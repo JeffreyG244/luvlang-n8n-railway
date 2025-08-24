@@ -99,7 +99,7 @@ if (fs.existsSync(execDashPath)) {
   const execContent = fs.readFileSync(execDashPath, 'utf8');
   if (!execContent.includes('Executive Dashboard') || !execContent.includes('Welcome back, jeffreytgravescas')) {
     console.error('❌ DEPLOYMENT BLOCKED: ExecutiveDashboard wrong styling!');
-    console.error('   Must match screenshot: /Users/jeffreygraves/Desktop/Luvlang.org website style.png');
+    console.error('   Must match reference screenshot (Executive Dashboard)');
     process.exit(1);
   }
   console.log('✅ Executive Dashboard styling validated');
@@ -115,5 +115,5 @@ console.log('📸 Photo Upload: Enabled');
 console.log('👔 Executive Dashboard: Matches reference screenshot');
 console.log('🔐 Security: Enhanced');
 console.log('');
-console.log('🖼️  REFERENCE: /Users/jeffreygraves/Desktop/Luvlang.org website style.png');
+console.log('🖼️  REFERENCE: Executive Dashboard with deep purple gradient');
 console.log('🔗 SOURCE: Lovable.dev 016dc165-a1fe-4ce7-adef-dbf00d3eba8a');
