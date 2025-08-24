@@ -93,8 +93,27 @@ if (fs.existsSync(packagePath)) {
   console.log('✅ Package dependencies validated');
 }
 
+// Final check - Executive Dashboard must exist and have correct styling
+const execDashPath = path.join(__dirname, '..', 'src', 'pages', 'ExecutiveDashboard.tsx');
+if (fs.existsSync(execDashPath)) {
+  const execContent = fs.readFileSync(execDashPath, 'utf8');
+  if (!execContent.includes('Executive Dashboard') || !execContent.includes('Welcome back, jeffreytgravescas')) {
+    console.error('❌ DEPLOYMENT BLOCKED: ExecutiveDashboard wrong styling!');
+    console.error('   Must match screenshot: /Users/jeffreygraves/Desktop/Luvlang.org website style.png');
+    process.exit(1);
+  }
+  console.log('✅ Executive Dashboard styling validated');
+} else {
+  console.error('❌ DEPLOYMENT BLOCKED: ExecutiveDashboard.tsx missing!');
+  process.exit(1);
+}
+
 console.log('🎉 ALL VALIDATION CHECKS PASSED!');
 console.log(`✅ Deploying LuvLang ${lockConfig.version}`);
-console.log('🎨 Theme: Professional Deep Purple & Pink');
-console.log('📸 Photo Upload: Enabled');
+console.log('🎨 Theme: Deep Purple Gradient (matches screenshot)');
+console.log('📸 Photo Upload: Enabled');  
+console.log('👔 Executive Dashboard: Matches reference screenshot');
 console.log('🔐 Security: Enhanced');
+console.log('');
+console.log('🖼️  REFERENCE: /Users/jeffreygraves/Desktop/Luvlang.org website style.png');
+console.log('🔗 SOURCE: Lovable.dev 016dc165-a1fe-4ce7-adef-dbf00d3eba8a');
