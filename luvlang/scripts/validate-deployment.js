@@ -60,7 +60,7 @@ if (!fs.existsSync(photoCapturePath)) {
 }
 console.log('✅ Photo upload component validated');
 
-// Check 4: Validate App.tsx has advanced routing (not simple Vite template)
+// Check 4: Validate App.tsx has LuvLang Dashboard (not simple Vite template)
 const appPath = path.join(__dirname, '..', 'src', 'App.tsx');
 if (fs.existsSync(appPath)) {
   const appContent = fs.readFileSync(appPath, 'utf8');
@@ -69,12 +69,12 @@ if (fs.existsSync(appPath)) {
     console.error('   This is the wrong/reverted version');
     process.exit(1);
   }
-  if (!appContent.includes('AuthProvider') || !appContent.includes('Routes')) {
-    console.error('❌ DEPLOYMENT BLOCKED: App.tsx missing advanced routing!');
-    console.error('   This is not the professional version');
+  if (!appContent.includes('LovableCompatible/Dashboard') || !appContent.includes('Dashboard')) {
+    console.error('❌ DEPLOYMENT BLOCKED: App.tsx missing LuvLang Dashboard!');
+    console.error('   This is not the correct Lovable.dev version');
     process.exit(1);
   }
-  console.log('✅ Advanced app routing validated');
+  console.log('✅ LuvLang Dashboard app validated');
 } else {
   console.error('❌ DEPLOYMENT BLOCKED: App.tsx not found!');
   process.exit(1);
