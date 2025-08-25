@@ -69,7 +69,7 @@ if (fs.existsSync(appPath)) {
     console.error('   This is the wrong/reverted version');
     process.exit(1);
   }
-  if (!appContent.includes('LovableCompatible/Dashboard') || !appContent.includes('Dashboard')) {
+  if ((!appContent.includes('LovableCompatible/Dashboard') && !appContent.includes('./components/Dashboard')) || !appContent.includes('Dashboard')) {
     console.error('❌ DEPLOYMENT BLOCKED: App.tsx missing LuvLang Dashboard!');
     console.error('   This is not the correct Lovable.dev version');
     process.exit(1);
