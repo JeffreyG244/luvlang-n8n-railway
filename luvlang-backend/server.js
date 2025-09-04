@@ -113,4 +113,4 @@ app.get('*', (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 LuvLang Backend running on port ${port}`);
   console.log(`📁 Serving frontend from ${path.join(__dirname, 'dist')}`);
-});
+});// Force Railway redeploy
