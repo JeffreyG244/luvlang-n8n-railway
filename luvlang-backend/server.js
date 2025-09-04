@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from dist directory
-app.use(express.static(path.join(__dirname, '../dist')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // API route for service status
 app.get('/api', (req, res) => {
@@ -107,10 +107,10 @@ app.post('/webhook/matching', async (req, res) => {
 
 // Catch all handler: send back React's index.html file for client-side routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(port, () => {
   console.log(`🚀 LuvLang Backend running on port ${port}`);
-  console.log(`📁 Serving frontend from ${path.join(__dirname, '../dist')}`);
+  console.log(`📁 Serving frontend from ${path.join(__dirname, 'dist')}`);
 });
