@@ -1,5 +1,5 @@
-# Use Node.js 18 LTS
-FROM node:18-alpine
+# Use Node.js 20 LTS for better compatibility
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
@@ -10,20 +10,17 @@ COPY package*.json ./
 # Install ALL dependencies including dev dependencies for build
 RUN npm ci
 
-# Copy source code (excluding website-files and other conflicts)
-COPY src ./src
-COPY public ./public
-COPY index.html ./
-COPY vite.config.ts ./
-COPY tsconfig*.json ./
-COPY tailwind.config.ts ./
-COPY postcss.config.js ./
-COPY server.js ./
+# Copy all source files
+COPY . .
+
+# Remove any conflicting files that might exist
+RUN rm -rf website-files/ || true
+RUN rm -f nixpacks.toml || true
 
 # Build the application
 RUN npm run build
 
-# Expose port
+# Expose port (Railway automatically sets PORT env var)
 EXPOSE 3000
 
 # Start the application
