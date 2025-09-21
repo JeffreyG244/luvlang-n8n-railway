@@ -11,10 +11,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files from dist directory
+// Serve static files from dist directory - NO CACHE
 app.use(express.static(path.join(__dirname, 'dist'), {
-  maxAge: '1y',
-  etag: false
+  maxAge: 0,
+  etag: false,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
 }));
 
 // Health check endpoint for Railway
