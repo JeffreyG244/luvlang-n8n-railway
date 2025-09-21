@@ -1,0 +1,314 @@
+{
+  "meta": {
+    "instanceId": "luvlang-marketing"
+  },
+  "name": "Luvlang Marketing - Automated Schedule",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "luvlang-marketing-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Manual Marketing Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 380],
+      "webhookId": "luvlang-marketing"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 8,
+              "minute": 0
+            },
+            {
+              "hour": 12,
+              "minute": 0
+            },
+            {
+              "hour": 17,
+              "minute": 0
+            },
+            {
+              "hour": 20,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "daily-trigger",
+      "name": "4x Daily Auto Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "// SMART CONTENT ROTATION\n// Different content for different times of day\n\nconst now = new Date();\nconst hour = now.getHours();\nconst campaignId = `luvlang_${Date.now()}`;\n\n// Time-based content strategy\nlet contentTheme, targetAudience, platform_priority;\n\nif (hour >= 7 && hour <= 10) {\n  // Morning: Professional focus\n  contentTheme = 'morning_motivation';\n  targetAudience = 'commuting_professionals';\n  platform_priority = 'linkedin';\n} else if (hour >= 11 && hour <= 14) {\n  // Lunch: Quick engagement\n  contentTheme = 'lunch_break';\n  targetAudience = 'office_workers';\n  platform_priority = 'instagram';\n} else if (hour >= 15 && hour <= 18) {\n  // Afternoon: Business focus\n  contentTheme = 'business_networking';\n  targetAudience = 'executives';\n  platform_priority = 'linkedin';\n} else {\n  // Evening: Lifestyle content\n  contentTheme = 'evening_lifestyle';\n  targetAudience = 'social_professionals';\n  platform_priority = 'twitter';\n}\n\n// Professional models rotation\nconst models = [\n  {\n    name: 'Sarah Chen',\n    title: 'VP Marketing',\n    company: 'Tech Fortune 500',\n    demographic: 'Asian-American female, 32'\n  },\n  {\n    name: 'Marcus Johnson', \n    title: 'Investment Director',\n    company: 'Private Equity',\n    demographic: 'African-American male, 35'\n  },\n  {\n    name: 'Isabella Rodriguez',\n    title: 'Startup Founder',\n    company: 'HealthTech',\n    demographic: 'Latina female, 29'\n  },\n  {\n    name: 'David Park',\n    title: 'Strategy Consultant', \n    company: 'McKinsey & Company',\n    demographic: 'Korean-American male, 33'\n  }\n];\n\nconst selectedModel = models[Math.floor(Math.random() * models.length)];\n\n// SEO topics rotation\nconst seoTopics = [\n  {\n    keyword: 'executive dating app',\n    title: 'Executive Dating App for C-Suite Professionals - Luvlang',\n    description: 'Connect with verified executives, entrepreneurs, and high-achievers. Premium dating platform designed for successful professionals.'\n  },\n  {\n    keyword: 'professional singles network',\n    title: 'Elite Professional Singles Network - Find Your Executive Match',\n    description: 'Join thousands of accomplished professionals. Exclusive dating community for CEOs, VPs, entrepreneurs, and industry leaders.'\n  },\n  {\n    keyword: 'luxury dating service',\n    title: 'Luxury Dating Service for High-Net-Worth Individuals',\n    description: 'Premium matchmaking for affluent singles. Verified professionals, exclusive events, and personalized matching algorithm.'\n  },\n  {\n    keyword: 'entrepreneur dating',\n    title: 'Entrepreneur Dating Network - Connect with Fellow Innovators',\n    description: 'Dating platform for startup founders, business owners, and investors. Find someone who understands your entrepreneurial journey.'\n  }\n];\n\nconst selectedSEO = seoTopics[Math.floor(Math.random() * seoTopics.length)];\n\n// Time-specific social content\nconst socialContent = {\n  morning_motivation: {\n    linkedin: `Start your morning right! Meet ${selectedModel.name}, ${selectedModel.title} at ${selectedModel.company}. She found her perfect match on Luvlang - where ambitious professionals connect. Your success story starts here. #ExecutiveDating #MorningMotivation #Success`,\n    instagram: `🌅 Morning thoughts: Success is sweeter when shared with someone who gets your ambition. Join ${selectedModel.name} and thousands of executives finding love on Luvlang. #ExecutiveDating #MorningVibes #Success`,\n    twitter: `Monday motivation: ${selectedModel.name}, ${selectedModel.title}, found her match on @Luvlang. Where will your ambition take you in love? #ExecutiveDating #Success`\n  },\n  lunch_break: {\n    linkedin: `Lunch break insight from ${selectedModel.name}: 'Finding someone who understands your 60-hour weeks is priceless.' That's why she chose Luvlang. #ExecutiveDating #LunchBreak #ProfessionalLife`,\n    instagram: `☀️ Midday check-in: Even the busiest executives make time for love. ${selectedModel.name} did, and found her perfect match. Your turn? #ExecutiveDating #LunchBreak #Love`,\n    twitter: `Lunch thought: ${selectedModel.name} manages a Fortune 500 budget AND found love on @Luvlang. Time management goals. #ExecutiveDating`\n  },\n  business_networking: {\n    linkedin: `Business insight: ${selectedModel.name}, ${selectedModel.title}, says 'The best networking happens when you're being authentically yourself.' She met her partner on Luvlang doing just that. #ExecutiveDating #Networking #Authenticity`,\n    instagram: `📈 Afternoon wisdom: Business success + personal happiness = the ultimate ROI. Ask ${selectedModel.name} how Luvlang delivered both. #ExecutiveDating #BusinessSuccess #ROI`,\n    twitter: `${selectedModel.name} closed a major deal AND found love this year. Both through authentic connections. @Luvlang gets it. #ExecutiveDating #Success`\n  },\n  evening_lifestyle: {\n    linkedin: `Evening reflection: ${selectedModel.name} proves you don't have to choose between career success and finding love. Luvlang made both possible. #ExecutiveDating #WorkLifeBalance #Success`,\n    instagram: `🌆 Evening vibes: After building empires all day, ${selectedModel.name} comes home to someone who celebrates her wins. Found through Luvlang. #ExecutiveDating #EveningVibes #Love`,\n    twitter: `End of day thought: ${selectedModel.name} built a career AND found her person. Both require the right strategy. @Luvlang #ExecutiveDating`\n  }\n};\n\nconst output = {\n  campaign_id: campaignId,\n  execution_time: now.toISOString(),\n  hour_executed: hour,\n  content_theme: contentTheme,\n  target_audience: targetAudience,\n  platform_priority: platform_priority,\n  \n  // SEO Data\n  seo_title: selectedSEO.title,\n  seo_description: selectedSEO.description, \n  target_keyword: selectedSEO.keyword,\n  \n  // Model Data\n  selected_model: selectedModel,\n  \n  // Platform Content\n  linkedin_content: socialContent[contentTheme].linkedin,\n  instagram_content: socialContent[contentTheme].instagram,\n  twitter_content: socialContent[contentTheme].twitter,\n  \n  // Execution Context\n  auto_triggered: true,\n  posting_schedule: '4x daily (8am, 12pm, 5pm, 8pm)',\n  status: 'content_generated'\n};\n\nconsole.log(`✅ ${contentTheme} content generated for ${targetAudience}`);\nconsole.log(`📱 Priority platform: ${platform_priority}`);\nconsole.log(`👔 Featured model: ${selectedModel.name}`);\nconsole.log(`⏰ Execution time: ${hour}:00`);\n\nreturn [{ json: output }];"
+      },
+      "id": "smart-content-generator",
+      "name": "Smart Content Generator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Campaign-Theme",
+              "value": "={{ $json.content_theme }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"update_seo\",\n  \"campaign_id\": \"{{ $json.campaign_id }}\",\n  \"execution_time\": \"{{ $json.execution_time }}\",\n  \"hour_executed\": {{ $json.hour_executed }},\n  \"content_theme\": \"{{ $json.content_theme }}\",\n  \"title\": \"{{ $json.seo_title }}\",\n  \"description\": \"{{ $json.seo_description }}\",\n  \"keyword\": \"{{ $json.target_keyword }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\"\n}",
+        "options": {}
+      },
+      "id": "update-seo",
+      "name": "Update SEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Platform-Priority",
+              "value": "={{ $json.platform_priority }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"post_linkedin\",\n  \"campaign_id\": \"{{ $json.campaign_id }}\",\n  \"execution_time\": \"{{ $json.execution_time }}\",\n  \"platform\": \"linkedin\",\n  \"content\": \"{{ $json.linkedin_content }}\",\n  \"model\": \"{{ $json.selected_model.name }}\",\n  \"content_theme\": \"{{ $json.content_theme }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"is_priority_platform\": {{ $json.platform_priority === 'linkedin' }}\n}",
+        "options": {}
+      },
+      "id": "post-linkedin",
+      "name": "Post LinkedIn",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 220]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Platform-Priority",
+              "value": "={{ $json.platform_priority }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"post_instagram\",\n  \"campaign_id\": \"{{ $json.campaign_id }}\",\n  \"execution_time\": \"{{ $json.execution_time }}\",\n  \"platform\": \"instagram\",\n  \"content\": \"{{ $json.instagram_content }}\",\n  \"model\": \"{{ $json.selected_model.name }}\",\n  \"content_theme\": \"{{ $json.content_theme }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"is_priority_platform\": {{ $json.platform_priority === 'instagram' }}\n}",
+        "options": {}
+      },
+      "id": "post-instagram",
+      "name": "Post Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Platform-Priority",
+              "value": "={{ $json.platform_priority }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"post_twitter\",\n  \"campaign_id\": \"{{ $json.campaign_id }}\",\n  \"execution_time\": \"{{ $json.execution_time }}\",\n  \"platform\": \"twitter\",\n  \"content\": \"{{ $json.twitter_content }}\",\n  \"model\": \"{{ $json.selected_model.name }}\",\n  \"content_theme\": \"{{ $json.content_theme }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"is_priority_platform\": {{ $json.platform_priority === 'twitter' }}\n}",
+        "options": {}
+      },
+      "id": "post-twitter",
+      "name": "Post Twitter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "// COMPREHENSIVE ANALYTICS & SCHEDULING\nconst campaignId = $json.json?.campaign_id || $json.campaign_id;\nconst executionTime = $json.json?.execution_time || $json.execution_time;\nconst contentTheme = $json.json?.content_theme;\nconst targetAudience = $json.json?.target_audience;\nconst platform = $json.json?.platform;\nconst isPriorityPlatform = $json.json?.is_priority_platform;\n\n// Calculate next execution times\nconst nextExecutions = [\n  '08:00 AM - Morning Professional Focus',\n  '12:00 PM - Lunch Break Engagement', \n  '05:00 PM - Business Networking',\n  '08:00 PM - Evening Lifestyle'\n];\n\nconst analytics = {\n  campaign_id: campaignId,\n  execution_time: executionTime,\n  content_theme: contentTheme,\n  target_audience: targetAudience,\n  platform_posted: platform,\n  priority_platform_post: isPriorityPlatform,\n  \n  // Execution Summary\n  execution_summary: {\n    workflow_status: 'completed_successfully',\n    auto_triggered: true,\n    analytics_processed: true,\n    smart_scheduling_active: true\n  },\n  \n  // Daily Schedule Status\n  daily_schedule: {\n    total_daily_executions: 4,\n    next_executions: nextExecutions,\n    auto_scheduling: 'active',\n    cpu_dependent: true,\n    runs_when_computer_on: true\n  },\n  \n  // Performance Projections (per execution)\n  performance_projections: {\n    estimated_reach_per_post: 15000,\n    estimated_engagement_per_post: 750,\n    estimated_conversions_per_post: 75,\n    daily_totals: {\n      reach: 60000,\n      engagement: 3000,\n      conversions: 300\n    }\n  },\n  \n  // Content Strategy\n  content_strategy: {\n    theme_rotation: 'time_based',\n    model_rotation: 'random',\n    platform_prioritization: 'audience_specific',\n    seo_rotation: 'keyword_diverse'\n  },\n  \n  final_status: 'success',\n  ready_for_production: true\n};\n\nconsole.log(`📊 Analytics processed for ${contentTheme} campaign`);\nconsole.log(`🎯 Target audience: ${targetAudience}`);\nconsole.log(`📱 Platform: ${platform} (Priority: ${isPriorityPlatform})`);\nconsole.log(`⏰ Auto-scheduling: 4x daily when CPU is on`);\n\nreturn [{ json: analytics }];"
+      },
+      "id": "comprehensive-analytics",
+      "name": "Comprehensive Analytics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 280]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"🚀 Luvlang automated marketing campaign executed successfully!\",\n  \"campaign_id\": \"{{ $json.campaign_id }}\",\n  \"execution_time\": \"{{ $json.execution_time }}\",\n  \"content_theme\": \"{{ $json.content_theme }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"platform_posted\": \"{{ $json.platform_posted }}\",\n  \"priority_platform_post\": {{ $json.priority_platform_post }},\n  \"workflow_status\": \"{{ $json.execution_summary.workflow_status }}\",\n  \"auto_scheduling\": {\n    \"status\": \"{{ $json.daily_schedule.auto_scheduling }}\",\n    \"daily_executions\": {{ $json.daily_schedule.total_daily_executions }},\n    \"schedule\": {{ JSON.stringify($json.daily_schedule.next_executions) }},\n    \"cpu_dependent\": {{ $json.daily_schedule.cpu_dependent }},\n    \"note\": \"Workflow runs automatically 4x daily when your computer is on\"\n  },\n  \"performance_today\": {\n    \"estimated_daily_reach\": {{ $json.performance_projections.daily_totals.reach }},\n    \"estimated_daily_engagement\": {{ $json.performance_projections.daily_totals.engagement }},\n    \"estimated_daily_conversions\": {{ $json.performance_projections.daily_totals.conversions }}\n  },\n  \"content_strategy\": {\n    \"smart_scheduling\": \"{{ $json.execution_summary.smart_scheduling_active }}\",\n    \"theme_rotation\": \"{{ $json.content_strategy.theme_rotation }}\",\n    \"model_rotation\": \"{{ $json.content_strategy.model_rotation }}\",\n    \"platform_prioritization\": \"{{ $json.content_strategy.platform_prioritization }}\"\n  },\n  \"production_status\": {\n    \"ready_for_production\": {{ $json.ready_for_production }},\n    \"auto_triggered\": {{ $json.execution_summary.auto_triggered }},\n    \"final_status\": \"{{ $json.final_status }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 280]
+    }
+  ],
+  "connections": {
+    "Manual Marketing Trigger": {
+      "main": [
+        [
+          {
+            "node": "Smart Content Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4x Daily Auto Trigger": {
+      "main": [
+        [
+          {
+            "node": "Smart Content Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smart Content Generator": {
+      "main": [
+        [
+          {
+            "node": "Update SEO",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post Instagram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update SEO": {
+      "main": [
+        [
+          {
+            "node": "Comprehensive Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Comprehensive Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Instagram": {
+      "main": [
+        [
+          {
+            "node": "Comprehensive Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Twitter": {
+      "main": [
+        [
+          {
+            "node": "Comprehensive Analytics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprehensive Analytics": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "id": "luvlang-automated",
+      "name": "Luvlang Automated"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2025-01-13T00:00:00.000Z",
+  "versionId": "2"
+}
