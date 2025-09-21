@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,14 +15,14 @@ const Index = () => {
           <span className="text-2xl font-bold">LuvLang</span>
         </div>
         <div className="space-x-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate('/auth')}
             className="text-white hover:bg-white/10"
           >
             Sign In
           </Button>
-          <Button 
+          <Button
             onClick={() => navigate('/auth')}
             className="bg-pink-600 hover:bg-pink-700"
           >
@@ -44,19 +43,19 @@ const Index = () => {
             Find Your Executive Match
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-purple-100 max-w-3xl mx-auto">
-            Connect with successful executives who share your values, ambitions, and lifestyle. 
+            Connect with successful executives who share your values, ambitions, and lifestyle.
             Where professional excellence meets personal connection.
           </p>
           <div className="space-x-4">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => navigate('/auth')}
               className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-lg px-8 py-4"
             >
               Start Your Journey
             </Button>
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               variant="outline"
               className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-4"
             >
@@ -155,8 +154,8 @@ const Index = () => {
           <p className="text-xl text-purple-200 mb-8">
             Join thousands of successful executives who have found meaningful connections through LuvLang.
           </p>
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             onClick={() => navigate('/auth')}
             className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-lg px-12 py-4"
           >
