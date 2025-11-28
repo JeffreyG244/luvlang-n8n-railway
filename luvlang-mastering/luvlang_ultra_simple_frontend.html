@@ -1213,6 +1213,43 @@
                     </div>
                 </div>
 
+                <!-- Noise Gate Control (PODCAST CRITICAL!) -->
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-name">🚪 Noise Gate</div>
+                        <div class="control-value" id="gateValue">Off</div>
+                    </div>
+                    <div class="control-description">
+                        Removes background noise during silence (AC hum, room noise, computer fan). Essential for podcasts!
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="gateToggle" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Enable Noise Gate</span>
+                        </label>
+                    </div>
+                    <div id="gateControls" style="display: none; margin-top: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.85rem; opacity: 0.8; display: block; margin-bottom: 5px;">Threshold (dB):</label>
+                            <input type="range" class="slider" id="gateThreshold" min="-60" max="-20" step="2" value="-40">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.6; margin-top: 2px;">
+                                <span>-60 dB (Sensitive)</span>
+                                <span id="gateThresholdValue">-40 dB</span>
+                                <span>-20 dB (Aggressive)</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; opacity: 0.8; display: block; margin-bottom: 5px;">Release (ms):</label>
+                            <input type="range" class="slider" id="gateRelease" min="50" max="500" step="50" value="200">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.6; margin-top: 2px;">
+                                <span>50 ms (Fast)</span>
+                                <span id="gateReleaseValue">200 ms</span>
+                                <span>500 ms (Smooth)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Warmth Control (OLD - keeping for now) -->
                 <div class="control-item" style="display: none;">
                     <div class="control-header">
@@ -1622,6 +1659,7 @@
         let deesserCompressor = null;  // ⚡ De-esser dynamics compressor
         let deesserSplitter = null;  // ⚡ De-esser signal splitter
         let deesserMerger = null;  // ⚡ De-esser signal merger
+        let noiseGate = null;  // ⚡ Noise gate (DynamicsCompressor with expansion)
         let gainNode = null;
         let analyser = null;
 
@@ -2292,6 +2330,17 @@
             deesserCompressor.release.value = 0.05;   // Fast release (only compress "sss")
 
             console.log('✅ De-esser created (OFF by default, 6 kHz, 3 dB reduction)');
+
+            // ⚡ Create noise gate (expands dynamic range below threshold to silence noise)
+            // Web Audio API doesn't have a true gate, so we use DynamicsCompressor with special settings
+            noiseGate = audioContext.createDynamicsCompressor();
+            noiseGate.threshold.value = -40;    // Default -40 dB (close gate below this)
+            noiseGate.knee.value = 0;           // Hard knee (sharp gate)
+            noiseGate.ratio.value = 20;         // High ratio acts like gate (20:1)
+            noiseGate.attack.value = 0.003;     // Fast attack (3ms - don't cut transients)
+            noiseGate.release.value = 0.2;      // 200ms release (smooth fade-out)
+
+            console.log('✅ Noise gate created (OFF by default, -40 dB threshold)');
 
             // Create analyser for visualization
             analyser = audioContext.createAnalyser();
@@ -3504,6 +3553,87 @@
                 const freq = parseInt(deesserFreq.value);
                 deesserValue.textContent = `On (${(freq/1000).toFixed(1)} kHz, ${amount} dB)`;
                 console.log('🎤 De-esser amount:', amount, 'dB → Threshold:', threshold, 'dB');
+            }
+        });
+
+        // ⚡ Noise Gate event listeners (PODCAST CRITICAL!)
+        const gateToggle = document.getElementById('gateToggle');
+        const gateControls = document.getElementById('gateControls');
+        const gateValue = document.getElementById('gateValue');
+        const gateThreshold = document.getElementById('gateThreshold');
+        const gateThresholdValue = document.getElementById('gateThresholdValue');
+        const gateRelease = document.getElementById('gateRelease');
+        const gateReleaseValue = document.getElementById('gateReleaseValue');
+
+        let gateEnabled = false; // Track gate state
+
+        // Toggle noise gate on/off
+        gateToggle.addEventListener('change', () => {
+            gateEnabled = gateToggle.checked;
+
+            if (gateEnabled) {
+                gateControls.style.display = 'block';
+                const threshold = parseInt(gateThreshold.value);
+                const release = parseInt(gateRelease.value);
+                gateValue.textContent = `On (${threshold} dB, ${release} ms)`;
+
+                // Insert gate into signal chain: eqAirFilter → noiseGate → compressor
+                if (eqAirFilter && noiseGate && compressor) {
+                    console.log('🚪 Noise Gate ENABLED');
+
+                    // Disconnect existing connection
+                    eqAirFilter.disconnect();
+
+                    // Insert gate between EQ and compressor
+                    eqAirFilter.connect(noiseGate);
+                    noiseGate.connect(compressor);
+
+                    console.log('✅ Gate routing: EQ → noiseGate → compressor');
+                }
+            } else {
+                gateControls.style.display = 'none';
+                gateValue.textContent = 'Off';
+
+                // Bypass gate: reconnect direct path
+                if (eqAirFilter && noiseGate && compressor) {
+                    console.log('🚪 Noise Gate DISABLED (bypassed)');
+
+                    // Disconnect gate routing
+                    eqAirFilter.disconnect();
+                    noiseGate.disconnect();
+
+                    // Direct connection (bypass)
+                    eqAirFilter.connect(compressor);
+
+                    console.log('✅ Gate bypassed: EQ → compressor (direct)');
+                }
+            }
+        });
+
+        // Noise gate threshold slider
+        gateThreshold.addEventListener('input', () => {
+            const threshold = parseInt(gateThreshold.value);
+            gateThresholdValue.textContent = threshold + ' dB';
+
+            if (noiseGate && gateEnabled) {
+                noiseGate.threshold.value = threshold;
+                const release = parseInt(gateRelease.value);
+                gateValue.textContent = `On (${threshold} dB, ${release} ms)`;
+                console.log('🚪 Gate threshold:', threshold, 'dB');
+            }
+        });
+
+        // Noise gate release slider
+        gateRelease.addEventListener('input', () => {
+            const release = parseInt(gateRelease.value);
+            gateReleaseValue.textContent = release + ' ms';
+
+            if (noiseGate && gateEnabled) {
+                // Convert ms to seconds
+                noiseGate.release.value = release / 1000;
+                const threshold = parseInt(gateThreshold.value);
+                gateValue.textContent = `On (${threshold} dB, ${release} ms)`;
+                console.log('🚪 Gate release:', release, 'ms');
             }
         });
 
