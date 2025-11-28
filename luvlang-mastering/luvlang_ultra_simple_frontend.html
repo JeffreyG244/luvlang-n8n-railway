@@ -1176,6 +1176,43 @@
                     </div>
                 </div>
 
+                <!-- De-Esser Control (PODCAST CRITICAL!) -->
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-name">🎤 De-Esser</div>
+                        <div class="control-value" id="deesserValue">Off</div>
+                    </div>
+                    <div class="control-description">
+                        Removes harsh "sss" sounds from vocals (critical for podcasts!). Toggle on and adjust frequency/amount.
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="deesserToggle" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                            <span style="font-size: 0.9rem; opacity: 0.9;">Enable De-Esser</span>
+                        </label>
+                    </div>
+                    <div id="deesserControls" style="display: none; margin-top: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-size: 0.85rem; opacity: 0.8; display: block; margin-bottom: 5px;">Frequency (Hz):</label>
+                            <input type="range" class="slider" id="deesserFreq" min="4000" max="10000" step="500" value="6000">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.6; margin-top: 2px;">
+                                <span>4 kHz</span>
+                                <span id="deesserFreqValue">6 kHz</span>
+                                <span>10 kHz</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85rem; opacity: 0.8; display: block; margin-bottom: 5px;">Amount (dB):</label>
+                            <input type="range" class="slider" id="deesserAmount" min="0" max="10" step="1" value="3">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.6; margin-top: 2px;">
+                                <span>0 dB (Off)</span>
+                                <span id="deesserAmountValue">3 dB</span>
+                                <span>10 dB (Max)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Warmth Control (OLD - keeping for now) -->
                 <div class="control-item" style="display: none;">
                     <div class="control-header">
@@ -1581,6 +1618,10 @@
         let saturationNode = null;  // ⚡ Saturation/warmth
         let limiter = null;  // ⚡ Brick wall limiter
         let limiterMakeupGain = null;  // ⚡ Gain after limiter for ceiling control
+        let deesserFilter = null;  // ⚡ De-esser high-pass filter
+        let deesserCompressor = null;  // ⚡ De-esser dynamics compressor
+        let deesserSplitter = null;  // ⚡ De-esser signal splitter
+        let deesserMerger = null;  // ⚡ De-esser signal merger
         let gainNode = null;
         let analyser = null;
 
@@ -2232,6 +2273,25 @@
             limiterMakeupGain = audioContext.createGain();
             limiterMakeupGain.gain.value = Math.pow(10, -0.3 / 20); // Default -0.3 dB ceiling
             console.log('✅ Brick wall limiter created (ceiling: -0.3 dB)');
+
+            // ⚡ Create de-esser (multiband compression on high frequencies)
+            // De-esser works by splitting signal, filtering sibilance frequencies (4-10kHz),
+            // compressing only those frequencies, then merging back
+            deesserSplitter = audioContext.createGain();  // Split point
+            deesserMerger = audioContext.createGain();    // Merge point
+            deesserFilter = audioContext.createBiquadFilter();
+            deesserFilter.type = 'highpass';
+            deesserFilter.frequency.value = 6000;  // Default 6kHz (typical sibilance)
+            deesserFilter.Q.value = 1.0;           // Moderate slope
+
+            deesserCompressor = audioContext.createDynamicsCompressor();
+            deesserCompressor.threshold.value = -30;  // Catch sibilance
+            deesserCompressor.knee.value = 10;        // Smooth compression
+            deesserCompressor.ratio.value = 6;        // 6:1 ratio (strong but not limiting)
+            deesserCompressor.attack.value = 0.001;   // Very fast attack (catch sibilance)
+            deesserCompressor.release.value = 0.05;   // Fast release (only compress "sss")
+
+            console.log('✅ De-esser created (OFF by default, 6 kHz, 3 dB reduction)');
 
             // Create analyser for visualization
             analyser = audioContext.createAnalyser();
@@ -3347,6 +3407,103 @@
                 const ceilingLinear = Math.pow(10, ceilingDB / 20);
                 limiterMakeupGain.gain.value = ceilingLinear;
                 console.log('🧱 Limiter ceiling adjusted:', ceilingDB.toFixed(1), 'dB → Gain:', ceilingLinear.toFixed(3));
+            }
+        });
+
+        // ⚡ De-Esser event listeners (PODCAST CRITICAL!)
+        const deesserToggle = document.getElementById('deesserToggle');
+        const deesserControls = document.getElementById('deesserControls');
+        const deesserValue = document.getElementById('deesserValue');
+        const deesserFreq = document.getElementById('deesserFreq');
+        const deesserFreqValue = document.getElementById('deesserFreqValue');
+        const deesserAmount = document.getElementById('deesserAmount');
+        const deesserAmountValue = document.getElementById('deesserAmountValue');
+
+        let deesserEnabled = false; // Track de-esser state
+
+        // Toggle de-esser on/off
+        deesserToggle.addEventListener('change', () => {
+            deesserEnabled = deesserToggle.checked;
+
+            if (deesserEnabled) {
+                deesserControls.style.display = 'block';
+                const freq = parseInt(deesserFreq.value);
+                const amount = parseInt(deesserAmount.value);
+                deesserValue.textContent = `On (${(freq/1000).toFixed(1)} kHz, ${amount} dB)`;
+
+                // Reconnect signal chain with de-esser inserted
+                if (stereoMerger && limiter && deesserSplitter) {
+                    console.log('🎤 De-esser ENABLED');
+
+                    // Disconnect existing connection
+                    stereoMerger.disconnect();
+
+                    // Insert de-esser: stereoMerger → deesserSplitter → [split to direct + filtered paths] → deesserMerger → limiter
+                    stereoMerger.connect(deesserSplitter);
+
+                    // Direct path (full signal minus sibilance)
+                    deesserSplitter.connect(deesserMerger);
+
+                    // Filtered path (only sibilance frequencies, compressed)
+                    deesserSplitter.connect(deesserFilter);
+                    deesserFilter.connect(deesserCompressor);
+                    deesserCompressor.connect(deesserMerger);
+
+                    // Continue to limiter
+                    deesserMerger.connect(limiter);
+
+                    console.log('✅ De-esser routing: stereoMerger → deesser (multiband) → limiter');
+                }
+            } else {
+                deesserControls.style.display = 'none';
+                deesserValue.textContent = 'Off';
+
+                // Bypass de-esser: reconnect direct path
+                if (stereoMerger && limiter && deesserSplitter) {
+                    console.log('🎤 De-esser DISABLED (bypassed)');
+
+                    // Disconnect de-esser routing
+                    stereoMerger.disconnect();
+                    deesserSplitter.disconnect();
+                    deesserFilter.disconnect();
+                    deesserCompressor.disconnect();
+                    deesserMerger.disconnect();
+
+                    // Direct connection (bypass)
+                    stereoMerger.connect(limiter);
+
+                    console.log('✅ De-esser bypassed: stereoMerger → limiter (direct)');
+                }
+            }
+        });
+
+        // De-esser frequency slider
+        deesserFreq.addEventListener('input', () => {
+            const freq = parseInt(deesserFreq.value);
+            deesserFreqValue.textContent = (freq / 1000).toFixed(1) + ' kHz';
+
+            if (deesserFilter && deesserEnabled) {
+                deesserFilter.frequency.value = freq;
+                const amount = parseInt(deesserAmount.value);
+                deesserValue.textContent = `On (${(freq/1000).toFixed(1)} kHz, ${amount} dB)`;
+                console.log('🎤 De-esser frequency:', freq, 'Hz');
+            }
+        });
+
+        // De-esser amount slider
+        deesserAmount.addEventListener('input', () => {
+            const amount = parseInt(deesserAmount.value);
+            deesserAmountValue.textContent = amount + ' dB';
+
+            if (deesserCompressor && deesserEnabled) {
+                // Map amount (0-10 dB) to threshold (-40 to -20 dB)
+                // More amount = lower threshold = more compression
+                const threshold = -40 + (amount * 2);
+                deesserCompressor.threshold.value = threshold;
+
+                const freq = parseInt(deesserFreq.value);
+                deesserValue.textContent = `On (${(freq/1000).toFixed(1)} kHz, ${amount} dB)`;
+                console.log('🎤 De-esser amount:', amount, 'dB → Threshold:', threshold, 'dB');
             }
         });
 
