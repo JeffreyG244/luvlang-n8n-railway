@@ -861,6 +861,76 @@
             z-index: 1;
         }
 
+        /* ⚡ COLLAPSIBLE SECTIONS */
+        .collapsible-section {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .collapsible-section:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .collapsible-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .collapsible-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+            opacity: 0.6;
+        }
+
+        .collapsible-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+            padding: 0 20px;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 3000px;
+            padding: 0 20px 20px 20px;
+            transition: max-height 0.6s ease-in, padding 0.3s ease-in;
+        }
+
+        .collapsible-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(102, 126, 234, 0.3);
+            color: white;
+            font-weight: 600;
+        }
+
         @media (max-width: 1024px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1069,144 +1139,190 @@
                     </style>
                 </div>
 
-                <!-- Bass Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">🎸 Bass</div>
-                        <div class="control-value" id="bassValue">+0.0 dB</div>
+                <!-- ⚡ COLLAPSIBLE: EQ Controls -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('eqSection')">
+                        <div class="collapsible-title">
+                            <span>🎚️ EQ (Tone Shaping)</span>
+                            <span class="collapsible-badge">3 BANDS</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="eqToggle">▼</div>
                     </div>
-                    <div class="control-description">
-                        Control the low-end punch. Increase for more thump and power, decrease if it sounds muddy.
-                    </div>
-                    <input type="range" class="slider" id="bassSlider" min="-6" max="6" step="0.5" value="0">
-                    <div class="slider-labels">
-                        <span>Less Bass</span>
-                        <span>More Bass</span>
+                    <div class="collapsible-content expanded" id="eqSection">
+                        <!-- Bass Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🎸 Bass</div>
+                                <div class="control-value" id="bassValue">+0.0 dB</div>
+                            </div>
+                            <div class="control-description">
+                                Control the low-end punch. Increase for more thump and power, decrease if it sounds muddy.
+                            </div>
+                            <input type="range" class="slider" id="bassSlider" min="-6" max="6" step="0.5" value="0">
+                            <div class="slider-labels">
+                                <span>Less Bass</span>
+                                <span>More Bass</span>
+                            </div>
+                        </div>
+
+                        <!-- Mids Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🎤 Mids (Vocals)</div>
+                                <div class="control-value" id="midsValue">+0.0 dB</div>
+                            </div>
+                            <div class="control-description">
+                                Adjust vocal presence and body. Increase to bring vocals forward, decrease if harsh or honky.
+                            </div>
+                            <input type="range" class="slider" id="midsSlider" min="-6" max="6" step="0.5" value="0">
+                            <div class="slider-labels">
+                                <span>Less Mids</span>
+                                <span>More Mids</span>
+                            </div>
+                        </div>
+
+                        <!-- Highs Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">✨ Highs (Sparkle)</div>
+                                <div class="control-value" id="highsValue">+0.0 dB</div>
+                            </div>
+                            <div class="control-description">
+                                Control the air and brightness. Increase for more clarity and sparkle, decrease if too harsh.
+                            </div>
+                            <input type="range" class="slider" id="highsSlider" min="-6" max="6" step="0.5" value="0">
+                            <div class="slider-labels">
+                                <span>Less Highs</span>
+                                <span>More Highs</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Mids Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">🎤 Mids (Vocals)</div>
-                        <div class="control-value" id="midsValue">+0.0 dB</div>
+                <!-- ⚡ COLLAPSIBLE: Loudness & Dynamics -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('dynamicsSection')">
+                        <div class="collapsible-title">
+                            <span>💪 Loudness & Dynamics</span>
+                            <span class="collapsible-badge">POWER</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="dynamicsToggle">▼</div>
                     </div>
-                    <div class="control-description">
-                        Adjust vocal presence and body. Increase to bring vocals forward, decrease if harsh or honky.
-                    </div>
-                    <input type="range" class="slider" id="midsSlider" min="-6" max="6" step="0.5" value="0">
-                    <div class="slider-labels">
-                        <span>Less Mids</span>
-                        <span>More Mids</span>
+                    <div class="collapsible-content expanded" id="dynamicsSection">
+                        <!-- Loudness Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🔊 Overall Loudness</div>
+                                <div class="control-value" id="loudnessValue" style="opacity: 0.7;">Target: -14 LUFS</div>
+                            </div>
+                            <div class="control-description">
+                                <strong>✅ Auto-set to -14 LUFS on upload</strong> (streaming standard for Spotify/YouTube/Apple Music).<br>
+                                Adjust if needed: -9 for club/radio, -16 for dynamic music. Check Track Statistics below for actual measured loudness.
+                            </div>
+                            <input type="range" class="slider" id="loudnessSlider" min="-18" max="-8" step="0.5" value="-14">
+                            <div class="slider-labels">
+                                <span>Quieter/Dynamic</span>
+                                <span>Louder/Punchy</span>
+                            </div>
+                        </div>
+
+                        <!-- Compression Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">💪 Compression</div>
+                                <div class="control-value" id="compressionValue">Medium</div>
+                            </div>
+                            <div class="control-description">
+                                Control dynamic range. Light for natural sound, heavy for consistent loud sound.
+                            </div>
+                            <input type="range" class="slider" id="compressionSlider" min="1" max="10" step="1" value="5">
+                            <div class="slider-labels">
+                                <span>Light</span>
+                                <span>Heavy</span>
+                            </div>
+                        </div>
+
+                        <!-- Brick Wall Limiter Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🧱 Limiter Ceiling</div>
+                                <div class="control-value" id="limiterValue">-0.3 dB</div>
+                            </div>
+                            <div class="control-description">
+                                Maximum peak level (prevents clipping absolutely). Lower = safer, higher = louder (use -0.1 dB for streaming).
+                            </div>
+                            <input type="range" class="slider" id="limiterSlider" min="-1.0" max="-0.1" step="0.1" value="-0.3">
+                            <div class="slider-labels">
+                                <span>Conservative (-1.0)</span>
+                                <span>Maximum (-0.1)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Highs Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">✨ Highs (Sparkle)</div>
-                        <div class="control-value" id="highsValue">+0.0 dB</div>
+                <!-- ⚡ COLLAPSIBLE: Enhancement & Effects -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('enhancementSection')">
+                        <div class="collapsible-title">
+                            <span>✨ Enhancement & Effects</span>
+                            <span class="collapsible-badge">COLOR</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="enhancementToggle">▼</div>
                     </div>
-                    <div class="control-description">
-                        Control the air and brightness. Increase for more clarity and sparkle, decrease if too harsh.
-                    </div>
-                    <input type="range" class="slider" id="highsSlider" min="-6" max="6" step="0.5" value="0">
-                    <div class="slider-labels">
-                        <span>Less Highs</span>
-                        <span>More Highs</span>
+                    <div class="collapsible-content expanded" id="enhancementSection">
+                        <!-- Saturation Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🔥 Saturation / Warmth</div>
+                                <div class="control-value" id="saturationValue">0%</div>
+                            </div>
+                            <div class="control-description">
+                                Adds analog warmth and harmonic richness (like vintage tape/tube gear). Great for making digital tracks sound more "alive"!
+                            </div>
+                            <input type="range" class="slider" id="saturationSlider" min="0" max="100" step="5" value="0">
+                            <div style="margin-top: 10px;">
+                                <label style="font-size: 0.85rem; opacity: 0.8; margin-right: 10px;">Type:</label>
+                                <select id="saturationType" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; font-size: 0.85rem;">
+                                    <option value="tape">Tape (Warm)</option>
+                                    <option value="tube">Tube (Smooth)</option>
+                                    <option value="solid">Solid State (Punchy)</option>
+                                </select>
+                            </div>
+                            <div class="slider-labels">
+                                <span>Clean/Digital</span>
+                                <span>Warm/Analog</span>
+                            </div>
+                        </div>
+
+                        <!-- Stereo Width Control -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">📏 Stereo Width</div>
+                                <div class="control-value" id="widthValue">100%</div>
+                            </div>
+                            <div class="control-description">
+                                Adjust the stereo image. Increase for wider sound, decrease for more mono compatibility.
+                            </div>
+                            <input type="range" class="slider" id="widthSlider" min="50" max="150" step="5" value="100">
+                            <div class="slider-labels">
+                                <span>Narrow</span>
+                                <span>Wide</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Loudness Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">🔊 Overall Loudness</div>
-                        <div class="control-value" id="loudnessValue" style="opacity: 0.7;">Target: -14 LUFS</div>
+                <!-- ⚡ COLLAPSIBLE: Podcast Tools -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('podcastSection')">
+                        <div class="collapsible-title">
+                            <span>🎤 Podcast Tools</span>
+                            <span class="collapsible-badge">VOICE</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="podcastToggle">▼</div>
                     </div>
-                    <div class="control-description">
-                        <strong>✅ Auto-set to -14 LUFS on upload</strong> (streaming standard for Spotify/YouTube/Apple Music).<br>
-                        Adjust if needed: -9 for club/radio, -16 for dynamic music. Check Track Statistics below for actual measured loudness.
-                    </div>
-                    <input type="range" class="slider" id="loudnessSlider" min="-18" max="-8" step="0.5" value="-14">
-                    <div class="slider-labels">
-                        <span>Quieter/Dynamic</span>
-                        <span>Louder/Punchy</span>
-                    </div>
-                </div>
-
-                <!-- Saturation Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">🔥 Saturation / Warmth</div>
-                        <div class="control-value" id="saturationValue">0%</div>
-                    </div>
-                    <div class="control-description">
-                        Adds analog warmth and harmonic richness (like vintage tape/tube gear). Great for making digital tracks sound more "alive"!
-                    </div>
-                    <input type="range" class="slider" id="saturationSlider" min="0" max="100" step="5" value="0">
-                    <div style="margin-top: 10px;">
-                        <label style="font-size: 0.85rem; opacity: 0.8; margin-right: 10px;">Type:</label>
-                        <select id="saturationType" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; font-size: 0.85rem;">
-                            <option value="tape">Tape (Warm)</option>
-                            <option value="tube">Tube (Smooth)</option>
-                            <option value="solid">Solid State (Punchy)</option>
-                        </select>
-                    </div>
-                    <div class="slider-labels">
-                        <span>Clean/Digital</span>
-                        <span>Warm/Analog</span>
-                    </div>
-                </div>
-
-                <!-- Stereo Width Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">📏 Stereo Width</div>
-                        <div class="control-value" id="widthValue">100%</div>
-                    </div>
-                    <div class="control-description">
-                        Adjust the stereo image. Increase for wider sound, decrease for more mono compatibility.
-                    </div>
-                    <input type="range" class="slider" id="widthSlider" min="50" max="150" step="5" value="100">
-                    <div class="slider-labels">
-                        <span>Narrow</span>
-                        <span>Wide</span>
-                    </div>
-                </div>
-
-                <!-- Compression Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">💪 Compression</div>
-                        <div class="control-value" id="compressionValue">Medium</div>
-                    </div>
-                    <div class="control-description">
-                        Control dynamic range. Light for natural sound, heavy for consistent loud sound.
-                    </div>
-                    <input type="range" class="slider" id="compressionSlider" min="1" max="10" step="1" value="5">
-                    <div class="slider-labels">
-                        <span>Light</span>
-                        <span>Heavy</span>
-                    </div>
-                </div>
-
-                <!-- Brick Wall Limiter Control -->
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">🧱 Limiter Ceiling</div>
-                        <div class="control-value" id="limiterValue">-0.3 dB</div>
-                    </div>
-                    <div class="control-description">
-                        Maximum peak level (prevents clipping absolutely). Lower = safer, higher = louder (use -0.1 dB for streaming).
-                    </div>
-                    <input type="range" class="slider" id="limiterSlider" min="-1.0" max="-0.1" step="0.1" value="-0.3">
-                    <div class="slider-labels">
-                        <span>Conservative (-1.0)</span>
-                        <span>Maximum (-0.1)</span>
-                    </div>
-                </div>
-
-                <!-- De-Esser Control (PODCAST CRITICAL!) -->
+                    <div class="collapsible-content expanded" id="podcastSection">
+                        <!-- De-Esser Control (PODCAST CRITICAL!) -->
                 <div class="control-item">
                     <div class="control-header">
                         <div class="control-name">🎤 De-Esser</div>
@@ -1277,6 +1393,8 @@
                                 <span>500 ms (Smooth)</span>
                             </div>
                         </div>
+                    </div>
+                </div>
                     </div>
                 </div>
 
@@ -4719,6 +4837,31 @@
 
         // Initialize
         loadGenrePreset('balanced');
+
+        // ⚡ COLLAPSIBLE SECTIONS - Toggle function
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const toggle = document.getElementById(sectionId.replace('Section', 'Toggle'));
+
+            if (content && toggle) {
+                const isExpanded = content.classList.contains('expanded');
+
+                if (isExpanded) {
+                    // Collapse
+                    content.classList.remove('expanded');
+                    toggle.classList.remove('expanded');
+                } else {
+                    // Expand
+                    content.classList.add('expanded');
+                    toggle.classList.add('expanded');
+                }
+
+                console.log('🎛️ Section toggled:', sectionId, isExpanded ? 'collapsed' : 'expanded');
+            }
+        }
+
+        // Make toggle function globally available
+        window.toggleSection = toggleSection;
     </script>
 
     <!-- AI Results Modal -->
