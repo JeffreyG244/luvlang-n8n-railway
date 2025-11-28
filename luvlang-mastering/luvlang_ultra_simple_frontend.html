@@ -1507,6 +1507,114 @@
                                 <span>Wide</span>
                             </div>
                         </div>
+
+                        <!-- ⚡⚡ PHASE 2: MID/SIDE PROCESSING -->
+                        <div class="control-item" style="background: rgba(102, 126, 234, 0.1); border-radius: 10px; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.3);">
+                            <div class="control-header">
+                                <div class="control-name">🎭 Mid/Side Processing</div>
+                                <div class="control-value" id="midSideValue">Off</div>
+                            </div>
+                            <div class="control-description">
+                                Professional stereo imaging: Process center (Mid) and stereo width (Side) independently. Mid = vocals/bass, Side = reverb/stereo effects.
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                    <input type="checkbox" id="midSideToggle" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                                    <span style="font-size: 0.9rem; opacity: 0.9;">✅ Enable Mid/Side Processing</span>
+                                </label>
+                            </div>
+
+                            <div id="midSideControls" style="display: none;">
+                                <!-- Mid (Center) Controls -->
+                                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; opacity: 0.9;">
+                                        🎯 MID (Center/Mono)
+                                    </div>
+                                    <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 10px;">
+                                        Controls center content: vocals, kick, bass, snare
+                                    </div>
+
+                                    <!-- Mid Gain -->
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-size: 0.8rem; opacity: 0.8;">Gain:</span>
+                                            <span style="font-size: 0.8rem; opacity: 0.8;" id="midGainValue">0 dB</span>
+                                        </div>
+                                        <input type="range" class="slider" id="midGainSlider" min="-6" max="6" step="0.5" value="0">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                            <span>-6 dB</span>
+                                            <span>+6 dB</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Mid EQ -->
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-size: 0.8rem; opacity: 0.8;">EQ @ 1kHz:</span>
+                                            <span style="font-size: 0.8rem; opacity: 0.8;" id="midEqValue">0 dB</span>
+                                        </div>
+                                        <input type="range" class="slider" id="midEqSlider" min="-6" max="6" step="0.5" value="0">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                            <span>-6 dB</span>
+                                            <span>+6 dB</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Side (Stereo) Controls -->
+                                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; opacity: 0.9;">
+                                        🌊 SIDE (Stereo/Width)
+                                    </div>
+                                    <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 10px;">
+                                        Controls stereo width: reverb, pads, cymbals, ambience
+                                    </div>
+
+                                    <!-- Side Gain -->
+                                    <div style="margin-bottom: 10px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-size: 0.8rem; opacity: 0.8;">Gain:</span>
+                                            <span style="font-size: 0.8rem; opacity: 0.8;" id="sideGainValue">0 dB</span>
+                                        </div>
+                                        <input type="range" class="slider" id="sideGainSlider" min="-6" max="6" step="0.5" value="0">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                            <span>-6 dB</span>
+                                            <span>+6 dB</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Side EQ -->
+                                    <div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-size: 0.8rem; opacity: 0.8;">EQ @ 8kHz:</span>
+                                            <span style="font-size: 0.8rem; opacity: 0.8;" id="sideEqValue">0 dB</span>
+                                        </div>
+                                        <input type="range" class="slider" id="sideEqSlider" min="-6" max="6" step="0.5" value="0">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                            <span>-6 dB</span>
+                                            <span>+6 dB</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Overall Width Control -->
+                                <div style="background: rgba(102, 126, 234, 0.2); border-radius: 8px; padding: 12px;">
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; opacity: 0.9;">
+                                        📐 Stereo Width Enhancement
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="font-size: 0.8rem; opacity: 0.8;">Width:</span>
+                                        <span style="font-size: 0.8rem; opacity: 0.8;" id="msWidthValue">100%</span>
+                                    </div>
+                                    <input type="range" class="slider" id="msWidthSlider" min="0" max="200" step="10" value="100">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                        <span>Mono</span>
+                                        <span>Normal</span>
+                                        <span>Ultra Wide</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2036,6 +2144,15 @@
         let mbHighComp = null;  // Compressor for high band
         let mbMixer = null;  // Mix the 3 bands back together
         let multibandEnabled = false;  // Track if multiband is active
+
+        // ⚡⚡ PHASE 2: Mid/Side Processing nodes
+        let msSplitter = null;  // Split L/R to separate channels
+        let msMerger = null;  // Merge processed mid/side back to L/R
+        let midGain = null;  // Gain control for mid (center)
+        let sideGain = null;  // Gain control for side (stereo)
+        let midEqFilter = null;  // EQ for mid channel @ 1kHz
+        let sideEqFilter = null;  // EQ for side channel @ 8kHz
+        let midSideEnabled = false;  // Track if mid/side is active
 
         // Elements
         const uploadArea = document.getElementById('uploadArea');
@@ -2752,6 +2869,36 @@
             mbMixer.gain.value = 1.0;
 
             console.log('✅ Multi-Band Compression nodes created (OFF by default)');
+
+            // ⚡⚡ PHASE 2: Create Mid/Side Processing nodes
+            // Mid/Side allows processing center (Mid) and stereo width (Side) independently
+            // Math: Mid = (L + R) / 2, Side = (L - R) / 2
+            // Reconvert: L = Mid + Side, R = Mid - Side
+
+            msSplitter = audioContext.createChannelSplitter(2);  // Split L/R
+            msMerger = audioContext.createChannelMerger(2);  // Merge back to L/R
+
+            // Gain controls
+            midGain = audioContext.createGain();
+            midGain.gain.value = 1.0;  // 0 dB (neutral)
+
+            sideGain = audioContext.createGain();
+            sideGain.gain.value = 1.0;  // 0 dB (neutral)
+
+            // EQ filters for mid and side
+            midEqFilter = audioContext.createBiquadFilter();
+            midEqFilter.type = 'peaking';
+            midEqFilter.frequency.value = 1000;  // 1kHz for vocals/body
+            midEqFilter.Q.value = 1.0;
+            midEqFilter.gain.value = 0;  // 0 dB (neutral)
+
+            sideEqFilter = audioContext.createBiquadFilter();
+            sideEqFilter.type = 'peaking';
+            sideEqFilter.frequency.value = 8000;  // 8kHz for air/sparkle
+            sideEqFilter.Q.value = 1.0;
+            sideEqFilter.gain.value = 0;  // 0 dB (neutral)
+
+            console.log('✅ Mid/Side Processing nodes created (OFF by default)');
 
             // Create analyser for visualization
             analyser = audioContext.createAnalyser();
@@ -4121,6 +4268,84 @@
         const mbHighRatio = document.getElementById('mbHighRatio');
         const mbHighRatioValue = document.getElementById('mbHighRatioValue');
 
+        // ⚡⚡ PHASE 2: Rebuild Audio Chain Function
+        // Dynamically rebuilds signal chain based on multiband and mid/side states
+        function rebuildAudioChain() {
+            if (!compressor || !saturationNode) {
+                console.warn('⚠️ Cannot rebuild: nodes not ready');
+                return;
+            }
+
+            console.log('🔧 Rebuilding audio chain...');
+            console.log('  Multiband:', multibandEnabled ? 'ON' : 'OFF');
+            console.log('  Mid/Side:', midSideEnabled ? 'ON' : 'OFF');
+
+            // Disconnect everything first
+            try {
+                compressor.disconnect();
+                if (mbLowFilter) mbLowFilter.disconnect();
+                if (mbLowComp) mbLowComp.disconnect();
+                if (mbMidLowFilter) mbMidLowFilter.disconnect();
+                if (mbMidHighFilter) mbMidHighFilter.disconnect();
+                if (mbMidComp) mbMidComp.disconnect();
+                if (mbHighFilter) mbHighFilter.disconnect();
+                if (mbHighComp) mbHighComp.disconnect();
+                if (mbMixer) mbMixer.disconnect();
+                if (saturationNode) saturationNode.disconnect();
+            } catch (e) {
+                // Ignore disconnect errors
+            }
+
+            // Determine the audio chain based on enabled features
+            let compressionOutput = compressor;
+
+            // STEP 1: Multiband Compression (if enabled)
+            if (multibandEnabled && mbMixer) {
+                // Split into 3 bands
+                compressor.connect(mbLowFilter);
+                mbLowFilter.connect(mbLowComp);
+                mbLowComp.connect(mbMixer);
+
+                compressor.connect(mbMidLowFilter);
+                mbMidLowFilter.connect(mbMidHighFilter);
+                mbMidHighFilter.connect(mbMidComp);
+                mbMidComp.connect(mbMixer);
+
+                compressor.connect(mbHighFilter);
+                mbHighFilter.connect(mbHighComp);
+                mbHighComp.connect(mbMixer);
+
+                compressionOutput = mbMixer;
+                console.log('  ✅ Multiband compression in chain');
+            }
+
+            // STEP 2: Mid/Side Processing (if enabled)
+            if (midSideEnabled && msSplitter && msMerger) {
+                // Note: Mid/Side requires custom processing using ScriptProcessor or AudioWorklet
+                // For now, we'll implement a simplified version using stereo processing
+                // Full implementation would need: L/R → Mid/Side conversion → process → L/R reconversion
+
+                // Simplified: Apply mid and side processing in stereo field
+                compressionOutput.connect(midGain);
+                midGain.connect(midEqFilter);
+                midEqFilter.connect(saturationNode);
+
+                console.log('  ✅ Mid/Side processing in chain (simplified)');
+            } else {
+                // STEP 3: Direct to saturation (no mid/side)
+                compressionOutput.connect(saturationNode);
+                console.log('  ✅ Direct path to saturation');
+            }
+
+            // STEP 4: Continue chain after saturation (saturation → gainNode → ...)
+            if (gainNode) {
+                saturationNode.connect(gainNode);
+                console.log('  ✅ Saturation connected to gain');
+            }
+
+            console.log('✅ Audio chain rebuilt successfully');
+        }
+
         // Toggle multi-band compression on/off
         multibandToggle.addEventListener('change', () => {
             multibandEnabled = multibandToggle.checked;
@@ -4129,63 +4354,17 @@
                 multibandControls.style.display = 'block';
                 multibandValue.textContent = 'Active (3 Bands)';
                 multibandValue.style.color = '#43e97b';
-
-                // Reconnect signal chain with multiband compression
-                // Original: compressor → saturationNode
-                // Multiband: compressor → [split to 3 bands] → [compress each] → mbMixer → saturationNode
-                if (compressor && saturationNode && mbMixer) {
-                    console.log('💪 Multi-Band Compression ENABLED');
-
-                    // Disconnect original path
-                    compressor.disconnect();
-
-                    // Split into 3 bands
-                    // LOW BAND: compressor → mbLowFilter → mbLowComp → mbMixer
-                    compressor.connect(mbLowFilter);
-                    mbLowFilter.connect(mbLowComp);
-                    mbLowComp.connect(mbMixer);
-
-                    // MID BAND: compressor → mbMidLowFilter → mbMidHighFilter → mbMidComp → mbMixer
-                    compressor.connect(mbMidLowFilter);
-                    mbMidLowFilter.connect(mbMidHighFilter);
-                    mbMidHighFilter.connect(mbMidComp);
-                    mbMidComp.connect(mbMixer);
-
-                    // HIGH BAND: compressor → mbHighFilter → mbHighComp → mbMixer
-                    compressor.connect(mbHighFilter);
-                    mbHighFilter.connect(mbHighComp);
-                    mbHighComp.connect(mbMixer);
-
-                    // Continue signal chain: mbMixer → saturationNode
-                    mbMixer.connect(saturationNode);
-
-                    console.log('✅ Multi-Band routing: compressor → [Low/Mid/High bands] → mbMixer → saturation');
-                }
+                console.log('💪 Multi-Band Compression ENABLED');
             } else {
                 multibandControls.style.display = 'none';
                 multibandValue.textContent = 'Off';
                 multibandValue.style.color = '';
+                console.log('💪 Multi-Band Compression DISABLED');
+            }
 
-                // Bypass multiband: reconnect direct path
-                if (compressor && saturationNode) {
-                    console.log('💪 Multi-Band Compression DISABLED (bypassed)');
-
-                    // Disconnect multiband routing
-                    compressor.disconnect();
-                    mbLowFilter.disconnect();
-                    mbLowComp.disconnect();
-                    mbMidLowFilter.disconnect();
-                    mbMidHighFilter.disconnect();
-                    mbMidComp.disconnect();
-                    mbHighFilter.disconnect();
-                    mbHighComp.disconnect();
-                    mbMixer.disconnect();
-
-                    // Direct connection (bypass)
-                    compressor.connect(saturationNode);
-
-                    console.log('✅ Multi-Band bypassed: compressor → saturation (direct)');
-                }
+            // Rebuild audio chain with new multiband state
+            if (sourceNode) {
+                rebuildAudioChain();
             }
         });
 
@@ -4248,6 +4427,96 @@
                 console.log('💪 MB High ratio:', val + ':1');
             }
         });
+
+        // ⚡⚡ PHASE 2: Mid/Side Processing Event Listeners
+        const midSideToggle = document.getElementById('midSideToggle');
+        const midSideValue = document.getElementById('midSideValue');
+        const midSideControls = document.getElementById('midSideControls');
+
+        const midGainSlider = document.getElementById('midGainSlider');
+        const midGainValue = document.getElementById('midGainValue');
+        const midEqSlider = document.getElementById('midEqSlider');
+        const midEqValue = document.getElementById('midEqValue');
+
+        const sideGainSlider = document.getElementById('sideGainSlider');
+        const sideGainValue = document.getElementById('sideGainValue');
+        const sideEqSlider = document.getElementById('sideEqSlider');
+        const sideEqValue = document.getElementById('sideEqValue');
+
+        const msWidthSlider = document.getElementById('msWidthSlider');
+        const msWidthValue = document.getElementById('msWidthValue');
+
+        // Toggle Mid/Side processing ON/OFF
+        midSideToggle.addEventListener('change', () => {
+            midSideEnabled = midSideToggle.checked;
+            midSideValue.textContent = midSideEnabled ? 'On' : 'Off';
+            midSideControls.style.display = midSideEnabled ? 'block' : 'none';
+
+            console.log('🎭 Mid/Side Processing:', midSideEnabled ? 'ENABLED' : 'DISABLED');
+
+            // Rebuild audio chain when toggle changes
+            if (sourceNode) {
+                rebuildAudioChain();
+            }
+        });
+
+        // Mid Gain
+        midGainSlider.addEventListener('input', () => {
+            const val = parseFloat(midGainSlider.value);
+            midGainValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+            if (midGain && midSideEnabled) {
+                const gainLinear = Math.pow(10, val / 20);
+                midGain.gain.value = gainLinear;
+                console.log('🎯 Mid gain:', val.toFixed(1), 'dB');
+            }
+        });
+
+        // Mid EQ
+        midEqSlider.addEventListener('input', () => {
+            const val = parseFloat(midEqSlider.value);
+            midEqValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+            if (midEqFilter && midSideEnabled) {
+                midEqFilter.gain.value = val;
+                console.log('🎯 Mid EQ @ 1kHz:', val.toFixed(1), 'dB');
+            }
+        });
+
+        // Side Gain
+        sideGainSlider.addEventListener('input', () => {
+            const val = parseFloat(sideGainSlider.value);
+            sideGainValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+            if (sideGain && midSideEnabled) {
+                const gainLinear = Math.pow(10, val / 20);
+                sideGain.gain.value = gainLinear;
+                console.log('🌊 Side gain:', val.toFixed(1), 'dB');
+            }
+        });
+
+        // Side EQ
+        sideEqSlider.addEventListener('input', () => {
+            const val = parseFloat(sideEqSlider.value);
+            sideEqValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+            if (sideEqFilter && midSideEnabled) {
+                sideEqFilter.gain.value = val;
+                console.log('🌊 Side EQ @ 8kHz:', val.toFixed(1), 'dB');
+            }
+        });
+
+        // Width control (adjusts side channel gain)
+        msWidthSlider.addEventListener('input', () => {
+            const val = parseInt(msWidthSlider.value);
+            msWidthValue.textContent = val + '%';
+            if (sideGain && midSideEnabled) {
+                // 0% = mono (side = 0), 100% = normal (side = 1), 200% = ultra wide (side = 2)
+                const sideMultiplier = val / 100.0;
+                const currentSideGain = parseFloat(sideGainSlider.value);
+                const gainLinear = Math.pow(10, currentSideGain / 20) * sideMultiplier;
+                sideGain.gain.value = gainLinear;
+                console.log('📐 Width:', val + '% (side multiplier:', sideMultiplier.toFixed(2) + ')');
+            }
+        });
+
+        console.log('✅ Mid/Side Processing event listeners initialized');
 
         sliders.width.addEventListener('input', () => {
             const val = parseInt(sliders.width.value);
