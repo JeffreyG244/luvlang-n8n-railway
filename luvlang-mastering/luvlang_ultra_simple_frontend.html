@@ -1818,6 +1818,40 @@
                 <!-- Visual EQ -->
                 <div class="section-title">📊 Frequency Balance (Real-Time)</div>
 
+                <!-- ⚡⚡ PHASE 2: Enhanced Spectrum Analyzer Controls -->
+                <div style="background: rgba(102, 126, 234, 0.1); border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 2px solid rgba(102, 126, 234, 0.3);">
+                    <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; opacity: 0.9;">
+                                ⚡ Analyzer Mode
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="analyzerFast" class="analyzer-mode-btn active" style="flex: 1; background: rgba(67, 233, 123, 0.2); border: 1px solid #43e97b; border-radius: 5px; padding: 8px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">Fast</button>
+                                <button id="analyzerMedium" class="analyzer-mode-btn" style="flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; padding: 8px; cursor: pointer; font-size: 0.75rem;">Medium</button>
+                                <button id="analyzerSlow" class="analyzer-mode-btn" style="flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; padding: 8px; cursor: pointer; font-size: 0.75rem;">Slow</button>
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                <input type="checkbox" id="peakHoldToggle" checked style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;">
+                                <div>
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 2px;">🎯 Peak Hold</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.7;">Show transient peaks</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                <input type="checkbox" id="gridToggle" checked style="width: 18px; height: 18px; margin-right: 8px; cursor: pointer;">
+                                <div>
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 2px;">📐 Grid Lines</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.7;">Show dB markers</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Frequency Response Curve -->
                 <div class="frequency-curve-container">
                     <canvas id="frequencyCurve" width="800" height="200"></canvas>
@@ -2156,6 +2190,17 @@
         let originalRMS = 0; // RMS level of original audio
         let processedRMS = 0; // RMS level of processed audio
         let levelMatchGain = null; // Gain node for level matching
+
+        // ⚡⚡ PHASE 2: Enhanced Spectrum Analyzer state
+        let analyzerMode = 'fast'; // 'fast', 'medium', 'slow'
+        let peakHoldEnabled = true; // Show peak hold
+        let gridEnabled = true; // Show grid lines
+        let peakHoldArray = []; // Array to store peak values
+        let smoothingTimeConstant = {
+            fast: 0.1,
+            medium: 0.5,
+            slow: 0.8
+        };
 
         // Web Audio API nodes for real-time processing
         let sourceNode = null;
@@ -2957,12 +3002,18 @@
 
             console.log('✅ Mid/Side Processing nodes created (OFF by default)');
 
-            // Create analyser for visualization
+            // ⚡⚡ PHASE 2: Create Enhanced Spectrum Analyzer
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 8192; // Even higher resolution for better frequency accuracy
-            analyser.smoothingTimeConstant = 0.1; // Much less smoothing for very responsive meters
+            analyser.fftSize = 16384; // ⚡ PHASE 2: Much higher resolution (16384 vs 8192)
+            analyser.smoothingTimeConstant = smoothingTimeConstant[analyzerMode]; // ⚡ PHASE 2: Adjustable smoothing
             analyser.minDecibels = -100;
             analyser.maxDecibels = -20;
+
+            // ⚡ PHASE 2: Initialize peak hold array
+            const bufferLength = analyser.frequencyBinCount;
+            peakHoldArray = new Array(bufferLength).fill(-100);
+
+            console.log('✅ Enhanced Spectrum Analyzer created (FFT: 16384, Mode:', analyzerMode + ')');
 
             // ⚡ PHASE CORRECTION: Create stereo splitter/merger for phase analysis
             stereoSplitter = audioContext.createChannelSplitter(2);
@@ -3232,7 +3283,7 @@
                 updateBar(eqHigh, highVal, highAmp, 'Highs (8kHz)');
                 updateBar(eqAir, airVal, airAmp, 'Air (16kHz)');
 
-                // ⚡ DRAW FREQUENCY RESPONSE CURVE
+                // ⚡⚡ PHASE 2: ENHANCED SPECTRUM ANALYZER - Draw Frequency Response Curve
                 const curveCanvas = document.getElementById('frequencyCurve');
                 if (curveCanvas) {
                     const ctx = curveCanvas.getContext('2d');
@@ -3242,31 +3293,92 @@
                     // Clear canvas
                     ctx.clearRect(0, 0, width, height);
 
-                    // Draw grid lines
-                    ctx.strokeStyle = 'rgba(102, 126, 234, 0.1)';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i < 5; i++) {
-                        const y = (height / 4) * i;
-                        ctx.beginPath();
-                        ctx.moveTo(0, y);
-                        ctx.lineTo(width, y);
-                        ctx.stroke();
+                    // ⚡ PHASE 2: Enhanced grid with dB markers
+                    if (gridEnabled) {
+                        ctx.strokeStyle = 'rgba(102, 126, 234, 0.15)';
+                        ctx.lineWidth = 1;
+                        ctx.font = '10px monospace';
+                        ctx.fillStyle = 'rgba(102, 126, 234, 0.5)';
+
+                        // Horizontal grid lines with dB labels
+                        const dbLevels = [0, -10, -20, -30, -40];
+                        for (let i = 0; i < dbLevels.length; i++) {
+                            const y = (i / (dbLevels.length - 1)) * height;
+                            ctx.beginPath();
+                            ctx.moveTo(0, y);
+                            ctx.lineTo(width, y);
+                            ctx.stroke();
+
+                            // Draw dB label
+                            ctx.fillText(dbLevels[i] + ' dB', 5, y - 3);
+                        }
+
+                        // Vertical grid lines for frequency markers
+                        const freqMarkers = [100, 1000, 10000];
+                        freqMarkers.forEach(freq => {
+                            const sampleRate = audioContext.sampleRate;
+                            const nyquist = sampleRate / 2;
+                            const x = (Math.log10(freq) / Math.log10(nyquist)) * width;
+                            ctx.beginPath();
+                            ctx.moveTo(x, 0);
+                            ctx.lineTo(x, height);
+                            ctx.stroke();
+
+                            // Draw frequency label
+                            const label = freq >= 1000 ? (freq / 1000) + 'kHz' : freq + 'Hz';
+                            ctx.fillText(label, x + 3, height - 5);
+                        });
                     }
 
-                    // Draw frequency response curve
+                    // ⚡ PHASE 2: Update peak hold array
+                    if (peakHoldEnabled) {
+                        for (let i = 0; i < bufferLength; i++) {
+                            if (dataArray[i] > peakHoldArray[i]) {
+                                peakHoldArray[i] = dataArray[i];
+                            } else {
+                                // Decay peaks slowly
+                                peakHoldArray[i] *= 0.995;
+                            }
+                        }
+                    }
+
+                    // ⚡ PHASE 2: Draw peak hold curve (if enabled)
+                    if (peakHoldEnabled) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'rgba(254, 225, 64, 0.6)'; // Yellow for peaks
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 3]); // Dashed line
+
+                        const points = 256;
+                        for (let i = 0; i < points; i++) {
+                            const freqIndex = Math.floor((i / points) * bufferLength);
+                            const amplitude = peakHoldArray[freqIndex];
+                            const x = (i / points) * width;
+                            const y = height - (amplitude / 255) * height;
+
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        ctx.stroke();
+                        ctx.setLineDash([]); // Reset to solid line
+                    }
+
+                    // Draw frequency response curve with color gradient
                     ctx.beginPath();
-                    ctx.strokeStyle = '#667eea';
-                    ctx.lineWidth = 3;
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = 'rgba(102, 126, 234, 0.5)';
 
                     // Sample more points for smoother curve
                     const points = 256;
+                    const curvePoints = [];
+
                     for (let i = 0; i < points; i++) {
                         const freqIndex = Math.floor((i / points) * bufferLength);
                         const amplitude = dataArray[freqIndex];
                         const x = (i / points) * width;
                         const y = height - (amplitude / 255) * height;
+                        curvePoints.push({x, y, amplitude});
 
                         if (i === 0) {
                             ctx.moveTo(x, y);
@@ -3274,18 +3386,51 @@
                             ctx.lineTo(x, y);
                         }
                     }
+
+                    // ⚡ PHASE 2: Color gradient stroke based on amplitude (green → yellow → red)
+                    const avgAmplitude = curvePoints.reduce((sum, p) => sum + p.amplitude, 0) / curvePoints.length;
+                    let strokeColor;
+                    if (avgAmplitude > 200) {
+                        strokeColor = '#fa709a'; // Red - hot
+                    } else if (avgAmplitude > 150) {
+                        strokeColor = '#fee140'; // Yellow - warm
+                    } else {
+                        strokeColor = '#43e97b'; // Green - good
+                    }
+
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = strokeColor;
                     ctx.stroke();
 
-                    // Draw filled area under curve
+                    // Draw filled area under curve with gradient
                     ctx.lineTo(width, height);
                     ctx.lineTo(0, height);
                     ctx.closePath();
 
                     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-                    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
-                    gradient.addColorStop(0.5, 'rgba(102, 126, 234, 0.15)');
-                    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
-                    ctx.fillStyle = gradient;
+                    gradient.addColorStop(0, strokeColor.replace(')', ', 0.3)').replace('#', 'rgba('));
+                    gradient.addColorStop(0.5, strokeColor.replace(')', ', 0.15)').replace('#', 'rgba('));
+                    gradient.addColorStop(1, strokeColor.replace(')', ', 0.05)').replace('#', 'rgba('));
+
+                    // Fallback to hex-based gradient if rgba conversion fails
+                    const fallbackGradient = ctx.createLinearGradient(0, 0, 0, height);
+                    if (avgAmplitude > 200) {
+                        fallbackGradient.addColorStop(0, 'rgba(250, 112, 154, 0.3)');
+                        fallbackGradient.addColorStop(0.5, 'rgba(250, 112, 154, 0.15)');
+                        fallbackGradient.addColorStop(1, 'rgba(250, 112, 154, 0.05)');
+                    } else if (avgAmplitude > 150) {
+                        fallbackGradient.addColorStop(0, 'rgba(254, 225, 64, 0.3)');
+                        fallbackGradient.addColorStop(0.5, 'rgba(254, 225, 64, 0.15)');
+                        fallbackGradient.addColorStop(1, 'rgba(254, 225, 64, 0.05)');
+                    } else {
+                        fallbackGradient.addColorStop(0, 'rgba(67, 233, 123, 0.3)');
+                        fallbackGradient.addColorStop(0.5, 'rgba(67, 233, 123, 0.15)');
+                        fallbackGradient.addColorStop(1, 'rgba(67, 233, 123, 0.05)');
+                    }
+
+                    ctx.fillStyle = fallbackGradient;
                     ctx.fill();
 
                     // Reset shadow
@@ -4668,6 +4813,74 @@
         }
 
         console.log('✅ Advanced A/B Comparison event listeners initialized');
+
+        // ⚡⚡ PHASE 2: Enhanced Spectrum Analyzer Event Listeners
+        const analyzerFastBtn = document.getElementById('analyzerFast');
+        const analyzerMediumBtn = document.getElementById('analyzerMedium');
+        const analyzerSlowBtn = document.getElementById('analyzerSlow');
+        const peakHoldToggle = document.getElementById('peakHoldToggle');
+        const gridToggle = document.getElementById('gridToggle');
+
+        // Analyzer mode buttons
+        function setAnalyzerMode(mode) {
+            analyzerMode = mode;
+
+            // Update analyzer smoothing
+            if (analyser) {
+                analyser.smoothingTimeConstant = smoothingTimeConstant[mode];
+                console.log('📊 Analyzer mode:', mode, '(smoothing:', smoothingTimeConstant[mode] + ')');
+            }
+
+            // Update button visuals
+            const modeBtns = document.querySelectorAll('.analyzer-mode-btn');
+            modeBtns.forEach(btn => {
+                btn.style.background = 'rgba(255, 255, 255, 0.05)';
+                btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                btn.classList.remove('active');
+            });
+
+            const activeBtn = document.getElementById('analyzer' + mode.charAt(0).toUpperCase() + mode.slice(1));
+            if (activeBtn) {
+                activeBtn.style.background = 'rgba(67, 233, 123, 0.2)';
+                activeBtn.style.border = '1px solid #43e97b';
+                activeBtn.classList.add('active');
+            }
+        }
+
+        if (analyzerFastBtn) {
+            analyzerFastBtn.addEventListener('click', () => setAnalyzerMode('fast'));
+        }
+
+        if (analyzerMediumBtn) {
+            analyzerMediumBtn.addEventListener('click', () => setAnalyzerMode('medium'));
+        }
+
+        if (analyzerSlowBtn) {
+            analyzerSlowBtn.addEventListener('click', () => setAnalyzerMode('slow'));
+        }
+
+        // Peak hold toggle
+        if (peakHoldToggle) {
+            peakHoldToggle.addEventListener('change', () => {
+                peakHoldEnabled = peakHoldToggle.checked;
+                console.log('🎯 Peak hold:', peakHoldEnabled ? 'ENABLED' : 'DISABLED');
+
+                // Reset peak hold array when disabled
+                if (!peakHoldEnabled && peakHoldArray.length > 0) {
+                    peakHoldArray.fill(-100);
+                }
+            });
+        }
+
+        // Grid toggle
+        if (gridToggle) {
+            gridToggle.addEventListener('change', () => {
+                gridEnabled = gridToggle.checked;
+                console.log('📐 Grid lines:', gridEnabled ? 'ENABLED' : 'DISABLED');
+            });
+        }
+
+        console.log('✅ Enhanced Spectrum Analyzer event listeners initialized');
 
         sliders.width.addEventListener('input', () => {
             const val = parseInt(sliders.width.value);
