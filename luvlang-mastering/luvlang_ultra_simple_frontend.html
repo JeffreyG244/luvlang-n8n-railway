@@ -1039,6 +1039,36 @@
 
                 <div class="section-title" style="margin-top: 30px;">🎛️ Fine-Tune Your Sound</div>
 
+                <!-- ⚡ QUICK PRESETS (One-Click Optimization) -->
+                <div style="margin-bottom: 30px;">
+                    <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 12px; font-weight: 500;">
+                        ⚡ Quick Start Presets
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="presetMusic" class="preset-btn" style="flex: 1; min-width: 140px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                            🎵 Music<br>
+                            <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.9;">Balanced, streaming-ready</span>
+                        </button>
+                        <button id="presetPodcast" class="preset-btn" style="flex: 1; min-width: 140px; padding: 15px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);">
+                            🎤 Podcast<br>
+                            <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.9;">Clear voice, no noise</span>
+                        </button>
+                        <button id="presetContent" class="preset-btn" style="flex: 1; min-width: 140px; padding: 15px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);">
+                            📹 Content<br>
+                            <span style="font-size: 0.75rem; font-weight: 400; opacity: 0.9;">Loud & punchy</span>
+                        </button>
+                    </div>
+                    <style>
+                        .preset-btn:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+                        }
+                        .preset-btn:active {
+                            transform: translateY(0);
+                        }
+                    </style>
+                </div>
+
                 <!-- Bass Control -->
                 <div class="control-item">
                     <div class="control-header">
@@ -3661,6 +3691,203 @@
         sliders.warmth.addEventListener('input', () => {
             const val = parseInt(sliders.warmth.value);
             values.warmth.textContent = val + '%';
+        });
+
+        // ⚡ QUICK PRESET BUTTONS - One-Click Optimization
+        const presetMusic = document.getElementById('presetMusic');
+        const presetPodcast = document.getElementById('presetPodcast');
+        const presetContent = document.getElementById('presetContent');
+
+        // Helper function to apply preset
+        function applyQuickPreset(presetName, settings) {
+            console.log('⚡ Applying Quick Preset:', presetName);
+
+            // Apply all settings with visual feedback
+            const updates = [];
+
+            // EQ Settings
+            if (settings.bass !== undefined) {
+                sliders.bass.value = settings.bass;
+                values.bass.textContent = (settings.bass > 0 ? '+' : '') + settings.bass.toFixed(1) + ' dB';
+                if (eqBassFilter) eqBassFilter.gain.value = settings.bass;
+                updates.push(`Bass: ${settings.bass > 0 ? '+' : ''}${settings.bass.toFixed(1)} dB`);
+            }
+
+            if (settings.mids !== undefined) {
+                sliders.mids.value = settings.mids;
+                values.mids.textContent = (settings.mids > 0 ? '+' : '') + settings.mids.toFixed(1) + ' dB';
+                if (eqMidFilter) eqMidFilter.gain.value = settings.mids;
+                updates.push(`Mids: ${settings.mids > 0 ? '+' : ''}${settings.mids.toFixed(1)} dB`);
+            }
+
+            if (settings.highs !== undefined) {
+                sliders.highs.value = settings.highs;
+                values.highs.textContent = (settings.highs > 0 ? '+' : '') + settings.highs.toFixed(1) + ' dB';
+                if (eqHighFilter) eqHighFilter.gain.value = settings.highs;
+                updates.push(`Highs: ${settings.highs > 0 ? '+' : ''}${settings.highs.toFixed(1)} dB`);
+            }
+
+            // Compression
+            if (settings.compression !== undefined) {
+                sliders.compression.value = settings.compression;
+                const labels = ['Very Light', 'Light', 'Light-Medium', 'Medium', 'Medium', 'Medium-Heavy', 'Heavy', 'Very Heavy', 'Extreme', 'Maximum'];
+                values.compression.textContent = labels[settings.compression - 1];
+                if (compressor) {
+                    const ratio = 1.5 + (settings.compression - 1) * 2.05;
+                    compressor.ratio.value = ratio;
+                    compressor.threshold.value = -30 + (settings.compression * 0.5);
+                }
+                updates.push(`Compression: ${labels[settings.compression - 1]}`);
+            }
+
+            // Saturation
+            if (settings.saturation !== undefined) {
+                const saturationSlider = document.getElementById('saturationSlider');
+                const saturationValue = document.getElementById('saturationValue');
+                const saturationType = document.getElementById('saturationType');
+
+                if (saturationSlider && saturationValue && saturationType) {
+                    saturationSlider.value = settings.saturation.amount;
+                    saturationValue.textContent = settings.saturation.amount + '%';
+                    saturationType.value = settings.saturation.type;
+
+                    if (saturationNode) {
+                        saturationNode.curve = makeSaturationCurve(settings.saturation.amount, settings.saturation.type);
+                    }
+                    updates.push(`Saturation: ${settings.saturation.amount}% (${settings.saturation.type})`);
+                }
+            }
+
+            // Limiter
+            if (settings.limiterCeiling !== undefined) {
+                const limiterSlider = document.getElementById('limiterSlider');
+                const limiterValue = document.getElementById('limiterValue');
+
+                if (limiterSlider && limiterValue && limiterMakeupGain) {
+                    limiterSlider.value = settings.limiterCeiling;
+                    limiterValue.textContent = settings.limiterCeiling.toFixed(1) + ' dB';
+                    const ceilingLinear = Math.pow(10, settings.limiterCeiling / 20);
+                    limiterMakeupGain.gain.value = ceilingLinear;
+                    updates.push(`Limiter Ceiling: ${settings.limiterCeiling.toFixed(1)} dB`);
+                }
+            }
+
+            // De-Esser (Podcast only)
+            if (settings.deesser !== undefined) {
+                if (settings.deesser.enabled) {
+                    if (!deesserEnabled) {
+                        deesserToggle.checked = true;
+                        deesserToggle.dispatchEvent(new Event('change'));
+                    }
+                    deesserFreq.value = settings.deesser.frequency;
+                    deesserAmount.value = settings.deesser.amount;
+                    deesserFreqValue.textContent = (settings.deesser.frequency / 1000).toFixed(1) + ' kHz';
+                    deesserAmountValue.textContent = settings.deesser.amount + ' dB';
+
+                    if (deesserFilter && deesserCompressor) {
+                        deesserFilter.frequency.value = settings.deesser.frequency;
+                        const threshold = -40 + (settings.deesser.amount * 2);
+                        deesserCompressor.threshold.value = threshold;
+                    }
+                    updates.push(`De-Esser: ${(settings.deesser.frequency / 1000).toFixed(1)} kHz, ${settings.deesser.amount} dB`);
+                } else if (deesserEnabled) {
+                    deesserToggle.checked = false;
+                    deesserToggle.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // Noise Gate (Podcast only)
+            if (settings.noiseGate !== undefined) {
+                if (settings.noiseGate.enabled) {
+                    if (!gateEnabled) {
+                        gateToggle.checked = true;
+                        gateToggle.dispatchEvent(new Event('change'));
+                    }
+                    gateThreshold.value = settings.noiseGate.threshold;
+                    gateRelease.value = settings.noiseGate.release;
+                    gateThresholdValue.textContent = settings.noiseGate.threshold + ' dB';
+                    gateReleaseValue.textContent = settings.noiseGate.release + ' ms';
+
+                    if (noiseGate) {
+                        noiseGate.threshold.value = settings.noiseGate.threshold;
+                        noiseGate.release.value = settings.noiseGate.release / 1000;
+                    }
+                    updates.push(`Noise Gate: ${settings.noiseGate.threshold} dB, ${settings.noiseGate.release} ms`);
+                } else if (gateEnabled) {
+                    gateToggle.checked = false;
+                    gateToggle.dispatchEvent(new Event('change'));
+                }
+            }
+
+            console.log('✅ Preset Applied:', updates.join(', '));
+            alert(`✅ ${presetName} Preset Applied!\n\n${updates.join('\n')}`);
+        }
+
+        // Music Preset - Balanced, streaming-ready
+        presetMusic.addEventListener('click', () => {
+            applyQuickPreset('Music', {
+                bass: 1.0,           // Slight bass boost
+                mids: 0.0,           // Flat mids (natural)
+                highs: 1.5,          // Bright, airy
+                compression: 5,      // Medium compression
+                saturation: {
+                    amount: 15,
+                    type: 'tape'     // Warm tape saturation
+                },
+                limiterCeiling: -0.3, // Safe ceiling
+                deesser: { enabled: false },
+                noiseGate: { enabled: false }
+            });
+        });
+
+        // Podcast Preset - Clear voice, no noise
+        presetPodcast.addEventListener('click', () => {
+            applyQuickPreset('Podcast', {
+                bass: -1.0,          // Reduce bass (less rumble)
+                mids: 2.0,           // Boost mids (vocal clarity)
+                highs: 0.5,          // Slight brightness
+                compression: 7,      // Heavy compression (consistent levels)
+                saturation: {
+                    amount: 5,
+                    type: 'solid'    // Clean, minimal warmth
+                },
+                limiterCeiling: -0.1, // Maximum loudness
+                deesser: {
+                    enabled: true,
+                    frequency: 6000,  // 6 kHz (typical sibilance)
+                    amount: 4         // Strong de-essing
+                },
+                noiseGate: {
+                    enabled: true,
+                    threshold: -40,   // Remove background noise
+                    release: 200      // Smooth fade
+                }
+            });
+        });
+
+        // Content Preset - Loud & punchy (YouTube, TikTok, Instagram)
+        presetContent.addEventListener('click', () => {
+            applyQuickPreset('Content', {
+                bass: 2.0,           // Punchy bass
+                mids: 1.0,           // Present, forward
+                highs: 2.5,          // Very bright, attention-grabbing
+                compression: 8,      // Heavy compression (loud & consistent)
+                saturation: {
+                    amount: 25,
+                    type: 'tube'     // Aggressive, punchy warmth
+                },
+                limiterCeiling: -0.1, // Maximum loudness
+                deesser: {
+                    enabled: true,
+                    frequency: 7000,  // 7 kHz (catch harsh highs)
+                    amount: 3         // Moderate de-essing
+                },
+                noiseGate: {
+                    enabled: true,
+                    threshold: -45,   // Sensitive (clean silence)
+                    release: 150      // Fast fade
+                }
+            });
         });
 
         // Professional Presets - POWERFUL & TASTEFUL
