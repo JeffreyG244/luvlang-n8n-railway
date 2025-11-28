@@ -1257,6 +1257,75 @@
                                 <span>Maximum (-0.1)</span>
                             </div>
                         </div>
+
+                        <!-- Multi-Band Compression (PHASE 2!) -->
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">💪 Multi-Band Compression</div>
+                                <div class="control-value" id="multibandValue">Off</div>
+                            </div>
+                            <div class="control-description">
+                                Professional multiband dynamics control. Compresses Low/Mid/High frequencies independently for surgical precision!
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                    <input type="checkbox" id="multibandToggle" style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                                    <span style="font-size: 0.9rem; opacity: 0.9;">Enable Multi-Band Compression</span>
+                                </label>
+                            </div>
+                            <div id="multibandControls" style="display: none; margin-top: 15px;">
+                                <!-- Low Band (20-250 Hz) -->
+                                <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; margin-bottom: 12px;">
+                                    <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: #667eea;">🎸 Low (20-250 Hz)</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Threshold</label>
+                                            <input type="range" class="slider" id="mbLowThreshold" min="-40" max="0" step="2" value="-20" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbLowThresholdValue">-20 dB</div>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Ratio</label>
+                                            <input type="range" class="slider" id="mbLowRatio" min="1" max="10" step="0.5" value="3" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbLowRatioValue">3.0:1</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mid Band (250-4000 Hz) -->
+                                <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; margin-bottom: 12px;">
+                                    <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: #667eea;">🎤 Mid (250-4000 Hz)</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Threshold</label>
+                                            <input type="range" class="slider" id="mbMidThreshold" min="-40" max="0" step="2" value="-15" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbMidThresholdValue">-15 dB</div>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Ratio</label>
+                                            <input type="range" class="slider" id="mbMidRatio" min="1" max="10" step="0.5" value="4" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbMidRatioValue">4.0:1</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- High Band (4000-20000 Hz) -->
+                                <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px;">
+                                    <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: #667eea;">✨ High (4000-20000 Hz)</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Threshold</label>
+                                            <input type="range" class="slider" id="mbHighThreshold" min="-40" max="0" step="2" value="-18" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbHighThresholdValue">-18 dB</div>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 3px;">Ratio</label>
+                                            <input type="range" class="slider" id="mbHighRatio" min="1" max="10" step="0.5" value="5" style="width: 100%;">
+                                            <div style="text-align: center; font-size: 0.75rem; margin-top: 2px;" id="mbHighRatioValue">5.0:1</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1827,6 +1896,17 @@
         let rightChannel = null;
         let phaseInverter = null; // For phase correction
         let hasPhaseIssues = false;
+
+        // Multi-Band Compression nodes (PHASE 2!)
+        let mbLowFilter = null;  // Low-pass filter for low band
+        let mbLowComp = null;  // Compressor for low band
+        let mbMidLowFilter = null;  // High-pass for mid band (remove lows)
+        let mbMidHighFilter = null;  // Low-pass for mid band (remove highs)
+        let mbMidComp = null;  // Compressor for mid band
+        let mbHighFilter = null;  // High-pass filter for high band
+        let mbHighComp = null;  // Compressor for high band
+        let mbMixer = null;  // Mix the 3 bands back together
+        let multibandEnabled = false;  // Track if multiband is active
 
         // Elements
         const uploadArea = document.getElementById('uploadArea');
@@ -2489,6 +2569,60 @@
             noiseGate.release.value = 0.2;      // 200ms release (smooth fade-out)
 
             console.log('✅ Noise gate created (OFF by default, -40 dB threshold)');
+
+            // ⚡⚡ PHASE 2: Create Multi-Band Compression nodes
+            // Split audio into 3 bands: Low (20-250Hz), Mid (250-4000Hz), High (4000-20kHz)
+            // Compress each band independently, then mix back together
+
+            // LOW BAND (20-250 Hz)
+            mbLowFilter = audioContext.createBiquadFilter();
+            mbLowFilter.type = 'lowpass';
+            mbLowFilter.frequency.value = 250;  // Everything below 250Hz
+            mbLowFilter.Q.value = 0.707;  // Butterworth response
+
+            mbLowComp = audioContext.createDynamicsCompressor();
+            mbLowComp.threshold.value = -20;
+            mbLowComp.knee.value = 10;
+            mbLowComp.ratio.value = 3;
+            mbLowComp.attack.value = 0.01;  // 10ms - slower for bass
+            mbLowComp.release.value = 0.2;  // 200ms
+
+            // MID BAND (250-4000 Hz)
+            mbMidLowFilter = audioContext.createBiquadFilter();
+            mbMidLowFilter.type = 'highpass';
+            mbMidLowFilter.frequency.value = 250;  // Remove lows
+            mbMidLowFilter.Q.value = 0.707;
+
+            mbMidHighFilter = audioContext.createBiquadFilter();
+            mbMidHighFilter.type = 'lowpass';
+            mbMidHighFilter.frequency.value = 4000;  // Remove highs
+            mbMidHighFilter.Q.value = 0.707;
+
+            mbMidComp = audioContext.createDynamicsCompressor();
+            mbMidComp.threshold.value = -15;
+            mbMidComp.knee.value = 10;
+            mbMidComp.ratio.value = 4;
+            mbMidComp.attack.value = 0.005;  // 5ms
+            mbMidComp.release.value = 0.15;  // 150ms
+
+            // HIGH BAND (4000-20000 Hz)
+            mbHighFilter = audioContext.createBiquadFilter();
+            mbHighFilter.type = 'highpass';
+            mbHighFilter.frequency.value = 4000;  // Everything above 4kHz
+            mbHighFilter.Q.value = 0.707;
+
+            mbHighComp = audioContext.createDynamicsCompressor();
+            mbHighComp.threshold.value = -18;
+            mbHighComp.knee.value = 10;
+            mbHighComp.ratio.value = 5;
+            mbHighComp.attack.value = 0.001;  // 1ms - very fast for highs
+            mbHighComp.release.value = 0.05;  // 50ms
+
+            // Mixer to combine all 3 bands
+            mbMixer = audioContext.createGain();
+            mbMixer.gain.value = 1.0;
+
+            console.log('✅ Multi-Band Compression nodes created (OFF by default)');
 
             // Create analyser for visualization
             analyser = audioContext.createAnalyser();
@@ -3832,6 +3966,157 @@
                 const threshold = parseInt(gateThreshold.value);
                 gateValue.textContent = `On (${threshold} dB, ${release} ms)`;
                 console.log('🚪 Gate release:', release, 'ms');
+            }
+        });
+
+        // ⚡⚡ PHASE 2: Multi-Band Compression event listeners
+        const multibandToggle = document.getElementById('multibandToggle');
+        const multibandControls = document.getElementById('multibandControls');
+        const multibandValue = document.getElementById('multibandValue');
+
+        // Low band controls
+        const mbLowThreshold = document.getElementById('mbLowThreshold');
+        const mbLowThresholdValue = document.getElementById('mbLowThresholdValue');
+        const mbLowRatio = document.getElementById('mbLowRatio');
+        const mbLowRatioValue = document.getElementById('mbLowRatioValue');
+
+        // Mid band controls
+        const mbMidThreshold = document.getElementById('mbMidThreshold');
+        const mbMidThresholdValue = document.getElementById('mbMidThresholdValue');
+        const mbMidRatio = document.getElementById('mbMidRatio');
+        const mbMidRatioValue = document.getElementById('mbMidRatioValue');
+
+        // High band controls
+        const mbHighThreshold = document.getElementById('mbHighThreshold');
+        const mbHighThresholdValue = document.getElementById('mbHighThresholdValue');
+        const mbHighRatio = document.getElementById('mbHighRatio');
+        const mbHighRatioValue = document.getElementById('mbHighRatioValue');
+
+        // Toggle multi-band compression on/off
+        multibandToggle.addEventListener('change', () => {
+            multibandEnabled = multibandToggle.checked;
+
+            if (multibandEnabled) {
+                multibandControls.style.display = 'block';
+                multibandValue.textContent = 'Active (3 Bands)';
+                multibandValue.style.color = '#43e97b';
+
+                // Reconnect signal chain with multiband compression
+                // Original: compressor → saturationNode
+                // Multiband: compressor → [split to 3 bands] → [compress each] → mbMixer → saturationNode
+                if (compressor && saturationNode && mbMixer) {
+                    console.log('💪 Multi-Band Compression ENABLED');
+
+                    // Disconnect original path
+                    compressor.disconnect();
+
+                    // Split into 3 bands
+                    // LOW BAND: compressor → mbLowFilter → mbLowComp → mbMixer
+                    compressor.connect(mbLowFilter);
+                    mbLowFilter.connect(mbLowComp);
+                    mbLowComp.connect(mbMixer);
+
+                    // MID BAND: compressor → mbMidLowFilter → mbMidHighFilter → mbMidComp → mbMixer
+                    compressor.connect(mbMidLowFilter);
+                    mbMidLowFilter.connect(mbMidHighFilter);
+                    mbMidHighFilter.connect(mbMidComp);
+                    mbMidComp.connect(mbMixer);
+
+                    // HIGH BAND: compressor → mbHighFilter → mbHighComp → mbMixer
+                    compressor.connect(mbHighFilter);
+                    mbHighFilter.connect(mbHighComp);
+                    mbHighComp.connect(mbMixer);
+
+                    // Continue signal chain: mbMixer → saturationNode
+                    mbMixer.connect(saturationNode);
+
+                    console.log('✅ Multi-Band routing: compressor → [Low/Mid/High bands] → mbMixer → saturation');
+                }
+            } else {
+                multibandControls.style.display = 'none';
+                multibandValue.textContent = 'Off';
+                multibandValue.style.color = '';
+
+                // Bypass multiband: reconnect direct path
+                if (compressor && saturationNode) {
+                    console.log('💪 Multi-Band Compression DISABLED (bypassed)');
+
+                    // Disconnect multiband routing
+                    compressor.disconnect();
+                    mbLowFilter.disconnect();
+                    mbLowComp.disconnect();
+                    mbMidLowFilter.disconnect();
+                    mbMidHighFilter.disconnect();
+                    mbMidComp.disconnect();
+                    mbHighFilter.disconnect();
+                    mbHighComp.disconnect();
+                    mbMixer.disconnect();
+
+                    // Direct connection (bypass)
+                    compressor.connect(saturationNode);
+
+                    console.log('✅ Multi-Band bypassed: compressor → saturation (direct)');
+                }
+            }
+        });
+
+        // Low band threshold
+        mbLowThreshold.addEventListener('input', () => {
+            const val = parseInt(mbLowThreshold.value);
+            mbLowThresholdValue.textContent = val + ' dB';
+            if (mbLowComp && multibandEnabled) {
+                mbLowComp.threshold.value = val;
+                console.log('💪 MB Low threshold:', val, 'dB');
+            }
+        });
+
+        // Low band ratio
+        mbLowRatio.addEventListener('input', () => {
+            const val = parseFloat(mbLowRatio.value);
+            mbLowRatioValue.textContent = val.toFixed(1) + ':1';
+            if (mbLowComp && multibandEnabled) {
+                mbLowComp.ratio.value = val;
+                console.log('💪 MB Low ratio:', val + ':1');
+            }
+        });
+
+        // Mid band threshold
+        mbMidThreshold.addEventListener('input', () => {
+            const val = parseInt(mbMidThreshold.value);
+            mbMidThresholdValue.textContent = val + ' dB';
+            if (mbMidComp && multibandEnabled) {
+                mbMidComp.threshold.value = val;
+                console.log('💪 MB Mid threshold:', val, 'dB');
+            }
+        });
+
+        // Mid band ratio
+        mbMidRatio.addEventListener('input', () => {
+            const val = parseFloat(mbMidRatio.value);
+            mbMidRatioValue.textContent = val.toFixed(1) + ':1';
+            if (mbMidComp && multibandEnabled) {
+                mbMidComp.ratio.value = val;
+                console.log('💪 MB Mid ratio:', val + ':1');
+            }
+        });
+
+        // High band threshold
+        mbHighThreshold.addEventListener('input', () => {
+            const val = parseInt(mbHighThreshold.value);
+            mbHighThresholdValue.textContent = val + ' dB';
+            if (mbHighComp && multibandEnabled) {
+                mbHighComp.threshold.value = val;
+                console.log('💪 MB High threshold:', val, 'dB');
+            }
+        });
+
+        // High band ratio
+        mbHighRatio.addEventListener('input', () => {
+            const val = parseFloat(mbHighRatio.value);
+            mbHighRatioValue.textContent = val.toFixed(1) + ':1';
+            if (mbHighComp && multibandEnabled) {
+                mbHighComp.ratio.value = val;
+                console.log('💪 MB High ratio:', val + ':1');
             }
         });
 
