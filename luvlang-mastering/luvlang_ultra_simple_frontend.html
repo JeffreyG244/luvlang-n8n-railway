@@ -2017,6 +2017,56 @@
                     🔄 Re-Master with New Settings
                 </button>
 
+                <!-- ⚡⚡ PHASE 2: Advanced A/B Comparison -->
+                <div id="abComparisonSection" style="display: none; margin-top: 30px; background: rgba(102, 126, 234, 0.1); border-radius: 15px; padding: 20px; border: 2px solid rgba(102, 126, 234, 0.3);">
+                    <div style="font-size: 1rem; font-weight: 600; margin-bottom: 15px;">
+                        <span>🔄 A/B Comparison</span>
+                    </div>
+                    <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 15px;">
+                        Compare your processed audio with the original. Level-matched for fair comparison.
+                    </div>
+
+                    <!-- Currently Playing Indicator -->
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div id="indicatorA" style="flex: 1; background: rgba(67, 233, 123, 0.3); border: 2px solid #43e97b; border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 5px;">🎧 A: Processed</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">With mastering applied</div>
+                        </div>
+                        <div id="indicatorB" style="flex: 1; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 5px;">🎵 B: Original</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">Unprocessed audio</div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Button -->
+                    <button id="abToggleBtn" class="action-btn" style="width: 100%; background: linear-gradient(135deg, #667eea, #764ba2); margin-bottom: 15px;">
+                        🔄 Toggle A/B (Spacebar)
+                    </button>
+
+                    <!-- Level Match Toggle -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="levelMatchToggle" checked style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 3px;">
+                                    ⚖️ Level Matching (Recommended)
+                                </div>
+                                <div style="font-size: 0.75rem; opacity: 0.7;">
+                                    Auto-adjust gain for fair comparison (prevents "louder = better" bias)
+                                </div>
+                            </div>
+                        </label>
+                        <div id="levelDifference" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.8; text-align: center; display: none;">
+                            Level difference: <span id="levelDiffValue">+0.0 dB</span>
+                        </div>
+                    </div>
+
+                    <!-- Keyboard Shortcut Hint -->
+                    <div style="margin-top: 15px; text-align: center; font-size: 0.75rem; opacity: 0.6;">
+                        💡 Pro Tip: Press <kbd style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 3px; font-weight: 600;">Spacebar</kbd> to quickly toggle A/B
+                    </div>
+                </div>
+
                 <!-- Download Buttons (shown after mastering) -->
                 <div id="downloadSection" style="display: none; margin-top: 30px;">
                     <div class="section-title">⬇️ Download Your Mastered Track</div>
@@ -2099,6 +2149,13 @@
         let isBypassed = false; // Track bypass state (true = hearing original, false = hearing processed)
         let audioContext = null;
         let currentSource = null;
+
+        // ⚡⚡ PHASE 2: Advanced A/B Comparison state
+        let abMode = 'A'; // 'A' = processed, 'B' = original
+        let levelMatchEnabled = true; // Auto level-match for fair comparison
+        let originalRMS = 0; // RMS level of original audio
+        let processedRMS = 0; // RMS level of processed audio
+        let levelMatchGain = null; // Gain node for level matching
 
         // Web Audio API nodes for real-time processing
         let sourceNode = null;
@@ -4518,6 +4575,100 @@
 
         console.log('✅ Mid/Side Processing event listeners initialized');
 
+        // ⚡⚡ PHASE 2: Advanced A/B Comparison Event Listeners
+        const abToggleBtn = document.getElementById('abToggleBtn');
+        const indicatorA = document.getElementById('indicatorA');
+        const indicatorB = document.getElementById('indicatorB');
+        const levelMatchToggle = document.getElementById('levelMatchToggle');
+        const levelDifference = document.getElementById('levelDifference');
+        const levelDiffValue = document.getElementById('levelDiffValue');
+
+        // Toggle A/B comparison
+        function toggleAB() {
+            abMode = (abMode === 'A') ? 'B' : 'A';
+
+            // Update visual indicators
+            if (abMode === 'A') {
+                // A = Processed (green highlight)
+                indicatorA.style.background = 'rgba(67, 233, 123, 0.3)';
+                indicatorA.style.border = '2px solid #43e97b';
+                indicatorB.style.background = 'rgba(255, 255, 255, 0.05)';
+                indicatorB.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+
+                // Restore processing (bypass off)
+                isBypassed = false;
+                console.log('🔄 A/B: Switched to A (Processed)');
+            } else {
+                // B = Original (blue highlight)
+                indicatorB.style.background = 'rgba(102, 126, 234, 0.3)';
+                indicatorB.style.border = '2px solid #667eea';
+                indicatorA.style.background = 'rgba(255, 255, 255, 0.05)';
+                indicatorA.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+
+                // Bypass processing (original)
+                isBypassed = true;
+                console.log('🔄 A/B: Switched to B (Original)');
+            }
+
+            // Apply level matching if enabled
+            if (levelMatchEnabled && levelMatchGain) {
+                if (abMode === 'B') {
+                    // When listening to original, boost it to match processed level
+                    const diff = processedRMS - originalRMS;
+                    const gainLinear = Math.pow(10, diff / 20);
+                    levelMatchGain.gain.value = gainLinear;
+                    console.log('⚖️ Level match: Boosting original by', diff.toFixed(1), 'dB');
+                } else {
+                    // When listening to processed, no boost needed
+                    levelMatchGain.gain.value = 1.0;
+                }
+            }
+        }
+
+        // Button click
+        if (abToggleBtn) {
+            abToggleBtn.addEventListener('click', toggleAB);
+        }
+
+        // Click on indicators to switch
+        if (indicatorA) {
+            indicatorA.addEventListener('click', () => {
+                if (abMode !== 'A') toggleAB();
+            });
+        }
+
+        if (indicatorB) {
+            indicatorB.addEventListener('click', () => {
+                if (abMode !== 'B') toggleAB();
+            });
+        }
+
+        // Spacebar keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            // Only trigger if not typing in an input field
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault(); // Prevent page scroll
+                if (document.getElementById('abComparisonSection').style.display !== 'none') {
+                    toggleAB();
+                }
+            }
+        });
+
+        // Level match toggle
+        if (levelMatchToggle) {
+            levelMatchToggle.addEventListener('change', () => {
+                levelMatchEnabled = levelMatchToggle.checked;
+                console.log('⚖️ Level matching:', levelMatchEnabled ? 'ENABLED' : 'DISABLED');
+
+                if (!levelMatchEnabled && levelMatchGain) {
+                    // Disable level matching (set gain to 1.0)
+                    levelMatchGain.gain.value = 1.0;
+                }
+            });
+        }
+
+        console.log('✅ Advanced A/B Comparison event listeners initialized');
+
         sliders.width.addEventListener('input', () => {
             const val = parseInt(sliders.width.value);
             values.width.textContent = val + '%';
@@ -5125,9 +5276,10 @@
                             masteredAudio = new Audio(job.output_mp3_url);
                         }
 
-                        // Show download section
+                        // Show download section and A/B comparison
                         document.getElementById('downloadSection').style.display = 'block';
                         document.getElementById('remixBtn').style.display = 'block';
+                        document.getElementById('abComparisonSection').style.display = 'block';
 
                         // Set download button URLs
                         if (job.output_wav_url) {
