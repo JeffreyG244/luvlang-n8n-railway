@@ -422,7 +422,7 @@
         /* Visual EQ - BADASS VERSION */
         .visual-eq {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-evenly;
             align-items: flex-end;
             height: 250px;
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.9) 100%);
@@ -430,6 +430,7 @@
             padding: 30px 20px;
             margin-bottom: 30px;
             position: relative;
+            gap: 0;
             box-shadow:
                 0 10px 40px rgba(0, 0, 0, 0.5),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -477,11 +478,57 @@
             padding-bottom: 8px;
         }
 
+        /* Frequency Response Curve Container */
+        .frequency-curve-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.9) 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            overflow: hidden;
+        }
+
+        .frequency-curve-container canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .curve-label-left {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #43e97b;
+        }
+
+        .curve-label-right {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #667eea;
+        }
+
         .eq-bar-container {
-            flex: 1;
+            width: calc(100% / 7);
+            max-width: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
             gap: 10px;
             position: relative;
             z-index: 2;
@@ -1044,10 +1091,10 @@
                 <div class="control-item">
                     <div class="control-header">
                         <div class="control-name">🔊 Overall Loudness</div>
-                        <div class="control-value" id="loudnessValue">-14 LUFS</div>
+                        <div class="control-value" id="loudnessValue" style="opacity: 0.7;">Target: -14 LUFS</div>
                     </div>
                     <div class="control-description">
-                        Set the perceived loudness. Use -14 for Spotify/YouTube, -9 for club/radio, -16 for dynamic music.
+                        Set the target loudness. Use -14 for Spotify/YouTube, -9 for club/radio, -16 for dynamic music. Check Track Statistics below for actual measured loudness.
                     </div>
                     <input type="range" class="slider" id="loudnessSlider" min="-18" max="-8" step="0.5" value="-14">
                     <div class="slider-labels">
@@ -1200,34 +1247,43 @@
                 </div>
 
                 <!-- Visual EQ -->
-                <div class="section-title">📊 Frequency Balance</div>
+                <div class="section-title">📊 Frequency Balance (Real-Time)</div>
+
+                <!-- Frequency Response Curve -->
+                <div class="frequency-curve-container">
+                    <canvas id="frequencyCurve" width="800" height="200"></canvas>
+                    <div class="curve-label-left">Loud</div>
+                    <div class="curve-label-right">Quiet</div>
+                </div>
+
+                <!-- EQ Bars (Evenly Aligned) -->
                 <div class="visual-eq">
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 50%;" id="eqSub"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqSub"></div>
                         <div class="eq-label">Sub<br>60Hz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 75%;" id="eqBass"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqBass"></div>
                         <div class="eq-label">Bass<br>250Hz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 50%;" id="eqLowMid"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqLowMid"></div>
                         <div class="eq-label">Low Mids<br>500Hz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 70%;" id="eqMid"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqMid"></div>
                         <div class="eq-label">Mids<br>1kHz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 60%;" id="eqHighMid"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqHighMid"></div>
                         <div class="eq-label">High Mids<br>2kHz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 55%;" id="eqHigh"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqHigh"></div>
                         <div class="eq-label">Highs<br>8kHz</div>
                     </div>
                     <div class="eq-bar-container">
-                        <div class="eq-bar" style="height: 45%;" id="eqAir"></div>
+                        <div class="eq-bar" style="height: 0%;" id="eqAir"></div>
                         <div class="eq-label">Air<br>16kHz</div>
                     </div>
                 </div>
@@ -2336,6 +2392,66 @@
                 updateBar(eqHigh, highVal, highAmp, 'Highs (8kHz)');
                 updateBar(eqAir, airVal, airAmp, 'Air (16kHz)');
 
+                // ⚡ DRAW FREQUENCY RESPONSE CURVE
+                const curveCanvas = document.getElementById('frequencyCurve');
+                if (curveCanvas) {
+                    const ctx = curveCanvas.getContext('2d');
+                    const width = curveCanvas.width;
+                    const height = curveCanvas.height;
+
+                    // Clear canvas
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Draw grid lines
+                    ctx.strokeStyle = 'rgba(102, 126, 234, 0.1)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 5; i++) {
+                        const y = (height / 4) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(width, y);
+                        ctx.stroke();
+                    }
+
+                    // Draw frequency response curve
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#667eea';
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = 'rgba(102, 126, 234, 0.5)';
+
+                    // Sample more points for smoother curve
+                    const points = 256;
+                    for (let i = 0; i < points; i++) {
+                        const freqIndex = Math.floor((i / points) * bufferLength);
+                        const amplitude = dataArray[freqIndex];
+                        const x = (i / points) * width;
+                        const y = height - (amplitude / 255) * height;
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+
+                    // Draw filled area under curve
+                    ctx.lineTo(width, height);
+                    ctx.lineTo(0, height);
+                    ctx.closePath();
+
+                    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+                    gradient.addColorStop(0.5, 'rgba(102, 126, 234, 0.15)');
+                    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // Reset shadow
+                    ctx.shadowBlur = 0;
+                }
+
                 // Update clipping warning display
                 const clippingWarning = document.getElementById('clippingWarning');
                 const clippingDetails = document.getElementById('clippingDetails');
@@ -3059,7 +3175,7 @@
 
         sliders.loudness.addEventListener('input', () => {
             const val = parseFloat(sliders.loudness.value);
-            values.loudness.textContent = val.toFixed(1) + ' LUFS';
+            values.loudness.textContent = 'Target: ' + val.toFixed(1) + ' LUFS';
             // ❌ REMOVED BUG: Don't set statLoudness to slider value (target)
             // statLoudness should show ACTUAL measured LUFS, not target!
             // document.getElementById('statLoudness').textContent = val.toFixed(1);
