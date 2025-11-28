@@ -1104,6 +1104,30 @@
                     </div>
                 </div>
 
+                <!-- Saturation Control -->
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-name">🔥 Saturation / Warmth</div>
+                        <div class="control-value" id="saturationValue">0%</div>
+                    </div>
+                    <div class="control-description">
+                        Adds analog warmth and harmonic richness (like vintage tape/tube gear). Great for making digital tracks sound more "alive"!
+                    </div>
+                    <input type="range" class="slider" id="saturationSlider" min="0" max="100" step="5" value="0">
+                    <div style="margin-top: 10px;">
+                        <label style="font-size: 0.85rem; opacity: 0.8; margin-right: 10px;">Type:</label>
+                        <select id="saturationType" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; font-size: 0.85rem;">
+                            <option value="tape">Tape (Warm)</option>
+                            <option value="tube">Tube (Smooth)</option>
+                            <option value="solid">Solid State (Punchy)</option>
+                        </select>
+                    </div>
+                    <div class="slider-labels">
+                        <span>Clean/Digital</span>
+                        <span>Warm/Analog</span>
+                    </div>
+                </div>
+
                 <!-- Stereo Width Control -->
                 <div class="control-item">
                     <div class="control-header">
@@ -1136,8 +1160,24 @@
                     </div>
                 </div>
 
-                <!-- Warmth Control -->
+                <!-- Brick Wall Limiter Control -->
                 <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-name">🧱 Limiter Ceiling</div>
+                        <div class="control-value" id="limiterValue">-0.3 dB</div>
+                    </div>
+                    <div class="control-description">
+                        Maximum peak level (prevents clipping absolutely). Lower = safer, higher = louder (use -0.1 dB for streaming).
+                    </div>
+                    <input type="range" class="slider" id="limiterSlider" min="-1.0" max="-0.1" step="0.1" value="-0.3">
+                    <div class="slider-labels">
+                        <span>Conservative (-1.0)</span>
+                        <span>Maximum (-0.1)</span>
+                    </div>
+                </div>
+
+                <!-- Warmth Control (OLD - keeping for now) -->
+                <div class="control-item" style="display: none;">
                     <div class="control-header">
                         <div class="control-name">🔥 Warmth</div>
                         <div class="control-value" id="warmthValue">20%</div>
@@ -1538,6 +1578,9 @@
         let midsFilter = null;
         let highsFilter = null;
         let compressor = null;
+        let saturationNode = null;  // ⚡ Saturation/warmth
+        let limiter = null;  // ⚡ Brick wall limiter
+        let limiterMakeupGain = null;  // ⚡ Gain after limiter for ceiling control
         let gainNode = null;
         let analyser = null;
 
@@ -2135,9 +2178,60 @@
             compressor.attack.value = 0.003;
             compressor.release.value = 0.25;
 
+            // ⚡ Saturation curve generator function
+            function makeSaturationCurve(amount, type) {
+                const samples = 44100;
+                const curve = new Float32Array(samples);
+                const normalizedAmount = amount / 100; // Convert 0-100 to 0-1
+
+                for (let i = 0; i < samples; i++) {
+                    const x = (i * 2 / samples) - 1; // -1 to +1
+
+                    if (type === 'tape') {
+                        // Soft tape saturation (smooth compression)
+                        curve[i] = Math.tanh(x * (1 + normalizedAmount * 3));
+                    } else if (type === 'tube') {
+                        // Tube-style saturation (warm, asymmetric)
+                        const drive = 1 + normalizedAmount * 2;
+                        curve[i] = x / (1 + Math.abs(x * drive));
+                    } else if (type === 'solid') {
+                        // Solid state (harder, more aggressive)
+                        const threshold = 0.7 - (normalizedAmount * 0.3);
+                        if (Math.abs(x) < threshold) {
+                            curve[i] = x;
+                        } else {
+                            curve[i] = Math.sign(x) * (threshold + (Math.abs(x) - threshold) / (1 + normalizedAmount * 5));
+                        }
+                    } else {
+                        curve[i] = x; // Linear (bypass)
+                    }
+                }
+
+                return curve;
+            }
+
+            // ⚡ Create saturation node (WaveShaper for harmonic enhancement)
+            saturationNode = audioContext.createWaveShaper();
+            saturationNode.curve = makeSaturationCurve(0, 'tape'); // Start with 0% (bypass)
+            saturationNode.oversample = '4x'; // High quality oversampling
+            console.log('✅ Saturation node created');
+
             // Create gain node for overall level
             gainNode = audioContext.createGain();
             gainNode.gain.value = 1.0;
+
+            // ⚡ Create brick wall limiter (DynamicsCompressor with extreme settings)
+            limiter = audioContext.createDynamicsCompressor();
+            limiter.threshold.value = -1;  // Very low threshold (catches everything)
+            limiter.knee.value = 0;        // Hard knee (brick wall)
+            limiter.ratio.value = 20;      // Maximum ratio (limiting, not compression)
+            limiter.attack.value = 0.001;  // Very fast attack (instant)
+            limiter.release.value = 0.1;   // Medium-fast release
+
+            // Create makeup gain for ceiling control
+            limiterMakeupGain = audioContext.createGain();
+            limiterMakeupGain.gain.value = Math.pow(10, -0.3 / 20); // Default -0.3 dB ceiling
+            console.log('✅ Brick wall limiter created (ceiling: -0.3 dB)');
 
             // Create analyser for visualization
             analyser = audioContext.createAnalyser();
@@ -2171,9 +2265,10 @@
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
 
-                // Dynamics and gain
+                // Dynamics, saturation, and gain
                 eqAirFilter.connect(compressor);
-                compressor.connect(gainNode);
+                compressor.connect(saturationNode);  // ⚡ NEW: Saturation after compression
+                saturationNode.connect(gainNode);
 
                 // Phase correction chain (stereo processing)
                 gainNode.connect(stereoSplitter);
@@ -2187,8 +2282,10 @@
                 phaseInverter.connect(rightChannel, 0);
                 rightChannel.connect(stereoMerger, 0, 1);
 
-                // Output
-                stereoMerger.connect(analyser);
+                // Output with brick wall limiter (LAST stage for maximum loudness safely)
+                stereoMerger.connect(limiter);
+                limiter.connect(limiterMakeupGain);
+                limiterMakeupGain.connect(analyser);
                 analyser.connect(audioContext.destination);
 
                 console.log('✅ Audio graph connected');
@@ -3207,6 +3304,49 @@
                 }
             } else {
                 console.warn('⚠️ Gain node not initialized yet - cannot adjust loudness');
+            }
+        });
+
+        // ⚡ Saturation slider event listener
+        const saturationSlider = document.getElementById('saturationSlider');
+        const saturationValue = document.getElementById('saturationValue');
+        const saturationType = document.getElementById('saturationType');
+
+        saturationSlider.addEventListener('input', () => {
+            const amount = parseInt(saturationSlider.value);
+            saturationValue.textContent = amount + '%';
+
+            if (saturationNode) {
+                const type = saturationType.value;
+                saturationNode.curve = makeSaturationCurve(amount, type);
+                console.log('🔥 Saturation updated:', amount + '%', 'Type:', type);
+            }
+        });
+
+        // Saturation type selector
+        saturationType.addEventListener('change', () => {
+            const amount = parseInt(saturationSlider.value);
+            const type = saturationType.value;
+
+            if (saturationNode) {
+                saturationNode.curve = makeSaturationCurve(amount, type);
+                console.log('🔥 Saturation type changed:', type, 'Amount:', amount + '%');
+            }
+        });
+
+        // ⚡ Limiter ceiling slider event listener
+        const limiterSlider = document.getElementById('limiterSlider');
+        const limiterValue = document.getElementById('limiterValue');
+
+        limiterSlider.addEventListener('input', () => {
+            const ceilingDB = parseFloat(limiterSlider.value);
+            limiterValue.textContent = ceilingDB.toFixed(1) + ' dB';
+
+            if (limiterMakeupGain) {
+                // Convert dB to linear gain: gain = 10^(dB/20)
+                const ceilingLinear = Math.pow(10, ceilingDB / 20);
+                limiterMakeupGain.gain.value = ceilingLinear;
+                console.log('🧱 Limiter ceiling adjusted:', ceilingDB.toFixed(1), 'dB → Gain:', ceilingLinear.toFixed(3));
             }
         });
 
