@@ -1139,6 +1139,51 @@
                     </style>
                 </div>
 
+                <!-- ⚡⚡ PHASE 2: PRESET MANAGEMENT SYSTEM -->
+                <div style="margin-bottom: 30px; background: rgba(102, 126, 234, 0.1); border-radius: 15px; padding: 20px; border: 2px solid rgba(102, 126, 234, 0.3);">
+                    <div style="font-size: 1rem; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>💾 Preset Management</span>
+                        <span style="font-size: 0.75rem; opacity: 0.7; font-weight: 400;">Save your perfect settings</span>
+                    </div>
+
+                    <!-- Save Preset -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; opacity: 0.9;">💾 Save Current Settings</div>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="presetName" placeholder="Enter preset name..." style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; color: white; font-size: 0.9rem;">
+                            <button id="savePresetBtn" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                                💾 Save
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- User Presets List -->
+                    <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px; opacity: 0.9; display: flex; justify-content: space-between; align-items: center;">
+                            <span>📁 My Presets (<span id="userPresetCount">0</span>)</span>
+                            <button id="clearAllPresetsBtn" style="background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.4); color: #ff6b6b; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">
+                                🗑️ Clear All
+                            </button>
+                        </div>
+                        <div id="userPresetsList" style="max-height: 200px; overflow-y: auto;">
+                            <div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 0.85rem;">
+                                No saved presets yet. Save your first preset above!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export/Import -->
+                    <div style="display: flex; gap: 10px;">
+                        <button id="exportPresetsBtn" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+                            📤 Export All
+                        </button>
+                        <button id="importPresetsBtn" style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+                            📥 Import
+                        </button>
+                    </div>
+                    <input type="file" id="importPresetsFile" accept=".json" style="display: none;">
+                </div>
+
                 <!-- ⚡ COLLAPSIBLE: EQ Controls -->
                 <div class="collapsible-section">
                     <div class="collapsible-header" onclick="toggleSection('eqSection')">
@@ -5124,6 +5169,353 @@
         loadGenrePreset('balanced');
 
         // ⚡ COLLAPSIBLE SECTIONS - Toggle function
+        // ⚡⚡ PHASE 2: PRESET MANAGEMENT SYSTEM
+        // LocalStorage key for user presets
+        const PRESETS_STORAGE_KEY = 'luvlang_user_presets';
+
+        // Get all current settings as a preset object
+        function getCurrentSettings() {
+            return {
+                // 7-band EQ
+                eqSub: parseFloat(document.getElementById('eqSubSlider')?.value || 0),
+                eqBass: parseFloat(document.getElementById('eqBassSlider')?.value || 0),
+                eqLowMid: parseFloat(document.getElementById('eqLowMidSlider')?.value || 0),
+                eqMid: parseFloat(document.getElementById('eqMidSlider')?.value || 0),
+                eqHighMid: parseFloat(document.getElementById('eqHighMidSlider')?.value || 0),
+                eqHigh: parseFloat(document.getElementById('eqHighSlider')?.value || 0),
+                eqAir: parseFloat(document.getElementById('eqAirSlider')?.value || 0),
+
+                // Dynamics
+                compression: parseInt(document.getElementById('compressionSlider')?.value || 5),
+                loudness: parseFloat(document.getElementById('loudnessSlider')?.value || -14),
+                limiterCeiling: parseFloat(document.getElementById('limiterSlider')?.value || -0.3),
+
+                // Multi-band compression
+                multibandEnabled: multibandEnabled || false,
+                mbLowThreshold: parseInt(document.getElementById('mbLowThreshold')?.value || -20),
+                mbLowRatio: parseFloat(document.getElementById('mbLowRatio')?.value || 3),
+                mbMidThreshold: parseInt(document.getElementById('mbMidThreshold')?.value || -15),
+                mbMidRatio: parseFloat(document.getElementById('mbMidRatio')?.value || 4),
+                mbHighThreshold: parseInt(document.getElementById('mbHighThreshold')?.value || -18),
+                mbHighRatio: parseFloat(document.getElementById('mbHighRatio')?.value || 5),
+
+                // Enhancement
+                saturation: parseInt(document.getElementById('saturationSlider')?.value || 0),
+                saturationType: document.getElementById('saturationType')?.value || 'tape',
+                stereoWidth: parseInt(document.getElementById('widthSlider')?.value || 100),
+
+                // Podcast tools
+                deesserEnabled: deesserEnabled || false,
+                deesserFreq: parseInt(document.getElementById('deesserFreq')?.value || 6000),
+                deesserAmount: parseInt(document.getElementById('deesserAmount')?.value || 3),
+                gateEnabled: gateEnabled || false,
+                gateThreshold: parseInt(document.getElementById('gateThreshold')?.value || -40),
+                gateRelease: parseInt(document.getElementById('gateRelease')?.value || 200)
+            };
+        }
+
+        // Apply settings from a preset object
+        function applySettings(settings) {
+            console.log('💾 Applying preset settings:', settings);
+
+            // 7-band EQ
+            if (settings.eqSub !== undefined) {
+                document.getElementById('eqSubSlider').value = settings.eqSub;
+                document.getElementById('eqSubSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqBass !== undefined) {
+                document.getElementById('eqBassSlider').value = settings.eqBass;
+                document.getElementById('eqBassSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqLowMid !== undefined) {
+                document.getElementById('eqLowMidSlider').value = settings.eqLowMid;
+                document.getElementById('eqLowMidSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqMid !== undefined) {
+                document.getElementById('eqMidSlider').value = settings.eqMid;
+                document.getElementById('eqMidSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqHighMid !== undefined) {
+                document.getElementById('eqHighMidSlider').value = settings.eqHighMid;
+                document.getElementById('eqHighMidSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqHigh !== undefined) {
+                document.getElementById('eqHighSlider').value = settings.eqHigh;
+                document.getElementById('eqHighSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.eqAir !== undefined) {
+                document.getElementById('eqAirSlider').value = settings.eqAir;
+                document.getElementById('eqAirSlider').dispatchEvent(new Event('input'));
+            }
+
+            // Dynamics
+            if (settings.compression !== undefined) {
+                document.getElementById('compressionSlider').value = settings.compression;
+                document.getElementById('compressionSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.loudness !== undefined) {
+                document.getElementById('loudnessSlider').value = settings.loudness;
+                document.getElementById('loudnessSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.limiterCeiling !== undefined) {
+                document.getElementById('limiterSlider').value = settings.limiterCeiling;
+                document.getElementById('limiterSlider').dispatchEvent(new Event('input'));
+            }
+
+            // Multi-band compression
+            if (settings.multibandEnabled !== undefined) {
+                document.getElementById('multibandToggle').checked = settings.multibandEnabled;
+                document.getElementById('multibandToggle').dispatchEvent(new Event('change'));
+
+                if (settings.multibandEnabled) {
+                    if (settings.mbLowThreshold !== undefined) document.getElementById('mbLowThreshold').value = settings.mbLowThreshold;
+                    if (settings.mbLowRatio !== undefined) document.getElementById('mbLowRatio').value = settings.mbLowRatio;
+                    if (settings.mbMidThreshold !== undefined) document.getElementById('mbMidThreshold').value = settings.mbMidThreshold;
+                    if (settings.mbMidRatio !== undefined) document.getElementById('mbMidRatio').value = settings.mbMidRatio;
+                    if (settings.mbHighThreshold !== undefined) document.getElementById('mbHighThreshold').value = settings.mbHighThreshold;
+                    if (settings.mbHighRatio !== undefined) document.getElementById('mbHighRatio').value = settings.mbHighRatio;
+
+                    // Trigger input events
+                    document.getElementById('mbLowThreshold').dispatchEvent(new Event('input'));
+                    document.getElementById('mbLowRatio').dispatchEvent(new Event('input'));
+                    document.getElementById('mbMidThreshold').dispatchEvent(new Event('input'));
+                    document.getElementById('mbMidRatio').dispatchEvent(new Event('input'));
+                    document.getElementById('mbHighThreshold').dispatchEvent(new Event('input'));
+                    document.getElementById('mbHighRatio').dispatchEvent(new Event('input'));
+                }
+            }
+
+            // Enhancement
+            if (settings.saturation !== undefined) {
+                document.getElementById('saturationSlider').value = settings.saturation;
+                document.getElementById('saturationSlider').dispatchEvent(new Event('input'));
+            }
+            if (settings.saturationType !== undefined) {
+                document.getElementById('saturationType').value = settings.saturationType;
+                document.getElementById('saturationType').dispatchEvent(new Event('change'));
+            }
+            if (settings.stereoWidth !== undefined) {
+                document.getElementById('widthSlider').value = settings.stereoWidth;
+                document.getElementById('widthSlider').dispatchEvent(new Event('input'));
+            }
+
+            // Podcast tools
+            if (settings.deesserEnabled !== undefined) {
+                document.getElementById('deesserToggle').checked = settings.deesserEnabled;
+                document.getElementById('deesserToggle').dispatchEvent(new Event('change'));
+
+                if (settings.deesserEnabled) {
+                    if (settings.deesserFreq !== undefined) document.getElementById('deesserFreq').value = settings.deesserFreq;
+                    if (settings.deesserAmount !== undefined) document.getElementById('deesserAmount').value = settings.deesserAmount;
+                    document.getElementById('deesserFreq').dispatchEvent(new Event('input'));
+                    document.getElementById('deesserAmount').dispatchEvent(new Event('input'));
+                }
+            }
+            if (settings.gateEnabled !== undefined) {
+                document.getElementById('gateToggle').checked = settings.gateEnabled;
+                document.getElementById('gateToggle').dispatchEvent(new Event('change'));
+
+                if (settings.gateEnabled) {
+                    if (settings.gateThreshold !== undefined) document.getElementById('gateThreshold').value = settings.gateThreshold;
+                    if (settings.gateRelease !== undefined) document.getElementById('gateRelease').value = settings.gateRelease;
+                    document.getElementById('gateThreshold').dispatchEvent(new Event('input'));
+                    document.getElementById('gateRelease').dispatchEvent(new Event('input'));
+                }
+            }
+
+            console.log('✅ Preset applied successfully');
+        }
+
+        // Load presets from LocalStorage
+        function loadPresets() {
+            const presetsJson = localStorage.getItem(PRESETS_STORAGE_KEY);
+            return presetsJson ? JSON.parse(presetsJson) : [];
+        }
+
+        // Save presets to LocalStorage
+        function savePresets(presets) {
+            localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+        }
+
+        // Render the presets list UI
+        function renderPresetsList() {
+            const presets = loadPresets();
+            const container = document.getElementById('userPresetsList');
+            const countElement = document.getElementById('userPresetCount');
+
+            countElement.textContent = presets.length;
+
+            if (presets.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 0.85rem;">No saved presets yet. Save your first preset above!</div>';
+                return;
+            }
+
+            container.innerHTML = presets.map((preset, index) => `
+                <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="flex: 1; cursor: pointer;" onclick="loadPreset(${index})">
+                        <div style="font-weight: 600; font-size: 0.9rem;">${preset.name}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">${new Date(preset.timestamp).toLocaleDateString()}</div>
+                    </div>
+                    <button onclick="deletePreset(${index}); event.stopPropagation();" style="background: rgba(255,0,0,0.2); border: 1px solid rgba(255,0,0,0.4); color: #ff6b6b; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600;">
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Save new preset
+        function savePreset() {
+            const nameInput = document.getElementById('presetName');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                alert('Please enter a preset name!');
+                return;
+            }
+
+            const presets = loadPresets();
+            const settings = getCurrentSettings();
+
+            const newPreset = {
+                name: name,
+                settings: settings,
+                timestamp: new Date().toISOString()
+            };
+
+            presets.push(newPreset);
+            savePresets(presets);
+
+            nameInput.value = '';
+            renderPresetsList();
+
+            console.log('💾 Preset saved:', name);
+            alert(`✅ Preset "${name}" saved successfully!`);
+        }
+
+        // Load preset by index
+        function loadPreset(index) {
+            const presets = loadPresets();
+            if (index < 0 || index >= presets.length) return;
+
+            const preset = presets[index];
+            applySettings(preset.settings);
+
+            console.log('📂 Preset loaded:', preset.name);
+            alert(`✅ Loaded preset: "${preset.name}"`);
+        }
+
+        // Delete preset by index
+        function deletePreset(index) {
+            const presets = loadPresets();
+            if (index < 0 || index >= presets.length) return;
+
+            const presetName = presets[index].name;
+
+            if (confirm(`Delete preset "${presetName}"?`)) {
+                presets.splice(index, 1);
+                savePresets(presets);
+                renderPresetsList();
+
+                console.log('🗑️ Preset deleted:', presetName);
+            }
+        }
+
+        // Clear all presets
+        function clearAllPresets() {
+            const presets = loadPresets();
+            if (presets.length === 0) {
+                alert('No presets to clear!');
+                return;
+            }
+
+            if (confirm(`Delete all ${presets.length} preset(s)? This cannot be undone!`)) {
+                localStorage.removeItem(PRESETS_STORAGE_KEY);
+                renderPresetsList();
+                console.log('🗑️ All presets cleared');
+                alert('✅ All presets cleared!');
+            }
+        }
+
+        // Export all presets as JSON
+        function exportPresets() {
+            const presets = loadPresets();
+            if (presets.length === 0) {
+                alert('No presets to export!');
+                return;
+            }
+
+            const dataStr = JSON.stringify(presets, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `luvlang_presets_${new Date().getTime()}.json`;
+            link.click();
+
+            URL.revokeObjectURL(url);
+            console.log('📤 Exported', presets.length, 'preset(s)');
+            alert(`✅ Exported ${presets.length} preset(s)!`);
+        }
+
+        // Import presets from JSON file
+        function importPresets(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedPresets = JSON.parse(e.target.result);
+
+                    if (!Array.isArray(importedPresets)) {
+                        throw new Error('Invalid preset file format');
+                    }
+
+                    const existingPresets = loadPresets();
+                    const mergedPresets = [...existingPresets, ...importedPresets];
+
+                    savePresets(mergedPresets);
+                    renderPresetsList();
+
+                    console.log('📥 Imported', importedPresets.length, 'preset(s)');
+                    alert(`✅ Imported ${importedPresets.length} preset(s)!`);
+                } catch (error) {
+                    console.error('Error importing presets:', error);
+                    alert('❌ Error importing presets. Invalid file format.');
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Initialize preset management event listeners
+        document.getElementById('savePresetBtn').addEventListener('click', savePreset);
+        document.getElementById('clearAllPresetsBtn').addEventListener('click', clearAllPresets);
+        document.getElementById('exportPresetsBtn').addEventListener('click', exportPresets);
+        document.getElementById('importPresetsBtn').addEventListener('click', () => {
+            document.getElementById('importPresetsFile').click();
+        });
+        document.getElementById('importPresetsFile').addEventListener('change', importPresets);
+
+        // Allow Enter key to save preset
+        document.getElementById('presetName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                savePreset();
+            }
+        });
+
+        // Make functions globally available
+        window.loadPreset = loadPreset;
+        window.deletePreset = deletePreset;
+
+        // Load presets list on page load
+        renderPresetsList();
+
+        console.log('✅ Preset Management System initialized');
+
         function toggleSection(sectionId) {
             const content = document.getElementById(sectionId);
             const toggle = document.getElementById(sectionId.replace('Section', 'Toggle'));
