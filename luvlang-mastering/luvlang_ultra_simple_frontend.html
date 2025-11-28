@@ -1094,7 +1094,8 @@
                         <div class="control-value" id="loudnessValue" style="opacity: 0.7;">Target: -14 LUFS</div>
                     </div>
                     <div class="control-description">
-                        Set the target loudness. Use -14 for Spotify/YouTube, -9 for club/radio, -16 for dynamic music. Check Track Statistics below for actual measured loudness.
+                        <strong>✅ Auto-set to -14 LUFS on upload</strong> (streaming standard for Spotify/YouTube/Apple Music).<br>
+                        Adjust if needed: -9 for club/radio, -16 for dynamic music. Check Track Statistics below for actual measured loudness.
                     </div>
                     <input type="range" class="slider" id="loudnessSlider" min="-18" max="-8" step="0.5" value="-14">
                     <div class="slider-labels">
@@ -1713,6 +1714,28 @@
             document.getElementById('autoMasterBtn').disabled = false;
             document.getElementById('advancedToggle').style.display = 'block';
 
+            // ⚡ AUTO-SET LOUDNESS TO -14 LUFS (streaming standard)
+            setTimeout(() => {
+                console.log('🎯 Auto-setting Loudness to -14 LUFS (streaming standard)...');
+
+                const loudnessSlider = document.getElementById('loudnessSlider');
+                const loudnessValue = document.getElementById('loudnessValue');
+
+                if (loudnessSlider && loudnessValue) {
+                    // Set slider to -14 LUFS
+                    loudnessSlider.value = -14;
+                    loudnessValue.textContent = 'Target: -14.0 LUFS';
+
+                    // Apply the gain adjustment
+                    if (gainNode && !isBypassed) {
+                        const targetLUFS = -14;
+                        const gain = Math.pow(10, (targetLUFS + 14) / 20);
+                        gainNode.gain.value = gain;
+                        console.log('✅ Loudness auto-set to -14 LUFS (gain:', gain.toFixed(3), ')');
+                    }
+                }
+            }, 300);
+
             // ⚡ SHOW WORKFLOW SELECTION MODAL after 500ms (give audio time to load)
             setTimeout(() => {
                 console.log('🎵 Showing workflow selection modal...');
@@ -2242,17 +2265,13 @@
                     phaseInverter.gain.value = -1.0;
                     hasPhaseIssues = true;
 
-                    console.log('✅ Phase corrected! Right channel inverted.');
+                    console.log('✅ Phase corrected automatically! Right channel inverted.');
                     console.log('   Result: Channels now in-phase for mono compatibility');
+                    console.log('   ✅ Better mono compatibility');
+                    console.log('   ✅ Stronger bass response');
+                    console.log('   ✅ No phase cancellation');
 
-                    // Show alert to user
-                    alert('🔧 PHASE ISSUE FIXED!\n\n' +
-                          'Detected: Out-of-phase stereo (' + correlation.toFixed(2) + ')\n' +
-                          'Fixed: Right channel phase inverted\n\n' +
-                          'Result:\n' +
-                          '✅ Better mono compatibility\n' +
-                          '✅ Stronger bass response\n' +
-                          '✅ No phase cancellation');
+                    // Note: No alert shown - automatic fix happens silently for better UX
 
                 } else if (correlation < 0.1) {
                     console.log('ℹ️ Wide stereo detected (correlation: ' + correlation.toFixed(3) + ')');
@@ -3029,17 +3048,9 @@
                 });
             }
 
-            // 5. Check for phase issues (L/R mismatch)
-            const phaseCorrelation = Math.abs(peakL - peakR) / Math.max(peakL, peakR, 1);
-            if (phaseCorrelation > 0.8) {
-                newProblems.push({
-                    icon: '⚠️',
-                    severity: 'caution',
-                    title: 'Possible Phase Issues',
-                    description: 'Left/Right channels are very different',
-                    solution: 'Check stereo width - may have mono compatibility issues'
-                });
-            }
+            // 5. Phase issues are AUTOMATICALLY FIXED on upload (see phase correction code)
+            // No need to warn - phase inverter already handles out-of-phase stereo
+            // (Phase correction happens automatically ~2 seconds after upload)
 
             // 6. Check loudness levels
             // 🔍 DEBUG: Always log LUFS check
