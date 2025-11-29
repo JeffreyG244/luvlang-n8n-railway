@@ -4299,6 +4299,108 @@
             }
         });
 
+        // ⚡⚡ 7-BAND PARAMETRIC EQ EVENT LISTENERS (PHASE 1)
+        const eqSubSlider = document.getElementById('eqSubSlider');
+        const eqSubValue = document.getElementById('eqSubValue');
+        const eqBassSlider = document.getElementById('eqBassSlider');
+        const eqBassValue = document.getElementById('eqBassValue');
+        const eqLowMidSlider = document.getElementById('eqLowMidSlider');
+        const eqLowMidValue = document.getElementById('eqLowMidValue');
+        const eqMidSlider = document.getElementById('eqMidSlider');
+        const eqMidValue = document.getElementById('eqMidValue');
+        const eqHighMidSlider = document.getElementById('eqHighMidSlider');
+        const eqHighMidValue = document.getElementById('eqHighMidValue');
+        const eqHighSlider = document.getElementById('eqHighSlider');
+        const eqHighValue = document.getElementById('eqHighValue');
+        const eqAirSlider = document.getElementById('eqAirSlider');
+        const eqAirValue = document.getElementById('eqAirValue');
+
+        // Sub Bass (60Hz lowshelf)
+        if (eqSubSlider && eqSubValue) {
+            eqSubSlider.addEventListener('input', () => {
+                const val = parseFloat(eqSubSlider.value);
+                eqSubValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqSubFilter) {
+                    eqSubFilter.gain.value = val;
+                    console.log('🎚️ Sub (60Hz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // Bass (250Hz peaking)
+        if (eqBassSlider && eqBassValue) {
+            eqBassSlider.addEventListener('input', () => {
+                const val = parseFloat(eqBassSlider.value);
+                eqBassValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqBassFilter) {
+                    eqBassFilter.gain.value = val;
+                    console.log('🎚️ Bass (250Hz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // Low Mids (500Hz peaking)
+        if (eqLowMidSlider && eqLowMidValue) {
+            eqLowMidSlider.addEventListener('input', () => {
+                const val = parseFloat(eqLowMidSlider.value);
+                eqLowMidValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqLowMidFilter) {
+                    eqLowMidFilter.gain.value = val;
+                    console.log('🎚️ Low-Mid (500Hz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // Mids (1kHz peaking)
+        if (eqMidSlider && eqMidValue) {
+            eqMidSlider.addEventListener('input', () => {
+                const val = parseFloat(eqMidSlider.value);
+                eqMidValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqMidFilter) {
+                    eqMidFilter.gain.value = val;
+                    console.log('🎚️ Mid (1kHz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // High Mids (2kHz peaking)
+        if (eqHighMidSlider && eqHighMidValue) {
+            eqHighMidSlider.addEventListener('input', () => {
+                const val = parseFloat(eqHighMidSlider.value);
+                eqHighMidValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqHighMidFilter) {
+                    eqHighMidFilter.gain.value = val;
+                    console.log('🎚️ High-Mid (2kHz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // Highs (8kHz peaking)
+        if (eqHighSlider && eqHighValue) {
+            eqHighSlider.addEventListener('input', () => {
+                const val = parseFloat(eqHighSlider.value);
+                eqHighValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqHighFilter) {
+                    eqHighFilter.gain.value = val;
+                    console.log('🎚️ High (8kHz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        // Air (16kHz highshelf)
+        if (eqAirSlider && eqAirValue) {
+            eqAirSlider.addEventListener('input', () => {
+                const val = parseFloat(eqAirSlider.value);
+                eqAirValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + ' dB';
+                if (eqAirFilter) {
+                    eqAirFilter.gain.value = val;
+                    console.log('🎚️ Air (16kHz) EQ:', val.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        console.log('✅ 7-Band EQ event listeners connected');
+
         // ⚡ De-Esser event listeners (PODCAST CRITICAL!)
         const deesserToggle = document.getElementById('deesserToggle');
         const deesserControls = document.getElementById('deesserControls');
