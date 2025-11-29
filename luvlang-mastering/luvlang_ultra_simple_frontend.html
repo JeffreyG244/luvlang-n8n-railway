@@ -2756,7 +2756,11 @@
                 if (sourceNode && bassFilter && analyser) {
                     console.log('ℹ️ Web Audio already set up - resuming context if needed');
                     if (audioContext.state === 'suspended') {
-                        audioContext.resume();
+                        audioContext.resume().then(() => {
+                            console.log('✅ Audio context resumed successfully');
+                        }).catch(err => {
+                            console.warn('⚠️ Could not resume audio context:', err);
+                        });
                     }
                     return; // Already set up, no need to recreate
                 }
@@ -2767,8 +2771,14 @@
                         sourceNode = audioContext.createMediaElementSource(audioElement);
                         console.log('✅ Media source created from audio element');
                     } catch (e) {
+                        // If the element already has a source node, this is not a critical error
+                        if (e.name === 'InvalidStateError') {
+                            console.warn('ℹ️ Audio element already connected to Web Audio (this is normal on reload)');
+                            // Don't throw error, just return - audio will still work
+                            return;
+                        }
                         console.error('❌ Failed to create media source:', e);
-                        return;
+                        throw e; // Re-throw other errors
                     }
                 }
 
@@ -3075,7 +3085,27 @@
 
             } catch (error) {
                 console.error('❌ Web Audio setup error:', error);
-                alert('Note: Real-time audio processing may not work in this browser. Audio playback will still work normally.');
+
+                // Provide more specific error messages
+                let errorMessage = 'Unable to initialize audio processing: ';
+
+                if (error.name === 'NotSupportedError') {
+                    errorMessage += 'Your browser doesn\'t support Web Audio API. Please use Chrome, Firefox, or Safari.';
+                } else if (error.name === 'InvalidStateError') {
+                    errorMessage += 'Audio source already connected. Refreshing the page may help.';
+                } else if (error.message.includes('createMediaElementSource')) {
+                    errorMessage += 'Cannot create audio source. The audio element may already be in use.';
+                } else {
+                    errorMessage += error.message || 'Unknown error occurred.';
+                }
+
+                errorMessage += '\n\nAudio playback will still work, but real-time effects may not be available.';
+
+                console.warn('⚠️', errorMessage);
+                // Only show alert if it's a critical error, not just a warning
+                if (error.name === 'NotSupportedError') {
+                    alert(errorMessage);
+                }
             }
         }
 
