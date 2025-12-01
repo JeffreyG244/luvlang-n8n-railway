@@ -3570,6 +3570,11 @@
                 // Increment frame counter
                 frameCount++;
 
+                // 🔧 DIAGNOSTIC: Log every 60 frames to verify animation loop is running
+                if (frameCount % 60 === 0) {
+                    console.log('⏱️ Animation Loop Running - Frame:', frameCount, 'Time:', Date.now());
+                }
+
                 // Calculate frequency bin resolution
                 const nyquist = audioContext.sampleRate / 2;
                 const binResolution = nyquist / bufferLength;
@@ -3757,6 +3762,11 @@
                 const hmAmp = TEST_MODE ? (75 + Math.sin(Date.now() / 1000 * 2.1) * 65) : highMidAmp;
                 const hAmp = TEST_MODE ? (65 + Math.sin(Date.now() / 1000 * 2.4) * 55) : highAmp;
                 const aAmp = TEST_MODE ? (55 + Math.sin(Date.now() / 1000 * 2.7) * 45) : airAmp;
+
+                // 🔧 DIAGNOSTIC: Log before updateBar calls
+                if (frameCount % 60 === 0) {
+                    console.log('🎚️ About to call updateBar - Bass height:', bassVal, 'Bass amp:', bAmp);
+                }
 
                 updateBar(eqSub, subVal, subAmp, 'Sub (60Hz)', 'eqSubValue');
                 updateBar(eqBass, bassVal, bAmp, 'Bass (250Hz)', 'eqBassValue');
