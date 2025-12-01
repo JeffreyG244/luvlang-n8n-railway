@@ -3224,8 +3224,16 @@
                 phaseInverter.connect(rightChannel, 0);
                 rightChannel.connect(stereoMerger, 0, 1);
 
-                // Output with brick wall limiter (LAST stage for maximum loudness safely)
-                stereoMerger.connect(limiter);
+                // Output with limiters (LAST stage for maximum loudness safely)
+                // Use look-ahead limiter first (if enabled), then basic limiter + makeup gain
+                if (lookAheadEnabled && lookAheadLimiter) {
+                    stereoMerger.connect(lookAheadLimiter);
+                    lookAheadLimiter.connect(limiter);
+                    console.log('✅ Look-Ahead Limiter inserted in chain');
+                } else {
+                    stereoMerger.connect(limiter);
+                    console.log('✅ Basic limiter only (Look-Ahead disabled)');
+                }
                 limiter.connect(limiterMakeupGain);
                 limiterMakeupGain.connect(analyser);
                 analyser.connect(audioContext.destination);
@@ -4658,8 +4666,9 @@
 
                     // Disconnect existing connection
                     stereoMerger.disconnect();
+                    if (lookAheadLimiter) lookAheadLimiter.disconnect();
 
-                    // Insert de-esser: stereoMerger → deesserSplitter → [split to direct + filtered paths] → deesserMerger → limiter
+                    // Insert de-esser: stereoMerger → deesserSplitter → [split to direct + filtered paths] → deesserMerger → [look-ahead limiter if enabled] → limiter
                     stereoMerger.connect(deesserSplitter);
 
                     // Direct path (full signal minus sibilance)
@@ -4670,10 +4679,15 @@
                     deesserFilter.connect(deesserCompressor);
                     deesserCompressor.connect(deesserMerger);
 
-                    // Continue to limiter
-                    deesserMerger.connect(limiter);
-
-                    console.log('✅ De-esser routing: stereoMerger → deesser (multiband) → limiter');
+                    // Continue to look-ahead limiter (if enabled) or direct to limiter
+                    if (lookAheadEnabled && lookAheadLimiter) {
+                        deesserMerger.connect(lookAheadLimiter);
+                        lookAheadLimiter.connect(limiter);
+                        console.log('✅ De-esser routing: stereoMerger → deesser → look-ahead limiter → limiter');
+                    } else {
+                        deesserMerger.connect(limiter);
+                        console.log('✅ De-esser routing: stereoMerger → deesser → limiter');
+                    }
                 }
             } else {
                 deesserControls.style.display = 'none';
@@ -4689,11 +4703,17 @@
                     deesserFilter.disconnect();
                     deesserCompressor.disconnect();
                     deesserMerger.disconnect();
+                    if (lookAheadLimiter) lookAheadLimiter.disconnect();
 
-                    // Direct connection (bypass)
-                    stereoMerger.connect(limiter);
-
-                    console.log('✅ De-esser bypassed: stereoMerger → limiter (direct)');
+                    // Direct connection or through look-ahead limiter
+                    if (lookAheadEnabled && lookAheadLimiter) {
+                        stereoMerger.connect(lookAheadLimiter);
+                        lookAheadLimiter.connect(limiter);
+                        console.log('✅ De-esser bypassed: stereoMerger → look-ahead limiter → limiter');
+                    } else {
+                        stereoMerger.connect(limiter);
+                        console.log('✅ De-esser bypassed: stereoMerger → limiter (direct)');
+                    }
                 }
             }
         });
@@ -4905,6 +4925,13 @@
             if (gainNode) {
                 saturationNode.connect(gainNode);
                 console.log('  ✅ Saturation connected to gain');
+            }
+
+            // STEP 5: Look-Ahead Limiter (if enabled) - insert before final limiter
+            // Note: The look-ahead limiter should be placed after gainNode but before the existing limiter
+            // This happens in the main audio chain connection (line ~3215-3230)
+            if (lookAheadEnabled && lookAheadLimiter) {
+                console.log('  ✅ Look-Ahead Limiter enabled in chain');
             }
 
             console.log('✅ Audio chain rebuilt successfully');
@@ -5263,9 +5290,41 @@
 
                 console.log('🔒 Look-Ahead Limiter:', lookAheadEnabled ? 'ENABLED' : 'DISABLED');
 
-                // Rebuild audio chain with limiter
-                if (sourceNode) {
-                    rebuildAudioChain();
+                // Reconnect limiter section of audio chain
+                // Need to handle de-esser + look-ahead limiter combination
+                if (stereoMerger && limiter && lookAheadLimiter) {
+                    // Disconnect current limiter connections
+                    try {
+                        stereoMerger.disconnect();
+                        if (deesserMerger) deesserMerger.disconnect();
+                        if (lookAheadLimiter) lookAheadLimiter.disconnect();
+                    } catch (e) { /* ignore */ }
+
+                    // Determine what's between stereoMerger and limiter
+                    let preLimiterNode = stereoMerger;
+
+                    // If de-esser is enabled, route through it first
+                    if (deesserEnabled && deesserSplitter && deesserMerger) {
+                        stereoMerger.connect(deesserSplitter);
+                        deesserSplitter.connect(deesserMerger);
+                        deesserSplitter.connect(deesserFilter);
+                        deesserFilter.connect(deesserCompressor);
+                        deesserCompressor.connect(deesserMerger);
+                        preLimiterNode = deesserMerger;
+                        console.log('  ✅ De-esser in chain before limiter');
+                    }
+
+                    // Then look-ahead limiter (if enabled)
+                    if (lookAheadEnabled) {
+                        preLimiterNode.connect(lookAheadLimiter);
+                        lookAheadLimiter.connect(limiter);
+                        console.log('  ✅ Look-Ahead Limiter inserted');
+                    } else {
+                        preLimiterNode.connect(limiter);
+                        console.log('  ✅ Direct to basic limiter');
+                    }
+
+                    console.log('✅ Limiter chain reconnected');
                 }
             });
         }
