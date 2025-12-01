@@ -3649,9 +3649,9 @@
                     highVal = scaleToHeight(fakeHighAmp);
                     airVal = scaleToHeight(fakeAirAmp);
 
-                    // Log test mode status on first few frames
-                    if (frameCount < 3) {
-                        console.log('🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%');
+                    // Log test mode status on first few frames AND every 60 frames
+                    if (frameCount < 3 || frameCount % 60 === 0) {
+                        console.log('🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%', 'Time:', time.toFixed(2));
                     }
                 } else {
                     // Use real audio data
