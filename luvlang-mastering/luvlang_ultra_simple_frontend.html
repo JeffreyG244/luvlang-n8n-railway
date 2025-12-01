@@ -536,21 +536,21 @@
 
         .eq-bar {
             width: 45px;
-            min-height: 5px; /* Always show at least 5px so bars are visible */
+            min-height: 50px; /* INCREASED: Much taller minimum for visibility */
             background: linear-gradient(to top,
-                rgba(67, 233, 123, 0.9) 0%,
+                rgba(67, 233, 123, 1) 0%,
                 rgba(67, 233, 123, 1) 10%,
                 rgba(102, 126, 234, 1) 50%,
                 rgba(118, 75, 162, 1) 90%,
-                rgba(118, 75, 162, 0.9) 100%);
+                rgba(118, 75, 162, 1) 100%);
             border-radius: 8px 8px 3px 3px;
-            transition: height 0.05s ease-out, box-shadow 0.1s ease-out;
+            transition: height 0.08s linear; /* Faster, linear for immediate response */
             position: relative;
             box-shadow:
-                0 0 20px rgba(102, 126, 234, 0.4),
-                0 0 40px rgba(102, 126, 234, 0.2),
-                inset 0 -2px 10px rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+                0 0 30px rgba(102, 126, 234, 0.8),
+                0 0 60px rgba(102, 126, 234, 0.4),
+                inset 0 -2px 10px rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.4);
         }
 
         /* Glow effect when bar is tall */
@@ -2000,37 +2000,37 @@
                 <div class="visual-eq">
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqSubValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqSub"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqSub"></div>
                         <div class="eq-label">Sub<br>60Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqBassValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqBass"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqBass"></div>
                         <div class="eq-label">Bass<br>250Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqLowMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqLowMid"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqLowMid"></div>
                         <div class="eq-label">Low Mids<br>500Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqMid"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqMid"></div>
                         <div class="eq-label">Mids<br>1kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqHighMid"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqHighMid"></div>
                         <div class="eq-label">High Mids<br>2kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqHigh"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqHigh"></div>
                         <div class="eq-label">Highs<br>8kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqAirValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 10%;" id="eqAir"></div>
+                        <div class="eq-bar" style="height: 30%;" id="eqAir"></div>
                         <div class="eq-label">Air<br>16kHz</div>
                     </div>
                 </div>
@@ -3549,6 +3549,11 @@
             function draw() {
                 requestAnimationFrame(draw);
 
+                // 🔧 DIAGNOSTIC: Log that draw() is being called
+                if (frameCount === 0) {
+                    console.log('🎬 FIRST FRAME: draw() animation loop started!');
+                }
+
                 // Get frequency data
                 analyser.getByteFrequencyData(dataArray);
 
@@ -3556,8 +3561,10 @@
                 if (frameCount < 5) {
                     const sampleData = Array.from(dataArray).slice(0, 10);
                     console.log(`📊 Frame ${frameCount}: First 10 samples:`, sampleData);
-                    frameCount++;
                 }
+
+                // Increment frame counter
+                frameCount++;
 
                 // Calculate frequency bin resolution
                 const nyquist = audioContext.sampleRate / 2;
@@ -3588,25 +3595,21 @@
                 const highAmp = getFrequencyAmplitude(6000, 12000);
                 const airAmp = getFrequencyAmplitude(12000, 20000);
 
-                // ⚡⚡⚡ ULTRA-RESPONSIVE: EQ bars with maximum visual movement
-                const minHeight = 15; // Minimum visible height
-                const maxHeight = 95;
+                // ⚡⚡⚡ ULTRA-RESPONSIVE: EQ bars with MAXIMUM visual movement
+                const minHeight = 30; // INCREASED: 30% minimum (very visible)
+                const maxHeight = 90;
 
                 function scaleToHeight(amplitude) {
-                    // AGGRESSIVE scaling for maximum visual response
-                    // This makes even quiet sounds create visible bar movement
+                    // EXTREME scaling for maximum visual response
 
                     if (amplitude < 1) return minHeight;
 
-                    // Direct percentage mapping with boost
-                    // 0-255 → 15-95% with aggressive scaling
+                    // Direct linear mapping - SIMPLE and RESPONSIVE
+                    // 0-255 → 30-90%
                     let percent = (amplitude / 255) * 100;
 
-                    // BOOST factor: multiply by 3 for more sensitivity
-                    percent = percent * 3;
-
-                    // Apply square root for even more compression (makes quiet sounds more visible)
-                    percent = Math.sqrt(percent / 100) * 100;
+                    // EXTREME BOOST: multiply by 5 for hypersensitivity
+                    percent = percent * 5;
 
                     // Ensure within bounds
                     return Math.min(maxHeight, Math.max(minHeight, percent));
@@ -3615,6 +3618,11 @@
                 // 🧪 TEST MODE: Generate fake animated bars to test visualization
                 // This will make bars bounce even without audio to verify the mechanism works
                 const TEST_MODE = true; // Set to false to use real audio data
+
+                // 🔧 DIAGNOSTIC: Log TEST_MODE status on first frame
+                if (frameCount === 0) {
+                    console.log('🧪 TEST MODE:', TEST_MODE ? 'ENABLED - Using fake sine wave data' : 'DISABLED - Using real audio');
+                }
 
                 let subVal, bassVal, lowMidVal, midVal, highMidVal, highVal, airVal;
 
@@ -3637,9 +3645,9 @@
                     highVal = scaleToHeight(fakeHighAmp);
                     airVal = scaleToHeight(fakeAirAmp);
 
-                    // Log test mode status once per second
-                    if (frameCount % 60 === 0) {
-                        console.log('🧪 TEST MODE: Fake bars animating. Bass:', fakeBassAmp.toFixed(0), '→', bassVal.toFixed(1) + '%');
+                    // Log test mode status on first few frames
+                    if (frameCount < 3) {
+                        console.log('🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%');
                     }
                 } else {
                     // Use real audio data
@@ -3675,13 +3683,25 @@
                 const clippingBands = [];
                 function updateBar(element, value, rawAmplitude, bandName, valueElementId) {
                     if (!element) {
-                        console.warn('⚠️ EQ bar element not found:', bandName);
+                        console.error('❌ EQ BAR ELEMENT NOT FOUND:', bandName, 'ID should be:', valueElementId.replace('Value', ''));
                         return;
                     }
 
-                    // Ensure value is at least 10% for visibility (minimum height)
-                    const displayValue = Math.max(10, Math.min(100, value));
+                    // 🔧 DIAGNOSTIC: Log every update on first 10 frames
+                    if (frameCount < 10) {
+                        console.log('🔧 FRAME', frameCount, bandName, 'Input value:', value, 'Raw amp:', rawAmplitude, 'Element:', element.id);
+                    }
+
+                    // Ensure value is at least 30% for visibility (minimum height) - CHANGED from 10% to 30%
+                    const displayValue = Math.max(30, Math.min(90, value));
                     element.style.height = displayValue + '%';
+
+                    // 🔧 DIAGNOSTIC: Force immediate visual feedback
+                    if (frameCount < 10) {
+                        console.log('🔧 Setting', element.id, 'to height:', displayValue + '%');
+                        const computedStyle = window.getComputedStyle(element);
+                        console.log('🔧 Computed height:', computedStyle.height, 'Min-height:', computedStyle.minHeight, 'Display:', computedStyle.display);
+                    }
 
                     // Convert raw amplitude (0-255) to dB (-60 to 0 dB)
                     const dB = -60 + (rawAmplitude / 255) * 60;
