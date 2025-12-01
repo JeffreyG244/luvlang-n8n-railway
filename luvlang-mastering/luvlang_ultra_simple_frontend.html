@@ -424,58 +424,15 @@
             display: flex;
             justify-content: space-evenly;
             align-items: flex-end;
-            height: 250px;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 40, 0.9) 100%);
-            border-radius: 20px;
-            padding: 30px 20px;
+            height: 200px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            padding: 20px 15px;
             margin-bottom: 30px;
             position: relative;
-            gap: 0;
-            box-shadow:
-                0 10px 40px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        /* Animated background grid */
-        .visual-eq::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(rgba(102, 126, 234, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(102, 126, 234, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            opacity: 0.5;
-        }
-
-        /* Clipping threshold line with glow */
-        .visual-eq::after {
-            content: 'CLIPPING THRESHOLD';
-            position: absolute;
-            left: 30px;
-            right: 30px;
-            bottom: calc(30px + 90%);
-            height: 2px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(255, 0, 0, 0.6) 20%,
-                rgba(255, 0, 0, 0.8) 50%,
-                rgba(255, 0, 0, 0.6) 80%,
-                transparent 100%);
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-            pointer-events: none;
-            z-index: 1;
-            font-size: 8px;
-            color: rgba(255, 0, 0, 0.6);
-            text-align: center;
-            line-height: 0;
-            padding-bottom: 8px;
+            gap: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2a2a2a;
         }
 
         /* Frequency Response Curve Container */
@@ -535,93 +492,51 @@
         }
 
         .eq-bar {
-            width: 50px;
-            min-height: 40px;
-            /* Professional gradient: FabFilter/iZotope style */
+            width: 45px;
+            min-height: 20px;
+            /* Professional: Clean gradient like Pro Tools / Logic Pro */
             background: linear-gradient(to top,
-                #00ff88 0%,      /* Bright green bottom */
-                #00e5ff 25%,     /* Cyan */
-                #667eea 50%,     /* Blue middle */
-                #f093fb 75%,     /* Pink */
-                #ff6b9d 100%);   /* Hot pink top */
-            border-radius: 4px 4px 2px 2px;
-            transition: height 0.05s ease-out; /* Smooth but fast */
+                #2d5f2e 0%,      /* Dark green bottom */
+                #3d8b40 20%,     /* Green */
+                #4caf50 40%,     /* Brighter green */
+                #7cb342 60%,     /* Yellow-green */
+                #f57f17 80%,     /* Orange */
+                #d32f2f 100%);   /* Red top */
+            border-radius: 2px 2px 0 0;
+            transition: height 0.05s linear;
             position: relative;
             box-shadow:
-                0 0 20px rgba(102, 126, 234, 0.6),
-                0 4px 12px rgba(0, 0, 0, 0.3),
-                inset 0 1px 2px rgba(255, 255, 255, 0.4),
-                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(4px);
+                0 1px 3px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.3);
         }
 
-        /* Glow effect when bar is tall */
-        .eq-bar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 30px;
-            background: radial-gradient(ellipse at center,
-                rgba(102, 126, 234, 0.6) 0%,
-                transparent 70%);
-            filter: blur(10px);
-            opacity: 0;
-            transition: opacity 0.1s ease-out;
-            pointer-events: none;
-        }
-
-        .eq-bar[style*="height: 7"]:before,
-        .eq-bar[style*="height: 8"]:before,
-        .eq-bar[style*="height: 9"]:before {
-            opacity: 1;
-        }
-
-        /* Reflection effect */
+        /* Subtle highlight on bars */
         .eq-bar::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 40%;
+            height: 30%;
             background: linear-gradient(to bottom,
-                rgba(255, 255, 255, 0.2) 0%,
-                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0.15) 0%,
                 transparent 100%);
-            border-radius: 8px 8px 0 0;
             pointer-events: none;
         }
 
         .eq-bar.warning {
             background: linear-gradient(to top,
-                rgba(245, 175, 25, 1) 0%,
-                rgba(245, 175, 25, 1) 30%,
-                rgba(241, 39, 17, 1) 100%) !important;
-            box-shadow:
-                0 0 25px rgba(245, 175, 25, 0.6),
-                0 0 50px rgba(245, 175, 25, 0.3),
-                inset 0 -2px 10px rgba(255, 255, 255, 0.1) !important;
+                #f57f17 0%,
+                #ff9800 50%,
+                #ffb74d 100%) !important;
         }
 
         .eq-bar.clipping {
             background: linear-gradient(to top,
-                rgba(255, 0, 0, 0.9) 0%,
-                rgba(255, 0, 0, 1) 50%,
-                rgba(255, 100, 100, 1) 100%) !important;
-            box-shadow:
-                0 0 30px rgba(255, 0, 0, 0.8),
-                0 0 60px rgba(255, 0, 0, 0.4),
-                inset 0 -2px 10px rgba(255, 255, 255, 0.2) !important;
-            animation: clipPulse 0.2s ease-in-out infinite;
-        }
-
-        @keyframes clipPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+                #c62828 0%,
+                #e53935 50%,
+                #ef5350 100%) !important;
         }
 
         /* Bypass Button */
@@ -675,63 +590,22 @@
             line-height: 1.3;
         }
 
-        /* ⚡ PROFESSIONAL PEAK HOLD INDICATOR */
+        /* ⚡ SUBTLE PEAK HOLD INDICATOR */
         .eq-peak-hold {
             position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 56px;
-            height: 3px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                #ff0080 10%,
-                #ff0040 50%,
-                #ff0080 90%,
-                transparent 100%);
-            box-shadow:
-                0 0 8px rgba(255, 0, 128, 0.8),
-                0 0 4px rgba(255, 0, 128, 1);
-            border-radius: 2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
             pointer-events: none;
             z-index: 3;
             opacity: 0;
-            transition: opacity 0.3s ease-out, bottom 0.05s ease-out;
+            transition: opacity 0.2s ease-out, bottom 0.03s ease-out;
         }
 
         .eq-peak-hold.visible {
-            opacity: 1;
-        }
-
-        /* dB Scale markers on left side */
-        .eq-db-scale {
-            position: absolute;
-            left: 5px;
-            top: 30px;
-            bottom: 30px;
-            width: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            font-size: 0.65rem;
-            color: rgba(102, 126, 234, 0.5);
-            font-family: 'Monaco', 'Courier New', monospace;
-            z-index: 1;
-        }
-
-        .eq-db-scale span {
-            position: relative;
-            text-align: right;
-            line-height: 1;
-        }
-
-        .eq-db-scale span::after {
-            content: '';
-            position: absolute;
-            left: 25px;
-            top: 50%;
-            width: 100vw;
-            height: 1px;
-            background: rgba(102, 126, 234, 0.08);
+            opacity: 0.8;
         }
 
         /* Progress Overlay */
@@ -2060,20 +1934,6 @@
 
                 <!-- EQ Bars (Evenly Aligned) -->
                 <div class="visual-eq">
-                    <!-- ⚡ PROFESSIONAL: dB Scale -->
-                    <div class="eq-db-scale">
-                        <span>0</span>
-                        <span>-6</span>
-                        <span>-12</span>
-                        <span>-18</span>
-                        <span>-24</span>
-                        <span>-30</span>
-                        <span>-36</span>
-                        <span>-42</span>
-                        <span>-48</span>
-                        <span>-60</span>
-                    </div>
-
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqSubValue">-60 dB</div>
                         <div class="eq-peak-hold" id="eqSubPeak"></div>
