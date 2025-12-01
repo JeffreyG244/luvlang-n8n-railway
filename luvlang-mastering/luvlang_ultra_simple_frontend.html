@@ -2461,11 +2461,20 @@
         function handleFile(file) {
             if (!file) return;
 
-            const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/flac', 'audio/m4a'];
-            if (!validTypes.includes(file.type) && !file.name.match(/\.(wav|mp3|flac|m4a)$/i)) {
-                alert('Please upload a valid audio file (WAV, MP3, FLAC, or M4A)');
+            console.log('📁 File selected:', file.name, 'Type:', file.type, 'Size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+
+            // More permissive validation - accept any file starting with "audio/" or common audio extensions
+            const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/flac', 'audio/m4a', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/webm'];
+            const isAudioType = file.type.startsWith('audio/') || validTypes.includes(file.type);
+            const hasAudioExtension = file.name.match(/\.(wav|mp3|flac|m4a|aac|ogg|webm|opus)$/i);
+
+            if (!isAudioType && !hasAudioExtension) {
+                alert('Please upload a valid audio file (WAV, MP3, FLAC, M4A, AAC, OGG, WebM)');
+                console.error('❌ Invalid file type:', file.type);
                 return;
             }
+
+            console.log('✅ File type validated successfully');
 
             uploadedFile = file;
             uploadArea.innerHTML = `
