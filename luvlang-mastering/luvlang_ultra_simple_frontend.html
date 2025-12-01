@@ -2000,37 +2000,37 @@
                 <div class="visual-eq">
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqSubValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqSub"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqSub"></div>
                         <div class="eq-label">Sub<br>60Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqBassValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqBass"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqBass"></div>
                         <div class="eq-label">Bass<br>250Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqLowMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqLowMid"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqLowMid"></div>
                         <div class="eq-label">Low Mids<br>500Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqMid"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqMid"></div>
                         <div class="eq-label">Mids<br>1kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighMidValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqHighMid"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqHighMid"></div>
                         <div class="eq-label">High Mids<br>2kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqHigh"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqHigh"></div>
                         <div class="eq-label">Highs<br>8kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqAirValue">-60 dB</div>
-                        <div class="eq-bar" style="height: 5%;" id="eqAir"></div>
+                        <div class="eq-bar" style="height: 10%;" id="eqAir"></div>
                         <div class="eq-label">Air<br>16kHz</div>
                     </div>
                 </div>
@@ -3588,17 +3588,27 @@
                 const highAmp = getFrequencyAmplitude(6000, 12000);
                 const airAmp = getFrequencyAmplitude(12000, 20000);
 
-                // Convert to percentage with MUCH MORE aggressive scaling for visibility
-                const scale = 5.0; // Much higher sensitivity
-                const minHeight = 5; // Minimum height so bars are always visible
+                // ⚡⚡⚡ ENHANCED: Professional bar scaling for maximum visibility
+                const minHeight = 10; // Minimum 10% height so bars are always visible
                 const maxHeight = 95;
 
                 function scaleToHeight(amplitude) {
-                    // Convert 0-255 to percentage with exponential scaling
-                    const normalized = amplitude / 255;
-                    // Use power of 0.5 (square root) for even more compression
-                    const scaled = Math.pow(normalized, 0.5) * scale;
-                    const percent = scaled * 100;
+                    // Convert 0-255 to percentage with professional scaling
+                    // Using logarithmic scale to match human hearing perception
+
+                    if (amplitude < 1) return minHeight; // Silence = minimum height
+
+                    // Logarithmic scaling for natural feel (matches dB scale)
+                    // -60 dB = minHeight, 0 dB = maxHeight
+                    const dB = -60 + (amplitude / 255) * 60; // Convert to dB
+                    const normalized = (dB + 60) / 60; // Normalize to 0-1
+
+                    // Apply gentle curve for better visualization
+                    const curved = Math.pow(normalized, 0.7); // Slight compression
+
+                    // Scale to percentage
+                    const percent = minHeight + (curved * (maxHeight - minHeight));
+
                     return Math.min(maxHeight, Math.max(minHeight, percent));
                 }
 
@@ -3627,8 +3637,8 @@
                         return;
                     }
 
-                    // Ensure value is at least 5% for visibility (minimum height)
-                    const displayValue = Math.max(5, Math.min(100, value));
+                    // Ensure value is at least 10% for visibility (minimum height)
+                    const displayValue = Math.max(10, Math.min(100, value));
                     element.style.height = displayValue + '%';
 
                     // Convert raw amplitude (0-255) to dB (-60 to 0 dB)
