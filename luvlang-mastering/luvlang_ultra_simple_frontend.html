@@ -3612,23 +3612,55 @@
                     return Math.min(maxHeight, Math.max(minHeight, percent));
                 }
 
-                // Add console log to verify bars are updating
-                if (frameCount % 30 === 0) {
-                    console.log('🎚️ EQ Amplitudes:', {
-                        sub: subBassAmp.toFixed(0),
-                        bass: bassAmp.toFixed(0),
-                        mid: midAmp.toFixed(0),
-                        high: highAmp.toFixed(0)
-                    });
-                }
+                // 🧪 TEST MODE: Generate fake animated bars to test visualization
+                // This will make bars bounce even without audio to verify the mechanism works
+                const TEST_MODE = true; // Set to false to use real audio data
 
-                const subVal = scaleToHeight(subBassAmp);
-                const bassVal = scaleToHeight(bassAmp);
-                const lowMidVal = scaleToHeight(lowMidAmp);
-                const midVal = scaleToHeight(midAmp);
-                const highMidVal = scaleToHeight(highMidAmp);
-                const highVal = scaleToHeight(highAmp);
-                const airVal = scaleToHeight(airAmp);
+                let subVal, bassVal, lowMidVal, midVal, highMidVal, highVal, airVal;
+
+                if (TEST_MODE) {
+                    // Generate sine wave animation for testing
+                    const time = Date.now() / 1000;
+                    const fakeSubAmp = 50 + Math.sin(time * 1) * 40;
+                    const fakeBassAmp = 60 + Math.sin(time * 1.2) * 50;
+                    const fakeLowMidAmp = 70 + Math.sin(time * 1.5) * 60;
+                    const fakeMidAmp = 80 + Math.sin(time * 1.8) * 70;
+                    const fakeHighMidAmp = 75 + Math.sin(time * 2.1) * 65;
+                    const fakeHighAmp = 65 + Math.sin(time * 2.4) * 55;
+                    const fakeAirAmp = 55 + Math.sin(time * 2.7) * 45;
+
+                    subVal = scaleToHeight(fakeSubAmp);
+                    bassVal = scaleToHeight(fakeBassAmp);
+                    lowMidVal = scaleToHeight(fakeLowMidAmp);
+                    midVal = scaleToHeight(fakeMidAmp);
+                    highMidVal = scaleToHeight(fakeHighMidAmp);
+                    highVal = scaleToHeight(fakeHighAmp);
+                    airVal = scaleToHeight(fakeAirAmp);
+
+                    // Log test mode status once per second
+                    if (frameCount % 60 === 0) {
+                        console.log('🧪 TEST MODE: Fake bars animating. Bass:', fakeBassAmp.toFixed(0), '→', bassVal.toFixed(1) + '%');
+                    }
+                } else {
+                    // Use real audio data
+                    subVal = scaleToHeight(subBassAmp);
+                    bassVal = scaleToHeight(bassAmp);
+                    lowMidVal = scaleToHeight(lowMidAmp);
+                    midVal = scaleToHeight(midAmp);
+                    highMidVal = scaleToHeight(highMidAmp);
+                    highVal = scaleToHeight(highAmp);
+                    airVal = scaleToHeight(airAmp);
+
+                    // Add console log to verify bars are updating
+                    if (frameCount % 30 === 0) {
+                        console.log('🎚️ EQ Amplitudes:', {
+                            sub: subBassAmp.toFixed(0),
+                            bass: bassAmp.toFixed(0),
+                            mid: midAmp.toFixed(0),
+                            high: highAmp.toFixed(0)
+                        });
+                    }
+                }
 
                 // Update DOM elements with clipping detection
                 const eqSub = document.getElementById('eqSub');
@@ -3693,13 +3725,22 @@
                     }
                 }
 
-                updateBar(eqSub, subVal, subBassAmp, 'Sub (60Hz)', 'eqSubValue');
-                updateBar(eqBass, bassVal, bassAmp, 'Bass (250Hz)', 'eqBassValue');
-                updateBar(eqLowMid, lowMidVal, lowMidAmp, 'Low-Mids (500Hz)', 'eqLowMidValue');
-                updateBar(eqMid, midVal, midAmp, 'Mids (1kHz)', 'eqMidValue');
-                updateBar(eqHighMid, highMidVal, highMidAmp, 'High-Mids (2kHz)', 'eqHighMidValue');
-                updateBar(eqHigh, highVal, highAmp, 'Highs (8kHz)', 'eqHighValue');
-                updateBar(eqAir, airVal, airAmp, 'Air (16kHz)', 'eqAirValue');
+                // Use fake or real amplitude values depending on TEST_MODE
+                const subAmp = TEST_MODE ? (50 + Math.sin(Date.now() / 1000 * 1) * 40) : subBassAmp;
+                const bAmp = TEST_MODE ? (60 + Math.sin(Date.now() / 1000 * 1.2) * 50) : bassAmp;
+                const lmAmp = TEST_MODE ? (70 + Math.sin(Date.now() / 1000 * 1.5) * 60) : lowMidAmp;
+                const mAmp = TEST_MODE ? (80 + Math.sin(Date.now() / 1000 * 1.8) * 70) : midAmp;
+                const hmAmp = TEST_MODE ? (75 + Math.sin(Date.now() / 1000 * 2.1) * 65) : highMidAmp;
+                const hAmp = TEST_MODE ? (65 + Math.sin(Date.now() / 1000 * 2.4) * 55) : highAmp;
+                const aAmp = TEST_MODE ? (55 + Math.sin(Date.now() / 1000 * 2.7) * 45) : airAmp;
+
+                updateBar(eqSub, subVal, subAmp, 'Sub (60Hz)', 'eqSubValue');
+                updateBar(eqBass, bassVal, bAmp, 'Bass (250Hz)', 'eqBassValue');
+                updateBar(eqLowMid, lowMidVal, lmAmp, 'Low-Mids (500Hz)', 'eqLowMidValue');
+                updateBar(eqMid, midVal, mAmp, 'Mids (1kHz)', 'eqMidValue');
+                updateBar(eqHighMid, highMidVal, hmAmp, 'High-Mids (2kHz)', 'eqHighMidValue');
+                updateBar(eqHigh, highVal, hAmp, 'Highs (8kHz)', 'eqHighValue');
+                updateBar(eqAir, airVal, aAmp, 'Air (16kHz)', 'eqAirValue');
 
                 // ⚡⚡ PHASE 2: ENHANCED SPECTRUM ANALYZER - Draw Frequency Response Curve
                 const curveCanvas = document.getElementById('frequencyCurve');
