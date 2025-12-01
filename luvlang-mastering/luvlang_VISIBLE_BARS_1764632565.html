@@ -3600,19 +3600,22 @@
                 const maxHeight = 90;
 
                 function scaleToHeight(amplitude) {
-                    // EXTREME scaling for maximum visual response
+                    // ULTRA AGGRESSIVE scaling for MAXIMUM visual response
 
-                    if (amplitude < 1) return minHeight;
+                    if (amplitude < 0.5) return minHeight;
 
-                    // Direct linear mapping - SIMPLE and RESPONSIVE
-                    // 0-255 → 30-90%
+                    // Apply logarithmic boost for better visibility
+                    // Even quiet sounds will show big bars
                     let percent = (amplitude / 255) * 100;
 
-                    // EXTREME BOOST: multiply by 5 for hypersensitivity
-                    percent = percent * 5;
+                    // ULTRA BOOST: multiply by 15 for hypersensitivity
+                    percent = percent * 15;
+
+                    // Add bass boost - ensures low end is always visible
+                    percent = percent + 20;
 
                     // Ensure within bounds
-                    return Math.min(maxHeight, Math.max(minHeight, percent));
+                    return Math.min(95, Math.max(60, percent));
                 }
 
                 // 🧪 TEST MODE: Generate fake animated bars to test visualization
@@ -3687,8 +3690,8 @@
                         return;
                     }
 
-                    // Ensure value is at least 50% for visibility (minimum height)
-                    const displayValue = Math.max(50, Math.min(95, value));
+                    // Ensure value is at least 60% for visibility (bars always BIG)
+                    const displayValue = Math.max(60, Math.min(98, value));
                     element.style.height = displayValue + '%';
 
                     // ⚡ PROFESSIONAL: Update peak hold indicator
