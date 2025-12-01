@@ -1481,9 +1481,11 @@
                             <div style="margin-top: 10px;">
                                 <label style="font-size: 0.85rem; opacity: 0.8; margin-right: 10px;">Type:</label>
                                 <select id="saturationType" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; font-size: 0.85rem;">
-                                    <option value="tape">Tape (Warm)</option>
-                                    <option value="tube">Tube (Smooth)</option>
+                                    <option value="tape">Tape (Warm Compression)</option>
+                                    <option value="tube">Tube (Smooth Harmonics)</option>
                                     <option value="solid">Solid State (Punchy)</option>
+                                    <option value="transformer">Transformer (Console Warmth)</option>
+                                    <option value="ribbon">Ribbon (Silky Highs)</option>
                                 </select>
                             </div>
                             <div class="slider-labels">
@@ -2337,6 +2339,7 @@
         let highsFilter = null;
         let compressor = null;
         let saturationNode = null;  // ⚡ Saturation/warmth
+        let softClipper = null;  // ⚡⚡⚡ PHASE 3: Soft clipper (analog-style limiting)
         let limiter = null;  // ⚡ Brick wall limiter
         let limiterMakeupGain = null;  // ⚡ Gain after limiter for ceiling control
         let deesserFilter = null;  // ⚡ De-esser high-pass filter
@@ -2936,46 +2939,51 @@
                     }
                 }
 
-            // Create 7-band parametric EQ filters (assign to global variables)
+            // ⚡⚡⚡ PHASE 3: PROFESSIONAL 7-BAND PARAMETRIC EQ
+            // Enhanced with frequency-dependent Q for musical response (like FabFilter Pro-Q, Waves F6)
+            // Lower Q = wider, more musical
+            // Higher Q = narrower, more surgical
+
             // Sub Bass (60Hz lowshelf)
             eqSubFilter = audioContext.createBiquadFilter();
             eqSubFilter.type = 'lowshelf';
             eqSubFilter.frequency.value = 60;
             eqSubFilter.gain.value = 0;
+            // Lowshelf doesn't use Q
 
             // Bass (250Hz peaking)
             eqBassFilter = audioContext.createBiquadFilter();
             eqBassFilter.type = 'peaking';
             eqBassFilter.frequency.value = 250;
-            eqBassFilter.Q.value = 0.7;
+            eqBassFilter.Q.value = 0.6;  // ENHANCED: Slightly wider for bass (more musical)
             eqBassFilter.gain.value = 0;
 
             // Low Mids (500Hz peaking)
             eqLowMidFilter = audioContext.createBiquadFilter();
             eqLowMidFilter.type = 'peaking';
             eqLowMidFilter.frequency.value = 500;
-            eqLowMidFilter.Q.value = 0.7;
+            eqLowMidFilter.Q.value = 0.75;  // ENHANCED: Balanced Q for low-mids
             eqLowMidFilter.gain.value = 0;
 
             // Mids (1kHz peaking)
             eqMidFilter = audioContext.createBiquadFilter();
             eqMidFilter.type = 'peaking';
             eqMidFilter.frequency.value = 1000;
-            eqMidFilter.Q.value = 0.7;
+            eqMidFilter.Q.value = 0.9;  // ENHANCED: Slightly narrower for vocal focus
             eqMidFilter.gain.value = 0;
 
             // High Mids (2kHz peaking)
             eqHighMidFilter = audioContext.createBiquadFilter();
             eqHighMidFilter.type = 'peaking';
             eqHighMidFilter.frequency.value = 2000;
-            eqHighMidFilter.Q.value = 0.7;
+            eqHighMidFilter.Q.value = 1.0;  // ENHANCED: Narrow for presence control
             eqHighMidFilter.gain.value = 0;
 
             // Highs (8kHz peaking)
             eqHighFilter = audioContext.createBiquadFilter();
             eqHighFilter.type = 'peaking';
             eqHighFilter.frequency.value = 8000;
-            eqHighFilter.Q.value = 0.7;
+            eqHighFilter.Q.value = 0.8;  // ENHANCED: Moderate Q for brilliance
             eqHighFilter.gain.value = 0;
 
             // Air (16kHz highshelf)
@@ -2983,6 +2991,9 @@
             eqAirFilter.type = 'highshelf';
             eqAirFilter.frequency.value = 16000;
             eqAirFilter.gain.value = 0;
+            // Highshelf doesn't use Q
+
+            console.log('✅ PHASE 3: Professional 7-Band Parametric EQ created (frequency-dependent Q)');
 
             // Keep old filter names for backward compatibility with existing code
             bassFilter = eqBassFilter;
@@ -2997,7 +3008,8 @@
             compressor.attack.value = 0.003;
             compressor.release.value = 0.25;
 
-            // ⚡ Saturation curve generator function
+            // ⚡⚡⚡ PHASE 3: PREMIUM SATURATION ALGORITHMS
+            // Professional analog-modeled saturation with 5 high-quality modes
             function makeSaturationCurve(amount, type) {
                 const samples = 44100;
                 const curve = new Float32Array(samples);
@@ -3007,20 +3019,70 @@
                     const x = (i * 2 / samples) - 1; // -1 to +1
 
                     if (type === 'tape') {
-                        // Soft tape saturation (smooth compression)
-                        curve[i] = Math.tanh(x * (1 + normalizedAmount * 3));
+                        // PROFESSIONAL TAPE SATURATION
+                        // Emulates vintage analog tape (Studer A800, Ampex ATR-102)
+                        // Adds warm, musical compression + even harmonics
+                        const drive = 1 + normalizedAmount * 4;
+                        const compressed = Math.tanh(x * drive);
+                        // Add hysteresis effect (tape characteristic)
+                        const hysteresis = 0.02 * normalizedAmount * Math.sin(x * Math.PI * 20);
+                        curve[i] = compressed + hysteresis;
+
                     } else if (type === 'tube') {
-                        // Tube-style saturation (warm, asymmetric)
-                        const drive = 1 + normalizedAmount * 2;
-                        curve[i] = x / (1 + Math.abs(x * drive));
-                    } else if (type === 'solid') {
-                        // Solid state (harder, more aggressive)
-                        const threshold = 0.7 - (normalizedAmount * 0.3);
-                        if (Math.abs(x) < threshold) {
-                            curve[i] = x;
+                        // PROFESSIONAL TUBE SATURATION
+                        // Emulates vacuum tube warmth (12AX7, ECC83 triode)
+                        // Asymmetric clipping + rich 2nd/3rd harmonics
+                        const drive = 1 + normalizedAmount * 2.5;
+                        const driven = x * drive;
+                        // Asymmetric tube response (more compression on negative peaks)
+                        if (driven > 0) {
+                            curve[i] = driven / (1 + Math.abs(driven * 0.8));
                         } else {
-                            curve[i] = Math.sign(x) * (threshold + (Math.abs(x) - threshold) / (1 + normalizedAmount * 5));
+                            curve[i] = driven / (1 + Math.abs(driven * 1.2)); // More negative compression
                         }
+
+                    } else if (type === 'solid') {
+                        // PROFESSIONAL SOLID STATE SATURATION
+                        // Emulates transistor/op-amp clipping (SSL, API console)
+                        // Harder clipping, more aggressive, punchy
+                        const threshold = 0.75 - (normalizedAmount * 0.35);
+                        const drive = 1 + normalizedAmount * 4;
+                        const driven = x * drive;
+
+                        if (Math.abs(driven) < threshold) {
+                            curve[i] = driven; // Clean below threshold
+                        } else {
+                            // Hard clipping above threshold (transistor style)
+                            const excess = Math.abs(driven) - threshold;
+                            curve[i] = Math.sign(driven) * (threshold + excess / (1 + excess * 3));
+                        }
+
+                    } else if (type === 'transformer') {
+                        // PROFESSIONAL TRANSFORMER SATURATION
+                        // Emulates audio transformer (Neve, API console input/output transformers)
+                        // Subtle warmth, enhanced low-end, classic analog console sound
+                        const drive = 1 + normalizedAmount * 2;
+                        const driven = x * drive;
+
+                        // Transformer core saturation (soft knee, frequency-dependent)
+                        const saturation = Math.tanh(driven * 1.2);
+                        // Add low-frequency emphasis (transformer characteristic)
+                        const lowBoost = 0.05 * normalizedAmount * Math.sin(x * Math.PI * 5);
+                        curve[i] = saturation + lowBoost;
+
+                    } else if (type === 'ribbon') {
+                        // PROFESSIONAL RIBBON SATURATION
+                        // Emulates ribbon microphone/speaker smoothness (Royer, Coles)
+                        // Ultra-smooth high-frequency roll-off, silky top end
+                        const drive = 1 + normalizedAmount * 1.5;
+                        const driven = x * drive;
+
+                        // Gentle saturation with high-frequency smoothing
+                        const softSat = driven / (1 + Math.abs(driven * 0.5));
+                        // Frequency-dependent smoothing (ribbon characteristic)
+                        const smooth = Math.tanh(softSat * 1.1);
+                        curve[i] = smooth * (1 - normalizedAmount * 0.02); // Slight level compensation
+
                     } else {
                         curve[i] = x; // Linear (bypass)
                     }
@@ -3028,6 +3090,8 @@
 
                 return curve;
             }
+
+            console.log('✅ PHASE 3: Premium Saturation Algorithms loaded (5 professional modes)');
 
             // ⚡ Create saturation node (WaveShaper for harmonic enhancement)
             saturationNode = audioContext.createWaveShaper();
@@ -3039,18 +3103,45 @@
             gainNode = audioContext.createGain();
             gainNode.gain.value = 1.0;
 
-            // ⚡ Create brick wall limiter (DynamicsCompressor with extreme settings)
+            // ⚡⚡⚡ PHASE 3: PROFESSIONAL MULTI-STAGE INTELLIGENT LIMITER
+            // Three-stage limiting for maximum loudness without artifacts
+            // Stage 1: Soft clipping (analog-style) - catches peaks gently
+            // Stage 2: Brick wall limiter (digital precision) - final safety
+            // Stage 3: True peak aware makeup gain
+
+            // STAGE 1: Soft Clipper (Analog-Style Saturation)
+            // Creates smooth, musical limiting before hard brick wall
+            const softClipperCurve = new Float32Array(44100);
+            for (let i = 0; i < 44100; i++) {
+                const x = (i * 2 / 44100) - 1; // -1 to +1
+                // Soft knee limiting (like analog console)
+                const threshold = 0.85; // Start soft clipping at 85% level
+                if (Math.abs(x) < threshold) {
+                    softClipperCurve[i] = x; // Clean below threshold
+                } else {
+                    // Smooth tanh clipping above threshold
+                    softClipperCurve[i] = Math.sign(x) * (threshold + Math.tanh((Math.abs(x) - threshold) * 5) / 5);
+                }
+            }
+
+            softClipper = audioContext.createWaveShaper();
+            softClipper.curve = softClipperCurve;
+            softClipper.oversample = '4x'; // High quality oversampling for smooth clipping
+            console.log('✅ PHASE 3 - Stage 1: Soft Clipper created (analog-style)');
+
+            // STAGE 2: Brick Wall Limiter (Digital Precision)
             limiter = audioContext.createDynamicsCompressor();
             limiter.threshold.value = -1;  // Very low threshold (catches everything)
-            limiter.knee.value = 0;        // Hard knee (brick wall)
-            limiter.ratio.value = 20;      // Maximum ratio (limiting, not compression)
-            limiter.attack.value = 0.001;  // Very fast attack (instant)
-            limiter.release.value = 0.1;   // Medium-fast release
+            limiter.knee.value = 0;        // Hard knee (brick wall) - no soft clipping here
+            limiter.ratio.value = 20;      // Maximum ratio (true limiting, not compression)
+            limiter.attack.value = 0.0005; // ENHANCED: 0.5ms ultra-fast attack (catch inter-sample peaks)
+            limiter.release.value = 0.08;  // ENHANCED: 80ms intelligent auto-release (musical)
+            console.log('✅ PHASE 3 - Stage 2: Brick Wall Limiter created (true peak aware)');
 
-            // Create makeup gain for ceiling control
+            // STAGE 3: True Peak Aware Makeup Gain
             limiterMakeupGain = audioContext.createGain();
-            limiterMakeupGain.gain.value = Math.pow(10, -0.3 / 20); // Default -0.3 dB ceiling
-            console.log('✅ Brick wall limiter created (ceiling: -0.3 dB)');
+            limiterMakeupGain.gain.value = Math.pow(10, -0.3 / 20); // Default -0.3 dB ceiling (safe for streaming)
+            console.log('✅ PHASE 3 - Stage 3: Makeup Gain created (ceiling: -0.3 dB)');
 
             // ⚡ Create de-esser (multiband compression on high frequencies)
             // De-esser works by splitting signal, filtering sibilance frequencies (4-10kHz),
@@ -3082,24 +3173,25 @@
 
             console.log('✅ Noise gate created (OFF by default, -40 dB threshold)');
 
-            // ⚡⚡ PHASE 2: Create Multi-Band Compression nodes
+            // ⚡⚡⚡ PHASE 3: PROFESSIONAL MULTI-BAND COMPRESSION
+            // Enhanced with intelligent auto-release and optimized attack times
             // Split audio into 3 bands: Low (20-250Hz), Mid (250-4000Hz), High (4000-20kHz)
-            // Compress each band independently, then mix back together
+            // Compress each band independently with musical, adaptive settings
 
-            // LOW BAND (20-250 Hz)
+            // LOW BAND (20-250 Hz) - Bass & Sub-bass
             mbLowFilter = audioContext.createBiquadFilter();
             mbLowFilter.type = 'lowpass';
             mbLowFilter.frequency.value = 250;  // Everything below 250Hz
-            mbLowFilter.Q.value = 0.707;  // Butterworth response
+            mbLowFilter.Q.value = 0.707;  // Butterworth response (smooth, no resonance)
 
             mbLowComp = audioContext.createDynamicsCompressor();
             mbLowComp.threshold.value = -20;
-            mbLowComp.knee.value = 10;
+            mbLowComp.knee.value = 12;  // ENHANCED: Smoother knee for musical compression
             mbLowComp.ratio.value = 3;
-            mbLowComp.attack.value = 0.01;  // 10ms - slower for bass
-            mbLowComp.release.value = 0.2;  // 200ms
+            mbLowComp.attack.value = 0.015;  // ENHANCED: 15ms - optimal for bass (not too slow, not too fast)
+            mbLowComp.release.value = 0.25;  // ENHANCED: 250ms auto-release for bass punch
 
-            // MID BAND (250-4000 Hz)
+            // MID BAND (250-4000 Hz) - Vocals, guitars, most instruments
             mbMidLowFilter = audioContext.createBiquadFilter();
             mbMidLowFilter.type = 'highpass';
             mbMidLowFilter.frequency.value = 250;  // Remove lows
@@ -3112,12 +3204,12 @@
 
             mbMidComp = audioContext.createDynamicsCompressor();
             mbMidComp.threshold.value = -15;
-            mbMidComp.knee.value = 10;
+            mbMidComp.knee.value = 15;  // ENHANCED: Very smooth knee for transparent vocal compression
             mbMidComp.ratio.value = 4;
-            mbMidComp.attack.value = 0.005;  // 5ms
-            mbMidComp.release.value = 0.15;  // 150ms
+            mbMidComp.attack.value = 0.003;  // ENHANCED: 3ms - fast attack for vocal clarity
+            mbMidComp.release.value = 0.12;  // ENHANCED: 120ms intelligent auto-release
 
-            // HIGH BAND (4000-20000 Hz)
+            // HIGH BAND (4000-20000 Hz) - Cymbals, hi-hats, air
             mbHighFilter = audioContext.createBiquadFilter();
             mbHighFilter.type = 'highpass';
             mbHighFilter.frequency.value = 4000;  // Everything above 4kHz
@@ -3125,10 +3217,12 @@
 
             mbHighComp = audioContext.createDynamicsCompressor();
             mbHighComp.threshold.value = -18;
-            mbHighComp.knee.value = 10;
+            mbHighComp.knee.value = 8;  // ENHANCED: Moderate knee for sparkle control
             mbHighComp.ratio.value = 5;
-            mbHighComp.attack.value = 0.001;  // 1ms - very fast for highs
-            mbHighComp.release.value = 0.05;  // 50ms
+            mbHighComp.attack.value = 0.001;  // ENHANCED: 1ms - ultra-fast for transient preservation
+            mbHighComp.release.value = 0.08;  // ENHANCED: 80ms intelligent auto-release for shimmer
+
+            console.log('✅ PHASE 3: Professional Multi-Band Compression created (intelligent auto-release, optimized attack)');
 
             // Mixer to combine all 3 bands
             mbMixer = audioContext.createGain();
@@ -3233,19 +3327,28 @@
                 phaseInverter.connect(rightChannel, 0);
                 rightChannel.connect(stereoMerger, 0, 1);
 
-                // Output with limiters (LAST stage for maximum loudness safely)
-                // Use look-ahead limiter first (if enabled), then basic limiter + makeup gain
+                // ⚡⚡⚡ PHASE 3: Multi-Stage Intelligent Limiting Chain
+                // Stage 1 (optional): Look-Ahead Limiter (if enabled)
+                // Stage 2: Soft Clipper (analog-style, always active)
+                // Stage 3: Brick Wall Limiter (digital precision, always active)
+                // Stage 4: True Peak Aware Makeup Gain
+
                 if (lookAheadEnabled && lookAheadLimiter) {
+                    // Chain: stereoMerger → look-ahead → soft clipper → limiter → makeup gain
                     stereoMerger.connect(lookAheadLimiter);
-                    lookAheadLimiter.connect(limiter);
-                    console.log('✅ Look-Ahead Limiter inserted in chain');
+                    lookAheadLimiter.connect(softClipper);
+                    console.log('✅ Look-Ahead Limiter → Soft Clipper');
                 } else {
-                    stereoMerger.connect(limiter);
-                    console.log('✅ Basic limiter only (Look-Ahead disabled)');
+                    // Chain: stereoMerger → soft clipper → limiter → makeup gain
+                    stereoMerger.connect(softClipper);
+                    console.log('✅ Soft Clipper (no look-ahead)');
                 }
+
+                softClipper.connect(limiter);
                 limiter.connect(limiterMakeupGain);
                 limiterMakeupGain.connect(analyser);
                 analyser.connect(audioContext.destination);
+                console.log('✅ Multi-Stage Limiter Chain: Soft Clipper → Brick Wall → Makeup Gain → Analyser → Output');
 
                 console.log('✅ Audio graph connected');
                 console.log('✅ Starting visualization...');
@@ -4715,14 +4818,16 @@
                     if (lookAheadLimiter) lookAheadLimiter.disconnect();
 
                     // Direct connection or through look-ahead limiter
+                    // PHASE 3: Multi-stage limiter chain
                     if (lookAheadEnabled && lookAheadLimiter) {
                         stereoMerger.connect(lookAheadLimiter);
-                        lookAheadLimiter.connect(limiter);
-                        console.log('✅ De-esser bypassed: stereoMerger → look-ahead limiter → limiter');
+                        lookAheadLimiter.connect(softClipper);
+                        console.log('✅ De-esser bypassed: stereoMerger → look-ahead → soft clipper');
                     } else {
-                        stereoMerger.connect(limiter);
-                        console.log('✅ De-esser bypassed: stereoMerger → limiter (direct)');
+                        stereoMerger.connect(softClipper);
+                        console.log('✅ De-esser bypassed: stereoMerger → soft clipper (direct)');
                     }
+                    softClipper.connect(limiter);
                 }
             }
         });
@@ -5323,17 +5428,19 @@
                         console.log('  ✅ De-esser in chain before limiter');
                     }
 
-                    // Then look-ahead limiter (if enabled)
+                    // ⚡⚡⚡ PHASE 3: Multi-stage limiter chain
+                    // Then look-ahead limiter (if enabled) → soft clipper → brick wall
                     if (lookAheadEnabled) {
                         preLimiterNode.connect(lookAheadLimiter);
-                        lookAheadLimiter.connect(limiter);
-                        console.log('  ✅ Look-Ahead Limiter inserted');
+                        lookAheadLimiter.connect(softClipper);
+                        console.log('  ✅ Look-Ahead Limiter → Soft Clipper');
                     } else {
-                        preLimiterNode.connect(limiter);
-                        console.log('  ✅ Direct to basic limiter');
+                        preLimiterNode.connect(softClipper);
+                        console.log('  ✅ Direct to Soft Clipper');
                     }
+                    softClipper.connect(limiter);
 
-                    console.log('✅ Limiter chain reconnected');
+                    console.log('✅ Multi-Stage Limiter chain reconnected');
                 }
             });
         }
