@@ -3549,9 +3549,13 @@
             function draw() {
                 requestAnimationFrame(draw);
 
-                // 🔧 DIAGNOSTIC: Log that draw() is being called
-                if (frameCount === 0) {
-                    console.log('🎬 FIRST FRAME: draw() animation loop started!');
+                // 🔧 DIAGNOSTIC: ALWAYS log first frame to verify code is loaded
+                if (frameCount <= 0) {
+                    console.log('🎬🎬🎬 FIRST FRAME: draw() animation loop started! Frame:', frameCount);
+                    console.log('🔧 EQ Bar Elements Check:');
+                    console.log('  eqSub:', !!document.getElementById('eqSub'));
+                    console.log('  eqBass:', !!document.getElementById('eqBass'));
+                    console.log('  eqMid:', !!document.getElementById('eqMid'));
                 }
 
                 // Get frequency data
@@ -3975,7 +3979,7 @@
                     // Only update if value is reasonable (not -Infinity during silence)
                     if (estimatedLUFS > -60) {
                         // 🔍 DEBUG: Log every LUFS meter update
-                        console.log('📊 UPDATING LUFS METER:', estimatedLUFS.toFixed(1), 'LUFS (RMS:', rms.toFixed(4), ')');
+                        console.log('📊 UPDATING LUFS METER:', estimatedLUFS.toFixed(1), 'LUFS (RMS:', rms.toFixed(4), ') [v2.0-DIAGNOSTIC]');
 
                         lufsElement.textContent = estimatedLUFS.toFixed(1);
 
