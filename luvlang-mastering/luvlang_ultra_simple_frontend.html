@@ -535,22 +535,25 @@
         }
 
         .eq-bar {
-            width: 45px;
-            min-height: 50px; /* INCREASED: Much taller minimum for visibility */
+            width: 50px;
+            min-height: 40px;
+            /* Professional gradient: FabFilter/iZotope style */
             background: linear-gradient(to top,
-                rgba(67, 233, 123, 1) 0%,
-                rgba(67, 233, 123, 1) 10%,
-                rgba(102, 126, 234, 1) 50%,
-                rgba(118, 75, 162, 1) 90%,
-                rgba(118, 75, 162, 1) 100%);
-            border-radius: 8px 8px 3px 3px;
-            transition: height 0.08s linear; /* Faster, linear for immediate response */
+                #00ff88 0%,      /* Bright green bottom */
+                #00e5ff 25%,     /* Cyan */
+                #667eea 50%,     /* Blue middle */
+                #f093fb 75%,     /* Pink */
+                #ff6b9d 100%);   /* Hot pink top */
+            border-radius: 4px 4px 2px 2px;
+            transition: height 0.05s ease-out; /* Smooth but fast */
             position: relative;
             box-shadow:
-                0 0 30px rgba(102, 126, 234, 0.8),
-                0 0 60px rgba(102, 126, 234, 0.4),
-                inset 0 -2px 10px rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+                0 0 20px rgba(102, 126, 234, 0.6),
+                0 4px 12px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
         }
 
         /* Glow effect when bar is tall */
@@ -670,6 +673,65 @@
             color: rgba(102, 126, 234, 0.9);
             text-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
             line-height: 1.3;
+        }
+
+        /* ⚡ PROFESSIONAL PEAK HOLD INDICATOR */
+        .eq-peak-hold {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 3px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                #ff0080 10%,
+                #ff0040 50%,
+                #ff0080 90%,
+                transparent 100%);
+            box-shadow:
+                0 0 8px rgba(255, 0, 128, 0.8),
+                0 0 4px rgba(255, 0, 128, 1);
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.3s ease-out, bottom 0.05s ease-out;
+        }
+
+        .eq-peak-hold.visible {
+            opacity: 1;
+        }
+
+        /* dB Scale markers on left side */
+        .eq-db-scale {
+            position: absolute;
+            left: 5px;
+            top: 30px;
+            bottom: 30px;
+            width: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: rgba(102, 126, 234, 0.5);
+            font-family: 'Monaco', 'Courier New', monospace;
+            z-index: 1;
+        }
+
+        .eq-db-scale span {
+            position: relative;
+            text-align: right;
+            line-height: 1;
+        }
+
+        .eq-db-scale span::after {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 50%;
+            width: 100vw;
+            height: 1px;
+            background: rgba(102, 126, 234, 0.08);
         }
 
         /* Progress Overlay */
@@ -1998,38 +2060,59 @@
 
                 <!-- EQ Bars (Evenly Aligned) -->
                 <div class="visual-eq">
+                    <!-- ⚡ PROFESSIONAL: dB Scale -->
+                    <div class="eq-db-scale">
+                        <span>0</span>
+                        <span>-6</span>
+                        <span>-12</span>
+                        <span>-18</span>
+                        <span>-24</span>
+                        <span>-30</span>
+                        <span>-36</span>
+                        <span>-42</span>
+                        <span>-48</span>
+                        <span>-60</span>
+                    </div>
+
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqSubValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqSubPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqSub"></div>
                         <div class="eq-label">Sub<br>60Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqBassValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqBassPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqBass"></div>
                         <div class="eq-label">Bass<br>250Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqLowMidValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqLowMidPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqLowMid"></div>
                         <div class="eq-label">Low Mids<br>500Hz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqMidValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqMidPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqMid"></div>
                         <div class="eq-label">Mids<br>1kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighMidValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqHighMidPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqHighMid"></div>
                         <div class="eq-label">High Mids<br>2kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqHighValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqHighPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqHigh"></div>
                         <div class="eq-label">Highs<br>8kHz</div>
                     </div>
                     <div class="eq-bar-container">
                         <div class="eq-bar-value" id="eqAirValue">-60 dB</div>
+                        <div class="eq-peak-hold" id="eqAirPeak"></div>
                         <div class="eq-bar" style="height: 30%;" id="eqAir"></div>
                         <div class="eq-label">Air<br>16kHz</div>
                     </div>
@@ -3546,6 +3629,20 @@
             console.log('🎵 Analyser:', analyser ? 'EXISTS' : 'NULL');
 
             let frameCount = 0;
+
+            // ⚡ PROFESSIONAL: Peak hold tracking for each band
+            const peakHolds = {
+                sub: { value: 0, decayCounter: 0 },
+                bass: { value: 0, decayCounter: 0 },
+                lowMid: { value: 0, decayCounter: 0 },
+                mid: { value: 0, decayCounter: 0 },
+                highMid: { value: 0, decayCounter: 0 },
+                high: { value: 0, decayCounter: 0 },
+                air: { value: 0, decayCounter: 0 }
+            };
+            const PEAK_HOLD_FRAMES = 90; // Hold for 1.5 seconds at 60fps
+            const PEAK_DECAY_RATE = 0.5; // Decay speed after hold expires
+
             function draw() {
                 requestAnimationFrame(draw);
 
@@ -3570,9 +3667,9 @@
                 // Increment frame counter
                 frameCount++;
 
-                // 🔧 DIAGNOSTIC: Log every 60 frames to verify animation loop is running
-                if (frameCount % 60 === 0) {
-                    console.log('⏱️ Animation Loop Running - Frame:', frameCount, 'Time:', Date.now());
+                // Animation loop is running - log occasionally for monitoring
+                if (frameCount % 180 === 0) { // Every 3 seconds
+                    console.log('⏱️ Animation Loop Active - Frame:', frameCount);
                 }
 
                 // Calculate frequency bin resolution
@@ -3626,7 +3723,7 @@
 
                 // 🧪 TEST MODE: Generate fake animated bars to test visualization
                 // This will make bars bounce even without audio to verify the mechanism works
-                const TEST_MODE = true; // Set to false to use real audio data
+                const TEST_MODE = false; // DISABLED - Now using REAL audio data for responsive visualization
 
                 // 🔧 DIAGNOSTIC: Log TEST_MODE status on first frame
                 if (frameCount === 0) {
@@ -3654,9 +3751,9 @@
                     highVal = scaleToHeight(fakeHighAmp);
                     airVal = scaleToHeight(fakeAirAmp);
 
-                    // Log test mode status on first few frames AND every 60 frames
-                    if (frameCount < 3 || frameCount % 60 === 0) {
-                        console.log('🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%', 'Time:', time.toFixed(2));
+                    // Log test mode status occasionally
+                    if (frameCount % 180 === 0) {
+                        console.log('🧪 TEST MODE Active - Frame', frameCount, 'Bass:', fakeBassAmp.toFixed(1), '→', bassVal.toFixed(1) + '%');
                     }
                 } else {
                     // Use real audio data
@@ -3688,22 +3785,44 @@
                 const eqHigh = document.getElementById('eqHigh');
                 const eqAir = document.getElementById('eqAir');
 
-                // Helper function to update bar with clipping detection
+                // Helper function to update bar with clipping detection AND peak hold
                 const clippingBands = [];
-                function updateBar(element, value, rawAmplitude, bandName, valueElementId) {
+                function updateBar(element, value, rawAmplitude, bandName, valueElementId, peakElementId, peakKey) {
                     if (!element) {
-                        console.error('❌ EQ BAR ELEMENT NOT FOUND:', bandName, 'ID should be:', valueElementId.replace('Value', ''));
+                        console.error('❌ EQ BAR ELEMENT NOT FOUND:', bandName);
                         return;
                     }
 
-                    // 🔧 DIAGNOSTIC: Log every update on first 10 frames
-                    if (frameCount < 10) {
-                        console.log('🔧 FRAME', frameCount, bandName, 'Input value:', value, 'Raw amp:', rawAmplitude, 'Element:', element.id);
-                    }
-
-                    // Ensure value is at least 30% for visibility (minimum height) - CHANGED from 10% to 30%
+                    // Ensure value is at least 30% for visibility (minimum height)
                     const displayValue = Math.max(30, Math.min(90, value));
                     element.style.height = displayValue + '%';
+
+                    // ⚡ PROFESSIONAL: Update peak hold indicator
+                    const peakElement = document.getElementById(peakElementId);
+                    if (peakElement && peakHolds[peakKey]) {
+                        const peak = peakHolds[peakKey];
+
+                        // Update peak if current value exceeds it
+                        if (displayValue > peak.value) {
+                            peak.value = displayValue;
+                            peak.decayCounter = PEAK_HOLD_FRAMES;
+                        }
+
+                        // Decay peak hold after hold time expires
+                        if (peak.decayCounter > 0) {
+                            peak.decayCounter--;
+                        } else if (peak.value > displayValue) {
+                            peak.value = Math.max(displayValue, peak.value - PEAK_DECAY_RATE);
+                        }
+
+                        // Position and show peak hold indicator
+                        if (peak.value > 30) {
+                            peakElement.style.bottom = peak.value + '%';
+                            peakElement.classList.add('visible');
+                        } else {
+                            peakElement.classList.remove('visible');
+                        }
+                    }
 
                     // 🔧 DIAGNOSTIC: Force immediate visual feedback
                     if (frameCount < 10) {
@@ -3733,8 +3852,8 @@
                     }
 
                     // Debug logging occasionally
-                    if (frameCount % 60 === 0 && bandName === 'Bass (250Hz)') {
-                        console.log('📊 EQ Bar Update:', bandName, 'Height:', displayValue.toFixed(1) + '%', 'dB:', dB.toFixed(1), 'Raw:', rawAmplitude.toFixed(0));
+                    if (frameCount % 180 === 0 && bandName === 'Bass (250Hz)') {
+                        console.log('📊 EQ Bar Update:', bandName, displayValue.toFixed(1) + '%', dB.toFixed(1) + 'dB');
                     }
 
                     // Clipping detection based on raw amplitude (0-255 scale)
@@ -3763,18 +3882,18 @@
                 const hAmp = TEST_MODE ? (65 + Math.sin(Date.now() / 1000 * 2.4) * 55) : highAmp;
                 const aAmp = TEST_MODE ? (55 + Math.sin(Date.now() / 1000 * 2.7) * 45) : airAmp;
 
-                // 🔧 DIAGNOSTIC: Log before updateBar calls
-                if (frameCount % 60 === 0) {
-                    console.log('🎚️ About to call updateBar - Bass height:', bassVal, 'Bass amp:', bAmp);
+                // Log updateBar calls occasionally for monitoring
+                if (frameCount % 180 === 0) {
+                    console.log('🎚️ EQ Bars updating - Bass height:', bassVal.toFixed(1) + '%', 'Amp:', bAmp.toFixed(1));
                 }
 
-                updateBar(eqSub, subVal, subAmp, 'Sub (60Hz)', 'eqSubValue');
-                updateBar(eqBass, bassVal, bAmp, 'Bass (250Hz)', 'eqBassValue');
-                updateBar(eqLowMid, lowMidVal, lmAmp, 'Low-Mids (500Hz)', 'eqLowMidValue');
-                updateBar(eqMid, midVal, mAmp, 'Mids (1kHz)', 'eqMidValue');
-                updateBar(eqHighMid, highMidVal, hmAmp, 'High-Mids (2kHz)', 'eqHighMidValue');
-                updateBar(eqHigh, highVal, hAmp, 'Highs (8kHz)', 'eqHighValue');
-                updateBar(eqAir, airVal, aAmp, 'Air (16kHz)', 'eqAirValue');
+                updateBar(eqSub, subVal, subAmp, 'Sub (60Hz)', 'eqSubValue', 'eqSubPeak', 'sub');
+                updateBar(eqBass, bassVal, bAmp, 'Bass (250Hz)', 'eqBassValue', 'eqBassPeak', 'bass');
+                updateBar(eqLowMid, lowMidVal, lmAmp, 'Low-Mids (500Hz)', 'eqLowMidValue', 'eqLowMidPeak', 'lowMid');
+                updateBar(eqMid, midVal, mAmp, 'Mids (1kHz)', 'eqMidValue', 'eqMidPeak', 'mid');
+                updateBar(eqHighMid, highMidVal, hmAmp, 'High-Mids (2kHz)', 'eqHighMidValue', 'eqHighMidPeak', 'highMid');
+                updateBar(eqHigh, highVal, hAmp, 'Highs (8kHz)', 'eqHighValue', 'eqHighPeak', 'high');
+                updateBar(eqAir, airVal, aAmp, 'Air (16kHz)', 'eqAirValue', 'eqAirPeak', 'air');
 
                 // ⚡⚡ PHASE 2: ENHANCED SPECTRUM ANALYZER - Draw Frequency Response Curve
                 const curveCanvas = document.getElementById('frequencyCurve');
