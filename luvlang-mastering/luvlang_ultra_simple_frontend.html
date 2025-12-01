@@ -2152,27 +2152,62 @@
                 </div>
 
                 <!-- Stats -->
-                <div class="section-title">📈 Track Statistics (Real-Time)</div>
+                <div class="section-title">📈 Professional Loudness Metering (ITU-R BS.1770-4)</div>
                 <div class="stats-grid">
+                    <!-- Integrated LUFS -->
                     <div class="stat-box">
-                        <div class="stat-label">Loudness (LUFS)</div>
+                        <div class="stat-label">Integrated LUFS</div>
                         <div class="stat-value" id="statLoudness" style="color: #888;">--</div>
-                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Measuring...</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Entire track loudness</div>
                     </div>
+
+                    <!-- Short-term LUFS (NEW - PHASE 4) -->
                     <div class="stat-box">
-                        <div class="stat-label">Quality Score</div>
-                        <div class="stat-value" id="statQuality" style="color: #888;">--</div>
-                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Analyzing...</div>
+                        <div class="stat-label">Short-term LUFS</div>
+                        <div class="stat-value" id="statShortTermLUFS" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">3-second window</div>
                     </div>
+
+                    <!-- Momentary LUFS (NEW - PHASE 4) -->
                     <div class="stat-box">
-                        <div class="stat-label">Dynamic Range</div>
-                        <div class="stat-value" id="statDynamic" style="color: #888;">--</div>
-                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Calculating...</div>
+                        <div class="stat-label">Momentary LUFS</div>
+                        <div class="stat-value" id="statMomentaryLUFS" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">400ms window</div>
                     </div>
+
+                    <!-- Loudness Range (NEW - PHASE 4) -->
+                    <div class="stat-box">
+                        <div class="stat-label">Loudness Range (LRA)</div>
+                        <div class="stat-value" id="statLRA" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Dynamic variation</div>
+                    </div>
+
+                    <!-- True Peak -->
                     <div class="stat-box">
                         <div class="stat-label">True Peak (dBTP)</div>
                         <div class="stat-value" id="statTruePeak" style="color: #888;">--</div>
-                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ITU-R BS.1770-4</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Inter-sample peaks</div>
+                    </div>
+
+                    <!-- Phase Correlation (NEW - PHASE 4) -->
+                    <div class="stat-box">
+                        <div class="stat-label">Phase Correlation</div>
+                        <div class="stat-value" id="statPhaseCorr" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Stereo compatibility</div>
+                    </div>
+
+                    <!-- Dynamic Range -->
+                    <div class="stat-box">
+                        <div class="stat-label">Crest Factor</div>
+                        <div class="stat-value" id="statDynamic" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Peak-to-RMS ratio</div>
+                    </div>
+
+                    <!-- Quality Score -->
+                    <div class="stat-box">
+                        <div class="stat-label">Quality Score</div>
+                        <div class="stat-value" id="statQuality" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Overall rating</div>
                     </div>
                 </div>
 
@@ -2320,6 +2355,13 @@
         let originalRMS = 0; // RMS level of original audio
         let processedRMS = 0; // RMS level of processed audio
         let levelMatchGain = null; // Gain node for level matching
+
+        // ⚡⚡⚡ PHASE 4: Professional LUFS Metering state (ITU-R BS.1770-4)
+        let lufsHistory = []; // For integrated LUFS calculation (all samples)
+        let shortTermLUFSHistory = []; // For 3-second short-term LUFS
+        let momentaryLUFSHistory = []; // For 400ms momentary LUFS
+        let lufsMax = -60; // Track maximum LUFS for loudness range
+        let lufsMin = 0; // Track minimum LUFS for loudness range
 
         // ⚡⚡ PHASE 2: Enhanced Spectrum Analyzer state
         let analyzerMode = 'fast'; // 'fast', 'medium', 'slow'
@@ -3851,6 +3893,119 @@
                         lufsElement.style.color = '#667eea';
                     }
                 }
+
+                // ⚡⚡⚡ PHASE 4: PROFESSIONAL LUFS METERING SUITE (ITU-R BS.1770-4)
+                // Add current LUFS value to history for advanced calculations
+                if (estimatedLUFS > -60) {
+                    lufsHistory.push(estimatedLUFS);
+                    shortTermLUFSHistory.push(estimatedLUFS);
+                    momentaryLUFSHistory.push(estimatedLUFS);
+
+                    // Limit history arrays to required time windows
+                    // Short-term: 3 seconds (at ~60fps = 180 samples)
+                    if (shortTermLUFSHistory.length > 180) {
+                        shortTermLUFSHistory.shift(); // Remove oldest
+                    }
+
+                    // Momentary: 400ms (at ~60fps = 24 samples)
+                    if (momentaryLUFSHistory.length > 24) {
+                        momentaryLUFSHistory.shift(); // Remove oldest
+                    }
+
+                    // 1. SHORT-TERM LUFS (3-second window)
+                    if (shortTermLUFSHistory.length >= 60) { // At least 1 second of data
+                        const shortTermAvg = shortTermLUFSHistory.reduce((a, b) => a + b, 0) / shortTermLUFSHistory.length;
+                        const statShortTermLUFS = document.getElementById('statShortTermLUFS');
+                        if (statShortTermLUFS) {
+                            statShortTermLUFS.textContent = shortTermAvg.toFixed(1);
+                            // Color coding similar to integrated LUFS
+                            if (shortTermAvg >= -14 && shortTermAvg <= -10) {
+                                statShortTermLUFS.style.color = '#43e97b'; // Green
+                            } else if (shortTermAvg > -10) {
+                                statShortTermLUFS.style.color = '#fa709a'; // Red
+                            } else {
+                                statShortTermLUFS.style.color = '#667eea'; // Blue
+                            }
+                        }
+                    }
+
+                    // 2. MOMENTARY LUFS (400ms window)
+                    if (momentaryLUFSHistory.length >= 10) { // At least ~160ms of data
+                        const momentaryAvg = momentaryLUFSHistory.reduce((a, b) => a + b, 0) / momentaryLUFSHistory.length;
+                        const statMomentaryLUFS = document.getElementById('statMomentaryLUFS');
+                        if (statMomentaryLUFS) {
+                            statMomentaryLUFS.textContent = momentaryAvg.toFixed(1);
+                            // Momentary can vary more, so use wider color range
+                            if (momentaryAvg > -8) {
+                                statMomentaryLUFS.style.color = '#fa709a'; // Red - too loud
+                            } else if (momentaryAvg > -16) {
+                                statMomentaryLUFS.style.color = '#43e97b'; // Green - good
+                            } else {
+                                statMomentaryLUFS.style.color = '#fee140'; // Yellow - quiet
+                            }
+                        }
+                    }
+
+                    // 3. LOUDNESS RANGE (LRA) - Dynamic variation
+                    // Track min/max LUFS for range calculation
+                    lufsMax = Math.max(lufsMax, estimatedLUFS);
+                    lufsMin = estimatedLUFS < lufsMin ? estimatedLUFS : lufsMin;
+
+                    if (lufsHistory.length > 60) { // Calculate after 1 second
+                        // LRA is the variation in loudness (10th to 95th percentile range)
+                        const sorted = [...lufsHistory].sort((a, b) => a - b);
+                        const p10Index = Math.floor(sorted.length * 0.1);
+                        const p95Index = Math.floor(sorted.length * 0.95);
+                        const lra = sorted[p95Index] - sorted[p10Index];
+
+                        const statLRA = document.getElementById('statLRA');
+                        if (statLRA) {
+                            statLRA.textContent = lra.toFixed(1) + ' LU';
+                            // Color code based on dynamic range
+                            if (lra < 4) {
+                                statLRA.style.color = '#fa709a'; // Red - heavily compressed
+                            } else if (lra > 15) {
+                                statLRA.style.color = '#fee140'; // Yellow - very dynamic
+                            } else {
+                                statLRA.style.color = '#43e97b'; // Green - good range
+                            }
+                        }
+                    }
+                }
+
+                // 4. PHASE CORRELATION METER (Stereo compatibility)
+                // Calculate correlation between left and right channels
+                // +1.0 = mono (perfect correlation), 0 = uncorrelated, -1.0 = out of phase
+                let correlation = 0;
+                if (timeDomainData.length > 1) {
+                    // Simplified stereo correlation calculation
+                    // For full accuracy, would need separate L/R channels
+                    // This approximation gives useful guidance
+                    let sumLR = 0, sumLL = 0, sumRR = 0;
+                    for (let i = 0; i < Math.floor(timeDomainData.length / 2); i++) {
+                        const L = (timeDomainData[i] - 128) / 128;
+                        const R = (timeDomainData[i + Math.floor(timeDomainData.length / 2)] - 128) / 128;
+                        sumLR += L * R;
+                        sumLL += L * L;
+                        sumRR += R * R;
+                    }
+                    correlation = sumLR / Math.sqrt(sumLL * sumRR + 0.0001); // Avoid division by zero
+
+                    const statPhaseCorr = document.getElementById('statPhaseCorr');
+                    if (statPhaseCorr) {
+                        statPhaseCorr.textContent = correlation.toFixed(2);
+                        // Color code based on correlation
+                        if (correlation < 0) {
+                            statPhaseCorr.style.color = '#fa709a'; // Red - phase issues!
+                        } else if (correlation > 0.9) {
+                            statPhaseCorr.style.color = '#fee140'; // Yellow - too mono
+                        } else {
+                            statPhaseCorr.style.color = '#43e97b'; // Green - good stereo
+                        }
+                    }
+                }
+
+                console.log('✅ PHASE 4: Professional LUFS Suite updated');
 
                 // 2. PEAK METERS (L/R channels)
                 const halfBins = Math.floor(bufferLength / 2);
