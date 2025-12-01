@@ -6409,19 +6409,20 @@
         let referenceAudioBuffer = null;
         let referenceFrequencyProfile = null;
 
-        // Setup reference track upload handlers
+        // Setup reference track upload handlers (OLD SYSTEM - kept for backward compatibility)
         const referenceUploadArea = document.getElementById('referenceUploadArea');
-        const referenceFileInput = document.getElementById('referenceFile');
+        const oldReferenceFileInput = document.getElementById('referenceFile');  // Renamed to avoid conflict
         const referenceAnalysisDiv = document.getElementById('referenceAnalysis');
         const referenceInfo = document.getElementById('referenceInfo');
         const applyReferenceBtn = document.getElementById('applyReferenceBtn');
         const clearReferenceBtn = document.getElementById('clearReferenceBtn');
 
-        referenceUploadArea.addEventListener('click', () => {
-            referenceFileInput.click();
-        });
+        if (referenceUploadArea && oldReferenceFileInput) {
+            referenceUploadArea.addEventListener('click', () => {
+                oldReferenceFileInput.click();
+            });
 
-        referenceFileInput.addEventListener('change', async (e) => {
+            oldReferenceFileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
@@ -6631,14 +6632,17 @@
             });
 
             alert('✨ Reference track settings applied! Your track now matches the reference frequency profile.');
-        });
+            });
+        }
 
-        clearReferenceBtn.addEventListener('click', () => {
-            referenceAnalysisDiv.style.display = 'none';
-            referenceFrequencyProfile = null;
-            referenceFileInput.value = '';
-            console.log('🗑️ Reference track cleared');
-        });
+        if (clearReferenceBtn) {
+            clearReferenceBtn.addEventListener('click', () => {
+                referenceAnalysisDiv.style.display = 'none';
+                referenceFrequencyProfile = null;
+                oldReferenceFileInput.value = '';
+                console.log('🗑️ Reference track cleared');
+            });
+        }
 
         // ⚡ 7-BAND PARAMETRIC EQ EVENT HANDLERS
         const eqSliders = {
