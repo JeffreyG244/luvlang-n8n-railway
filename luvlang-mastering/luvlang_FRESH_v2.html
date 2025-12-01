@@ -3570,9 +3570,9 @@
                 // Increment frame counter
                 frameCount++;
 
-                // 🔧 DIAGNOSTIC: Log every 60 frames to verify animation loop is running
-                if (frameCount % 60 === 0) {
-                    console.log('⏱️ Animation Loop Running - Frame:', frameCount, 'Time:', Date.now());
+                // 🔧 DIAGNOSTIC: UNCONDITIONAL logging every frame
+                if (frameCount <= 5 || frameCount % 60 === 0) {
+                    console.log('⏱️⏱️⏱️ FRAME:', frameCount, 'Type:', typeof frameCount, 'Modulo:', frameCount % 60);
                 }
 
                 // Calculate frequency bin resolution
@@ -3655,8 +3655,8 @@
                     airVal = scaleToHeight(fakeAirAmp);
 
                     // Log test mode status on first few frames AND every 60 frames
-                    if (frameCount < 3 || frameCount % 60 === 0) {
-                        console.log('🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%', 'Time:', time.toFixed(2));
+                    if (frameCount <= 5 || frameCount % 60 === 0) {
+                        console.log('🧪🧪🧪 TEST MODE Frame', frameCount, '- Bass amp:', fakeBassAmp.toFixed(1), '→ Height:', bassVal.toFixed(1) + '%', 'Time:', time.toFixed(2));
                     }
                 } else {
                     // Use real audio data
