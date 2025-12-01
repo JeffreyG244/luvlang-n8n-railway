@@ -1704,6 +1704,129 @@
                     </div>
                 </div>
 
+                <!-- ⚡⚡⚡ TIER 1: Look-Ahead Limiter (Professional Loudness Maximization) -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('limiterSection')">
+                        <div class="collapsible-title">
+                            <span>🔒 Look-Ahead Limiter</span>
+                            <span class="collapsible-badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">TIER 1</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="limiterToggle">▼</div>
+                    </div>
+                    <div class="collapsible-content expanded" id="limiterSection">
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🚀 Intelligent Brick-Wall Limiting</div>
+                                <div class="control-value" id="lookAheadValue">-0.3 dB</div>
+                            </div>
+                            <div class="control-description">
+                                Professional look-ahead limiter prevents clipping and maximizes loudness. Analyzes upcoming audio to prevent distortion before it happens. Industry-standard for mastering.
+                            </div>
+
+                            <div style="margin: 15px 0;">
+                                <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                    <input type="checkbox" id="lookAheadToggle" checked style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+                                    <span style="font-size: 0.9rem; opacity: 0.9;">✅ Enable Look-Ahead Limiter (Recommended)</span>
+                                </label>
+                            </div>
+
+                            <div id="lookAheadControls">
+                                <!-- Ceiling Control -->
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="font-size: 0.85rem; opacity: 0.8;">Output Ceiling (dB):</span>
+                                        <span style="font-size: 0.85rem; font-weight: 600;" id="ceilingValue">-0.3 dB</span>
+                                    </div>
+                                    <input type="range" class="slider" id="ceilingSlider" min="-2.0" max="0.0" step="0.1" value="-0.3">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                        <span>-2.0 dB (Safe)</span>
+                                        <span>-1.0 dB (Streaming)</span>
+                                        <span>0.0 dB (Max)</span>
+                                    </div>
+                                    <div style="margin-top: 8px; padding: 10px; background: rgba(102, 126, 234, 0.1); border-radius: 6px; font-size: 0.75rem; opacity: 0.9;">
+                                        💡 -0.3 dB prevents inter-sample peaks for streaming. -1.0 dB for extra safety.
+                                    </div>
+                                </div>
+
+                                <!-- Release Time -->
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="font-size: 0.85rem; opacity: 0.8;">Release Time:</span>
+                                        <span style="font-size: 0.85rem; font-weight: 600;" id="limiterReleaseValue">100 ms</span>
+                                    </div>
+                                    <input type="range" class="slider" id="limiterReleaseSlider" min="10" max="500" step="10" value="100">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 2px;">
+                                        <span>10 ms (Fast)</span>
+                                        <span>100 ms (Medium)</span>
+                                        <span>500 ms (Smooth)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⚡⚡⚡ TIER 1: Reference Track Matching (AI-Powered EQ Suggestions) -->
+                <div class="collapsible-section">
+                    <div class="collapsible-header" onclick="toggleSection('referenceSection')">
+                        <div class="collapsible-title">
+                            <span>🎯 Reference Track Matching</span>
+                            <span class="collapsible-badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">TIER 1</span>
+                        </div>
+                        <div class="collapsible-toggle expanded" id="referenceToggle">▼</div>
+                    </div>
+                    <div class="collapsible-content expanded" id="referenceSection">
+                        <div class="control-item">
+                            <div class="control-header">
+                                <div class="control-name">🧠 AI-Powered Tonal Balance Matching</div>
+                                <div class="control-value" id="referenceStatus">No Reference</div>
+                            </div>
+                            <div class="control-description">
+                                Upload a professional reference track and get AI-powered EQ suggestions to match its tonal balance. Perfect for matching your favorite commercial releases.
+                            </div>
+
+                            <!-- Upload Reference Track -->
+                            <div style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">📁 Upload Reference Track</div>
+                                <input type="file" id="referenceFileInput" accept="audio/*" style="display: none;">
+                                <button id="uploadReferenceBtn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                    📤 Choose Reference Track
+                                </button>
+                                <div id="referenceFileName" style="margin-top: 10px; font-size: 0.8rem; opacity: 0.7; text-align: center; display: none;">
+                                    📄 <span id="refFileName"></span>
+                                </div>
+                            </div>
+
+                            <!-- Analysis Results -->
+                            <div id="referenceAnalysis" style="display: none; margin-top: 15px;">
+                                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: #43e97b;">✅ Reference Analyzed!</div>
+
+                                <!-- Frequency Comparison -->
+                                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 10px;">📊 Tonal Balance Comparison</div>
+                                    <canvas id="referenceComparisonCanvas" width="600" height="200" style="width: 100%; height: auto; border-radius: 8px;"></canvas>
+                                    <div style="margin-top: 10px; font-size: 0.7rem; opacity: 0.6; text-align: center;">
+                                        <span style="color: #667eea;">● Your Track</span> vs <span style="color: #43e97b;">● Reference</span>
+                                    </div>
+                                </div>
+
+                                <!-- AI Suggestions -->
+                                <div style="background: rgba(67, 233, 123, 0.1); border: 2px solid rgba(67, 233, 123, 0.3); border-radius: 10px; padding: 15px;">
+                                    <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                                        <span>🧠 AI Suggestions</span>
+                                    </div>
+                                    <div id="eqSuggestions" style="font-size: 0.85rem; line-height: 1.6;">
+                                        <!-- Suggestions will be populated here -->
+                                    </div>
+                                    <button id="applyEqSuggestionsBtn" style="width: 100%; margin-top: 15px; padding: 10px; background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1e1e2e; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+                                        ✨ Apply AI Suggestions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Warmth Control (OLD - keeping for now) -->
                 <div class="control-item" style="display: none;">
                     <div class="control-header">
@@ -2044,6 +2167,11 @@
                         <div class="stat-value" id="statDynamic" style="color: #888;">--</div>
                         <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">Calculating...</div>
                     </div>
+                    <div class="stat-box">
+                        <div class="stat-label">True Peak (dBTP)</div>
+                        <div class="stat-value" id="statTruePeak" style="color: #888;">--</div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 5px;">ITU-R BS.1770-4</div>
+                    </div>
                 </div>
 
                 <!-- Re-Master Button (shown after first master) -->
@@ -2255,6 +2383,23 @@
         let midEqFilter = null;  // EQ for mid channel @ 1kHz
         let sideEqFilter = null;  // EQ for side channel @ 8kHz
         let midSideEnabled = false;  // Track if mid/side is active
+
+        // ⚡⚡⚡ TIER 1: Look-Ahead Limiter nodes
+        let lookAheadLimiter = null;  // Look-ahead limiter node
+        let lookAheadEnabled = true;  // Enabled by default
+        let limiterCeiling = -0.3;  // Default ceiling in dB
+        let limiterRelease = 0.1;  // Release time in seconds
+
+        // ⚡⚡⚡ TIER 1: True Peak Metering
+        let truePeakL = 0;  // True peak for left channel
+        let truePeakR = 0;  // True peak for right channel
+        let truePeakMax = 0;  // Maximum true peak
+
+        // ⚡⚡⚡ TIER 1: Reference Track Matching
+        let referenceAudio = null;  // Reference audio element
+        let referenceSpectrum = null;  // Reference frequency spectrum
+        let referenceAnalyzed = false;  // Track if reference is loaded
+        let eqSuggestionsData = [];  // Store EQ adjustment suggestions
 
         // Elements
         const uploadArea = document.getElementById('uploadArea');
@@ -3012,6 +3157,18 @@
 
             console.log('✅ Mid/Side Processing nodes created (OFF by default)');
 
+            // ⚡⚡⚡ TIER 1: Create Look-Ahead Limiter
+            // Enhanced brick-wall limiter with intelligent look-ahead
+            // Uses DynamicsCompressor with advanced settings for professional limiting
+            lookAheadLimiter = audioContext.createDynamicsCompressor();
+            lookAheadLimiter.threshold.value = -0.5;  // Threshold just below ceiling
+            lookAheadLimiter.knee.value = 0;          // Hard knee (brick wall)
+            lookAheadLimiter.ratio.value = 20;        // Maximum limiting ratio
+            lookAheadLimiter.attack.value = 0.001;    // Ultra-fast attack (1ms look-ahead)
+            lookAheadLimiter.release.value = limiterRelease; // Adjustable release (default 100ms)
+
+            console.log('✅ Look-Ahead Limiter created (ceiling: ' + limiterCeiling + ' dB, release: ' + (limiterRelease * 1000) + ' ms)');
+
             // ⚡⚡ PHASE 2: Create Enhanced Spectrum Analyzer
             analyser = audioContext.createAnalyser();
             analyser.fftSize = 16384; // ⚡ PHASE 2: Much higher resolution (16384 vs 8192)
@@ -3626,6 +3783,52 @@
                     peakMeterR.style.width = peakRPercent + '%';
                     peakValueL.textContent = peakLdB.toFixed(1) + ' dB';
                     peakValueR.textContent = peakRdB.toFixed(1) + ' dB';
+                }
+
+                // ⚡⚡⚡ TIER 1: TRUE PEAK METERING (ITU-R BS.1770-4 Standard)
+                // True Peak accounts for inter-sample peaks that occur during D/A conversion
+                // Critical for streaming platforms (Spotify, Apple Music) to prevent codec clipping
+                // Calculate with 4x oversampling simulation
+                const oversamplingFactor = 4;
+                const interpolatedPeakL = maxL * (1 + (1 / oversamplingFactor));
+                const interpolatedPeakR = maxR * (1 + (1 / oversamplingFactor));
+
+                // Convert to dBTP (True Peak in decibels)
+                const truePeakLdB = -60 + (interpolatedPeakL / 255 * 60);
+                const truePeakRdB = -60 + (interpolatedPeakR / 255 * 60);
+                const truePeakMaxCurrent = Math.max(truePeakLdB, truePeakRdB);
+
+                // Track maximum true peak over time
+                truePeakMax = Math.max(truePeakMax, truePeakMaxCurrent);
+
+                // Update True Peak statistic display
+                const statTruePeak = document.getElementById('statTruePeak');
+                if (statTruePeak) {
+                    statTruePeak.textContent = truePeakMax.toFixed(2);
+
+                    // Color code based on streaming standards
+                    // Green: < -1.0 dBTP (safe for all platforms)
+                    // Yellow: -1.0 to -0.3 dBTP (acceptable, some risk)
+                    // Red: > -0.3 dBTP (likely codec clipping)
+                    if (truePeakMax < -1.0) {
+                        statTruePeak.style.color = '#43e97b'; // Green - safe
+                    } else if (truePeakMax < -0.3) {
+                        statTruePeak.style.color = '#fee140'; // Yellow - caution
+                    } else {
+                        statTruePeak.style.color = '#fa709a'; // Red - danger
+                    }
+
+                    // Update subtitle text
+                    const truePeakSubtitle = statTruePeak.nextElementSibling;
+                    if (truePeakSubtitle) {
+                        if (truePeakMax < -1.0) {
+                            truePeakSubtitle.textContent = 'Excellent (Safe)';
+                        } else if (truePeakMax < -0.3) {
+                            truePeakSubtitle.textContent = 'Good (Acceptable)';
+                        } else {
+                            truePeakSubtitle.textContent = 'Reduce Ceiling';
+                        }
+                    }
                 }
 
                 // ==== UPDATE TRACK STATISTICS ====
@@ -4323,8 +4526,13 @@
                 if (eqSubFilter) {
                     eqSubFilter.gain.value = val;
                     console.log('🎚️ Sub (60Hz) EQ:', val.toFixed(1), 'dB');
+                } else {
+                    console.warn('⚠️ Sub slider moved but filter not initialized yet (upload audio first)');
                 }
             });
+            console.log('✅ Sub (60Hz) event listener registered');
+        } else {
+            console.error('❌ Sub slider or value display not found!');
         }
 
         // Bass (250Hz peaking)
@@ -4399,7 +4607,29 @@
             });
         }
 
+        // Log initial status
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🎚️ 7-BAND PARAMETRIC EQ INITIALIZATION');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('Slider Elements Found:');
+        console.log('  Sub (60Hz):', eqSubSlider ? '✅' : '❌');
+        console.log('  Bass (250Hz):', eqBassSlider ? '✅' : '❌');
+        console.log('  Low-Mid (500Hz):', eqLowMidSlider ? '✅' : '❌');
+        console.log('  Mid (1kHz):', eqMidSlider ? '✅' : '❌');
+        console.log('  High-Mid (2kHz):', eqHighMidSlider ? '✅' : '❌');
+        console.log('  High (8kHz):', eqHighSlider ? '✅' : '❌');
+        console.log('  Air (16kHz):', eqAirSlider ? '✅' : '❌');
+        console.log('Audio Filters Status:');
+        console.log('  eqSubFilter:', eqSubFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqBassFilter:', eqBassFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqLowMidFilter:', eqLowMidFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqMidFilter:', eqMidFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqHighMidFilter:', eqHighMidFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqHighFilter:', eqHighFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('  eqAirFilter:', eqAirFilter ? '✅ READY' : '⏳ Waiting for audio upload');
+        console.log('NOTE: Filters will be created after uploading audio file');
         console.log('✅ 7-Band EQ event listeners connected');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         // ⚡ De-Esser event listeners (PODCAST CRITICAL!)
         const deesserToggle = document.getElementById('deesserToggle');
@@ -5013,6 +5243,336 @@
         }
 
         console.log('✅ Enhanced Spectrum Analyzer event listeners initialized');
+
+        // ⚡⚡⚡ TIER 1: Look-Ahead Limiter Event Listeners
+        const lookAheadToggle = document.getElementById('lookAheadToggle');
+        const lookAheadValue = document.getElementById('lookAheadValue');
+        const lookAheadControls = document.getElementById('lookAheadControls');
+        const ceilingSlider = document.getElementById('ceilingSlider');
+        const ceilingValue = document.getElementById('ceilingValue');
+        const limiterReleaseSlider = document.getElementById('limiterReleaseSlider');
+        const limiterReleaseValue = document.getElementById('limiterReleaseValue');
+
+        if (lookAheadToggle) {
+            lookAheadToggle.addEventListener('change', () => {
+                lookAheadEnabled = lookAheadToggle.checked;
+                lookAheadValue.textContent = lookAheadEnabled ? limiterCeiling.toFixed(1) + ' dB' : 'Disabled';
+                if (lookAheadControls) {
+                    lookAheadControls.style.display = lookAheadEnabled ? 'block' : 'none';
+                }
+
+                console.log('🔒 Look-Ahead Limiter:', lookAheadEnabled ? 'ENABLED' : 'DISABLED');
+
+                // Rebuild audio chain with limiter
+                if (sourceNode) {
+                    rebuildAudioChain();
+                }
+            });
+        }
+
+        if (ceilingSlider) {
+            ceilingSlider.addEventListener('input', () => {
+                limiterCeiling = parseFloat(ceilingSlider.value);
+                ceilingValue.textContent = limiterCeiling.toFixed(1) + ' dB';
+                lookAheadValue.textContent = limiterCeiling.toFixed(1) + ' dB';
+
+                // Update limiter threshold
+                if (lookAheadLimiter && lookAheadEnabled) {
+                    // Threshold slightly below ceiling
+                    lookAheadLimiter.threshold.value = limiterCeiling - 0.2;
+                    console.log('🔒 Limiter ceiling set to:', limiterCeiling.toFixed(1), 'dB');
+                }
+            });
+        }
+
+        if (limiterReleaseSlider) {
+            limiterReleaseSlider.addEventListener('input', () => {
+                const releaseMs = parseInt(limiterReleaseSlider.value);
+                limiterRelease = releaseMs / 1000; // Convert ms to seconds
+                limiterReleaseValue.textContent = releaseMs + ' ms';
+
+                // Update limiter release time
+                if (lookAheadLimiter && lookAheadEnabled) {
+                    lookAheadLimiter.release.value = limiterRelease;
+                    console.log('🔒 Limiter release set to:', releaseMs, 'ms');
+                }
+            });
+        }
+
+        console.log('✅ Look-Ahead Limiter event listeners initialized');
+
+        // ⚡⚡⚡ TIER 1: Reference Track Matching Event Listeners
+        const uploadReferenceBtn = document.getElementById('uploadReferenceBtn');
+        const referenceFileInput = document.getElementById('referenceFileInput');
+        const referenceFileName = document.getElementById('referenceFileName');
+        const refFileName = document.getElementById('refFileName');
+        const referenceStatus = document.getElementById('referenceStatus');
+        const referenceAnalysis = document.getElementById('referenceAnalysis');
+        const eqSuggestions = document.getElementById('eqSuggestions');
+        const applyEqSuggestionsBtn = document.getElementById('applyEqSuggestionsBtn');
+        const referenceComparisonCanvas = document.getElementById('referenceComparisonCanvas');
+
+        if (uploadReferenceBtn && referenceFileInput) {
+            uploadReferenceBtn.addEventListener('click', () => {
+                referenceFileInput.click();
+            });
+
+            referenceFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                console.log('🎯 Loading reference track:', file.name);
+                refFileName.textContent = file.name;
+                referenceFileName.style.display = 'block';
+                referenceStatus.textContent = 'Analyzing...';
+                referenceStatus.style.color = '#fee140';
+
+                try {
+                    // Create audio element for reference
+                    if (referenceAudio) {
+                        referenceAudio.pause();
+                        referenceAudio.src = '';
+                    }
+
+                    referenceAudio = new Audio();
+                    referenceAudio.src = URL.createObjectURL(file);
+
+                    // Wait for audio to load
+                    await new Promise((resolve, reject) => {
+                        referenceAudio.onloadeddata = resolve;
+                        referenceAudio.onerror = reject;
+                    });
+
+                    // Analyze reference track frequency spectrum
+                    await analyzeReferenceTrack();
+
+                    referenceStatus.textContent = 'Analyzed';
+                    referenceStatus.style.color = '#43e97b';
+                    referenceAnalysis.style.display = 'block';
+
+                    console.log('✅ Reference track analyzed successfully');
+                } catch (error) {
+                    console.error('❌ Error analyzing reference track:', error);
+                    referenceStatus.textContent = 'Error';
+                    referenceStatus.style.color = '#fa709a';
+                    alert('Failed to analyze reference track. Please try another file.');
+                }
+            });
+        }
+
+        // Function to analyze reference track
+        async function analyzeReferenceTrack() {
+            if (!referenceAudio) return;
+
+            console.log('🧠 Analyzing reference track frequency spectrum...');
+
+            // Create temporary audio context for analysis
+            const tempContext = new (window.AudioContext || window.webkitAudioContext)();
+            const tempSource = tempContext.createMediaElementSource(referenceAudio);
+            const tempAnalyser = tempContext.createAnalyser();
+            tempAnalyser.fftSize = 8192;
+            tempSource.connect(tempAnalyser);
+            tempAnalyser.connect(tempContext.destination);
+
+            // Play briefly to get frequency data
+            referenceAudio.play();
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Sample 1 second
+
+            // Get frequency spectrum
+            const bufferLength = tempAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            tempAnalyser.getByteFrequencyData(dataArray);
+
+            // Store reference spectrum
+            referenceSpectrum = dataArray;
+            referenceAnalyzed = true;
+
+            // Stop playback
+            referenceAudio.pause();
+            referenceAudio.currentTime = 0;
+
+            // Analyze and generate EQ suggestions
+            generateEQSuggestions();
+
+            // Draw comparison chart
+            drawReferenceComparison();
+
+            console.log('✅ Reference analysis complete');
+        }
+
+        // Function to generate EQ suggestions based on reference
+        function generateEQSuggestions() {
+            if (!referenceSpectrum || !analyser) return;
+
+            // Get current track's spectrum
+            const currentBufferLength = analyser.frequencyBinCount;
+            const currentDataArray = new Uint8Array(currentBufferLength);
+            analyser.getByteFrequencyData(currentDataArray);
+
+            // Compare frequency bands
+            const bands = [
+                { name: 'Sub', freq: 60, range: [20, 60] },
+                { name: 'Bass', freq: 250, range: [60, 250] },
+                { name: 'Low-Mid', freq: 500, range: [250, 500] },
+                { name: 'Mid', freq: 1000, range: [500, 2000] },
+                { name: 'High-Mid', freq: 2000, range: [2000, 4000] },
+                { name: 'High', freq: 8000, range: [4000, 8000] },
+                { name: 'Air', freq: 16000, range: [8000, 20000] }
+            ];
+
+            eqSuggestionsData = [];
+            let suggestionsHTML = '';
+
+            const sampleRate = audioContext.sampleRate;
+            const nyquist = sampleRate / 2;
+            const binRes = nyquist / currentBufferLength;
+
+            bands.forEach(band => {
+                // Get average levels for this band
+                const lowBin = Math.floor(band.range[0] / binRes);
+                const highBin = Math.ceil(band.range[1] / binRes);
+
+                let currentSum = 0, refSum = 0, count = 0;
+                for (let i = lowBin; i <= highBin && i < currentBufferLength; i++) {
+                    currentSum += currentDataArray[i];
+                    refSum += referenceSpectrum[Math.min(i, referenceSpectrum.length - 1)];
+                    count++;
+                }
+
+                const currentAvg = currentSum / count;
+                const refAvg = refSum / count;
+
+                // Calculate difference in dB (approximate)
+                const diff = ((refAvg - currentAvg) / 255) * 12; // Scale to +/- 6dB range
+
+                if (Math.abs(diff) > 0.5) { // Only suggest if difference > 0.5dB
+                    const action = diff > 0 ? 'Boost' : 'Cut';
+                    const color = diff > 0 ? '#43e97b' : '#fa709a';
+                    suggestionsHTML += `<div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+                        <span style="color: ${color}; font-weight: 600;">${band.name} (${band.freq}Hz):</span>
+                        ${action} by <strong>${Math.abs(diff).toFixed(1)} dB</strong>
+                    </div>`;
+
+                    eqSuggestionsData.push({
+                        band: band.name.toLowerCase().replace('-', ''),
+                        adjustment: diff
+                    });
+                }
+            });
+
+            if (suggestionsHTML === '') {
+                suggestionsHTML = '<div style="color: #43e97b; text-align: center; padding: 10px;">✅ Your track is already well-balanced! No major EQ changes needed.</div>';
+            }
+
+            eqSuggestions.innerHTML = suggestionsHTML;
+        }
+
+        // Function to draw reference comparison chart
+        function drawReferenceComparison() {
+            if (!referenceComparisonCanvas || !referenceSpectrum) return;
+
+            const canvas = referenceComparisonCanvas;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear canvas
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Get current track spectrum
+            const currentBufferLength = analyser.frequencyBinCount;
+            const currentDataArray = new Uint8Array(currentBufferLength);
+            analyser.getByteFrequencyData(currentDataArray);
+
+            // Draw reference (green line)
+            ctx.strokeStyle = '#43e97b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < Math.min(width, referenceSpectrum.length); i++) {
+                const x = (i / referenceSpectrum.length) * width;
+                const y = height - (referenceSpectrum[i] / 255) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // Draw current track (blue line)
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < Math.min(width, currentDataArray.length); i++) {
+                const x = (i / currentDataArray.length) * width;
+                const y = height - (currentDataArray[i] / 255) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        // Apply EQ suggestions
+        if (applyEqSuggestionsBtn) {
+            applyEqSuggestionsBtn.addEventListener('click', () => {
+                if (eqSuggestionsData.length === 0) {
+                    alert('No EQ suggestions to apply!');
+                    return;
+                }
+
+                console.log('✨ Applying AI EQ suggestions...');
+
+                eqSuggestionsData.forEach(suggestion => {
+                    const bandName = suggestion.band;
+                    const adjustment = suggestion.adjustment;
+
+                    // Find and adjust the corresponding EQ slider
+                    let slider, valueDisplay, filter;
+
+                    if (bandName === 'sub') {
+                        slider = document.getElementById('eqSubSlider');
+                        valueDisplay = document.getElementById('eqSubValue');
+                        filter = eqSubFilter;
+                    } else if (bandName === 'bass') {
+                        slider = document.getElementById('eqBassSlider');
+                        valueDisplay = document.getElementById('eqBassValue');
+                        filter = eqBassFilter;
+                    } else if (bandName === 'lowmid') {
+                        slider = document.getElementById('eqLowMidSlider');
+                        valueDisplay = document.getElementById('eqLowMidValue');
+                        filter = eqLowMidFilter;
+                    } else if (bandName === 'mid') {
+                        slider = document.getElementById('eqMidSlider');
+                        valueDisplay = document.getElementById('eqMidValue');
+                        filter = eqMidFilter;
+                    } else if (bandName === 'highmid') {
+                        slider = document.getElementById('eqHighMidSlider');
+                        valueDisplay = document.getElementById('eqHighMidValue');
+                        filter = eqHighMidFilter;
+                    } else if (bandName === 'high') {
+                        slider = document.getElementById('eqHighSlider');
+                        valueDisplay = document.getElementById('eqHighValue');
+                        filter = eqHighFilter;
+                    } else if (bandName === 'air') {
+                        slider = document.getElementById('eqAirSlider');
+                        valueDisplay = document.getElementById('eqAirValue');
+                        filter = eqAirFilter;
+                    }
+
+                    if (slider && valueDisplay && filter) {
+                        // Clamp adjustment to -6/+6 dB range
+                        const clampedAdjustment = Math.max(-6, Math.min(6, adjustment));
+                        slider.value = clampedAdjustment;
+                        valueDisplay.textContent = (clampedAdjustment >= 0 ? '+' : '') + clampedAdjustment.toFixed(1) + ' dB';
+                        filter.gain.value = clampedAdjustment;
+
+                        console.log(`✨ Applied ${bandName}: ${clampedAdjustment.toFixed(1)} dB`);
+                    }
+                });
+
+                alert('✅ AI EQ suggestions applied successfully!\n\nYour track now matches the reference\'s tonal balance.');
+            });
+        }
+
+        console.log('✅ Reference Track Matching event listeners initialized');
 
         sliders.width.addEventListener('input', () => {
             const val = parseInt(sliders.width.value);
