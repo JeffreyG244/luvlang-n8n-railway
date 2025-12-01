@@ -3588,28 +3588,38 @@
                 const highAmp = getFrequencyAmplitude(6000, 12000);
                 const airAmp = getFrequencyAmplitude(12000, 20000);
 
-                // ⚡⚡⚡ ENHANCED: Professional bar scaling for maximum visibility
-                const minHeight = 10; // Minimum 10% height so bars are always visible
+                // ⚡⚡⚡ ULTRA-RESPONSIVE: EQ bars with maximum visual movement
+                const minHeight = 15; // Minimum visible height
                 const maxHeight = 95;
 
                 function scaleToHeight(amplitude) {
-                    // Convert 0-255 to percentage with professional scaling
-                    // Using logarithmic scale to match human hearing perception
+                    // AGGRESSIVE scaling for maximum visual response
+                    // This makes even quiet sounds create visible bar movement
 
-                    if (amplitude < 1) return minHeight; // Silence = minimum height
+                    if (amplitude < 1) return minHeight;
 
-                    // Logarithmic scaling for natural feel (matches dB scale)
-                    // -60 dB = minHeight, 0 dB = maxHeight
-                    const dB = -60 + (amplitude / 255) * 60; // Convert to dB
-                    const normalized = (dB + 60) / 60; // Normalize to 0-1
+                    // Direct percentage mapping with boost
+                    // 0-255 → 15-95% with aggressive scaling
+                    let percent = (amplitude / 255) * 100;
 
-                    // Apply gentle curve for better visualization
-                    const curved = Math.pow(normalized, 0.7); // Slight compression
+                    // BOOST factor: multiply by 3 for more sensitivity
+                    percent = percent * 3;
 
-                    // Scale to percentage
-                    const percent = minHeight + (curved * (maxHeight - minHeight));
+                    // Apply square root for even more compression (makes quiet sounds more visible)
+                    percent = Math.sqrt(percent / 100) * 100;
 
+                    // Ensure within bounds
                     return Math.min(maxHeight, Math.max(minHeight, percent));
+                }
+
+                // Add console log to verify bars are updating
+                if (frameCount % 30 === 0) {
+                    console.log('🎚️ EQ Amplitudes:', {
+                        sub: subBassAmp.toFixed(0),
+                        bass: bassAmp.toFixed(0),
+                        mid: midAmp.toFixed(0),
+                        high: highAmp.toFixed(0)
+                    });
                 }
 
                 const subVal = scaleToHeight(subBassAmp);
@@ -3822,28 +3832,26 @@
                     ctx.lineTo(0, height);
                     ctx.closePath();
 
+                    // Create gradient with proper rgba colors
                     const gradient = ctx.createLinearGradient(0, 0, 0, height);
-                    gradient.addColorStop(0, strokeColor.replace(')', ', 0.3)').replace('#', 'rgba('));
-                    gradient.addColorStop(0.5, strokeColor.replace(')', ', 0.15)').replace('#', 'rgba('));
-                    gradient.addColorStop(1, strokeColor.replace(')', ', 0.05)').replace('#', 'rgba('));
-
-                    // Fallback to hex-based gradient if rgba conversion fails
-                    const fallbackGradient = ctx.createLinearGradient(0, 0, 0, height);
                     if (avgAmplitude > 200) {
-                        fallbackGradient.addColorStop(0, 'rgba(250, 112, 154, 0.3)');
-                        fallbackGradient.addColorStop(0.5, 'rgba(250, 112, 154, 0.15)');
-                        fallbackGradient.addColorStop(1, 'rgba(250, 112, 154, 0.05)');
+                        // Red/Hot
+                        gradient.addColorStop(0, 'rgba(250, 112, 154, 0.3)');
+                        gradient.addColorStop(0.5, 'rgba(250, 112, 154, 0.15)');
+                        gradient.addColorStop(1, 'rgba(250, 112, 154, 0.05)');
                     } else if (avgAmplitude > 150) {
-                        fallbackGradient.addColorStop(0, 'rgba(254, 225, 64, 0.3)');
-                        fallbackGradient.addColorStop(0.5, 'rgba(254, 225, 64, 0.15)');
-                        fallbackGradient.addColorStop(1, 'rgba(254, 225, 64, 0.05)');
+                        // Yellow/Warm
+                        gradient.addColorStop(0, 'rgba(254, 225, 64, 0.3)');
+                        gradient.addColorStop(0.5, 'rgba(254, 225, 64, 0.15)');
+                        gradient.addColorStop(1, 'rgba(254, 225, 64, 0.05)');
                     } else {
-                        fallbackGradient.addColorStop(0, 'rgba(67, 233, 123, 0.3)');
-                        fallbackGradient.addColorStop(0.5, 'rgba(67, 233, 123, 0.15)');
-                        fallbackGradient.addColorStop(1, 'rgba(67, 233, 123, 0.05)');
+                        // Green/Good
+                        gradient.addColorStop(0, 'rgba(67, 233, 123, 0.3)');
+                        gradient.addColorStop(0.5, 'rgba(67, 233, 123, 0.15)');
+                        gradient.addColorStop(1, 'rgba(67, 233, 123, 0.05)');
                     }
 
-                    ctx.fillStyle = fallbackGradient;
+                    ctx.fillStyle = gradient;
                     ctx.fill();
 
                     // Reset shadow
