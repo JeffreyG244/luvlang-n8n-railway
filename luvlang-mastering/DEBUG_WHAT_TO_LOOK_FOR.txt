@@ -1,0 +1,61 @@
+🔍 DEBUG - WHAT TO LOOK FOR IN CONSOLE
+==========================================
+
+The file has been updated with extensive debug logging.
+
+Upload audio, click Play, then check the console for these messages:
+
+✅ SUCCESS MESSAGES (Frame 1):
+-------------------------------
+🔍 PEAK METER DEBUG:
+  leftAnalyser exists? true/false
+  rightAnalyser exists? true/false
+
+🔍 STEREO WIDTH DEBUG:
+  stereoValue element exists? true/false
+  stereoCanvas element exists? true/false
+  leftAnalyser exists? true/false
+  rightAnalyser exists? true/false
+
+✅ drawWaveform: Called successfully! Canvas found.
+✅ drawSpectralAnalyzer: Called successfully! Canvas found.
+
+
+❌ ERROR MESSAGES (if things are broken):
+------------------------------------------
+❌ drawWaveform: waveformCanvas element NOT FOUND
+❌ drawWaveform: Could not get 2d context
+❌ drawWaveform error: [error message]
+
+❌ drawSpectralAnalyzer: spectralCanvas element NOT FOUND
+❌ drawSpectralAnalyzer error: [error message]
+
+
+📊 WHAT EACH MESSAGE MEANS:
+============================
+
+IF you see:
+✅ drawWaveform: Called successfully!
+→ Waveform function is working, canvas exists
+
+IF you see:
+✅ drawSpectralAnalyzer: Called successfully!
+→ Spectral function is working, canvas exists
+
+IF you see:
+leftAnalyser exists? false
+rightAnalyser exists? false
+→ THIS IS THE PROBLEM! The L/R analyzers were never created
+→ This means stereo width and peak meters won't work
+
+IF you see:
+leftAnalyser exists? true
+rightAnalyser exists? true
+→ Good! The analyzers exist, stereo width should work
+
+
+COPY AND PASTE:
+===============
+Please copy all the console output (especially Frame 1 debug messages) and send it to me.
+Look for any lines that start with ❌ or 🔍
+

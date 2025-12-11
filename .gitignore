@@ -1,13 +1,44 @@
-# Local Netlify folder
-.netlify
+# Ignore everything by default
+/*
+
+# But track these specific project folders
+!/luvlang-mastering/
+!/luvlang-backend/
+!/luvlang-production-clean/
+
+# Track important config files
+!.gitignore
+!.gitattributes
+!railway.json
+
+# Ignore common directories
 .DS_Store
-node_modules
-.nvm
-.env
-.env.local
-.env.production
-ssl/
+node_modules/
+dist/
+build/
 *.log
-n8n_data/
-redis_data/
-postgres_data/
+.env
+.env.*
+*.sqlite
+*.db
+
+# Ignore system directories
+.Trash/
+Library/
+Applications/
+Desktop/
+Documents/
+Downloads/
+Movies/
+Music/
+Pictures/
+Public/
+.cache/
+.npm/
+.config/
+.local/
+.ssh/
+.vscode/
+.docker/
+.n8n/
+.railway/
