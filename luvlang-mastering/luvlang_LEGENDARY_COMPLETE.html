@@ -4640,7 +4640,6 @@
         const waveformScrubber = document.getElementById('waveformScrubber');
         const waveformContainer = document.getElementById('waveformContainer');
         let isDraggingScrubber = false;
-        let wasPlayingBeforeScrubberDrag = false;
 
         function updateScrubberPosition() {
             if (!audioElement || !audioElement.duration || !waveformContainer) return;
@@ -4687,12 +4686,6 @@
         // Mouse down on scrubber handle
         waveformScrubber.addEventListener('mousedown', (e) => {
             isDraggingScrubber = true;
-            wasPlayingBeforeScrubberDrag = !audioElement.paused;
-
-            // Pause during scrubbing for smooth experience
-            if (wasPlayingBeforeScrubberDrag) {
-                audioElement.pause();
-            }
 
             // Enhance visual feedback
             waveformScrubber.style.boxShadow = '0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.6)';
@@ -4708,7 +4701,7 @@
         });
 
         // Mouse up - release scrubber
-        document.addEventListener('mouseup', async () => {
+        document.addEventListener('mouseup', () => {
             if (!isDraggingScrubber) return;
 
             isDraggingScrubber = false;
@@ -4716,24 +4709,7 @@
             // Reset visual feedback
             waveformScrubber.style.boxShadow = '0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4)';
 
-            // Resume playback if it was playing before
-            if (wasPlayingBeforeScrubberDrag) {
-                try {
-                    if (audioContext && audioContext.state !== 'running') {
-                        await audioContext.resume();
-                    }
-                    await audioElement.play();
-                    isPlaying = true;
-                    if (playBtn) playBtn.textContent = '⏸';
-                    console.log('▶️ Resumed playback after scrubber drag');
-                } catch (err) {
-                    if (err.name !== 'AbortError') {
-                        console.error('❌ Could not resume playback:', err);
-                    }
-                    isPlaying = false;
-                    if (playBtn) playBtn.textContent = '▶';
-                }
-            }
+            console.log('🎯 Scrubber drag complete');
         });
 
         function formatTime(seconds) {
