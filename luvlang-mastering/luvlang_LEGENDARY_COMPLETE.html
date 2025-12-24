@@ -4836,13 +4836,27 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // PROFESSIONAL WAVEFORM - RETINA-READY WITH DPI SCALING
         function drawWaveformFromBuffer(audioBuffer, showGhost = true) {
+            console.log('🎨 drawWaveformFromBuffer() CALLED');
+
             const canvas = document.getElementById('waveformCanvasStatic');
-            if (!canvas) return;
+            if (!canvas) {
+                console.error('❌ Canvas waveformCanvasStatic NOT FOUND!');
+                return;
+            }
+            console.log('✅ Canvas found:', canvas);
 
             const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+            if (!ctx) {
+                console.error('❌ Cannot get 2D context!');
+                return;
+            }
+            console.log('✅ Context obtained');
 
-            if (!audioBuffer) return;
+            if (!audioBuffer) {
+                console.warn('⚠️ No audioBuffer provided');
+                return;
+            }
+            console.log('✅ AudioBuffer exists:', audioBuffer.duration.toFixed(2), 'seconds');
 
             // ═══ RETINA/HIGH-DPI FIX ═══
             const dpr = window.devicePixelRatio || 1;
@@ -4976,6 +4990,12 @@
                 ctx.lineTo(width, y);
                 ctx.stroke();
             }
+
+            console.log('✅✅✅ WAVEFORM DRAWING COMPLETE! ✅✅✅');
+            console.log('   Width:', width, 'Height:', height);
+            console.log('   DPR:', dpr);
+            console.log('   Canvas internal size:', canvas.width, 'x', canvas.height);
+            console.log('================================================');
         }
 
         // Legacy function name for compatibility
