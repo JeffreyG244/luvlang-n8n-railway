@@ -5739,13 +5739,16 @@
                     // Update value display
                     complianceValue.textContent = heldPeakdBFS.toFixed(1) + ' dBTP';
 
-                    // Traffic Light Logic:
-                    // Green: -2.0 to -1.0 dBTP = "Broadcast Safe"
-                    // Yellow: -0.9 to -0.1 dBTP = "Streaming Hot"
-                    // Red: > 0.0 dBTP = "CLIP" (flashing)
+                    // Traffic Light Logic - Professional Broadcast Standards:
+                    // ✅ Green: ≤ -1.0 dBTP = "BROADCAST SAFE" (EBU R128 compliant)
+                    // ⚠️  Yellow: -0.99 to -0.01 dBTP = "WARNING" (exceeds broadcast standard)
+                    // 🔴 Red: ≥ 0.0 dBTP = "CLIP!" (inter-sample clipping)
+                    //
+                    // NOTE: EBU R128 mandates -1.0 dBTP maximum for broadcast delivery.
+                    // This ensures accurate customer-facing compliance indication.
 
                     if (heldPeakdBFS >= 0.0) {
-                        // RED - CLIP!
+                        // RED - CLIP! (Inter-sample clipping detected)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05))';
                         complianceBadge.style.borderColor = '#F44336';
                         complianceBadge.style.boxShadow = '0 0 20px rgba(244, 67, 54, 0.5)';
@@ -5755,17 +5758,17 @@
                         complianceLabel.textContent = 'CLIP!';
                         complianceLabel.style.color = '#F44336';
                     } else if (heldPeakdBFS > -1.0) {
-                        // YELLOW - Streaming Hot (close to limit)
+                        // YELLOW - WARNING (Exceeds -1.0 dBTP broadcast standard)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
                         complianceBadge.style.borderColor = '#FFC107';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
                         complianceLight.style.background = '#FFC107';
                         complianceLight.style.boxShadow = '0 0 12px rgba(255, 193, 7, 0.8)';
                         complianceLight.style.animation = 'pulse 1s infinite';
-                        complianceLabel.textContent = 'STREAMING HOT';
+                        complianceLabel.textContent = 'WARNING';
                         complianceLabel.style.color = '#FFC107';
                     } else {
-                        // GREEN - Broadcast Safe
+                        // GREEN - BROADCAST SAFE (Meets EBU R128: ≤ -1.0 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
                         complianceBadge.style.borderColor = '#4CAF50';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
