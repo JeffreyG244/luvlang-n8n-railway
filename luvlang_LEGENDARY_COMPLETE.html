@@ -3642,7 +3642,7 @@
             panel.classList.add('visible');
         }
 
-        function applyAutoFixes(results) {
+        async function applyAutoFixes(results) {
             console.log('🔧 APPLYING PROFESSIONAL BROADCAST MASTERING...');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -3907,18 +3907,45 @@
             // Update fader positions
             updateAllFaderPositions();
 
-            // CRITICAL: Update results.integratedLUFS based on actual gain applied
-            // Use makeupGain (before limiter) for LUFS calculation since that's what affects loudness
+            // CRITICAL: Measure ACTUAL LUFS after processing using offline analysis
+            console.log('🔬 Measuring actual post-processing LUFS...');
             const appliedGainDB = 20 * Math.log10(makeupGain ? makeupGain.gain.value : 1.0);
             const originalLUFS = beforeSpecs.lufs;
-            const newLUFS = originalLUFS + appliedGainDB;
-            results.integratedLUFS = newLUFS;
 
-            console.log(`📊 LUFS Calculation: ${originalLUFS.toFixed(1)} + ${appliedGainDB.toFixed(1)} dB (makeupGain) = ${newLUFS.toFixed(1)} LUFS`);
+            let measuredAfterLUFS = originalLUFS + appliedGainDB; // Fallback estimate
+
+            // Measure actual LUFS through full processing chain
+            if (audioBuffer && makeupGain && limiter && compressor) {
+                try {
+                    const offlineResults = await measureProcessedLoudness(
+                        audioBuffer,
+                        appliedGainDB,
+                        limiter.threshold.value,
+                        {
+                            threshold: compressor.threshold.value,
+                            knee: compressor.knee.value,
+                            ratio: compressor.ratio.value,
+                            attack: compressor.attack.value,
+                            release: compressor.release.value
+                        }
+                    );
+
+                    if (offlineResults && isFinite(offlineResults.integratedLUFS)) {
+                        measuredAfterLUFS = offlineResults.integratedLUFS;
+                        console.log(`✅ Measured ACTUAL LUFS: ${measuredAfterLUFS.toFixed(1)} LUFS (was ${originalLUFS.toFixed(1)} LUFS)`);
+                    }
+                } catch (error) {
+                    console.error('⚠️ Offline measurement failed, using estimate:', error);
+                }
+            }
+
+            results.integratedLUFS = measuredAfterLUFS;
+
+            console.log(`📊 LUFS Change: ${originalLUFS.toFixed(1)} → ${measuredAfterLUFS.toFixed(1)} LUFS (${(measuredAfterLUFS - originalLUFS).toFixed(1)} dB)`);
 
             // CAPTURE AFTER SPECS
             const afterSpecs = {
-                lufs: results.integratedLUFS,  // ACTUAL LUFS after processing
+                lufs: measuredAfterLUFS,  // MEASURED LUFS after full processing chain
                 peak: -1.0,  // True-Peak ceiling
                 lra: results.lra || 8,
                 stereoWidth: results.stereoWidth || 0.5,
@@ -6656,8 +6683,8 @@
                 }
 
                 // Apply the actual fixes (compression, limiter, etc.) and generate report
-                // applyAutoFixes() will calculate the new LUFS based on the makeupGain we just set
-                applyAutoFixes(analysisResults);
+                // applyAutoFixes() will measure the ACTUAL LUFS based on the processing chain
+                await applyAutoFixes(analysisResults);
 
                 updateProgress(85, '🎨 Rendering Master...', 'Applying professional-grade processing...');
                 await new Promise(r => setTimeout(r, 400));
