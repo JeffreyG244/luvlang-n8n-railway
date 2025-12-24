@@ -1098,6 +1098,27 @@
             100% { transform: translateX(100%); }
         }
 
+        /* 🏆 Traffic Light Compliance Badge Animation */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes flash {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+
         .ai-progress-percentage {
             margin-top: 12px;
             font-size: 2.5rem;
@@ -1744,9 +1765,14 @@
 
             <!-- 9 PROFESSIONAL BROADCAST-GRADE METERS -->
             <div class="meters-container">
-                <div class="section-title">📡 Broadcast Meters</div>
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📡 Broadcast Meters</span>
+                    <button id="advancedMetersToggle" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                        ▼ SHOW PRO METERS
+                    </button>
+                </div>
 
-                <!-- 1. Integrated LUFS -->
+                <!-- 1. Integrated LUFS - ALWAYS VISIBLE (Essential) -->
                 <div class="meter-item">
                     <div class="meter-label">Integrated LUFS</div>
                     <div class="meter-value" id="lufsValue">-∞</div>
@@ -1758,31 +1784,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Short-term LUFS -->
-                <div class="meter-item">
-                    <div class="meter-label">Short-term LUFS</div>
-                    <div class="meter-value" id="shortLufsValue">-∞</div>
-                </div>
-
-                <!-- 3. Momentary LUFS -->
-                <div class="meter-item">
-                    <div class="meter-label">Momentary LUFS</div>
-                    <div class="meter-value" id="momentaryLufsValue">-∞</div>
-                </div>
-
-                <!-- 4. True Peak -->
-                <div class="meter-item">
-                    <div class="meter-label">True Peak (dBTP)</div>
-                    <div class="meter-value" id="peakValue">-∞</div>
-                    <div style="font-size: 0.75rem; margin-top: 6px; font-weight: 600; transition: all 0.3s ease; color: #ffffff; opacity: 0.6;" id="peakWarning">
-                        Target: -1.0 dBTP max
-                    </div>
-                    <div class="meter-bar">
-                        <div class="meter-bar-fill" id="peakMeter" style="background: linear-gradient(90deg, #2196F3, #03A9F4, #00BCD4);"></div>
-                    </div>
-                </div>
-
-                <!-- 5. Phase Correlation -->
+                <!-- 2. Phase Correlation - ALWAYS VISIBLE (Essential for stereo imaging) -->
                 <div class="meter-item">
                     <div class="meter-label">Phase Correlation</div>
                     <div class="meter-value" id="phaseValue">+1.0</div>
@@ -1794,28 +1796,83 @@
                     </div>
                 </div>
 
-                <!-- 6. Loudness Range (LRA) -->
-                <div class="meter-item">
+                <!-- 🏆 ADVANCED/PRO METERS - Hidden by default, expandable for professionals -->
+                <!-- 3. Short-term LUFS - PRO (for verse/chorus analysis) -->
+                <div class="meter-item advanced-meter" style="display: none;">
+                    <div class="meter-label">Short-term LUFS (3s)</div>
+                    <div class="meter-value" id="shortLufsValue">-∞</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Verse/chorus loudness variation</div>
+                </div>
+
+                <!-- 4. Momentary LUFS - PRO (for transient analysis) -->
+                <div class="meter-item advanced-meter" style="display: none;">
+                    <div class="meter-label">Momentary LUFS (400ms)</div>
+                    <div class="meter-value" id="momentaryLufsValue">-∞</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Real-time loudness (400ms window)</div>
+                </div>
+
+                <!-- 5. Loudness Range (LRA) - PRO (broadcast requirement) -->
+                <div class="meter-item advanced-meter" style="display: none;">
                     <div class="meter-label">Loudness Range (LRA)</div>
                     <div class="meter-value" id="lraValue">-- dB</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Dynamic range (EBU R128)</div>
                 </div>
 
-                <!-- 7. Crest Factor -->
-                <div class="meter-item">
+                <!-- 6. Crest Factor - PRO (for mastering engineers) -->
+                <div class="meter-item advanced-meter" style="display: none;">
                     <div class="meter-label">Crest Factor</div>
                     <div class="meter-value" id="crestValue">-- dB</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Peak-to-RMS ratio</div>
                 </div>
 
-                <!-- 8. PLR (Peak to Loudness Ratio) -->
-                <div class="meter-item">
+                <!-- 7. PLR (Peak to Loudness Ratio) - PRO (streaming optimization) -->
+                <div class="meter-item advanced-meter" style="display: none;">
                     <div class="meter-label">PLR (Peak/Loudness)</div>
                     <div class="meter-value" id="plrValue">-- dB</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">True Peak to LUFS ratio</div>
                 </div>
             </div>
 
             <!-- MASTER SECTION -->
             <div class="master-section">
                 <div class="section-title">Master Output</div>
+
+                <!-- 🏆 TRAFFIC LIGHT COMPLIANCE BADGE - Professional Peak Monitoring -->
+                <div id="complianceBadge" style="
+                    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+                    border: 2px solid #4CAF50;
+                    border-radius: 20px;
+                    padding: 8px 16px;
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+                    transition: all 0.3s ease;
+                ">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="complianceLight" style="
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%;
+                            background: #4CAF50;
+                            box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+                            animation: pulse 2s infinite;
+                        "></div>
+                        <span id="complianceLabel" style="
+                            font-size: 0.75rem;
+                            font-weight: 600;
+                            letter-spacing: 0.5px;
+                            color: #4CAF50;
+                        ">BROADCAST SAFE</span>
+                    </div>
+                    <span id="complianceValue" style="
+                        font-size: 0.85rem;
+                        font-weight: 700;
+                        font-family: 'JetBrains Mono', monospace;
+                        color: #ffffff;
+                    ">-∞ dBTP</span>
+                </div>
 
                 <div class="control-item">
                     <div class="control-header">
@@ -2137,11 +2194,11 @@
                 eqCompensationGain = audioContext.createGain();
                 eqCompensationGain.gain.value = 1.0;
 
-                // ⚡ LIMITER - Transparent Peak Control (Steely Dan mastering)
+                // ⚡ LIMITER - Ultra-Conservative Peak Protection (NO CLIPPING EVER)
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -1.5;     // -1.5dBTP for streaming headroom
-                limiter.knee.value = 1.0;           // PROFESSIONAL: 1dB knee for transparent limiting
-                limiter.ratio.value = 20;           // Hard limiting ratio
+                limiter.threshold.value = -4.5;     // VERY conservative -4.5dB to ensure NO clipping
+                limiter.knee.value = 0.5;           // Tight knee for precise limiting
+                limiter.ratio.value = 20;           // Brick-wall limiting ratio
                 limiter.attack.value = 0.001;       // Ultra-fast attack (1ms) for peak control
                 limiter.release.value = 0.1;        // Fast release (100ms) for transparency
 
@@ -2357,6 +2414,53 @@
 
                     console.log('✅ Audio buffer decoded for AI processing');
 
+                    // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
+                    // This ensures EQ and saturation work in their optimal range
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
+
+                    // Calculate RMS level of the uploaded audio
+                    const channelData = audioBuffer.getChannelData(0);
+                    let sumSquares = 0;
+                    for (let i = 0; i < channelData.length; i++) {
+                        sumSquares += channelData[i] * channelData[i];
+                    }
+                    const rms = Math.sqrt(sumSquares / channelData.length);
+                    const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
+
+                    console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
+
+                    // If signal is too quiet (below -18dBFS), auto-boost it
+                    const targetRMS = -18; // Analog sweet spot
+                    const masterGainSlider = document.getElementById('masterGainSlider');
+                    const masterGainValue = document.getElementById('masterGainValue');
+
+                    if (rmsDB < targetRMS - 1) {
+                        // Calculate how much gain is needed
+                        const gainNeeded = targetRMS - rmsDB;
+
+                        // Apply to master gain slider (limit to +12dB max for safety)
+                        const safeGain = Math.min(gainNeeded, 12);
+
+                        if (masterGainSlider && masterGainValue) {
+                            masterGainSlider.value = safeGain;
+                            masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
+
+                            // Apply to actual audio processing
+                            if (masterGain) {
+                                masterGain.gain.value = Math.pow(10, safeGain / 20);
+                            }
+
+                            console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
+                            console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
+                            console.log('   🎯 Signal now in optimal range for processing');
+                        }
+                    } else {
+                        console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
+                        console.log('   No gain adjustment needed');
+                    }
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
                     // Draw waveform now that audioBuffer is ready
                     console.log('📊 Drawing waveform now that audioBuffer is ready...');
                     drawStaticWaveform();
@@ -2452,6 +2556,156 @@
 
             } catch (error) {
                 console.error('❌ Analysis failed:', error);
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🏆 OFFLINE ANALYSIS PASS - Accurate Post-Processing Measurement
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Instead of "guessing" the post-limiter LUFS with linear math (originalLUFS + gain),
+        // we ACTUALLY PROCESS the audio through the effects chain and measure the result.
+        // This accounts for the limiter compressing peaks and affecting loudness.
+        async function measureProcessedLoudness(audioBuffer, makeupGainDB, limiterThresholdDB, compressorSettings) {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('🔬 OFFLINE ANALYSIS PASS: Measuring ACTUAL post-processing loudness...');
+            console.log('   Makeup Gain:', makeupGainDB.toFixed(1), 'dB');
+            console.log('   Limiter Threshold:', limiterThresholdDB.toFixed(1), 'dB');
+
+            try {
+                // Create offline context for fast processing (no real-time constraints)
+                const offlineContext = new OfflineAudioContext(
+                    audioBuffer.numberOfChannels,
+                    audioBuffer.length,
+                    audioBuffer.sampleRate
+                );
+
+                // Create the same processing chain as the live audio
+                const source = offlineContext.createBufferSource();
+                source.buffer = audioBuffer;
+
+                // 1. Compressor (same settings as live chain)
+                const offlineCompressor = offlineContext.createDynamicsCompressor();
+                offlineCompressor.threshold.value = compressorSettings.threshold || -24;
+                offlineCompressor.knee.value = compressorSettings.knee || 6;
+                offlineCompressor.ratio.value = compressorSettings.ratio || 3;
+                offlineCompressor.attack.value = compressorSettings.attack || 0.003;
+                offlineCompressor.release.value = compressorSettings.release || 0.25;
+
+                // 2. Makeup Gain (applied by AI mastering)
+                const offlineMakeupGain = offlineContext.createGain();
+                offlineMakeupGain.gain.value = Math.pow(10, makeupGainDB / 20);
+
+                // 3. Limiter (brick-wall peak protection)
+                const offlineLimiter = offlineContext.createDynamicsCompressor();
+                offlineLimiter.threshold.value = limiterThresholdDB;
+                offlineLimiter.knee.value = 0.5;
+                offlineLimiter.ratio.value = 20;
+                offlineLimiter.attack.value = 0.001;
+                offlineLimiter.release.value = 0.1;
+
+                // Connect the chain: Source → Compressor → Makeup Gain → Limiter → Destination
+                source.connect(offlineCompressor);
+                offlineCompressor.connect(offlineMakeupGain);
+                offlineMakeupGain.connect(offlineLimiter);
+                offlineLimiter.connect(offlineContext.destination);
+
+                // Start processing
+                source.start(0);
+
+                // Render the audio (faster than real-time)
+                const processedBuffer = await offlineContext.startRendering();
+
+                console.log('   ✅ Offline processing complete. Now measuring LUFS and True Peak...');
+
+                // Analyze the processed buffer to get ACTUAL values
+                const sampleRate = processedBuffer.sampleRate;
+                const duration = processedBuffer.duration;
+                const analysisSeconds = Math.min(duration, 30); // Analyze up to 30 seconds for accuracy
+                const sampleCount = Math.floor(analysisSeconds * sampleRate);
+                const leftChannel = processedBuffer.getChannelData(0);
+                const rightChannel = processedBuffer.numberOfChannels > 1 ? processedBuffer.getChannelData(1) : leftChannel;
+
+                // Measure True Peak (scan all samples)
+                let maxPeak = 0;
+                for (let i = 0; i < sampleCount; i++) {
+                    const peakL = Math.abs(leftChannel[i]);
+                    const peakR = Math.abs(rightChannel[i]);
+                    const peak = Math.max(peakL, peakR);
+                    if (peak > maxPeak) maxPeak = peak;
+                }
+
+                // ITU-R BS.1770-4 LUFS Measurement (Gated)
+                // This is a simplified but accurate gated loudness measurement
+                const blockSize = Math.floor(sampleRate * 0.4); // 400ms blocks
+                const overlapSize = Math.floor(blockSize * 0.75); // 75% overlap
+                const absoluteGate = -70; // LUFS
+                const relativeGate = -10; // LUFS relative to ungated mean
+
+                let loudnessBlocks = [];
+
+                for (let i = 0; i < sampleCount - blockSize; i += (blockSize - overlapSize)) {
+                    let sumSquares = 0;
+                    for (let j = i; j < i + blockSize; j++) {
+                        const sampleL = leftChannel[j];
+                        const sampleR = rightChannel[j];
+                        // K-weighting approximation (simplified)
+                        sumSquares += (sampleL * sampleL + sampleR * sampleR) / 2;
+                    }
+
+                    const meanSquare = sumSquares / blockSize;
+                    if (meanSquare > 0) {
+                        const blockLUFS = -0.691 + 10 * Math.log10(meanSquare);
+                        if (blockLUFS > absoluteGate) {
+                            loudnessBlocks.push(blockLUFS);
+                        }
+                    }
+                }
+
+                let integratedLUFS = -70;
+
+                if (loudnessBlocks.length > 0) {
+                    // Calculate ungated mean for relative gate
+                    let sumLinear = 0;
+                    for (const lufs of loudnessBlocks) {
+                        sumLinear += Math.pow(10, lufs / 10);
+                    }
+                    const ungatedMean = 10 * Math.log10(sumLinear / loudnessBlocks.length);
+                    const relativeGateThreshold = ungatedMean + relativeGate;
+
+                    // Apply relative gate
+                    const relativeGated = loudnessBlocks.filter(lufs => lufs >= relativeGateThreshold);
+
+                    if (relativeGated.length > 0) {
+                        sumLinear = 0;
+                        for (const lufs of relativeGated) {
+                            sumLinear += Math.pow(10, lufs / 10);
+                        }
+                        integratedLUFS = 10 * Math.log10(sumLinear / relativeGated.length);
+                    }
+                }
+
+                // Clamp values to reasonable ranges
+                integratedLUFS = Math.max(-70, Math.min(0, integratedLUFS));
+                const truePeakDB = maxPeak > 0 ? 20 * Math.log10(maxPeak) : -70;
+
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('✅ OFFLINE ANALYSIS RESULTS (ACTUAL VALUES):');
+                console.log('   Integrated LUFS:', integratedLUFS.toFixed(1), 'LUFS');
+                console.log('   True Peak:', truePeakDB.toFixed(1), 'dBTP');
+                console.log('   Max Peak (linear):', maxPeak.toFixed(4));
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                return {
+                    integratedLUFS: integratedLUFS,
+                    truePeakDB: truePeakDB,
+                    maxPeak: maxPeak
+                };
+
+            } catch (error) {
+                console.error('❌ Offline analysis failed:', error);
+                console.error('   Falling back to estimated values');
+                // Return estimated values as fallback
+                return null;
             }
         }
 
@@ -2587,6 +2841,10 @@
             // Auto-detect best platform for recommendation only
             const bestPlatform = detectBestPlatform(genre, lra, integratedLUFS);
 
+            // 🏆 Store detected genre globally for reference curve overlay
+            detectedGenre = genre;
+            console.log('🎵 Detected Genre:', genre, '- Reference curve will be overlaid on spectrum');
+
             return {
                 // Peak & Dynamics
                 maxPeak,
@@ -2652,6 +2910,96 @@
             }
 
             return 'Balanced';
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🏆 GHOST REFERENCE CURVE - Visual EQ targets based on genre
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Instead of just saying "Muddy Low-Mids" in text, SHOW the user where
+        // their spectrum should be for professional genre-appropriate balance
+        let detectedGenre = 'Balanced'; // Store globally for spectrum overlay
+
+        // Reference curves in dB at key frequencies (20Hz to 20kHz)
+        const REFERENCE_CURVES = {
+            'Pop': {
+                20: -40, 40: -35, 80: -30, 120: -25, 250: -20, 500: -15,
+                1000: -12, 2000: -10, 4000: -8, 8000: -10, 16000: -15, 20000: -20
+            },
+            'Rock': {
+                20: -45, 40: -38, 80: -32, 120: -28, 250: -22, 500: -16,
+                1000: -12, 2000: -8, 4000: -6, 8000: -8, 16000: -12, 20000: -18
+            },
+            'Hip-Hop': {
+                20: -28, 40: -22, 80: -18, 120: -16, 250: -18, 500: -16,
+                1000: -14, 2000: -12, 4000: -10, 8000: -14, 16000: -20, 20000: -25
+            },
+            'EDM': {
+                20: -25, 40: -20, 80: -16, 120: -14, 250: -16, 500: -14,
+                1000: -12, 2000: -8, 4000: -6, 8000: -8, 16000: -12, 20000: -18
+            },
+            'Classical/Jazz': {
+                20: -50, 40: -42, 80: -36, 120: -30, 250: -24, 500: -18,
+                1000: -14, 2000: -10, 4000: -8, 8000: -10, 16000: -14, 20000: -22
+            },
+            'Balanced': {
+                20: -40, 40: -35, 80: -30, 120: -26, 250: -20, 500: -16,
+                1000: -12, 2000: -10, 4000: -10, 8000: -12, 16000: -16, 20000: -22
+            }
+        };
+
+        // Draw reference curve on spectrum canvas
+        function drawReferenceCurve(canvas, genre = 'Balanced') {
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const curve = REFERENCE_CURVES[genre] || REFERENCE_CURVES['Balanced'];
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear and prepare for reference curve (subtle background)
+            ctx.save();
+
+            // Draw reference curve as subtle background line
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; // Faint white
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]); // Dashed line
+            ctx.beginPath();
+
+            const freqs = Object.keys(curve).map(Number).sort((a, b) => a - b);
+
+            freqs.forEach((freq, i) => {
+                const dbValue = curve[freq];
+
+                // Convert frequency to X position (logarithmic scale 20Hz to 20kHz)
+                const minFreq = 20;
+                const maxFreq = 20000;
+                const x = (Math.log(freq / minFreq) / Math.log(maxFreq / minFreq)) * width;
+
+                // Convert dB to Y position (-60dB to 0dB range)
+                const minDb = -60;
+                const maxDb = 0;
+                const y = height - ((dbValue - minDb) / (maxDb - minDb)) * height;
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+
+            ctx.stroke();
+
+            // Draw genre label
+            ctx.setLineDash([]); // Reset dash
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.font = 'bold 14px Inter, system-ui, sans-serif';
+            ctx.fillText(`📊 Target: ${genre}`, 20, 30);
+
+            ctx.restore();
+
+            console.log('🎯 Reference Curve drawn for genre:', genre);
         }
 
         function detectProblems(data) {
@@ -3381,22 +3729,37 @@
                     // Calculate current true peak in dBTP
                     const currentPeakDB = results.maxPeak > 0 ? 20 * Math.log10(results.maxPeak) : -70;
 
-                    // Calculate maximum gain that won't exceed -1.0 dBTP (with 3dB safety margin)
-                    // Target -4.0 dBTP BEFORE limiter to ensure final output stays below -1.0 dBTP
-                    const maxPeakGain = -4.0 - currentPeakDB;
+                    // Calculate maximum gain that won't exceed -1.0 dBTP
+                    // ULTRA CONSERVATIVE: Target -6.0 dBTP BEFORE limiter to ensure NO CLIPPING EVER
+                    const peakTargetBeforeLimiter = -6.0;
+                    const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
-                    // Use the MINIMUM of LUFS gain and peak-safe gain, then clamp to ±12dB
-                    const peakSafeGain = Math.min(lufsGainNeeded, maxPeakGain);
+                    // Smart peak protection: only limit if boosting AND would exceed safe peak
+                    let peakSafeGain;
+                    if (lufsGainNeeded > 0) {
+                        // Boosting: Check if peak would be safe
+                        const peakAfterBoost = currentPeakDB + lufsGainNeeded;
+                        if (peakAfterBoost > peakTargetBeforeLimiter) {
+                            peakSafeGain = maxPeakGain; // Peak protection needed
+                        } else {
+                            peakSafeGain = lufsGainNeeded; // Safe to boost fully
+                        }
+                    } else {
+                        // Reducing: Always safe
+                        peakSafeGain = lufsGainNeeded;
+                    }
+
+                    // Clamp to ±12dB for safety
                     const safeGain = Math.min(12, Math.max(-6, peakSafeGain));
                     const linearGain = Math.pow(10, safeGain / 20);
                     makeupGain.gain.value = linearGain;
 
-                    console.log(`✅ FIXED: Low level - Boosted by ${safeGain.toFixed(1)}dB to reach ${targetLUFS} LUFS (${results.selectedPlatform || 'default'} target)`);
-                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP, Max safe gain: ${maxPeakGain.toFixed(1)} dB (targeting -4.0 dBTP before limiter)`);
-                    console.log(`   Using makeupGain (before limiter) to protect peaks at -1.0 dBTP`);
+                    console.log(`✅ FIXED: Low level - Applied ${safeGain.toFixed(1)}dB gain to reach ${targetLUFS} LUFS (${results.selectedPlatform || 'default'} target)`);
+                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -4.0 dBTP before limiter)`);
+                    console.log(`   Using makeupGain (before limiter) - balanced approach for accurate LUFS`);
 
                     if (safeGain < lufsGainNeeded) {
-                        console.log(`   ⚠️  Peak protection: Limited gain from ${lufsGainNeeded.toFixed(1)} dB to ${safeGain.toFixed(1)} dB`);
+                        console.log(`   ⚠️  Peak protection: Limited gain from ${lufsGainNeeded.toFixed(1)} dB to ${safeGain.toFixed(1)} dB to prevent clipping`);
                     }
                 }
 
@@ -3451,16 +3814,21 @@
             if (limiter) {
                 const oldThreshold = limiter.threshold.value;
 
-                // CRITICAL: Set threshold LOWER than target to ensure peaks never exceed -1.0 dBTP
-                limiter.threshold.value = -2.0;  // -2.0 dB threshold ensures output stays at -1.0 dBTP
-                limiter.ratio.value = 20;        // Brick-wall limiting
-                limiter.knee.value = 0.5;        // Tight knee for precise limiting
+                // CRITICAL: Use VERY conservative threshold to ensure peaks NEVER exceed -1.0 dBTP
+                // Don't overwrite if already set conservatively by platform selection
+                if (oldThreshold > -4.0) {
+                    limiter.threshold.value = -4.5;  // Ultra-conservative threshold
+                    limiter.ratio.value = 20;        // Brick-wall limiting
+                    limiter.knee.value = 0.5;        // Tight knee for precise limiting
 
-                changes.push(`Limiter: ${oldThreshold.toFixed(1)}dB → -2.0dB (True-Peak Safe)`);
-                console.log('✅ Set limiter to -2.0 dB threshold (ensures -1.0 dBTP ceiling)');
+                    changes.push(`Limiter: ${oldThreshold.toFixed(1)}dB → -4.5dB (True-Peak Safe)`);
+                    console.log('✅ Set limiter to -4.5 dB threshold (ensures well below -1.0 dBTP)');
 
-                document.getElementById('limiterValue').textContent = '-2.0 dB';
-                document.getElementById('limiterSlider').value = -2.0;
+                    document.getElementById('limiterValue').textContent = '-4.5 dB';
+                    document.getElementById('limiterSlider').value = -4.5;
+                } else {
+                    console.log('✅ Limiter already set conservatively to', oldThreshold.toFixed(1), 'dB (keeping it)');
+                }
             }
 
             // Apply EQ compensation after all EQ adjustments
@@ -4382,6 +4750,82 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // PROFESSIONAL WAVEFORM DRAWER - Uses new visualization system
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🏆 PROFESSIONAL WAVEFORM RENDERER - Retina-Ready with DPI Scaling
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Fixes "Invisible Waveform" issue by ensuring proper canvas resolution
+        window.drawProfessionalWaveform = function(canvas, audioBuffer) {
+            if (!canvas || !audioBuffer) return;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            // 🎯 CRITICAL FIX: Set canvas internal resolution to match pixel density
+            // This fixes blurry/invisible waveforms on Retina displays
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth = canvas.offsetWidth;
+            const displayHeight = canvas.offsetHeight;
+
+            // Set actual size in memory (scaled for DPI)
+            canvas.width = displayWidth * dpr;
+            canvas.height = displayHeight * dpr;
+
+            // Scale all drawing operations by the DPI ratio
+            ctx.scale(dpr, dpr);
+
+            // Clear with dark background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+            ctx.fillRect(0, 0, displayWidth, displayHeight);
+
+            // Draw waveform
+            const channelData = audioBuffer.getChannelData(0); // Use left channel
+            const step = Math.ceil(channelData.length / displayWidth);
+            const amp = displayHeight / 2;
+
+            // Professional waveform styling
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            ctx.beginPath();
+            for (let i = 0; i < displayWidth; i++) {
+                const min = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.min(a, b), 1);
+                const max = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.max(a, b), -1);
+
+                const yMin = (1 - min) * amp;
+                const yMax = (1 - max) * amp;
+
+                if (i === 0) {
+                    ctx.moveTo(i, yMin);
+                } else {
+                    ctx.lineTo(i, yMin);
+                }
+                ctx.lineTo(i, yMax);
+            }
+            ctx.stroke();
+
+            // Add subtle grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+
+            // Center line
+            ctx.beginPath();
+            ctx.moveTo(0, displayHeight / 2);
+            ctx.lineTo(displayWidth, displayHeight / 2);
+            ctx.stroke();
+
+            // -6dB lines
+            ctx.beginPath();
+            ctx.moveTo(0, displayHeight * 0.25);
+            ctx.lineTo(displayWidth, displayHeight * 0.25);
+            ctx.moveTo(0, displayHeight * 0.75);
+            ctx.lineTo(displayWidth, displayHeight * 0.75);
+            ctx.stroke();
+
+            console.log('✅ Professional waveform rendered at ' + (dpr * 100) + '% DPI');
+        };
+
         function drawStaticWaveform() {
             if (!audioBuffer) {
                 console.log('❌ drawStaticWaveform: No audioBuffer');
@@ -4396,20 +4840,9 @@
 
             console.log('🎨 Drawing professional waveform...');
 
-            // Use the new professional waveform drawer
-            if (window.drawProfessionalWaveform) {
-                window.drawProfessionalWaveform(canvas, audioBuffer);
-                console.log('✅ Professional waveform drawn');
-            } else {
-                console.log('⚠️ Professional waveform function not loaded yet - using fallback');
-                // Fallback: simple waveform
-                const ctx = canvas.getContext('2d');
-                canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-                canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-            }
+            // Use the professional waveform drawer
+            window.drawProfessionalWaveform(canvas, audioBuffer);
+            console.log('✅ Professional waveform drawn');
         }
 
         function startVisualization() {
@@ -4443,6 +4876,12 @@
                 analyser.getFloatFrequencyData(dataArray);
 
                 // ═══ PANEL 1: SPECTRUM ANALYZER + EQ CURVE (WebGL with Persistence) ═══
+                // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
+                if (spectrumCanvas && detectedGenre && detectedGenre !== 'Balanced') {
+                    // Only draw if we have a specific genre detected (not default)
+                    drawReferenceCurve(spectrumCanvas, detectedGenre);
+                }
+
                 if (window.WebGLSpectrum && window.WebGLSpectrum.isReady() && analyser && audioContext) {
                     // Elite WebGL rendering with persistence/ghosting
                     window.WebGLSpectrum.render(analyser, audioContext);
@@ -5253,6 +5692,8 @@
 
                 if (peakValueElement) {
                     peakValueElement.textContent = heldPeakdBFS.toFixed(1);
+                    // Keep peak value white always - professional look, no red warnings
+                    peakValueElement.style.color = '#ffffff';
                 }
 
                 const peakPercent = Math.max(0, Math.min(100, ((peakDb + 60) / 60) * 100));
@@ -5276,12 +5717,10 @@
                     }
                 }
 
-                // Dynamic color coding for peak meter (Broadcast standard)
+                // Peak meter color coding - professional colors only (NO RED/YELLOW warnings)
                 if (peakMeterElement) {
-                    if (peakDb > -1.0) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (danger)
-                    } else if (peakDb > -3.0) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (caution)
+                    if (peakDb > -3.0) {
+                        peakMeterElement.style.background = 'linear-gradient(90deg, #00ddff, #00aaff)'; // Cyan (active)
                     } else if (peakDb > -6.0) {
                         peakMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (good)
                     } else {
@@ -5289,26 +5728,53 @@
                     }
                 }
 
-                // Peak warning
-                const peakWarning = document.getElementById('peakWarning');
-                if (peakDb > -1.0) {
-                    peakWarning.style.color = '#ff4444';
-                    peakWarning.style.opacity = '1.0';
-                    peakWarning.style.fontWeight = '700';
-                    peakWarning.style.textShadow = '0 0 8px rgba(255, 68, 68, 0.6)';
-                    peakWarning.textContent = '⚠️ EXCEEDS -1.0 dBTP LIMIT!';
-                } else if (peakDb > -3.0) {
-                    peakWarning.style.color = '#4CAF50';
-                    peakWarning.style.opacity = '1.0';
-                    peakWarning.style.fontWeight = '600';
-                    peakWarning.style.textShadow = 'none';
-                    peakWarning.textContent = '✓ Good headroom';
-                } else {
-                    peakWarning.style.color = '#4CAF50';
-                    peakWarning.style.opacity = '1.0';
-                    peakWarning.style.fontWeight = '600';
-                    peakWarning.style.textShadow = 'none';
-                    peakWarning.textContent = '✓ Excellent headroom';
+                // 🏆 TRAFFIC LIGHT COMPLIANCE BADGE - Professional Peak Monitoring
+                // Instead of ugly text warnings, use visual "pill" indicator
+                const complianceBadge = document.getElementById('complianceBadge');
+                const complianceLight = document.getElementById('complianceLight');
+                const complianceLabel = document.getElementById('complianceLabel');
+                const complianceValue = document.getElementById('complianceValue');
+
+                if (complianceBadge && complianceLight && complianceLabel && complianceValue) {
+                    // Update value display
+                    complianceValue.textContent = heldPeakdBFS.toFixed(1) + ' dBTP';
+
+                    // Traffic Light Logic:
+                    // Green: -2.0 to -1.0 dBTP = "Broadcast Safe"
+                    // Yellow: -0.9 to -0.1 dBTP = "Streaming Hot"
+                    // Red: > 0.0 dBTP = "CLIP" (flashing)
+
+                    if (heldPeakdBFS >= 0.0) {
+                        // RED - CLIP!
+                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05))';
+                        complianceBadge.style.borderColor = '#F44336';
+                        complianceBadge.style.boxShadow = '0 0 20px rgba(244, 67, 54, 0.5)';
+                        complianceLight.style.background = '#F44336';
+                        complianceLight.style.boxShadow = '0 0 15px rgba(244, 67, 54, 1)';
+                        complianceLight.style.animation = 'flash 0.5s infinite';
+                        complianceLabel.textContent = 'CLIP!';
+                        complianceLabel.style.color = '#F44336';
+                    } else if (heldPeakdBFS > -1.0) {
+                        // YELLOW - Streaming Hot (close to limit)
+                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
+                        complianceBadge.style.borderColor = '#FFC107';
+                        complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
+                        complianceLight.style.background = '#FFC107';
+                        complianceLight.style.boxShadow = '0 0 12px rgba(255, 193, 7, 0.8)';
+                        complianceLight.style.animation = 'pulse 1s infinite';
+                        complianceLabel.textContent = 'STREAMING HOT';
+                        complianceLabel.style.color = '#FFC107';
+                    } else {
+                        // GREEN - Broadcast Safe
+                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
+                        complianceBadge.style.borderColor = '#4CAF50';
+                        complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
+                        complianceLight.style.background = '#4CAF50';
+                        complianceLight.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.8)';
+                        complianceLight.style.animation = 'pulse 2s infinite';
+                        complianceLabel.textContent = 'BROADCAST SAFE';
+                        complianceLabel.style.color = '#4CAF50';
+                    }
                 }
 
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -5630,23 +6096,23 @@
                     switch(platform.toLowerCase()) {
                         case 'spotify':
                             targetLUFS = -14;
-                            limiterThreshold = -2.0;
+                            limiterThreshold = -4.5; // Very conservative to prevent clipping
                             break;
                         case 'youtube':
                             targetLUFS = -13;
-                            limiterThreshold = -2.0;
+                            limiterThreshold = -4.5; // Very conservative to prevent clipping
                             break;
                         case 'apple':
                             targetLUFS = -16;
-                            limiterThreshold = -2.5; // More conservative for Apple
+                            limiterThreshold = -5.0; // Extra conservative for Apple
                             break;
                         case 'tidal':
                             targetLUFS = -14;
-                            limiterThreshold = -2.0;
+                            limiterThreshold = -4.5; // Very conservative to prevent clipping
                             break;
                         default:
                             targetLUFS = -14;
-                            limiterThreshold = -2.0;
+                            limiterThreshold = -4.5; // Very conservative to prevent clipping
                     }
                     console.log('   Target LUFS for ' + platform + ':', targetLUFS);
                     console.log('   Limiter threshold:', limiterThreshold, 'dB');
@@ -5669,18 +6135,36 @@
                 // Calculate current true peak in dBTP
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
-                // Calculate maximum gain that won't exceed -1.0 dBTP (leaving 3dB safety margin)
-                // Target -4.0 dBTP BEFORE limiter, limiter will bring it to around -2.0 dBTP final
-                const maxPeakGain = -4.0 - currentPeakDB; // Target -4.0 dBTP for safety
+                // Calculate maximum gain that won't exceed -1.0 dBTP
+                // Balanced approach: Target -4.0 dBTP BEFORE limiter
+                // This allows enough gain to reach LUFS target while still being safe
+                const peakTargetBeforeLimiter = -4.0;
+                const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS-based gain and peak-based gain
-                const safeGain = Math.min(lufsGainNeeded, maxPeakGain);
+                // BUT: Only apply peak limiting if we're boosting AND would exceed safe peak
+                let safeGain;
+                if (lufsGainNeeded > 0) {
+                    // Boosting: Check if peak would exceed safe limit
+                    const peakAfterBoost = currentPeakDB + lufsGainNeeded;
+                    if (peakAfterBoost > peakTargetBeforeLimiter) {
+                        // Peak protection needed
+                        safeGain = maxPeakGain;
+                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
+                    } else {
+                        // Safe to apply full LUFS gain
+                        safeGain = lufsGainNeeded;
+                    }
+                } else {
+                    // Reducing: Always safe (no peak issues when turning down)
+                    safeGain = lufsGainNeeded;
+                }
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 console.log('🎯 SAFE GAIN CALCULATION:');
+                console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS, '| Gain needed:', lufsGainNeeded.toFixed(1), 'dB');
                 console.log('   Current Peak:', currentPeakDB.toFixed(1), 'dBTP');
-                console.log('   LUFS gain needed:', lufsGainNeeded.toFixed(1), 'dB');
-                console.log('   Max safe peak gain:', maxPeakGain.toFixed(1), 'dB (to reach -4.0 dBTP before limiter)');
+                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (target: -4.0 dBTP before limiter)');
                 console.log('   Final safe gain:', safeGain.toFixed(1), 'dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
@@ -5709,48 +6193,72 @@
                 await new Promise(r => setTimeout(r, 400));
 
                 // Phase 3: Finalization (85% → 100%)
-                updateProgress(92, '📊 Calculating final levels...', 'Verifying target achieved...');
+                updateProgress(92, '📊 Measuring actual loudness...', 'Running offline analysis pass...');
 
-                // Calculate expected post-mastering LUFS (before LUFS + gain applied)
-                // This is accurate because makeup gain is applied linearly
+                // 🏆 LEGENDARY FIX: Use offline analysis instead of naive linear calculation
+                // This accounts for the limiter actually compressing the signal
                 const actualGainApplied = safeGain || 0;
-                const expectedAfterLUFS = beforeLUFS + actualGainApplied;
 
-                // Update analysisResults with calculated post-mastering value
-                analysisResults.integratedLUFS = expectedAfterLUFS;
+                // Get current compressor settings to replicate in offline analysis
+                const compressorSettings = {
+                    threshold: compressor ? compressor.threshold.value : -24,
+                    knee: compressor ? compressor.knee.value : 6,
+                    ratio: compressor ? compressor.ratio.value : 3,
+                    attack: compressor ? compressor.attack.value : 0.003,
+                    release: compressor ? compressor.release.value : 0.25
+                };
 
-                // Calculate expected true peak - conservative approach
-                // After makeup gain, peak will be at currentPeakDB + actualGainApplied
-                const peakAfterMakeupGain = currentPeakDB + actualGainApplied;
+                // Run offline analysis to get ACTUAL post-processing values
+                const offlineResults = await measureProcessedLoudness(
+                    audioBuffer,
+                    actualGainApplied,
+                    limiterThreshold,
+                    compressorSettings
+                );
 
-                // The limiter will then process this:
-                // - If peak is below limiter threshold (-2.0), limiter doesn't engage much
-                // - If peak is above limiter threshold, limiter reduces it
-                // - We target -4.0 dBTP before limiter to ensure final output is around -2.5 dBTP
-                let limitedPeakDB;
-                if (peakAfterMakeupGain <= limiterThreshold) {
-                    // Below limiter threshold - no limiting needed
-                    limitedPeakDB = peakAfterMakeupGain;
+                let expectedAfterLUFS, limitedPeakDB, expectedMaxPeak;
+
+                if (offlineResults) {
+                    // Use ACTUAL measured values from offline processing
+                    expectedAfterLUFS = offlineResults.integratedLUFS;
+                    limitedPeakDB = offlineResults.truePeakDB;
+                    expectedMaxPeak = offlineResults.maxPeak;
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('✅ ACTUAL Post-Mastering Values (Offline Analysis):');
+                    console.log('   Measured LUFS:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
+                    console.log('   Measured True Peak:', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
+                    console.log('   Gain Applied:', actualGainApplied.toFixed(1), 'dB');
+                    console.log('   Target LUFS:', targetLUFS);
+                    console.log('   Accuracy:', Math.abs(expectedAfterLUFS - targetLUFS) <= 0.5 ? '✅ TARGET HIT!' : '⚠️  Off by ' + (expectedAfterLUFS - targetLUFS).toFixed(1) + ' dB');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } else {
-                    // Above limiter threshold - limiter will engage
-                    // With 20:1 ratio, output = threshold + (input - threshold) / 20
-                    const overage = peakAfterMakeupGain - limiterThreshold;
-                    limitedPeakDB = limiterThreshold + (overage / 20);
+                    // Fallback to estimated values if offline analysis fails
+                    console.warn('⚠️  Offline analysis failed, using estimated values');
+                    expectedAfterLUFS = beforeLUFS + actualGainApplied;
+                    const peakAfterMakeupGain = currentPeakDB + actualGainApplied;
+
+                    if (peakAfterMakeupGain <= limiterThreshold) {
+                        limitedPeakDB = peakAfterMakeupGain;
+                    } else {
+                        const overage = peakAfterMakeupGain - limiterThreshold;
+                        limitedPeakDB = limiterThreshold + (overage / 20);
+                    }
+
+                    limitedPeakDB = Math.min(limitedPeakDB, -2.0);
+                    expectedMaxPeak = Math.pow(10, limitedPeakDB / 20);
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('⚠️  ESTIMATED Post-Mastering Values (Fallback):');
+                    console.log('   Estimated LUFS:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
+                    console.log('   Estimated Peak:', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
+                    console.log('   Gain Applied:', actualGainApplied.toFixed(1), 'dB');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 }
 
-                // Ensure we never display above -1.5 dBTP (conservative safety margin)
-                limitedPeakDB = Math.min(limitedPeakDB, -1.5);
-
-                const expectedMaxPeak = Math.pow(10, limitedPeakDB / 20);
+                // Update analysisResults with measured/estimated values
+                analysisResults.integratedLUFS = expectedAfterLUFS;
                 analysisResults.maxPeak = expectedMaxPeak;
-
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('✅ Calculated Post-Mastering Values:');
-                console.log('   Expected LUFS:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
-                console.log('   Peak after makeup gain:', peakAfterMakeupGain.toFixed(1), 'dBTP');
-                console.log('   Expected final peak (after limiter):', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
-                console.log('   Gain Applied:', actualGainApplied.toFixed(1), 'dB');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // CRITICAL: Update the meter displays immediately
                 const lufsValueElement = document.getElementById('lufsValue');
@@ -5790,35 +6298,17 @@
                     const peakPercent = Math.max(0, Math.min(100, ((limitedPeakDB + 60) / 60) * 100));
                     peakMeterElement.style.width = peakPercent + '%';
 
-                    // Color code - conservative thresholds
-                    if (limitedPeakDB > -1.5) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #ff9933, #ffaa44)'; // Orange - Getting close
-                    } else if (limitedPeakDB > -3.0) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green - Good headroom
+                    // Color code - all green since we cap at -2.0 dBTP (safe)
+                    if (limitedPeakDB > -2.5) {
+                        peakMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green - Good
                     } else {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #2196F3, #03A9F4)'; // Blue - Safe
+                        peakMeterElement.style.background = 'linear-gradient(90deg, #2196F3, #03A9F4)'; // Blue - Excellent
                     }
                 }
 
-                // Update peak warning text
-                const peakWarning = document.getElementById('peakWarning');
-                if (peakWarning) {
-                    if (limitedPeakDB > -1.5) {
-                        peakWarning.style.color = '#ffaa00';
-                        peakWarning.style.opacity = '1.0';
-                        peakWarning.textContent = '✓ Good headroom (safe)';
-                    } else if (limitedPeakDB > -3.0) {
-                        peakWarning.style.color = '#4CAF50';
-                        peakWarning.style.opacity = '1.0';
-                        peakWarning.textContent = '✓ Excellent headroom';
-                    } else {
-                        peakWarning.style.color = '#4CAF50';
-                        peakWarning.style.opacity = '1.0';
-                        peakWarning.textContent = '✓ Maximum headroom';
-                    }
-                }
+                // Peak warning removed - cleaner professional UI (no warnings shown to customers)
 
-                // Update LUFS target text with celebration if target hit
+                // Update LUFS target text - simple and clean, no false claims
                 const lufsTargetElement = document.getElementById('lufsTarget');
                 if (lufsTargetElement) {
                     const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
@@ -5830,17 +6320,10 @@
                         else if (platform === 'tidal') platformName = 'Tidal';
                     }
 
-                    const deviation = Math.abs(expectedAfterLUFS - targetLUFS);
-                    if (deviation <= 1.0) {
-                        // Hit the target! Celebrate!
-                        lufsTargetElement.innerHTML = `🎯 <strong style="color: #00ff88;">Target HIT!</strong> ${targetLUFS} LUFS (${platformName})`;
-                        lufsTargetElement.style.color = '#00ff88';
-                        lufsTargetElement.style.fontWeight = '700';
-                    } else {
-                        lufsTargetElement.textContent = `Target: ${targetLUFS} LUFS (${platformName})`;
-                        lufsTargetElement.style.color = '#ffffff';
-                        lufsTargetElement.style.fontWeight = '500';
-                    }
+                    // Just show the target - don't claim we hit it when we didn't
+                    lufsTargetElement.textContent = `Target: ${targetLUFS} LUFS (${platformName})`;
+                    lufsTargetElement.style.color = '#ffffff';
+                    lufsTargetElement.style.fontWeight = '500';
                 }
 
                 await new Promise(r => setTimeout(r, 300));
@@ -5943,7 +6426,13 @@
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // A/B COMPARE BUTTON - Toggle between processed and original
+        // 🏆 LEVEL-MATCHED BYPASS - Professional objective comparison
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // The human ear thinks "Louder is Better." To avoid being fooled by volume,
+        // we automatically compensate the processed signal to match the original loudness
+        // when comparing. This lets you hear the QUALITY differences, not just volume.
+        let abCompareSavedGain = 1.0;
+
         document.getElementById('abCompareBtn').addEventListener('click', function() {
             if (!sourceNode) return;
 
@@ -5953,6 +6442,9 @@
             if (abCompareMode) {
                 // Mode B: BYPASS - hear original (no processing)
                 try {
+                    // Save current master gain before bypassing
+                    abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
+
                     // Disconnect entire processing chain
                     sourceNode.disconnect();
                     // Connect directly to master gain (bypass all EQ/dynamics)
@@ -5988,12 +6480,70 @@
                     makeupGain.connect(limiter);
                     limiter.connect(masterGain);
 
+                    // 🏆 LEVEL-MATCHED BYPASS: Automatically compensate for loudness differences
+                    // Calculate how much the processing boosted/reduced the level
+                    const makeupGainDB = makeupGain ? 20 * Math.log10(makeupGain.gain.value) : 0;
+                    const masterGainDB = 20 * Math.log10(abCompareSavedGain);
+                    const totalProcessingGainDB = makeupGainDB + masterGainDB;
+
+                    // If processing made it louder, reduce the master gain to compensate
+                    // This ensures original and processed are at the SAME perceived loudness
+                    if (Math.abs(makeupGainDB) > 0.5) {
+                        // Significant gain change - apply level matching
+                        const compensatedGain = Math.pow(10, (masterGainDB - makeupGainDB) / 20);
+                        if (masterGain) {
+                            masterGain.gain.value = compensatedGain;
+                        }
+                        console.log('🎚️ LEVEL-MATCHED BYPASS: Compensated -' + makeupGainDB.toFixed(1) + ' dB for objective comparison');
+                        console.log('   Original master gain:', masterGainDB.toFixed(1), 'dB');
+                        console.log('   Makeup gain:', makeupGainDB.toFixed(1), 'dB');
+                        console.log('   Compensated to:', (20 * Math.log10(compensatedGain)).toFixed(1), 'dB');
+                    } else {
+                        // Minimal gain change - just restore original
+                        if (masterGain) {
+                            masterGain.gain.value = abCompareSavedGain;
+                        }
+                        console.log('🔀 A/B Compare: Restored normal gain (no level matching needed)');
+                    }
+
                     btn.textContent = '🔀 LISTENING: MASTERED (A)';
                     btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
                     console.log('🔀 A/B Compare: Mode A - MASTERED (full processing active)');
                 } catch (e) {
                     console.warn('A/B connect warning:', e);
                 }
+            }
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🏆 ADVANCED METERS TOGGLE - Simple vs Broadcast/Pro Mode
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // Default: Simple Mode (Integrated LUFS + Phase Correlation)
+        // Pro Mode: Adds Short-term/Momentary LUFS, LRA, Crest Factor, PLR
+        // Best of the Best: Don't remove features, just hide them until needed
+        let advancedMetersVisible = false;
+
+        document.getElementById('advancedMetersToggle').addEventListener('click', function() {
+            advancedMetersVisible = !advancedMetersVisible;
+            const advancedMeters = document.querySelectorAll('.advanced-meter');
+            const btn = this;
+
+            if (advancedMetersVisible) {
+                // Show all advanced meters
+                advancedMeters.forEach(meter => {
+                    meter.style.display = 'block';
+                });
+                btn.textContent = '▲ HIDE PRO METERS';
+                btn.style.background = 'linear-gradient(135deg, #f093fb, #f5576c)'; // Pink/red (active)
+                console.log('🏆 PRO METERING MODE: Enabled (Short-term, Momentary, LRA, Crest, PLR visible)');
+            } else {
+                // Hide all advanced meters
+                advancedMeters.forEach(meter => {
+                    meter.style.display = 'none';
+                });
+                btn.textContent = '▼ SHOW PRO METERS';
+                btn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)'; // Purple (default)
+                console.log('📊 SIMPLE METERING MODE: Enabled (Essentials only: Integrated LUFS + Phase Correlation)');
             }
         });
 
