@@ -1,37 +1,4 @@
 {
-  "version": 2,
-  "name": "luvlang-mastering",
-  "builds": [
-    {
-      "src": "luvlang_LEGENDARY_COMPLETE.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "headers": {
-        "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Embedder-Policy": "require-corp",
-        "Cross-Origin-Resource-Policy": "cross-origin"
-      },
-      "continue": true
-    },
-    {
-      "src": ".*\\.wasm$",
-      "headers": {
-        "Content-Type": "application/wasm",
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": ".*\\.js$",
-      "headers": {
-        "Content-Type": "application/javascript; charset=utf-8",
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -51,21 +18,36 @@
       ]
     },
     {
-      "source": "/wasm/build/(.*).wasm",
+      "source": "/(.*).wasm",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/wasm"
         },
         {
-          "key": "Content-Encoding",
-          "value": "br"
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
         },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
     }
   ]
 }

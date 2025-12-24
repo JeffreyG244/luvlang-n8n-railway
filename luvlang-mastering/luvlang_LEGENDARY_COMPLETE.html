@@ -291,6 +291,19 @@
                 inset 0 0 20px rgba(0, 0, 0, 0.8),
                 inset 0 2px 4px rgba(0, 0, 0, 0.6),
                 0 1px 0 rgba(255, 255, 255, 0.02);
+            transition: box-shadow 0.2s ease, transform 0.1s ease;
+        }
+
+        .waveform-panel-viz canvas:hover {
+            box-shadow:
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 0 15px rgba(0, 212, 255, 0.3),
+                0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        .waveform-panel-viz canvas:active {
+            transform: scale(0.998);
         }
 
         /* OLD CLASSES - Keep for compatibility */
@@ -1462,10 +1475,15 @@
 
             <!-- PANEL 3: DYNAMIC WAVEFORM -->
             <div class="viz-panel waveform-panel-viz">
-                <div class="panel-title">WAVEFORM</div>
-                <div style="position: relative; width: 100%; height: 120px;">
-                    <canvas id="waveformCanvasStatic" width="800" height="120" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+                <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
+                <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
+                    <canvas id="waveformCanvasStatic" width="800" height="120" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
                     <canvas id="waveformCanvasPlayhead" width="800" height="120" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <!-- VISIBLE SCRUBBER HANDLE -->
+                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 10000; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
+                        <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
+                        <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -4436,34 +4454,82 @@
             const rect = waveformCanvasStatic.getBoundingClientRect();
             const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
             audioElement.currentTime = percent * audioElement.duration;
+
+            // Update scrubber handle position immediately
+            updateScrubberPosition();
+
+            // Visual feedback: Draw scrub indicator line
+            if (isDraggingWaveform) {
+                const canvas = waveformCanvasPlayhead;
+                const ctx = canvas.getContext('2d');
+                const width = canvas.offsetWidth;
+                const height = canvas.offsetHeight;
+
+                // Clear previous indicator
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw scrub indicator (bright cyan vertical line)
+                const x = percent * width * window.devicePixelRatio;
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.lineWidth = 3 * window.devicePixelRatio;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+
+                // Draw position text
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.9)';
+                ctx.font = `${12 * window.devicePixelRatio}px 'SF Pro Display', -apple-system, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText(formatTime(audioElement.currentTime), x, 15 * window.devicePixelRatio);
+            }
+
             console.log(`🎯 Seeked to ${(percent * 100).toFixed(1)}% (${formatTime(audioElement.currentTime)})`);
         }
 
-        waveformCanvasStatic.addEventListener('mousedown', (e) => {
-            isDraggingWaveform = true;
+        let mouseDownTime = 0;
 
-            // Remember if audio was playing before we start seeking
+        waveformCanvasStatic.addEventListener('mousedown', (e) => {
+            mouseDownTime = Date.now();
+            isDraggingWaveform = false; // Don't set to true yet, wait for movement
+
+            // Remember if audio was playing
             wasPlayingBeforeSeek = !audioElement.paused;
 
-            // Pause audio before seeking to prevent audio glitches
-            if (wasPlayingBeforeSeek) {
-                audioElement.pause();
-            }
-
+            // Immediately seek on click
             seekToWaveformPosition(e);
         });
 
         waveformCanvasStatic.addEventListener('mousemove', (e) => {
+            // If mouse is down and moving, this is a drag
+            if (mouseDownTime > 0 && !isDraggingWaveform) {
+                isDraggingWaveform = true;
+
+                // Pause audio ONLY when dragging starts
+                if (wasPlayingBeforeSeek) {
+                    audioElement.pause();
+                    console.log('⏸ Paused for dragging');
+                }
+            }
+
             if (isDraggingWaveform) {
                 seekToWaveformPosition(e);
             }
         });
 
         waveformCanvasStatic.addEventListener('mouseup', async () => {
+            const wasDragging = isDraggingWaveform;
             isDraggingWaveform = false;
+            mouseDownTime = 0;
 
-            // Resume playback if it was playing before seeking
-            if (wasPlayingBeforeSeek) {
+            // Clear scrub indicator
+            if (waveformCanvasPlayhead) {
+                const ctx = waveformCanvasPlayhead.getContext('2d');
+                ctx.clearRect(0, 0, waveformCanvasPlayhead.width, waveformCanvasPlayhead.height);
+            }
+
+            // Resume playback ONLY if we were dragging (not just clicking)
+            if (wasDragging && wasPlayingBeforeSeek) {
                 // Wait for the 'seeked' event to ensure seek is complete before playing
                 const resumePlayback = async () => {
                     try {
@@ -4509,10 +4575,18 @@
 
         waveformCanvasStatic.addEventListener('mouseleave', async () => {
             if (isDraggingWaveform) {
+                const wasDragging = isDraggingWaveform;
                 isDraggingWaveform = false;
+                mouseDownTime = 0;
+
+                // Clear scrub indicator
+                if (waveformCanvasPlayhead) {
+                    const ctx = waveformCanvasPlayhead.getContext('2d');
+                    ctx.clearRect(0, 0, waveformCanvasPlayhead.width, waveformCanvasPlayhead.height);
+                }
 
                 // Resume playback if it was playing before seeking
-                if (wasPlayingBeforeSeek) {
+                if (wasDragging && wasPlayingBeforeSeek) {
                     // Wait for the 'seeked' event to ensure seek is complete before playing
                     const resumePlayback = async () => {
                         try {
@@ -4557,8 +4631,110 @@
             }
         });
 
-        // Add cursor pointer to show it's clickable
-        waveformCanvasStatic.style.cursor = 'pointer';
+        // Add cursor to show it's horizontally scrubbable
+        waveformCanvasStatic.style.cursor = 'ew-resize';
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // VISIBLE SCRUBBER HANDLE - Updates position during playback
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const waveformScrubber = document.getElementById('waveformScrubber');
+        const waveformContainer = document.getElementById('waveformContainer');
+        let isDraggingScrubber = false;
+        let wasPlayingBeforeScrubberDrag = false;
+
+        function updateScrubberPosition() {
+            if (!audioElement || !audioElement.duration || !waveformContainer) return;
+            if (isDraggingScrubber) return; // Don't update while user is dragging
+
+            const percent = audioElement.currentTime / audioElement.duration;
+            const containerWidth = waveformContainer.offsetWidth;
+            const position = percent * containerWidth;
+
+            if (waveformScrubber) {
+                waveformScrubber.style.left = position + 'px';
+            }
+        }
+
+        // Update scrubber position every frame during playback
+        function updateScrubberLoop() {
+            updateScrubberPosition();
+            requestAnimationFrame(updateScrubberLoop);
+        }
+        updateScrubberLoop();
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SCRUBBER HANDLE DRAGGING - Grab and drag the handle to seek
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function scrubberSeekToPosition(clientX) {
+            if (!audioElement || !audioElement.duration || !waveformContainer) return;
+
+            const rect = waveformContainer.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const percent = Math.max(0, Math.min(1, x / rect.width));
+
+            audioElement.currentTime = percent * audioElement.duration;
+
+            // Update position immediately
+            const containerWidth = waveformContainer.offsetWidth;
+            const position = percent * containerWidth;
+            if (waveformScrubber) {
+                waveformScrubber.style.left = position + 'px';
+            }
+
+            console.log(`🎯 Scrubber seeked to ${(percent * 100).toFixed(1)}% (${formatTime(audioElement.currentTime)})`);
+        }
+
+        // Mouse down on scrubber handle
+        waveformScrubber.addEventListener('mousedown', (e) => {
+            isDraggingScrubber = true;
+            wasPlayingBeforeScrubberDrag = !audioElement.paused;
+
+            // Pause during scrubbing for smooth experience
+            if (wasPlayingBeforeScrubberDrag) {
+                audioElement.pause();
+            }
+
+            // Enhance visual feedback
+            waveformScrubber.style.boxShadow = '0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.6)';
+
+            e.preventDefault();
+            e.stopPropagation(); // Prevent waveform canvas click
+        });
+
+        // Mouse move - drag scrubber
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingScrubber) return;
+            scrubberSeekToPosition(e.clientX);
+        });
+
+        // Mouse up - release scrubber
+        document.addEventListener('mouseup', async () => {
+            if (!isDraggingScrubber) return;
+
+            isDraggingScrubber = false;
+
+            // Reset visual feedback
+            waveformScrubber.style.boxShadow = '0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4)';
+
+            // Resume playback if it was playing before
+            if (wasPlayingBeforeScrubberDrag) {
+                try {
+                    if (audioContext && audioContext.state !== 'running') {
+                        await audioContext.resume();
+                    }
+                    await audioElement.play();
+                    isPlaying = true;
+                    if (playBtn) playBtn.textContent = '⏸';
+                    console.log('▶️ Resumed playback after scrubber drag');
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('❌ Could not resume playback:', err);
+                    }
+                    isPlaying = false;
+                    if (playBtn) playBtn.textContent = '▶';
+                }
+            }
+        });
 
         function formatTime(seconds) {
             if (isNaN(seconds)) return '0:00';
@@ -4874,8 +5050,12 @@
             const width = displayWidth;
             const height = displayHeight;
 
-            // SOLID BLACK background
-            ctx.fillStyle = '#000000';
+            // Professional dark gradient background
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+            bgGradient.addColorStop(0, '#0a0a0f');
+            bgGradient.addColorStop(0.5, '#12121a');
+            bgGradient.addColorStop(1, '#0a0a0f');
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
             // Get audio data
@@ -4917,9 +5097,13 @@
                 ctx.globalAlpha = 1.0;
             }
 
-            // ═══ MAIN WAVEFORM (Post-Processing) ═══
-            ctx.fillStyle = '#00FF00';
-            ctx.globalAlpha = 0.6;
+            // ═══ MAIN WAVEFORM (Post-Processing) - Professional Gradient ═══
+            const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
+            waveGradient.addColorStop(0, '#00d4ff');      // Bright cyan top
+            waveGradient.addColorStop(0.5, '#0088cc');    // Mid blue
+            waveGradient.addColorStop(1, '#00d4ff');      // Bright cyan bottom
+            ctx.fillStyle = waveGradient;
+            ctx.globalAlpha = 0.85;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
 
@@ -4951,10 +5135,10 @@
             ctx.fill();
             ctx.globalAlpha = 1.0;
 
-            // Draw outline (BRIGHT GREEN)
-            ctx.strokeStyle = '#00FF00';
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 1.0;
+            // Draw outline (Bright Cyan)
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.6;
             ctx.beginPath();
 
             for (let i = 0; i < width; i++) {
@@ -4995,6 +5179,16 @@
             console.log('   Width:', width, 'Height:', height);
             console.log('   DPR:', dpr);
             console.log('   Canvas internal size:', canvas.width, 'x', canvas.height);
+
+            // VERIFY: Check if canvas actually has red pixels
+            const testPixels = ctx.getImageData(10, 10, 1, 1).data;
+            console.log('   🔍 PIXEL CHECK at (10,10): R=' + testPixels[0] + ' G=' + testPixels[1] + ' B=' + testPixels[2] + ' A=' + testPixels[3]);
+            if (testPixels[0] > 200 && testPixels[1] < 50 && testPixels[2] < 50) {
+                console.log('   ✅ RED PIXELS CONFIRMED IN CANVAS!');
+            } else {
+                console.log('   ❌ WARNING: Canvas does NOT have red pixels!');
+            }
+
             console.log('================================================');
         }
 
@@ -5188,9 +5382,10 @@
                 }
 
                 // ═══ PANEL 3: WAVEFORM (STATIC + PLAYHEAD) ═══
-                // 🏆 PERFORMANCE FIX: Static waveform is drawn ONCE when audio loads (in handleFile)
-                // Only the playhead overlay animates every frame - this prevents flickering and improves performance
-                // (Waveform drawing is handled by drawStaticWaveform() called from handleFile after audio decodes)
+                // DRAW WAVEFORM EVERY FRAME to ensure it's always visible
+                if (window.audioBuffer || audioBuffer) {
+                    drawWaveformFromBuffer(window.audioBuffer || audioBuffer);
+                }
 
                 // Draw playhead
                 if (waveformCanvasPlayhead && audioElement) {
@@ -5205,65 +5400,64 @@
                     // Clear
                     ctx.clearRect(0, 0, width, height);
 
-                    // Draw playhead if playing
-                    if (!audioElement.paused && audioElement.duration > 0) {
+                    // Draw playhead ALWAYS (playing or paused)
+                    if (audioElement && audioElement.duration > 0) {
                         const playheadX = (audioElement.currentTime / audioElement.duration) * width;
+                        console.log('🎯 Drawing playhead at X=' + playheadX.toFixed(0) + ' (time: ' + audioElement.currentTime.toFixed(1) + 's)');
 
-                        // Professional playhead line with gradient
-                        const lineGradient = ctx.createLinearGradient(0, 0, 0, height);
-                        lineGradient.addColorStop(0, 'rgba(255, 200, 100, 0.95)');  // Bright golden at top
-                        lineGradient.addColorStop(0.5, 'rgba(255, 149, 0, 0.9)');   // Orange middle
-                        lineGradient.addColorStop(1, 'rgba(255, 100, 0, 0.85)');    // Deeper orange at bottom
-
-                        // Outer glow
-                        ctx.shadowBlur = 15;
-                        ctx.shadowColor = 'rgba(255, 149, 0, 0.5)';
-                        ctx.strokeStyle = lineGradient;
-                        ctx.lineWidth = 3;
-                        ctx.lineCap = 'round';  // Rounded ends
+                        // ULTRA BRIGHT VERTICAL LINE - Impossible to miss
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = 'rgba(255, 255, 0, 0.8)';
+                        ctx.strokeStyle = '#FFFF00';  // BRIGHT YELLOW
+                        ctx.lineWidth = 4;
+                        ctx.lineCap = 'round';
                         ctx.beginPath();
-                        ctx.moveTo(playheadX, 15);  // Start below triangle
+                        ctx.moveTo(playheadX, 0);
                         ctx.lineTo(playheadX, height);
                         ctx.stroke();
 
-                        // Inner bright line (highlight)
-                        ctx.shadowBlur = 8;
-                        ctx.shadowColor = 'rgba(255, 200, 100, 0.8)';
-                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                        ctx.lineWidth = 1;
+                        // White highlight line
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 2;
                         ctx.beginPath();
-                        ctx.moveTo(playheadX, 15);
+                        ctx.moveTo(playheadX, 0);
                         ctx.lineTo(playheadX, height);
                         ctx.stroke();
 
-                        // Professional playhead marker (rounded pill shape)
-                        ctx.shadowBlur = 12;
-                        ctx.shadowColor = 'rgba(255, 149, 0, 0.7)';
+                        // HUGE DRAGGABLE HANDLE at top
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = 'rgba(255, 255, 0, 0.9)';
 
-                        // Gradient fill for marker
-                        const markerGradient = ctx.createLinearGradient(playheadX - 8, 0, playheadX + 8, 0);
-                        markerGradient.addColorStop(0, 'rgba(255, 200, 100, 0.3)');
-                        markerGradient.addColorStop(0.5, 'rgba(255, 149, 0, 1)');
-                        markerGradient.addColorStop(1, 'rgba(255, 200, 100, 0.3)');
-                        ctx.fillStyle = markerGradient;
-
-                        // Draw rounded pill shape
+                        // Outer circle (yellow glow)
+                        ctx.fillStyle = '#FFFF00';
                         ctx.beginPath();
-                        ctx.arc(playheadX - 4, 7, 7, Math.PI / 2, (3 * Math.PI) / 2);  // Left semicircle
-                        ctx.arc(playheadX + 4, 7, 7, (3 * Math.PI) / 2, Math.PI / 2);  // Right semicircle
-                        ctx.closePath();
+                        ctx.arc(playheadX, 15, 12, 0, Math.PI * 2);
                         ctx.fill();
 
-                        // Add bright highlight on top
+                        // Inner circle (white center)
+                        ctx.shadowBlur = 5;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.arc(playheadX, 15, 8, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Center dot (yellow)
                         ctx.shadowBlur = 0;
-                        const highlightGradient = ctx.createRadialGradient(playheadX, 5, 0, playheadX, 7, 8);
-                        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-                        highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
-                        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                        ctx.fillStyle = highlightGradient;
+                        ctx.fillStyle = '#FFFF00';
                         ctx.beginPath();
-                        ctx.arc(playheadX, 6, 5, 0, Math.PI * 2);
+                        ctx.arc(playheadX, 15, 4, 0, Math.PI * 2);
                         ctx.fill();
+
+                        // TIME DISPLAY above handle
+                        ctx.shadowBlur = 3;
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 11px Arial';
+                        ctx.textAlign = 'center';
+                        const currentTime = formatTime(audioElement.currentTime);
+                        ctx.fillText(currentTime, playheadX, 5);
                     }
                 }
 
@@ -7792,26 +7986,16 @@
 
                 console.log('✅ Canvas initialized - ready for waveform');
 
-                // PERSISTENT WAVEFORM REDRAW - keeps it visible
+                // WAVEFORM NOW DRAWS EVERY FRAME in draw() loop - no need for interval
+                // (Disabled to prevent duplicate drawing)
+                /*
                 window.waveformRedrawInterval = setInterval(() => {
                     const buffer = window.audioBuffer || audioBuffer;
                     if (buffer) {
-                        // Draw actual waveform
-                        console.log('🔄 Redrawing waveform (persistent loop)');
                         drawWaveformFromBuffer(buffer);
-                    } else {
-                        // Show waiting message
-                        const c = document.getElementById('waveformCanvasStatic');
-                        if (c) {
-                            const context = c.getContext('2d');
-                            context.fillStyle = '#000000';
-                            context.fillRect(0, 0, c.width, c.height);
-                            context.fillStyle = 'rgba(0, 212, 255, 0.5)';
-                            context.font = '14px Arial';
-                            context.fillText('Waiting for audio...', 320, 65);
-                        }
                     }
-                }, 200); // Redraw 5 times per second
+                }, 200);
+                */
 
                 // Check if audio is already loaded
                 if (window.audioBuffer || audioBuffer) {
