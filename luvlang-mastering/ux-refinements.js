@@ -263,9 +263,12 @@
 
     /**
      * Enhanced EQ graph drawing with logarithmic Y-axis
-     * Updates the existing drawEQGraph to use logarithmic scaling
+     * DISABLED - Using the main drawEQGraph from HTML file instead
      */
     function enhanceEQGraphWithLogScale() {
+        console.log('⚠️ enhanceEQGraphWithLogScale DISABLED - using main drawEQGraph instead');
+        return; // DISABLED
+
         // Wait for drawEQGraph to be defined
         const checkInterval = setInterval(() => {
             if (typeof window.drawEQGraph === 'function') {
@@ -275,7 +278,7 @@
                 window.drawEQGraphOriginal_Linear = window.drawEQGraph;
 
                 // Replace with logarithmic version
-                window.drawEQGraph = function(ctx, width, height, dataArray) {
+                window.drawEQGraph_OLD_DISABLED = function(ctx, width, height, dataArray) {
                     // Clear with professional gradient background
                     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
                     bgGradient.addColorStop(0, '#0a0a0a');

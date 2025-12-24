@@ -392,6 +392,57 @@ class ReferenceTrackMatcher {
         console.log('🎯 Matching loudness: ' + sign + gainAdjustment.toFixed(2) + ' dB');
         return gainAdjustment;
     }
+
+    async applyMatch(currentBuffer, strength = 1.0) {
+        if (!this.referenceAnalysis) {
+            console.error('❌ No reference track loaded');
+            return;
+        }
+
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('🎯 APPLYING REFERENCE MATCH');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        // Analyze current audio if not already analyzed
+        let currentAnalysis = window.analysisResults;
+        if (!currentAnalysis || !currentAnalysis.integratedLUFS) {
+            console.log('📊 Analyzing current audio...');
+            const engine = window.professionalMasteringEngine;
+            if (engine) {
+                currentAnalysis = await engine.analyzeAudio(currentBuffer);
+                window.analysisResults = currentAnalysis;
+            } else {
+                console.error('❌ Professional mastering engine not available');
+                return;
+            }
+        }
+
+        const currentLUFS = currentAnalysis.integratedLUFS;
+        const referenceLUFS = this.referenceAnalysis.integratedLUFS;
+
+        console.log('📊 Current Audio LUFS:', currentLUFS.toFixed(1));
+        console.log('🎯 Reference LUFS:', referenceLUFS.toFixed(1));
+
+        // Calculate gain adjustment
+        const fullGainAdjustment = this.matchLoudness(currentLUFS, referenceLUFS);
+        const adjustedGain = fullGainAdjustment * strength;
+
+        // Apply gain using makeupGain (before limiter for proper peak protection)
+        if (window.makeupGain) {
+            const linearGain = Math.pow(10, adjustedGain / 20);
+            window.makeupGain.gain.setValueAtTime(linearGain, this.context.currentTime);
+
+            const sign = adjustedGain >= 0 ? '+' : '';
+            console.log('✅ Applied ' + sign + adjustedGain.toFixed(1) + ' dB gain (Strength: ' + (strength * 100) + '%)');
+            console.log('   New target LUFS: ' + (currentLUFS + adjustedGain).toFixed(1));
+        } else {
+            console.error('❌ makeupGain node not available');
+        }
+
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✅ Reference matching complete!');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
 }
 
 // ============================================================================

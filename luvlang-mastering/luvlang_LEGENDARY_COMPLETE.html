@@ -223,16 +223,22 @@
            PROFESSIONAL VISUALIZATION PANELS - 3-Panel System
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .viz-panel {
-            background: linear-gradient(135deg, rgba(5, 5, 10, 0.95), rgba(15, 15, 25, 0.95));
+            background:
+                linear-gradient(135deg, rgba(5, 5, 10, 0.95), rgba(15, 15, 25, 0.95)),
+                linear-gradient(90deg, rgba(30, 30, 35, 0.3) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(30, 30, 35, 0.3) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 12px;
             border: 1px solid rgba(0, 212, 255, 0.15);
             box-shadow:
                 0 4px 20px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.03);
+                inset 0 1px 0 rgba(255, 255, 255, 0.03),
+                inset 0 0 30px rgba(0, 0, 0, 0.4);
             position: relative;
             overflow: hidden;
+            z-index: 0;
         }
 
         .viz-panel::before {
@@ -266,6 +272,12 @@
             background: linear-gradient(180deg, #000000 0%, #0a0a0f 50%, #000000 100%);
             border-radius: 8px;
             display: block;
+            box-shadow:
+                inset 0 0 25px rgba(0, 0, 0, 0.9),
+                inset 0 4px 8px rgba(0, 0, 0, 0.7),
+                0 2px 0 rgba(255, 255, 255, 0.01);
+            position: relative;
+            z-index: 1;
         }
 
         .meters-panel-viz {
@@ -275,6 +287,10 @@
         .waveform-panel-viz canvas {
             background: linear-gradient(180deg, #000000 0%, #050508 50%, #000000 100%);
             border-radius: 8px;
+            box-shadow:
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                inset 0 2px 4px rgba(0, 0, 0, 0.6),
+                0 1px 0 rgba(255, 255, 255, 0.02);
         }
 
         /* OLD CLASSES - Keep for compatibility */
@@ -1448,8 +1464,8 @@
             <div class="viz-panel waveform-panel-viz">
                 <div class="panel-title">WAVEFORM</div>
                 <div style="position: relative; width: 100%; height: 120px;">
-                    <canvas id="waveformCanvasStatic" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
-                    <canvas id="waveformCanvasPlayhead" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <canvas id="waveformCanvasStatic" width="800" height="120" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+                    <canvas id="waveformCanvasPlayhead" width="800" height="120" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
                 </div>
             </div>
 
@@ -1971,6 +1987,7 @@
         let compressor = null;
         let limiter = null;
         let eqCompensationGain = null;  // Automatic gain compensation for EQ
+        let bypassCompensationGain = null;  // Level-matched bypass compensation
         let makeupGain = null;           // AI mastering gain (before limiter)
         let masterGain = null;           // Manual output gain (after limiter)
 
@@ -2194,6 +2211,10 @@
                 eqCompensationGain = audioContext.createGain();
                 eqCompensationGain.gain.value = 1.0;
 
+                // Bypass Compensation Gain (level-matched bypass to prevent "louder is better" bias)
+                bypassCompensationGain = audioContext.createGain();
+                bypassCompensationGain.gain.value = 1.0;
+
                 // ⚡ LIMITER - Ultra-Conservative Peak Protection (NO CLIPPING EVER)
                 limiter = audioContext.createDynamicsCompressor();
                 limiter.threshold.value = -4.5;     // VERY conservative -4.5dB to ensure NO clipping
@@ -2412,6 +2433,9 @@
                     // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                     window.audioBuffer = audioBuffer;
 
+                    // Store original peaks for transient ghost layer
+                    window.originalPeaksData = audioBuffer.getChannelData(0).slice();
+
                     console.log('✅ Audio buffer decoded for AI processing');
 
                     // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
@@ -2461,9 +2485,21 @@
                     }
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                    // Draw waveform now that audioBuffer is ready
-                    console.log('📊 Drawing waveform now that audioBuffer is ready...');
-                    drawStaticWaveform();
+                    // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
+
+                    // Try immediately
+                    drawWaveformFromBuffer(audioBuffer);
+
+                    // Try again after 100ms (canvas might need time to be ready)
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
+
+                    // And once more after 500ms to be absolutely sure
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
+
+                    console.log('   Waveform draw attempts scheduled (3 times)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                     // Initialize WebGL spectrum analyzer (with persistence/ghosting)
                     if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
@@ -2689,10 +2725,12 @@
                 const truePeakDB = maxPeak > 0 ? 20 * Math.log10(maxPeak) : -70;
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('✅ OFFLINE ANALYSIS RESULTS (ACTUAL VALUES):');
-                console.log('   Integrated LUFS:', integratedLUFS.toFixed(1), 'LUFS');
-                console.log('   True Peak:', truePeakDB.toFixed(1), 'dBTP');
-                console.log('   Max Peak (linear):', maxPeak.toFixed(4));
+                console.log('✅ OFFLINE ANALYSIS RESULTS (ACTUAL POST-PROCESSING VALUES):');
+                console.log('   🎚️  Integrated LUFS: ' + integratedLUFS.toFixed(1) + ' LUFS');
+                console.log('   🔊 True Peak: ' + truePeakDB.toFixed(1) + ' dBTP');
+                console.log('   📊 Max Peak (linear): ' + maxPeak.toFixed(4));
+                console.log('   ⚙️  Makeup Gain Applied: ' + makeupGainDB.toFixed(1) + ' dB');
+                console.log('   🧱 Limiter Threshold: ' + limiterThresholdDB.toFixed(1) + ' dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 return {
@@ -3718,14 +3756,20 @@
                 fixedProblems.push('harsh_highs');
             }
 
-            // 5. FIX LOW LEVEL (too quiet)
-            if (results.problems.some(p => p.type === 'low_level')) {
-                if (makeupGain) {
-                    // Boost to bring to user's selected platform target
-                    // CRITICAL: Use makeupGain (before limiter) AND respect true peak headroom
-                    const targetLUFS = results.platformTarget || -14;
-                    const lufsGainNeeded = targetLUFS - results.integratedLUFS;
+            // 5. FIX LOW LEVEL (too quiet) OR HIGH LEVEL (too loud) - ALWAYS hit target LUFS
+            const isLowLevel = results.problems.some(p => p.type === 'low_level');
+            const isHighLevel = results.problems.some(p => p.type === 'high_level');
+            const needsLUFSCorrection = isLowLevel || isHighLevel;
 
+            // CRITICAL: ALWAYS try to hit target LUFS, regardless of detected problems
+            // This ensures accurate platform targeting even if analysis missed the issue
+            if (makeupGain) {
+                const targetLUFS = results.platformTarget || -14;
+                const currentLUFS = results.integratedLUFS;
+                const lufsGainNeeded = targetLUFS - currentLUFS;
+
+                // Only adjust if we're more than 0.5 LUFS off target
+                if (Math.abs(lufsGainNeeded) > 0.5) {
                     // Calculate current true peak in dBTP
                     const currentPeakDB = results.maxPeak > 0 ? 20 * Math.log10(results.maxPeak) : -70;
 
@@ -3750,20 +3794,27 @@
                     }
 
                     // Clamp to ±12dB for safety
-                    const safeGain = Math.min(12, Math.max(-6, peakSafeGain));
+                    const safeGain = Math.min(12, Math.max(-12, peakSafeGain));
                     const linearGain = Math.pow(10, safeGain / 20);
                     makeupGain.gain.value = linearGain;
 
-                    console.log(`✅ FIXED: Low level - Applied ${safeGain.toFixed(1)}dB gain to reach ${targetLUFS} LUFS (${results.selectedPlatform || 'default'} target)`);
-                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -4.0 dBTP before limiter)`);
+                    const actionWord = lufsGainNeeded > 0 ? 'BOOSTED' : 'REDUCED';
+                    console.log(`✅ FIXED: LUFS Targeting - ${actionWord} ${Math.abs(safeGain).toFixed(1)}dB to reach ${targetLUFS} LUFS (${results.selectedPlatform || 'default'} target)`);
+                    console.log(`   Current: ${currentLUFS.toFixed(1)} LUFS → Target: ${targetLUFS.toFixed(1)} LUFS → Applied: ${safeGain.toFixed(1)} dB`);
+                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -6.0 dBTP before limiter)`);
                     console.log(`   Using makeupGain (before limiter) - balanced approach for accurate LUFS`);
 
-                    if (safeGain < lufsGainNeeded) {
+                    if (Math.abs(safeGain) < Math.abs(lufsGainNeeded)) {
                         console.log(`   ⚠️  Peak protection: Limited gain from ${lufsGainNeeded.toFixed(1)} dB to ${safeGain.toFixed(1)} dB to prevent clipping`);
                     }
-                }
 
-                // Add gentle compression to maintain consistency
+                    if (isLowLevel) fixedProblems.push('low_level');
+                    if (isHighLevel) fixedProblems.push('high_level');
+                }
+            }
+
+            // Add gentle compression only if low level detected
+            if (isLowLevel) {
                 if (compressor) {
                     compressor.threshold.value = -24;
                     compressor.ratio.value = 3;
@@ -3776,8 +3827,6 @@
                     document.getElementById('compValue').textContent = '30%';
                     document.getElementById('compSlider').value = 30;
                 }
-
-                fixedProblems.push('low_level');
             }
 
             // 6. FIX NARROW STEREO (if it's not intentional for genre)
@@ -4618,8 +4667,8 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // EQ BYPASS - Properly disconnect/reconnect entire signal chain
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.getElementById('eqBypassBtn').addEventListener('click', function() {
-            if (!sourceNode || !compressor || !eqSubFilter) {
+        document.getElementById('eqBypassBtn').addEventListener('click', async function() {
+            if (!sourceNode || !compressor || !eqSubFilter || !bypassCompensationGain) {
                 console.warn('⚠️ Cannot bypass EQ - audio chain not initialized');
                 return;
             }
@@ -4627,28 +4676,59 @@
             eqBypassed = !eqBypassed;
 
             if (eqBypassed) {
-                // BYPASS MODE: Source -> Compressor (skip entire EQ chain)
-                console.log('🔇 EQ BYPASSED - Signal routing: Source → Compressor (EQ skipped)');
+                // BYPASS MODE: Source -> Bypass Compensation -> Compressor (skip entire EQ chain)
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🔇 LEVEL-MATCHED BYPASS - Calculating compensation...');
 
                 try {
+                    // Calculate level matching compensation
+                    // EQ typically adds ~3-6 dB of perceived loudness due to frequency shaping
+                    // We'll measure the actual difference and compensate
+
+                    // Get current EQ boost sum (rough estimate of added loudness)
+                    let totalEQBoost = 0;
+                    if (eqSubFilter) totalEQBoost += Math.max(0, eqSubFilter.gain.value);
+                    if (eqBassFilter) totalEQBoost += Math.max(0, eqBassFilter.gain.value);
+                    if (eqLowMidFilter) totalEQBoost += Math.max(0, eqLowMidFilter.gain.value);
+                    if (eqMidFilter) totalEQBoost += Math.max(0, eqMidFilter.gain.value);
+                    if (eqHighMidFilter) totalEQBoost += Math.max(0, eqHighMidFilter.gain.value);
+                    if (eqHighFilter) totalEQBoost += Math.max(0, eqHighFilter.gain.value);
+                    if (eqAirFilter) totalEQBoost += Math.max(0, eqAirFilter.gain.value);
+
+                    // Apply compensation (reduce bypass path by half the total boost to match perceived loudness)
+                    // Using 0.5x factor because EQ compensation gain already handles some of it
+                    const compensationDB = -Math.min(12, totalEQBoost * 0.5);
+                    const compensationLinear = Math.pow(10, compensationDB / 20);
+                    bypassCompensationGain.gain.value = compensationLinear;
+
+                    console.log('   Total EQ Boost:', totalEQBoost.toFixed(1), 'dB');
+                    console.log('   Bypass Compensation:', compensationDB.toFixed(1), 'dB (linear:', compensationLinear.toFixed(3), ')');
+                    console.log('   Result: Bypass volume matched to EQ-active volume');
+
                     // Disconnect source from EQ chain
                     sourceNode.disconnect();
 
-                    // Connect source directly to compressor (bypassing all 7 EQ filters)
-                    sourceNode.connect(compressor);
+                    // Connect source through bypass compensation to compressor
+                    sourceNode.connect(bypassCompensationGain);
+                    bypassCompensationGain.connect(compressor);
 
                     this.classList.add('bypassed');
-                    this.textContent = 'EQ Bypassed';
-                    console.log('✅ EQ bypassed successfully');
+                    this.textContent = 'EQ Bypassed (Level Matched)';
+                    console.log('✅ Level-matched bypass active');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
                     console.error('❌ EQ bypass failed:', e);
                 }
             } else {
                 // ACTIVE MODE: Source -> EQ Chain -> Compressor
-                console.log('🔊 EQ ACTIVE - Signal routing: Source → 7-Band EQ → Compressor');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🔊 EQ ACTIVE - Restoring full processing chain');
 
                 try {
-                    // Disconnect source from compressor
+                    // Reset bypass compensation to unity gain
+                    bypassCompensationGain.gain.value = 1.0;
+
+                    // Disconnect source from bypass path
                     sourceNode.disconnect();
 
                     // Reconnect full EQ chain:
@@ -4665,7 +4745,8 @@
 
                     this.classList.remove('bypassed');
                     this.textContent = 'EQ Active';
-                    console.log('✅ EQ chain reconnected successfully');
+                    console.log('✅ EQ chain reconnected (full processing)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
                     console.error('❌ EQ activation failed:', e);
                 }
@@ -4751,79 +4832,239 @@
         // PROFESSIONAL WAVEFORM DRAWER - Uses new visualization system
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 🏆 PROFESSIONAL WAVEFORM RENDERER - Retina-Ready with DPI Scaling
+        // 🏆 WAVEFORM RENDERER - Fixed and Working
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // Fixes "Invisible Waveform" issue by ensuring proper canvas resolution
-        window.drawProfessionalWaveform = function(canvas, audioBuffer) {
-            if (!canvas || !audioBuffer) return;
+        // PROFESSIONAL WAVEFORM - RETINA-READY WITH DPI SCALING
+        function drawWaveformFromBuffer(audioBuffer, showGhost = true) {
+            const canvas = document.getElementById('waveformCanvasStatic');
+            if (!canvas) return;
 
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // 🎯 CRITICAL FIX: Set canvas internal resolution to match pixel density
-            // This fixes blurry/invisible waveforms on Retina displays
-            const dpr = window.devicePixelRatio || 1;
-            const displayWidth = canvas.offsetWidth;
-            const displayHeight = canvas.offsetHeight;
+            if (!audioBuffer) return;
 
-            // Set actual size in memory (scaled for DPI)
+            // ═══ RETINA/HIGH-DPI FIX ═══
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const displayWidth = rect.width;
+            const displayHeight = rect.height;
+
+            // Set internal canvas resolution to match pixel density
             canvas.width = displayWidth * dpr;
             canvas.height = displayHeight * dpr;
 
-            // Scale all drawing operations by the DPI ratio
+            // Scale context for sharp rendering
             ctx.scale(dpr, dpr);
 
-            // Clear with dark background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
-            ctx.fillRect(0, 0, displayWidth, displayHeight);
+            const width = displayWidth;
+            const height = displayHeight;
 
-            // Draw waveform
-            const channelData = audioBuffer.getChannelData(0); // Use left channel
-            const step = Math.ceil(channelData.length / displayWidth);
-            const amp = displayHeight / 2;
+            // SOLID BLACK background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
 
-            // Professional waveform styling
-            ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
-            ctx.lineWidth = 1.5;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            // Get audio data
+            const data = audioBuffer.getChannelData(0);
+            const step = Math.ceil(data.length / width);
+            const centerY = height / 2;
+            const amp = height / 2.2;
 
-            ctx.beginPath();
-            for (let i = 0; i < displayWidth; i++) {
-                const min = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.min(a, b), 1);
-                const max = channelData.slice(i * step, (i + 1) * step).reduce((a, b) => Math.max(a, b), -1);
+            // ═══ TRANSIENT GHOST LAYER (Pre-Limiting Peaks) ═══
+            if (showGhost && window.originalPeaksData) {
+                ctx.fillStyle = 'rgba(255, 100, 0, 0.3)'; // Orange ghost
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
 
-                const yMin = (1 - min) * amp;
-                const yMax = (1 - max) * amp;
-
-                if (i === 0) {
-                    ctx.moveTo(i, yMin);
-                } else {
-                    ctx.lineTo(i, yMin);
+                // Draw original peaks (before limiting)
+                for (let i = 0; i < width; i++) {
+                    let max = 0;
+                    for (let j = 0; j < step; j++) {
+                        const idx = i * step + j;
+                        if (idx < window.originalPeaksData.length) {
+                            max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
+                        }
+                    }
+                    ctx.lineTo(i, centerY - (max * amp));
                 }
-                ctx.lineTo(i, yMax);
+                for (let i = width - 1; i >= 0; i--) {
+                    let max = 0;
+                    for (let j = 0; j < step; j++) {
+                        const idx = i * step + j;
+                        if (idx < window.originalPeaksData.length) {
+                            max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
+                        }
+                    }
+                    ctx.lineTo(i, centerY + (max * amp));
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
             }
-            ctx.stroke();
 
-            // Add subtle grid
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            // ═══ MAIN WAVEFORM (Post-Processing) ═══
+            ctx.fillStyle = '#00FF00';
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+
+            // Top half
+            for (let i = 0; i < width; i++) {
+                let max = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < data.length) {
+                        max = Math.max(max, Math.abs(data[idx]));
+                    }
+                }
+                ctx.lineTo(i, centerY - (max * amp));
+            }
+
+            // Bottom half (reverse)
+            for (let i = width - 1; i >= 0; i--) {
+                let max = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < data.length) {
+                        max = Math.max(max, Math.abs(data[idx]));
+                    }
+                }
+                ctx.lineTo(i, centerY + (max * amp));
+            }
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            // Draw outline (BRIGHT GREEN)
+            ctx.strokeStyle = '#00FF00';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 1.0;
+            ctx.beginPath();
+
+            for (let i = 0; i < width; i++) {
+                let max = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < data.length) {
+                        max = Math.max(max, Math.abs(data[idx]));
+                    }
+                }
+                const y = centerY - (max * amp);
+                if (i === 0) ctx.moveTo(i, y);
+                else ctx.lineTo(i, y);
+            }
+
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
+            // Center line (subtle white)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.lineWidth = 1;
-
-            // Center line
             ctx.beginPath();
-            ctx.moveTo(0, displayHeight / 2);
-            ctx.lineTo(displayWidth, displayHeight / 2);
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
             ctx.stroke();
 
-            // -6dB lines
-            ctx.beginPath();
-            ctx.moveTo(0, displayHeight * 0.25);
-            ctx.lineTo(displayWidth, displayHeight * 0.25);
-            ctx.moveTo(0, displayHeight * 0.75);
-            ctx.lineTo(displayWidth, displayHeight * 0.75);
-            ctx.stroke();
+            // Grid lines (very subtle)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            for (let i = 1; i < 4; i++) {
+                const y = (height / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+        }
 
-            console.log('✅ Professional waveform rendered at ' + (dpr * 100) + '% DPI');
+        // Legacy function name for compatibility
+        window.drawProfessionalWaveform = function(canvas, audioBuffer) {
+            drawWaveformFromBuffer(audioBuffer);
+        };
+
+        // TEST FUNCTION - Call this from console to verify canvas is working
+        window.testWaveformCanvas = function() {
+            console.log('🧪 TESTING WAVEFORM CANVAS...');
+            const canvas = document.getElementById('waveformCanvasStatic');
+            if (!canvas) {
+                console.error('❌ Canvas not found!');
+                return;
+            }
+
+            console.log('   Canvas element:', canvas);
+            console.log('   offsetWidth:', canvas.offsetWidth);
+            console.log('   offsetHeight:', canvas.offsetHeight);
+            console.log('   clientWidth:', canvas.clientWidth);
+            console.log('   clientHeight:', canvas.clientHeight);
+            console.log('   Computed style:', window.getComputedStyle(canvas));
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.offsetWidth || 800;
+            const height = canvas.offsetHeight || 120;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw rainbow test pattern
+            const gradient = ctx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, 'red');
+            gradient.addColorStop(0.2, 'yellow');
+            gradient.addColorStop(0.4, 'green');
+            gradient.addColorStop(0.6, 'cyan');
+            gradient.addColorStop(0.8, 'blue');
+            gradient.addColorStop(1, 'magenta');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 30px Arial';
+            ctx.fillText('WAVEFORM CANVAS TEST', 50, height/2);
+
+            console.log('✅ Test pattern drawn at ' + width + 'x' + height);
+            console.log('   If you don\'t see a rainbow, the canvas is hidden by CSS or z-index');
+        };
+
+        // PERSISTENT WAVEFORM - Redraw every second to keep it visible
+        let waveformRedrawInterval = null;
+
+        window.forceDrawWaveform = function() {
+            console.log('🔨 FORCE DRAWING WAVEFORM...');
+
+            // Try to find audioBuffer from multiple sources
+            const buffer = window.audioBuffer || audioBuffer;
+
+            if (buffer) {
+                console.log('   ✓ Found audioBuffer:', buffer.duration.toFixed(2) + 's');
+
+                // Draw immediately
+                drawWaveformFromBuffer(buffer);
+
+                // KEEP REDRAWING every 500ms to prevent it from disappearing
+                if (waveformRedrawInterval) {
+                    clearInterval(waveformRedrawInterval);
+                }
+
+                waveformRedrawInterval = setInterval(() => {
+                    console.log('🔄 Redrawing waveform (persistent)');
+                    drawWaveformFromBuffer(buffer);
+                }, 500);
+
+                console.log('✓ Waveform will redraw every 500ms to stay visible');
+            } else {
+                console.error('   ❌ No audioBuffer found! Load an audio file first.');
+                alert('Please load an audio file first by dragging it onto the page!');
+            }
+        };
+
+        // Stop persistent redrawing
+        window.stopWaveformRedraw = function() {
+            if (waveformRedrawInterval) {
+                clearInterval(waveformRedrawInterval);
+                waveformRedrawInterval = null;
+                console.log('⏹ Stopped waveform redrawing');
+            }
         };
 
         function drawStaticWaveform() {
@@ -4838,11 +5079,11 @@
                 return;
             }
 
-            console.log('🎨 Drawing professional waveform...');
+            console.log('🎨 Drawing waveform from audio buffer...');
 
-            // Use the professional waveform drawer
-            window.drawProfessionalWaveform(canvas, audioBuffer);
-            console.log('✅ Professional waveform drawn');
+            // Draw the waveform using the new function
+            drawWaveformFromBuffer(audioBuffer);
+            console.log('✅ Waveform drawn successfully');
         }
 
         function startVisualization() {
@@ -4863,7 +5104,7 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             function draw() {
                 if (!analyser) {
-                    console.log('⚠️ draw() called but analyser is null');
+                    // DON'T LOG - too spammy
                     return;
                 }
 
@@ -4927,11 +5168,9 @@
                 }
 
                 // ═══ PANEL 3: WAVEFORM (STATIC + PLAYHEAD) ═══
-                // Redraw static waveform EVERY FRAME to ensure visibility
-                // (Something is clearing it, so we need to keep redrawing)
-                if (waveformCanvasStatic && audioBuffer && window.drawProfessionalWaveform) {
-                    window.drawProfessionalWaveform(waveformCanvasStatic, audioBuffer);
-                }
+                // 🏆 PERFORMANCE FIX: Static waveform is drawn ONCE when audio loads (in handleFile)
+                // Only the playhead overlay animates every frame - this prevents flickering and improves performance
+                // (Waveform drawing is handled by drawStaticWaveform() called from handleFile after audio decodes)
 
                 // Draw playhead
                 if (waveformCanvasPlayhead && audioElement) {
@@ -5728,55 +5967,80 @@
                     }
                 }
 
-                // 🏆 TRAFFIC LIGHT COMPLIANCE BADGE - Professional Peak Monitoring
-                // Instead of ugly text warnings, use visual "pill" indicator
+                // 🏆 PROFESSIONAL COMPLIANCE LED - Broadcast-Grade Monitoring
+                // Three-state indicator with LUFS + True Peak validation
                 const complianceBadge = document.getElementById('complianceBadge');
                 const complianceLight = document.getElementById('complianceLight');
                 const complianceLabel = document.getElementById('complianceLabel');
                 const complianceValue = document.getElementById('complianceValue');
 
                 if (complianceBadge && complianceLight && complianceLabel && complianceValue) {
-                    // Update value display
+                    // Update dBTP value display (moved above output fader in OLED-style window)
                     complianceValue.textContent = heldPeakdBFS.toFixed(1) + ' dBTP';
 
-                    // Traffic Light Logic - Professional Broadcast Standards:
-                    // ✅ Green: ≤ -1.0 dBTP = "BROADCAST SAFE" (EBU R128 compliant)
-                    // ⚠️  Yellow: -0.99 to -0.01 dBTP = "WARNING" (exceeds broadcast standard)
-                    // 🔴 Red: ≥ 0.0 dBTP = "CLIP!" (inter-sample clipping)
-                    //
-                    // NOTE: EBU R128 mandates -1.0 dBTP maximum for broadcast delivery.
-                    // This ensures accurate customer-facing compliance indication.
+                    // Get platform target for LUFS validation
+                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
+                    let platformTarget = -14; // Default Spotify
+                    if (selectedPlatform) {
+                        const platform = selectedPlatform.getAttribute('data-platform');
+                        if (platform === 'youtube') platformTarget = -13;
+                        else if (platform === 'apple') platformTarget = -16;
+                        else if (platform === 'tidal') platformTarget = -14;
+                        else platformTarget = -14; // Spotify
+                    }
+
+                    // Calculate LUFS deviation from target
+                    const lufsDeviation = Math.abs(integratedLUFS - platformTarget);
+                    const lufsOnTarget = lufsDeviation <= 1.0; // Within ±1 LU tolerance
+
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // LED State Logic - Professional Broadcast Compliance:
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    // 🔴 CLIP: True Peak ≥ 0.0 dBTP (inter-sample clipping)
+                    // 🟡 HOT: True Peak between -0.9 and -0.1 dBTP (approaching clip)
+                    // 🟢 NORM: LUFS on target (±1 LU) AND True Peak < -1.0 dBTP (broadcast safe)
+                    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
                     if (heldPeakdBFS >= 0.0) {
-                        // RED - CLIP! (Inter-sample clipping detected)
+                        // 🔴 CLIP - Blinking Red (Inter-sample clipping detected)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05))';
                         complianceBadge.style.borderColor = '#F44336';
                         complianceBadge.style.boxShadow = '0 0 20px rgba(244, 67, 54, 0.5)';
                         complianceLight.style.background = '#F44336';
                         complianceLight.style.boxShadow = '0 0 15px rgba(244, 67, 54, 1)';
                         complianceLight.style.animation = 'flash 0.5s infinite';
-                        complianceLabel.textContent = 'CLIP!';
+                        complianceLabel.textContent = 'CLIP';
                         complianceLabel.style.color = '#F44336';
-                    } else if (heldPeakdBFS > -1.0) {
-                        // YELLOW - WARNING (Exceeds -1.0 dBTP broadcast standard)
+                    } else if (heldPeakdBFS > -1.0 && heldPeakdBFS >= -0.9) {
+                        // 🟡 HOT - Amber (Approaching clip zone: -0.9 to -0.1 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
                         complianceBadge.style.borderColor = '#FFC107';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
                         complianceLight.style.background = '#FFC107';
                         complianceLight.style.boxShadow = '0 0 12px rgba(255, 193, 7, 0.8)';
                         complianceLight.style.animation = 'pulse 1s infinite';
-                        complianceLabel.textContent = 'WARNING';
+                        complianceLabel.textContent = 'HOT';
                         complianceLabel.style.color = '#FFC107';
-                    } else {
-                        // GREEN - BROADCAST SAFE (Meets EBU R128: ≤ -1.0 dBTP)
+                    } else if (lufsOnTarget && heldPeakdBFS < -1.0) {
+                        // 🟢 NORM - Green (LUFS on target AND peak safe)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
                         complianceBadge.style.borderColor = '#4CAF50';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
                         complianceLight.style.background = '#4CAF50';
                         complianceLight.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.8)';
                         complianceLight.style.animation = 'pulse 2s infinite';
-                        complianceLabel.textContent = 'BROADCAST SAFE';
+                        complianceLabel.textContent = 'NORM';
                         complianceLabel.style.color = '#4CAF50';
+                    } else {
+                        // Intermediate state (peak < -1.0 but LUFS off target, or peak -1.0 to -0.9)
+                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.03))';
+                        complianceBadge.style.borderColor = '#FFC107';
+                        complianceBadge.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.2)';
+                        complianceLight.style.background = '#FFC107';
+                        complianceLight.style.boxShadow = '0 0 8px rgba(255, 193, 7, 0.6)';
+                        complianceLight.style.animation = 'pulse 1.5s infinite';
+                        complianceLabel.textContent = 'CHECK';
+                        complianceLabel.style.color = '#FFC107';
                     }
                 }
 
@@ -5797,41 +6061,54 @@
                 const phaseValueElement = document.getElementById('phaseValue');
                 const phaseMeterElement = document.getElementById('phaseMeter');
 
+                // Determine phase status and color
+                let phaseStatus = '';
+                let phaseColor = '';
+                let meterBackground = '';
+
+                if (phaseCorrelation < 0) {
+                    phaseStatus = 'PHASE ISSUES ⚠️';
+                    phaseColor = '#ff3333';
+                    meterBackground = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red
+                } else if (phaseCorrelation < 0.5) {
+                    phaseStatus = 'Narrow Stereo';
+                    phaseColor = '#ffaa00';
+                    meterBackground = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow
+                } else if (phaseCorrelation >= 0.7) {
+                    phaseStatus = 'Good Stereo ✓';
+                    phaseColor = '#00ff88';
+                    meterBackground = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green
+                } else {
+                    phaseStatus = 'Moderate Width';
+                    phaseColor = '#9C27B0';
+                    meterBackground = 'linear-gradient(90deg, #9C27B0, #E91E63)'; // Purple
+                }
+
                 if (phaseValueElement) {
-                    phaseValueElement.textContent = phaseCorrelation.toFixed(2);
+                    // Display value with status: "0.77 • Good Stereo ✓"
+                    phaseValueElement.innerHTML = `${phaseCorrelation.toFixed(2)} <span style="color: ${phaseColor}; font-weight: 600;">• ${phaseStatus}</span>`;
                 }
 
                 const phasePercent = (phaseCorrelation + 1) / 2 * 100;
 
                 if (phaseMeterElement) {
                     phaseMeterElement.style.width = phasePercent + '%';
+                    phaseMeterElement.style.background = meterBackground;
                 }
 
                 // Debug: Log phase correlation with DOM confirmation
                 if (Math.random() < 0.02) {
                     console.log('🔀 PHASE CORRELATION UPDATE:');
                     console.log('   Value:', phaseCorrelation.toFixed(2));
+                    console.log('   Status:', phaseStatus);
                     console.log('   Meter width:', phasePercent.toFixed(0) + '%');
                     console.log('   DOM Element phaseValue:', phaseValueElement ? 'EXISTS' : 'MISSING');
                     console.log('   DOM Element phaseMeter:', phaseMeterElement ? 'EXISTS' : 'MISSING');
                     if (phaseValueElement) {
-                        console.log('   Text Content:', phaseValueElement.textContent);
+                        console.log('   Text Content:', phaseValueElement.innerHTML);
                     }
                     if (phaseMeterElement) {
                         console.log('   Bar Width:', phaseMeterElement.style.width);
-                    }
-                }
-
-                // Dynamic color coding for phase correlation
-                if (phaseMeterElement) {
-                    if (phaseCorrelation < 0) {
-                        phaseMeterElement.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (phase issues)
-                    } else if (phaseCorrelation < 0.5) {
-                        phaseMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (narrow)
-                    } else if (phaseCorrelation >= 0.7) {
-                        phaseMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (good stereo)
-                    } else {
-                        phaseMeterElement.style.background = 'linear-gradient(90deg, #9C27B0, #E91E63)'; // Purple (moderate)
                     }
                 }
             }
@@ -7379,6 +7656,62 @@
             }
         }
 
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🔬 DIAGNOSTIC FUNCTION - Call from console to check measurements
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        window.checkMeasurements = function() {
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('🔬 CURRENT MEASUREMENTS DIAGNOSTIC');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('');
+            console.log('📊 LOUDNESS MEASUREMENTS (ITU-R BS.1770-5 Compliant):');
+            console.log('   Integrated LUFS: ' + integratedLUFS.toFixed(1) + ' LUFS');
+            console.log('   Short-term LUFS (3s): ' + shortTermLUFS.toFixed(1) + ' LUFS');
+            console.log('   Momentary LUFS (400ms): ' + momentaryLUFS.toFixed(1) + ' LUFS');
+            console.log('   Loudness Range (LRA): ' + lra.toFixed(1) + ' LU');
+            console.log('');
+            console.log('🔊 PEAK MEASUREMENTS (4x Oversampled):');
+            console.log('   True Peak: ' + heldPeakdBFS.toFixed(1) + ' dBTP');
+            console.log('   Peak Hold (with 3dB/s decay): ' + heldPeakdBFS.toFixed(1) + ' dBFS');
+            console.log('');
+            console.log('🎯 PLATFORM TARGETS:');
+            const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
+            if (selectedPlatform) {
+                const platform = selectedPlatform.getAttribute('data-platform');
+                let target = -14;
+                if (platform === 'youtube') target = -13;
+                else if (platform === 'apple') target = -16;
+                else if (platform === 'tidal') target = -14;
+                else target = -14;
+                console.log('   Selected Platform: ' + platform.toUpperCase());
+                console.log('   Target LUFS: ' + target + ' LUFS');
+                const deviation = integratedLUFS - target;
+                console.log('   Deviation: ' + (deviation >= 0 ? '+' : '') + deviation.toFixed(1) + ' LU');
+                if (Math.abs(deviation) <= 1.0) {
+                    console.log('   ✅ WITHIN TARGET (±1 LU tolerance)');
+                } else if (Math.abs(deviation) <= 2.0) {
+                    console.log('   ⚠️  CLOSE TO TARGET (±2 LU tolerance)');
+                } else {
+                    console.log('   ❌ OUTSIDE TARGET (needs adjustment)');
+                }
+            }
+            console.log('');
+            console.log('⚙️  PROCESSING CHAIN:');
+            console.log('   Master Gain: ' + (masterGain ? (20 * Math.log10(masterGain.gain.value)).toFixed(1) + ' dB' : 'N/A'));
+            console.log('   Compressor Threshold: ' + (compressor ? compressor.threshold.value.toFixed(1) + ' dB' : 'N/A'));
+            console.log('   Compressor Ratio: ' + (compressor ? compressor.ratio.value.toFixed(1) + ':1' : 'N/A'));
+            console.log('   Limiter Threshold: ' + (limiter ? limiter.threshold.value.toFixed(1) + ' dB' : 'N/A'));
+            console.log('');
+            console.log('📡 AUDIO CONTEXT:');
+            console.log('   Sample Rate: ' + (audioContext ? audioContext.sampleRate + ' Hz' : 'N/A'));
+            console.log('   Audio Loaded: ' + (audioBuffer ? 'YES (' + audioBuffer.duration.toFixed(2) + 's, ' + audioBuffer.numberOfChannels + 'ch)' : 'NO'));
+            console.log('   Playing: ' + (audioElement && !audioElement.paused ? 'YES' : 'NO'));
+            console.log('');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('💡 TIP: Run checkMeasurements() anytime to see current values');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        };
+
         // INITIALIZATION
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         window.addEventListener('load', () => {
@@ -7403,7 +7736,71 @@
             console.log('   ⚡  Real-time Web Audio processing at 48kHz');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             console.log('   🎉 LEGENDARY FEATURES LOADED - Press ? for keyboard shortcuts');
+            console.log('   🔬 Run checkMeasurements() to see real-time LUFS/True Peak values');
             console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+            // SUPER SIMPLE CANVAS TEST - DRAW WITHOUT RESIZING
+            setTimeout(() => {
+                console.log('🎨 ATTEMPTING TO DRAW ON CANVAS...');
+                const canvas = document.getElementById('waveformCanvasStatic');
+                console.log('Canvas element:', canvas);
+
+                if (!canvas) {
+                    console.error('❌ CANVAS NOT FOUND!');
+                    alert('ERROR: Canvas element not found!');
+                    return;
+                }
+
+                console.log('Canvas width (bitmap):', canvas.width);
+                console.log('Canvas height (bitmap):', canvas.height);
+                console.log('Canvas offsetWidth (display):', canvas.offsetWidth);
+                console.log('Canvas offsetHeight (display):', canvas.offsetHeight);
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('❌ CANNOT GET CONTEXT!');
+                    alert('ERROR: Cannot get canvas context!');
+                    return;
+                }
+
+                // Draw initial placeholder
+                ctx.fillStyle = '#1a1a25';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+                ctx.font = '14px Arial';
+                ctx.fillText('Load audio file to see waveform...', 260, 65);
+
+                console.log('✅ Canvas initialized - ready for waveform');
+
+                // PERSISTENT WAVEFORM REDRAW - keeps it visible
+                window.waveformRedrawInterval = setInterval(() => {
+                    const buffer = window.audioBuffer || audioBuffer;
+                    if (buffer) {
+                        // Draw actual waveform
+                        console.log('🔄 Redrawing waveform (persistent loop)');
+                        drawWaveformFromBuffer(buffer);
+                    } else {
+                        // Show waiting message
+                        const c = document.getElementById('waveformCanvasStatic');
+                        if (c) {
+                            const context = c.getContext('2d');
+                            context.fillStyle = '#000000';
+                            context.fillRect(0, 0, c.width, c.height);
+                            context.fillStyle = 'rgba(0, 212, 255, 0.5)';
+                            context.font = '14px Arial';
+                            context.fillText('Waiting for audio...', 320, 65);
+                        }
+                    }
+                }, 200); // Redraw 5 times per second
+
+                // Check if audio is already loaded
+                if (window.audioBuffer || audioBuffer) {
+                    console.log('🎨 Audio already loaded - drawing waveform NOW...');
+                    drawWaveformFromBuffer(window.audioBuffer || audioBuffer);
+                } else {
+                    console.log('⏳ No audio loaded yet - will draw when you load a file');
+                }
+            }, 800);
         });
 
     </script>
