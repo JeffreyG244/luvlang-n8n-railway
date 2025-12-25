@@ -334,23 +334,30 @@ async function getUserSubscription() {
 /**
  * Update UI for logged in user
  */
-function updateUIForLoggedInUser() {
-    // Show user menu
+async function updateUIForLoggedInUser() {
+    // Hide auth buttons section, show user menu
+    const authButtons = document.getElementById('authButtons');
+    if (authButtons) {
+        authButtons.style.display = 'none';
+    }
+
     const userMenu = document.getElementById('userMenu');
     if (userMenu) {
         userMenu.style.display = 'block';
     }
 
-    // Hide sign in/up buttons
-    const signInBtn = document.getElementById('signInBtn');
-    const signUpBtn = document.getElementById('signUpBtn');
-    if (signInBtn) signInBtn.style.display = 'none';
-    if (signUpBtn) signUpBtn.style.display = 'none';
-
     // Show user email
     const userEmail = document.getElementById('userEmail');
     if (userEmail && currentUser) {
         userEmail.textContent = currentUser.email;
+    }
+
+    // Get and display subscription tier
+    const userTier = document.getElementById('userTier');
+    if (userTier) {
+        const subscription = await getUserSubscription();
+        const tierName = subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1);
+        userTier.textContent = `${tierName} tier`;
     }
 
     // Enable cloud features
@@ -365,17 +372,16 @@ function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
-    // Hide user menu
+    // Hide user menu, show auth buttons
     const userMenu = document.getElementById('userMenu');
     if (userMenu) {
         userMenu.style.display = 'none';
     }
 
-    // Show sign in/up buttons
-    const signInBtn = document.getElementById('signInBtn');
-    const signUpBtn = document.getElementById('signUpBtn');
-    if (signInBtn) signInBtn.style.display = 'block';
-    if (signUpBtn) signUpBtn.style.display = 'block';
+    const authButtons = document.getElementById('authButtons');
+    if (authButtons) {
+        authButtons.style.display = 'flex';
+    }
 
     // Disable cloud features
     const savePresetBtn = document.getElementById('savePresetBtn');

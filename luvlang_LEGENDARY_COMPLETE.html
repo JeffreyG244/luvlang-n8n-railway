@@ -1272,6 +1272,30 @@
                 <div class="logo-subtitle">Professional Mastering Suite</div>
             </div>
 
+            <!-- AUTHENTICATION BUTTONS -->
+            <div id="authSection" style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+                <div id="authButtons" style="display: flex; gap: 8px;">
+                    <button id="signInBtn" class="btn-secondary" style="flex: 1; padding: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; cursor: pointer;">
+                        Sign In
+                    </button>
+                    <button id="signUpBtn" class="btn-primary" style="flex: 1; padding: 8px; font-size: 0.85rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-weight: 600;">
+                        Sign Up
+                    </button>
+                </div>
+
+                <div id="userMenu" style="display: none;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 4px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span id="userEmail" style="font-size: 0.85rem; font-weight: 600;"></span>
+                            <span id="userTier" style="font-size: 0.7rem; opacity: 0.6;"></span>
+                        </div>
+                        <button id="signOutBtn" class="btn-secondary" style="padding: 6px 12px; font-size: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; cursor: pointer;">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- UPLOAD AREA -->
             <div class="section-title">Upload Audio</div>
             <div class="upload-area" id="uploadArea">
@@ -2138,6 +2162,71 @@
     </div>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         AUTHENTICATION MODALS
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+    <!-- Sign In Modal -->
+    <div id="signInModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="margin: 0 0 25px 0; font-size: 1.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Sign In</h2>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Email</label>
+                <input type="email" id="signInEmail" placeholder="your@email.com" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 1rem; outline: none;" />
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Password</label>
+                <input type="password" id="signInPassword" placeholder="••••••••" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 1rem; outline: none;" />
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button onclick="handleSignIn()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 6px; color: #fff; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.2s;">
+                    Sign In
+                </button>
+                <button onclick="closeSignInModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-weight: 600; font-size: 1rem; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Up Modal -->
+    <div id="signUpModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="margin: 0 0 25px 0; font-size: 1.8rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Create Account</h2>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Display Name</label>
+                <input type="text" id="signUpName" placeholder="Your Name" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 1rem; outline: none;" />
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Email</label>
+                <input type="email" id="signUpEmail" placeholder="your@email.com" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 1rem; outline: none;" />
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Password</label>
+                <input type="password" id="signUpPassword" placeholder="••••••••" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 1rem; outline: none;" />
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button onclick="handleSignUp()" style="flex: 1; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 6px; color: #fff; font-weight: 600; font-size: 1rem; cursor: pointer; transition: transform 0.2s;">
+                    Sign Up
+                </button>
+                <button onclick="closeSignUpModal()" style="flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-weight: 600; font-size: 1rem; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 0.85rem; opacity: 0.6; text-align: center;">
+                By signing up, you'll start with the Free tier (3 presets, 7-day history)
+            </p>
+        </div>
+    </div>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          LOAD REVOLUTIONARY FEATURE ENGINES
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="stem-mastering.js"></script>
@@ -2188,6 +2277,140 @@
 
         // K-weighting filters for ITU-R BS.1770-5 LUFS measurement
         let kWeightingHPF1 = null;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // AUTHENTICATION UI HANDLERS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function showSignInModal() {
+            document.getElementById('signInModal').style.display = 'flex';
+        }
+
+        function closeSignInModal() {
+            document.getElementById('signInModal').style.display = 'none';
+            // Clear inputs
+            document.getElementById('signInEmail').value = '';
+            document.getElementById('signInPassword').value = '';
+        }
+
+        function showSignUpModal() {
+            document.getElementById('signUpModal').style.display = 'flex';
+        }
+
+        function closeSignUpModal() {
+            document.getElementById('signUpModal').style.display = 'none';
+            // Clear inputs
+            document.getElementById('signUpName').value = '';
+            document.getElementById('signUpEmail').value = '';
+            document.getElementById('signUpPassword').value = '';
+        }
+
+        async function handleSignIn() {
+            const email = document.getElementById('signInEmail').value.trim();
+            const password = document.getElementById('signInPassword').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            // Check if Supabase is available
+            if (typeof signIn !== 'function') {
+                alert('Authentication system is initializing. Please wait a moment and try again.');
+                return;
+            }
+
+            const result = await signIn(email, password);
+
+            if (result.success) {
+                console.log('✅ User signed in:', result.user.email);
+                alert('Welcome back! You are now signed in.');
+                closeSignInModal();
+            } else {
+                console.error('❌ Sign in failed:', result.error);
+                alert('Sign in failed: ' + result.error);
+            }
+        }
+
+        async function handleSignUp() {
+            const name = document.getElementById('signUpName').value.trim();
+            const email = document.getElementById('signUpEmail').value.trim();
+            const password = document.getElementById('signUpPassword').value;
+
+            if (!name || !email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+
+            // Check if Supabase is available
+            if (typeof signUp !== 'function') {
+                alert('Authentication system is initializing. Please wait a moment and try again.');
+                return;
+            }
+
+            const result = await signUp(email, password, name);
+
+            if (result.success) {
+                console.log('✅ User signed up:', result.user.email);
+                alert('Account created successfully! Check your email to confirm your account.');
+                closeSignUpModal();
+            } else {
+                console.error('❌ Sign up failed:', result.error);
+                alert('Sign up failed: ' + result.error);
+            }
+        }
+
+        // Set up event listeners for auth buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            const signInBtn = document.getElementById('signInBtn');
+            const signUpBtn = document.getElementById('signUpBtn');
+            const signOutBtn = document.getElementById('signOutBtn');
+
+            if (signInBtn) {
+                signInBtn.addEventListener('click', showSignInModal);
+            }
+
+            if (signUpBtn) {
+                signUpBtn.addEventListener('click', showSignUpModal);
+            }
+
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', async () => {
+                    if (typeof signOut === 'function') {
+                        const result = await signOut();
+                        if (result.success) {
+                            alert('You have been signed out');
+                        }
+                    }
+                });
+            }
+
+            // Close modals on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeSignInModal();
+                    closeSignUpModal();
+                }
+            });
+
+            // Close modals on background click
+            document.getElementById('signInModal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'signInModal') {
+                    closeSignInModal();
+                }
+            });
+
+            document.getElementById('signUpModal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'signUpModal') {
+                    closeSignUpModal();
+                }
+            });
+        });
         let kWeightingHPF2 = null;
         let kWeightingShelf = null;
 
