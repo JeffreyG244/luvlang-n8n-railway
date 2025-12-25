@@ -2157,6 +2157,12 @@
     <script src="interactive-waveform.js"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         SUPABASE - Cloud Sync & User Authentication
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          MAIN JAVASCRIPT - PROFESSIONAL AUDIO ENGINE
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script>
@@ -2307,6 +2313,17 @@
                     if (typeof SpectralDenoiser !== 'undefined') {
                         spectralDenoiser = new SpectralDenoiser(audioContext);
                         console.log('✅ Spectral De-noiser loaded');
+                    }
+
+                    // ✨ SUPABASE: Initialize cloud sync and authentication
+                    if (typeof initializeSupabase === 'function') {
+                        initializeSupabase().then(success => {
+                            if (success) {
+                                console.log('✅ Supabase cloud sync ready');
+                            }
+                        }).catch(err => {
+                            console.warn('⚠️ Supabase initialization failed (offline mode):', err.message);
+                        });
                     }
 
                     // ✨ CRITICAL FIX: Initialize audio playback connection
