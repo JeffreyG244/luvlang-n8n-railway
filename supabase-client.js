@@ -4,9 +4,9 @@
  */
 
 // Supabase configuration
-// Replace these with your actual Supabase project credentials
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+// ⚠️ IMPORTANT: Make sure this is the ANON key, NOT the service role key!
+const SUPABASE_URL = 'https://mqczbnreafrpoxqqwxzl.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_secret_tnPB7RA5viVS0-yKQfm5GQ_5C1_Y8Ch';
 
 // Initialize Supabase client
 let supabase = null;
