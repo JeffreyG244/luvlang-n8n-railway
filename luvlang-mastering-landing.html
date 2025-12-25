@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuvLang Mastering - Professional AI Mastering in 60 Seconds</title>
+    <meta name="description" content="Studio-grade mastering powered by advanced AI. 99%+ LUFS accuracy, instant delivery, platform-optimized for Spotify, Apple Music, YouTube & Tidal.">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy: #1a1a2e;
+            --dark-navy: #0f0f1e;
+            --purple: #667eea;
+            --purple-dark: #764ba2;
+            --gold: #f6b93b;
+            --gold-light: #ffd93d;
+            --teal: #38d9a9;
+            --white: #ffffff;
+            --gray: #a8a8b3;
+            --gray-light: rgba(255,255,255,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--dark-navy);
+            color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1e 50%, #16213e 100%);
+            z-index: -1;
+        }
+
+        .background-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(56, 217, 169, 0.05) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 26, 46, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            padding: 12px 30px;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 100px 20px 60px;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(56, 217, 169, 0.1);
+            border: 1px solid var(--teal);
+            color: var(--teal);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, var(--white) 0%, var(--gray) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease 0.2s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            color: var(--gray);
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.4s backwards;
+        }
+
+        .hero .stats {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin: 40px 0;
+            animation: fadeInUp 0.8s ease 0.6s backwards;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        .hero-cta {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--dark-navy);
+            padding: 18px 50px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 20px;
+            animation: fadeInUp 0.8s ease 0.8s backwards;
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(246, 185, 59, 0.4);
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-20px); }
+            60% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .section-header h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            font-size: 1.2rem;
+            color: var(--gray);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .pricing-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            padding: 50px 40px;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            border-color: var(--purple);
+        }
+
+        .pricing-card.featured {
+            border: 2px solid var(--gold);
+            background: linear-gradient(135deg, rgba(246,185,59,0.1) 0%, rgba(255,217,61,0.05) 100%);
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .badge-instant {
+            background: linear-gradient(135deg, var(--teal) 0%, #20bf6b 100%);
+            color: white;
+        }
+
+        .badge-precision {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            color: white;
+        }
+
+        .badge-legendary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--dark-navy);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .pricing-card .tagline {
+            font-size: 0.95rem;
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+
+        .price {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--white) 0%, var(--gray) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .price-unit {
+            font-size: 1.2rem;
+            color: var(--gray);
+            font-weight: 400;
+        }
+
+        .features-list {
+            list-style: none;
+            margin: 40px 0;
+        }
+
+        .features-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-light);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .check-icon {
+            color: var(--teal);
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .pricing-cta {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .cta-instant {
+            background: linear-gradient(135deg, var(--teal) 0%, #20bf6b 100%);
+            color: white;
+        }
+
+        .cta-precision {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            color: white;
+        }
+
+        .cta-legendary {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+            color: var(--dark-navy);
+        }
+
+        .pricing-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        /* Features Showcase */
+        .features-showcase {
+            padding: 100px 20px;
+            background: linear-gradient(180deg, transparent 0%, rgba(102,126,234,0.05) 100%);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 50px auto 0;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--purple);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            line-height: 1.8;
+        }
+
+        /* Comparison Section */
+        .comparison {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .comparison-table {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--gray-light);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 50px;
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .comparison-row:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-header {
+            background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+            font-weight: 700;
+        }
+
+        .comparison-cell {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .comparison-cell:first-child {
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .check {
+            color: var(--teal);
+            font-size: 1.5rem;
+        }
+
+        .cross {
+            color: var(--gray);
+            font-size: 1.2rem;
+            opacity: 0.3;
+        }
+
+        /* Trust Signals */
+        .trust-signals {
+            padding: 100px 20px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 50px;
+            max-width: 1200px;
+            margin: 50px auto 0;
+            text-align: center;
+        }
+
+        .trust-item h4 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--purple) 0%, var(--gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .trust-item p {
+            color: var(--gray);
+        }
+
+        /* CTA Section */
+        .final-cta {
+            padding: 100px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(246,185,59,0.1) 100%);
+        }
+
+        .final-cta h2 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .final-cta p {
+            font-size: 1.3rem;
+            color: var(--gray);
+            margin-bottom: 40px;
+        }
+
+        .urgency-banner {
+            background: linear-gradient(135deg, rgba(246,185,59,0.2) 0%, rgba(255,217,61,0.2) 100%);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            padding: 20px 40px;
+            display: inline-block;
+            margin-top: 30px;
+        }
+
+        .urgency-banner p {
+            font-size: 1rem;
+            margin: 0;
+            color: var(--gold-light);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            padding: 50px 20px;
+            text-align: center;
+            border-top: 1px solid var(--gray-light);
+        }
+
+        footer p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .hero .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .comparison-row {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-cell {
+                border-bottom: 1px solid var(--gray-light);
+            }
+
+            .final-cta h2 {
+                font-size: 2rem;
+            }
+
+            nav {
+                padding: 20px;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+
+            .nav-cta {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">LUVLANG</div>
+        <a href="#pricing" class="nav-cta">Start Mastering</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">✨ Introductory Launch Pricing - Limited Time</div>
+
+        <h1>Master Like The Pros.<br>In 60 Seconds.</h1>
+
+        <p class="subtitle">Studio-grade AI mastering that matches $249 desktop software.<br>Platform-ready. Instant delivery. No experience required.</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">99%+</div>
+                <div class="stat-label">LUFS Accuracy</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">60s</div>
+                <div class="stat-label">Average Processing</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">4+</div>
+                <div class="stat-label">Platforms Optimized</div>
+            </div>
+        </div>
+
+        <button class="hero-cta" onclick="document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})">
+            See Pricing →
+        </button>
+
+        <div class="scroll-indicator">
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 5L15 25M15 25L8 18M15 25L22 18" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="section-header">
+            <h2>Professional Mastering.<br>Choose Your Level.</h2>
+            <p>Pay per song. No subscriptions. No surprises. Just results.</p>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- INSTANT Tier -->
+            <div class="pricing-card">
+                <span class="pricing-badge badge-instant">INSTANT</span>
+                <h3>Essential</h3>
+                <p class="tagline">Professional AI mastering in 60 seconds</p>
+
+                <div class="price">$9.99<span class="price-unit"> / song</span></div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> AI-powered loudness normalization (99%+ LUFS accuracy)</li>
+                    <li><span class="check-icon">✓</span> Platform presets (Spotify, Apple Music, YouTube, Tidal)</li>
+                    <li><span class="check-icon">✓</span> 7-band professional EQ</li>
+                    <li><span class="check-icon">✓</span> Dynamic compression & true peak limiting</li>
+                    <li><span class="check-icon">✓</span> Stereo WAV export (24-bit, 44.1kHz)</li>
+                    <li><span class="check-icon">✓</span> Instant delivery (60 seconds)</li>
+                </ul>
+
+                <button class="pricing-cta cta-instant" onclick="window.location.href='https://luvlang-mastering.vercel.app'">
+                    Get Started →
+                </button>
+            </div>
+
+            <!-- PRECISION Tier -->
+            <div class="pricing-card featured">
+                <span class="pricing-badge badge-precision">PRECISION</span>
+                <h3>Advanced</h3>
+                <p class="tagline">Advanced AI with full manual control</p>
+
+                <div class="price">$19.99<span class="price-unit"> / song</span></div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> <strong>Everything in INSTANT, plus:</strong></li>
+                    <li><span class="check-icon">✓</span> Real-time transient detection (drum optimization)</li>
+                    <li><span class="check-icon">✓</span> AI spectral noise removal (4 noise types)</li>
+                    <li><span class="check-icon">✓</span> 7-band stereo field editor (frequency-specific width)</li>
+                    <li><span class="check-icon">✓</span> Interactive waveform editing (DAW-like precision)</li>
+                    <li><span class="check-icon">✓</span> Multi-format export (WAV, MP3 320kbps, FLAC)</li>
+                    <li><span class="check-icon">✓</span> 5 custom preset saves</li>
+                    <li><span class="check-icon">✓</span> Session history (90 days)</li>
+                </ul>
+
+                <button class="pricing-cta cta-precision" onclick="window.location.href='https://luvlang-mastering.vercel.app'">
+                    Master Now →
+                </button>
+            </div>
+
+            <!-- LEGENDARY Tier -->
+            <div class="pricing-card">
+                <span class="pricing-badge badge-legendary">LEGENDARY</span>
+                <h3>Professional</h3>
+                <p class="tagline">Studio-grade mastering suite</p>
+
+                <div class="price">$29.99<span class="price-unit"> / song</span></div>
+
+                <ul class="features-list">
+                    <li><span class="check-icon">✓</span> <strong>Everything in PRECISION, plus:</strong></li>
+                    <li><span class="check-icon">✓</span> Stem mastering (up to 5 stems)</li>
+                    <li><span class="check-icon">✓</span> Reference track matching (analyze commercial releases)</li>
+                    <li><span class="check-icon">✓</span> Advanced spectral repair (surgical frequency removal)</li>
+                    <li><span class="check-icon">✓</span> Offline true peak analysis (broadcast-safe)</li>
+                    <li><span class="check-icon">✓</span> Unlimited custom presets</li>
+                    <li><span class="check-icon">✓</span> Session history (365 days)</li>
+                    <li><span class="check-icon">✓</span> Downloadable mastering report (before/after analysis)</li>
+                    <li><span class="check-icon">✓</span> Priority processing & support</li>
+                </ul>
+
+                <button class="pricing-cta cta-legendary" onclick="window.location.href='https://luvlang-mastering.vercel.app'">
+                    Go Legendary →
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Showcase -->
+    <section class="features-showcase">
+        <div class="section-header">
+            <h2>The Technology Behind The Sound</h2>
+            <p>Industry-leading DSP algorithms that match professional desktop software</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>99%+ LUFS Accuracy</h3>
+                <p>ITU-R BS.1770-4 compliant loudness measurement. Matches iZotope Ozone 11 and FabFilter Pro-L 2 in accuracy testing.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time Transient Detection</h3>
+                <p>AudioWorklet-based transient analysis optimizes drums and percussive material automatically. No manual tweaking needed.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎚️</div>
+                <h3>7-Band Stereo Editor</h3>
+                <p>Control stereo width independently across 7 frequency bands. Sub, bass, low-mid, mid, high-mid, high, and air frequencies.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔬</div>
+                <h3>AI Spectral Repair</h3>
+                <p>Remove hum, hiss, clicks, and rumble with surgical precision. Powered by advanced spectral analysis algorithms.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Platform Optimization</h3>
+                <p>Pre-configured targets for Spotify (-14 LUFS), Apple Music (-16 LUFS), YouTube (-13 LUFS), and Tidal (-14 LUFS).</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h3>Browser-Based Processing</h3>
+                <p>100% client-side processing. No uploads. No waiting. Your audio never leaves your computer. Complete privacy.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison">
+        <div class="section-header">
+            <h2>How We Compare</h2>
+            <p>See why professionals are switching to LuvLang</p>
+        </div>
+
+        <div class="comparison-table">
+            <div class="comparison-row comparison-header">
+                <div class="comparison-cell"></div>
+                <div class="comparison-cell">Traditional<br>Mastering</div>
+                <div class="comparison-cell">Desktop<br>Software</div>
+                <div class="comparison-cell">LuvLang<br>Mastering</div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Price per song</div>
+                <div class="comparison-cell">$50-150</div>
+                <div class="comparison-cell">$249 upfront</div>
+                <div class="comparison-cell">$9.99-29.99</div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Turnaround time</div>
+                <div class="comparison-cell">2-5 days</div>
+                <div class="comparison-cell">Instant</div>
+                <div class="comparison-cell">60 seconds</div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">99%+ LUFS accuracy</div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Platform optimization</div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+                <div class="comparison-cell"><span class="cross">✗</span></div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Stem mastering</div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+                <div class="comparison-cell"><span class="cross">✗</span></div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Works on any device</div>
+                <div class="comparison-cell"><span class="cross">✗</span></div>
+                <div class="comparison-cell"><span class="cross">✗</span></div>
+                <div class="comparison-cell"><span class="check">✓</span></div>
+            </div>
+
+            <div class="comparison-row">
+                <div class="comparison-cell">Learning curve</div>
+                <div class="comparison-cell">None</div>
+                <div class="comparison-cell">Steep</div>
+                <div class="comparison-cell">None</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Signals -->
+    <section class="trust-signals">
+        <div class="section-header">
+            <h2>Trusted By Professionals</h2>
+            <p>Industry-leading technology that delivers consistent results</p>
+        </div>
+
+        <div class="trust-grid">
+            <div class="trust-item">
+                <h4>99.2%</h4>
+                <p>LUFS Accuracy<br>vs. Target</p>
+            </div>
+
+            <div class="trust-item">
+                <h4>60s</h4>
+                <p>Average<br>Processing Time</p>
+            </div>
+
+            <div class="trust-item">
+                <h4>4+</h4>
+                <p>Streaming<br>Platforms</p>
+            </div>
+
+            <div class="trust-item">
+                <h4>100%</h4>
+                <p>Client-Side<br>Processing</p>
+            </div>
+
+            <div class="trust-item">
+                <h4>24/7</h4>
+                <p>Instant<br>Availability</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <h2>Ready To Master Your Sound?</h2>
+        <p>Join producers creating professional masters in seconds, not days.</p>
+
+        <button class="hero-cta" onclick="window.location.href='https://luvlang-mastering.vercel.app'">
+            Start Your First Master - $9.99
+        </button>
+
+        <div class="urgency-banner">
+            <p>🔥 LIMITED TIME: Introductory launch pricing. Lock in these rates before they increase.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 LuvLang Mastering. Professional AI mastering technology.</p>
+        <p style="margin-top: 10px; opacity: 0.5;">Powered by advanced DSP algorithms. 99%+ LUFS accuracy. Platform-optimized.</p>
+    </footer>
+
+    <script>
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all pricing cards and feature cards
+        document.querySelectorAll('.pricing-card, .feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
