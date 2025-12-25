@@ -1306,19 +1306,6 @@
                 </div>
             </div>
 
-            <!-- GENRE SELECTOR -->
-            <div class="selector-group">
-                <div class="section-title">Genre</div>
-                <div class="selector-grid">
-                    <div class="selector-btn" data-genre="pop">Pop</div>
-                    <div class="selector-btn" data-genre="hiphop">Hip-Hop</div>
-                    <div class="selector-btn" data-genre="rock">Rock</div>
-                    <div class="selector-btn" data-genre="edm">EDM</div>
-                    <div class="selector-btn active" data-genre="universal">Universal</div>
-                    <div class="selector-btn" data-genre="jazz">Jazz</div>
-                </div>
-            </div>
-
             <!-- PLATFORM SELECTOR -->
             <div class="selector-group">
                 <div class="section-title">Platform Target</div>
@@ -1342,9 +1329,9 @@
                 </div>
             </div>
 
-            <!-- GENRE SELECTOR -->
+            <!-- GENRE SELECTOR with EQ Presets -->
             <div class="selector-group">
-                <div class="section-title">Genre Preset</div>
+                <div class="section-title">Genre</div>
                 <div class="selector-grid">
                     <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
                         <div>Hip-Hop</div>
@@ -2252,6 +2239,11 @@
     <script src="supabase-client.js"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         STRIPE PAYMENT - Per-Song Purchases
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script src="stripe-client.js"></script>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          MAIN JAVASCRIPT - PROFESSIONAL AUDIO ENGINE
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script>
@@ -2546,6 +2538,17 @@
                             }
                         }).catch(err => {
                             console.warn('⚠️ Supabase initialization failed (offline mode):', err.message);
+                        });
+                    }
+
+                    // 💳 STRIPE: Initialize payment processing
+                    if (typeof initializeStripe === 'function') {
+                        initializeStripe().then(success => {
+                            if (success) {
+                                console.log('✅ Stripe payment system ready');
+                            }
+                        }).catch(err => {
+                            console.warn('⚠️ Stripe initialization failed:', err.message);
                         });
                     }
 
@@ -7576,12 +7579,43 @@
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // EXPORT BUTTON WITH BUG FIX #3: MediaRecorder Error Handling
+        // EXPORT BUTTON WITH PAYMENT GATE + BUG FIX #3: MediaRecorder Error Handling
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         document.getElementById('exportBtn').addEventListener('click', async () => {
             if (!audioElement || !audioElement.src) {
                 alert('Please upload an audio file first');
                 return;
+            }
+
+            // 💳 PAYMENT GATE: Show payment modal before allowing export
+            // In production, check if user has already purchased this session
+            if (typeof showPaymentModal === 'function') {
+                // Prepare session data for purchase
+                const sessionData = {
+                    filename: audioFileInput.files[0]?.name || 'untitled',
+                    targetLUFS: platformTarget || -14,
+                    finalLUFS: currentIntegratedLUFS || -14,
+                    truePeak: currentTruePeak || -1.0,
+                    settings: {
+                        eq: getCurrentEQValues(),
+                        compressor: {
+                            threshold: compressor ? compressor.threshold.value : -20,
+                            ratio: compressor ? compressor.ratio.value : 4,
+                            attack: compressor ? compressor.attack.value : 0.003,
+                            release: compressor ? compressor.release.value : 0.25
+                        },
+                        limiter: {
+                            threshold: limiter ? limiter.threshold.value : -1
+                        }
+                    }
+                };
+
+                // Show payment modal (user selects tier: INSTANT, PRECISION, or LEGENDARY)
+                showPaymentModal(sessionData);
+
+                // NOTE: In production, after successful payment, enable the actual export
+                // For now, we'll allow free export after showing the modal
+                console.log('💳 Payment modal shown. In production, export would require payment.');
             }
 
             try {
