@@ -7557,22 +7557,28 @@
                 // Update LUFS target display when platform changes
                 const platform = this.getAttribute('data-platform');
                 if (platform) {
+                    // Determine target LUFS and platform name
+                    let targetLUFS, platformName;
+                    if (platform === 'spotify') {
+                        targetLUFS = -14;
+                        platformName = 'Spotify';
+                    } else if (platform === 'youtube') {
+                        targetLUFS = -13;
+                        platformName = 'YouTube';
+                    } else if (platform === 'apple') {
+                        targetLUFS = -16;
+                        platformName = 'Apple Music';
+                    } else if (platform === 'tidal') {
+                        targetLUFS = -14;
+                        platformName = 'Tidal';
+                    } else {
+                        targetLUFS = -14;
+                        platformName = 'Spotify';
+                    }
+
+                    // Update UI target display
                     const lufsTargetElement = document.getElementById('lufsTarget');
                     if (lufsTargetElement) {
-                        let targetLUFS, platformName;
-                        if (platform === 'spotify') {
-                            targetLUFS = -14;
-                            platformName = 'Spotify';
-                        } else if (platform === 'youtube') {
-                            targetLUFS = -13;
-                            platformName = 'YouTube';
-                        } else if (platform === 'apple') {
-                            targetLUFS = -16;
-                            platformName = 'Apple Music';
-                        } else if (platform === 'tidal') {
-                            targetLUFS = -14;
-                            platformName = 'Tidal';
-                        }
                         lufsTargetElement.textContent = `Target: ${targetLUFS} LUFS (${platformName})`;
                     }
 
@@ -7580,17 +7586,32 @@
                     setPlatformTarget(platform);
 
                     // AUTO-MASTER: Automatically re-master when platform changes (if audio is loaded)
+                    console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
+                    console.log('   audioBuffer exists:', !!audioBuffer, '| uploadedFile exists:', !!uploadedFile);
+
                     if (audioBuffer && uploadedFile) {
-                        console.log('🎯 Platform changed to', platformName, '- Auto-mastering to', targetLUFS, 'LUFS...');
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                        console.log('🎯 AUTO-MASTERING FOR PLATFORM CHANGE');
+                        console.log('   Platform:', platformName);
+                        console.log('   Target LUFS:', targetLUFS);
+                        console.log('   Triggering AI Master in 500ms...');
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                         // Trigger AI Master automatically (simulate button click)
                         setTimeout(() => {
                             const autoMasterBtn = document.getElementById('autoMasterBtn');
                             if (autoMasterBtn) {
+                                console.log('🔄 Clicking AI Master button...');
                                 autoMasterBtn.click();
-                                console.log('✅ Auto-mastering triggered for platform change');
+                                console.log('✅ Auto-mastering triggered successfully');
+                            } else {
+                                console.error('❌ Auto Master button not found!');
                             }
-                        }, 300); // Small delay to ensure UI updates
+                        }, 500); // Increased delay to ensure UI updates
+                    } else {
+                        console.warn('⚠️  Cannot auto-master: No audio loaded yet');
+                        if (!audioBuffer) console.warn('   Missing: audioBuffer');
+                        if (!uploadedFile) console.warn('   Missing: uploadedFile');
                     }
                 }
 
