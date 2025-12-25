@@ -2438,6 +2438,10 @@
         let lraMax = -70;
         let lra = 0; // Loudness Range (global for Auto Master)
 
+        // CURRENT MEASURED VALUES (Updated after analysis and mastering)
+        let currentIntegratedLUFS = -70; // Current measured integrated LUFS
+        let currentTruePeak = 0; // Current measured true peak in dBTP
+
         // BUG FIX #2: Peak decay state for professional 3 dB/s decay
         let heldPeakdBFS = -70;
         let lastDecayTime = 0;
@@ -3036,6 +3040,15 @@
                 window.audioBuffer = audioBuffer;
 
                 const analysisResults = await comprehensiveAnalysis(audioBuffer);
+
+                // UPDATE GLOBAL CURRENT VALUES from initial analysis
+                if (analysisResults.integratedLUFS && isFinite(analysisResults.integratedLUFS)) {
+                    currentIntegratedLUFS = analysisResults.integratedLUFS;
+                }
+                if (analysisResults.maxPeak && isFinite(analysisResults.maxPeak)) {
+                    currentTruePeak = 20 * Math.log10(analysisResults.maxPeak);
+                }
+                console.log('✅ Initial values: LUFS =', currentIntegratedLUFS.toFixed(1), ', Peak =', currentTruePeak.toFixed(1), 'dBTP');
 
                 // Display results in UI (analysis only, no fixes)
                 displayAnalysisResults(analysisResults);
@@ -7241,6 +7254,12 @@
                 analysisResults.integratedLUFS = expectedAfterLUFS;
                 analysisResults.maxPeak = expectedMaxPeak;
 
+                // UPDATE GLOBAL CURRENT VALUES for accurate reporting
+                currentIntegratedLUFS = expectedAfterLUFS;
+                currentTruePeak = limitedPeakDB;
+                console.log('✅ Updated global currentIntegratedLUFS:', currentIntegratedLUFS.toFixed(1), 'LUFS');
+                console.log('✅ Updated global currentTruePeak:', currentTruePeak.toFixed(1), 'dBTP');
+
                 // CRITICAL: Update the meter displays immediately
                 const lufsValueElement = document.getElementById('lufsValue');
                 const lufsMeterElement = document.getElementById('lufsMeter');
@@ -7601,6 +7620,20 @@
 
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
+
+                    // AUTO-MASTER: Automatically re-master when platform changes (if audio is loaded)
+                    if (audioBuffer && uploadedFile) {
+                        console.log('🎯 Platform changed to', platformName, '- Auto-mastering to', targetLUFS, 'LUFS...');
+
+                        // Trigger AI Master automatically (simulate button click)
+                        setTimeout(() => {
+                            const autoMasterBtn = document.getElementById('autoMasterBtn');
+                            if (autoMasterBtn) {
+                                autoMasterBtn.click();
+                                console.log('✅ Auto-mastering triggered for platform change');
+                            }
+                        }, 300); // Small delay to ensure UI updates
+                    }
                 }
 
                 // Handle genre preset changes
