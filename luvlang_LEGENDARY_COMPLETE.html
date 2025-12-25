@@ -4249,20 +4249,20 @@
             if (limiter) {
                 const oldThreshold = limiter.threshold.value;
 
-                // CRITICAL: Use VERY conservative threshold to ensure peaks NEVER exceed -1.0 dBTP
-                // Don't overwrite if already set conservatively by platform selection
-                if (oldThreshold > -4.0) {
-                    limiter.threshold.value = -4.5;  // Ultra-conservative threshold
+                // Set broadcast-safe limiter threshold for proper loudness
+                // Don't overwrite if already set by platform selection
+                if (oldThreshold > -1.0) {
+                    limiter.threshold.value = -1.5;  // Broadcast-safe threshold (allows proper loudness)
                     limiter.ratio.value = 20;        // Brick-wall limiting
                     limiter.knee.value = 0.5;        // Tight knee for precise limiting
 
-                    changes.push(`Limiter: ${oldThreshold.toFixed(1)}dB → -4.5dB (True-Peak Safe)`);
-                    console.log('✅ Set limiter to -4.5 dB threshold (ensures well below -1.0 dBTP)');
+                    changes.push(`Limiter: ${oldThreshold.toFixed(1)}dB → -1.5dB (Broadcast Safe)`);
+                    console.log('✅ Set limiter to -1.5 dB threshold (broadcast safe with proper loudness)');
 
-                    document.getElementById('limiterValue').textContent = '-4.5 dB';
-                    document.getElementById('limiterSlider').value = -4.5;
+                    document.getElementById('limiterValue').textContent = '-1.5 dB';
+                    document.getElementById('limiterSlider').value = -1.5;
                 } else {
-                    console.log('✅ Limiter already set conservatively to', oldThreshold.toFixed(1), 'dB (keeping it)');
+                    console.log('✅ Limiter already set to', oldThreshold.toFixed(1), 'dB (keeping platform-specific setting)');
                 }
             }
 
@@ -7000,23 +7000,23 @@
                     switch(platform.toLowerCase()) {
                         case 'spotify':
                             targetLUFS = -14;
-                            limiterThreshold = -4.5; // Very conservative to prevent clipping
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                             break;
                         case 'youtube':
                             targetLUFS = -13;
-                            limiterThreshold = -4.5; // Very conservative to prevent clipping
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                             break;
                         case 'apple':
                             targetLUFS = -16;
-                            limiterThreshold = -5.0; // Extra conservative for Apple
+                            limiterThreshold = -2.0; // Slightly more conservative for Apple
                             break;
                         case 'tidal':
                             targetLUFS = -14;
-                            limiterThreshold = -4.5; // Very conservative to prevent clipping
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                             break;
                         default:
                             targetLUFS = -14;
-                            limiterThreshold = -4.5; // Very conservative to prevent clipping
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                     }
                     console.log('   Target LUFS for ' + platform + ':', targetLUFS);
                     console.log('   Limiter threshold:', limiterThreshold, 'dB');
@@ -7040,9 +7040,9 @@
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
                 // Calculate maximum gain that won't exceed -1.0 dBTP
-                // Balanced approach: Target -4.0 dBTP BEFORE limiter
-                // This allows enough gain to reach LUFS target while still being safe
-                const peakTargetBeforeLimiter = -4.0;
+                // Target -1.5 dBTP BEFORE limiter for proper loudness
+                // This allows the audio to be loud enough while staying broadcast safe
+                const peakTargetBeforeLimiter = -1.5;
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS-based gain and peak-based gain
@@ -7169,6 +7169,37 @@
                 currentTruePeak = limitedPeakDB;
                 console.log('✅ Updated global currentIntegratedLUFS:', currentIntegratedLUFS.toFixed(1), 'LUFS');
                 console.log('✅ Updated global currentTruePeak:', currentTruePeak.toFixed(1), 'dBTP');
+
+                // BOOST FINAL OUTPUT if we're below target LUFS after limiting
+                // This compensates for any loudness loss from the limiter
+                const lufsDeficit = targetLUFS - expectedAfterLUFS;
+                if (lufsDeficit > 0.5 && masterGain) {
+                    // We're more than 0.5 LU below target - apply output boost
+                    const outputBoost = Math.min(3.0, lufsDeficit * 0.8); // Cap at +3dB
+                    const outputBoostLinear = Math.pow(10, outputBoost / 20);
+                    masterGain.gain.value = outputBoostLinear;
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🔊 FINAL OUTPUT BOOST APPLIED:');
+                    console.log('   LUFS deficit:', lufsDeficit.toFixed(1), 'LU');
+                    console.log('   Output boost:', outputBoost.toFixed(1), 'dB');
+                    console.log('   masterGain set to:', outputBoostLinear.toFixed(3));
+                    console.log('   Expected final LUFS:', (expectedAfterLUFS + outputBoost).toFixed(1), 'LUFS');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Update UI slider to reflect output boost
+                    const outputGainSlider = document.getElementById('outputGainSlider');
+                    const outputGainValue = document.getElementById('outputGainValue');
+                    if (outputGainSlider && outputGainValue) {
+                        outputGainSlider.value = outputBoost;
+                        outputGainValue.textContent = '+' + outputBoost.toFixed(1) + ' dB';
+                    }
+                } else if (masterGain && masterGain.gain.value !== 1.0) {
+                    // Already has boost applied, keep it
+                    console.log('✅ Master output gain maintained:', (20 * Math.log10(masterGain.gain.value)).toFixed(1), 'dB');
+                } else {
+                    console.log('✅ Target LUFS achieved - no output boost needed');
+                }
 
                 // CRITICAL: Update the meter displays immediately
                 const lufsValueElement = document.getElementById('lufsValue');
