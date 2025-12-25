@@ -4250,15 +4250,50 @@
 
             // ACTIVATE SPECTRAL DE-NOISER (AI-Powered Noise Removal)
             if (spectralDenoiser && typeof spectralDenoiser.applyPreset === 'function') {
-                // Apply moderate noise removal for AI Master
-                spectralDenoiser.applyPreset('moderate');
-                console.log('✅ Activated Spectral De-noiser with moderate preset');
+                // Determine preset based on detected issues
+                let denoisePreset = 'moderate';
+                let denoiseAmount = 50;
 
-                // Enable specific noise types based on analysis
                 if (results.problems.some(p => p.type === 'noisy' || p.severity === 'high')) {
-                    spectralDenoiser.applyPreset('aggressive');
+                    denoisePreset = 'aggressive';
+                    denoiseAmount = 75;
                     console.log('   → Using aggressive noise removal due to detected noise');
+                } else {
+                    console.log('✅ Activated Spectral De-noiser with moderate preset');
                 }
+
+                // Apply preset to audio engine
+                spectralDenoiser.applyPreset(denoisePreset);
+
+                // UPDATE UI to reflect activation (moderate: 50%, aggressive: 75%)
+                // Enable all noise type checkboxes
+                const hissCheckbox = document.getElementById('denoiseHiss');
+                const humCheckbox = document.getElementById('denoiseHum');
+                const clicksCheckbox = document.getElementById('denoiseClicks');
+                const broadbandCheckbox = document.getElementById('denoiseBroadband');
+
+                if (hissCheckbox) {
+                    hissCheckbox.checked = true;
+                    document.getElementById('denoiseHissAmount').value = denoiseAmount;
+                    document.getElementById('hissValue').textContent = denoiseAmount + '%';
+                }
+                if (humCheckbox) {
+                    humCheckbox.checked = true;
+                    document.getElementById('denoiseHumAmount').value = denoiseAmount;
+                    document.getElementById('humValue').textContent = denoiseAmount + '%';
+                }
+                if (clicksCheckbox) {
+                    clicksCheckbox.checked = true;
+                    document.getElementById('denoiseClicksAmount').value = denoiseAmount;
+                    document.getElementById('clicksValue').textContent = denoiseAmount + '%';
+                }
+                if (broadbandCheckbox) {
+                    broadbandCheckbox.checked = true;
+                    document.getElementById('denoiseBroadbandAmount').value = denoiseAmount;
+                    document.getElementById('broadbandValue').textContent = denoiseAmount + '%';
+                }
+
+                console.log('   ✅ Updated Spectral De-noiser UI sliders to', denoiseAmount + '%');
             }
 
             // ACTIVATE MULTIBAND COMPRESSION (Dynamics & Processing)
@@ -4363,8 +4398,8 @@
             // CRITICAL: Remove fixed problems from the array
             results.problems = results.problems.filter(p => !fixedProblems.includes(p.type));
 
-            // CRITICAL: Display detailed before/after comparison
-            displayProfessionalMasteringReport(results, beforeSpecs, afterSpecs, changes, fixedProblems);
+            // RETURN specs for accurate reporting in AI Master function
+            return { beforeSpecs, afterSpecs, changes, fixedProblems };
         }
 
         // NEW FUNCTION: Update the analysis display after fixes
@@ -7073,9 +7108,9 @@
                     // DON'T update analysisResults.integratedLUFS here - let applyAutoFixes() calculate it
                 }
 
-                // Apply the actual fixes (compression, limiter, etc.) and generate report
-                // applyAutoFixes() will measure the ACTUAL LUFS based on the processing chain
-                await applyAutoFixes(analysisResults);
+                // Apply the actual fixes (compression, limiter, etc.)
+                // Capture before/after specs for accurate reporting
+                const masteringReport = await applyAutoFixes(analysisResults);
 
                 updateProgress(85, '🎨 Rendering Master...', 'Applying professional-grade processing...');
                 await new Promise(r => setTimeout(r, 400));
@@ -7242,8 +7277,25 @@
                 updateProgress(95, '✅ Finalizing...', 'Verifying broadcast standards...');
                 await new Promise(r => setTimeout(r, 200));
 
-                // NOTE: Professional mastering report already displayed by applyAutoFixes()
-                // Just need to ensure the LUFS value in meters updates (happens automatically via real-time meter)
+                // UPDATE afterSpecs with CORRECTED measured LUFS from offline analysis
+                if (masteringReport) {
+                    masteringReport.afterSpecs.lufs = expectedAfterLUFS; // Use CORRECT measured value
+                    masteringReport.afterSpecs.peak = limitedPeakDB; // Use CORRECT measured peak
+
+                    console.log('🎯 CORRECTED REPORT VALUES:');
+                    console.log('   Before LUFS:', masteringReport.beforeSpecs.lufs.toFixed(1));
+                    console.log('   After LUFS (CORRECTED):', masteringReport.afterSpecs.lufs.toFixed(1));
+                    console.log('   After Peak (CORRECTED):', masteringReport.afterSpecs.peak.toFixed(1), 'dBTP');
+
+                    // Display professional mastering report with CORRECTED values
+                    displayProfessionalMasteringReport(
+                        analysisResults,
+                        masteringReport.beforeSpecs,
+                        masteringReport.afterSpecs,
+                        masteringReport.changes,
+                        masteringReport.fixedProblems
+                    );
+                }
 
                 updateProgress(100, '🎉 Mastering Complete!', 'Professional quality achieved - Sterling Sound standards');
                 await new Promise(r => setTimeout(r, 1500));
