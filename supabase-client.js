@@ -4,9 +4,9 @@
  */
 
 // Supabase configuration
-// ⚠️ IMPORTANT: Make sure this is the ANON key, NOT the service role key!
+// ✅ Using the PUBLIC/ANON key (safe for client-side use)
 const SUPABASE_URL = 'https://mqczbnreafrpoxqqwxzl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_secret_tnPB7RA5viVS0-yKQfm5GQ_5C1_Y8Ch';
+const SUPABASE_ANON_KEY = 'sb_publishable_3H147_2o9deVyDnCP3ZzKg_7ceq6fmk';
 
 // Initialize Supabase client
 let supabase = null;
