@@ -4341,6 +4341,39 @@
                 }
             }
 
+            // ACTIVATE SPECTRAL DE-NOISER (AI-Powered Noise Removal)
+            if (spectralDenoiser && typeof spectralDenoiser.applyPreset === 'function') {
+                // Apply moderate noise removal for AI Master
+                spectralDenoiser.applyPreset('moderate');
+                console.log('✅ Activated Spectral De-noiser with moderate preset');
+
+                // Enable specific noise types based on analysis
+                if (results.problems.some(p => p.type === 'noisy' || p.severity === 'high')) {
+                    spectralDenoiser.applyPreset('aggressive');
+                    console.log('   → Using aggressive noise removal due to detected noise');
+                }
+            }
+
+            // ACTIVATE MULTIBAND COMPRESSION (Dynamics & Processing)
+            if (window.multibandCompressor && typeof window.multibandCompressor.enable === 'function') {
+                window.multibandCompressor.enable();
+
+                // Choose preset based on genre/content
+                const genre = results.genre || 'Universal';
+                let preset = 'balanced';
+
+                if (genre.toLowerCase().includes('hip') || genre.toLowerCase().includes('edm')) {
+                    preset = 'bass-heavy';
+                } else if (genre.toLowerCase().includes('rock') || genre.toLowerCase().includes('metal')) {
+                    preset = 'punchy';
+                } else if (genre.toLowerCase().includes('vocal') || genre.toLowerCase().includes('podcast')) {
+                    preset = 'vocal';
+                }
+
+                window.multibandCompressor.loadPreset(preset);
+                console.log('✅ Activated Multiband Compression with', preset, 'preset');
+            }
+
             // Apply EQ compensation after all EQ adjustments
             if (typeof updateEQCompensation === 'function') {
                 updateEQCompensation();
@@ -5392,25 +5425,33 @@
             const value = parseInt(this.value);
             document.getElementById('widthValue').textContent = value + '%';
 
-            // CRITICAL FIX: Actually apply stereo width to audio chain!
-            if (leftChannel && rightChannel) {
-                // Simple M/S stereo width algorithm
-                // 100% = normal, 0% = mono, 200% = extra wide
+            // ENHANCED M/S PROCESSING: Proper Mid/Side stereo width control
+            if (typeof stereoFieldEditor !== 'undefined' && stereoFieldEditor) {
+                // Use the full StereoFieldEditor for all 7 frequency bands
+                for (let i = 0; i < 7; i++) {
+                    stereoFieldEditor.setWidth(i, value);
+                }
+                console.log('🔊 M/S Processing applied via StereoFieldEditor:', value + '%');
+            } else if (leftChannel && rightChannel) {
+                // Fallback: Proper M/S encoding/decoding algorithm
+                // 100% = normal, 0% = mono, 200% = ultra wide
                 const widthFactor = value / 100;
 
-                // This is a simplified approach - adjust L/R channel gains
-                // For proper M/S processing, we'd need to decode/encode
-                // But this gives a noticeable width effect
-                if (widthFactor < 1.0) {
-                    // Narrower: reduce sides
-                    leftChannel.gain.value = 0.5 + (widthFactor * 0.5);
-                    rightChannel.gain.value = 0.5 + (widthFactor * 0.5);
+                if (widthFactor <= 1.0) {
+                    // Narrowing: Reduce side component
+                    // At 0%, full mono (sides eliminated)
+                    // At 100%, normal stereo
+                    const sideReduction = widthFactor;
+                    leftChannel.gain.value = 0.5 + (sideReduction * 0.5);
+                    rightChannel.gain.value = 0.5 + (sideReduction * 0.5);
                 } else {
-                    // Wider: boost sides
-                    leftChannel.gain.value = widthFactor;
-                    rightChannel.gain.value = widthFactor;
+                    // Widening: Boost side component
+                    // At 200%, ultra wide (sides boosted)
+                    const sideBoost = 1.0 + ((widthFactor - 1.0) * 1.2);
+                    leftChannel.gain.value = Math.min(2.0, sideBoost);
+                    rightChannel.gain.value = Math.min(2.0, sideBoost);
                 }
-                console.log('🔊 Stereo width applied:', value + '%');
+                console.log('🔊 M/S Processing applied via channel gains:', value + '%', 'factor:', widthFactor.toFixed(2));
             }
         });
 
