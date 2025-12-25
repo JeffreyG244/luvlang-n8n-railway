@@ -1881,36 +1881,46 @@
              ═════════════════════════════════════════════════════════════════ -->
         <div class="right-sidebar">
 
-            <!-- 9 PROFESSIONAL BROADCAST-GRADE METERS -->
+            <!-- 📊 PROFESSIONAL BROADCAST METERS - Redesigned for Clarity -->
             <div class="meters-container">
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <span>📡 Broadcast Meters</span>
                     <button id="advancedMetersToggle" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
                         ▼ SHOW PRO METERS
                     </button>
                 </div>
 
-                <!-- 1. Integrated LUFS - ALWAYS VISIBLE (Essential) -->
-                <div class="meter-item">
-                    <div class="meter-label">Integrated LUFS</div>
-                    <div class="meter-value" id="lufsValue">-∞</div>
-                    <div id="lufsTarget" style="font-size: 0.7rem; opacity: 1.0; margin-top: 4px; color: #ffffff; font-weight: 500;">
-                        Target: -14 LUFS (Spotify)
+                <!-- LOUDNESS METER CARD (Primary) -->
+                <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 212, 255, 0.02)); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">LOUDNESS</div>
+                        <div id="lufsTarget" style="font-size: 0.65rem; color: rgba(0, 212, 255, 0.8); font-weight: 600;">
+                            Target: -14 LUFS
+                        </div>
                     </div>
-                    <div class="meter-bar">
-                        <div class="meter-bar-fill" id="lufsMeter" style="background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);"></div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+                        <div id="lufsValue" style="font-size: 2.5rem; font-weight: 700; color: #00d4ff; line-height: 1; font-family: 'Courier New', monospace;">-∞</div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); font-weight: 600;">LUFS</div>
+                    </div>
+                    <div class="meter-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                        <div class="meter-bar-fill" id="lufsMeter" style="height: 100%; background: linear-gradient(90deg, #00ff88, #00d4ff); transition: width 0.3s ease;"></div>
                     </div>
                 </div>
 
-                <!-- 2. Phase Correlation - ALWAYS VISIBLE (Essential for stereo imaging) -->
-                <div class="meter-item">
-                    <div class="meter-label">Phase Correlation</div>
-                    <div class="meter-value" id="phaseValue">+1.0</div>
-                    <div style="font-size: 0.7rem; opacity: 1.0; margin-top: 4px; color: #ffffff; font-weight: 500;">
-                        +1.0 = Perfect / -1.0 = Out of phase
+                <!-- STEREO & PEAK METER CARDS (Secondary - Side by Side) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <!-- Phase Correlation -->
+                    <div style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.08), rgba(156, 39, 176, 0.02)); border: 1px solid rgba(156, 39, 176, 0.3); border-radius: 10px; padding: 12px;">
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">STEREO</div>
+                        <div id="phaseValue" style="font-size: 1.8rem; font-weight: 700; color: #e91e63; line-height: 1; font-family: 'Courier New', monospace;">+1.0</div>
+                        <div id="phaseDescription" style="font-size: 0.6rem; color: rgba(0,255,136,0.8); margin-top: 4px; font-weight: 600;">Perfect</div>
                     </div>
-                    <div class="meter-bar">
-                        <div class="meter-bar-fill" id="phaseMeter" style="background: linear-gradient(90deg, #9C27B0, #E91E63, #F44336);"></div>
+
+                    <!-- True Peak -->
+                    <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.08), rgba(255, 152, 0, 0.02)); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 10px; padding: 12px;">
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">PEAK</div>
+                        <div id="peakValue" style="font-size: 1.8rem; font-weight: 700; color: #ff9800; line-height: 1; font-family: 'Courier New', monospace;">-∞</div>
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 4px;">dBTP</div>
                     </div>
                 </div>
 
@@ -2335,6 +2345,14 @@
         // CURRENT MEASURED VALUES (Updated after analysis and mastering)
         let currentIntegratedLUFS = -70; // Current measured integrated LUFS
         let currentTruePeak = 0; // Current measured true peak in dBTP
+
+        // SMOOTHING VALUES for stable meter display (prevents flickering)
+        let smoothedLUFS = -70; // Smoothed LUFS value for display
+        let smoothedPeak = -70; // Smoothed peak value for display
+        let smoothedPhase = 1.0; // Smoothed phase correlation for display
+        const METER_SMOOTHING_FACTOR = 0.15; // 0.0 = no smoothing, 1.0 = instant (higher = faster response)
+        let lastMeterUpdate = 0; // Timestamp of last meter update
+        const METER_UPDATE_INTERVAL = 100; // Update meters every 100ms (10Hz) to reduce flickering
 
         // BUG FIX #2: Peak decay state for professional 3 dB/s decay
         let heldPeakdBFS = -70;
@@ -6442,35 +6460,36 @@
                     integratedLUFS = -70; // Below absolute gate
                 }
 
-                // Clamp and update display
+                // Clamp raw value
                 integratedLUFS = Math.max(-70, Math.min(0, integratedLUFS));
-                const lufsValueElement = document.getElementById('lufsValue');
-                const lufsMeterElement = document.getElementById('lufsMeter');
 
-                if (lufsValueElement) {
-                    lufsValueElement.textContent = integratedLUFS.toFixed(1);
-                }
+                // SMOOTH LUFS VALUE using exponential moving average (prevents flickering)
+                smoothedLUFS = smoothedLUFS + METER_SMOOTHING_FACTOR * (integratedLUFS - smoothedLUFS);
 
-                const lufsPercent = Math.max(0, Math.min(100, ((integratedLUFS + 60) / 60) * 100));
+                // THROTTLE METER UPDATES to reduce flickering (update every 100ms instead of every frame)
+                const currentTime = Date.now();
+                if (currentTime - lastMeterUpdate >= METER_UPDATE_INTERVAL) {
+                    lastMeterUpdate = currentTime;
 
-                if (lufsMeterElement) {
-                    lufsMeterElement.style.width = lufsPercent + '%';
-                }
+                    const lufsValueElement = document.getElementById('lufsValue');
+                    const lufsMeterElement = document.getElementById('lufsMeter');
 
-                // Debug: Log LUFS updates with DOM confirmation
-                if (Math.random() < 0.02) {
-                    console.log('📊 LUFS UPDATE:');
-                    console.log('   Value:', integratedLUFS.toFixed(1), 'dB');
-                    console.log('   Meter width:', lufsPercent.toFixed(0) + '%');
-                    console.log('   DOM Element lufsValue:', lufsValueElement ? 'EXISTS' : 'MISSING');
-                    console.log('   DOM Element lufsMeter:', lufsMeterElement ? 'EXISTS' : 'MISSING');
                     if (lufsValueElement) {
-                        console.log('   Text Content:', lufsValueElement.textContent);
+                        lufsValueElement.textContent = smoothedLUFS.toFixed(1);
                     }
+
+                    const lufsPercent = Math.max(0, Math.min(100, ((smoothedLUFS + 60) / 60) * 100));
+
                     if (lufsMeterElement) {
-                        console.log('   Bar Width:', lufsMeterElement.style.width);
+                        lufsMeterElement.style.width = lufsPercent + '%';
                     }
+                } else {
+                    // Skip this frame to prevent flickering
+                    return;
                 }
+
+                // Use smoothed value for all subsequent calculations
+                const displayLUFS = smoothedLUFS;
 
                 // Dynamic color coding for LUFS based on selected platform target
                 const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
@@ -6484,19 +6503,22 @@
                 }
 
                 // Check if within ±1 LU of target (professional tolerance)
-                const lufsDeviation = Math.abs(integratedLUFS - platformTarget);
+                const lufsDeviation = Math.abs(displayLUFS - platformTarget);
 
-                if (lufsMeterElement) {
-                    if (integratedLUFS > -10) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (dangerously loud)
+                const lufsValueElement2 = document.getElementById('lufsValue');
+                const lufsMeterElement2 = document.getElementById('lufsMeter');
+
+                if (lufsMeterElement2) {
+                    if (displayLUFS > -10) {
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (dangerously loud)
                     } else if (lufsDeviation <= 1.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (perfect - within 1 LU)
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (perfect - within 1 LU)
                     } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (close - within 2 LU)
-                    } else if (integratedLUFS < platformTarget - 3) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Light green (too quiet)
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (close - within 2 LU)
+                    } else if (displayLUFS < platformTarget - 3) {
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Light green (too quiet)
                     } else {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange (needs adjustment)
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange (needs adjustment)
                     }
                 }
 
@@ -6569,44 +6591,22 @@
                 }
                 lastDecayTime = timestamp;
 
+                // SMOOTH PEAK VALUE using exponential moving average
+                smoothedPeak = smoothedPeak + METER_SMOOTHING_FACTOR * (heldPeakdBFS - smoothedPeak);
+
+                // Update peak display (already throttled by LUFS update check above)
                 const peakValueElement = document.getElementById('peakValue');
-                const peakMeterElement = document.getElementById('peakMeter');
 
                 if (peakValueElement) {
-                    peakValueElement.textContent = heldPeakdBFS.toFixed(1);
-                    // Keep peak value white always - professional look, no red warnings
-                    peakValueElement.style.color = '#ffffff';
-                }
+                    peakValueElement.textContent = smoothedPeak.toFixed(1);
 
-                const peakPercent = Math.max(0, Math.min(100, ((peakDb + 60) / 60) * 100));
-
-                if (peakMeterElement) {
-                    peakMeterElement.style.width = peakPercent + '%';
-                }
-
-                // Debug: Log peak updates with DOM confirmation
-                if (Math.random() < 0.02) {
-                    console.log('🔊 TRUE PEAK UPDATE:');
-                    console.log('   Value:', heldPeakdBFS.toFixed(1), 'dBTP');
-                    console.log('   Meter width:', peakPercent.toFixed(0) + '%');
-                    console.log('   DOM Element peakValue:', peakValueElement ? 'EXISTS' : 'MISSING');
-                    console.log('   DOM Element peakMeter:', peakMeterElement ? 'EXISTS' : 'MISSING');
-                    if (peakValueElement) {
-                        console.log('   Text Content:', peakValueElement.textContent);
-                    }
-                    if (peakMeterElement) {
-                        console.log('   Bar Width:', peakMeterElement.style.width);
-                    }
-                }
-
-                // Peak meter color coding - professional colors only (NO RED/YELLOW warnings)
-                if (peakMeterElement) {
-                    if (peakDb > -3.0) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #00ddff, #00aaff)'; // Cyan (active)
-                    } else if (peakDb > -6.0) {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (good)
+                    // Dynamic color coding based on peak level
+                    if (smoothedPeak > -1.0) {
+                        peakValueElement.style.color = '#ff3333'; // Red (danger!)
+                    } else if (smoothedPeak > -3.0) {
+                        peakValueElement.style.color = '#ffaa00'; // Orange (caution)
                     } else {
-                        peakMeterElement.style.background = 'linear-gradient(90deg, #2196F3, #03A9F4)'; // Blue (safe)
+                        peakValueElement.style.color = '#ff9800'; // Standard orange
                     }
                 }
 
@@ -6701,58 +6701,39 @@
                 phaseCorrelation = (lSquared * rSquared > 0) ?
                     lrSum / Math.sqrt(lSquared * rSquared) : 0;
 
-                const phaseValueElement = document.getElementById('phaseValue');
-                const phaseMeterElement = document.getElementById('phaseMeter');
+                // SMOOTH PHASE CORRELATION using exponential moving average
+                smoothedPhase = smoothedPhase + METER_SMOOTHING_FACTOR * (phaseCorrelation - smoothedPhase);
 
-                // Determine phase status and color
+                // Update phase display (already throttled by LUFS update check above)
+                const phaseValueElement = document.getElementById('phaseValue');
+                const phaseDescElement = document.getElementById('phaseDescription');
+
+                // Determine phase status based on smoothed value
                 let phaseStatus = '';
                 let phaseColor = '';
-                let meterBackground = '';
 
-                if (phaseCorrelation < 0) {
-                    phaseStatus = 'PHASE ISSUES ⚠️';
+                if (smoothedPhase < 0) {
+                    phaseStatus = 'Out of Phase!';
                     phaseColor = '#ff3333';
-                    meterBackground = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red
-                } else if (phaseCorrelation < 0.5) {
-                    phaseStatus = 'Narrow Stereo';
+                } else if (smoothedPhase < 0.5) {
+                    phaseStatus = 'Narrow';
                     phaseColor = '#ffaa00';
-                    meterBackground = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow
-                } else if (phaseCorrelation >= 0.7) {
-                    phaseStatus = 'Good Stereo ✓';
+                } else if (smoothedPhase >= 0.8) {
+                    phaseStatus = 'Perfect';
                     phaseColor = '#00ff88';
-                    meterBackground = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green
                 } else {
-                    phaseStatus = 'Moderate Width';
-                    phaseColor = '#9C27B0';
-                    meterBackground = 'linear-gradient(90deg, #9C27B0, #E91E63)'; // Purple
+                    phaseStatus = 'Good';
+                    phaseColor = '#e91e63';
                 }
 
                 if (phaseValueElement) {
-                    // Display value with status: "0.77 • Good Stereo ✓"
-                    phaseValueElement.innerHTML = `${phaseCorrelation.toFixed(2)} <span style="color: ${phaseColor}; font-weight: 600;">• ${phaseStatus}</span>`;
+                    phaseValueElement.textContent = (smoothedPhase >= 0 ? '+' : '') + smoothedPhase.toFixed(2);
+                    phaseValueElement.style.color = phaseColor;
                 }
 
-                const phasePercent = (phaseCorrelation + 1) / 2 * 100;
-
-                if (phaseMeterElement) {
-                    phaseMeterElement.style.width = phasePercent + '%';
-                    phaseMeterElement.style.background = meterBackground;
-                }
-
-                // Debug: Log phase correlation with DOM confirmation
-                if (Math.random() < 0.02) {
-                    console.log('🔀 PHASE CORRELATION UPDATE:');
-                    console.log('   Value:', phaseCorrelation.toFixed(2));
-                    console.log('   Status:', phaseStatus);
-                    console.log('   Meter width:', phasePercent.toFixed(0) + '%');
-                    console.log('   DOM Element phaseValue:', phaseValueElement ? 'EXISTS' : 'MISSING');
-                    console.log('   DOM Element phaseMeter:', phaseMeterElement ? 'EXISTS' : 'MISSING');
-                    if (phaseValueElement) {
-                        console.log('   Text Content:', phaseValueElement.innerHTML);
-                    }
-                    if (phaseMeterElement) {
-                        console.log('   Bar Width:', phaseMeterElement.style.width);
-                    }
+                if (phaseDescElement) {
+                    phaseDescElement.textContent = phaseStatus;
+                    phaseDescElement.style.color = phaseColor;
                 }
             }
 
