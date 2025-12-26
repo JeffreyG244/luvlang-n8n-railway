@@ -4452,8 +4452,8 @@
                     const currentPeakDB = results.maxPeak > 0 ? 20 * Math.log10(results.maxPeak) : -70;
 
                     // Calculate maximum gain that won't exceed -1.0 dBTP
-                    // ULTRA CONSERVATIVE: Target -6.0 dBTP BEFORE limiter to ensure NO CLIPPING EVER
-                    const peakTargetBeforeLimiter = -6.0;
+                    // FIXED: Target -2.0 dBTP BEFORE limiter (limiter will catch peaks at -1.0 dBTP ceiling)
+                    const peakTargetBeforeLimiter = -2.0;
                     const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                     // Smart peak protection: only limit if boosting AND would exceed safe peak
@@ -4483,7 +4483,7 @@
                     console.log(`   Processing Compensation: ${processingLossCompensation.toFixed(2)} dB (limiter adds ~1.1dB perceived loudness)`);
                     console.log(`   Total Gain: ${lufsGainNeeded.toFixed(1)} dB → Applied (peak-safe): ${safeGain.toFixed(1)} dB`);
                     console.log(`   ⚡ APPLYING ${safeGain.toFixed(1)} dB to makeupGain node`);
-                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -6.0 dBTP before limiter)`);
+                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -2.0 dBTP before limiter)`);
                     console.log(`   Using makeupGain (before limiter) - balanced approach for accurate LUFS`);
 
                     if (Math.abs(safeGain) < Math.abs(lufsGainNeeded)) {
