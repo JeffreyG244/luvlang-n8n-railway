@@ -5,12 +5,18 @@
 
 // Supabase configuration
 // ✅ Using the PUBLIC/ANON key (safe for client-side use)
-const SUPABASE_URL = 'https://mqczbnreafrpoxqqwxzl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_3H147_2o9deVyDnCP3ZzKg_7ceq6fmk';
+const SUPABASE_URL = 'https://tzskjzkolyiwhijslqmq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c2tqemtvbHlpd2hpanNscW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI4NTcyNTEsImV4cCI6MjA0ODQzMzI1MX0.Uv4HfNw_-LZwz3zTX_MbRe0qNBHlEqW9sDmPqDpOGO8';
 
 // Initialize Supabase client
 let supabase = null;
 let currentUser = null;
+
+// Make supabase available globally for payment integration
+if (typeof window !== 'undefined') {
+    window.supabase = null;
+    window.currentUser = null;
+}
 
 /**
  * Initialize Supabase client
@@ -23,7 +29,15 @@ async function initializeSupabase() {
             // Import Supabase from CDN (add this script tag to HTML)
             // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+            // Check if @supabase/supabase-js is loaded
+            if (!window.supabase || !window.supabase.createClient) {
+                throw new Error('Supabase library not loaded. Add <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> to your HTML.');
+            }
+
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Make globally available
+            window.supabase = supabase;
 
             console.log('✅ Supabase client initialized');
         }
@@ -402,4 +416,7 @@ if (typeof window !== 'undefined') {
     window.saveMasteringHistory = saveMasteringHistory;
     window.loadMasteringHistory = loadMasteringHistory;
     window.getUserSubscription = getUserSubscription;
+    window.currentUser = currentUser;
 }
+
+console.log('✅ Supabase client module loaded');
