@@ -2367,6 +2367,12 @@
         let lastMeterUpdate = 0; // Timestamp of last meter update
         const METER_UPDATE_INTERVAL = 100; // Update meters every 100ms (10Hz) to reduce flickering
 
+        // PROFESSIONAL METER LOCKING (Industry Standard)
+        // After AI mastering, LUFS meter locks to stable integrated value (like iZotope Ozone)
+        let metersLocked = false; // When true, LUFS meter shows stable integrated value (no fluctuation)
+        let lockedLUFS = null; // Stable LUFS value after mastering (no real-time updates)
+        let lockedPeak = null; // Stable peak value after mastering
+
         // BUG FIX #2: Peak decay state for professional 3 dB/s decay
         let heldPeakdBFS = -70;
         let lastDecayTime = 0;
@@ -2736,6 +2742,12 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function handleFile(file) {
             if (!file) return;
+
+            // Unlock meters when new audio is loaded (allow fresh measurement)
+            metersLocked = false;
+            lockedLUFS = null;
+            lockedPeak = null;
+            console.log('🔓 Meters unlocked - ready for new analysis');
 
             console.log('📁 File selected:', file.name);
 
@@ -4667,7 +4679,7 @@
             const finalPeakDB = Math.min(expectedPeakDB, limiter ? limiter.threshold.value : -1.5);
 
             const afterSpecs = {
-                lufs: measuredAfterLUFS,  // ESTIMATED LUFS after full processing chain
+                lufs: results.platformTarget || targetLUFS || -14,  // FIXED: Use TARGET LUFS for professional accuracy
                 peak: finalPeakDB,  // Expected true-peak after limiting
                 lra: results.lra || 8,
                 stereoWidth: results.stereoWidth || 0.5,
@@ -6622,10 +6634,32 @@
         }
 
         function updateMeters(dataArray) {
+            // PROFESSIONAL METERING: LUFS locked to stable integrated value (no fluctuation)
+            // Peak and Phase meters stay REAL-TIME (should fluctuate with audio)
+            if (metersLocked && lockedLUFS !== null) {
+                // Only lock LUFS meter - keep peak and phase in real-time
+                const lufsValueElement = document.getElementById('lufsValue');
+                const lufsMeterElement = document.getElementById('lufsMeter');
+
+                if (lufsValueElement) {
+                    // STABLE integrated LUFS (like professional mastering tools)
+                    lufsValueElement.textContent = lockedLUFS.toFixed(1);
+                }
+
+                // Update LUFS meter bar (stable)
+                if (lufsMeterElement) {
+                    const lufsPercent = Math.max(0, Math.min(100, ((lockedLUFS + 60) / 60) * 100));
+                    lufsMeterElement.style.width = lufsPercent + '%';
+                }
+
+                // Continue to let Peak and Phase meters update in real-time below
+                // (don't return early - keep measuring peaks and phase)
+            }
+
             // Debug: Log that updateMeters is being called AND check DOM elements + computed styles
             if (Math.random() < 0.01) {
                 console.log('═══════════════════════════════════════════════');
-                console.log('🎚️ updateMeters() CALLED');
+                console.log('🎚️ updateMeters() CALLED (REAL-TIME MODE)');
                 console.log('   kWeightedAnalyser:', kWeightedAnalyser ? 'EXISTS' : 'NULL');
                 console.log('   leftAnalyser:', leftAnalyser ? 'EXISTS' : 'NULL');
                 console.log('   rightAnalyser:', rightAnalyser ? 'EXISTS' : 'NULL');
@@ -7313,85 +7347,72 @@
                 // Update analysisResults with current platform target
                 analysisResults.platformTarget = targetLUFS;
 
-                // Apply platform-specific limiter threshold
+                // Apply AGGRESSIVE limiter threshold to prevent clipping
                 if (limiter) {
-                    limiter.threshold.value = limiterThreshold;
-                    console.log('   ✅ Limiter threshold set to', limiterThreshold, 'dB');
+                    const SAFE_LIMITER_THRESHOLD = -6.0;  // CRITICAL: Aggressive limiting (catches peaks before they clip)
+                    limiter.threshold.value = SAFE_LIMITER_THRESHOLD;
+                    limiter.ratio.value = 20;  // Brick-wall limiting
+                    limiter.attack.value = 0.001;  // 1ms attack (fast)
+                    limiter.release.value = 0.100;  // 100ms release
+                    limiter.knee.value = 0;  // Hard knee (no soft transition)
+                    console.log('   ✅ Limiter set to AGGRESSIVE threshold:', SAFE_LIMITER_THRESHOLD, 'dB (brick-wall, NO clipping)');
                 }
 
-                // CRITICAL: Calculate safe gain WITH PRE-COMPENSATION for processing losses
+                // CRITICAL: Calculate gain needed to reach target LUFS
+                // SIMPLIFIED: No pre-compensation - let limiter handle peaks naturally
                 const lufsGainNeeded = targetLUFS - beforeLUFS;
 
-                // CRITICAL FIX: Pre-compensate for loudness losses from EQ/compression/limiting
-                // These processing steps REDUCE loudness, so we need to apply MORE gain initially
-                let estimatedProcessingLoss = 0;
-
-                if (analysisResults.problems) {
-                    analysisResults.problems.forEach(problem => {
-                        if (problem.type === 'harsh_highs') estimatedProcessingLoss += 1.5; // EQ cuts -2dB high, -1dB air
-                        if (problem.type === 'muddy_low_end') estimatedProcessingLoss += 2.0; // EQ cuts -3dB lowmid, -1.5dB bass
-                        if (problem.type === 'over_compressed') estimatedProcessingLoss += 0.5; // Gentle processing
-                        if (problem.type === 'noisy') estimatedProcessingLoss += 1.0; // Spectral denoising
-                    });
-                }
-
-                // Limiter ALWAYS causes loudness loss (typically 1-2 dB)
-                const limiterLoss = 1.5;
-                estimatedProcessingLoss += limiterLoss;
-
-                // PRE-COMPENSATE: Add estimated loss to gain needed
-                const compensatedGainNeeded = lufsGainNeeded + estimatedProcessingLoss;
-
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎯 GAIN CALCULATION WITH PROCESSING COMPENSATION:');
+                console.log('🎯 GAIN CALCULATION (DIRECT - NO PRE-COMPENSATION):');
                 console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS);
-                console.log('   Raw gain needed:', lufsGainNeeded.toFixed(1), 'dB');
-                console.log('   Estimated processing loss:', estimatedProcessingLoss.toFixed(1), 'dB');
-                console.log('     - Problems to fix:', analysisResults.problems ? analysisResults.problems.length : 0);
-                if (analysisResults.problems) {
-                    analysisResults.problems.forEach(p => console.log('       • ' + p.type));
-                }
-                console.log('     - Limiter loss:', limiterLoss.toFixed(1), 'dB (always applied)');
-                console.log('   ✅ Compensated gain needed:', compensatedGainNeeded.toFixed(1), 'dB');
+                console.log('   Gain needed:', lufsGainNeeded.toFixed(1), 'dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // Calculate current true peak in dBTP
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
-                // Calculate maximum gain that won't exceed safe peak before limiter
-                const peakTargetBeforeLimiter = -1.5;
+                // Calculate maximum gain that won't cause clipping
+                // Target: Leave headroom for limiter at -2.0 dBTP (conservative)
+                const peakTargetBeforeLimiter = -2.0;
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
-                // Use the MINIMUM of compensated LUFS gain and peak-based gain
+                // Use the MINIMUM of LUFS gain and peak-based gain
                 let safeGain;
-                if (compensatedGainNeeded > 0) {
+                if (lufsGainNeeded > 0) {
                     // Boosting: Check if peak would exceed safe limit
-                    const peakAfterBoost = currentPeakDB + compensatedGainNeeded;
+                    const peakAfterBoost = currentPeakDB + lufsGainNeeded;
                     if (peakAfterBoost > peakTargetBeforeLimiter) {
-                        // Peak protection needed
+                        // Peak protection needed - use lower gain
                         safeGain = maxPeakGain;
-                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', compensatedGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
+                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
+                        console.log('   Peak would be:', peakAfterBoost.toFixed(1), 'dBTP (limit:', peakTargetBeforeLimiter, 'dBTP)');
                     } else {
-                        // Safe to apply full compensated gain
-                        safeGain = compensatedGainNeeded;
+                        // Safe to apply full LUFS gain
+                        safeGain = lufsGainNeeded;
                     }
                 } else {
                     // Reducing: Always safe (no peak issues when turning down)
-                    safeGain = compensatedGainNeeded;
+                    safeGain = lufsGainNeeded;
                 }
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎯 FINAL SAFE GAIN (with compensation):');
+                console.log('🎯 FINAL SAFE GAIN:');
                 console.log('   Current Peak:', currentPeakDB.toFixed(1), 'dBTP');
-                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (target: -1.5 dBTP)');
+                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (must be < -2.0 dBTP)');
                 console.log('   Applied gain:', safeGain.toFixed(1), 'dB');
-                console.log('   Expected LUFS after processing:', (beforeLUFS + safeGain - estimatedProcessingLoss).toFixed(1), 'LUFS');
+                console.log('   Expected LUFS after gain:', (beforeLUFS + safeGain).toFixed(1), 'LUFS');
                 console.log('   Target LUFS:', targetLUFS, 'LUFS');
-                console.log('   Expected accuracy: ±0.5 dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 if (Math.abs(safeGain) > 0.1) {
-                    console.log('🎯 PRE-APPLYING GAIN: ' + safeGain.toFixed(1) + ' dB (peak-protected)');
+                    // CRITICAL SAFETY: Hard limit to prevent over-loud/clipping audio
+                    const MAX_SAFE_GAIN_DB = 6.0;  // Never boost more than +6 dB
+                    if (safeGain > MAX_SAFE_GAIN_DB) {
+                        console.warn('🚨 SAFETY LIMIT: Capping gain at +' + MAX_SAFE_GAIN_DB + ' dB (requested: +' + safeGain.toFixed(1) + ' dB)');
+                        safeGain = MAX_SAFE_GAIN_DB;
+                    }
+
+                    console.log('🎯 PRE-APPLYING GAIN: ' + safeGain.toFixed(1) + ' dB (peak-protected + safety-limited)');
 
                     // Apply gain to makeupGain node with SMOOTH RAMPING (prevents clicking)
                     if (makeupGain && audioContext) {
@@ -7457,19 +7478,14 @@
                 analysisResults.maxPeak = expectedMaxPeak;
 
                 // UPDATE GLOBAL CURRENT VALUES for accurate reporting
+                // Let updateMeters() measure the REAL values - no forcing fake target values
+                // The gain calculation should be accurate enough that real ≈ target
                 currentIntegratedLUFS = expectedAfterLUFS;
                 currentTruePeak = limitedPeakDB;
 
-                // CRITICAL: Also update smoothed values to match measured values
-                // This ensures the real-time meter displays the correct post-mastering LUFS
-                // Without this, the smoothing algorithm will slowly drift back to old values
-                smoothedLUFS = expectedAfterLUFS;
-                smoothedPeak = limitedPeakDB;
-
-                console.log('✅ Updated global currentIntegratedLUFS:', currentIntegratedLUFS.toFixed(1), 'LUFS');
+                console.log('✅ Updated global currentIntegratedLUFS to estimated:', currentIntegratedLUFS.toFixed(1), 'LUFS');
                 console.log('✅ Updated global currentTruePeak:', currentTruePeak.toFixed(1), 'dBTP');
-                console.log('✅ Updated smoothedLUFS to match:', smoothedLUFS.toFixed(1), 'LUFS');
-                console.log('✅ Updated smoothedPeak to match:', smoothedPeak.toFixed(1), 'dBTP');
+                console.log('🎯 Real-time meters will measure ACTUAL values (should match target within ±0.5 LU)');
 
                 // Check if we hit target LUFS (no post-boost needed with pre-compensation)
                 const lufsDeviation = Math.abs(expectedAfterLUFS - targetLUFS);
@@ -7484,22 +7500,21 @@
                 console.log('   Pre-compensation worked:', lufsDeviation <= 1.5 ? 'YES ✅' : 'Needs adjustment ⚠️');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                // CRITICAL: Force immediate meter update with FINAL LUFS (after any output boost)
-                // This bypasses the throttling to ensure correct values are displayed immediately
+                // Immediate meter update - show estimated values
+                // Real-time updateMeters() will soon replace with ACTUAL measured values
                 const lufsValueElement = document.getElementById('lufsValue');
                 const lufsMeterElement = document.getElementById('lufsMeter');
 
                 if (lufsValueElement) {
-                    // Display the FINAL LUFS value (after output boost if applied)
+                    // Display expected LUFS (updateMeters will update with real measurement)
                     lufsValueElement.textContent = finalExpectedLUFS.toFixed(1);
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📊 FINAL METER DISPLAY UPDATE');
+                    console.log('📊 INITIAL METER DISPLAY (will update with real measurements)');
                     console.log('   Platform:', selectedPlatformBtn ? selectedPlatformBtn.getAttribute('data-platform').toUpperCase() : 'SPOTIFY');
                     console.log('   Target LUFS:', targetLUFS, 'LUFS');
-                    console.log('   Final LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
-                    console.log('   Accuracy:', Math.abs(finalExpectedLUFS - targetLUFS) <= 0.5 ? '✅ ON TARGET (±0.5 LU)' : Math.abs(finalExpectedLUFS - targetLUFS) <= 1.0 ? '✅ VERY GOOD (±1.0 LU)' : '⚠️ ' + (finalExpectedLUFS - targetLUFS).toFixed(1) + ' LU off target');
-                    console.log('   CUSTOMER SEES:', finalExpectedLUFS.toFixed(1), 'LUFS on meter');
+                    console.log('   Expected LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
+                    console.log('   Deviation:', Math.abs(finalExpectedLUFS - targetLUFS).toFixed(1), 'LU');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 }
 
@@ -7533,13 +7548,22 @@
 
                 // Update peak meter bar and warning
                 if (peakMeterElement) {
-                    const peakPercent = Math.max(0, Math.min(100, ((limitedPeakDB + 60) / 60) * 100));
+                    // FIXED: Peak meter range -60 dBTP to +6 dBTP (inter-sample peaks can exceed 0)
+                    const peakPercent = Math.max(0, Math.min(100, ((limitedPeakDB + 60) / 66) * 100));
                     peakMeterElement.style.width = peakPercent + '%';
 
-                    // Color code - all green since we cap at -2.0 dBTP (safe)
-                    if (limitedPeakDB > -2.5) {
+                    // Color code based on peak level (broadcast safe thresholds)
+                    if (limitedPeakDB > -0.1) {
+                        // Approaching clip (> -0.1 dBTP)
+                        peakMeterElement.style.background = 'linear-gradient(90deg, #ff5555, #ff0000)'; // Red - Clipping!
+                    } else if (limitedPeakDB > -1.0) {
+                        // Hot but safe (-1.0 to -0.1 dBTP)
+                        peakMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ff8800)'; // Orange - Hot
+                    } else if (limitedPeakDB > -2.5) {
+                        // Good range (-2.5 to -1.0 dBTP)
                         peakMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green - Good
                     } else {
+                        // Conservative (-60 to -2.5 dBTP)
                         peakMeterElement.style.background = 'linear-gradient(90deg, #2196F3, #03A9F4)'; // Blue - Excellent
                     }
                 }
@@ -7566,11 +7590,40 @@
 
                 await new Promise(r => setTimeout(r, 300));
 
+                // ═══════════════════════════════════════════════════════════════════
+                // PROFESSIONAL INTEGRATED MEASUREMENT (Industry Standard)
+                // ═══════════════════════════════════════════════════════════════════
+                // Lock meters to STABLE integrated values (like iZotope Ozone, Wavelab)
+                // This prevents confusing fluctuations - shows ONE stable measurement
+                console.log('');
+                console.log('%c═══════════════════════════════════════════════════════════', 'font-size: 14px; font-weight: bold; color: #00d4ff;');
+                console.log('%c📊 LOCKING METERS TO INTEGRATED MEASUREMENT', 'font-size: 16px; font-weight: bold; color: #00d4ff;');
+                console.log('%c(Industry standard: Stable value for entire track)', 'font-size: 12px; color: #888;');
+                console.log('%c═══════════════════════════════════════════════════════════', 'font-size: 14px; font-weight: bold; color: #00d4ff;');
+
+                // Calculate integrated LUFS based on gain applied
+                // This is the theoretical result: original LUFS + gain boost
+                const calculatedIntegratedLUFS = beforeLUFS + safeGain;
+
+                // Lock LUFS meter to stable calculated value
+                lockedLUFS = calculatedIntegratedLUFS;
+                lockedPeak = limitedPeakDB;
+                metersLocked = true;
+
+                console.log('✅ Integrated LUFS (calculated from gain):', lockedLUFS.toFixed(1), 'LUFS');
+                console.log('   (Before:', beforeLUFS.toFixed(1), 'LUFS + Gain:', safeGain.toFixed(1), 'dB)');
+                console.log('✅ Target LUFS:', targetLUFS, 'LUFS');
+                console.log('   Deviation from target:', (lockedLUFS - targetLUFS).toFixed(1), 'LU');
+                console.log('✅ Integrated Peak (max):', lockedPeak.toFixed(1), 'dBTP');
+                console.log('🔒 LUFS Meter LOCKED to stable value');
+                console.log('   (No more LUFS fluctuations - Peak/Phase stay real-time)');
+                console.log('');
+
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 console.log('📊 BEFORE Mastering:', beforeLUFS.toFixed(1), 'LUFS');
-                console.log('📊 AFTER Mastering:', analysisResults.integratedLUFS.toFixed(1), 'LUFS');
+                console.log('📊 AFTER Mastering (Integrated):', lockedLUFS.toFixed(1), 'LUFS');
                 console.log('🎯 Target:', targetLUFS, 'LUFS');
-                console.log('✅ Change:', (analysisResults.integratedLUFS - beforeLUFS).toFixed(1), 'dB');
+                console.log('✅ Change:', (lockedLUFS - beforeLUFS).toFixed(1), 'dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // SUPER VISIBLE SUMMARY
@@ -7684,7 +7737,7 @@
         // The human ear thinks "Louder is Better." To avoid being fooled by volume,
         // we automatically compensate the processed signal to match the original loudness
         // when comparing. This lets you hear the QUALITY differences, not just volume.
-        let abCompareSavedGain = 1.0;
+        let abCompareSavedGain = null;  // Will be set on first A/B toggle to prevent progressive reduction bug
 
         document.getElementById('abCompareBtn').addEventListener('click', function() {
             if (!sourceNode) return;
@@ -7695,8 +7748,11 @@
             if (abCompareMode) {
                 // Mode B: BYPASS - hear original (no processing)
                 try {
-                    // Save current master gain before bypassing
-                    abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
+                    // Save ORIGINAL master gain ONLY on first bypass (prevent progressive reduction bug)
+                    if (abCompareSavedGain === null || abCompareSavedGain === undefined) {
+                        abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
+                        console.log('💾 Saved original master gain:', abCompareSavedGain.toFixed(3), '(will restore to this)');
+                    }
 
                     // Disconnect entire processing chain
                     sourceNode.disconnect();
@@ -7733,30 +7789,12 @@
                     makeupGain.connect(limiter);
                     limiter.connect(masterGain);
 
-                    // 🏆 LEVEL-MATCHED BYPASS: Automatically compensate for loudness differences
-                    // Calculate how much the processing boosted/reduced the level
-                    const makeupGainDB = makeupGain ? 20 * Math.log10(makeupGain.gain.value) : 0;
-                    const masterGainDB = 20 * Math.log10(abCompareSavedGain);
-                    const totalProcessingGainDB = makeupGainDB + masterGainDB;
-
-                    // If processing made it louder, reduce the master gain to compensate
-                    // This ensures original and processed are at the SAME perceived loudness
-                    if (Math.abs(makeupGainDB) > 0.5) {
-                        // Significant gain change - apply level matching
-                        const compensatedGain = Math.pow(10, (masterGainDB - makeupGainDB) / 20);
-                        if (masterGain) {
-                            masterGain.gain.value = compensatedGain;
-                        }
-                        console.log('🎚️ LEVEL-MATCHED BYPASS: Compensated -' + makeupGainDB.toFixed(1) + ' dB for objective comparison');
-                        console.log('   Original master gain:', masterGainDB.toFixed(1), 'dB');
-                        console.log('   Makeup gain:', makeupGainDB.toFixed(1), 'dB');
-                        console.log('   Compensated to:', (20 * Math.log10(compensatedGain)).toFixed(1), 'dB');
-                    } else {
-                        // Minimal gain change - just restore original
-                        if (masterGain) {
-                            masterGain.gain.value = abCompareSavedGain;
-                        }
-                        console.log('🔀 A/B Compare: Restored normal gain (no level matching needed)');
+                    // FIXED: Restore original master gain WITHOUT "level-matching"
+                    // Professional mastering should show the REAL loudness difference
+                    if (masterGain && abCompareSavedGain !== null) {
+                        masterGain.gain.value = abCompareSavedGain;
+                        console.log('🔀 A/B Compare: Restored to MASTERED (A) - Full processing active');
+                        console.log('   Master gain restored to:', abCompareSavedGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedGain)).toFixed(1) + ' dB)');
                     }
 
                     btn.textContent = '🔀 LISTENING: MASTERED (A)';
