@@ -344,6 +344,83 @@ Every item must be manually verified in a browser before marking as production-r
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+## SECTION 16: UI STRUCTURE & DUPLICATION CHECK (CRITICAL)
+
+### **MANDATORY Before Every Commit**
+
+This section prevents duplicate UI elements from being added back after cleanup.
+
+### Genre Selectors
+- [ ] Only ONE "Genre" or "Genre Preset" selector visible
+- [ ] Genre selector has descriptions (e.g., "Hip-Hop (Sub + Presence)")
+- [ ] No duplicate genre button grids
+- [ ] Count: `grep -c "<!-- GENRE SELECTOR -->" luvlang_LEGENDARY_COMPLETE.html` should return **1**
+
+### EQ Sections
+- [ ] Only ONE 7-Band Parametric EQ section visible
+- [ ] EQ section has SUB, BASS, LOW MID, MID, HIGH MID, HIGH, AIR bands
+- [ ] No "Stereo Field Editor" section (should be removed)
+- [ ] No "Spectral De-noiser" section (should be removed)
+- [ ] Count: `grep -c '<div class="eq-section"' luvlang_LEGENDARY_COMPLETE.html` should return **1**
+
+### Platform Selectors
+- [ ] Only ONE platform selector visible
+- [ ] Platform selector has Spotify, YouTube, Apple Music, Tidal
+- [ ] LUFS targets display correctly (-14, -14, -16, -14)
+- [ ] Count: `grep -c "<!-- PLATFORM SELECTOR -->" luvlang_LEGENDARY_COMPLETE.html` should return **1**
+
+### EQ Preset Dropdown
+- [ ] EQ preset dropdown exists (`<select id="eqPresetSelect">`)
+- [ ] Dropdown has 6 options (Hip-Hop, Pop, EDM, Rock, Jazz, Neutral)
+- [ ] Dropdown is wired up to applyGenrePreset() function
+- [ ] Check: `grep -c 'id="eqPresetSelect"' luvlang_LEGENDARY_COMPLETE.html` should return **1**
+
+### Visual Inspection
+- [ ] Open page in browser
+- [ ] Scroll through entire page
+- [ ] Look for sections that appear twice
+- [ ] Count how many times you see:
+  - Genre selectors (should be 1)
+  - EQ fader sections (should be 1)
+  - Platform selectors (should be 1)
+
+### Automated Check Script
+```bash
+#!/bin/bash
+echo "🔍 UI Duplication Check"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "Genre Selectors: $(grep -c '<!-- GENRE SELECTOR -->' luvlang_LEGENDARY_COMPLETE.html) (should be 1)"
+echo "EQ Sections: $(grep -c '<div class="eq-section"' luvlang_LEGENDARY_COMPLETE.html) (should be 1)"
+echo "Platform Selectors: $(grep -c '<!-- PLATFORM SELECTOR -->' luvlang_LEGENDARY_COMPLETE.html) (should be 1)"
+echo "EQ Preset Dropdown: $(grep -c 'id="eqPresetSelect"' luvlang_LEGENDARY_COMPLETE.html) (should be 1)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Save this as `check-duplicates.sh` and run before every commit.
+
+### What Went Wrong (December 26, 2025 - SECOND TIME)
+
+**Issue:** After user explicitly said "make sure we dont have any duplicates," I still missed:
+- 2 Genre selectors (one without descriptions, one with)
+- 3 EQ-like sections (Stereo Field Editor, Spectral De-noiser, Professional EQ)
+- Missing EQ Preset dropdown
+
+**Root Cause:**
+1. Previously removed Stereo Field Editor in commit 1022b8b
+2. I reintroduced it when adding production features
+3. Never checked git history for previous removals
+4. No automated duplication detection
+5. No visual verification of UI structure
+
+**Fix Applied:**
+- Removed Stereo Field Editor (105 lines)
+- Removed Spectral De-noiser (72 lines)
+- Removed first Genre selector (12 lines)
+- Added EQ Preset dropdown
+- Created DUPLICATION_REMOVAL_PLAN.md to document what was removed and why
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 ## TESTING PROTOCOL
 
 ### Before Each Release:
