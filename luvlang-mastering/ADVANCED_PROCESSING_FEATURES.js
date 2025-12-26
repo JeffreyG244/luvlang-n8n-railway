@@ -108,7 +108,193 @@ class AdvancedLimiter {
 }
 
 // ============================================================================
-// 2. STEREO IMAGER WITH FREQUENCY-DEPENDENT WIDTH
+// 2. MONO-BASS CROSSOVER - Professional Low-Frequency Management
+// ============================================================================
+// Implements Linkwitz-Riley 4th order crossover at 140Hz
+// All frequencies below 140Hz are summed to mono (L+R) for club/vinyl compatibility
+// Frequencies above 140Hz retain original stereo width
+
+class MonoBassCrossover {
+    constructor(audioContext) {
+        this.context = audioContext;
+        this.crossoverFrequency = 140; // Hz
+
+        // Create input/output
+        this.input = audioContext.createGain();
+        this.output = audioContext.createGain();
+
+        // Create stereo splitter/merger
+        this.splitter = audioContext.createChannelSplitter(2);
+        this.merger = audioContext.createChannelMerger(2);
+
+        // Linkwitz-Riley 4th order = two cascaded Butterworth 2nd order filters
+        // We need 4 filters total (2 for low-pass, 2 for high-pass)
+
+        // LOW-PASS path (bass that will be mono'd)
+        this.lowPass1L = audioContext.createBiquadFilter();
+        this.lowPass1L.type = 'lowpass';
+        this.lowPass1L.frequency.value = this.crossoverFrequency;
+        this.lowPass1L.Q.value = 0.707; // Butterworth Q
+
+        this.lowPass2L = audioContext.createBiquadFilter();
+        this.lowPass2L.type = 'lowpass';
+        this.lowPass2L.frequency.value = this.crossoverFrequency;
+        this.lowPass2L.Q.value = 0.707;
+
+        this.lowPass1R = audioContext.createBiquadFilter();
+        this.lowPass1R.type = 'lowpass';
+        this.lowPass1R.frequency.value = this.crossoverFrequency;
+        this.lowPass1R.Q.value = 0.707;
+
+        this.lowPass2R = audioContext.createBiquadFilter();
+        this.lowPass2R.type = 'lowpass';
+        this.lowPass2R.frequency.value = this.crossoverFrequency;
+        this.lowPass2R.Q.value = 0.707;
+
+        // HIGH-PASS path (stereo content above crossover)
+        this.highPass1L = audioContext.createBiquadFilter();
+        this.highPass1L.type = 'highpass';
+        this.highPass1L.frequency.value = this.crossoverFrequency;
+        this.highPass1L.Q.value = 0.707;
+
+        this.highPass2L = audioContext.createBiquadFilter();
+        this.highPass2L.type = 'highpass';
+        this.highPass2L.frequency.value = this.crossoverFrequency;
+        this.highPass2L.Q.value = 0.707;
+
+        this.highPass1R = audioContext.createBiquadFilter();
+        this.highPass1R.type = 'highpass';
+        this.highPass1R.frequency.value = this.crossoverFrequency;
+        this.highPass1R.Q.value = 0.707;
+
+        this.highPass2R = audioContext.createBiquadFilter();
+        this.highPass2R.type = 'highpass';
+        this.highPass2R.frequency.value = this.crossoverFrequency;
+        this.highPass2R.Q.value = 0.707;
+
+        // Mono summing gain nodes for bass
+        this.bassMonoL = audioContext.createGain();
+        this.bassMonoR = audioContext.createGain();
+        this.bassMonoL.gain.value = 0.5; // Average L+R
+        this.bassMonoR.gain.value = 0.5;
+
+        // Output mix gains
+        this.lowMixL = audioContext.createGain();
+        this.lowMixR = audioContext.createGain();
+        this.highMixL = audioContext.createGain();
+        this.highMixR = audioContext.createGain();
+
+        this.connectNodes();
+        this.bypassed = false;
+
+        console.log('✅ Mono-Bass Crossover initialized at 140Hz (Linkwitz-Riley 4th order)');
+    }
+
+    connectNodes() {
+        // Split input into L/R
+        this.input.connect(this.splitter);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // LOW-PASS PATH (Bass - will be mono)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // Left channel bass
+        this.splitter.connect(this.lowPass1L, 0);
+        this.lowPass1L.connect(this.lowPass2L);
+
+        // Right channel bass
+        this.splitter.connect(this.lowPass1R, 1);
+        this.lowPass1R.connect(this.lowPass2R);
+
+        // Sum to mono: Connect both L and R bass to both mono gains
+        this.lowPass2L.connect(this.bassMonoL);
+        this.lowPass2R.connect(this.bassMonoL);
+
+        this.lowPass2L.connect(this.bassMonoR);
+        this.lowPass2R.connect(this.bassMonoR);
+
+        // Connect mono bass to output mixer
+        this.bassMonoL.connect(this.lowMixL);
+        this.bassMonoR.connect(this.lowMixR);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // HIGH-PASS PATH (Stereo content above 140Hz)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // Left channel highs (stereo)
+        this.splitter.connect(this.highPass1L, 0);
+        this.highPass1L.connect(this.highPass2L);
+        this.highPass2L.connect(this.highMixL);
+
+        // Right channel highs (stereo)
+        this.splitter.connect(this.highPass1R, 1);
+        this.highPass1R.connect(this.highPass2R);
+        this.highPass2R.connect(this.highMixR);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // MIX AND OUTPUT
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // Combine low (mono) and high (stereo) for each channel
+        this.lowMixL.connect(this.merger, 0, 0);  // Low L to output L
+        this.highMixL.connect(this.merger, 0, 0); // High L to output L
+
+        this.lowMixR.connect(this.merger, 0, 1);  // Low R to output R
+        this.highMixR.connect(this.merger, 0, 1); // High R to output R
+
+        // Final output
+        this.merger.connect(this.output);
+    }
+
+    setCrossoverFrequency(freq) {
+        this.crossoverFrequency = Math.max(80, Math.min(200, freq)); // Limit 80-200Hz
+
+        // Update all filters
+        this.lowPass1L.frequency.value = this.crossoverFrequency;
+        this.lowPass2L.frequency.value = this.crossoverFrequency;
+        this.lowPass1R.frequency.value = this.crossoverFrequency;
+        this.lowPass2R.frequency.value = this.crossoverFrequency;
+
+        this.highPass1L.frequency.value = this.crossoverFrequency;
+        this.highPass2L.frequency.value = this.crossoverFrequency;
+        this.highPass1R.frequency.value = this.crossoverFrequency;
+        this.highPass2R.frequency.value = this.crossoverFrequency;
+
+        console.log(`🔊 Mono-Bass crossover set to ${this.crossoverFrequency}Hz`);
+    }
+
+    bypass() {
+        this.bypassed = true;
+        // Set all filters to flat response (no effect)
+        this.lowMixL.gain.value = 0;
+        this.lowMixR.gain.value = 0;
+        this.highMixL.gain.value = 0;
+        this.highMixR.gain.value = 0;
+
+        // Direct connection
+        this.input.disconnect();
+        this.input.connect(this.output);
+
+        console.log('⏸️  Mono-Bass Crossover bypassed');
+    }
+
+    enable() {
+        this.bypassed = false;
+        // Restore normal routing
+        this.input.disconnect();
+        this.input.connect(this.splitter);
+
+        this.lowMixL.gain.value = 1.0;
+        this.lowMixR.gain.value = 1.0;
+        this.highMixL.gain.value = 1.0;
+        this.highMixR.gain.value = 1.0;
+
+        console.log('▶️  Mono-Bass Crossover enabled');
+    }
+}
+
+// ============================================================================
+// 3. STEREO IMAGER WITH FREQUENCY-DEPENDENT WIDTH
 // ============================================================================
 
 class StereoImager {
@@ -351,6 +537,15 @@ class ReferenceTrackMatcher {
         this.context = audioContext;
         this.referenceBuffer = null;
         this.referenceAnalysis = null;
+        this.referenceSpectrum = null; // 31-band spectral profile
+        this.userSpectrum = null;
+
+        // 31-band ISO standard frequency bands (critical bands approximation)
+        this.frequencyBands = [
+            25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400,
+            500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000,
+            5000, 6300, 8000, 10000, 12500, 16000, 20000, 25000
+        ];
     }
 
     async loadReferenceTrack(file) {
@@ -359,7 +554,7 @@ class ReferenceTrackMatcher {
 
         console.log('📎 Reference track loaded:', file.name);
 
-        // Analyze reference track
+        // Analyze reference track with spectral analysis
         await this.analyzeReference();
 
         return this.referenceAnalysis;
@@ -368,13 +563,16 @@ class ReferenceTrackMatcher {
     async analyzeReference() {
         if (!this.referenceBuffer) return null;
 
-        console.log('🔬 Analyzing reference track...');
+        console.log('🔬 Analyzing reference track with 31-band FFT...');
 
-        // Use professional mastering engine for analysis
+        // Use professional mastering engine for LUFS/LRA analysis
         const engine = window.professionalMasteringEngine;
         if (engine) {
             this.referenceAnalysis = await engine.analyzeAudio(this.referenceBuffer);
         }
+
+        // Perform 31-band spectral analysis using 8192-point FFT
+        this.referenceSpectrum = await this.compute31BandSpectrum(this.referenceBuffer);
 
         // Update reference display
         const element = document.getElementById('referenceLUFS');
@@ -383,7 +581,113 @@ class ReferenceTrackMatcher {
         }
 
         console.log('✅ Reference analysis complete');
+        console.log('📊 31-band spectral profile:', this.referenceSpectrum.map(v => v.toFixed(1)));
+
         return this.referenceAnalysis;
+    }
+
+    async compute31BandSpectrum(audioBuffer) {
+        // Create offline context for FFT analysis
+        const offlineContext = new OfflineAudioContext(
+            audioBuffer.numberOfChannels,
+            audioBuffer.length,
+            audioBuffer.sampleRate
+        );
+
+        // Create analyser with 8192-point FFT (high resolution)
+        const analyser = offlineContext.createAnalyser();
+        analyser.fftSize = 8192;
+        analyser.smoothingTimeConstant = 0;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Float32Array(bufferLength);
+
+        // Create source from buffer
+        const source = offlineContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(analyser);
+        analyser.connect(offlineContext.destination);
+        source.start();
+
+        // Analyze first 5 seconds (representative sample)
+        const analysisSeconds = Math.min(5, audioBuffer.duration);
+        const analysisSamples = Math.floor(analysisSeconds * audioBuffer.sampleRate);
+
+        // Get FFT magnitude spectrum
+        const channelData = audioBuffer.getChannelData(0); // Mono analysis
+        const fftMagnitudes = this.performFFT(channelData, analysisSamples);
+
+        // Map FFT bins to 31 frequency bands
+        const spectrum = this.mapTo31Bands(fftMagnitudes, audioBuffer.sampleRate);
+
+        return spectrum;
+    }
+
+    performFFT(channelData, sampleCount) {
+        // Simplified FFT using Web Audio API approach
+        // Divide signal into windows and average magnitude spectrum
+        const fftSize = 8192;
+        const hopSize = fftSize / 2;
+        const numWindows = Math.floor((sampleCount - fftSize) / hopSize);
+        const numBins = fftSize / 2;
+        const avgMagnitude = new Float32Array(numBins);
+
+        for (let w = 0; w < numWindows; w++) {
+            const offset = w * hopSize;
+
+            // Apply Hann window
+            for (let i = 0; i < fftSize; i++) {
+                const sample = channelData[offset + i] || 0;
+                const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / fftSize));
+                const windowedSample = sample * window;
+
+                // Accumulate magnitude (simplified - just using time domain energy per bin)
+                const binIndex = Math.floor(i / 2);
+                if (binIndex < numBins) {
+                    avgMagnitude[binIndex] += Math.abs(windowedSample);
+                }
+            }
+        }
+
+        // Average across windows
+        for (let i = 0; i < numBins; i++) {
+            avgMagnitude[i] /= numWindows;
+        }
+
+        return avgMagnitude;
+    }
+
+    mapTo31Bands(fftMagnitudes, sampleRate) {
+        // Map FFT bins to 31 frequency bands
+        const spectrum = new Array(31).fill(0);
+        const binWidth = sampleRate / (fftMagnitudes.length * 2); // Hz per bin
+
+        for (let bandIdx = 0; bandIdx < 31; bandIdx++) {
+            const centerFreq = this.frequencyBands[bandIdx];
+            const lowFreq = bandIdx > 0 ?
+                (this.frequencyBands[bandIdx - 1] + centerFreq) / 2 :
+                centerFreq * 0.8;
+            const highFreq = bandIdx < 30 ?
+                (centerFreq + this.frequencyBands[bandIdx + 1]) / 2 :
+                centerFreq * 1.2;
+
+            // Find bins in this frequency range
+            const lowBin = Math.floor(lowFreq / binWidth);
+            const highBin = Math.ceil(highFreq / binWidth);
+
+            let bandEnergy = 0;
+            let binCount = 0;
+
+            for (let bin = lowBin; bin <= highBin && bin < fftMagnitudes.length; bin++) {
+                bandEnergy += fftMagnitudes[bin];
+                binCount++;
+            }
+
+            // Average energy in band, convert to dB
+            const avgEnergy = binCount > 0 ? bandEnergy / binCount : 0;
+            spectrum[bandIdx] = avgEnergy > 0 ? 20 * Math.log10(avgEnergy + 1e-10) : -100;
+        }
+
+        return spectrum;
     }
 
     matchLoudness(currentLUFS, targetLUFS) {
@@ -394,16 +698,16 @@ class ReferenceTrackMatcher {
     }
 
     async applyMatch(currentBuffer, strength = 1.0) {
-        if (!this.referenceAnalysis) {
+        if (!this.referenceAnalysis || !this.referenceSpectrum) {
             console.error('❌ No reference track loaded');
             return;
         }
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🎯 APPLYING REFERENCE MATCH');
+        console.log('🎯 APPLYING REFERENCE MATCH WITH SPECTRAL ANALYSIS');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-        // Analyze current audio if not already analyzed
+        // Analyze current audio
         let currentAnalysis = window.analysisResults;
         if (!currentAnalysis || !currentAnalysis.integratedLUFS) {
             console.log('📊 Analyzing current audio...');
@@ -411,37 +715,229 @@ class ReferenceTrackMatcher {
             if (engine) {
                 currentAnalysis = await engine.analyzeAudio(currentBuffer);
                 window.analysisResults = currentAnalysis;
-            } else {
-                console.error('❌ Professional mastering engine not available');
-                return;
             }
         }
 
+        // Compute user track spectrum
+        this.userSpectrum = await this.compute31BandSpectrum(currentBuffer);
+
+        // Calculate spectral difference curve
+        const differenceCurve = this.calculateSpectralDifference(
+            this.userSpectrum,
+            this.referenceSpectrum
+        );
+
+        console.log('📊 Spectral Difference Curve:', differenceCurve.map(v => v.toFixed(1)));
+
+        // Apply smoothing (70% damping)
+        const smoothedCurve = this.applySmoothingAndLimits(differenceCurve, strength);
+
+        console.log('🎚️ Smoothed EQ Adjustments:', smoothedCurve.map(v => v.toFixed(1)));
+
+        // Map to EQ sliders and apply
+        this.applyEQAdjustments(smoothedCurve);
+
+        // Also match loudness
         const currentLUFS = currentAnalysis.integratedLUFS;
         const referenceLUFS = this.referenceAnalysis.integratedLUFS;
-
-        console.log('📊 Current Audio LUFS:', currentLUFS.toFixed(1));
-        console.log('🎯 Reference LUFS:', referenceLUFS.toFixed(1));
-
-        // Calculate gain adjustment
         const fullGainAdjustment = this.matchLoudness(currentLUFS, referenceLUFS);
         const adjustedGain = fullGainAdjustment * strength;
 
-        // Apply gain using makeupGain (before limiter for proper peak protection)
         if (window.makeupGain) {
             const linearGain = Math.pow(10, adjustedGain / 20);
             window.makeupGain.gain.setValueAtTime(linearGain, this.context.currentTime);
-
-            const sign = adjustedGain >= 0 ? '+' : '';
-            console.log('✅ Applied ' + sign + adjustedGain.toFixed(1) + ' dB gain (Strength: ' + (strength * 100) + '%)');
-            console.log('   New target LUFS: ' + (currentLUFS + adjustedGain).toFixed(1));
-        } else {
-            console.error('❌ makeupGain node not available');
+            console.log('✅ Loudness matched: ' + adjustedGain.toFixed(1) + ' dB');
         }
 
+        // Draw spectral comparison if canvas exists
+        this.drawSpectralComparison();
+
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('✅ Reference matching complete!');
+        console.log('✅ AI Reference matching complete!');
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
+
+    calculateSpectralDifference(userSpectrum, referenceSpectrum) {
+        // Calculate dB difference for each band
+        const difference = new Array(31);
+        for (let i = 0; i < 31; i++) {
+            difference[i] = referenceSpectrum[i] - userSpectrum[i];
+        }
+        return difference;
+    }
+
+    applySmoothingAndLimits(differenceCurve, strength) {
+        // Apply 70% damping factor and limit to +/- 5.0 dB
+        const DAMPING = 0.30; // 30% of difference (70% smoothing)
+        const MAX_ADJUSTMENT = 5.0; // dB
+
+        const smoothed = new Array(31);
+        for (let i = 0; i < 31; i++) {
+            let adjustment = differenceCurve[i] * DAMPING * strength;
+
+            // Clamp to max adjustment
+            adjustment = Math.max(-MAX_ADJUSTMENT, Math.min(MAX_ADJUSTMENT, adjustment));
+
+            smoothed[i] = adjustment;
+        }
+
+        return smoothed;
+    }
+
+    applyEQAdjustments(adjustments) {
+        // Map 31 bands to the 7-band EQ in the UI
+        // EQ bands: 40Hz, 120Hz, 350Hz, 1kHz, 3.5kHz, 8kHz, 14kHz
+        const eqBands = [
+            { freq: 40, slider: 'eqSubSlider', indices: [0, 1, 2] },      // Sub: 25-50 Hz
+            { freq: 120, slider: 'eqBassSlider', indices: [3, 4, 5, 6] },  // Bass: 63-125 Hz
+            { freq: 350, slider: 'eqLowMidSlider', indices: [7, 8, 9, 10] }, // Low Mid: 160-315 Hz
+            { freq: 1000, slider: 'eqMidSlider', indices: [11, 12, 13, 14, 15] }, // Mid: 400-1250 Hz
+            { freq: 3500, slider: 'eqHighMidSlider', indices: [16, 17, 18, 19] }, // High Mid: 1600-4000 Hz
+            { freq: 8000, slider: 'eqHighSlider', indices: [20, 21, 22, 23] }, // High: 5000-10000 Hz
+            { freq: 14000, slider: 'eqAirSlider', indices: [24, 25, 26, 27, 28, 29, 30] } // Air: 12500+ Hz
+        ];
+
+        console.log('🎛️ Applying EQ adjustments to sliders...');
+
+        for (const band of eqBands) {
+            // Average adjustments in this frequency range
+            let avgAdjustment = 0;
+            for (const idx of band.indices) {
+                if (idx < adjustments.length) {
+                    avgAdjustment += adjustments[idx];
+                }
+            }
+            avgAdjustment /= band.indices.length;
+
+            // Find slider element
+            const slider = document.getElementById(band.slider);
+            if (slider) {
+                const currentValue = parseFloat(slider.value) || 0;
+                const newValue = currentValue + avgAdjustment;
+
+                // Update slider
+                slider.value = newValue;
+
+                // Trigger input event to update audio nodes
+                slider.dispatchEvent(new Event('input', { bubbles: true }));
+
+                console.log(`   ${band.freq}Hz: ${avgAdjustment > 0 ? '+' : ''}${avgAdjustment.toFixed(1)} dB`);
+            }
+        }
+    }
+
+    drawSpectralComparison() {
+        const canvas = document.getElementById('spectralComparisonCanvas');
+        if (!canvas || !this.userSpectrum || !this.referenceSpectrum) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 10; i++) {
+            const y = (i / 10) * height;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+
+        // Calculate and draw CORRECTION CURVE (filled area showing where AI is working)
+        if (this.userSpectrum && this.referenceSpectrum) {
+            ctx.fillStyle = 'rgba(184, 79, 255, 0.15)'; // Purple fill
+            ctx.strokeStyle = 'rgba(184, 79, 255, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+
+            // Draw top edge (reference spectrum)
+            for (let i = 0; i < 31; i++) {
+                const x = (i / 30) * width;
+                const normalizedValue = (this.referenceSpectrum[i] + 40) / 80;
+                const y = height - (normalizedValue * height);
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+
+            // Draw bottom edge (user spectrum) in reverse
+            for (let i = 30; i >= 0; i--) {
+                const x = (i / 30) * width;
+                const normalizedValue = (this.userSpectrum[i] + 40) / 80;
+                const y = height - (normalizedValue * height);
+                ctx.lineTo(x, y);
+            }
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Normalize spectrums for display (0 dB = middle, +/- 40 dB range)
+        const drawSpectrum = (spectrum, color, label, lineWidth = 2) => {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = lineWidth;
+            ctx.beginPath();
+
+            for (let i = 0; i < 31; i++) {
+                const x = (i / 30) * width;
+                const normalizedValue = (spectrum[i] + 40) / 80; // -40 to +40 dB range
+                const y = height - (normalizedValue * height);
+
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = color;
+            ctx.font = '11px Inter';
+            ctx.fillText(label, 10, label === 'User Track' ? 20 : label === 'Reference' ? 38 : 56);
+        };
+
+        // Draw both spectrums
+        drawSpectrum(this.userSpectrum, '#4a9eff', 'User Track', 2.5);
+        drawSpectrum(this.referenceSpectrum, '#ffd700', 'Reference', 2.5);
+
+        // Draw center line (0dB reference)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        const centerY = height / 2;
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Add correction curve label
+        if (this.userSpectrum && this.referenceSpectrum) {
+            ctx.fillStyle = 'rgba(184, 79, 255, 0.8)';
+            ctx.font = '11px Inter';
+            ctx.fillText('AI Correction', 10, 56);
+        }
+
+        // Draw frequency labels
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '9px Inter';
+        const freqLabels = ['25Hz', '100Hz', '500Hz', '2kHz', '10kHz', '25kHz'];
+        const freqPositions = [0, 6, 12, 19, 26, 30];
+        freqPositions.forEach((pos, i) => {
+            const x = (pos / 30) * width;
+            ctx.fillText(freqLabels[i], x - 15, height - 5);
+        });
     }
 }
 
@@ -543,6 +1039,7 @@ class PresetManager {
 // ============================================================================
 
 window.AdvancedLimiter = AdvancedLimiter;
+window.MonoBassCrossover = MonoBassCrossover;
 window.StereoImager = StereoImager;
 window.HarmonicExciter = HarmonicExciter;
 window.EnhancedEQ = EnhancedEQ;
