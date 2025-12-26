@@ -2750,6 +2750,10 @@
 
             uploadedFile = file;
 
+            // Reset A/B compare state for new file
+            abOriginalGain = null;
+            abCompareMode = false;
+
             uploadArea.innerHTML = `
                 <div class="upload-icon">✅</div>
                 <div style="font-size: 1rem; margin-bottom: 5px;">${file.name}</div>
@@ -7909,6 +7913,7 @@
         // we automatically compensate the processed signal to match the original loudness
         // when comparing. This lets you hear the QUALITY differences, not just volume.
         let abCompareSavedGain = 1.0;
+        let abOriginalGain = null; // Store the ORIGINAL gain before any A/B toggling
 
         document.getElementById('abCompareBtn').addEventListener('click', function() {
             if (!sourceNode) return;
@@ -7919,7 +7924,10 @@
             if (abCompareMode) {
                 // Mode B: BYPASS - hear original (no processing)
                 try {
-                    // Save current master gain before bypassing
+                    // Save ORIGINAL master gain ONLY on first bypass (don't overwrite with compensated values)
+                    if (abOriginalGain === null) {
+                        abOriginalGain = masterGain ? masterGain.gain.value : 1.0;
+                    }
                     abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
 
                     // Disconnect entire processing chain
@@ -7957,30 +7965,15 @@
                     makeupGain.connect(limiter);
                     limiter.connect(masterGain);
 
-                    // 🏆 LEVEL-MATCHED BYPASS: Automatically compensate for loudness differences
-                    // Calculate how much the processing boosted/reduced the level
-                    const makeupGainDB = makeupGain ? 20 * Math.log10(makeupGain.gain.value) : 0;
-                    const masterGainDB = 20 * Math.log10(abCompareSavedGain);
-                    const totalProcessingGainDB = makeupGainDB + masterGainDB;
-
-                    // If processing made it louder, reduce the master gain to compensate
-                    // This ensures original and processed are at the SAME perceived loudness
-                    if (Math.abs(makeupGainDB) > 0.5) {
-                        // Significant gain change - apply level matching
-                        const compensatedGain = Math.pow(10, (masterGainDB - makeupGainDB) / 20);
-                        if (masterGain) {
-                            masterGain.gain.value = compensatedGain;
-                        }
-                        console.log('🎚️ LEVEL-MATCHED BYPASS: Compensated -' + makeupGainDB.toFixed(1) + ' dB for objective comparison');
-                        console.log('   Original master gain:', masterGainDB.toFixed(1), 'dB');
-                        console.log('   Makeup gain:', makeupGainDB.toFixed(1), 'dB');
-                        console.log('   Compensated to:', (20 * Math.log10(compensatedGain)).toFixed(1), 'dB');
-                    } else {
-                        // Minimal gain change - just restore original
-                        if (masterGain) {
-                            masterGain.gain.value = abCompareSavedGain;
-                        }
-                        console.log('🔀 A/B Compare: Restored normal gain (no level matching needed)');
+                    // 🏆 ALWAYS RESTORE ORIGINAL GAIN - No compensation needed
+                    // Simply restore to the original gain before any A/B toggling
+                    // This prevents progressive volume reduction on repeated toggles
+                    if (masterGain && abOriginalGain !== null) {
+                        masterGain.gain.value = abOriginalGain;
+                        console.log('🔀 A/B Compare: Restored original gain:', (20 * Math.log10(abOriginalGain)).toFixed(1), 'dB');
+                    } else if (masterGain) {
+                        masterGain.gain.value = abCompareSavedGain;
+                        console.log('🔀 A/B Compare: Restored saved gain:', (20 * Math.log10(abCompareSavedGain)).toFixed(1), 'dB');
                     }
 
                     btn.textContent = '🔀 LISTENING: MASTERED (A)';
