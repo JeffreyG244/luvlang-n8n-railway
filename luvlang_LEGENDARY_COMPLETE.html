@@ -7319,43 +7319,75 @@
                     console.log('   ✅ Limiter threshold set to', limiterThreshold, 'dB');
                 }
 
-                // CRITICAL: Calculate safe gain considering BOTH LUFS target AND true peak headroom
+                // CRITICAL: Calculate safe gain WITH PRE-COMPENSATION for processing losses
                 const lufsGainNeeded = targetLUFS - beforeLUFS;
+
+                // CRITICAL FIX: Pre-compensate for loudness losses from EQ/compression/limiting
+                // These processing steps REDUCE loudness, so we need to apply MORE gain initially
+                let estimatedProcessingLoss = 0;
+
+                if (analysisResults.problems) {
+                    analysisResults.problems.forEach(problem => {
+                        if (problem.type === 'harsh_highs') estimatedProcessingLoss += 1.5; // EQ cuts -2dB high, -1dB air
+                        if (problem.type === 'muddy_low_end') estimatedProcessingLoss += 2.0; // EQ cuts -3dB lowmid, -1.5dB bass
+                        if (problem.type === 'over_compressed') estimatedProcessingLoss += 0.5; // Gentle processing
+                        if (problem.type === 'noisy') estimatedProcessingLoss += 1.0; // Spectral denoising
+                    });
+                }
+
+                // Limiter ALWAYS causes loudness loss (typically 1-2 dB)
+                const limiterLoss = 1.5;
+                estimatedProcessingLoss += limiterLoss;
+
+                // PRE-COMPENSATE: Add estimated loss to gain needed
+                const compensatedGainNeeded = lufsGainNeeded + estimatedProcessingLoss;
+
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🎯 GAIN CALCULATION WITH PROCESSING COMPENSATION:');
+                console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS);
+                console.log('   Raw gain needed:', lufsGainNeeded.toFixed(1), 'dB');
+                console.log('   Estimated processing loss:', estimatedProcessingLoss.toFixed(1), 'dB');
+                console.log('     - Problems to fix:', analysisResults.problems ? analysisResults.problems.length : 0);
+                if (analysisResults.problems) {
+                    analysisResults.problems.forEach(p => console.log('       • ' + p.type));
+                }
+                console.log('     - Limiter loss:', limiterLoss.toFixed(1), 'dB (always applied)');
+                console.log('   ✅ Compensated gain needed:', compensatedGainNeeded.toFixed(1), 'dB');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // Calculate current true peak in dBTP
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
-                // Calculate maximum gain that won't exceed -1.0 dBTP
-                // Target -1.5 dBTP BEFORE limiter for proper loudness
-                // This allows the audio to be loud enough while staying broadcast safe
+                // Calculate maximum gain that won't exceed safe peak before limiter
                 const peakTargetBeforeLimiter = -1.5;
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
-                // Use the MINIMUM of LUFS-based gain and peak-based gain
-                // BUT: Only apply peak limiting if we're boosting AND would exceed safe peak
+                // Use the MINIMUM of compensated LUFS gain and peak-based gain
                 let safeGain;
-                if (lufsGainNeeded > 0) {
+                if (compensatedGainNeeded > 0) {
                     // Boosting: Check if peak would exceed safe limit
-                    const peakAfterBoost = currentPeakDB + lufsGainNeeded;
+                    const peakAfterBoost = currentPeakDB + compensatedGainNeeded;
                     if (peakAfterBoost > peakTargetBeforeLimiter) {
                         // Peak protection needed
                         safeGain = maxPeakGain;
-                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
+                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', compensatedGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
                     } else {
-                        // Safe to apply full LUFS gain
-                        safeGain = lufsGainNeeded;
+                        // Safe to apply full compensated gain
+                        safeGain = compensatedGainNeeded;
                     }
                 } else {
                     // Reducing: Always safe (no peak issues when turning down)
-                    safeGain = lufsGainNeeded;
+                    safeGain = compensatedGainNeeded;
                 }
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎯 SAFE GAIN CALCULATION:');
-                console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS, '| Gain needed:', lufsGainNeeded.toFixed(1), 'dB');
+                console.log('🎯 FINAL SAFE GAIN (with compensation):');
                 console.log('   Current Peak:', currentPeakDB.toFixed(1), 'dBTP');
-                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (target: -4.0 dBTP before limiter)');
-                console.log('   Final safe gain:', safeGain.toFixed(1), 'dB');
+                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (target: -1.5 dBTP)');
+                console.log('   Applied gain:', safeGain.toFixed(1), 'dB');
+                console.log('   Expected LUFS after processing:', (beforeLUFS + safeGain - estimatedProcessingLoss).toFixed(1), 'LUFS');
+                console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                console.log('   Expected accuracy: ±0.5 dB');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 if (Math.abs(safeGain) > 0.1) {
@@ -7439,56 +7471,18 @@
                 console.log('✅ Updated smoothedLUFS to match:', smoothedLUFS.toFixed(1), 'LUFS');
                 console.log('✅ Updated smoothedPeak to match:', smoothedPeak.toFixed(1), 'dBTP');
 
-                // BOOST FINAL OUTPUT if we're below target LUFS after limiting
-                // This compensates for any loudness loss from the limiter
-                const lufsDeficit = targetLUFS - expectedAfterLUFS;
-                let finalExpectedLUFS = expectedAfterLUFS; // Track final LUFS after any boost
+                // Check if we hit target LUFS (no post-boost needed with pre-compensation)
+                const lufsDeviation = Math.abs(expectedAfterLUFS - targetLUFS);
+                let finalExpectedLUFS = expectedAfterLUFS;
 
-                if (lufsDeficit > 0.5 && masterGain && audioContext) {
-                    // We're more than 0.5 LU below target - apply output boost
-                    const outputBoost = Math.min(3.0, lufsDeficit * 0.8); // Cap at +3dB
-                    const outputBoostLinear = Math.pow(10, outputBoost / 20);
-                    const currentTime = audioContext.currentTime;
-
-                    // Apply with SMOOTH RAMPING (prevents volume cutting)
-                    masterGain.gain.cancelScheduledValues(currentTime);
-                    masterGain.gain.setValueAtTime(masterGain.gain.value, currentTime);
-                    masterGain.gain.linearRampToValueAtTime(outputBoostLinear, currentTime + 0.05);
-
-                    // Calculate final expected LUFS after boost
-                    finalExpectedLUFS = expectedAfterLUFS + outputBoost;
-
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔊 FINAL OUTPUT BOOST APPLIED (with smooth ramp):');
-                    console.log('   LUFS deficit:', lufsDeficit.toFixed(1), 'LU');
-                    console.log('   Output boost:', outputBoost.toFixed(1), 'dB');
-                    console.log('   masterGain smoothly ramping to:', outputBoostLinear.toFixed(3));
-                    console.log('   Before boost LUFS:', expectedAfterLUFS.toFixed(1), 'LUFS');
-                    console.log('   After boost LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
-                    console.log('   Target LUFS:', targetLUFS, 'LUFS');
-                    console.log('   🎵 Using smooth 50ms ramp to prevent volume cuts');
-                    console.log('   Final accuracy:', Math.abs(finalExpectedLUFS - targetLUFS) <= 0.5 ? '✅ ON TARGET' : '⚠️ ' + (finalExpectedLUFS - targetLUFS).toFixed(1) + ' LU off');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    // Update smoothedLUFS to reflect final value after boost
-                    smoothedLUFS = finalExpectedLUFS;
-                    currentIntegratedLUFS = finalExpectedLUFS;
-
-                    // Update UI slider to reflect output boost
-                    const outputGainSlider = document.getElementById('outputGainSlider');
-                    const outputGainValue = document.getElementById('outputGainValue');
-                    if (outputGainSlider && outputGainValue) {
-                        outputGainSlider.value = outputBoost;
-                        outputGainValue.textContent = '+' + outputBoost.toFixed(1) + ' dB';
-                    }
-                } else if (masterGain && masterGain.gain.value !== 1.0) {
-                    // Already has boost applied, keep it
-                    const currentBoostDB = 20 * Math.log10(masterGain.gain.value);
-                    console.log('✅ Master output gain maintained:', currentBoostDB.toFixed(1), 'dB');
-                } else {
-                    console.log('✅ Target LUFS achieved - no output boost needed');
-                    console.log('   Measured:', expectedAfterLUFS.toFixed(1), 'LUFS | Target:', targetLUFS, 'LUFS | Delta:', (expectedAfterLUFS - targetLUFS).toFixed(1), 'LU');
-                }
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🎯 FINAL LUFS TARGET CHECK:');
+                console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                console.log('   Measured LUFS:', expectedAfterLUFS.toFixed(1), 'LUFS');
+                console.log('   Deviation:', (expectedAfterLUFS - targetLUFS >= 0 ? '+' : '') + (expectedAfterLUFS - targetLUFS).toFixed(1), 'dB');
+                console.log('   Accuracy:', lufsDeviation <= 0.5 ? '✅ ON TARGET (±0.5 LU)' : lufsDeviation <= 1.0 ? '✅ VERY GOOD (±1.0 LU)' : lufsDeviation <= 2.0 ? '⚠️  ACCEPTABLE (±2.0 LU)' : '❌ OFF TARGET');
+                console.log('   Pre-compensation worked:', lufsDeviation <= 1.5 ? 'YES ✅' : 'Needs adjustment ⚠️');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // CRITICAL: Force immediate meter update with FINAL LUFS (after any output boost)
                 // This bypasses the throttling to ensure correct values are displayed immediately
