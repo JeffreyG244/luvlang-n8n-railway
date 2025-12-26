@@ -7167,25 +7167,46 @@
                 // UPDATE GLOBAL CURRENT VALUES for accurate reporting
                 currentIntegratedLUFS = expectedAfterLUFS;
                 currentTruePeak = limitedPeakDB;
+
+                // CRITICAL: Also update smoothed values to match measured values
+                // This ensures the real-time meter displays the correct post-mastering LUFS
+                // Without this, the smoothing algorithm will slowly drift back to old values
+                smoothedLUFS = expectedAfterLUFS;
+                smoothedPeak = limitedPeakDB;
+
                 console.log('✅ Updated global currentIntegratedLUFS:', currentIntegratedLUFS.toFixed(1), 'LUFS');
                 console.log('✅ Updated global currentTruePeak:', currentTruePeak.toFixed(1), 'dBTP');
+                console.log('✅ Updated smoothedLUFS to match:', smoothedLUFS.toFixed(1), 'LUFS');
+                console.log('✅ Updated smoothedPeak to match:', smoothedPeak.toFixed(1), 'dBTP');
 
                 // BOOST FINAL OUTPUT if we're below target LUFS after limiting
                 // This compensates for any loudness loss from the limiter
                 const lufsDeficit = targetLUFS - expectedAfterLUFS;
+                let finalExpectedLUFS = expectedAfterLUFS; // Track final LUFS after any boost
+
                 if (lufsDeficit > 0.5 && masterGain) {
                     // We're more than 0.5 LU below target - apply output boost
                     const outputBoost = Math.min(3.0, lufsDeficit * 0.8); // Cap at +3dB
                     const outputBoostLinear = Math.pow(10, outputBoost / 20);
                     masterGain.gain.value = outputBoostLinear;
 
+                    // Calculate final expected LUFS after boost
+                    finalExpectedLUFS = expectedAfterLUFS + outputBoost;
+
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     console.log('🔊 FINAL OUTPUT BOOST APPLIED:');
                     console.log('   LUFS deficit:', lufsDeficit.toFixed(1), 'LU');
                     console.log('   Output boost:', outputBoost.toFixed(1), 'dB');
                     console.log('   masterGain set to:', outputBoostLinear.toFixed(3));
-                    console.log('   Expected final LUFS:', (expectedAfterLUFS + outputBoost).toFixed(1), 'LUFS');
+                    console.log('   Before boost LUFS:', expectedAfterLUFS.toFixed(1), 'LUFS');
+                    console.log('   After boost LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
+                    console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                    console.log('   Final accuracy:', Math.abs(finalExpectedLUFS - targetLUFS) <= 0.5 ? '✅ ON TARGET' : '⚠️ ' + (finalExpectedLUFS - targetLUFS).toFixed(1) + ' LU off');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Update smoothedLUFS to reflect final value after boost
+                    smoothedLUFS = finalExpectedLUFS;
+                    currentIntegratedLUFS = finalExpectedLUFS;
 
                     // Update UI slider to reflect output boost
                     const outputGainSlider = document.getElementById('outputGainSlider');
@@ -7196,35 +7217,51 @@
                     }
                 } else if (masterGain && masterGain.gain.value !== 1.0) {
                     // Already has boost applied, keep it
-                    console.log('✅ Master output gain maintained:', (20 * Math.log10(masterGain.gain.value)).toFixed(1), 'dB');
+                    const currentBoostDB = 20 * Math.log10(masterGain.gain.value);
+                    console.log('✅ Master output gain maintained:', currentBoostDB.toFixed(1), 'dB');
                 } else {
                     console.log('✅ Target LUFS achieved - no output boost needed');
+                    console.log('   Measured:', expectedAfterLUFS.toFixed(1), 'LUFS | Target:', targetLUFS, 'LUFS | Delta:', (expectedAfterLUFS - targetLUFS).toFixed(1), 'LU');
                 }
 
-                // CRITICAL: Update the meter displays immediately
+                // CRITICAL: Force immediate meter update with FINAL LUFS (after any output boost)
+                // This bypasses the throttling to ensure correct values are displayed immediately
                 const lufsValueElement = document.getElementById('lufsValue');
                 const lufsMeterElement = document.getElementById('lufsMeter');
+
                 if (lufsValueElement) {
-                    lufsValueElement.textContent = expectedAfterLUFS.toFixed(1);
-                    console.log('✅ Updated LUFS meter display to:', expectedAfterLUFS.toFixed(1));
+                    // Display the FINAL LUFS value (after output boost if applied)
+                    lufsValueElement.textContent = finalExpectedLUFS.toFixed(1);
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📊 FINAL METER DISPLAY UPDATE');
+                    console.log('   Platform:', selectedPlatformBtn ? selectedPlatformBtn.getAttribute('data-platform').toUpperCase() : 'SPOTIFY');
+                    console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                    console.log('   Final LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
+                    console.log('   Accuracy:', Math.abs(finalExpectedLUFS - targetLUFS) <= 0.5 ? '✅ ON TARGET (±0.5 LU)' : Math.abs(finalExpectedLUFS - targetLUFS) <= 1.0 ? '✅ VERY GOOD (±1.0 LU)' : '⚠️ ' + (finalExpectedLUFS - targetLUFS).toFixed(1) + ' LU off target');
+                    console.log('   CUSTOMER SEES:', finalExpectedLUFS.toFixed(1), 'LUFS on meter');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 }
 
-                // Update LUFS meter bar
+                // Update LUFS meter bar with FINAL value
                 if (lufsMeterElement) {
-                    const lufsPercent = Math.max(0, Math.min(100, ((expectedAfterLUFS + 60) / 60) * 100));
+                    const lufsPercent = Math.max(0, Math.min(100, ((finalExpectedLUFS + 60) / 60) * 100));
                     lufsMeterElement.style.width = lufsPercent + '%';
 
-                    // Color code based on target
-                    const lufsDeviation = Math.abs(expectedAfterLUFS - targetLUFS);
-                    if (lufsDeviation <= 1.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddaa)'; // Perfect!
+                    // Color code based on target accuracy
+                    const lufsDeviation = Math.abs(finalExpectedLUFS - targetLUFS);
+                    if (lufsDeviation <= 0.5) {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddaa)'; // Perfect! (±0.5 LU)
+                    } else if (lufsDeviation <= 1.0) {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Very Good (±1.0 LU)
                     } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Good
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #8BC34A, #CDDC39)'; // Good (±2.0 LU)
                     } else {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #8BC34A, #CDDC39)'; // Acceptable
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Needs adjustment
                     }
 
-                    console.log('✅ Updated LUFS meter bar to:', lufsPercent.toFixed(0) + '%');
+                    console.log('   Meter Bar Width:', lufsPercent.toFixed(0) + '% (range: 0-100%)');
+                    console.log('   Meter Color:', lufsDeviation <= 0.5 ? '🟢 Green (Perfect ±0.5 LU)' : lufsDeviation <= 1.0 ? '🟢 Light Green (Very Good ±1.0 LU)' : lufsDeviation <= 2.0 ? '🟡 Yellow (Good ±2.0 LU)' : '🟠 Orange (Needs Adjustment)');
                 }
 
                 const peakValueElement = document.getElementById('peakValue');
