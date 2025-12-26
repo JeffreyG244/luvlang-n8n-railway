@@ -1309,6 +1309,18 @@
                 </div>
             </div>
 
+            <!-- GENRE SELECTOR -->
+            <div class="selector-group">
+                <div class="section-title">Genre</div>
+                <div class="selector-grid">
+                    <div class="selector-btn" data-genre="pop">Pop</div>
+                    <div class="selector-btn" data-genre="hiphop">Hip-Hop</div>
+                    <div class="selector-btn" data-genre="rock">Rock</div>
+                    <div class="selector-btn" data-genre="edm">EDM</div>
+                    <div class="selector-btn active" data-genre="universal">Universal</div>
+                    <div class="selector-btn" data-genre="jazz">Jazz</div>
+                </div>
+            </div>
 
             <!-- PLATFORM SELECTOR -->
             <div class="selector-group">
@@ -1534,6 +1546,183 @@
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
             </div>
 
+            <!-- STEREO FIELD EDITOR (NEW FEATURE) -->
+            <div class="eq-section" style="margin-top: 15px;">
+                <div class="eq-header">
+                    <div class="section-title" style="margin-bottom: 0;">🎚️ Stereo Field Editor (Frequency-Based Width Control)</div>
+                    <button class="eq-bypass-btn" id="stereoFieldBypassBtn">Stereo Field Active</button>
+                </div>
+
+                <div style="padding: 10px; background: rgba(0, 212, 255, 0.05); border-radius: 8px; margin-bottom: 12px;">
+                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 8px;">
+                        Control stereo width per frequency band • 0% = Mono • 100% = Original • 200% = Maximum Width
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <button class="selector-btn" onclick="if(stereoFieldEditor) stereoFieldEditor.applyPreset('mono-bass')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Mono Bass</button>
+                        <button class="selector-btn" onclick="if(stereoFieldEditor) stereoFieldEditor.applyPreset('wide')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Wide</button>
+                        <button class="selector-btn" onclick="if(stereoFieldEditor) stereoFieldEditor.applyPreset('center-focus')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Center Focus</button>
+                        <button class="selector-btn" onclick="if(stereoFieldEditor) stereoFieldEditor.reset()" style="flex: 1; padding: 6px; font-size: 0.7rem;">Reset</button>
+                    </div>
+                </div>
+
+                <div class="eq-faders">
+                    <!-- Sub (40Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>SUB</div>
+                            <div class="eq-fader-freq">40Hz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoSub"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(0, this.value); document.getElementById('stereoSubValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoSubValue">100%</div>
+                    </div>
+
+                    <!-- Bass (120Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>BASS</div>
+                            <div class="eq-fader-freq">120Hz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoBass"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(1, this.value); document.getElementById('stereoBassValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoBassValue">100%</div>
+                    </div>
+
+                    <!-- Low Mid (350Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>LOW MID</div>
+                            <div class="eq-fader-freq">350Hz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoLowMid"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(2, this.value); document.getElementById('stereoLowMidValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoLowMidValue">100%</div>
+                    </div>
+
+                    <!-- Mid (1kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>MID</div>
+                            <div class="eq-fader-freq">1kHz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoMid"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(3, this.value); document.getElementById('stereoMidValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoMidValue">100%</div>
+                    </div>
+
+                    <!-- High Mid (3.5kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>HIGH MID</div>
+                            <div class="eq-fader-freq">3.5kHz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoHighMid"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(4, this.value); document.getElementById('stereoHighMidValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoHighMidValue">100%</div>
+                    </div>
+
+                    <!-- High (8kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>HIGH</div>
+                            <div class="eq-fader-freq">8kHz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoHigh"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(5, this.value); document.getElementById('stereoHighValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoHighValue">100%</div>
+                    </div>
+
+                    <!-- Air (15kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>AIR</div>
+                            <div class="eq-fader-freq">15kHz</div>
+                        </div>
+                        <input type="range" min="0" max="200" value="100" class="stereo-width-slider" id="stereoAir"
+                               style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 60px; height: 120px; margin: 10px auto; display: block;"
+                               oninput="if(stereoFieldEditor){stereoFieldEditor.setWidth(6, this.value); document.getElementById('stereoAirValue').textContent = this.value + '%';}">
+                        <div class="eq-fader-value" id="stereoAirValue">100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SPECTRAL DE-NOISER (NEW FEATURE) -->
+            <div class="eq-section" style="margin-top: 15px;">
+                <div class="eq-header">
+                    <div class="section-title" style="margin-bottom: 0;">🎤 Spectral De-noiser (AI-Powered Noise Removal)</div>
+                    <button class="eq-bypass-btn" id="denoiserBypassBtn">De-noiser Active</button>
+                </div>
+
+                <div style="padding: 15px; background: rgba(184, 79, 255, 0.05); border-radius: 8px;">
+                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 12px;">
+                        Remove hiss, hum, clicks, and background noise • Select quiet section first to learn noise profile
+                    </div>
+
+                    <!-- Noise Type Controls -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <input type="checkbox" id="denoiseHiss" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('hiss', this.checked)">
+                                Hiss (High Frequency)
+                            </label>
+                            <input type="range" min="0" max="100" value="50" id="denoiseHissAmount" style="width: 100%;"
+                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('hiss', this.value); document.getElementById('hissValue').textContent = this.value + '%';">
+                            <div style="font-size: 0.65rem; opacity: 0.6;" id="hissValue">50%</div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <input type="checkbox" id="denoiseHum" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('hum', this.checked)">
+                                Hum (Low Frequency)
+                            </label>
+                            <input type="range" min="0" max="100" value="50" id="denoiseHumAmount" style="width: 100%;"
+                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('hum', this.value); document.getElementById('humValue').textContent = this.value + '%';">
+                            <div style="font-size: 0.65rem; opacity: 0.6;" id="humValue">50%</div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <input type="checkbox" id="denoiseClicks" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('clicks', this.checked)">
+                                Clicks & Crackle
+                            </label>
+                            <input type="range" min="0" max="100" value="50" id="denoiseClicksAmount" style="width: 100%;"
+                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('clicks', this.value); document.getElementById('clicksValue').textContent = this.value + '%';">
+                            <div style="font-size: 0.65rem; opacity: 0.6;" id="clicksValue">50%</div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                <input type="checkbox" id="denoiseBroadband" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('broadband', this.checked)">
+                                Broadband Noise
+                            </label>
+                            <input type="range" min="0" max="100" value="50" id="denoiseBroadbandAmount" style="width: 100%;"
+                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('broadband', this.value); document.getElementById('broadbandValue').textContent = this.value + '%';">
+                            <div style="font-size: 0.65rem; opacity: 0.6;" id="broadbandValue">50%</div>
+                        </div>
+                    </div>
+
+                    <!-- Threshold Control -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 0.7rem; opacity: 0.8; display: block; margin-bottom: 4px;">Noise Gate Threshold</label>
+                        <input type="range" min="-60" max="0" value="-40" id="denoiseThreshold" style="width: 100%;"
+                               oninput="if(spectralDenoiser) spectralDenoiser.setThreshold(this.value); document.getElementById('thresholdValue').textContent = this.value + ' dB';">
+                        <div style="font-size: 0.65rem; opacity: 0.6;" id="thresholdValue">-40 dB</div>
+                    </div>
+
+                    <!-- Preset Buttons -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('gentle')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Gentle</button>
+                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('moderate')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Moderate</button>
+                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('aggressive')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Aggressive</button>
+                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.reset()" style="flex: 1; padding: 6px; font-size: 0.7rem;">Reset</button>
+                    </div>
+                </div>
             </div>
 
             <!-- PROFESSIONAL 7-BAND EQ -->
@@ -1542,21 +1731,6 @@
                     <div class="section-title" style="margin-bottom: 0;">7-Band Parametric EQ</div>
                     <button class="eq-bypass-btn" id="eqBypassBtn">EQ Active</button>
                 </div>
-
-                <!-- EQ PRESET DROPDOWN -->
-                <div style="padding: 10px; margin-bottom: 12px;">
-                    <label style="font-size: 0.75rem; opacity: 0.7; display: block; margin-bottom: 6px;">EQ Preset</label>
-                    <select id="eqPresetSelect" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 6px; font-size: 0.85rem;">
-                        <option value="">-- Select Preset --</option>
-                        <option value="hip-hop">Hip-Hop (Sub + Presence)</option>
-                        <option value="pop">Pop (Balanced + Air)</option>
-                        <option value="edm">EDM (Massive Bass)</option>
-                        <option value="rock">Rock (Body + Bite)</option>
-                        <option value="jazz">Jazz (Natural)</option>
-                        <option value="neutral">Neutral (Flat EQ)</option>
-                    </select>
-                </div>
-
 
                 <div class="eq-faders">
                     <!-- Sub Bass (40Hz) -->
@@ -7977,22 +8151,6 @@
                 }
             });
         });
-
-        // EQ PRESET DROPDOWN - Apply genre-specific EQ curves
-        const eqPresetSelect = document.getElementById('eqPresetSelect');
-        if (eqPresetSelect) {
-            eqPresetSelect.addEventListener('change', function() {
-                const selectedPreset = this.value;
-                if (selectedPreset && audioBuffer) {
-                    console.log(`🎛️ EQ Preset selected from dropdown: ${selectedPreset}`);
-                    applyGenrePreset(selectedPreset, true); // Apply with animation
-                } else if (selectedPreset && !audioBuffer) {
-                    console.warn('⚠️ Please load audio before applying EQ preset');
-                    alert('Please upload an audio file first before applying EQ presets.');
-                    this.value = ''; // Reset dropdown
-                }
-            });
-        }
 
         document.querySelectorAll('.export-format-btn').forEach(btn => {
             btn.addEventListener('click', function() {
