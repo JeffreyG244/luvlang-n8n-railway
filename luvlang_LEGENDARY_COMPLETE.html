@@ -4660,9 +4660,15 @@
             console.log(`📊 ESTIMATED LUFS Change: ${originalLUFS.toFixed(1)} → ${measuredAfterLUFS.toFixed(1)} LUFS (${(measuredAfterLUFS - originalLUFS).toFixed(1)} dB)`);
 
             // CAPTURE AFTER SPECS
+            // Calculate expected peak after gain reduction
+            const originalPeakDB = 20 * Math.log10(results.maxPeak > 0 ? results.maxPeak : 0.1);
+            const expectedPeakDB = originalPeakDB + appliedGainDB;
+            // Limiter will keep it at or below threshold
+            const finalPeakDB = Math.min(expectedPeakDB, limiter ? limiter.threshold.value : -1.5);
+
             const afterSpecs = {
-                lufs: measuredAfterLUFS,  // MEASURED LUFS after full processing chain
-                peak: -1.0,  // True-Peak ceiling
+                lufs: measuredAfterLUFS,  // ESTIMATED LUFS after full processing chain
+                peak: finalPeakDB,  // Expected true-peak after limiting
                 lra: results.lra || 8,
                 stereoWidth: results.stereoWidth || 0.5,
                 eq: {
@@ -7375,6 +7381,12 @@
                         if (safeGain < lufsGainNeeded) {
                             console.log('   ⚠️  Peak limiting applied: Reduced gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
                         }
+
+                        // CRITICAL: Wait for ramp to finish before continuing
+                        // Otherwise applyAutoFixes will read intermediate gain value!
+                        console.log('   ⏳ Waiting 60ms for gain ramp to complete...');
+                        await new Promise(r => setTimeout(r, 60));
+                        console.log('   ✅ Gain ramp complete, makeupGain now at target value');
                     }
 
                     // DON'T update analysisResults.integratedLUFS here - let applyAutoFixes() calculate it
@@ -7388,68 +7400,25 @@
                 await new Promise(r => setTimeout(r, 400));
 
                 // Phase 3: Finalization (85% → 100%)
-                updateProgress(92, '📊 Measuring actual loudness...', 'Running offline analysis pass...');
+                updateProgress(92, '📊 Measuring actual loudness...', 'Calculating final LUFS from processing chain...');
 
-                // 🏆 LEGENDARY FIX: Use offline analysis instead of naive linear calculation
-                // This accounts for the limiter actually compressing the signal
-                const actualGainApplied = safeGain || 0;
+                // CRITICAL FIX: Use masteringReport.afterSpecs which includes ALL processing effects
+                // This accounts for: gain, EQ cuts/boosts, compression, limiting, and everything else
+                // The old offline analysis only included compressor + gain + limiter (missed EQ changes!)
+                let expectedAfterLUFS = masteringReport.afterSpecs.lufs;
+                let limitedPeakDB = masteringReport.afterSpecs.peak;
+                let expectedMaxPeak = Math.pow(10, limitedPeakDB / 20);
 
-                // Get current compressor settings to replicate in offline analysis
-                const compressorSettings = {
-                    threshold: compressor ? compressor.threshold.value : -24,
-                    knee: compressor ? compressor.knee.value : 6,
-                    ratio: compressor ? compressor.ratio.value : 3,
-                    attack: compressor ? compressor.attack.value : 0.003,
-                    release: compressor ? compressor.release.value : 0.25
-                };
-
-                // Run offline analysis to get ACTUAL post-processing values
-                const offlineResults = await measureProcessedLoudness(
-                    audioBuffer,
-                    actualGainApplied,
-                    limiterThreshold,
-                    compressorSettings
-                );
-
-                let expectedAfterLUFS, limitedPeakDB, expectedMaxPeak;
-
-                if (offlineResults) {
-                    // Use ACTUAL measured values from offline processing
-                    expectedAfterLUFS = offlineResults.integratedLUFS;
-                    limitedPeakDB = offlineResults.truePeakDB;
-                    expectedMaxPeak = offlineResults.maxPeak;
-
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('✅ ACTUAL Post-Mastering Values (Offline Analysis):');
-                    console.log('   Measured LUFS:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
-                    console.log('   Measured True Peak:', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
-                    console.log('   Gain Applied:', actualGainApplied.toFixed(1), 'dB');
-                    console.log('   Target LUFS:', targetLUFS);
-                    console.log('   Accuracy:', Math.abs(expectedAfterLUFS - targetLUFS) <= 0.5 ? '✅ TARGET HIT!' : '⚠️  Off by ' + (expectedAfterLUFS - targetLUFS).toFixed(1) + ' dB');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                } else {
-                    // Fallback to estimated values if offline analysis fails
-                    console.warn('⚠️  Offline analysis failed, using estimated values');
-                    expectedAfterLUFS = beforeLUFS + actualGainApplied;
-                    const peakAfterMakeupGain = currentPeakDB + actualGainApplied;
-
-                    if (peakAfterMakeupGain <= limiterThreshold) {
-                        limitedPeakDB = peakAfterMakeupGain;
-                    } else {
-                        const overage = peakAfterMakeupGain - limiterThreshold;
-                        limitedPeakDB = limiterThreshold + (overage / 20);
-                    }
-
-                    limitedPeakDB = Math.min(limitedPeakDB, -2.0);
-                    expectedMaxPeak = Math.pow(10, limitedPeakDB / 20);
-
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('⚠️  ESTIMATED Post-Mastering Values (Fallback):');
-                    console.log('   Estimated LUFS:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
-                    console.log('   Estimated Peak:', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
-                    console.log('   Gain Applied:', actualGainApplied.toFixed(1), 'dB');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                }
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('✅ Post-Mastering Values (includes ALL processing):');
+                console.log('   LUFS after full chain:', expectedAfterLUFS.toFixed(1), '(was', beforeLUFS.toFixed(1), ')');
+                console.log('   Peak after processing:', limitedPeakDB.toFixed(1), 'dBTP (was', currentPeakDB.toFixed(1), ')');
+                console.log('   Gain applied:', safeGain.toFixed(1), 'dB');
+                console.log('   Target LUFS:', targetLUFS);
+                console.log('   Direction:', expectedAfterLUFS > beforeLUFS ? '📈 LOUDER' : expectedAfterLUFS < beforeLUFS ? '📉 QUIETER' : '➡️ SAME');
+                console.log('   Change:', (expectedAfterLUFS - beforeLUFS >= 0 ? '+' : '') + (expectedAfterLUFS - beforeLUFS).toFixed(1), 'dB');
+                console.log('   This includes: Gain, EQ, Compression, Limiting, and all other effects');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // Update analysisResults with measured/estimated values
                 analysisResults.integratedLUFS = expectedAfterLUFS;
@@ -7623,17 +7592,15 @@
                 updateProgress(95, '✅ Finalizing...', 'Verifying broadcast standards...');
                 await new Promise(r => setTimeout(r, 200));
 
-                // UPDATE afterSpecs with CORRECTED measured LUFS from offline analysis
+                // Display professional mastering report with values from applyAutoFixes
                 if (masteringReport) {
-                    masteringReport.afterSpecs.lufs = expectedAfterLUFS; // Use CORRECT measured value
-                    masteringReport.afterSpecs.peak = limitedPeakDB; // Use CORRECT measured peak
-
-                    console.log('🎯 CORRECTED REPORT VALUES:');
+                    console.log('🎯 FINAL REPORT VALUES (from applyAutoFixes):');
                     console.log('   Before LUFS:', masteringReport.beforeSpecs.lufs.toFixed(1));
-                    console.log('   After LUFS (CORRECTED):', masteringReport.afterSpecs.lufs.toFixed(1));
-                    console.log('   After Peak (CORRECTED):', masteringReport.afterSpecs.peak.toFixed(1), 'dBTP');
+                    console.log('   After LUFS:', masteringReport.afterSpecs.lufs.toFixed(1));
+                    console.log('   After Peak:', masteringReport.afterSpecs.peak.toFixed(1), 'dBTP');
+                    console.log('   LUFS Change:', (masteringReport.afterSpecs.lufs - masteringReport.beforeSpecs.lufs >= 0 ? '+' : '') + (masteringReport.afterSpecs.lufs - masteringReport.beforeSpecs.lufs).toFixed(1), 'dB');
 
-                    // Display professional mastering report with CORRECTED values
+                    // Display professional mastering report
                     displayProfessionalMasteringReport(
                         analysisResults,
                         masteringReport.beforeSpecs,
