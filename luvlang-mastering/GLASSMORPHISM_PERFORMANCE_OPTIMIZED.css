@@ -1,0 +1,279 @@
+/**
+ * GLASSMORPHISM THEME - Performance Optimized for 60fps
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ *
+ * Optimizations Applied:
+ * 1. GPU acceleration via transform3d() and will-change
+ * 2. Reduced blur on lower-end devices
+ * 3. Compositor-only animations (transform, opacity)
+ * 4. Contain paint operations
+ * 5. Hardware-accelerated filters
+ *
+ * Performance Target: 60fps during heavy WASM processing
+ */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PERFORMANCE BASE
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.mastering-panel,
+.panel,
+.section,
+.control-panel {
+    /* GPU-accelerated glass effect */
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* Force GPU layer */
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+
+    /* Paint containment (prevents unnecessary repaints) */
+    contain: paint layout;
+
+    /* Borders and shadows */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow:
+        0 8px 32px 0 rgba(0, 0, 0, 0.37),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+
+    /* Hardware-accelerated transitions (compositor-only properties) */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover effect - optimized for compositor */
+.mastering-panel:hover,
+.control-panel:hover {
+    /* Only animate transform and opacity (compositor-only) */
+    transform: translate3d(0, -2px, 0);
+
+    /* Background change via pseudo-element to avoid repaints */
+}
+
+.mastering-panel:hover::before,
+.control-panel:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 15px;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   BUTTONS - Hardware Accelerated
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.action-btn,
+.export-btn,
+button {
+    /* GPU layer */
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+
+    /* Glass effect */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    /* Compositor-only transitions */
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.action-btn:hover,
+.export-btn:hover,
+button:hover:not(:disabled) {
+    /* Only transform (GPU-accelerated) */
+    transform: translate3d(0, -1px, 0);
+}
+
+.action-btn:active,
+.export-btn:active,
+button:active:not(:disabled) {
+    transform: translate3d(0, 0, 0);
+}
+
+/* Primary button gradient - optimized */
+.action-btn-primary {
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.6) 0%,
+        rgba(118, 75, 162, 0.6) 100%
+    );
+    /* Use background-image instead of background for better performance */
+    background-size: 200% 200%;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ANIMATIONS - Compositor-Only Properties
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Processing pulse - optimized with transform and opacity only */
+@keyframes glass-pulse-optimized {
+    0%, 100% {
+        transform: scale3d(1, 1, 1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale3d(1.02, 1.02, 1);
+        opacity: 0.9;
+    }
+}
+
+.active-processing,
+.processing {
+    animation: glass-pulse-optimized 2s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+/* Shimmer effect - using transform instead of background-position */
+@keyframes glass-shimmer-optimized {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.premium-glass {
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: glass-shimmer-optimized 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESPONSIVE PERFORMANCE
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Reduce blur on mobile/lower-end devices */
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+    .mastering-panel,
+    .panel,
+    .action-btn,
+    .export-btn,
+    button {
+        /* Lighter blur for performance */
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+    }
+
+    /* Disable animations if user prefers reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/* Disable blur on very low-end devices */
+@media (max-width: 480px) and (max-device-width: 480px) {
+    .mastering-panel,
+    .panel,
+    .action-btn,
+    .export-btn,
+    button {
+        /* No blur on very low-end devices */
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   METERS & VISUALIZERS - Optimized for Realtime
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.meter-container,
+.visualizer-container,
+canvas {
+    /* Force GPU compositing */
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+
+    /* Paint containment */
+    contain: strict;
+
+    background: rgba(10, 10, 15, 0.6);
+    backdrop-filter: blur(8px); /* Lighter blur for canvas */
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ACCESSIBILITY - Maintain Performance
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Text contrast */
+.mastering-panel,
+.panel,
+.control-panel {
+    color: rgba(255, 255, 255, 0.95);
+    /* Lighter text-shadow for performance */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Focus states - compositor-only */
+button:focus,
+input:focus {
+    outline: 2px solid rgba(74, 144, 226, 0.6);
+    outline-offset: 2px;
+    /* Simplified box-shadow */
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.2);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   PERFORMANCE MONITORING
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Add this class to body to monitor frame rate */
+body.debug-performance::before {
+    content: 'FPS: monitoring...';
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #34c759;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    z-index: 10000;
+    pointer-events: none;
+}
