@@ -4470,60 +4470,28 @@
                 fixedProblems.push('harsh_highs');
             }
 
-            // 5. FIX LOW LEVEL (too quiet) OR HIGH LEVEL (too loud) - ALWAYS hit target LUFS
+            // 5. READ CURRENT MAKEUP GAIN (already set by AI Master function)
+            // CRITICAL FIX: Do NOT apply gain here - AI Master already set makeupGain!
+            // This function only applies OTHER fixes (EQ, compression, etc.)
             const isLowLevel = results.problems.some(p => p.type === 'low_level');
             const isHighLevel = results.problems.some(p => p.type === 'high_level');
-            const needsLUFSCorrection = isLowLevel || isHighLevel;
 
-            // CRITICAL: ALWAYS try to hit target LUFS, regardless of detected problems
-            // This ensures accurate platform targeting even if analysis missed the issue
-            if (makeupGain) {
-                const targetLUFS = results.platformTarget || -14;
-                const currentLUFS = results.integratedLUFS;
-                const lufsGainNeeded = targetLUFS - currentLUFS;
+            // Read the CURRENT makeupGain value (already set by AI Master)
+            const currentMakeupGainLinear = makeupGain ? makeupGain.gain.value : 1.0;
+            const currentMakeupGainDB = 20 * Math.log10(currentMakeupGainLinear);
 
-                // Only adjust if we're more than 0.5 LUFS off target
-                if (Math.abs(lufsGainNeeded) > 0.5) {
-                    // Calculate current true peak in dBTP
-                    const currentPeakDB = results.maxPeak > 0 ? 20 * Math.log10(results.maxPeak) : -70;
+            console.log(`📊 CURRENT MAKEUP GAIN (set by AI Master): ${currentMakeupGainDB.toFixed(1)} dB`);
+            console.log(`   This gain was already applied - NOT re-applying to avoid double-gain bug`);
 
-                    // Calculate maximum gain that won't exceed -1.0 dBTP
-                    // ULTRA CONSERVATIVE: Target -6.0 dBTP BEFORE limiter to ensure NO CLIPPING EVER
-                    const peakTargetBeforeLimiter = -6.0;
-                    const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
-
-                    // Smart peak protection: only limit if boosting AND would exceed safe peak
-                    let peakSafeGain;
-                    if (lufsGainNeeded > 0) {
-                        // Boosting: Check if peak would be safe
-                        const peakAfterBoost = currentPeakDB + lufsGainNeeded;
-                        if (peakAfterBoost > peakTargetBeforeLimiter) {
-                            peakSafeGain = maxPeakGain; // Peak protection needed
-                        } else {
-                            peakSafeGain = lufsGainNeeded; // Safe to boost fully
-                        }
-                    } else {
-                        // Reducing: Always safe
-                        peakSafeGain = lufsGainNeeded;
-                    }
-
-                    // Clamp to ±12dB for safety
-                    const safeGain = Math.min(12, Math.max(-12, peakSafeGain));
-                    const linearGain = Math.pow(10, safeGain / 20);
-                    makeupGain.gain.value = linearGain;
-
-                    const actionWord = lufsGainNeeded > 0 ? 'BOOSTED' : 'REDUCED';
-                    console.log(`✅ FIXED: LUFS Targeting - ${actionWord} ${Math.abs(safeGain).toFixed(1)}dB to reach ${targetLUFS} LUFS (${results.selectedPlatform || 'default'} target)`);
-                    console.log(`   Current: ${currentLUFS.toFixed(1)} LUFS → Target: ${targetLUFS.toFixed(1)} LUFS → Applied: ${safeGain.toFixed(1)} dB`);
-                    console.log(`   Current peak: ${currentPeakDB.toFixed(1)} dBTP → After gain: ${(currentPeakDB + safeGain).toFixed(1)} dBTP (target: -6.0 dBTP before limiter)`);
-                    console.log(`   Using makeupGain (before limiter) - balanced approach for accurate LUFS`);
-
-                    if (Math.abs(safeGain) < Math.abs(lufsGainNeeded)) {
-                        console.log(`   ⚠️  Peak protection: Limited gain from ${lufsGainNeeded.toFixed(1)} dB to ${safeGain.toFixed(1)} dB to prevent clipping`);
-                    }
-
-                    if (isLowLevel) fixedProblems.push('low_level');
-                    if (isHighLevel) fixedProblems.push('high_level');
+            // Mark problems as fixed if gain was applied
+            if (Math.abs(currentMakeupGainDB) > 0.5) {
+                if (currentMakeupGainDB > 0 && isLowLevel) {
+                    fixedProblems.push('low_level');
+                    console.log(`✅ LOW LEVEL fixed by AI Master (+${currentMakeupGainDB.toFixed(1)} dB gain)`);
+                }
+                if (currentMakeupGainDB < 0 && isHighLevel) {
+                    fixedProblems.push('high_level');
+                    console.log(`✅ HIGH LEVEL fixed by AI Master (${currentMakeupGainDB.toFixed(1)} dB reduction)`);
                 }
             }
 
@@ -4671,41 +4639,25 @@
             // Update fader positions
             updateAllFaderPositions();
 
-            // CRITICAL: Measure ACTUAL LUFS after processing using offline analysis
-            console.log('🔬 Measuring actual post-processing LUFS...');
-            const appliedGainDB = 20 * Math.log10(makeupGain ? makeupGain.gain.value : 1.0);
+            // CRITICAL FIX: Use CURRENT makeupGain value (already set by AI Master)
+            // Do NOT run offline analysis here - AI Master will do accurate final measurement
+            const appliedGainDB = currentMakeupGainDB;
             const originalLUFS = beforeSpecs.lufs;
 
-            let measuredAfterLUFS = originalLUFS + appliedGainDB; // Fallback estimate
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('🔬 Estimating post-processing LUFS in applyAutoFixes...');
+            console.log(`   Original LUFS: ${originalLUFS.toFixed(1)} LUFS`);
+            console.log(`   Makeup Gain (already applied by AI Master): ${appliedGainDB.toFixed(1)} dB`);
+            console.log(`   Estimated LUFS: ${(originalLUFS + appliedGainDB).toFixed(1)} LUFS`);
+            console.log('   NOTE: AI Master will run accurate offline analysis next');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-            // Measure actual LUFS through full processing chain
-            if (audioBuffer && makeupGain && limiter && compressor) {
-                try {
-                    const offlineResults = await measureProcessedLoudness(
-                        audioBuffer,
-                        appliedGainDB,
-                        limiter.threshold.value,
-                        {
-                            threshold: compressor.threshold.value,
-                            knee: compressor.knee.value,
-                            ratio: compressor.ratio.value,
-                            attack: compressor.attack.value,
-                            release: compressor.release.value
-                        }
-                    );
-
-                    if (offlineResults && isFinite(offlineResults.integratedLUFS)) {
-                        measuredAfterLUFS = offlineResults.integratedLUFS;
-                        console.log(`✅ Measured ACTUAL LUFS: ${measuredAfterLUFS.toFixed(1)} LUFS (was ${originalLUFS.toFixed(1)} LUFS)`);
-                    }
-                } catch (error) {
-                    console.error('⚠️ Offline measurement failed, using estimate:', error);
-                }
-            }
+            // Use simple linear estimate - AI Master will do accurate measurement
+            let measuredAfterLUFS = originalLUFS + appliedGainDB;
 
             results.integratedLUFS = measuredAfterLUFS;
 
-            console.log(`📊 LUFS Change: ${originalLUFS.toFixed(1)} → ${measuredAfterLUFS.toFixed(1)} LUFS (${(measuredAfterLUFS - originalLUFS).toFixed(1)} dB)`);
+            console.log(`📊 ESTIMATED LUFS Change: ${originalLUFS.toFixed(1)} → ${measuredAfterLUFS.toFixed(1)} LUFS (${(measuredAfterLUFS - originalLUFS).toFixed(1)} dB)`);
 
             // CAPTURE AFTER SPECS
             const afterSpecs = {
@@ -7403,11 +7355,22 @@
                 if (Math.abs(safeGain) > 0.1) {
                     console.log('🎯 PRE-APPLYING GAIN: ' + safeGain.toFixed(1) + ' dB (peak-protected)');
 
-                    // Apply gain to makeupGain node
-                    if (makeupGain) {
+                    // Apply gain to makeupGain node with SMOOTH RAMPING (prevents clicking)
+                    if (makeupGain && audioContext) {
                         const linearGain = Math.pow(10, safeGain / 20);
-                        makeupGain.gain.value = linearGain;
-                        console.log('   ✅ makeupGain set to ' + linearGain.toFixed(3) + ' (' + safeGain.toFixed(1) + ' dB)');
+                        const currentTime = audioContext.currentTime;
+
+                        // Cancel any scheduled changes
+                        makeupGain.gain.cancelScheduledValues(currentTime);
+
+                        // Set current value
+                        makeupGain.gain.setValueAtTime(makeupGain.gain.value, currentTime);
+
+                        // Smooth ramp to new value over 50ms (prevents clicks and volume cuts)
+                        makeupGain.gain.linearRampToValueAtTime(linearGain, currentTime + 0.05);
+
+                        console.log('   ✅ makeupGain smoothly ramping to ' + linearGain.toFixed(3) + ' (' + safeGain.toFixed(1) + ' dB)');
+                        console.log('   🎵 Using smooth 50ms ramp to prevent audio clicks');
 
                         if (safeGain < lufsGainNeeded) {
                             console.log('   ⚠️  Peak limiting applied: Reduced gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
@@ -7512,23 +7475,29 @@
                 const lufsDeficit = targetLUFS - expectedAfterLUFS;
                 let finalExpectedLUFS = expectedAfterLUFS; // Track final LUFS after any boost
 
-                if (lufsDeficit > 0.5 && masterGain) {
+                if (lufsDeficit > 0.5 && masterGain && audioContext) {
                     // We're more than 0.5 LU below target - apply output boost
                     const outputBoost = Math.min(3.0, lufsDeficit * 0.8); // Cap at +3dB
                     const outputBoostLinear = Math.pow(10, outputBoost / 20);
-                    masterGain.gain.value = outputBoostLinear;
+                    const currentTime = audioContext.currentTime;
+
+                    // Apply with SMOOTH RAMPING (prevents volume cutting)
+                    masterGain.gain.cancelScheduledValues(currentTime);
+                    masterGain.gain.setValueAtTime(masterGain.gain.value, currentTime);
+                    masterGain.gain.linearRampToValueAtTime(outputBoostLinear, currentTime + 0.05);
 
                     // Calculate final expected LUFS after boost
                     finalExpectedLUFS = expectedAfterLUFS + outputBoost;
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔊 FINAL OUTPUT BOOST APPLIED:');
+                    console.log('🔊 FINAL OUTPUT BOOST APPLIED (with smooth ramp):');
                     console.log('   LUFS deficit:', lufsDeficit.toFixed(1), 'LU');
                     console.log('   Output boost:', outputBoost.toFixed(1), 'dB');
-                    console.log('   masterGain set to:', outputBoostLinear.toFixed(3));
+                    console.log('   masterGain smoothly ramping to:', outputBoostLinear.toFixed(3));
                     console.log('   Before boost LUFS:', expectedAfterLUFS.toFixed(1), 'LUFS');
                     console.log('   After boost LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
                     console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                    console.log('   🎵 Using smooth 50ms ramp to prevent volume cuts');
                     console.log('   Final accuracy:', Math.abs(finalExpectedLUFS - targetLUFS) <= 0.5 ? '✅ ON TARGET' : '⚠️ ' + (finalExpectedLUFS - targetLUFS).toFixed(1) + ' LU off');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
