@@ -91,13 +91,20 @@
 
         // ═══ IDLE STATE: STEREO METERS ═══
         function drawIdleMeter(canvas, label) {
-            if (!canvas) return;
+            if (!canvas) {
+                console.warn('⚠️ Meter canvas not found:', label);
+                return;
+            }
 
             const ctx = canvas.getContext('2d');
+
+            // Use actual canvas dimensions (not offsetWidth for these small meters)
             const width = canvas.width;
             const height = canvas.height;
 
-            // Clear
+            console.log(`Drawing idle meter ${label}: ${width}x${height}`);
+
+            // Clear with black background
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, width, height);
 
@@ -131,11 +138,16 @@
 
         // ═══ IDLE STATE: GONIOMETER ═══
         function drawIdleGoniometer(canvas) {
-            if (!canvas) return;
+            if (!canvas) {
+                console.warn('⚠️ Goniometer canvas not found');
+                return;
+            }
 
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
+
+            console.log(`Drawing idle goniometer: ${width}x${height}`);
             const centerX = width / 2;
             const centerY = height / 2;
             const radius = Math.min(width, height) / 2 - 10;
@@ -324,8 +336,11 @@
         initVisualizations();
     }
 
-    // Also run after a short delay to ensure all scripts are loaded
-    setTimeout(initVisualizations, 500);
+    // Run multiple times at different intervals to ensure it catches the canvases
+    setTimeout(initVisualizations, 100);   // Quick check
+    setTimeout(initVisualizations, 500);   // After scripts load
+    setTimeout(initVisualizations, 1000);  // Extra safety
+    setTimeout(initVisualizations, 2000);  // Final check
 
     // Expose function globally for manual refresh
     window.refreshVisualizations = initVisualizations;
