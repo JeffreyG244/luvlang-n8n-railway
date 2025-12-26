@@ -6162,6 +6162,83 @@
             console.log('✅ Waveform drawn successfully');
         }
 
+        // Initialize canvases with placeholder content immediately on page load
+        function initializeCanvasPlaceholders() {
+            console.log('🎨 Initializing canvas placeholders...');
+
+            // Spectrum Canvas
+            if (spectrumCanvas) {
+                const ctx = spectrumCanvas.getContext('2d');
+                const width = spectrumCanvas.offsetWidth || 800;
+                const height = spectrumCanvas.offsetHeight || 400;
+                spectrumCanvas.width = width;
+                spectrumCanvas.height = height;
+
+                ctx.fillStyle = '#0a0a0f';
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.5)';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('AWAITING AUDIO', width/2, height/2 - 10);
+                ctx.font = '12px Arial';
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+                ctx.fillText('Upload file to see spectrum analyzer', width/2, height/2 + 15);
+                console.log('✅ Spectrum canvas initialized:', width, 'x', height);
+            } else {
+                console.error('❌ spectrumCanvas not found!');
+            }
+
+            // Meter Canvases
+            if (leftMeterCanvas) {
+                const ctx = leftMeterCanvas.getContext('2d');
+                ctx.fillStyle = '#0a0a0f';
+                ctx.fillRect(0, 0, 60, 150);
+                console.log('✅ Left meter canvas initialized');
+            } else {
+                console.error('❌ leftMeterCanvas not found!');
+            }
+
+            if (rightMeterCanvas) {
+                const ctx = rightMeterCanvas.getContext('2d');
+                ctx.fillStyle = '#0a0a0f';
+                ctx.fillRect(0, 0, 60, 150);
+                console.log('✅ Right meter canvas initialized');
+            } else {
+                console.error('❌ rightMeterCanvas not found!');
+            }
+
+            if (goniometerCanvas) {
+                const ctx = goniometerCanvas.getContext('2d');
+                ctx.fillStyle = '#0a0a0f';
+                ctx.fillRect(0, 0, 150, 150);
+                ctx.strokeStyle = 'rgba(0, 212, 255, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(75, 75, 50, 0, Math.PI * 2);
+                ctx.stroke();
+                console.log('✅ Goniometer canvas initialized');
+            } else {
+                console.error('❌ goniometerCanvas not found!');
+            }
+
+            if (correlationHeatmapCanvas) {
+                const ctx = correlationHeatmapCanvas.getContext('2d');
+                ctx.fillStyle = '#0a0a0f';
+                ctx.fillRect(0, 0, 800, 200);
+                console.log('✅ Correlation heatmap canvas initialized');
+            } else {
+                console.error('❌ correlationHeatmapCanvas not found!');
+            }
+
+            console.log('✅ All canvases initialized with placeholders');
+        }
+
+        // Call initialization immediately after canvas elements are defined
+        setTimeout(() => {
+            console.log('📢 Calling initializeCanvasPlaceholders...');
+            initializeCanvasPlaceholders();
+        }, 100);
+
         function startVisualization() {
             console.log('═══════════════════════════════════════════════');
             console.log('🚀 START VISUALIZATION CALLED!!!');
