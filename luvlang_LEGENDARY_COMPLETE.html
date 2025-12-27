@@ -436,6 +436,12 @@
             color: #ff4444;
         }
 
+        .eq-bypass-btn.active {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
         .eq-faders {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -672,6 +678,8 @@
             padding: 15px;
             margin-bottom: 15px;
             display: none;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .analysis-panel.visible {
@@ -714,7 +722,7 @@
             border-bottom: none;
         }
 
-        .analysis-section strong {
+        .analysis-section > strong {
             color: #00d4ff;
             margin-right: 8px;
             font-size: 0.75rem;
@@ -1905,15 +1913,13 @@
 
                 <!-- LOUDNESS METER CARD (Primary) -->
                 <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 212, 255, 0.02)); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">LOUDNESS</div>
-                        <div id="lufsTarget" style="font-size: 0.65rem; color: rgba(0, 212, 255, 0.8); font-weight: 600;">
-                            Target: -14 LUFS
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: nowrap;">
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">LOUDNESS</div>
+                        <div id="lufsTarget" style="font-size: 0.65rem; color: rgba(0, 212, 255, 0.8); font-weight: 600; white-space: nowrap;">Target: -14 LUFS</div>
                     </div>
-                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
-                        <div id="lufsValue" style="font-size: 2.5rem; font-weight: 700; color: #00d4ff; line-height: 1; font-family: 'Courier New', monospace;">-∞</div>
-                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); font-weight: 600;">LUFS</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap;">
+                        <div id="lufsValue" style="font-size: 2.5rem; font-weight: 700; color: #00d4ff; line-height: 1; font-family: 'Courier New', monospace; white-space: nowrap;">-∞</div>
+                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); font-weight: 600; white-space: nowrap;">LUFS</div>
                     </div>
                     <div class="meter-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                         <div class="meter-bar-fill" id="lufsMeter" style="height: 100%; background: linear-gradient(90deg, #00ff88, #00d4ff); transition: width 0.3s ease;"></div>
@@ -1990,8 +1996,9 @@
                     justify-content: space-between;
                     box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
                     transition: all 0.3s ease;
+                    flex-wrap: nowrap;
                 ">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
                         <div id="complianceLight" style="
                             width: 12px;
                             height: 12px;
@@ -1999,12 +2006,14 @@
                             background: #4CAF50;
                             box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
                             animation: pulse 2s infinite;
+                            flex-shrink: 0;
                         "></div>
                         <span id="complianceLabel" style="
                             font-size: 0.75rem;
                             font-weight: 600;
                             letter-spacing: 0.5px;
                             color: #4CAF50;
+                            white-space: nowrap;
                         ">BROADCAST SAFE</span>
                     </div>
                     <span id="complianceValue" style="
@@ -2012,6 +2021,7 @@
                         font-weight: 700;
                         font-family: 'JetBrains Mono', monospace;
                         color: #00ff88;
+                        white-space: nowrap;
                     ">-∞ dBTP</span>
                 </div>
 
@@ -3263,7 +3273,7 @@
                         platformTarget = -16;
                         break;
                     case 'youtube':
-                        platformTarget = -13;
+                        platformTarget = -14;
                         break;
                     case 'tidal':
                         platformTarget = -14;
@@ -5667,6 +5677,209 @@
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SPECTRAL DE-NOISER - Offline Processing
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let originalAudioBuffer = null; // Store original for undo
+        let denoiserActive = false;
+
+        document.getElementById('denoiserBypassBtn').addEventListener('click', async function() {
+            if (!audioBuffer) {
+                alert('Please load an audio file first!');
+                return;
+            }
+
+            if (!spectralDenoiser) {
+                alert('Spectral De-noiser not initialized!');
+                return;
+            }
+
+            denoiserActive = !denoiserActive;
+
+            if (denoiserActive) {
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🎤 APPLYING SPECTRAL DE-NOISING...');
+
+                this.textContent = 'Processing...';
+                this.disabled = true;
+
+                try {
+                    // Store original if not already stored
+                    if (!originalAudioBuffer) {
+                        originalAudioBuffer = audioBuffer;
+                        console.log('   ✓ Original audio backed up');
+                    }
+
+                    // Enable de-noiser
+                    spectralDenoiser.setActive(true);
+
+                    // Enable all checked noise types
+                    const hissEnabled = document.getElementById('denoiseHiss').checked;
+                    const humEnabled = document.getElementById('denoiseHum').checked;
+                    const clicksEnabled = document.getElementById('denoiseClicks').checked;
+                    const broadbandEnabled = document.getElementById('denoiseBroadband').checked;
+
+                    if (!hissEnabled && !humEnabled && !clicksEnabled && !broadbandEnabled) {
+                        alert('Please enable at least one noise type (check the boxes)');
+                        denoiserActive = false;
+                        this.textContent = 'De-noiser Active';
+                        this.disabled = false;
+                        return;
+                    }
+
+                    console.log('   Noise types enabled:', {
+                        hiss: hissEnabled,
+                        hum: humEnabled,
+                        clicks: clicksEnabled,
+                        broadband: broadbandEnabled
+                    });
+
+                    // Process audio buffer
+                    const processedBuffer = await spectralDenoiser.process(audioBuffer);
+
+                    if (processedBuffer) {
+                        // Replace current audio buffer with processed version
+                        audioBuffer = processedBuffer;
+                        window.audioBuffer = processedBuffer;
+
+                        // Convert to WAV and reload audio element
+                        const wavBlob = audioBufferToWav(processedBuffer);
+                        const url = URL.createObjectURL(wavBlob);
+
+                        const wasPlaying = !audioElement.paused;
+                        const currentTime = audioElement.currentTime;
+
+                        audioElement.src = url;
+                        audioElement.currentTime = currentTime;
+
+                        if (wasPlaying) {
+                            await audioElement.play();
+                        }
+
+                        // Redraw waveform
+                        if (window.drawWaveformFromBuffer) {
+                            drawWaveformFromBuffer(processedBuffer);
+                        }
+
+                        this.classList.add('active');
+                        this.textContent = 'De-noiser Active ✓';
+                        console.log('✅ De-noising applied successfully!');
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    }
+
+                } catch (e) {
+                    console.error('❌ De-noising failed:', e);
+                    alert('De-noising failed: ' + e.message);
+                    denoiserActive = false;
+                    this.textContent = 'De-noiser Active';
+                } finally {
+                    this.disabled = false;
+                }
+
+            } else {
+                // Restore original audio
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('♻️ RESTORING ORIGINAL AUDIO...');
+
+                if (originalAudioBuffer) {
+                    audioBuffer = originalAudioBuffer;
+                    window.audioBuffer = originalAudioBuffer;
+
+                    // Convert to WAV and reload audio element
+                    const wavBlob = audioBufferToWav(originalAudioBuffer);
+                    const url = URL.createObjectURL(wavBlob);
+
+                    const wasPlaying = !audioElement.paused;
+                    const currentTime = audioElement.currentTime;
+
+                    audioElement.src = url;
+                    audioElement.currentTime = currentTime;
+
+                    if (wasPlaying) {
+                        await audioElement.play();
+                    }
+
+                    // Redraw waveform
+                    if (window.drawWaveformFromBuffer) {
+                        drawWaveformFromBuffer(originalAudioBuffer);
+                    }
+
+                    this.classList.remove('active');
+                    this.textContent = 'De-noiser Active';
+                    spectralDenoiser.setActive(false);
+
+                    console.log('✅ Original audio restored');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                }
+            }
+        });
+
+        // Helper function to convert AudioBuffer to WAV Blob
+        function audioBufferToWav(buffer) {
+            const numberOfChannels = buffer.numberOfChannels;
+            const length = buffer.length * numberOfChannels * 2;
+            const arrayBuffer = new ArrayBuffer(44 + length);
+            const view = new DataView(arrayBuffer);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+
+            // Write WAV header
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+
+            // RIFF identifier
+            setUint32(0x46464952);
+            // file length
+            setUint32(36 + length);
+            // RIFF type
+            setUint32(0x45564157);
+            // format chunk identifier
+            setUint32(0x20746d66);
+            // format chunk length
+            setUint32(16);
+            // sample format (raw)
+            setUint16(1);
+            // channel count
+            setUint16(numberOfChannels);
+            // sample rate
+            setUint32(buffer.sampleRate);
+            // byte rate
+            setUint32(buffer.sampleRate * numberOfChannels * 2);
+            // block align
+            setUint16(numberOfChannels * 2);
+            // bits per sample
+            setUint16(16);
+            // data chunk identifier
+            setUint32(0x61746164);
+            // data chunk length
+            setUint32(length);
+
+            // Write interleaved data
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < arrayBuffer.byteLength) {
+                for (let i = 0; i < numberOfChannels; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // DYNAMICS CONTROLS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         document.getElementById('compSlider').addEventListener('input', function() {
@@ -5925,13 +6138,14 @@
             console.log('   DPR:', dpr);
             console.log('   Canvas internal size:', canvas.width, 'x', canvas.height);
 
-            // VERIFY: Check if canvas actually has red pixels
-            const testPixels = ctx.getImageData(10, 10, 1, 1).data;
-            console.log('   🔍 PIXEL CHECK at (10,10): R=' + testPixels[0] + ' G=' + testPixels[1] + ' B=' + testPixels[2] + ' A=' + testPixels[3]);
-            if (testPixels[0] > 200 && testPixels[1] < 50 && testPixels[2] < 50) {
-                console.log('   ✅ RED PIXELS CONFIRMED IN CANVAS!');
+            // VERIFY: Check if canvas actually has cyan/blue waveform pixels
+            const testPixels = ctx.getImageData(width/2, centerY - 10, 1, 1).data;
+            console.log('   🔍 PIXEL CHECK at (' + Math.floor(width/2) + ',' + Math.floor(centerY - 10) + '): R=' + testPixels[0] + ' G=' + testPixels[1] + ' B=' + testPixels[2] + ' A=' + testPixels[3]);
+            // Check for cyan/blue pixels (not background)
+            if (testPixels[2] > 100 || testPixels[1] > 100) {
+                console.log('   ✅ WAVEFORM PIXELS CONFIRMED IN CANVAS!');
             } else {
-                console.log('   ❌ WARNING: Canvas does NOT have red pixels!');
+                console.log('   ❌ WARNING: Canvas does NOT have waveform pixels!');
             }
 
             console.log('================================================');
@@ -6000,17 +6214,13 @@
                 // Draw immediately
                 drawWaveformFromBuffer(buffer);
 
-                // KEEP REDRAWING every 500ms to prevent it from disappearing
+                // Stop any existing redraw interval to prevent performance issues
                 if (waveformRedrawInterval) {
                     clearInterval(waveformRedrawInterval);
+                    waveformRedrawInterval = null;
                 }
 
-                waveformRedrawInterval = setInterval(() => {
-                    console.log('🔄 Redrawing waveform (persistent)');
-                    drawWaveformFromBuffer(buffer);
-                }, 500);
-
-                console.log('✓ Waveform will redraw every 500ms to stay visible');
+                console.log('✓ Waveform drawn once (no continuous redraw to preserve performance)');
             } else {
                 console.error('   ❌ No audioBuffer found! Load an audio file first.');
                 alert('Please load an audio file first by dragging it onto the page!');
@@ -6127,10 +6337,7 @@
                 }
 
                 // ═══ PANEL 3: WAVEFORM (STATIC + PLAYHEAD) ═══
-                // DRAW WAVEFORM EVERY FRAME to ensure it's always visible
-                if (window.audioBuffer || audioBuffer) {
-                    drawWaveformFromBuffer(window.audioBuffer || audioBuffer);
-                }
+                // Waveform is drawn once when audio loads (not every frame for performance)
 
                 // Draw playhead
                 if (waveformCanvasPlayhead && audioElement) {
@@ -6999,8 +7206,8 @@
                     // LED State Logic - Professional Broadcast Compliance:
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // 🔴 CLIP: True Peak ≥ 0.0 dBTP (inter-sample clipping)
-                    // 🟡 HOT: True Peak -0.5 to 0.0 dBTP (approaching clip)
-                    // 🟢 NORM: True Peak < -0.5 dBTP (broadcast safe)
+                    // 🟡 HOT: True Peak -1.4 to 0.0 dBTP (exceeds broadcast safe limit)
+                    // 🟢 Broadcast Safe: True Peak < -1.4 dBTP (broadcast compliant)
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
                     if (displayPeak >= 0.0) {
@@ -7013,8 +7220,8 @@
                         complianceLight.style.animation = 'flash 0.5s infinite';
                         complianceLabel.textContent = 'CLIP';
                         complianceLabel.style.color = '#F44336';
-                    } else if (displayPeak >= -0.5) {
-                        // 🟡 HOT - Amber (Approaching clip zone: -0.5 to 0 dBTP)
+                    } else if (displayPeak >= -1.4) {
+                        // 🟡 HOT - Amber (Exceeds broadcast safe limit: -1.4 to 0 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
                         complianceBadge.style.borderColor = '#FFC107';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
@@ -7024,14 +7231,14 @@
                         complianceLabel.textContent = 'HOT';
                         complianceLabel.style.color = '#FFC107';
                     } else {
-                        // 🟢 NORM - Green (Broadcast safe: < -0.5 dBTP)
+                        // 🟢 Broadcast Safe - Green (Compliant: < -1.4 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
                         complianceBadge.style.borderColor = '#4CAF50';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
                         complianceLight.style.background = '#4CAF50';
                         complianceLight.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.8)';
                         complianceLight.style.animation = 'pulse 2s infinite';
-                        complianceLabel.textContent = 'NORM';
+                        complianceLabel.textContent = 'Broadcast Safe';
                         complianceLabel.style.color = '#4CAF50';
                     }
                 }
@@ -7306,8 +7513,53 @@
                 if (!analysisResults.platformTarget) analysisResults.platformTarget = -14;
                 if (!analysisResults.integratedLUFS) analysisResults.integratedLUFS = -20;
 
+                // CRITICAL FIX: Get CURRENT platform selection from UI BEFORE showing progress messages
+                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
+                let targetLUFS = -14; // Default Spotify
+                let limiterThreshold = -2.0; // Default
+                let platformName = 'Spotify';
+
+                if (selectedPlatformBtn) {
+                    const platform = selectedPlatformBtn.getAttribute('data-platform');
+                    console.log('🎯 Reading CURRENT platform selection:', platform);
+
+                    switch(platform.toLowerCase()) {
+                        case 'spotify':
+                            targetLUFS = -14;
+                            platformName = 'Spotify';
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
+                            break;
+                        case 'youtube':
+                            targetLUFS = -14;
+                            platformName = 'YouTube';
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
+                            break;
+                        case 'apple':
+                            targetLUFS = -16;
+                            platformName = 'Apple Music';
+                            limiterThreshold = -2.0; // Slightly more conservative for Apple
+                            break;
+                        case 'tidal':
+                            targetLUFS = -14;
+                            platformName = 'Tidal';
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
+                            break;
+                        default:
+                            targetLUFS = -14;
+                            platformName = 'Spotify';
+                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
+                    }
+                    console.log('   Target LUFS for ' + platform + ':', targetLUFS);
+                    console.log('   Limiter threshold:', limiterThreshold, 'dB');
+                } else {
+                    console.log('⚠️ No platform selected, using default: -14 LUFS');
+                }
+
+                // Update analysisResults with current platform target
+                analysisResults.platformTarget = targetLUFS;
+
                 updateProgress(30, '✅ Analysis Complete', 'Identified ' + (analysisResults.problems ? analysisResults.problems.length : 0) + ' issues to fix');
-                console.log('✅ Analysis Complete. Target Gain:', (analysisResults.platformTarget - analysisResults.integratedLUFS).toFixed(2), 'dB');
+                console.log('✅ Analysis Complete. Target Gain:', (targetLUFS - analysisResults.integratedLUFS).toFixed(2), 'dB');
                 await new Promise(r => setTimeout(r, 400));
 
                 // Phase 2: Processing (30% → 85%)
@@ -7317,7 +7569,8 @@
                 updateProgress(45, '🎚️ Adjusting Dynamics...', 'Applying professional compression...');
                 await new Promise(r => setTimeout(r, 300));
 
-                updateProgress(55, '🔊 Setting Loudness...', 'Targeting ' + analysisResults.platformTarget + ' LUFS for ' + analysisResults.bestPlatform);
+                console.log('🔊 PROGRESS DEBUG: targetLUFS =', targetLUFS, '| platformName =', platformName);
+                updateProgress(55, '🔊 Setting Loudness...', 'Targeting ' + targetLUFS + ' LUFS for ' + platformName);
                 await new Promise(r => setTimeout(r, 300));
 
                 updateProgress(65, '✨ Applying Limiter...', 'True-peak ceiling at -1.0 dBTP...');
@@ -7333,7 +7586,7 @@
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 console.log('🎯 BEFORE APPLYING FIXES:');
                 console.log('   Current LUFS:', beforeLUFS.toFixed(1));
-                console.log('   Target LUFS:', analysisResults.platformTarget);
+                console.log('   Target LUFS:', targetLUFS);
                 console.log('   Problems detected:', analysisResults.problems ? analysisResults.problems.length : 0);
                 if (analysisResults.problems) {
                     analysisResults.problems.forEach(p => {
@@ -7341,45 +7594,6 @@
                     });
                 }
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                // CRITICAL FIX: Get CURRENT platform selection from UI (not cached analysisResults)
-                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
-                let targetLUFS = -14; // Default Spotify
-                let limiterThreshold = -2.0; // Default
-
-                if (selectedPlatformBtn) {
-                    const platform = selectedPlatformBtn.getAttribute('data-platform');
-                    console.log('🎯 Reading CURRENT platform selection:', platform);
-
-                    switch(platform.toLowerCase()) {
-                        case 'spotify':
-                            targetLUFS = -14;
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
-                            break;
-                        case 'youtube':
-                            targetLUFS = -14;
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
-                            break;
-                        case 'apple':
-                            targetLUFS = -16;
-                            limiterThreshold = -2.0; // Slightly more conservative for Apple
-                            break;
-                        case 'tidal':
-                            targetLUFS = -14;
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
-                            break;
-                        default:
-                            targetLUFS = -14;
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
-                    }
-                    console.log('   Target LUFS for ' + platform + ':', targetLUFS);
-                    console.log('   Limiter threshold:', limiterThreshold, 'dB');
-                } else {
-                    console.log('⚠️ No platform selected, using default: -14 LUFS');
-                }
-
-                // Update analysisResults with current platform target
-                analysisResults.platformTarget = targetLUFS;
 
                 // Apply CONSERVATIVE limiter threshold to ensure peaks stay below -1.0 dBTP
                 if (limiter) {
@@ -7797,6 +8011,13 @@
                     if (abCompareSavedGain === null || abCompareSavedGain === undefined) {
                         abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
                         console.log('💾 Saved original master gain:', abCompareSavedGain.toFixed(3), '(will restore to this)');
+                    }
+
+                    // Set master gain to unity for bypass mode (original loudness)
+                    // This ensures B mode plays at true original volume, regardless of loudness matching
+                    if (masterGain) {
+                        masterGain.gain.value = 1.0;
+                        console.log('   🔊 Master gain set to unity (1.0) for original playback');
                     }
 
                     // Disconnect entire processing chain
