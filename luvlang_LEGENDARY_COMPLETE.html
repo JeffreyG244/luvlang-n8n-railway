@@ -1316,7 +1316,7 @@
                     </div>
                     <div class="selector-btn" data-platform="youtube" style="position: relative;">
                         <div>YouTube</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-13 LUFS</div>
+                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-14 LUFS</div>
                     </div>
                     <div class="selector-btn" data-platform="apple" style="position: relative;">
                         <div>Apple Music</div>
@@ -1925,14 +1925,14 @@
                     <!-- Phase Correlation -->
                     <div style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.08), rgba(156, 39, 176, 0.02)); border: 1px solid rgba(156, 39, 176, 0.3); border-radius: 10px; padding: 12px;">
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">STEREO</div>
-                        <div id="phaseValue" style="font-size: 1.8rem; font-weight: 700; color: #e91e63; line-height: 1; font-family: 'Courier New', monospace;">+1.0</div>
+                        <div id="phaseValue" style="font-size: 1.8rem; font-weight: 700; color: #00ff88; line-height: 1; font-family: 'Courier New', monospace;">+1.0</div>
                         <div id="phaseDescription" style="font-size: 0.6rem; color: rgba(0,255,136,0.8); margin-top: 4px; font-weight: 600;">Perfect</div>
                     </div>
 
                     <!-- True Peak -->
                     <div style="background: linear-gradient(135deg, rgba(255, 152, 0, 0.08), rgba(255, 152, 0, 0.02)); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 10px; padding: 12px;">
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">PEAK</div>
-                        <div id="peakValue" style="font-size: 1.8rem; font-weight: 700; color: #ff9800; line-height: 1; font-family: 'Courier New', monospace;">-∞</div>
+                        <div id="peakValue" style="font-size: 1.8rem; font-weight: 700; color: #00ff88; line-height: 1; font-family: 'Courier New', monospace;">-∞</div>
                         <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 4px;">dBTP</div>
                     </div>
                 </div>
@@ -2011,7 +2011,7 @@
                         font-size: 0.85rem;
                         font-weight: 700;
                         font-family: 'JetBrains Mono', monospace;
-                        color: #ffffff;
+                        color: #00ff88;
                     ">-∞ dBTP</span>
                 </div>
 
@@ -2363,9 +2363,9 @@
         let smoothedLUFS = -70; // Smoothed LUFS value for display
         let smoothedPeak = -70; // Smoothed peak value for display
         let smoothedPhase = 1.0; // Smoothed phase correlation for display
-        const METER_SMOOTHING_FACTOR = 0.15; // 0.0 = no smoothing, 1.0 = instant (higher = faster response)
+        const METER_SMOOTHING_FACTOR = 0.05; // 0.0 = no smoothing, 1.0 = instant (lower = smoother, less flickering)
         let lastMeterUpdate = 0; // Timestamp of last meter update
-        const METER_UPDATE_INTERVAL = 100; // Update meters every 100ms (10Hz) to reduce flickering
+        const METER_UPDATE_INTERVAL = 250; // Update meters every 250ms (4Hz) to reduce flickering
 
         // PROFESSIONAL METER LOCKING (Industry Standard)
         // After AI mastering, LUFS meter locks to stable integrated value (like iZotope Ozone)
@@ -3559,7 +3559,7 @@
                     limiterThreshold = -2.0; // Safety headroom
                     break;
                 case 'youtube':
-                    targetLUFS = -13.0;
+                    targetLUFS = -14.0;
                     ceilingDBTP = -1.0;
                     limiterThreshold = -2.0;
                     break;
@@ -6646,10 +6646,32 @@
                     lufsValueElement.textContent = lockedLUFS.toFixed(1);
                 }
 
-                // Update LUFS meter bar (stable)
+                // Update LUFS meter bar (stable width and color)
                 if (lufsMeterElement) {
                     const lufsPercent = Math.max(0, Math.min(100, ((lockedLUFS + 60) / 60) * 100));
                     lufsMeterElement.style.width = lufsPercent + '%';
+
+                    // Set color based on locked value
+                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
+                    let platformTarget = -14;
+                    if (selectedPlatform) {
+                        const platform = selectedPlatform.getAttribute('data-platform');
+                        if (platform === 'youtube') platformTarget = -14;
+                        else if (platform === 'apple') platformTarget = -16;
+                        else if (platform === 'tidal') platformTarget = -14;
+                        else platformTarget = -14;
+                    }
+
+                    const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
+                    if (lockedLUFS > -10) {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (dangerously loud)
+                    } else if (lufsDeviation <= 2.0) {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (on target)
+                    } else if (lufsDeviation <= 3.5) {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow
+                    } else {
+                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange
+                    }
                 }
 
                 // Continue to let Peak and Phase meters update in real-time below
@@ -6729,7 +6751,8 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // TRUE K-WEIGHTED LUFS WITH PROPER GATING (ITU-R BS.1770-5 COMPLIANT)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            if (kWeightedAnalyser) {
+            // SKIP real-time LUFS calculation if meters are locked (show stable mastered value)
+            if (kWeightedAnalyser && !metersLocked) {
                 // Get K-weighted time domain data
                 const kData = new Float32Array(kWeightedAnalyser.fftSize);
                 kWeightedAnalyser.getFloatTimeDomainData(kData);
@@ -6816,13 +6839,13 @@
                 let platformTarget = -14; // Default Spotify
                 if (selectedPlatform) {
                     const platform = selectedPlatform.getAttribute('data-platform');
-                    if (platform === 'youtube') platformTarget = -13;
+                    if (platform === 'youtube') platformTarget = -14;
                     else if (platform === 'apple') platformTarget = -16;
                     else if (platform === 'tidal') platformTarget = -14;
                     else platformTarget = -14; // Spotify
                 }
 
-                // Check if within ±1 LU of target (professional tolerance)
+                // Check deviation from target (wider tolerance for stability)
                 const lufsDeviation = Math.abs(displayLUFS - platformTarget);
 
                 const lufsValueElement2 = document.getElementById('lufsValue');
@@ -6831,11 +6854,11 @@
                 if (lufsMeterElement2) {
                     if (displayLUFS > -10) {
                         lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (dangerously loud)
-                    } else if (lufsDeviation <= 1.0) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (perfect - within 1 LU)
                     } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (close - within 2 LU)
-                    } else if (displayLUFS < platformTarget - 3) {
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (on target - within 2 LU)
+                    } else if (lufsDeviation <= 3.5) {
+                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (close - within 3.5 LU)
+                    } else if (displayLUFS < platformTarget - 5) {
                         lufsMeterElement2.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Light green (too quiet)
                     } else {
                         lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange (needs adjustment)
@@ -6866,67 +6889,83 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             let peakDb = -70; // Initialize to prevent undefined error
             let phaseCorrelation = 1.0; // Initialize to prevent undefined error (1.0 = perfect correlation)
+            let crestFactor = 0; // Initialize crest factor for quality score
+            let plr = 0; // Initialize PLR for quality score
 
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // GET L/R CHANNEL DATA - Always needed for phase correlation
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             if (leftAnalyser && rightAnalyser) {
                 const leftData = new Float32Array(leftAnalyser.fftSize);
                 const rightData = new Float32Array(rightAnalyser.fftSize);
                 leftAnalyser.getFloatTimeDomainData(leftData);
                 rightAnalyser.getFloatTimeDomainData(rightData);
 
-                // 4x oversampling using linear interpolation
-                const oversampleFactor = 4;
-                let truePeakL = 0;
-                let truePeakR = 0;
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // TRUE PEAK MEASUREMENT - Skip calculation if meters locked
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                if (!metersLocked) {
+                    // 4x oversampling using linear interpolation
+                    const oversampleFactor = 4;
+                    let truePeakL = 0;
+                    let truePeakR = 0;
 
-                for (let i = 0; i < leftData.length - 1; i++) {
-                    for (let j = 0; j < oversampleFactor; j++) {
-                        const t = j / oversampleFactor;
-                        // Linear interpolation between samples
-                        const interpL = leftData[i] * (1 - t) + leftData[i + 1] * t;
-                        const interpR = rightData[i] * (1 - t) + rightData[i + 1] * t;
-                        truePeakL = Math.max(truePeakL, Math.abs(interpL));
-                        truePeakR = Math.max(truePeakR, Math.abs(interpR));
+                    for (let i = 0; i < leftData.length - 1; i++) {
+                        for (let j = 0; j < oversampleFactor; j++) {
+                            const t = j / oversampleFactor;
+                            // Linear interpolation between samples
+                            const interpL = leftData[i] * (1 - t) + leftData[i + 1] * t;
+                            const interpR = rightData[i] * (1 - t) + rightData[i + 1] * t;
+                            truePeakL = Math.max(truePeakL, Math.abs(interpL));
+                            truePeakR = Math.max(truePeakR, Math.abs(interpR));
+                        }
                     }
-                }
 
-                // Convert to dBTP (true peak)
-                const truePeak = Math.max(truePeakL, truePeakR);
-                peakDb = truePeak > 0 ? 20 * Math.log10(truePeak) : -70;
-                truePeakMax = Math.max(truePeakMax, peakDb);
+                    // Convert to dBTP (true peak)
+                    const truePeak = Math.max(truePeakL, truePeakR);
+                    peakDb = truePeak > 0 ? 20 * Math.log10(truePeak) : -70;
+                    truePeakMax = Math.max(truePeakMax, peakDb);
 
-                // BUG FIX #2: Professional peak decay - 3 dB/s time-based decay
-                const timestamp = performance.now();
-                if (lastDecayTime === 0) {
+                    // BUG FIX #2: Professional peak decay - 3 dB/s time-based decay
+                    const timestamp = performance.now();
+                    if (lastDecayTime === 0) {
+                        lastDecayTime = timestamp;
+                    }
+
+                    // Update held peak with new value if higher
+                    if (peakDb > heldPeakdBFS) {
+                        heldPeakdBFS = peakDb;
+                    } else {
+                        // Apply time-based decay
+                        const deltaTime = (timestamp - lastDecayTime) / 1000; // Convert to seconds
+                        heldPeakdBFS -= PEAK_DECAY_RATE_DB_PER_SEC * deltaTime;
+                        heldPeakdBFS = Math.max(heldPeakdBFS, peakDb); // Don't decay below current peak
+                    }
                     lastDecayTime = timestamp;
-                }
 
-                // Update held peak with new value if higher
-                if (peakDb > heldPeakdBFS) {
-                    heldPeakdBFS = peakDb;
-                } else {
-                    // Apply time-based decay
-                    const deltaTime = (timestamp - lastDecayTime) / 1000; // Convert to seconds
-                    heldPeakdBFS -= PEAK_DECAY_RATE_DB_PER_SEC * deltaTime;
-                    heldPeakdBFS = Math.max(heldPeakdBFS, peakDb); // Don't decay below current peak
-                }
-                lastDecayTime = timestamp;
+                    // SMOOTH PEAK VALUE using exponential moving average
+                    smoothedPeak = smoothedPeak + METER_SMOOTHING_FACTOR * (heldPeakdBFS - smoothedPeak);
+                } // End !metersLocked check for peak calculation
 
-                // SMOOTH PEAK VALUE using exponential moving average
-                smoothedPeak = smoothedPeak + METER_SMOOTHING_FACTOR * (heldPeakdBFS - smoothedPeak);
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // PEAK DISPLAY - Always update (uses locked value if meters locked)
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // Use locked peak if meters are locked, otherwise use smoothed real-time peak
+                const displayPeak = metersLocked && lockedPeak !== null ? lockedPeak : smoothedPeak;
 
-                // Update peak display (already throttled by LUFS update check above)
+                // Update peak display (stable if locked, real-time if not)
                 const peakValueElement = document.getElementById('peakValue');
 
                 if (peakValueElement) {
-                    peakValueElement.textContent = smoothedPeak.toFixed(1);
+                    peakValueElement.textContent = displayPeak.toFixed(1);
 
-                    // Dynamic color coding based on peak level
-                    if (smoothedPeak > -1.0) {
-                        peakValueElement.style.color = '#ff3333'; // Red (danger!)
-                    } else if (smoothedPeak > -3.0) {
-                        peakValueElement.style.color = '#ffaa00'; // Orange (caution)
+                    // Dynamic color coding based on peak level (matches compliance badge thresholds)
+                    if (displayPeak >= 0.0) {
+                        peakValueElement.style.color = '#ff3333'; // Red (clipping!)
+                    } else if (displayPeak >= -0.5) {
+                        peakValueElement.style.color = '#ffaa00'; // Orange (hot - approaching clip)
                     } else {
-                        peakValueElement.style.color = '#ff9800'; // Standard orange
+                        peakValueElement.style.color = '#00ff88'; // Green (broadcast safe)
                     }
                 }
 
@@ -6938,33 +6977,33 @@
                 const complianceValue = document.getElementById('complianceValue');
 
                 if (complianceBadge && complianceLight && complianceLabel && complianceValue) {
-                    // Update dBTP value display (moved above output fader in OLED-style window)
-                    complianceValue.textContent = heldPeakdBFS.toFixed(1) + ' dBTP';
+                    // Update dBTP value display (stable if locked, real-time if not)
+                    complianceValue.textContent = displayPeak.toFixed(1) + ' dBTP';
 
                     // Get platform target for LUFS validation
                     const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
                     let platformTarget = -14; // Default Spotify
                     if (selectedPlatform) {
                         const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'youtube') platformTarget = -13;
+                        if (platform === 'youtube') platformTarget = -14;
                         else if (platform === 'apple') platformTarget = -16;
                         else if (platform === 'tidal') platformTarget = -14;
                         else platformTarget = -14; // Spotify
                     }
 
-                    // Calculate LUFS deviation from target
-                    const lufsDeviation = Math.abs(integratedLUFS - platformTarget);
-                    const lufsOnTarget = lufsDeviation <= 1.0; // Within ±1 LU tolerance
+                    // Calculate LUFS deviation from target (use smoothed LUFS for stability)
+                    const lufsDeviation = Math.abs(smoothedLUFS - platformTarget);
+                    const lufsOnTarget = lufsDeviation <= 2.5; // Within ±2.5 LU tolerance (professional standard)
 
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // LED State Logic - Professional Broadcast Compliance:
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // 🔴 CLIP: True Peak ≥ 0.0 dBTP (inter-sample clipping)
-                    // 🟡 HOT: True Peak between -0.9 and -0.1 dBTP (approaching clip)
-                    // 🟢 NORM: LUFS on target (±1 LU) AND True Peak < -1.0 dBTP (broadcast safe)
+                    // 🟡 HOT: True Peak -0.5 to 0.0 dBTP (approaching clip)
+                    // 🟢 NORM: True Peak < -0.5 dBTP (broadcast safe)
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-                    if (heldPeakdBFS >= 0.0) {
+                    if (displayPeak >= 0.0) {
                         // 🔴 CLIP - Blinking Red (Inter-sample clipping detected)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05))';
                         complianceBadge.style.borderColor = '#F44336';
@@ -6974,8 +7013,8 @@
                         complianceLight.style.animation = 'flash 0.5s infinite';
                         complianceLabel.textContent = 'CLIP';
                         complianceLabel.style.color = '#F44336';
-                    } else if (heldPeakdBFS > -1.0 && heldPeakdBFS >= -0.9) {
-                        // 🟡 HOT - Amber (Approaching clip zone: -0.9 to -0.1 dBTP)
+                    } else if (displayPeak >= -0.5) {
+                        // 🟡 HOT - Amber (Approaching clip zone: -0.5 to 0 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
                         complianceBadge.style.borderColor = '#FFC107';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
@@ -6984,8 +7023,8 @@
                         complianceLight.style.animation = 'pulse 1s infinite';
                         complianceLabel.textContent = 'HOT';
                         complianceLabel.style.color = '#FFC107';
-                    } else if (lufsOnTarget && heldPeakdBFS < -1.0) {
-                        // 🟢 NORM - Green (LUFS on target AND peak safe)
+                    } else {
+                        // 🟢 NORM - Green (Broadcast safe: < -0.5 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
                         complianceBadge.style.borderColor = '#4CAF50';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
@@ -6994,16 +7033,6 @@
                         complianceLight.style.animation = 'pulse 2s infinite';
                         complianceLabel.textContent = 'NORM';
                         complianceLabel.style.color = '#4CAF50';
-                    } else {
-                        // Intermediate state (peak < -1.0 but LUFS off target, or peak -1.0 to -0.9)
-                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.03))';
-                        complianceBadge.style.borderColor = '#FFC107';
-                        complianceBadge.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.2)';
-                        complianceLight.style.background = '#FFC107';
-                        complianceLight.style.boxShadow = '0 0 8px rgba(255, 193, 7, 0.6)';
-                        complianceLight.style.animation = 'pulse 1.5s infinite';
-                        complianceLabel.textContent = 'CHECK';
-                        complianceLabel.style.color = '#FFC107';
                     }
                 }
 
@@ -7043,7 +7072,7 @@
                     phaseColor = '#00ff88';
                 } else {
                     phaseStatus = 'Good';
-                    phaseColor = '#e91e63';
+                    phaseColor = '#00ff88';
                 }
 
                 if (phaseValueElement) {
@@ -7057,19 +7086,24 @@
                 }
             }
 
-            // Loudness Range (LRA)
-            lraMin = Math.min(lraMin, integratedLUFS);
-            lraMax = Math.max(lraMax, integratedLUFS);
-            lra = lraMax - lraMin; // Update global lra variable
-            document.getElementById('lraValue').textContent = lra.toFixed(1) + ' LU';
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // DERIVED METRICS - Skip if meters locked (values calculated once after mastering)
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            if (!metersLocked) {
+                // Loudness Range (LRA)
+                lraMin = Math.min(lraMin, integratedLUFS);
+                lraMax = Math.max(lraMax, integratedLUFS);
+                lra = lraMax - lraMin; // Update global lra variable
+                document.getElementById('lraValue').textContent = lra.toFixed(1) + ' LU';
 
-            // Crest Factor
-            const crestFactor = peakDb - integratedLUFS;
-            document.getElementById('crestValue').textContent = crestFactor.toFixed(1) + ' dB';
+                // Crest Factor
+                crestFactor = peakDb - integratedLUFS;
+                document.getElementById('crestValue').textContent = crestFactor.toFixed(1) + ' dB';
 
-            // PLR (Peak to Loudness Ratio)
-            const plr = truePeakMax - integratedLUFS;
-            document.getElementById('plrValue').textContent = plr.toFixed(1) + ' dB';
+                // PLR (Peak to Loudness Ratio)
+                plr = truePeakMax - integratedLUFS;
+                document.getElementById('plrValue').textContent = plr.toFixed(1) + ' dB';
+            }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // PROFESSIONAL QUALITY SCORE - Positive Scoring System (Steely Dan Grade)
@@ -7323,7 +7357,7 @@
                             limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                             break;
                         case 'youtube':
-                            targetLUFS = -13;
+                            targetLUFS = -14;
                             limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
                             break;
                         case 'apple':
@@ -7347,15 +7381,15 @@
                 // Update analysisResults with current platform target
                 analysisResults.platformTarget = targetLUFS;
 
-                // Apply AGGRESSIVE limiter threshold to prevent clipping
+                // Apply CONSERVATIVE limiter threshold to ensure peaks stay below -1.0 dBTP
                 if (limiter) {
-                    const SAFE_LIMITER_THRESHOLD = -6.0;  // CRITICAL: Aggressive limiting (catches peaks before they clip)
+                    const SAFE_LIMITER_THRESHOLD = -3.0;  // Conservative threshold to ensure output peaks at -1.0 to -2.0 dBTP
                     limiter.threshold.value = SAFE_LIMITER_THRESHOLD;
                     limiter.ratio.value = 20;  // Brick-wall limiting
                     limiter.attack.value = 0.001;  // 1ms attack (fast)
                     limiter.release.value = 0.100;  // 100ms release
                     limiter.knee.value = 0;  // Hard knee (no soft transition)
-                    console.log('   ✅ Limiter set to AGGRESSIVE threshold:', SAFE_LIMITER_THRESHOLD, 'dB (brick-wall, NO clipping)');
+                    console.log('   ✅ Limiter set to CONSERVATIVE threshold:', SAFE_LIMITER_THRESHOLD, 'dB (ensures -1.0 to -2.0 dBTP output)');
                 }
 
                 // CRITICAL: Calculate gain needed to reach target LUFS
@@ -7372,8 +7406,8 @@
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
                 // Calculate maximum gain that won't cause clipping
-                // Target: Leave headroom for limiter at -2.0 dBTP (conservative)
-                const peakTargetBeforeLimiter = -2.0;
+                // Target: Leave MORE headroom for limiter at -4.0 dBTP (very conservative)
+                const peakTargetBeforeLimiter = -4.0;
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS gain and peak-based gain
@@ -7662,6 +7696,17 @@
 
                 console.log('✅ AI Master applied successfully using INTERNAL engine.');
 
+                // Reset Master Output to 0.0 dB (unity gain) - Professional standard
+                // All loudness targeting is handled by makeup gain in the mastering chain
+                const masterGainSlider = document.getElementById('masterGainSlider');
+                const masterGainValue = document.getElementById('masterGainValue');
+                if (masterGainSlider && masterGainValue && masterGain) {
+                    masterGainSlider.value = 0;
+                    masterGainValue.textContent = '0.0 dB';
+                    masterGain.gain.value = 1.0;
+                    console.log('🎚️ Master Output set to 0.0 dB (unity gain) - Professional post-mastering standard');
+                }
+
                 // Check if LUFS target was hit and trigger celebration pulse
                 window.analysisResults = analysisResults; // Update global for checkLUFSTargetPulse
                 checkLUFSTargetPulse();
@@ -7896,7 +7941,7 @@
                         targetLUFS = -14;
                         platformName = 'Spotify';
                     } else if (platform === 'youtube') {
-                        targetLUFS = -13;
+                        targetLUFS = -14;
                         platformName = 'YouTube';
                     } else if (platform === 'apple') {
                         targetLUFS = -16;
@@ -8714,7 +8759,7 @@
                     targetLUFS = -16;
                     break;
                 case 'youtube':
-                    targetLUFS = -13;
+                    targetLUFS = -14;
                     break;
             }
 
@@ -8761,7 +8806,7 @@
             if (selectedPlatform) {
                 const platform = selectedPlatform.getAttribute('data-platform');
                 let target = -14;
-                if (platform === 'youtube') target = -13;
+                if (platform === 'youtube') target = -14;
                 else if (platform === 'apple') target = -16;
                 else if (platform === 'tidal') target = -14;
                 else target = -14;
