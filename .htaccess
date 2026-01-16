@@ -1,0 +1,131 @@
+# Apache Configuration for LuvLang Mastering Engine
+# Enables WebAssembly, SharedArrayBuffer, and Audio Worklets
+
+# ============================================================================
+# 1. MIME TYPES - Critical for WebAssembly
+# ============================================================================
+
+<IfModule mod_mime.c>
+    # WebAssembly MIME type (REQUIRED)
+    AddType application/wasm .wasm
+
+    # JavaScript
+    AddType application/javascript .js .mjs
+
+    # CSS
+    AddType text/css .css
+
+    # Audio
+    AddType audio/wav .wav
+    AddType audio/mpeg .mp3
+    AddType audio/ogg .ogg
+
+    # Fonts
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
+</IfModule>
+
+# ============================================================================
+# 2. CROSS-ORIGIN ISOLATION - Required for SharedArrayBuffer
+# ============================================================================
+
+<IfModule mod_headers.c>
+    # Enable SharedArrayBuffer and Audio Worklets (REQUIRED)
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+    Header always set Cross-Origin-Resource-Policy "cross-origin"
+
+    # Security headers
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# ============================================================================
+# 3. CACHING - Optimize performance
+# ============================================================================
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # WebAssembly - Cache forever (use versioning to invalidate)
+    ExpiresByType application/wasm "access plus 1 year"
+
+    # JavaScript - Cache forever
+    ExpiresByType application/javascript "access plus 1 year"
+
+    # CSS - Cache forever
+    ExpiresByType text/css "access plus 1 year"
+
+    # HTML - No cache (always get latest)
+    ExpiresByType text/html "access plus 0 seconds"
+
+    # Audio - No cache (streaming)
+    ExpiresByType audio/wav "access plus 0 seconds"
+    ExpiresByType audio/mpeg "access plus 0 seconds"
+
+    # Fonts - Cache forever
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Add cache control headers
+    <FilesMatch "\.(wasm|js|css|woff2|woff)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+
+    <FilesMatch "\.(wav|mp3|ogg)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
+# ============================================================================
+# 4. COMPRESSION - Brotli and Gzip
+# ============================================================================
+
+<IfModule mod_deflate.c>
+    # Enable Gzip compression
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/wasm
+
+    # Don't compress already compressed files
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|mp3|wav|woff2?)$ no-gzip
+</IfModule>
+
+# ============================================================================
+# 5. BROTLI COMPRESSION (if mod_brotli is available)
+# ============================================================================
+
+<IfModule mod_brotli.c>
+    # Serve pre-compressed Brotli files if available
+    RewriteEngine On
+    RewriteCond %{HTTP:Accept-Encoding} br
+    RewriteCond %{REQUEST_FILENAME}.br -f
+    RewriteRule ^(.*)$ $1.br [L]
+
+    # Set correct content type for .wasm.br files
+    <FilesMatch "\.wasm\.br$">
+        Header set Content-Type "application/wasm"
+        Header set Content-Encoding "br"
+    </FilesMatch>
+</IfModule>
+
+# ============================================================================
+# 6. ERROR HANDLING
+# ============================================================================
+
+# Ensure errors don't leak server info
+ServerSignature Off
+
+# Custom error pages (optional)
+# ErrorDocument 404 /404.html
+# ErrorDocument 500 /500.html

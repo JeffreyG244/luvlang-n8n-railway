@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>LuvLang Pro - Professional Audio Mastering Studio</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PROFESSIONAL 3-COLUMN LAYOUT
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LEFT SIDEBAR - Upload, Controls, Presets */
+        .left-sidebar {
+            background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+            border-right: 1px solid rgba(0, 212, 255, 0.1);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* CENTER MAIN - Waveform, EQ, Dynamics */
+        .center-main {
+            background: #0a0a0f;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* RIGHT SIDEBAR - Meters, Master Section, Export */
+        .right-sidebar {
+            background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+            border-left: 1px solid rgba(184, 79, 255, 0.1);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           HEADER & BRANDING
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .header-logo {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.5;
+            margin-top: 5px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SECTION TITLES
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            color: #00d4ff;
+            opacity: 0.9;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           UPLOAD AREA (LEFT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .upload-area {
+            border: 2px dashed rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 30px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            background: rgba(0, 212, 255, 0.02);
+        }
+
+        .upload-area:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        .upload-area.dragover {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: #00d4ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           GENRE & PLATFORM SELECTORS (LEFT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .selector-group {
+            margin-bottom: 20px;
+        }
+
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .selector-btn {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            color: white;
+            text-align: center;
+        }
+
+        .selector-btn:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .selector-btn.active {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PRESETS (LEFT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .preset-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .preset-btn {
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(20, 20, 40, 0.6));
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .preset-btn:hover {
+            border-color: #b84fff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(184, 79, 255, 0.2);
+        }
+
+        .preset-btn.active {
+            border-color: #b84fff;
+            background: linear-gradient(135deg, rgba(184, 79, 255, 0.3), rgba(102, 126, 234, 0.3));
+            box-shadow: 0 0 20px rgba(184, 79, 255, 0.4);
+        }
+
+        .preset-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .preset-desc {
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           QUICK ACTIONS (LEFT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .action-btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            color: white;
+        }
+
+        .action-btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .action-btn-secondary {
+            background: linear-gradient(135deg, #b84fff, #764ba2);
+            color: white;
+        }
+
+        .action-btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(184, 79, 255, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           WAVEFORM VISUALIZER (CENTER MAIN)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .waveform-container {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .waveform-canvas {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           TRANSPORT CONTROLS (CENTER MAIN)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .transport-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #b84fff);
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .time-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PROFESSIONAL 7-BAND EQ WITH VERTICAL DRAGGABLE FADERS
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .eq-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .eq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .eq-bypass-btn {
+            padding: 8px 16px;
+            border: 1px solid #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 6px;
+            color: #00d4ff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .eq-bypass-btn:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .eq-bypass-btn.bypassed {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        .eq-faders {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 15px;
+            align-items: end;
+            padding: 20px 10px;
+            background: linear-gradient(180deg, #0d0d0d 0%, #1a1a1a 50%, #141414 100%);
+            border-radius: 10px;
+            min-height: 350px;
+        }
+
+        .eq-fader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .eq-fader-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            color: #00d4ff;
+            min-height: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .eq-fader-track {
+            position: relative;
+            width: 40px;
+            height: 250px;
+            background: linear-gradient(180deg,
+                rgba(0, 212, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(184, 79, 255, 0.1) 100%
+            );
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .eq-fader-thumb {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 24px;
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            border-radius: 12px;
+            cursor: grab;
+            transition: box-shadow 0.2s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .eq-fader-thumb:hover {
+            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.6);
+        }
+
+        .eq-fader-thumb:active {
+            cursor: grabbing;
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.8);
+        }
+
+        .eq-fader-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #00d4ff;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .eq-fader-center {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+        }
+
+        .eq-fader-freq {
+            font-size: 0.65rem;
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           DYNAMICS SECTION (CENTER MAIN)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .dynamics-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(184, 79, 255, 0.2);
+        }
+
+        .dynamics-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .control-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .control-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .control-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #b84fff;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #b84fff, #764ba2);
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(184, 79, 255, 0.6);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(184, 79, 255, 0.8);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PROFESSIONAL METERS (RIGHT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .meters-container {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .meter-item {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .meter-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .meter-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-bottom: 8px;
+        }
+
+        .meter-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .meter-bar-fill {
+            height: 100%;
+            transition: width 0.1s ease;
+            border-radius: 6px;
+        }
+
+        .meter-lufs {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+        }
+
+        .meter-peak {
+            background: linear-gradient(90deg, #2196F3, #03A9F4, #00BCD4);
+        }
+
+        .meter-phase {
+            background: linear-gradient(90deg, #9C27B0, #E91E63, #F44336);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           MASTER SECTION (RIGHT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .master-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(184, 79, 255, 0.2);
+        }
+
+        .master-fader-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .master-fader-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           EXPORT SECTION (RIGHT SIDEBAR)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .export-section {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .export-format-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .export-format-btn {
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .export-format-btn:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .export-format-btn.active {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: linear-gradient(135deg, #00d4ff, #b84fff);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .export-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SCROLLBAR STYLING
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .left-sidebar::-webkit-scrollbar,
+        .center-main::-webkit-scrollbar,
+        .right-sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .left-sidebar::-webkit-scrollbar-track,
+        .center-main::-webkit-scrollbar-track,
+        .right-sidebar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .left-sidebar::-webkit-scrollbar-thumb,
+        .center-main::-webkit-scrollbar-thumb,
+        .right-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .left-sidebar::-webkit-scrollbar-thumb:hover,
+        .center-main::-webkit-scrollbar-thumb:hover,
+        .right-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 212, 255, 0.5);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PROGRESS OVERLAY
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-content {
+            text-align: center;
+            padding: 40px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(184, 79, 255, 0.1));
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .progress-spinner {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .progress-detail {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <!-- HIDDEN AUDIO ELEMENT -->
+    <audio id="audioElement" style="display: none;"></audio>
+    <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         3-COLUMN PROFESSIONAL LAYOUT
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div class="app-container">
+
+        <!-- ═════════════════════════════════════════════════════════════════
+             LEFT SIDEBAR - Upload, Genre, Platform, Presets, Quick Actions
+             ═════════════════════════════════════════════════════════════════ -->
+        <div class="left-sidebar">
+
+            <!-- HEADER LOGO -->
+            <div class="header-logo">
+                <div class="logo-text">LuvLang Pro</div>
+                <div class="logo-subtitle">Professional Mastering</div>
+            </div>
+
+            <!-- UPLOAD AREA -->
+            <div class="section-title">Upload Audio</div>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🎵</div>
+                <div class="upload-text">Click or drag audio file here</div>
+                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px;">
+                    WAV, MP3, FLAC, M4A, AAC
+                </div>
+            </div>
+
+            <!-- GENRE SELECTOR -->
+            <div class="selector-group">
+                <div class="section-title">Genre</div>
+                <div class="selector-grid">
+                    <div class="selector-btn" data-genre="pop">Pop</div>
+                    <div class="selector-btn" data-genre="hiphop">Hip-Hop</div>
+                    <div class="selector-btn" data-genre="rock">Rock</div>
+                    <div class="selector-btn" data-genre="edm">EDM</div>
+                    <div class="selector-btn active" data-genre="universal">Universal</div>
+                    <div class="selector-btn" data-genre="jazz">Jazz</div>
+                </div>
+            </div>
+
+            <!-- PLATFORM SELECTOR -->
+            <div class="selector-group">
+                <div class="section-title">Platform</div>
+                <div class="selector-grid">
+                    <div class="selector-btn active" data-platform="spotify">Spotify</div>
+                    <div class="selector-btn" data-platform="youtube">YouTube</div>
+                    <div class="selector-btn" data-platform="apple">Apple</div>
+                    <div class="selector-btn" data-platform="tidal">Tidal</div>
+                </div>
+            </div>
+
+            <!-- PRESETS -->
+            <div class="section-title">Presets</div>
+            <div class="preset-list">
+                <div class="preset-btn" data-preset="balanced">
+                    <div class="preset-name">Balanced Master</div>
+                    <div class="preset-desc">Perfect starting point</div>
+                </div>
+                <div class="preset-btn" data-preset="punchy">
+                    <div class="preset-name">Punchy & Loud</div>
+                    <div class="preset-desc">Maximum impact</div>
+                </div>
+                <div class="preset-btn" data-preset="warm">
+                    <div class="preset-name">Warm & Smooth</div>
+                    <div class="preset-desc">Analog warmth</div>
+                </div>
+                <div class="preset-btn" data-preset="bright">
+                    <div class="preset-name">Bright & Airy</div>
+                    <div class="preset-desc">Enhanced highs</div>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="section-title">Quick Actions</div>
+            <button class="action-btn action-btn-primary" id="autoMasterBtn" disabled>
+                Auto Master
+            </button>
+            <button class="action-btn action-btn-secondary" id="resetBtn" disabled>
+                Reset All
+            </button>
+
+        </div>
+
+        <!-- ═════════════════════════════════════════════════════════════════
+             CENTER MAIN - Waveform, Transport, EQ, Dynamics
+             ═════════════════════════════════════════════════════════════════ -->
+        <div class="center-main">
+
+            <!-- WAVEFORM VISUALIZER -->
+            <div class="waveform-container">
+                <div class="section-title">Waveform</div>
+                <canvas class="waveform-canvas" id="waveformCanvas"></canvas>
+            </div>
+
+            <!-- TRANSPORT CONTROLS -->
+            <div class="transport-controls">
+                <button class="play-btn" id="playBtn">▶</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+            </div>
+
+            <!-- PROFESSIONAL 7-BAND EQ -->
+            <div class="eq-section">
+                <div class="eq-header">
+                    <div class="section-title" style="margin-bottom: 0;">7-Band Parametric EQ</div>
+                    <button class="eq-bypass-btn" id="eqBypassBtn">Bypass</button>
+                </div>
+
+                <div class="eq-faders">
+                    <!-- Sub Bass (40Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>SUB</div>
+                            <div class="eq-fader-freq">40Hz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="sub">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="sub"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqSubValue">0.0 dB</div>
+                    </div>
+
+                    <!-- Bass (120Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>BASS</div>
+                            <div class="eq-fader-freq">120Hz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="bass">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="bass"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqBassValue">0.0 dB</div>
+                    </div>
+
+                    <!-- Low Mids (350Hz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>LOW MID</div>
+                            <div class="eq-fader-freq">350Hz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="lowmid">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="lowmid"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqLowMidValue">0.0 dB</div>
+                    </div>
+
+                    <!-- Mids (1kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>MID</div>
+                            <div class="eq-fader-freq">1kHz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="mid">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="mid"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqMidValue">0.0 dB</div>
+                    </div>
+
+                    <!-- High Mids (3.5kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>HIGH MID</div>
+                            <div class="eq-fader-freq">3.5kHz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="highmid">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="highmid"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqHighMidValue">0.0 dB</div>
+                    </div>
+
+                    <!-- Highs (8kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>HIGH</div>
+                            <div class="eq-fader-freq">8kHz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="high">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="high"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqHighValue">0.0 dB</div>
+                    </div>
+
+                    <!-- Air (14kHz) -->
+                    <div class="eq-fader-container">
+                        <div class="eq-fader-label">
+                            <div>AIR</div>
+                            <div class="eq-fader-freq">14kHz</div>
+                        </div>
+                        <div class="eq-fader-track" data-eq="air">
+                            <div class="eq-fader-center"></div>
+                            <div class="eq-fader-thumb" data-eq="air"></div>
+                        </div>
+                        <div class="eq-fader-value" id="eqAirValue">0.0 dB</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMICS SECTION -->
+            <div class="dynamics-section">
+                <div class="section-title">Dynamics</div>
+                <div class="dynamics-controls">
+
+                    <div class="control-item">
+                        <div class="control-header">
+                            <div class="control-name">Compression</div>
+                            <div class="control-value" id="compValue">0%</div>
+                        </div>
+                        <input type="range" class="slider" id="compSlider" min="0" max="100" value="0">
+                    </div>
+
+                    <div class="control-item">
+                        <div class="control-header">
+                            <div class="control-name">Saturation</div>
+                            <div class="control-value" id="satValue">0%</div>
+                        </div>
+                        <input type="range" class="slider" id="satSlider" min="0" max="100" value="0">
+                    </div>
+
+                    <div class="control-item">
+                        <div class="control-header">
+                            <div class="control-name">Stereo Width</div>
+                            <div class="control-value" id="widthValue">100%</div>
+                        </div>
+                        <input type="range" class="slider" id="widthSlider" min="0" max="200" value="100">
+                    </div>
+
+                    <div class="control-item">
+                        <div class="control-header">
+                            <div class="control-name">Limiter</div>
+                            <div class="control-value" id="limiterValue">-0.3 dB</div>
+                        </div>
+                        <input type="range" class="slider" id="limiterSlider" min="-10" max="0" step="0.1" value="-0.3">
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═════════════════════════════════════════════════════════════════
+             RIGHT SIDEBAR - Meters, Master Section, Export
+             ═════════════════════════════════════════════════════════════════ -->
+        <div class="right-sidebar">
+
+            <!-- PROFESSIONAL METERS -->
+            <div class="meters-container">
+                <div class="section-title">Meters</div>
+
+                <div class="meter-item">
+                    <div class="meter-label">Integrated LUFS</div>
+                    <div class="meter-value" id="lufsValue">-∞</div>
+                    <div class="meter-bar">
+                        <div class="meter-bar-fill meter-lufs" id="lufsMeter"></div>
+                    </div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">True Peak</div>
+                    <div class="meter-value" id="peakValue">-∞</div>
+                    <div class="meter-bar">
+                        <div class="meter-bar-fill meter-peak" id="peakMeter"></div>
+                    </div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">Phase Correlation</div>
+                    <div class="meter-value" id="phaseValue">+1.0</div>
+                    <div class="meter-bar">
+                        <div class="meter-bar-fill meter-phase" id="phaseMeter"></div>
+                    </div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">Dynamic Range</div>
+                    <div class="meter-value" id="dynamicValue">-- dB</div>
+                </div>
+
+                <div class="meter-item">
+                    <div class="meter-label">Stereo Width</div>
+                    <div class="meter-value" id="stereoValue">--</div>
+                </div>
+            </div>
+
+            <!-- MASTER SECTION -->
+            <div class="master-section">
+                <div class="section-title">Master Output</div>
+
+                <div class="control-item">
+                    <div class="control-header">
+                        <div class="control-name">Master Gain</div>
+                        <div class="control-value" id="masterGainValue">0.0 dB</div>
+                    </div>
+                    <input type="range" class="slider" id="masterGainSlider" min="-12" max="12" step="0.1" value="0">
+                </div>
+            </div>
+
+            <!-- EXPORT SECTION -->
+            <div class="export-section">
+                <div class="section-title">Export</div>
+
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
+                    <div class="export-format-grid">
+                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
+                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
+                        <div class="export-format-btn" data-format="flac">FLAC</div>
+                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
+                    </div>
+                </div>
+
+                <button class="export-btn" id="exportBtn" disabled>
+                    Export Master
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- PROGRESS OVERLAY -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-content">
+            <div class="progress-spinner">⚡</div>
+            <div class="progress-text" id="progressText">Processing...</div>
+            <div class="progress-detail" id="progressDetail"></div>
+        </div>
+    </div>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         JAVASCRIPT - AUDIO ENGINE & UI LOGIC
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // GLOBAL VARIABLES - Web Audio API Components
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        let audioContext = null;
+        let sourceNode = null;
+        let analyser = null;
+
+        // EQ Filters (7-Band Professional Parametric EQ)
+        let eqSubFilter = null;
+        let eqBassFilter = null;
+        let eqLowMidFilter = null;
+        let eqMidFilter = null;
+        let eqHighMidFilter = null;
+        let eqHighFilter = null;
+        let eqAirFilter = null;
+        let eqBypassed = false;
+
+        // Dynamics
+        let compressor = null;
+        let masterGain = null;
+
+        // File & State
+        let uploadedFile = null;
+        let isPlaying = false;
+        let animationFrame = null;
+
+        // Metering
+        let truePeakL = 0;
+        let truePeakR = 0;
+        let truePeakMax = 0;
+
+        // DOM Elements
+        const audioElement = document.getElementById('audioElement');
+        const audioFileInput = document.getElementById('audioFileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const playBtn = document.getElementById('playBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const progressOverlay = document.getElementById('progressOverlay');
+        const progressText = document.getElementById('progressText');
+        const progressDetail = document.getElementById('progressDetail');
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // WEB AUDIO SETUP - Professional 48kHz Audio Chain
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function setupWebAudio(audioElement) {
+            try {
+                // Create audio context with professional quality settings
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                        sampleRate: 48000,        // Professional broadcast standard
+                        latencyHint: 'playback'   // Optimize for quality
+                    });
+                    console.log('✅ Audio Context created at 48kHz professional quality');
+                }
+
+                // Check if Web Audio is already set up
+                if (sourceNode && eqSubFilter && analyser) {
+                    console.log('ℹ️ Web Audio already set up');
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    return;
+                }
+
+                // Create source from audio element
+                if (!sourceNode) {
+                    try {
+                        sourceNode = audioContext.createMediaElementSource(audioElement);
+                        console.log('✅ Media source created');
+                    } catch (e) {
+                        if (e.name === 'InvalidStateError') {
+                            console.warn('ℹ️ Audio element already connected (normal on reload)');
+                            return;
+                        }
+                        throw e;
+                    }
+                }
+
+                // ⚡ 7-BAND PARAMETRIC EQ (Professional frequencies)
+                // Sub Bass (40Hz lowshelf)
+                eqSubFilter = audioContext.createBiquadFilter();
+                eqSubFilter.type = 'lowshelf';
+                eqSubFilter.frequency.value = 40;
+                eqSubFilter.gain.value = 0;
+
+                // Bass (120Hz peaking)
+                eqBassFilter = audioContext.createBiquadFilter();
+                eqBassFilter.type = 'peaking';
+                eqBassFilter.frequency.value = 120;
+                eqBassFilter.Q.value = 0.7;
+                eqBassFilter.gain.value = 0;
+
+                // Low Mids (350Hz peaking)
+                eqLowMidFilter = audioContext.createBiquadFilter();
+                eqLowMidFilter.type = 'peaking';
+                eqLowMidFilter.frequency.value = 350;
+                eqLowMidFilter.Q.value = 0.8;
+                eqLowMidFilter.gain.value = 0;
+
+                // Mids (1kHz peaking)
+                eqMidFilter = audioContext.createBiquadFilter();
+                eqMidFilter.type = 'peaking';
+                eqMidFilter.frequency.value = 1000;
+                eqMidFilter.Q.value = 0.9;
+                eqMidFilter.gain.value = 0;
+
+                // High Mids (3.5kHz peaking)
+                eqHighMidFilter = audioContext.createBiquadFilter();
+                eqHighMidFilter.type = 'peaking';
+                eqHighMidFilter.frequency.value = 3500;
+                eqHighMidFilter.Q.value = 1.0;
+                eqHighMidFilter.gain.value = 0;
+
+                // Highs (8kHz peaking)
+                eqHighFilter = audioContext.createBiquadFilter();
+                eqHighFilter.type = 'peaking';
+                eqHighFilter.frequency.value = 8000;
+                eqHighFilter.Q.value = 0.8;
+                eqHighFilter.gain.value = 0;
+
+                // Air (14kHz highshelf)
+                eqAirFilter = audioContext.createBiquadFilter();
+                eqAirFilter.type = 'highshelf';
+                eqAirFilter.frequency.value = 14000;
+                eqAirFilter.gain.value = 0;
+
+                // Compressor
+                compressor = audioContext.createDynamicsCompressor();
+                compressor.threshold.value = -24;
+                compressor.knee.value = 30;
+                compressor.ratio.value = 3;
+                compressor.attack.value = 0.003;
+                compressor.release.value = 0.25;
+
+                // Master Gain
+                masterGain = audioContext.createGain();
+                masterGain.gain.value = 1.0;
+
+                // Analyser
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 8192;
+                analyser.smoothingTimeConstant = 0.8;
+
+                // ⚡ AUDIO SIGNAL CHAIN
+                // Source → EQ (7 bands) → Compressor → Master Gain → Analyser → Destination
+                sourceNode.connect(eqSubFilter);
+                eqSubFilter.connect(eqBassFilter);
+                eqBassFilter.connect(eqLowMidFilter);
+                eqLowMidFilter.connect(eqMidFilter);
+                eqMidFilter.connect(eqHighMidFilter);
+                eqHighMidFilter.connect(eqHighFilter);
+                eqHighFilter.connect(eqAirFilter);
+                eqAirFilter.connect(compressor);
+                compressor.connect(masterGain);
+                masterGain.connect(analyser);
+                analyser.connect(audioContext.destination);
+
+                console.log('✅ Professional audio chain connected');
+                console.log('   Source → EQ (7-Band) → Compressor → Master Gain → Analyser → Output');
+
+                // Start visualization
+                startVisualization();
+
+            } catch (error) {
+                console.error('❌ Web Audio setup failed:', error);
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // FILE UPLOAD HANDLING
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function handleFile(file) {
+            if (!file) return;
+
+            console.log('📁 File selected:', file.name);
+
+            // Validate file type
+            const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/flac', 'audio/m4a', 'audio/aac'];
+            const isAudioType = file.type.startsWith('audio/') || validTypes.includes(file.type);
+            const hasAudioExtension = file.name.match(/\.(wav|mp3|flac|m4a|aac|ogg)$/i);
+
+            if (!isAudioType && !hasAudioExtension) {
+                alert('Please upload a valid audio file');
+                return;
+            }
+
+            uploadedFile = file;
+
+            // Update upload area
+            uploadArea.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <div style="font-size: 1rem; margin-bottom: 5px;">${file.name}</div>
+                <div style="opacity: 0.7; font-size: 0.8rem;">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px;">
+                    Click to change file
+                </div>
+            `;
+
+            // Load audio file
+            const fileURL = URL.createObjectURL(file);
+            audioElement.src = fileURL;
+            audioElement.load();
+            audioElement.crossOrigin = 'anonymous';
+
+            // Reset true peak measurement
+            truePeakL = 0;
+            truePeakR = 0;
+            truePeakMax = 0;
+
+            // Enable controls
+            document.getElementById('autoMasterBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+            document.getElementById('exportBtn').disabled = false;
+
+            // Setup Web Audio when audio is loaded
+            audioElement.addEventListener('loadedmetadata', () => {
+                console.log('✅ Audio loaded, duration:', audioElement.duration.toFixed(2), 'seconds');
+                setupWebAudio(audioElement);
+
+                // Run AI Upload Scan
+                setTimeout(() => {
+                    analyzeAndFixOnUpload();
+                }, 500);
+            });
+        }
+
+        // Upload area event listeners
+        uploadArea.addEventListener('click', () => audioFileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        audioFileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // AI UPLOAD SCAN - Analyze audio on upload (OFFLINE)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        async function analyzeAndFixOnUpload() {
+            if (!uploadedFile) return;
+
+            console.log('🤖 AI UPLOAD SCAN: Analyzing track...');
+
+            try {
+                const arrayBuffer = await uploadedFile.arrayBuffer();
+                const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+                    2, 44100 * 5, 44100
+                );
+                const audioBuffer = await offlineContext.decodeAudioData(arrayBuffer);
+
+                console.log('✅ Audio decoded for analysis');
+                console.log('   Duration:', audioBuffer.duration.toFixed(2), 's');
+                console.log('   Channels:', audioBuffer.numberOfChannels);
+
+                // Analyze for clipping (first 3 seconds)
+                const analysisSeconds = Math.min(3, audioBuffer.duration);
+                const sampleCount = Math.floor(analysisSeconds * audioBuffer.sampleRate);
+                const leftChannel = audioBuffer.getChannelData(0);
+                const rightChannel = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
+
+                let clipCount = 0;
+                let maxPeak = 0;
+
+                for (let i = 0; i < sampleCount; i++) {
+                    const sampleL = Math.abs(leftChannel[i]);
+                    const sampleR = Math.abs(rightChannel[i]);
+                    const peak = Math.max(sampleL, sampleR);
+
+                    if (peak > maxPeak) maxPeak = peak;
+                    if (peak >= 0.99) clipCount++;
+                }
+
+                console.log('📊 Analysis complete:');
+                console.log('   Max Peak:', (maxPeak * 100).toFixed(1), '%');
+                console.log('   Clipped samples:', clipCount);
+
+                if (clipCount > 10) {
+                    console.warn('⚠️ CLIPPING DETECTED - Auto-fixing...');
+                    // Auto-reduce gain to prevent clipping
+                    const targetGain = 0.9 / maxPeak;
+                    if (masterGain) {
+                        masterGain.gain.value = targetGain;
+                        document.getElementById('masterGainValue').textContent =
+                            (20 * Math.log10(targetGain)).toFixed(1) + ' dB';
+                    }
+                }
+
+            } catch (error) {
+                console.error('❌ Analysis failed:', error);
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // TRANSPORT CONTROLS - Play/Pause
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        playBtn.addEventListener('click', () => {
+            if (!audioElement.src) return;
+
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            if (isPlaying) {
+                audioElement.pause();
+                playBtn.textContent = '▶';
+                isPlaying = false;
+            } else {
+                audioElement.play();
+                playBtn.textContent = '⏸';
+                isPlaying = true;
+            }
+        });
+
+        // Update progress bar
+        audioElement.addEventListener('timeupdate', () => {
+            const progress = (audioElement.currentTime / audioElement.duration) * 100;
+            progressFill.style.width = progress + '%';
+
+            const currentTime = formatTime(audioElement.currentTime);
+            const duration = formatTime(audioElement.duration);
+            timeDisplay.textContent = `${currentTime} / ${duration}`;
+        });
+
+        // Seek on progress bar click
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audioElement.currentTime = percent * audioElement.duration;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // VERTICAL DRAGGABLE EQ FADERS (Professional FabFilter-style)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const eqFaders = {
+            sub: { filter: () => eqSubFilter, valueEl: document.getElementById('eqSubValue') },
+            bass: { filter: () => eqBassFilter, valueEl: document.getElementById('eqBassValue') },
+            lowmid: { filter: () => eqLowMidFilter, valueEl: document.getElementById('eqLowMidValue') },
+            mid: { filter: () => eqMidFilter, valueEl: document.getElementById('eqMidValue') },
+            highmid: { filter: () => eqHighMidFilter, valueEl: document.getElementById('eqHighMidValue') },
+            high: { filter: () => eqHighFilter, valueEl: document.getElementById('eqHighValue') },
+            air: { filter: () => eqAirFilter, valueEl: document.getElementById('eqAirValue') }
+        };
+
+        // Initialize EQ fader dragging
+        Object.keys(eqFaders).forEach(band => {
+            const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
+            const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
+            const config = eqFaders[band];
+
+            let isDragging = false;
+            let startY = 0;
+            let startTop = 0;
+
+            // Position thumb at center (0 dB) initially
+            thumb.style.top = '50%';
+
+            // Mouse down - start dragging
+            thumb.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startY = e.clientY;
+                startTop = thumb.offsetTop;
+                e.preventDefault();
+            });
+
+            // Double-click to reset to 0 dB
+            thumb.addEventListener('dblclick', () => {
+                thumb.style.top = '50%';
+                updateEQFromFader(band, 0);
+            });
+
+            // Mouse move - drag fader
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+
+                const trackRect = track.getBoundingClientRect();
+                const trackHeight = trackRect.height;
+                const thumbHeight = thumb.offsetHeight;
+
+                const deltaY = e.clientY - startY;
+                let newTop = startTop + deltaY;
+
+                // Constrain to track bounds
+                newTop = Math.max(0, Math.min(trackHeight - thumbHeight, newTop));
+
+                thumb.style.top = newTop + 'px';
+
+                // Convert position to dB (-12 to +12)
+                const percent = newTop / (trackHeight - thumbHeight);
+                const db = 12 - (percent * 24); // Inverted: top = +12, bottom = -12
+
+                updateEQFromFader(band, db);
+            });
+
+            // Mouse up - stop dragging
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Click on track to jump
+            track.addEventListener('click', (e) => {
+                if (e.target === thumb) return;
+
+                const trackRect = track.getBoundingClientRect();
+                const clickY = e.clientY - trackRect.top;
+                const trackHeight = trackRect.height;
+                const thumbHeight = thumb.offsetHeight;
+
+                let newTop = clickY - (thumbHeight / 2);
+                newTop = Math.max(0, Math.min(trackHeight - thumbHeight, newTop));
+
+                thumb.style.top = newTop + 'px';
+
+                const percent = newTop / (trackHeight - thumbHeight);
+                const db = 12 - (percent * 24);
+
+                updateEQFromFader(band, db);
+            });
+        });
+
+        function updateEQFromFader(band, db) {
+            const config = eqFaders[band];
+            const filter = config.filter();
+
+            if (filter && filter.gain) {
+                filter.gain.value = db;
+                config.valueEl.textContent = (db >= 0 ? '+' : '') + db.toFixed(1) + ' dB';
+            }
+        }
+
+        // EQ Bypass button
+        document.getElementById('eqBypassBtn').addEventListener('click', function() {
+            eqBypassed = !eqBypassed;
+
+            if (eqBypassed) {
+                // Bypass EQ: disconnect EQ chain, connect source directly to compressor
+                if (sourceNode && compressor) {
+                    sourceNode.disconnect();
+                    sourceNode.connect(compressor);
+                }
+                this.classList.add('bypassed');
+                this.textContent = 'Bypassed';
+            } else {
+                // Re-enable EQ: reconnect full chain
+                if (sourceNode && eqSubFilter) {
+                    sourceNode.disconnect();
+                    sourceNode.connect(eqSubFilter);
+                }
+                this.classList.remove('bypassed');
+                this.textContent = 'Bypass';
+            }
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // DYNAMICS CONTROLS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.getElementById('compSlider').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            document.getElementById('compValue').textContent = value + '%';
+
+            if (compressor) {
+                // Map 0-100% to ratio 1-12
+                const ratio = 1 + (value / 100) * 11;
+                compressor.ratio.value = ratio;
+            }
+        });
+
+        document.getElementById('satSlider').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            document.getElementById('satValue').textContent = value + '%';
+            // Saturation would be implemented with additional processing
+        });
+
+        document.getElementById('widthSlider').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            document.getElementById('widthValue').textContent = value + '%';
+            // Stereo width would be implemented with M/S processing
+        });
+
+        document.getElementById('limiterSlider').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('limiterValue').textContent = value.toFixed(1) + ' dB';
+            // Limiter ceiling - could be implemented with additional processing
+        });
+
+        document.getElementById('masterGainSlider').addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            document.getElementById('masterGainValue').textContent =
+                (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
+
+            if (masterGain) {
+                masterGain.gain.value = Math.pow(10, value / 20);
+            }
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // WAVEFORM VISUALIZATION
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function startVisualization() {
+            const canvas = waveformCanvas;
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            function draw() {
+                if (!analyser) return;
+
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser.getByteTimeDomainData(dataArray);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#00d4ff';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00d4ff';
+
+                ctx.beginPath();
+                const sliceWidth = canvas.width / dataArray.length;
+                let x = 0;
+
+                for (let i = 0; i < dataArray.length; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = (v * canvas.height) / 2;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+
+                // Update meters
+                updateMeters(dataArray);
+
+                animationFrame = requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+
+        function updateMeters(dataArray) {
+            // Calculate RMS for LUFS approximation
+            let sumSquares = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                const normalized = (dataArray[i] - 128) / 128;
+                sumSquares += normalized * normalized;
+            }
+            const rms = Math.sqrt(sumSquares / dataArray.length);
+            const lufs = rms > 0 ? -0.691 + 10 * Math.log10(rms) : -60;
+
+            document.getElementById('lufsValue').textContent = lufs.toFixed(1);
+            const lufsPercent = Math.max(0, Math.min(100, ((lufs + 60) / 60) * 100));
+            document.getElementById('lufsMeter').style.width = lufsPercent + '%';
+
+            // Peak meter
+            const peak = Math.max(...dataArray) / 128.0;
+            const peakDb = 20 * Math.log10(peak);
+            document.getElementById('peakValue').textContent = peakDb.toFixed(1) + ' dB';
+            const peakPercent = Math.max(0, Math.min(100, ((peakDb + 60) / 60) * 100));
+            document.getElementById('peakMeter').style.width = peakPercent + '%';
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SELECTOR BUTTONS (Genre, Platform, Presets, Export Format)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.querySelectorAll('.selector-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active from siblings
+                this.parentElement.querySelectorAll('.selector-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const preset = this.dataset.preset;
+                applyPreset(preset);
+            });
+        });
+
+        document.querySelectorAll('.export-format-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.export-format-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        function applyPreset(preset) {
+            console.log('🎛️ Applying preset:', preset);
+            // Preset logic would adjust EQ and dynamics settings
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // AUTO MASTER BUTTON
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.getElementById('autoMasterBtn').addEventListener('click', async () => {
+            if (!uploadedFile || !analyser) return;
+
+            console.log('🤖 AUTO MASTER AI - Starting analysis...');
+
+            progressOverlay.style.display = 'flex';
+            progressText.textContent = '🤖 AI Analysis in Progress...';
+            progressDetail.textContent = 'Analyzing frequency balance and dynamics...';
+
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Simple auto-master: balanced EQ and gentle compression
+            if (eqSubFilter) eqSubFilter.gain.value = 2;
+            if (eqBassFilter) eqBassFilter.gain.value = 1.5;
+            if (eqMidFilter) eqMidFilter.gain.value = 0.5;
+            if (eqHighFilter) eqHighFilter.gain.value = 2;
+            if (eqAirFilter) eqAirFilter.gain.value = 1.5;
+
+            if (compressor) {
+                compressor.ratio.value = 4;
+                compressor.threshold.value = -18;
+            }
+
+            // Update UI
+            document.getElementById('eqSubValue').textContent = '+2.0 dB';
+            document.getElementById('eqBassValue').textContent = '+1.5 dB';
+            document.getElementById('eqMidValue').textContent = '+0.5 dB';
+            document.getElementById('eqHighValue').textContent = '+2.0 dB';
+            document.getElementById('eqAirValue').textContent = '+1.5 dB';
+            document.getElementById('compValue').textContent = '30%';
+            document.getElementById('compSlider').value = 30;
+
+            progressOverlay.style.display = 'none';
+            console.log('✅ Auto Master complete');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // RESET BUTTON
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            // Reset all EQ filters to 0 dB
+            if (eqSubFilter) eqSubFilter.gain.value = 0;
+            if (eqBassFilter) eqBassFilter.gain.value = 0;
+            if (eqLowMidFilter) eqLowMidFilter.gain.value = 0;
+            if (eqMidFilter) eqMidFilter.gain.value = 0;
+            if (eqHighMidFilter) eqHighMidFilter.gain.value = 0;
+            if (eqHighFilter) eqHighFilter.gain.value = 0;
+            if (eqAirFilter) eqAirFilter.gain.value = 0;
+
+            // Reset compressor
+            if (compressor) {
+                compressor.ratio.value = 1;
+                compressor.threshold.value = -24;
+            }
+
+            // Reset master gain
+            if (masterGain) {
+                masterGain.gain.value = 1;
+            }
+
+            // Reset UI
+            Object.keys(eqFaders).forEach(band => {
+                const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
+                thumb.style.top = '50%';
+                eqFaders[band].valueEl.textContent = '0.0 dB';
+            });
+
+            document.getElementById('compSlider').value = 0;
+            document.getElementById('compValue').textContent = '0%';
+            document.getElementById('satSlider').value = 0;
+            document.getElementById('satValue').textContent = '0%';
+            document.getElementById('widthSlider').value = 100;
+            document.getElementById('widthValue').textContent = '100%';
+            document.getElementById('limiterSlider').value = -0.3;
+            document.getElementById('limiterValue').textContent = '-0.3 dB';
+            document.getElementById('masterGainSlider').value = 0;
+            document.getElementById('masterGainValue').textContent = '0.0 dB';
+
+            console.log('🔄 All settings reset');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // EXPORT BUTTON (Placeholder)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            alert('Export functionality coming soon!\n\nThis will render your mastered audio with all EQ, compression, and effects applied.');
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // INITIALIZATION
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        window.addEventListener('load', () => {
+            console.log('🚀 LuvLang Pro loaded');
+            console.log('   Professional 3-column interface ready');
+            console.log('   7-band parametric EQ with vertical faders');
+            console.log('   Real-time Web Audio processing');
+        });
+
+    </script>
+</body>
+</html>

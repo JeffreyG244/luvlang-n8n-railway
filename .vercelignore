@@ -1,0 +1,60 @@
+# Vercel Deployment - Exclude Unnecessary Files
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Old/Test HTML files (keep only luvlang_LEGENDARY_COMPLETE.html)
+PROFESSIONAL_WAVEFORM.html
+SIMPLE_WAVEFORM.html
+TEST_WAVEFORM.html
+WAVEFORM_DIAGNOSTIC.html
+luvlang_PRECISION_MASTERING.html
+luvlang_PRO_INTERFACE.html
+luvlang_ULTIMATE_PROFESSIONAL.html
+luvlang_WORKING_VISUALIZATIONS.html
+
+# Documentation (large, not needed for production)
+*.md
+!README.md
+
+# Session summaries and status reports
+SESSION_*.md
+*_SUMMARY.md
+*_STATUS.md
+*_COMPLETE.md
+*_REPORT.md
+
+# Python scripts (backend, not needed for frontend deploy)
+*.py
+
+# Test files
+TEST_*.js
+*_TEST.js
+SIMPLE_*.js
+DIAGNOSTIC_*.js
+
+# Build artifacts and temp files
+*.log
+*.tmp
+.DS_Store
+.vscode/
+.idea/
+
+# Node modules (if any)
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Git files
+.git/
+.gitignore
+
+# Source maps
+*.map
+
+# Compiled WASM (will be built separately if needed)
+wasm/*.wasm.map
+
+# Backup files
+*.bak
+*~

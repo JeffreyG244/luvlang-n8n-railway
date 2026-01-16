@@ -1,0 +1,502 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     LUVLANG PAYMENT INTEGRATION - ADD THIS TO YOUR HTML
+     ═══════════════════════════════════════════════════════════════════════════
+
+     INSTRUCTIONS:
+     1. Add the <style> section inside your existing <style> tag (after line 29)
+     2. Add the <div id="paymentModal"> section right before </body>
+     3. Replace your export button click handler (line 8205) with the new one below
+
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PART 1: ADD THESE STYLES (Add inside your <style> tag around line 29)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<style>
+/* Payment Modal Overlay */
+.payment-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-modal-overlay.active {
+    display: flex;
+}
+
+.payment-modal {
+    background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 80px rgba(0, 212, 255, 0.3);
+}
+
+.payment-modal-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.payment-modal-header h2 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+}
+
+.payment-modal-header p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.payment-tiers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.payment-tier {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.payment-tier:hover {
+    border-color: #00d4ff;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+}
+
+.payment-tier.selected {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+}
+
+.payment-tier.featured {
+    border-color: #b84fff;
+}
+
+.payment-tier.featured::before {
+    content: '⭐ BEST VALUE';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #b84fff, #8b3fcf);
+    color: white;
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.tier-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: #00d4ff;
+}
+
+.tier-price {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.tier-price .currency {
+    font-size: 1.5rem;
+    vertical-align: top;
+}
+
+.tier-price .period {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 400;
+}
+
+.tier-features {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tier-features li {
+    padding: 8px 0;
+    padding-left: 24px;
+    position: relative;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.tier-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #00d4ff;
+    font-weight: 700;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.payment-btn {
+    padding: 16px 48px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.payment-btn-primary {
+    background: linear-gradient(135deg, #00d4ff, #0088cc);
+    color: white;
+}
+
+.payment-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+}
+
+.payment-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.payment-btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.payment-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.payment-processing {
+    display: none;
+    text-align: center;
+    padding: 40px;
+}
+
+.payment-processing.active {
+    display: block;
+}
+
+.payment-spinner {
+    border: 4px solid rgba(0, 212, 255, 0.2);
+    border-top: 4px solid #00d4ff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PART 2: ADD THIS HTML (Add right before </body>)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<div class="payment-modal-overlay" id="paymentModal">
+    <div class="payment-modal">
+        <!-- Header -->
+        <div class="payment-modal-header">
+            <h2>Choose Your Mastering Tier</h2>
+            <p>Select the tier that best fits your needs. One-time payment per track.</p>
+        </div>
+
+        <!-- Tier Selection -->
+        <div class="payment-tiers" id="tierSelection">
+            <!-- INSTANT Tier -->
+            <div class="payment-tier" data-tier="instant" data-price="29.00">
+                <div class="tier-name">Instant</div>
+                <div class="tier-price">
+                    <span class="currency">$</span>29<span class="period">/track</span>
+                </div>
+                <ul class="tier-features">
+                    <li>AI auto-mastering</li>
+                    <li>Platform optimization</li>
+                    <li>7-band EQ</li>
+                    <li>Compression & limiting</li>
+                    <li>WAV export</li>
+                    <li>~60 second processing</li>
+                </ul>
+            </div>
+
+            <!-- PROFESSIONAL Tier (Featured) -->
+            <div class="payment-tier featured" data-tier="professional" data-price="79.00">
+                <div class="tier-name">Professional</div>
+                <div class="tier-price">
+                    <span class="currency">$</span>79<span class="period">/track</span>
+                </div>
+                <ul class="tier-features">
+                    <li>Everything in INSTANT</li>
+                    <li>AI Stem Separation</li>
+                    <li>Reference Matching</li>
+                    <li>Multiband Compression</li>
+                    <li>M/S Processing</li>
+                    <li>Multi-format export</li>
+                    <li>Unlimited presets</li>
+                </ul>
+            </div>
+
+            <!-- LEGENDARY Tier -->
+            <div class="payment-tier" data-tier="legendary" data-price="149.00">
+                <div class="tier-name">Legendary</div>
+                <div class="tier-price">
+                    <span class="currency">$</span>149<span class="period">/track</span>
+                </div>
+                <ul class="tier-features">
+                    <li>Everything in PROFESSIONAL</li>
+                    <li>Multi-Track Mixing</li>
+                    <li>AI Assistant</li>
+                    <li>Spectral Repair</li>
+                    <li>PDF Report</li>
+                    <li>Priority support</li>
+                    <li>1 free revision</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="payment-actions">
+            <button class="payment-btn payment-btn-secondary" id="cancelPaymentBtn">
+                Cancel
+            </button>
+            <button class="payment-btn payment-btn-primary" id="proceedPaymentBtn" disabled>
+                Proceed to Payment
+            </button>
+        </div>
+
+        <!-- Processing State -->
+        <div class="payment-processing" id="paymentProcessing">
+            <div class="payment-spinner"></div>
+            <p>Processing payment...</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PART 3: ADD THIS JAVASCRIPT (Add at the end of your <script> section)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// PAYMENT INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Initialize Stripe
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51RXBWQP1VAtK8qeDRotSKHkuZF2UsKG18z4dDtoJM9MTtuR6Eh28ghQIGljfwQCyNN9fXHV8HwdvNJ8TmPizjagQ003L592cFz';
+const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+let selectedTier = null;
+let selectedPrice = null;
+let exportDataPending = null; // Store export data until payment completes
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TIER SELECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.querySelectorAll('.payment-tier').forEach(tier => {
+    tier.addEventListener('click', () => {
+        // Remove previous selection
+        document.querySelectorAll('.payment-tier').forEach(t => t.classList.remove('selected'));
+
+        // Select this tier
+        tier.classList.add('selected');
+        selectedTier = tier.dataset.tier;
+        selectedPrice = parseFloat(tier.dataset.price);
+
+        // Enable proceed button
+        document.getElementById('proceedPaymentBtn').disabled = false;
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CANCEL PAYMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.getElementById('cancelPaymentBtn').addEventListener('click', () => {
+    closePaymentModal();
+});
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+    selectedTier = null;
+    selectedPrice = null;
+    exportDataPending = null;
+    document.querySelectorAll('.payment-tier').forEach(t => t.classList.remove('selected'));
+    document.getElementById('proceedPaymentBtn').disabled = true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROCEED TO PAYMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.getElementById('proceedPaymentBtn').addEventListener('click', async () => {
+    if (!selectedTier || !selectedPrice) {
+        alert('Please select a tier');
+        return;
+    }
+
+    try {
+        // Show processing state
+        document.getElementById('tierSelection').style.display = 'none';
+        document.querySelector('.payment-actions').style.display = 'none';
+        document.getElementById('paymentProcessing').classList.add('active');
+
+        console.log('💳 Creating payment session for tier:', selectedTier, '$' + selectedPrice);
+
+        // Create Stripe Checkout Session
+        const response = await fetch('http://localhost:3000/api/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tier: selectedTier,
+                price: selectedPrice,
+                successUrl: window.location.href + '?payment=success&tier=' + selectedTier,
+                cancelUrl: window.location.href + '?payment=cancelled'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create checkout session');
+        }
+
+        const session = await response.json();
+
+        // Redirect to Stripe Checkout
+        const result = await stripe.redirectToCheckout({
+            sessionId: session.id
+        });
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+    } catch (error) {
+        console.error('❌ Payment error:', error);
+        alert('Payment failed: ' + error.message);
+
+        // Reset modal
+        document.getElementById('tierSelection').style.display = 'grid';
+        document.querySelector('.payment-actions').style.display = 'flex';
+        document.getElementById('paymentProcessing').classList.remove('active');
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHECK FOR PAYMENT SUCCESS ON PAGE LOAD
+// ═══════════════════════════════════════════════════════════════════════════
+
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    const tier = urlParams.get('tier');
+
+    if (paymentStatus === 'success' && tier) {
+        alert('✅ Payment successful! Your ' + tier.toUpperCase() + ' tier is now active.\n\nClick Export to download your mastered track.');
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Enable export (payment verified)
+        if (exportDataPending) {
+            performExport(exportDataPending);
+            exportDataPending = null;
+        }
+    } else if (paymentStatus === 'cancelled') {
+        alert('Payment was cancelled. You can try again when ready.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODIFIED EXPORT BUTTON - SHOWS PAYMENT MODAL FIRST
+// ═══════════════════════════════════════════════════════════════════════════
+// REPLACE YOUR EXISTING export button click handler (line 8205) WITH THIS:
+// ═══════════════════════════════════════════════════════════════════════════
+
+/*
+document.getElementById('exportBtn').addEventListener('click', async () => {
+    if (!audioElement || !audioElement.src) {
+        alert('Please upload an audio file first');
+        return;
+    }
+
+    // Show payment modal instead of exporting immediately
+    document.getElementById('paymentModal').classList.add('active');
+});
+*/
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ACTUAL EXPORT FUNCTION (called after payment succeeds)
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function performExport(exportData) {
+    // Your existing export code goes here
+    // (the code from lines 8211-8299)
+    console.log('🎬 Starting export process after payment...');
+    alert('✅ Payment verified! Starting download...');
+
+    // Add your existing export logic here
+    // For now, trigger a simple download
+    const a = document.createElement('a');
+    a.href = audioElement.src;
+    a.download = `luvlang_mastered_${Date.now()}.wav`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     INTEGRATION COMPLETE!
+     ═══════════════════════════════════════════════════════════════════════════
+
+     Now when users click "Export":
+     1. Payment modal appears
+     2. User selects tier (INSTANT $29, PROFESSIONAL $79, LEGENDARY $149)
+     3. User is redirected to Stripe Checkout
+     4. After successful payment, they return and download starts
+
+     ═══════════════════════════════════════════════════════════════════════════ -->

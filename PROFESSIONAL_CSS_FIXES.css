@@ -1,0 +1,420 @@
+/**
+ * LUVLANG PROFESSIONAL CSS FIXES
+ * Addresses all CSS structure improvements for pro-grade UI
+ */
+
+/* ============================================================================
+   1. EQ FADER THUMB - FIXED HOVER/ACTIVE STATES WITH PROPER CENTERING
+   ============================================================================ */
+
+.eq-fader-thumb {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);  /* Always maintain horizontal center */
+    width: 40px;
+    height: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    transition: all 0.15s ease;
+    z-index: 10;
+}
+
+.eq-fader-thumb:hover {
+    /* Keep translateX(-50%) for horizontal centering during hover */
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+}
+
+.eq-fader-thumb:active {
+    cursor: grabbing;
+    /* Maintain centering while actively dragging */
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.8);
+}
+
+/* During drag, JavaScript must update only the 'top' property, not transform */
+.eq-fader-thumb.dragging {
+    transition: none;  /* Disable transitions during drag for smooth movement */
+    transform: translateX(-50%);  /* Lock horizontal centering */
+}
+
+/* ============================================================================
+   2. ANALYSIS PANEL - ENHANCED DISPLAY STATES
+   ============================================================================ */
+
+.analysis-panel {
+    display: none;  /* Hidden by default until AI analysis runs */
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    animation: slideIn 0.3s ease-out;
+}
+
+.analysis-panel.visible {
+    display: block;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   3. CANVAS ELEMENTS - PROPER SIZING AND RENDERING
+   ============================================================================ */
+
+.eq-graph-canvas,
+.waveform-canvas,
+.vectorscope-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #0a0a0f;
+    border-radius: 8px;
+    /* Ensure sharp rendering for audio visualizations */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Container for canvas elements must have explicit dimensions */
+.eq-graph-container,
+.waveform-container,
+.vectorscope-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    min-height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* ============================================================================
+   4. PROFESSIONAL METER IMPROVEMENTS
+   ============================================================================ */
+
+.meter-bar {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.meter-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.15s ease-out;
+    /* Gradient will be set per meter type in JS */
+}
+
+/* Meter value with dynamic color coding */
+.meter-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 8px;
+    transition: color 0.2s ease;
+}
+
+.meter-value.critical {
+    color: #ff4444;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.meter-value.warning {
+    color: #ffaa00;
+}
+
+.meter-value.good {
+    color: #00ff88;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* ============================================================================
+   5. ENHANCED SLIDER CONTROLS (For custom sliders/faders)
+   ============================================================================ */
+
+/* Remove default styling for better custom controls */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+    transition: background 0.2s ease;
+}
+
+input[type="range"]:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+    transition: all 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.6);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+    transition: all 0.15s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.6);
+}
+
+/* ============================================================================
+   6. BUTTON IMPROVEMENTS - PROFESSIONAL INTERACTIONS
+   ============================================================================ */
+
+.btn-primary,
+.legendary-btn {
+    position: relative;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    overflow: hidden;
+}
+
+.btn-primary:hover,
+.legendary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.btn-primary:active,
+.legendary-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* Ripple effect on click */
+.btn-primary::after,
+.legendary-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-primary:active::after,
+.legendary-btn:active::after {
+    width: 200px;
+    height: 200px;
+}
+
+/* ============================================================================
+   7. EXPORT FORMAT GRID - ENHANCED SELECTION
+   ============================================================================ */
+
+.export-format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.export-format-btn {
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.export-format-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(102, 126, 234, 0.5);
+    color: #ffffff;
+}
+
+.export-format-btn.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+    border-color: #667eea;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================================================
+   8. RESPONSIVE IMPROVEMENTS
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .eq-fader-thumb {
+        width: 35px;
+        height: 14px;
+    }
+    
+    .meter-value {
+        font-size: 1rem;
+    }
+    
+    .export-format-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .eq-fader-thumb {
+        width: 30px;
+        height: 12px;
+    }
+    
+    .meter-value {
+        font-size: 0.9rem;
+    }
+    
+    .btn-primary,
+    .legendary-btn {
+        padding: 10px 20px;
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================================================
+   9. ACCESSIBILITY IMPROVEMENTS
+   ============================================================================ */
+
+/* Focus states for keyboard navigation */
+.eq-fader-thumb:focus,
+input[type="range"]:focus,
+.btn-primary:focus,
+.legendary-btn:focus,
+.export-format-btn:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .meter-bar {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .eq-fader-thumb {
+        border: 2px solid #ffffff;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================================================
+   10. LOADING STATES
+   ============================================================================ */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 15, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.loading-detail {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}

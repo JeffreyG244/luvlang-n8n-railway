@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Professional Waveform</title>
+    <style>
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: 'Segoe UI', Arial;
+            padding: 40px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00d4ff;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        #waveformCanvas {
+            border-radius: 8px;
+            display: block;
+            margin: 20px 0;
+            background: linear-gradient(180deg, #0f0f15 0%, #1a1a25 50%, #0f0f15 100%);
+            box-shadow:
+                inset 0 2px 4px rgba(0,0,0,0.5),
+                0 4px 20px rgba(0, 212, 255, 0.1);
+            cursor: pointer;
+        }
+        button {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            margin: 10px 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            transition: all 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+        input[type="file"] {
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            margin: 10px 0;
+        }
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+        .info {
+            background: rgba(0, 212, 255, 0.05);
+            border-left: 3px solid #00d4ff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎛️ PROFESSIONAL WAVEFORM DISPLAY</h1>
+
+        <input type="file" id="fileInput" accept="audio/*">
+        <br>
+        <button onclick="drawWaveform()">🎨 DRAW WAVEFORM</button>
+        <button onclick="toggleStereo()">🔊 TOGGLE STEREO/MONO</button>
+        <br>
+
+        <div class="info" id="info">Load an audio file to visualize</div>
+
+        <canvas id="waveformCanvas" width="1200" height="240"></canvas>
+
+        <audio id="audio" controls></audio>
+    </div>
+
+    <script>
+        let audioBuffer = null;
+        let audioContext = null;
+        let audioElement = null;
+        let animationId = null;
+        let showStereo = false;
+
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('info').innerHTML = `⏳ Loading: <strong>${file.name}</strong>...`;
+
+            // Create audio context
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Load into audio element
+            audioElement = document.getElementById('audio');
+            audioElement.src = URL.createObjectURL(file);
+
+            // Decode for waveform
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+                const duration = audioBuffer.duration.toFixed(1);
+                const channels = audioBuffer.numberOfChannels;
+                document.getElementById('info').innerHTML =
+                    `✅ Loaded: <strong>${file.name}</strong> • ${duration}s • ${channels} channel${channels > 1 ? 's' : ''}`;
+
+                // Auto-draw
+                drawWaveform();
+                startPlayheadAnimation();
+            } catch (error) {
+                document.getElementById('info').innerHTML = `❌ Error loading file: ${error.message}`;
+            }
+        });
+
+        function toggleStereo() {
+            showStereo = !showStereo;
+            drawWaveform();
+        }
+
+        function drawWaveform() {
+            if (!audioBuffer) {
+                alert('⚠️ Load an audio file first!');
+                return;
+            }
+
+            const canvas = document.getElementById('waveformCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear with gradient background
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+            bgGradient.addColorStop(0, '#0f0f15');
+            bgGradient.addColorStop(0.5, '#1a1a25');
+            bgGradient.addColorStop(1, '#0f0f15');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, width, height);
+
+            if (showStereo && audioBuffer.numberOfChannels >= 2) {
+                // STEREO MODE - Split display
+                drawChannel(ctx, audioBuffer.getChannelData(0), width, height / 2, 0, '#00d4ff', '#0088cc');
+                drawChannel(ctx, audioBuffer.getChannelData(1), width, height / 2, height / 2, '#b84fff', '#7700cc');
+
+                // Center divider
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+            } else {
+                // MONO MODE - Full height
+                drawChannel(ctx, audioBuffer.getChannelData(0), width, height, 0, '#00d4ff', '#0088cc');
+            }
+
+            // Grid lines
+            drawGrid(ctx, width, height);
+        }
+
+        function drawChannel(ctx, data, width, height, offsetY, color1, color2) {
+            const step = Math.ceil(data.length / width);
+            const amp = height / 2;
+            const centerY = offsetY + height / 2;
+
+            // Create gradient for waveform
+            const gradient = ctx.createLinearGradient(0, offsetY, 0, offsetY + height);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(0.5, color2);
+            gradient.addColorStop(1, color1);
+
+            // Draw filled waveform
+            ctx.fillStyle = gradient;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+
+            // Top half
+            for (let i = 0; i < width; i++) {
+                let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const index = i * step + j;
+                    if (index < data.length && Math.abs(data[index]) > max) {
+                        max = Math.abs(data[index]);
+                    }
+                }
+                const y = centerY - (max * amp);
+                ctx.lineTo(i, y);
+            }
+
+            // Bottom half (reverse)
+            for (let i = width - 1; i >= 0; i--) {
+                let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const index = i * step + j;
+                    if (index < data.length && Math.abs(data[index]) > max) {
+                        max = Math.abs(data[index]);
+                    }
+                }
+                const y = centerY + (max * amp);
+                ctx.lineTo(i, y);
+            }
+
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            // Draw outline for definition
+            ctx.strokeStyle = color1;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+
+            for (let i = 0; i < width; i++) {
+                let max = -1.0;
+                for (let j = 0; j < step; j++) {
+                    const index = i * step + j;
+                    if (index < data.length && Math.abs(data[index]) > max) {
+                        max = Math.abs(data[index]);
+                    }
+                }
+                const y = centerY - (max * amp);
+                if (i === 0) ctx.moveTo(i, y);
+                else ctx.lineTo(i, y);
+            }
+
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
+            // Center line
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+        }
+
+        function drawGrid(ctx, width, height) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+
+            // Vertical grid (time markers)
+            for (let i = 0; i < 10; i++) {
+                const x = (width / 10) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+        }
+
+        function startPlayheadAnimation() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+
+            function animate() {
+                if (!audioElement || !audioBuffer) return;
+
+                const canvas = document.getElementById('waveformCanvas');
+                const ctx = canvas.getContext('2d');
+
+                if (!audioElement.paused && audioElement.duration > 0) {
+                    const progress = audioElement.currentTime / audioElement.duration;
+                    const x = progress * canvas.width;
+
+                    // Redraw waveform
+                    drawWaveform();
+
+                    // Draw playhead
+                    const gradient = ctx.createLinearGradient(x - 20, 0, x + 20, 0);
+                    gradient.addColorStop(0, 'rgba(255, 149, 0, 0)');
+                    gradient.addColorStop(0.5, 'rgba(255, 149, 0, 0.8)');
+                    gradient.addColorStop(1, 'rgba(255, 149, 0, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x - 20, 0, 40, canvas.height);
+
+                    ctx.strokeStyle = '#ff9500';
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = 'rgba(255, 149, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // Click to seek
+        document.getElementById('waveformCanvas').addEventListener('click', function(e) {
+            if (!audioElement || !audioElement.duration) return;
+
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const progress = x / rect.width;
+            audioElement.currentTime = progress * audioElement.duration;
+        });
+    </script>
+</body>
+</html>
