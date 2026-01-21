@@ -8,13 +8,17 @@
 const SUPABASE_URL = 'https://jzclawsctaczhgvfpssx.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_9Bf4Bt5Y91aGdpFfYs7Zrg_mozxhGDA';
 
-// Initialize Supabase client
-let supabase = null;
+// Initialize Supabase client instance (NOT the library itself)
+let supabaseClient = null;
 let currentUser = null;
 
-// Make supabase available globally for payment integration
+// Store reference to Supabase library (loaded from CDN)
+let supabaseLib = null;
+
+// Make client available globally for payment integration
 if (typeof window !== 'undefined') {
-    window.supabase = null;
+    // DON'T overwrite window.supabase - that's the library from CDN!
+    window.supabaseClient = null;
     window.currentUser = null;
 }
 
@@ -41,7 +45,7 @@ async function initializeSupabase() {
         });
     }
 
-    if (isInitialized && supabase) {
+    if (isInitialized && supabaseClient) {
         console.log('✅ Supabase already initialized');
         return true;
     }
@@ -49,28 +53,33 @@ async function initializeSupabase() {
     isInitializing = true;
 
     try {
-        // Check if @supabase/supabase-js is loaded
-        if (!window.supabase || !window.supabase.createClient) {
+        // Check if @supabase/supabase-js is loaded from CDN
+        // The CDN script creates window.supabase with createClient method
+        supabaseLib = window.supabase;
+
+        if (!supabaseLib || !supabaseLib.createClient) {
             console.warn('⚠️ Supabase library not loaded yet, waiting...');
             // Wait a moment for CDN to load
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            if (!window.supabase || !window.supabase.createClient) {
+            supabaseLib = window.supabase;
+
+            if (!supabaseLib || !supabaseLib.createClient) {
                 throw new Error('Supabase library not loaded. Add <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> to your HTML.');
             }
         }
 
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Make globally available
-        window.supabaseClient = supabase;
+        window.supabaseClient = supabaseClient;
 
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
         // Try to check auth session, but don't block if it fails
         try {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
 
             if (error) {
                 console.warn('⚠️ Auth session check failed:', error.message);
@@ -80,6 +89,11 @@ async function initializeSupabase() {
                 window.currentUser = currentUser;
                 console.log('👤 User already logged in:', currentUser.email);
                 updateUIForLoggedInUser();
+
+                // Verify tier with server after login
+                if (typeof initializeTierSystem === 'function') {
+                    initializeTierSystem();
+                }
             } else {
                 console.log('👤 No active session');
                 updateUIForLoggedOutUser();
@@ -91,13 +105,18 @@ async function initializeSupabase() {
 
         // Listen for auth state changes
         try {
-            supabase.auth.onAuthStateChange((event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
 
                 if (session) {
                     currentUser = session.user;
                     window.currentUser = currentUser;
                     updateUIForLoggedInUser();
+
+                    // Re-verify tier on login
+                    if (typeof initializeTierSystem === 'function') {
+                        initializeTierSystem();
+                    }
                 } else {
                     currentUser = null;
                     window.currentUser = null;
@@ -126,7 +145,7 @@ async function initializeSupabase() {
  */
 async function signUp(email, password, displayName) {
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -158,7 +177,7 @@ async function signUp(email, password, displayName) {
  */
 async function signIn(email, password) {
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
@@ -181,7 +200,7 @@ async function signIn(email, password) {
  */
 async function signOut() {
     try {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
 
         if (error) throw error;
 
@@ -201,7 +220,7 @@ async function signOut() {
  */
 async function createUserProfile(userId, email, displayName) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_profiles')
             .insert([
                 {
@@ -234,7 +253,7 @@ async function savePreset(presetName, presetData) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_presets')
             .insert([
                 {
@@ -269,7 +288,7 @@ async function loadPresets() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_presets')
             .select('*')
             .eq('user_id', currentUser.id)
@@ -296,7 +315,7 @@ async function saveMasteringHistory(sessionData) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('mastering_history')
             .insert([
                 {
@@ -332,7 +351,7 @@ async function loadMasteringHistory(limit = 10) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('mastering_history')
             .select('*')
             .eq('user_id', currentUser.id)
@@ -359,7 +378,7 @@ async function getUserSubscription() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_profiles')
             .select('subscription_tier')
             .eq('id', currentUser.id)
@@ -368,7 +387,7 @@ async function getUserSubscription() {
         if (error) throw error;
 
         // Get tier limits from subscription_tiers table
-        const { data: tierData, error: tierError } = await supabase
+        const { data: tierData, error: tierError } = await supabaseClient
             .from('subscription_tiers')
             .select('*')
             .eq('tier_name', data.subscription_tier)
