@@ -2,16 +2,24 @@
  * STRIPE PAYMENT INTEGRATION
  * Handles per-song purchases for LuvLang Mastering
  * Tiers: INSTANT ($9.99), PRECISION ($19.99), LEGENDARY ($29.99)
+ *
+ * SECURITY: Keys loaded from config.js - never hardcode in production
  */
-
-// Stripe configuration
-// ⚠️ REPLACE WITH YOUR ACTUAL STRIPE PUBLISHABLE KEY
-// Get this from: https://dashboard.stripe.com/apikeys
-const STRIPE_PUBLISHABLE_KEY = 'pk_test_51RXBWQP1VAtK8qeDRotSKHkuZF2UsKG18z4dDtoJM9MTtuR6Eh28ghQIGljfwQCyNN9fXHV8HwdvNJ8TmPizjagQ003L592cFz';
 
 // Initialize Stripe
 let stripe = null;
 let currentPurchaseData = null;
+
+/**
+ * Get Stripe publishable key from config
+ */
+function getStripePublishableKey() {
+    if (typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.stripe) {
+        return LUVLANG_CONFIG.stripe.publishableKey;
+    }
+    console.warn('⚠️ LUVLANG_CONFIG not loaded, using fallback');
+    return null;
+}
 
 /**
  * Initialize Stripe client
@@ -25,10 +33,23 @@ async function initializeStripe() {
             return false;
         }
 
+        // Get publishable key from config
+        const publishableKey = getStripePublishableKey();
+        if (!publishableKey) {
+            console.error('❌ Stripe publishable key not configured');
+            return false;
+        }
+
         // Initialize Stripe with publishable key
-        stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        stripe = Stripe(publishableKey);
 
         console.log('✅ Stripe client initialized');
+
+        // Log mode (test vs live)
+        if (typeof LUVLANG_CONFIG !== 'undefined') {
+            console.log(`💳 Stripe mode: ${LUVLANG_CONFIG.isProduction ? 'LIVE' : 'TEST'}`);
+        }
+
         return true;
 
     } catch (error) {
@@ -118,6 +139,18 @@ const MASTERING_TIERS = {
 };
 
 /**
+ * Get the API base URL from config
+ */
+function getApiBaseUrl() {
+    if (typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.isProduction) {
+        // Production: use the Vercel API routes or your server
+        return process.env.API_URL || '';
+    }
+    // Development: use local server
+    return 'http://localhost:3000';
+}
+
+/**
  * Create a Stripe Checkout session for a tier
  *
  * @param {string} tierSlug - 'instant', 'precision', or 'legendary'
@@ -136,76 +169,99 @@ async function createCheckoutSession(tierSlug, sessionData = {}) {
         return { success: false, error: 'Invalid tier' };
     }
 
-    try {
-        // Store session data for later
-        currentPurchaseData = {
-            tierSlug: tierSlug,
-            tierName: tier.name,
-            price: tier.price,
-            filename: sessionData.filename || 'untitled',
-            targetLUFS: sessionData.targetLUFS || -14.0,
-            finalLUFS: sessionData.finalLUFS,
-            truePeak: sessionData.truePeak,
-            settings: sessionData.settings || {},
-            timestamp: new Date().toISOString()
-        };
+    // Store session data for later
+    currentPurchaseData = {
+        tierSlug: tierSlug,
+        tierName: tier.name,
+        price: tier.price,
+        filename: sessionData.filename || 'untitled',
+        targetLUFS: sessionData.targetLUFS || -14.0,
+        finalLUFS: sessionData.finalLUFS,
+        truePeak: sessionData.truePeak,
+        settings: sessionData.settings || {},
+        timestamp: new Date().toISOString()
+    };
 
-        // For client-side only implementation (no backend):
-        // We'll use Stripe Payment Links or Checkout Sessions
+    // Check if we're in demo mode
+    const isDemoMode = typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.features?.demoMode;
 
-        // OPTION 1: Redirect to Stripe Payment Link (easiest, no backend needed)
-        // You create these in Stripe Dashboard → Products → Payment Links
-        const paymentLinks = {
-            instant: 'https://buy.stripe.com/test_INSTANT_LINK',
-            precision: 'https://buy.stripe.com/test_PRECISION_LINK',
-            legendary: 'https://buy.stripe.com/test_LEGENDARY_LINK'
-        };
-
-        // Store session data in localStorage before redirect
-        localStorage.setItem('pendingPurchase', JSON.stringify(currentPurchaseData));
-
-        console.log(`💳 Redirecting to Stripe Checkout for ${tier.name} tier ($${tier.price})`);
-
-        // Redirect to payment link
-        // window.location.href = paymentLinks[tierSlug];
-
-        // OPTION 2: Use Stripe Checkout with a backend (recommended for production)
-        // This requires a server endpoint to create checkout sessions
-
-        // For now, we'll simulate the checkout for testing
+    if (isDemoMode) {
         console.log('🧪 DEMO MODE: Simulating payment for development');
         console.log('Purchase data:', currentPurchaseData);
-
-        // In production, you would call your backend:
-        /*
-        const response = await fetch('/api/create-checkout-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                tierSlug: tierSlug,
-                sessionData: sessionData,
-                successUrl: window.location.origin + '/success?session_id={CHECKOUT_SESSION_ID}',
-                cancelUrl: window.location.origin + '/cancel'
-            })
-        });
-
-        const session = await response.json();
-
-        // Redirect to Stripe Checkout
-        const result = await stripe.redirectToCheckout({
-            sessionId: session.id
-        });
-
-        if (result.error) {
-            throw new Error(result.error.message);
-        }
-        */
+        localStorage.setItem('pendingPurchase', JSON.stringify(currentPurchaseData));
 
         return {
             success: true,
-            message: 'Checkout initiated',
+            demoMode: true,
+            message: 'Demo checkout initiated',
             tier: tier.name,
             price: tier.price
+        };
+    }
+
+    try {
+        // Get user ID if logged in
+        let userId = null;
+        if (typeof supabase !== 'undefined' && supabase) {
+            const { data: { user } } = await supabase.auth.getUser();
+            userId = user?.id || null;
+        }
+
+        // Store pending purchase before redirect
+        localStorage.setItem('pendingPurchase', JSON.stringify(currentPurchaseData));
+
+        console.log(`💳 Creating Stripe Checkout for ${tier.name} tier ($${tier.price})`);
+
+        // Call backend to create checkout session
+        const apiUrl = getApiBaseUrl();
+        const response = await fetch(`${apiUrl}/api/create-checkout-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tier: tierSlug,
+                sessionData: {
+                    ...sessionData,
+                    userId: userId,
+                    filename: sessionData.filename || 'untitled',
+                    targetLUFS: sessionData.targetLUFS || -14.0,
+                    finalLUFS: sessionData.finalLUFS,
+                    truePeak: sessionData.truePeak,
+                    timestamp: new Date().toISOString()
+                },
+                successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancelUrl: `${window.location.origin}/cancel`
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to create checkout session');
+        }
+
+        console.log('✅ Checkout session created:', result.sessionId);
+
+        // Redirect to Stripe Checkout
+        if (result.url) {
+            // Direct URL redirect (recommended)
+            window.location.href = result.url;
+        } else {
+            // Fallback to Stripe.js redirect
+            const { error } = await stripe.redirectToCheckout({
+                sessionId: result.sessionId
+            });
+
+            if (error) {
+                throw new Error(error.message);
+            }
+        }
+
+        return {
+            success: true,
+            message: 'Redirecting to Stripe Checkout',
+            tier: tier.name,
+            price: tier.price,
+            sessionId: result.sessionId
         };
 
     } catch (error) {
@@ -225,32 +281,40 @@ async function handlePaymentSuccess(sessionId) {
     try {
         // Retrieve pending purchase data
         const pendingPurchase = localStorage.getItem('pendingPurchase');
-        if (!pendingPurchase) {
-            throw new Error('No pending purchase found');
+        const purchaseData = pendingPurchase ? JSON.parse(pendingPurchase) : null;
+
+        // Check if we're in demo mode
+        const isDemoMode = typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.features?.demoMode;
+
+        if (!isDemoMode && sessionId) {
+            // PRODUCTION: Verify payment with backend
+            const apiUrl = getApiBaseUrl();
+            const response = await fetch(`${apiUrl}/api/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: sessionId })
+            });
+
+            const verification = await response.json();
+
+            if (!verification.success || !verification.verified) {
+                throw new Error('Payment verification failed');
+            }
+
+            console.log('✅ Payment verified:', verification);
+
+            // Update purchase data with verified info
+            if (purchaseData) {
+                purchaseData.verified = true;
+                purchaseData.customerEmail = verification.customerEmail;
+            }
         }
 
-        const purchaseData = JSON.parse(pendingPurchase);
+        // Save purchase to Supabase (client-side backup)
+        if (typeof supabase !== 'undefined' && supabase && purchaseData) {
+            const { data: { user } } = await supabase.auth.getUser();
 
-        // In production, verify the payment with your backend:
-        /*
-        const response = await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId: sessionId })
-        });
-
-        const verification = await response.json();
-
-        if (!verification.success) {
-            throw new Error('Payment verification failed');
-        }
-        */
-
-        // Save purchase to Supabase
-        if (typeof supabase !== 'undefined' && supabase) {
-            const user = await supabase.auth.getUser();
-
-            if (user.data.user) {
+            if (user) {
                 // Get tier ID from database
                 const { data: tier } = await supabase
                     .from('mastering_tiers')
@@ -258,32 +322,45 @@ async function handlePaymentSuccess(sessionId) {
                     .eq('tier_slug', purchaseData.tierSlug)
                     .single();
 
-                // Record purchase
-                const { data: purchase, error } = await supabase
-                    .from('purchases')
-                    .insert({
-                        user_id: user.data.user.id,
-                        tier_id: tier.id,
-                        tier_slug: purchaseData.tierSlug,
-                        amount_paid: purchaseData.price,
-                        currency: 'USD',
-                        payment_provider: 'stripe',
-                        payment_id: sessionId,
-                        payment_status: 'succeeded',
-                        original_filename: purchaseData.filename,
-                        target_lufs: purchaseData.targetLUFS,
-                        final_lufs: purchaseData.finalLUFS,
-                        true_peak: purchaseData.truePeak,
-                        processing_settings: purchaseData.settings,
-                        completed_at: new Date().toISOString()
-                    })
-                    .select()
-                    .single();
+                if (tier) {
+                    // Check if purchase already exists (webhook may have created it)
+                    const { data: existingPurchase } = await supabase
+                        .from('purchases')
+                        .select('id')
+                        .eq('payment_id', sessionId)
+                        .single();
 
-                if (error) {
-                    console.error('❌ Failed to save purchase:', error);
-                } else {
-                    console.log('✅ Purchase saved to database:', purchase);
+                    if (!existingPurchase) {
+                        // Record purchase (only if not already recorded by webhook)
+                        const { data: purchase, error } = await supabase
+                            .from('purchases')
+                            .insert({
+                                user_id: user.id,
+                                tier_id: tier.id,
+                                tier_slug: purchaseData.tierSlug,
+                                amount_paid: purchaseData.price,
+                                currency: 'USD',
+                                payment_provider: 'stripe',
+                                payment_id: sessionId,
+                                payment_status: 'succeeded',
+                                original_filename: purchaseData.filename,
+                                target_lufs: purchaseData.targetLUFS,
+                                final_lufs: purchaseData.finalLUFS,
+                                true_peak: purchaseData.truePeak,
+                                processing_settings: purchaseData.settings,
+                                completed_at: new Date().toISOString()
+                            })
+                            .select()
+                            .single();
+
+                        if (error) {
+                            console.error('❌ Failed to save purchase:', error);
+                        } else {
+                            console.log('✅ Purchase saved to database:', purchase.id);
+                        }
+                    } else {
+                        console.log('ℹ️ Purchase already recorded by webhook');
+                    }
                 }
             }
         }
@@ -294,7 +371,8 @@ async function handlePaymentSuccess(sessionId) {
         console.log('✅ Payment successful!');
         return {
             success: true,
-            purchase: purchaseData
+            purchase: purchaseData,
+            sessionId: sessionId
         };
 
     } catch (error) {
@@ -528,27 +606,56 @@ async function handleTierPurchase(tierSlug, sessionData) {
 
         if (!user) {
             alert('Please sign in to purchase. Your mastering session will be saved.');
-            // You could trigger the sign-in modal here
+            // Trigger sign-in modal if available
+            if (typeof showAuthModal === 'function') {
+                showAuthModal('signin');
+            }
             closePaymentModal();
             return;
         }
     }
 
-    // Create checkout session
-    const result = await createCheckoutSession(tierSlug, sessionData);
+    // Show loading state on button
+    const btn = document.querySelector(`[data-tier="${tierSlug}"]`);
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span style="display: inline-block; animation: spin 1s linear infinite;">⏳</span> Processing...';
+    }
 
-    if (result.success) {
-        // For demo/development: simulate successful purchase
-        alert(`🎉 Purchase simulation: ${tier.name} tier for $${tier.price}\n\nIn production, this will redirect to Stripe Checkout.\n\nYour download will be available after payment.`);
+    try {
+        // Create checkout session
+        const result = await createCheckoutSession(tierSlug, sessionData);
 
-        // Simulate successful payment and enable download
-        if (typeof enableDownload === 'function') {
-            enableDownload(tierSlug);
+        if (result.success) {
+            if (result.demoMode) {
+                // Demo mode: simulate successful purchase
+                alert(`🧪 DEMO MODE\n\n${tier.name} tier for $${tier.price}\n\nIn production, this redirects to Stripe Checkout.\nYour download is now enabled for testing.`);
+
+                // Simulate successful payment and enable download
+                if (typeof enableDownload === 'function') {
+                    enableDownload(tierSlug);
+                }
+
+                // Trigger success event
+                window.dispatchEvent(new CustomEvent('paymentSuccess', {
+                    detail: { tier: tierSlug, demo: true }
+                }));
+
+                closePaymentModal();
+            }
+            // If not demo mode, user is being redirected to Stripe
+        } else {
+            throw new Error(result.error);
         }
+    } catch (error) {
+        console.error('❌ Purchase failed:', error);
+        alert('Payment failed: ' + error.message);
 
-        closePaymentModal();
-    } else {
-        alert('Payment failed: ' + result.error);
+        // Reset button
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `Select ${tier.name}`;
+        }
     }
 }
 

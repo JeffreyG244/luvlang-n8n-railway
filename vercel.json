@@ -1,8 +1,14 @@
 {
   "buildCommand": null,
   "devCommand": null,
-  "installCommand": null,
+  "installCommand": "npm install",
   "outputDirectory": ".",
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -18,6 +24,23 @@
         {
           "key": "Cross-Origin-Resource-Policy",
           "value": "cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     },
@@ -51,6 +74,14 @@
   "rewrites": [
     {
       "source": "/",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
+    },
+    {
+      "source": "/success",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
+    },
+    {
+      "source": "/cancel",
       "destination": "/luvlang_LEGENDARY_COMPLETE.html"
     }
   ]
