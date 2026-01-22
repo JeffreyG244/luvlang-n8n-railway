@@ -3903,7 +3903,7 @@
             'neutral': ['Flat Response - No coloration', 'Gentle Warmth - Subtle enhancement', 'Slight Brightness - Air boost', 'Reference - Mastering standard']
         };
 
-        // Show genre presets preview on hover
+        // Show genre presets preview with CLICKABLE buttons
         function showGenrePreview(genre) {
             const preview = document.getElementById('setupGenrePreview');
             const title = document.getElementById('setupPreviewTitle');
@@ -3913,19 +3913,106 @@
                 const presets = genrePresetPreviews[genre];
                 if (presets) {
                     const genreName = genre.charAt(0).toUpperCase() + genre.slice(1).replace('-', ' ');
-                    title.textContent = `${genreName} EQ Presets Available:`;
-                    list.innerHTML = presets.map(p => `• ${p}`).join('<br>');
+                    title.textContent = `${genreName} EQ Presets - Click to Select:`;
+
+                    // Create clickable preset buttons instead of just text
+                    list.innerHTML = '';
+                    presets.forEach((preset, index) => {
+                        const presetBtn = document.createElement('div');
+                        presetBtn.className = 'setup-preset-btn';
+                        presetBtn.setAttribute('data-preset-index', index);
+                        presetBtn.setAttribute('data-genre', genre);
+
+                        // Check if this is the currently selected preset
+                        const isSelected = window.selectedSetupGenre === genre && window.selectedSetupPresetIndex === index;
+
+                        presetBtn.style.cssText = `
+                            padding: 10px 12px;
+                            margin: 6px 0;
+                            background: ${isSelected ? 'rgba(184, 79, 255, 0.3)' : 'rgba(184, 79, 255, 0.08)'};
+                            border: 1px solid ${isSelected ? 'rgba(184, 79, 255, 0.8)' : 'rgba(184, 79, 255, 0.2)'};
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            font-size: 0.75rem;
+                            color: ${isSelected ? '#fff' : 'rgba(255,255,255,0.8)'};
+                        `;
+                        presetBtn.textContent = preset;
+
+                        // Hover effects
+                        presetBtn.addEventListener('mouseenter', function() {
+                            if (!this.classList.contains('selected')) {
+                                this.style.background = 'rgba(184, 79, 255, 0.2)';
+                                this.style.borderColor = 'rgba(184, 79, 255, 0.5)';
+                            }
+                        });
+                        presetBtn.addEventListener('mouseleave', function() {
+                            if (!this.classList.contains('selected')) {
+                                this.style.background = 'rgba(184, 79, 255, 0.08)';
+                                this.style.borderColor = 'rgba(184, 79, 255, 0.2)';
+                            }
+                        });
+
+                        // Click to select preset
+                        presetBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+
+                            // Store selected preset
+                            window.selectedSetupPresetIndex = index;
+
+                            // Also select the genre if not already
+                            if (window.selectedSetupGenre !== genre) {
+                                window.selectedSetupGenre = genre;
+                                // Update genre button visuals
+                                document.querySelectorAll('.setup-genre-btn').forEach(b => {
+                                    b.style.background = 'rgba(255,255,255,0.05)';
+                                    b.style.borderColor = 'rgba(255,255,255,0.15)';
+                                });
+                                const genreBtn = document.querySelector(`.setup-genre-btn[data-genre="${genre}"]`);
+                                if (genreBtn) {
+                                    genreBtn.style.background = 'rgba(184, 79, 255, 0.2)';
+                                    genreBtn.style.borderColor = '#b84fff';
+                                }
+                                updateSetupContinueButton();
+                            }
+
+                            // Update all preset button visuals
+                            list.querySelectorAll('.setup-preset-btn').forEach(btn => {
+                                btn.classList.remove('selected');
+                                btn.style.background = 'rgba(184, 79, 255, 0.08)';
+                                btn.style.borderColor = 'rgba(184, 79, 255, 0.2)';
+                                btn.style.color = 'rgba(255,255,255,0.8)';
+                            });
+
+                            // Mark this as selected
+                            this.classList.add('selected');
+                            this.style.background = 'rgba(184, 79, 255, 0.3)';
+                            this.style.borderColor = 'rgba(184, 79, 255, 0.8)';
+                            this.style.color = '#fff';
+
+                            // Apply the EQ preset so user can HEAR the difference!
+                            if (typeof applyGenreEQPreset === 'function') {
+                                applyGenreEQPreset(genre, index);
+                                console.log(`🎧 Applied ${genre} preset #${index} - Listen to the difference!`);
+                            }
+                        });
+
+                        if (isSelected) {
+                            presetBtn.classList.add('selected');
+                        }
+
+                        list.appendChild(presetBtn);
+                    });
+
                     preview.style.display = 'block';
                 }
             }
         }
 
-        // Hide genre preview
+        // Hide genre preview - keeping presets visible once a genre is hovered
         function hideGenrePreview() {
-            const preview = document.getElementById('setupGenrePreview');
-            if (preview) {
-                preview.style.display = 'none';
-            }
+            // Don't auto-hide - let presets stay visible for selection
+            // Preview will update when hovering different genres
         }
 
         // Setup platform button handlers
@@ -3975,11 +4062,20 @@
                     showGenreEQPresets(this.dataset.genre);
                 }
 
+                // Reset preset index when genre changes (use first preset by default)
+                window.selectedSetupPresetIndex = 0;
+
+                // Apply EQ immediately so user can HEAR the difference!
+                if (typeof applyGenreEQPreset === 'function') {
+                    applyGenreEQPreset(this.dataset.genre, 0);
+                    console.log(`🎧 Applied ${this.dataset.genre} preset - Listen to the difference!`);
+                }
+
                 updateSetupContinueButton();
                 console.log(`🎵 Genre selected: ${this.dataset.genre}`);
             });
 
-            // Hover to show preset preview
+            // Hover to show preset preview (interactive)
             btn.addEventListener('mouseenter', function() {
                 showGenrePreview(this.dataset.genre);
             });
@@ -3991,8 +4087,12 @@
                 window.setupComplete = true;
                 hideSetupModal();
 
-                // Apply the genre preset
-                if (window.audioBuffer && typeof applyGenrePreset === 'function') {
+                // Apply the selected genre preset (use selected index or default to 0)
+                const presetIndex = window.selectedSetupPresetIndex || 0;
+                if (typeof applyGenreEQPreset === 'function') {
+                    applyGenreEQPreset(window.selectedSetupGenre, presetIndex);
+                }
+                if (typeof applyGenrePreset === 'function') {
                     applyGenrePreset(window.selectedSetupGenre, true);
                 }
 
@@ -5170,14 +5270,7 @@
             console.log(`     High (8kHz):    ${eqValues.high>=0?'+':''}${eqValues.high.toFixed(1)} dB`);
             console.log(`     Air (12kHz):    ${eqValues.air>=0?'+':''}${eqValues.air.toFixed(1)} dB`);
 
-            // Only apply to audio if loaded
-            if (!window.audioBuffer) {
-                console.log(`⚠️  Audio not loaded - EQ settings saved for when audio is uploaded`);
-                console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                return;
-            }
-
-            // Store original values for animation
+            // Store original values for animation (apply EQ even without audioBuffer - filters affect media element source)
             const originalEQ = {
                 sub: eqSubFilter ? eqSubFilter.gain.value : 0,
                 bass: eqBassFilter ? eqBassFilter.gain.value : 0,
@@ -9624,13 +9717,12 @@
                 // Handle genre preset changes
                 const genre = this.getAttribute('data-genre');
                 if (genre) {
-                    // Show genre-specific EQ presets (always, even if audio not loaded)
+                    // Show genre-specific EQ presets (always shows interactive preset buttons)
                     showGenreEQPresets(genre);
 
-                    // Apply the main genre preset if audio is loaded
-                    if (audioBuffer) {
-                        applyGenrePreset(genre, true); // true = animate
-                    }
+                    // Apply the main genre preset (filters affect audio via media element source)
+                    applyGenrePreset(genre, true); // true = animate
+                    console.log(`🎧 Genre ${genre} applied - Presets ready to select!`);
                 }
             });
 
