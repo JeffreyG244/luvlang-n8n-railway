@@ -9562,27 +9562,32 @@
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
 
-                    // AUTO-ADJUST GAIN: When platform changes, adjust gain to new target
+                    // AUTO-ADJUST GAIN: Apply relative gain change when switching platforms
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
 
-                    if (audioBuffer && uploadedFile && masterGain) {
-                        // Get current LUFS
-                        const currentLUFS = integratedLUFS || -14;
+                    // Store previous target to calculate relative change
+                    const previousTarget = window.currentLUFSTarget || -14;
+                    window.currentLUFSTarget = targetLUFS;
 
-                        // Calculate gain adjustment to reach new platform target
-                        const gainAdjustmentDB = targetLUFS - currentLUFS;
-                        const clampedGainDB = Math.max(-12, Math.min(12, gainAdjustmentDB));
-                        const newGainLinear = Math.pow(10, clampedGainDB / 20);
+                    // Calculate the RELATIVE gain change (e.g., -14 to -16 = -2dB)
+                    const relativeGainDB = targetLUFS - previousTarget;
 
-                        // Apply gain adjustment if significant
-                        if (Math.abs(gainAdjustmentDB) > 0.3) {
-                            masterGain.gain.setTargetAtTime(newGainLinear, audioContext.currentTime, 0.15);
-                            console.log(`🎯 Platform Switch: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS | Gain ${gainAdjustmentDB > 0 ? '+' : ''}${gainAdjustmentDB.toFixed(2)} dB`);
-                        } else {
-                            console.log(`✓ Already at target (${currentLUFS.toFixed(1)} LUFS)`);
-                        }
+                    if (masterGain && audioContext) {
+                        // Get current gain and apply relative change
+                        const currentGain = masterGain.gain.value;
+                        const gainMultiplier = Math.pow(10, relativeGainDB / 20);
+                        const newGain = currentGain * gainMultiplier;
+
+                        // Clamp to safe range
+                        const clampedGain = Math.max(0.1, Math.min(4.0, newGain));
+
+                        // Apply gain change with smooth transition
+                        masterGain.gain.setTargetAtTime(clampedGain, audioContext.currentTime, 0.1);
+
+                        console.log(`🎯 LUFS Switch: ${previousTarget} → ${targetLUFS} LUFS | Gain change: ${relativeGainDB > 0 ? '+' : ''}${relativeGainDB} dB`);
+                        console.log(`   Current gain: ${currentGain.toFixed(3)} → New gain: ${clampedGain.toFixed(3)}`);
                     } else {
-                        console.log('⚠️ Audio not loaded yet - load a track to hear the difference');
+                        console.log('⚠️ Audio context not ready - gain will apply when audio loads');
                     }
                 }
 
