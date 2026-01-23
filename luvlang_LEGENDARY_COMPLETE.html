@@ -5118,6 +5118,49 @@
         }
 
         /**
+         * Ensure EQ chain is connected (not bypassed)
+         */
+        function ensureEQChainConnected() {
+            if (!sourceNode || !eqSubFilter || !audioContext) {
+                console.warn('⚠️ Audio chain not ready - EQ will apply when audio loads');
+                return false;
+            }
+
+            // Make sure EQ is not bypassed
+            if (eqBypassed) {
+                console.log('🔧 Re-enabling EQ (was bypassed)');
+                eqBypassed = false;
+                const bypassBtn = document.getElementById('eqBypassBtn');
+                if (bypassBtn) {
+                    bypassBtn.textContent = 'EQ Active';
+                    bypassBtn.style.background = '';
+                }
+            }
+
+            // Reconnect the full EQ chain if needed
+            try {
+                sourceNode.disconnect();
+                sourceNode.connect(eqSubFilter);
+                eqSubFilter.connect(eqBassFilter);
+                eqBassFilter.connect(eqLowMidFilter);
+                eqLowMidFilter.connect(eqMidFilter);
+                eqMidFilter.connect(eqHighMidFilter);
+                eqHighMidFilter.connect(eqHighFilter);
+                eqHighFilter.connect(eqAirFilter);
+                eqAirFilter.connect(eqCompensationGain);
+                eqCompensationGain.connect(compressor);
+                compressor.connect(makeupGain);
+                makeupGain.connect(limiter);
+                limiter.connect(masterGain);
+                console.log('✅ EQ chain reconnected');
+            } catch (e) {
+                console.warn('EQ reconnection note:', e.message);
+            }
+
+            return true;
+        }
+
+        /**
          * Apply a specific genre EQ preset variation
          */
         function applyGenreEQPreset(genreName, presetIndex) {
@@ -5142,15 +5185,24 @@
             console.log(`     High (8kHz):    ${eqValues.high>=0?'+':''}${eqValues.high.toFixed(1)} dB`);
             console.log(`     Air (12kHz):    ${eqValues.air>=0?'+':''}${eqValues.air.toFixed(1)} dB`);
 
-            // Store original values for animation (apply EQ even without audioBuffer - filters affect media element source)
+            // Ensure EQ chain is connected before applying
+            ensureEQChainConnected();
+
+            // Check if filters exist
+            if (!eqSubFilter) {
+                console.error('❌ EQ filters not initialized - upload a track first');
+                return;
+            }
+
+            // Store original values for animation
             const originalEQ = {
-                sub: eqSubFilter ? eqSubFilter.gain.value : 0,
-                bass: eqBassFilter ? eqBassFilter.gain.value : 0,
-                lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
-                mid: eqMidFilter ? eqMidFilter.gain.value : 0,
-                highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
-                high: eqHighFilter ? eqHighFilter.gain.value : 0,
-                air: eqAirFilter ? eqAirFilter.gain.value : 0
+                sub: eqSubFilter.gain.value,
+                bass: eqBassFilter.gain.value,
+                lowmid: eqLowMidFilter.gain.value,
+                mid: eqMidFilter.gain.value,
+                highmid: eqHighMidFilter.gain.value,
+                high: eqHighFilter.gain.value,
+                air: eqAirFilter.gain.value
             };
 
             // Animate EQ transition (smooth 400ms transition)
