@@ -9614,33 +9614,50 @@
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
 
-                    // AUTO-ADJUST GAIN: Apply relative gain change when switching platforms
-                    console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
+                    // ═══════════════════════════════════════════════════════════════════
+                    // REAL-TIME LUFS DEMONSTRATION - User MUST hear the difference!
+                    // ═══════════════════════════════════════════════════════════════════
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log(`🔊 LUFS TARGET: ${targetLUFS} LUFS (${platformName})`);
 
-                    // Store previous target to calculate relative change
-                    const previousTarget = window.currentLUFSTarget || -14;
-                    window.currentLUFSTarget = targetLUFS;
+                    // Resume audio context if suspended (browser autoplay policy)
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log('   ✅ AudioContext resumed');
+                        });
+                    }
 
-                    // Calculate the RELATIVE gain change (e.g., -14 to -16 = -2dB)
-                    const relativeGainDB = targetLUFS - previousTarget;
+                    // Store base gain on first selection (reference point)
+                    if (!window.lufsBaseGain) {
+                        window.lufsBaseGain = masterGain ? masterGain.gain.value : 1.0;
+                        window.lufsBaseTarget = -14; // Streaming is the reference
+                        console.log(`   📌 Base gain set: ${window.lufsBaseGain.toFixed(3)} at -14 LUFS`);
+                    }
+
+                    // Calculate gain offset from base (-14 LUFS)
+                    // -14 LUFS = 0dB offset (loudest - streaming standard)
+                    // -16 LUFS = -2dB offset (quieter - Apple/Podcast)
+                    const gainOffsetDB = targetLUFS - (-14); // e.g., -16 - (-14) = -2dB
+                    const gainMultiplier = Math.pow(10, gainOffsetDB / 20);
+                    const newGain = window.lufsBaseGain * gainMultiplier;
 
                     if (masterGain && audioContext) {
-                        // Get current gain and apply relative change
-                        const currentGain = masterGain.gain.value;
-                        const gainMultiplier = Math.pow(10, relativeGainDB / 20);
-                        const newGain = currentGain * gainMultiplier;
+                        // Apply gain change IMMEDIATELY for real-time feedback
+                        const now = audioContext.currentTime;
+                        masterGain.gain.cancelScheduledValues(now);
+                        masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+                        masterGain.gain.linearRampToValueAtTime(newGain, now + 0.05); // 50ms ramp
 
-                        // Clamp to safe range
-                        const clampedGain = Math.max(0.1, Math.min(4.0, newGain));
-
-                        // Apply gain change with smooth transition
-                        masterGain.gain.setTargetAtTime(clampedGain, audioContext.currentTime, 0.1);
-
-                        console.log(`🎯 LUFS Switch: ${previousTarget} → ${targetLUFS} LUFS | Gain change: ${relativeGainDB > 0 ? '+' : ''}${relativeGainDB} dB`);
-                        console.log(`   Current gain: ${currentGain.toFixed(3)} → New gain: ${clampedGain.toFixed(3)}`);
+                        console.log(`   🎚️ Gain offset: ${gainOffsetDB > 0 ? '+' : ''}${gainOffsetDB} dB`);
+                        console.log(`   🔊 Output gain: ${newGain.toFixed(3)} (${(20 * Math.log10(newGain)).toFixed(1)} dB)`);
+                        console.log(`   ✅ You should hear the volume ${gainOffsetDB < 0 ? 'DECREASE' : gainOffsetDB > 0 ? 'INCREASE' : 'stay the same'}`);
                     } else {
-                        console.log('⚠️ Audio context not ready - gain will apply when audio loads');
+                        console.log('   ⚠️ Audio not playing - upload and play a track to hear the difference');
                     }
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Store current target for reference
+                    window.currentLUFSTarget = targetLUFS;
                 }
 
                 // Handle genre preset changes
