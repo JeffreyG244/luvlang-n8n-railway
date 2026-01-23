@@ -3937,6 +3937,9 @@
                 // Reset preset index when genre changes (use first preset by default)
                 window.selectedSetupPresetIndex = 0;
 
+                // Show genre presets in the setup modal preview area
+                showGenrePreview(this.dataset.genre);
+
                 // Apply EQ immediately so user can HEAR the difference!
                 if (typeof applyGenreEQPreset === 'function') {
                     applyGenreEQPreset(this.dataset.genre, 0);
@@ -3947,10 +3950,7 @@
                 console.log(`🎵 Genre selected: ${this.dataset.genre}`);
             });
 
-            // Hover to show preset preview (interactive)
-            btn.addEventListener('mouseenter', function() {
-                showGenrePreview(this.dataset.genre);
-            });
+            // Presets now show on CLICK only (removed hover to prevent confusion)
         });
 
         // Continue button handler
