@@ -9598,16 +9598,7 @@
                 }
             });
 
-            // Add hover to show presets for genre buttons
-            if (btn.getAttribute('data-genre')) {
-                btn.addEventListener('mouseenter', function() {
-                    const genre = this.getAttribute('data-genre');
-                    if (genre) {
-                        // Show genre presets on hover (even without clicking)
-                        showGenreEQPresets(genre);
-                    }
-                });
-            }
+            // Genre presets are shown on CLICK only (not hover) to avoid confusion
         });
 
         document.querySelectorAll('.export-format-btn').forEach(btn => {
