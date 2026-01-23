@@ -5162,6 +5162,7 @@
 
         /**
          * Apply a specific genre EQ preset variation
+         * REAL-TIME AUDIO FEEDBACK - User MUST hear the difference immediately!
          */
         function applyGenreEQPreset(genreName, presetIndex) {
             const presets = genreEQPresets[genreName.toLowerCase()];
@@ -5174,16 +5175,21 @@
             const eqValues = preset.eq;
 
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            console.log(`🎵 Applying ${genreName.toUpperCase()} EQ Preset: "${preset.name}"`);
-            console.log(`   Description: ${preset.description}`);
-            console.log(`   EQ Settings:`);
-            console.log(`     Sub (45Hz):     ${eqValues.sub>=0?'+':''}${eqValues.sub.toFixed(1)} dB`);
-            console.log(`     Bass (100Hz):   ${eqValues.bass>=0?'+':''}${eqValues.bass.toFixed(1)} dB`);
-            console.log(`     LowMid (400Hz): ${eqValues.lowmid>=0?'+':''}${eqValues.lowmid.toFixed(1)} dB`);
-            console.log(`     Mid (1kHz):     ${eqValues.mid>=0?'+':''}${eqValues.mid.toFixed(1)} dB`);
-            console.log(`     HighMid (3.5k): ${eqValues.highmid>=0?'+':''}${eqValues.highmid.toFixed(1)} dB`);
-            console.log(`     High (8kHz):    ${eqValues.high>=0?'+':''}${eqValues.high.toFixed(1)} dB`);
-            console.log(`     Air (12kHz):    ${eqValues.air>=0?'+':''}${eqValues.air.toFixed(1)} dB`);
+            console.log(`🎵 APPLYING EQ PRESET: ${genreName.toUpperCase()} → "${preset.name}"`);
+            console.log(`   ${preset.description}`);
+            console.log(`   ┌─────────────────────────────────────────┐`);
+            console.log(`   │ SUB:     ${(eqValues.sub>=0?'+':'')+eqValues.sub.toFixed(1).padStart(5)} dB │ HIGH-MID: ${(eqValues.highmid>=0?'+':'')+eqValues.highmid.toFixed(1).padStart(5)} dB │`);
+            console.log(`   │ BASS:    ${(eqValues.bass>=0?'+':'')+eqValues.bass.toFixed(1).padStart(5)} dB │ HIGH:     ${(eqValues.high>=0?'+':'')+eqValues.high.toFixed(1).padStart(5)} dB │`);
+            console.log(`   │ LOW-MID: ${(eqValues.lowmid>=0?'+':'')+eqValues.lowmid.toFixed(1).padStart(5)} dB │ AIR:      ${(eqValues.air>=0?'+':'')+eqValues.air.toFixed(1).padStart(5)} dB │`);
+            console.log(`   │ MID:     ${(eqValues.mid>=0?'+':'')+eqValues.mid.toFixed(1).padStart(5)} dB │                      │`);
+            console.log(`   └─────────────────────────────────────────┘`);
+
+            // Resume audio context if suspended (browser autoplay policy)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('   ✅ AudioContext resumed for EQ preview');
+                });
+            }
 
             // Ensure EQ chain is connected before applying
             ensureEQChainConnected();
@@ -5194,29 +5200,77 @@
                 return;
             }
 
-            // Store original values for animation
-            const originalEQ = {
-                sub: eqSubFilter.gain.value,
-                bass: eqBassFilter.gain.value,
-                lowmid: eqLowMidFilter.gain.value,
-                mid: eqMidFilter.gain.value,
-                highmid: eqHighMidFilter.gain.value,
-                high: eqHighFilter.gain.value,
-                air: eqAirFilter.gain.value
-            };
+            // IMMEDIATE APPLICATION - Apply EQ values directly for instant feedback
+            const now = audioContext ? audioContext.currentTime : 0;
+            const rampTime = 0.05; // 50ms ramp for smooth but fast transition
 
-            // Animate EQ transition (smooth 400ms transition)
-            animateEQTransition(originalEQ, eqValues, 400);
-            console.log(`✅ EQ applied successfully - Listen to the difference!`);
+            // Apply each band with fast ramp
+            if (audioContext) {
+                eqSubFilter.gain.cancelScheduledValues(now);
+                eqSubFilter.gain.setValueAtTime(eqSubFilter.gain.value, now);
+                eqSubFilter.gain.linearRampToValueAtTime(eqValues.sub, now + rampTime);
+
+                eqBassFilter.gain.cancelScheduledValues(now);
+                eqBassFilter.gain.setValueAtTime(eqBassFilter.gain.value, now);
+                eqBassFilter.gain.linearRampToValueAtTime(eqValues.bass, now + rampTime);
+
+                eqLowMidFilter.gain.cancelScheduledValues(now);
+                eqLowMidFilter.gain.setValueAtTime(eqLowMidFilter.gain.value, now);
+                eqLowMidFilter.gain.linearRampToValueAtTime(eqValues.lowmid, now + rampTime);
+
+                eqMidFilter.gain.cancelScheduledValues(now);
+                eqMidFilter.gain.setValueAtTime(eqMidFilter.gain.value, now);
+                eqMidFilter.gain.linearRampToValueAtTime(eqValues.mid, now + rampTime);
+
+                eqHighMidFilter.gain.cancelScheduledValues(now);
+                eqHighMidFilter.gain.setValueAtTime(eqHighMidFilter.gain.value, now);
+                eqHighMidFilter.gain.linearRampToValueAtTime(eqValues.highmid, now + rampTime);
+
+                eqHighFilter.gain.cancelScheduledValues(now);
+                eqHighFilter.gain.setValueAtTime(eqHighFilter.gain.value, now);
+                eqHighFilter.gain.linearRampToValueAtTime(eqValues.high, now + rampTime);
+
+                eqAirFilter.gain.cancelScheduledValues(now);
+                eqAirFilter.gain.setValueAtTime(eqAirFilter.gain.value, now);
+                eqAirFilter.gain.linearRampToValueAtTime(eqValues.air, now + rampTime);
+
+                console.log(`   ✅ EQ applied with 50ms ramp - LISTEN for the change!`);
+            } else {
+                // Fallback: direct assignment
+                eqSubFilter.gain.value = eqValues.sub;
+                eqBassFilter.gain.value = eqValues.bass;
+                eqLowMidFilter.gain.value = eqValues.lowmid;
+                eqMidFilter.gain.value = eqValues.mid;
+                eqHighMidFilter.gain.value = eqValues.highmid;
+                eqHighFilter.gain.value = eqValues.high;
+                eqAirFilter.gain.value = eqValues.air;
+                console.log(`   ✅ EQ applied directly`);
+            }
+
+            // Update UI to reflect new EQ values
+            updateEQUI(eqValues);
+
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         }
 
         /**
          * Genre Preset Mapping (The Tonal Character)
          * Configures EQ, compression, and effects based on genre
+         * REAL-TIME AUDIO FEEDBACK - User MUST hear the difference immediately!
          */
         function applyGenrePreset(genreName, animate = true) {
-            console.log(`🎵 Applying Genre Preset: ${genreName}`);
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log(`🎸 GENRE PRESET: ${genreName.toUpperCase()}`);
+
+            // Resume audio context if suspended (browser autoplay policy)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('   ✅ AudioContext resumed for genre preview');
+                });
+            }
+
+            // Ensure EQ chain is connected
+            ensureEQChainConnected();
 
             // Store original values for animation
             const originalEQ = {
@@ -5365,12 +5419,51 @@
                     };
             }
 
-            // Apply EQ settings with animation
-            if (animate) {
-                animateEQTransition(originalEQ, preset.eq, 500); // 500ms animation
+            // Apply EQ settings with FAST ramp for real-time feedback
+            if (eqSubFilter && audioContext) {
+                const now = audioContext.currentTime;
+                const rampTime = 0.05; // 50ms ramp - fast but smooth
+
+                eqSubFilter.gain.cancelScheduledValues(now);
+                eqSubFilter.gain.setValueAtTime(eqSubFilter.gain.value, now);
+                eqSubFilter.gain.linearRampToValueAtTime(preset.eq.sub, now + rampTime);
+
+                eqBassFilter.gain.cancelScheduledValues(now);
+                eqBassFilter.gain.setValueAtTime(eqBassFilter.gain.value, now);
+                eqBassFilter.gain.linearRampToValueAtTime(preset.eq.bass, now + rampTime);
+
+                eqLowMidFilter.gain.cancelScheduledValues(now);
+                eqLowMidFilter.gain.setValueAtTime(eqLowMidFilter.gain.value, now);
+                eqLowMidFilter.gain.linearRampToValueAtTime(preset.eq.lowmid, now + rampTime);
+
+                eqMidFilter.gain.cancelScheduledValues(now);
+                eqMidFilter.gain.setValueAtTime(eqMidFilter.gain.value, now);
+                eqMidFilter.gain.linearRampToValueAtTime(preset.eq.mid, now + rampTime);
+
+                eqHighMidFilter.gain.cancelScheduledValues(now);
+                eqHighMidFilter.gain.setValueAtTime(eqHighMidFilter.gain.value, now);
+                eqHighMidFilter.gain.linearRampToValueAtTime(preset.eq.highmid, now + rampTime);
+
+                eqHighFilter.gain.cancelScheduledValues(now);
+                eqHighFilter.gain.setValueAtTime(eqHighFilter.gain.value, now);
+                eqHighFilter.gain.linearRampToValueAtTime(preset.eq.high, now + rampTime);
+
+                eqAirFilter.gain.cancelScheduledValues(now);
+                eqAirFilter.gain.setValueAtTime(eqAirFilter.gain.value, now);
+                eqAirFilter.gain.linearRampToValueAtTime(preset.eq.air, now + rampTime);
+
+                console.log(`   ✅ EQ applied with 50ms ramp - LISTEN for the change!`);
             } else {
-                applyEQValues(preset.eq);
+                // Fallback: use original animation or direct apply
+                if (animate) {
+                    animateEQTransition(originalEQ, preset.eq, 100); // Faster 100ms
+                } else {
+                    applyEQValues(preset.eq);
+                }
             }
+
+            // Update UI
+            updateEQUI(preset.eq);
 
             // Apply compression settings
             if (compressor && preset.compression) {
@@ -5378,12 +5471,14 @@
                 compressor.ratio.value = preset.compression.ratio;
                 compressor.attack.value = preset.compression.attack;
                 compressor.release.value = preset.compression.release;
+                console.log(`   🎛️ Compression: ${preset.compression.ratio}:1 ratio, ${preset.compression.threshold}dB threshold`);
             }
 
             // Store preset for later use
             window.currentGenrePreset = preset;
 
-            console.log('✅ Genre preset applied successfully');
+            console.log(`   ✅ Genre preset applied - You should hear the EQ change!`);
+            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
             return preset;
         }
 
