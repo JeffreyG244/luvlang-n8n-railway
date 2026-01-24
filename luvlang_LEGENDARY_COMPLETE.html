@@ -1475,7 +1475,7 @@
     <a href="#mainContent" class="skip-to-main">Skip to main content</a>
 
     <!-- HIDDEN AUDIO ELEMENT -->
-    <audio id="audioElement" style="display: none;" aria-hidden="true"></audio>
+    <audio id="audioElement" style="display: none;" aria-hidden="true" preload="auto"></audio>
     <input type="file" id="audioFileInput" accept="audio/*" style="display: none;" aria-label="Upload audio file">
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -3476,8 +3476,11 @@
                 console.log('   Parallel: K-Weighted Path → LUFS Meter');
                 console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
 
-                // Start visualization
-                startVisualization();
+                // DELAY visualization start - let audio chain stabilize first
+                setTimeout(() => {
+                    console.log('🎨 Starting visualization after delay...');
+                    startVisualization();
+                }, 1000);
 
             } catch (error) {
                 console.error('❌ Web Audio setup error:', error);
@@ -3672,19 +3675,13 @@
                     console.error('⚠️ Error decoding audio buffer:', error);
                 }
 
-                // ALL PROCESSING DONE - Now safe to auto-play without skipping
-                console.log('✅ All processing complete - starting playback...');
-                try {
-                    if (audioContext && audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-                    await audioElement.play();
-                    playBtn.textContent = '⏸️';
-                    isPlaying = true;
-                    console.log('🎵 Playback started smoothly (after all processing)');
-                } catch (err) {
-                    console.log('⚠️ Auto-play prevented by browser - click play button:', err);
-                }
+                // ALL PROCESSING DONE - Ready for playback
+                console.log('✅ All processing complete - ready for playback');
+                console.log('🎵 Click PLAY button to start (auto-play disabled to prevent skipping)');
+
+                // Update play button to show it's ready
+                playBtn.style.animation = 'pulse 1s ease-in-out 3';
+                playBtn.title = 'Click to play your track!';
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
@@ -5271,6 +5268,7 @@
 
         /**
          * Ensure EQ chain is connected (not bypassed)
+         * IMPORTANT: Only reconnect if EQ was actually bypassed to prevent audio glitches
          */
         function ensureEQChainConnected() {
             if (!sourceNode || !eqSubFilter || !audioContext) {
@@ -5278,7 +5276,7 @@
                 return false;
             }
 
-            // Make sure EQ is not bypassed
+            // Only reconnect if EQ was actually bypassed - prevents audio glitches
             if (eqBypassed) {
                 console.log('🔧 Re-enabling EQ (was bypassed)');
                 eqBypassed = false;
@@ -5287,27 +5285,18 @@
                     bypassBtn.textContent = 'EQ Active';
                     bypassBtn.style.background = '';
                 }
-            }
 
-            // Reconnect the full EQ chain if needed
-            try {
-                sourceNode.disconnect();
-                sourceNode.connect(eqSubFilter);
-                eqSubFilter.connect(eqBassFilter);
-                eqBassFilter.connect(eqLowMidFilter);
-                eqLowMidFilter.connect(eqMidFilter);
-                eqMidFilter.connect(eqHighMidFilter);
-                eqHighMidFilter.connect(eqHighFilter);
-                eqHighFilter.connect(eqAirFilter);
-                eqAirFilter.connect(eqCompensationGain);
-                eqCompensationGain.connect(compressor);
-                compressor.connect(makeupGain);
-                makeupGain.connect(limiter);
-                limiter.connect(masterGain);
-                console.log('✅ EQ chain reconnected');
-            } catch (e) {
-                console.warn('EQ reconnection note:', e.message);
+                // Only reconnect when coming back from bypass
+                try {
+                    sourceNode.disconnect();
+                    sourceNode.connect(eqSubFilter);
+                    // Rest of chain should already be connected
+                    console.log('✅ EQ chain re-enabled from bypass');
+                } catch (e) {
+                    console.warn('EQ reconnection note:', e.message);
+                }
             }
+            // If not bypassed, chain is already connected - don't disconnect/reconnect!
 
             return true;
         }
