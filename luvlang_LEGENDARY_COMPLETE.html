@@ -6666,9 +6666,14 @@
             }
         }
 
-        // Update scrubber position every frame during playback
+        // Update scrubber position - throttled to 15fps to reduce CPU load
+        let lastScrubberUpdate = 0;
         function updateScrubberLoop() {
-            updateScrubberPosition();
+            const now = performance.now();
+            if (now - lastScrubberUpdate >= 66) { // ~15fps
+                updateScrubberPosition();
+                lastScrubberUpdate = now;
+            }
             requestAnimationFrame(updateScrubberLoop);
         }
         updateScrubberLoop();
@@ -7524,7 +7529,18 @@
             let lastPlayheadCanvasWidth = 0;
             let lastPlayheadCanvasHeight = 0;
 
+            // THROTTLE to 30fps - reduce CPU usage to prevent audio skipping
+            let lastDrawTime = 0;
+            const FRAME_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
+
             function draw() {
+                // Skip frames to maintain 30fps max
+                const now = performance.now();
+                if (now - lastDrawTime < FRAME_INTERVAL) {
+                    animationFrame = requestAnimationFrame(draw);
+                    return;
+                }
+                lastDrawTime = now;
                 if (!analyser) {
                     // DON'T LOG - too spammy
                     return;
