@@ -3545,11 +3545,16 @@
                 }
                 window.currentBlobURL = fileURL;
 
-                // CRITICAL: Decode audioBuffer for AI Auto Master
-                try {
-                    const arrayBuffer = await uploadedFile.arrayBuffer();
-                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                // CRITICAL: Delay heavy processing to prevent audio skipping
+                // Wait 2 seconds for playback to stabilize before doing CPU-intensive work
+                setTimeout(async () => {
+                    console.log('🔄 Starting background audio processing (after playback stabilized)...');
+
+                    // CRITICAL: Decode audioBuffer for AI Auto Master
+                    try {
+                        const arrayBuffer = await uploadedFile.arrayBuffer();
+                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
                     // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                     window.audioBuffer = audioBuffer;
@@ -3648,9 +3653,10 @@
                         }
                     }, 200);
 
-                } catch (error) {
-                    console.error('⚠️ Error decoding audio buffer:', error);
-                }
+                    } catch (error) {
+                        console.error('⚠️ Error decoding audio buffer:', error);
+                    }
+                }, 2000); // 2 second delay to let playback stabilize
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
