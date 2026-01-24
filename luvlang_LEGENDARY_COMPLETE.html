@@ -5617,9 +5617,15 @@
             }
         }
 
-        // Update scrubber position every frame during playback
+        // Update scrubber position - throttled to 15fps (scrubber doesn't need 60fps)
+        let lastScrubberTime = 0;
+        const SCRUBBER_INTERVAL = 66; // ~15fps
         function updateScrubberLoop() {
-            updateScrubberPosition();
+            const now = performance.now();
+            if (now - lastScrubberTime >= SCRUBBER_INTERVAL) {
+                updateScrubberPosition();
+                lastScrubberTime = now;
+            }
             requestAnimationFrame(updateScrubberLoop);
         }
         updateScrubberLoop();
@@ -6475,15 +6481,22 @@
             let lastPlayheadCanvasWidth = 0;
             let lastPlayheadCanvasHeight = 0;
 
+            // THROTTLE: Reduce to 30fps to prevent audio skipping
+            let lastDrawTime = 0;
+            const DRAW_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
+
             function draw() {
-                if (!analyser) {
-                    // DON'T LOG - too spammy
+                // THROTTLE: Skip frames to maintain 30fps max
+                const now = performance.now();
+                if (now - lastDrawTime < DRAW_INTERVAL) {
+                    animationFrame = requestAnimationFrame(draw);
                     return;
                 }
+                lastDrawTime = now;
 
-                // ALWAYS RUN VISUALIZATION LOOP
-                // When audio is paused, analyzers will return silence (which is correct)
-                // This allows static waveform, broadcast meters, and UI to remain visible
+                if (!analyser) {
+                    return;
+                }
 
                 // Get audio data (reuse pre-allocated array)
                 if (!drawDataArray || drawDataArray.length !== analyser.frequencyBinCount) {
