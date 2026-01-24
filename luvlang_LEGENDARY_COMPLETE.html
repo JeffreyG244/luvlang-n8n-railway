@@ -3520,6 +3520,24 @@
             `;
 
             const fileURL = URL.createObjectURL(file);
+
+            // Clean up previous blob URL before setting new source
+            if (window.currentBlobURL) {
+                URL.revokeObjectURL(window.currentBlobURL);
+                console.log('🧹 Previous blob URL cleaned up');
+            }
+            window.currentBlobURL = fileURL;
+
+            // CRITICAL: Remove old event listeners to prevent stacking
+            const oldLoadedHandler = audioElement._loadedHandler;
+            const oldCanPlayHandler = audioElement._canPlayHandler;
+            if (oldLoadedHandler) {
+                audioElement.removeEventListener('loadedmetadata', oldLoadedHandler);
+            }
+            if (oldCanPlayHandler) {
+                audioElement.removeEventListener('canplaythrough', oldCanPlayHandler);
+            }
+
             audioElement.src = fileURL;
             audioElement.load();
 
@@ -3532,7 +3550,8 @@
             document.getElementById('savePresetBtn').disabled = false;
             document.getElementById('loadPresetBtn').disabled = false;
 
-            audioElement.addEventListener('loadedmetadata', async () => {
+            // Handler for loadedmetadata - setup Web Audio chain
+            const loadedHandler = () => {
                 const duration = audioElement.duration || 0;
                 console.log('✅ Audio loaded, duration:', duration.toFixed(2), 'seconds');
                 console.log('   Ready for playback or AI mastering');
@@ -3545,144 +3564,128 @@
                 playBtn.disabled = false;
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
+            };
+            audioElement._loadedHandler = loadedHandler;
+            audioElement.addEventListener('loadedmetadata', loadedHandler, { once: true });
 
-                // AUTO-PLAY: Start playback automatically when file is loaded
-                setTimeout(() => {
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume().then(() => {
-                            audioElement.play().then(() => {
-                                playBtn.textContent = '⏸️';
-                                isPlaying = true;
-                                console.log('🎵 Auto-play started');
-                            }).catch(err => {
-                                console.log('⚠️ Auto-play prevented by browser:', err);
-                            });
-                        });
-                    } else {
-                        audioElement.play().then(() => {
-                            playBtn.textContent = '⏸️';
-                            isPlaying = true;
-                            console.log('🎵 Auto-play started');
-                        }).catch(err => {
-                            console.log('⚠️ Auto-play prevented by browser:', err);
-                        });
-                    }
-                }, 300); // Small delay to ensure everything is ready
+            // Handler for canplaythrough - auto-play when enough data is buffered
+            const canPlayHandler = async () => {
+                console.log('🎵 Enough audio buffered - starting playback...');
 
-                // Store blob URL for cleanup when new file is loaded
-                // DO NOT revoke immediately - audio element needs it for playback!
-                if (window.currentBlobURL) {
-                    URL.revokeObjectURL(window.currentBlobURL);
-                    console.log('🧹 Previous blob URL cleaned up');
-                }
-                window.currentBlobURL = fileURL;
-
-                // CRITICAL: Decode audioBuffer for AI Auto Master
+                // AUTO-PLAY: Start playback when enough audio is buffered (no skipping)
                 try {
-                    const arrayBuffer = await uploadedFile.arrayBuffer();
-                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
-
-                    // Make audioBuffer globally accessible for ULTIMATE_VISUALS
-                    window.audioBuffer = audioBuffer;
-
-                    // Store original peaks for transient ghost layer
-                    window.originalPeaksData = audioBuffer.getChannelData(0).slice();
-
-                    console.log('✅ Audio buffer decoded for AI processing');
-
-                    // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
-                    // This ensures EQ and saturation work in their optimal range
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
-
-                    // Calculate RMS level of the uploaded audio
-                    const channelData = audioBuffer.getChannelData(0);
-                    let sumSquares = 0;
-                    for (let i = 0; i < channelData.length; i++) {
-                        sumSquares += channelData[i] * channelData[i];
+                    if (audioContext && audioContext.state === 'suspended') {
+                        await audioContext.resume();
                     }
-                    const rms = Math.sqrt(sumSquares / channelData.length);
-                    const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
-
-                    console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
-
-                    // If signal is too quiet (below -18dBFS), auto-boost it
-                    const targetRMS = -18; // Analog sweet spot
-                    const masterGainSlider = document.getElementById('masterGainSlider');
-                    const masterGainValue = document.getElementById('masterGainValue');
-
-                    if (rmsDB < targetRMS - 1) {
-                        // Calculate how much gain is needed
-                        const gainNeeded = targetRMS - rmsDB;
-
-                        // Apply to master gain slider (limit to +12dB max for safety)
-                        const safeGain = Math.min(gainNeeded, 12);
-
-                        if (masterGainSlider && masterGainValue) {
-                            masterGainSlider.value = safeGain;
-                            masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
-
-                            // Apply to actual audio processing
-                            if (masterGain) {
-                                masterGain.gain.value = Math.pow(10, safeGain / 20);
-                            }
-
-                            console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
-                            console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
-                            console.log('   🎯 Signal now in optimal range for processing');
-                        }
-                    } else {
-                        console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
-                        console.log('   No gain adjustment needed');
-                    }
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
-
-                    // Try immediately
-                    drawWaveformFromBuffer(audioBuffer);
-
-                    // Try again after 100ms (canvas might need time to be ready)
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
-
-                    // And once more after 500ms to be absolutely sure
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
-
-                    console.log('   Waveform draw attempts scheduled (3 times)');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    // Initialize WebGL spectrum analyzer (with persistence/ghosting)
-                    if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
-                        console.log('🎨 Initializing WebGL Spectrum with Persistence...');
-                        const success = window.WebGLSpectrum.init(spectrumCanvas);
-                        if (success) {
-                            console.log('   ✅ WebGL Persistence System active - Elite analog look enabled');
-                        } else {
-                            console.log('   ⚠️ WebGL failed, falling back to Canvas 2D');
-                        }
-                    }
-
-                    // Draw correlation heatmap legend (static, one-time)
-                    if (window.drawCorrelationLegend && correlationLegendCanvas) {
-                        console.log('🎨 Drawing Correlation Heatmap legend...');
-                        window.drawCorrelationLegend(correlationLegendCanvas);
-                        console.log('   ✅ Elite frequency-domain phase analysis ready');
-                    }
-
-                    // REMOVED: Old ultimateWaveformViz code
-                    setTimeout(() => {
-                        if (false && window.ultimateWaveformViz && window.audioBuffer) {
-                            // Disabled - we use the original waveform system
-                            console.log('🎨 Waveform auto-loaded');
-                        }
-                    }, 200);
-
-                } catch (error) {
-                    console.error('⚠️ Error decoding audio buffer:', error);
+                    await audioElement.play();
+                    playBtn.textContent = '⏸️';
+                    isPlaying = true;
+                    console.log('🎵 Auto-play started smoothly');
+                } catch (err) {
+                    console.log('⚠️ Auto-play prevented by browser:', err);
                 }
+
+                // DEFER: Decode audioBuffer AFTER playback starts (prevents skipping)
+                setTimeout(async () => {
+                    try {
+                        console.log('🔄 Decoding audio buffer in background...');
+                        const arrayBuffer = await uploadedFile.arrayBuffer();
+                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+
+                        // Make audioBuffer globally accessible for ULTIMATE_VISUALS
+                        window.audioBuffer = audioBuffer;
+
+                        // Store original peaks for transient ghost layer
+                        window.originalPeaksData = audioBuffer.getChannelData(0).slice();
+
+                        console.log('✅ Audio buffer decoded for AI processing');
+
+                        // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
+                        // This ensures EQ and saturation work in their optimal range
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                        console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
+
+                        // Calculate RMS level of the uploaded audio
+                        const channelData = audioBuffer.getChannelData(0);
+                        let sumSquares = 0;
+                        for (let i = 0; i < channelData.length; i++) {
+                            sumSquares += channelData[i] * channelData[i];
+                        }
+                        const rms = Math.sqrt(sumSquares / channelData.length);
+                        const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
+
+                        console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
+
+                        // If signal is too quiet (below -18dBFS), auto-boost it
+                        const targetRMS = -18; // Analog sweet spot
+                        const masterGainSlider = document.getElementById('masterGainSlider');
+                        const masterGainValue = document.getElementById('masterGainValue');
+
+                        if (rmsDB < targetRMS - 1) {
+                            // Calculate how much gain is needed
+                            const gainNeeded = targetRMS - rmsDB;
+
+                            // Apply to master gain slider (limit to +12dB max for safety)
+                            const safeGain = Math.min(gainNeeded, 12);
+
+                            if (masterGainSlider && masterGainValue) {
+                                masterGainSlider.value = safeGain;
+                                masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
+
+                                // Apply to actual audio processing
+                                if (masterGain) {
+                                    masterGain.gain.value = Math.pow(10, safeGain / 20);
+                                }
+
+                                console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
+                                console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
+                                console.log('   🎯 Signal now in optimal range for processing');
+                            }
+                        } else {
+                            console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
+                            console.log('   No gain adjustment needed');
+                        }
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                        // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                        console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
+
+                        // Try immediately
+                        drawWaveformFromBuffer(audioBuffer);
+
+                        // Try again after 100ms (canvas might need time to be ready)
+                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
+
+                        // And once more after 500ms to be absolutely sure
+                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
+
+                        console.log('   Waveform draw attempts scheduled (3 times)');
+                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                        // Initialize WebGL spectrum analyzer (with persistence/ghosting)
+                        if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
+                            console.log('🎨 Initializing WebGL Spectrum with Persistence...');
+                            const success = window.WebGLSpectrum.init(spectrumCanvas);
+                            if (success) {
+                                console.log('   ✅ WebGL Persistence System active - Elite analog look enabled');
+                            } else {
+                                console.log('   ⚠️ WebGL failed, falling back to Canvas 2D');
+                            }
+                        }
+
+                        // Draw correlation heatmap legend (static, one-time)
+                        if (window.drawCorrelationLegend && correlationLegendCanvas) {
+                            console.log('🎨 Drawing Correlation Heatmap legend...');
+                            window.drawCorrelationLegend(correlationLegendCanvas);
+                            console.log('   ✅ Elite frequency-domain phase analysis ready');
+                        }
+
+                    } catch (error) {
+                        console.error('⚠️ Error decoding audio buffer:', error);
+                    }
+                }, 500); // 500ms delay to let playback stabilize first
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
@@ -3692,7 +3695,9 @@
                 setTimeout(() => {
                     showSetupModal(file.name);
                 }, 800);
-            });
+            };
+            audioElement._canPlayHandler = canPlayHandler;
+            audioElement.addEventListener('canplaythrough', canPlayHandler, { once: true });
         }
 
         // CRITICAL: Attach file upload event listeners with error handling
