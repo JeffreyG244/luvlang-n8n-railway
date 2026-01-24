@@ -1,8 +1,6 @@
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    TIER SYSTEM - 3-Tier Commercial Hardware States
    Handles: Tier switching, power-on animations, module locking, checkout
-
-   SECURITY: Includes server-side tier verification
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -11,23 +9,12 @@
 
 let currentTier = 'basic'; // 'basic', 'advanced', 'premium'
 let wasmPrecisionMode = '32bit'; // '32bit', '64bit'
-let verifiedTierFromServer = null; // Server-verified tier (security)
-
-/**
- * Get payment links from config (environment-aware)
- */
-function getPaymentLink(tier) {
-    if (typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.stripe && LUVLANG_CONFIG.stripe.paymentLinks) {
-        return LUVLANG_CONFIG.stripe.paymentLinks[tier] || TIER_CONFIG[tier].stripeLink;
-    }
-    return TIER_CONFIG[tier].stripeLink;
-}
 
 const TIER_CONFIG = {
     basic: {
         price: 29.00,
         label: 'BASIC TIER',
-        stripeLink: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03', // Fallback only
+        stripeLink: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03',
         features: [
             'Unlimited MP3 exports (320kbps)',
             '32-bit float processing',
@@ -46,7 +33,7 @@ const TIER_CONFIG = {
     advanced: {
         price: 79.00,
         label: 'ADVANCED TIER',
-        stripeLink: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01', // Fallback only
+        stripeLink: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01',
         features: [
             'Unlimited 24-bit WAV exports',
             '32-bit float processing',
@@ -66,7 +53,7 @@ const TIER_CONFIG = {
     premium: {
         price: 149.00,
         label: 'PREMIUM TIER',
-        stripeLink: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02', // Fallback only
+        stripeLink: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02',
         features: [
             '64-bit precision engine (4x oversampling)',
             'Full manual control - All modules unlocked',
@@ -86,99 +73,6 @@ const TIER_CONFIG = {
         processing: '64bit'
     }
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SERVER-SIDE TIER VERIFICATION (SECURITY)
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Verify user's tier with server
- * This prevents client-side manipulation of tier access
- */
-async function verifyTierWithServer() {
-    // Skip verification if not logged in
-    if (typeof currentUser === 'undefined' || !currentUser) {
-        console.log('ℹ️ User not logged in, using default tier');
-        verifiedTierFromServer = 'basic';
-        return 'basic';
-    }
-
-    // Skip in development if demo mode is enabled
-    if (typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.features && LUVLANG_CONFIG.features.demoMode) {
-        console.log('⚠️ Demo mode: Skipping server verification');
-        verifiedTierFromServer = currentTier;
-        return currentTier;
-    }
-
-    try {
-        // Query Supabase for user's verified tier
-        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
-            const { data, error } = await supabaseClient
-                .from('user_profiles')
-                .select('subscription_tier')
-                .eq('id', currentUser.id)
-                .single();
-
-            if (error) {
-                console.error('❌ Tier verification failed:', error.message);
-                verifiedTierFromServer = 'basic';
-                return 'basic';
-            }
-
-            // Map subscription tier to our tier names
-            const tierMapping = {
-                'free': 'basic',
-                'basic': 'basic',
-                'advanced': 'advanced',
-                'premium': 'premium',
-                'legendary': 'premium'
-            };
-
-            verifiedTierFromServer = tierMapping[data.subscription_tier] || 'basic';
-            console.log('✅ Server-verified tier:', verifiedTierFromServer);
-            return verifiedTierFromServer;
-        }
-    } catch (error) {
-        console.error('❌ Tier verification error:', error);
-    }
-
-    verifiedTierFromServer = 'basic';
-    return 'basic';
-}
-
-/**
- * Check if module is unlocked (with server verification)
- */
-function isModuleUnlockedSecure(moduleName) {
-    // In production, use server-verified tier
-    const tierToCheck = verifiedTierFromServer || currentTier;
-    return TIER_CONFIG[tierToCheck]?.modules?.[moduleName] === true;
-}
-
-/**
- * Initialize tier system with server verification
- */
-async function initializeTierSystem() {
-    // Load any cached tier (for quick UI)
-    const cachedTier = localStorage.getItem('luvlang_cached_tier');
-    if (cachedTier && TIER_CONFIG[cachedTier]) {
-        currentTier = cachedTier;
-    }
-
-    // Verify with server (async)
-    const verifiedTier = await verifyTierWithServer();
-
-    // If server tier differs from cached, update
-    if (verifiedTier !== currentTier) {
-        console.log(`🔄 Updating tier from ${currentTier} to server-verified: ${verifiedTier}`);
-        switchTier(verifiedTier);
-    }
-
-    // Cache the verified tier
-    localStorage.setItem('luvlang_cached_tier', verifiedTier);
-
-    return verifiedTier;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TIER SWITCHING LOGIC
