@@ -6481,6 +6481,10 @@
             let lastPlayheadCanvasWidth = 0;
             let lastPlayheadCanvasHeight = 0;
 
+            // PERFORMANCE MODE: Set to true to disable heavy visualizations for testing
+            // Toggle in console: window.PERFORMANCE_MODE = true/false
+            window.PERFORMANCE_MODE = false;
+
             // THROTTLE: Reduce to 30fps to prevent audio skipping
             let lastDrawTime = 0;
             const DRAW_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
@@ -6505,22 +6509,25 @@
                 analyser.getFloatFrequencyData(drawDataArray);
 
                 // ═══ PANEL 1: SPECTRUM ANALYZER + EQ CURVE (WebGL with Persistence) ═══
-                // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
-                if (spectrumCanvas && detectedGenre && detectedGenre !== 'Balanced') {
-                    // Only draw if we have a specific genre detected (not default)
-                    drawReferenceCurve(spectrumCanvas, detectedGenre);
-                }
+                // PERFORMANCE MODE: Skip heavy visualizations
+                if (!window.PERFORMANCE_MODE) {
+                    // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
+                    if (spectrumCanvas && detectedGenre && detectedGenre !== 'Balanced') {
+                        // Only draw if we have a specific genre detected (not default)
+                        drawReferenceCurve(spectrumCanvas, detectedGenre);
+                    }
 
-                if (window.WebGLSpectrum && window.WebGLSpectrum.isReady() && analyser && audioContext) {
-                    // Elite WebGL rendering with persistence/ghosting
-                    window.WebGLSpectrum.render(analyser, audioContext);
-                } else if (window.drawProfessionalSpectrum && spectrumCanvas && audioContext) {
-                    // Fallback to Canvas 2D if WebGL not available
-                    window.drawProfessionalSpectrum(spectrumCanvas, analyser, audioContext);
+                    if (window.WebGLSpectrum && window.WebGLSpectrum.isReady() && analyser && audioContext) {
+                        // Elite WebGL rendering with persistence/ghosting
+                        window.WebGLSpectrum.render(analyser, audioContext);
+                    } else if (window.drawProfessionalSpectrum && spectrumCanvas && audioContext) {
+                        // Fallback to Canvas 2D if WebGL not available
+                        window.drawProfessionalSpectrum(spectrumCanvas, analyser, audioContext);
+                    }
                 }
 
                 // ═══ PANEL 2: STEREO METERS ═══
-                if (window.drawStereoMeter && leftAnalyser && rightAnalyser) {
+                if (!window.PERFORMANCE_MODE && window.drawStereoMeter && leftAnalyser && rightAnalyser) {
                     // Get time domain data for peak metering (reuse pre-allocated arrays)
                     if (!drawLeftTimeDomain || drawLeftTimeDomain.length !== leftAnalyser.fftSize) {
                         drawLeftTimeDomain = new Float32Array(leftAnalyser.fftSize);
