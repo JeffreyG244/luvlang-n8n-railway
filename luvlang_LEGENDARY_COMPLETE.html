@@ -3571,16 +3571,30 @@
             audioElement._loadedHandler = loadedHandler;
             audioElement.addEventListener('loadedmetadata', loadedHandler, { once: true });
 
-            // Handler for canplaythrough - all processing done, ready to play
+            // Handler for canplaythrough - start playback immediately, process in background
             const canPlayHandler = async () => {
-                console.log('🎵 Audio fully buffered and ready...');
+                console.log('🎵 Audio fully buffered - starting playback FIRST...');
 
-                // DO ALL HEAVY PROCESSING FIRST (before any playback)
+                // START PLAYBACK IMMEDIATELY (before any heavy processing)
                 try {
-                    console.log('🔄 Decoding audio buffer...');
-                    const arrayBuffer = await uploadedFile.arrayBuffer();
-                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                    if (audioContext && audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+                    await audioElement.play();
+                    playBtn.textContent = '⏸️';
+                    isPlaying = true;
+                    console.log('🎵 Playback started!');
+                } catch (err) {
+                    console.log('⚠️ Auto-play blocked:', err.message);
+                }
+
+                // NOW do heavy processing in background (after playback has started)
+                setTimeout(async () => {
+                    try {
+                        console.log('🔄 Background: Decoding audio buffer...');
+                        const arrayBuffer = await uploadedFile.arrayBuffer();
+                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
                         // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                         window.audioBuffer = audioBuffer;
@@ -3671,31 +3685,10 @@
                             console.log('   ✅ Elite frequency-domain phase analysis ready');
                         }
 
-                } catch (error) {
-                    console.error('⚠️ Error decoding audio buffer:', error);
-                }
-
-                // ALL PROCESSING DONE - Now safe to play
-                console.log('✅ All processing complete - starting playback...');
-
-                // Wait for audio chain to fully stabilize, then auto-play
-                setTimeout(async () => {
-                    try {
-                        if (audioContext && audioContext.state === 'suspended') {
-                            console.log('⚡ Resuming AudioContext...');
-                            await audioContext.resume();
-                        }
-                        console.log('▶ Starting playback...');
-                        await audioElement.play();
-                        playBtn.textContent = '⏸️';
-                        isPlaying = true;
-                        console.log('🎵 Playback started successfully');
-                    } catch (err) {
-                        console.log('⚠️ Auto-play blocked by browser - click play button:', err.message);
-                        playBtn.style.animation = 'pulse 1s ease-in-out 3';
-                        playBtn.title = 'Click to play your track!';
+                    } catch (error) {
+                        console.error('⚠️ Background processing error:', error);
                     }
-                }, 500); // 500ms delay to let audio chain stabilize
+                }, 1000); // 1 second delay to let playback stabilize first
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
@@ -3704,7 +3697,7 @@
                 window.uploadedFileName = file.name;
                 setTimeout(() => {
                     showSetupModal(file.name);
-                }, 500);
+                }, 800);
             };
             audioElement._canPlayHandler = canPlayHandler;
             audioElement.addEventListener('canplaythrough', canPlayHandler, { once: true });
