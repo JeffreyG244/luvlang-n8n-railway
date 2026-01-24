@@ -2603,30 +2603,35 @@
 
                     console.log('✅ Audio Context created at ' + audioContext.sampleRate + 'Hz (native)');
 
-                    // Initialize revolutionary feature engines
-                    if (typeof StemMasteringEngine !== 'undefined') {
-                        stemMasteringEngine = new StemMasteringEngine(audioContext);
-                        console.log('✅ Stem Mastering Engine loaded');
-                    }
-                    if (typeof CodecPreviewEngine !== 'undefined') {
-                        codecPreviewEngine = new CodecPreviewEngine(audioContext);
-                        console.log('✅ Codec Preview Engine loaded');
-                    }
-                    if (typeof PodcastMasteringEngine !== 'undefined') {
-                        podcastMasteringEngine = new PodcastMasteringEngine(audioContext);
-                        console.log('✅ Podcast Mastering Suite loaded');
-                    }
-                    if (typeof SpectralRepairEngine !== 'undefined') {
-                        spectralRepairEngine = new SpectralRepairEngine(audioContext);
-                        console.log('✅ Spectral Repair Engine loaded');
-                    }
-                    if (typeof StereoFieldEditor !== 'undefined') {
-                        stereoFieldEditor = new StereoFieldEditor(audioContext);
-                        console.log('✅ Stereo Field Editor loaded');
-                    }
-                    if (typeof SpectralDenoiser !== 'undefined') {
-                        spectralDenoiser = new SpectralDenoiser(audioContext);
-                        console.log('✅ Spectral De-noiser loaded');
+                    // Initialize revolutionary feature engines (wrapped to prevent audio chain disruption)
+                    try {
+                        if (typeof StemMasteringEngine !== 'undefined') {
+                            stemMasteringEngine = new StemMasteringEngine(audioContext);
+                            console.log('✅ Stem Mastering Engine loaded');
+                        }
+                        if (typeof CodecPreviewEngine !== 'undefined') {
+                            codecPreviewEngine = new CodecPreviewEngine(audioContext);
+                            console.log('✅ Codec Preview Engine loaded');
+                        }
+                        if (typeof PodcastMasteringEngine !== 'undefined') {
+                            podcastMasteringEngine = new PodcastMasteringEngine(audioContext);
+                            console.log('✅ Podcast Mastering Suite loaded');
+                        }
+                        if (typeof SpectralRepairEngine !== 'undefined') {
+                            spectralRepairEngine = new SpectralRepairEngine(audioContext);
+                            console.log('✅ Spectral Repair Engine loaded');
+                        }
+                        if (typeof StereoFieldEditor !== 'undefined') {
+                            stereoFieldEditor = new StereoFieldEditor(audioContext);
+                            console.log('✅ Stereo Field Editor loaded');
+                        }
+                        if (typeof SpectralDenoiser !== 'undefined') {
+                            spectralDenoiser = new SpectralDenoiser(audioContext);
+                            console.log('✅ Spectral De-noiser loaded');
+                        }
+                    } catch (engineError) {
+                        console.warn('⚠️ Some feature engines failed to load:', engineError.message);
+                        // Continue - audio chain will still work without these optional features
                     }
 
                     // ✨ SUPABASE: Initialize cloud sync and authentication
@@ -2650,14 +2655,22 @@
                         }
                     }
 
-                    // ✨ CRITICAL FIX: Initialize audio playback connection
+                    // ✨ CRITICAL FIX: Initialize audio playback connection (wrapped to prevent audio chain disruption)
                     if (typeof ensureAudioPlayback === 'function') {
-                        ensureAudioPlayback();
+                        try {
+                            ensureAudioPlayback();
+                        } catch (e) {
+                            console.warn('⚠️ ensureAudioPlayback skipped:', e.message);
+                        }
                     }
 
-                    // ✨ LEGENDARY: Initialize legendary features now that audioContext exists
+                    // ✨ LEGENDARY: Initialize legendary features now that audioContext exists (wrapped to prevent audio chain disruption)
                     if (typeof initializeLegendaryFeatures === 'function') {
-                        initializeLegendaryFeatures();
+                        try {
+                            initializeLegendaryFeatures();
+                        } catch (e) {
+                            console.warn('⚠️ initializeLegendaryFeatures skipped:', e.message);
+                        }
                     }
 
                     // 🤖 AI SUITE: Initialize AI Mastering Suite now that audioContext exists
@@ -2690,21 +2703,29 @@
                         }
                     }
 
-                    // ✨ PROFESSIONAL: Initialize Professional Mastering Engine
+                    // ✨ PROFESSIONAL: Initialize Professional Mastering Engine (wrapped to prevent audio chain disruption)
                     if (typeof initProfessionalEngine === 'function') {
-                        window.professionalMasteringEngine = initProfessionalEngine(audioContext);
-                        console.log('✅ Professional Mastering Engine initialized');
+                        try {
+                            window.professionalMasteringEngine = initProfessionalEngine(audioContext);
+                            console.log('✅ Professional Mastering Engine initialized');
+                        } catch (e) {
+                            console.warn('⚠️ Professional Mastering Engine skipped:', e.message);
+                        }
                     }
 
-                    // ✨ ADVANCED: Initialize Advanced Processors
+                    // ✨ ADVANCED: Initialize Advanced Processors (wrapped to prevent audio chain disruption)
                     if (typeof AdvancedLimiter !== 'undefined') {
-                        window.advancedLimiter = new AdvancedLimiter(audioContext);
-                        window.stereoImager = new StereoImager(audioContext);
-                        window.harmonicExciter = new HarmonicExciter(audioContext);
-                        window.enhancedEQ = new EnhancedEQ(audioContext);
-                        window.referenceTrackMatcher = new ReferenceTrackMatcher(audioContext);
-                        window.presetManager = new PresetManager();
-                        console.log('✅ All advanced processors initialized');
+                        try {
+                            window.advancedLimiter = new AdvancedLimiter(audioContext);
+                            window.stereoImager = new StereoImager(audioContext);
+                            window.harmonicExciter = new HarmonicExciter(audioContext);
+                            window.enhancedEQ = new EnhancedEQ(audioContext);
+                            window.referenceTrackMatcher = new ReferenceTrackMatcher(audioContext);
+                            window.presetManager = new PresetManager();
+                            console.log('✅ All advanced processors initialized');
+                        } catch (e) {
+                            console.warn('⚠️ Advanced processors skipped:', e.message);
+                        }
                     }
                 }
 
@@ -2924,10 +2945,18 @@
                 console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
 
                 // Start visualization
-                startVisualization();
+                try {
+                    startVisualization();
+                } catch (vizError) {
+                    console.error('⚠️ Visualization startup failed:', vizError.message);
+                    // Audio chain is already connected, so audio will still work
+                }
+
+                console.log('🎉 AUDIO CHAIN SETUP COMPLETE - Ready for playback!');
 
             } catch (error) {
                 console.error('❌ Web Audio setup error:', error);
+                console.error('   Stack:', error.stack);
             }
         }
 
