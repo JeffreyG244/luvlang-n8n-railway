@@ -2588,21 +2588,20 @@
         console.log('   48kHz Professional Quality');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // WEB AUDIO SETUP - Professional 48kHz Audio Chain
+        // WEB AUDIO SETUP - Native Sample Rate Audio Chain
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function setupWebAudio(audioElement) {
             try {
-                // Create audio context with professional quality settings
+                // Create audio context - use hardware's native sample rate to avoid CPU-intensive resampling
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        sampleRate: 48000,        // Professional broadcast standard
-                        latencyHint: 'playback'   // Optimize for quality
+                        latencyHint: 'balanced'   // Balance between latency and smooth playback
                     });
 
                     // Make audioContext globally accessible for ULTIMATE_VISUALS
                     window.audioContext = audioContext;
 
-                    console.log('✅ Audio Context created at 48kHz professional quality');
+                    console.log('✅ Audio Context created at ' + audioContext.sampleRate + 'Hz (native)');
 
                     // Initialize revolutionary feature engines
                     if (typeof StemMasteringEngine !== 'undefined') {
@@ -2818,17 +2817,18 @@
 
                 console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
 
-                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (32768 FFT)
+                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (8192 FFT - balanced quality/performance)
+                // Note: 32768 FFT was causing audio skipping due to excessive CPU load
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 32768;
-                analyser.smoothingTimeConstant = 0;
-                analyser.minDecibels = -120;
+                analyser.fftSize = 8192;  // Reduced from 32768 - still high quality but 4x faster
+                analyser.smoothingTimeConstant = 0.1;  // Slight smoothing reduces CPU spikes
+                analyser.minDecibels = -100;
                 analyser.maxDecibels = 0;
 
                 // Make analyser globally accessible for ULTIMATE_VISUALS
                 window.analyser = analyser;
 
-                console.log('✅ Spectrum Analyzer created (FFT: 32768, -120dB to 0dB)');
+                console.log('✅ Spectrum Analyzer created (FFT: 8192, -100dB to 0dB)');
 
                 // ═══════════════════════════════════════════════════════════════════
                 // REMOVED: Old ULTIMATE_VISUALS auto-init code (abandoned system)
