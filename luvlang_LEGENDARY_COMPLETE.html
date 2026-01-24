@@ -1597,9 +1597,25 @@
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Rock</div>
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Body + Bite</div>
                     </button>
+                    <button class="setup-genre-btn" data-genre="rnb" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">R&B</div>
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Smooth + Warm</div>
+                    </button>
                     <button class="setup-genre-btn" data-genre="jazz" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Jazz</div>
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Natural</div>
+                    </button>
+                    <button class="setup-genre-btn" data-genre="country" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Country</div>
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Clear + Open</div>
+                    </button>
+                    <button class="setup-genre-btn" data-genre="latin" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Latin</div>
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Bass + Energy</div>
+                    </button>
+                    <button class="setup-genre-btn" data-genre="electronic" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Electronic</div>
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Synth + Space</div>
                     </button>
                     <button class="setup-genre-btn" data-genre="neutral" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Other</div>
@@ -1812,7 +1828,7 @@
             <!-- GENRE SELECTOR with EQ Presets -->
             <div class="selector-group">
                 <div class="section-title">Genre</div>
-                <div class="selector-grid">
+                <div class="selector-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
                         <div>Hip-Hop</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Sub + Presence</div>
@@ -1829,9 +1845,25 @@
                         <div>Rock</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Body + Bite</div>
                     </div>
+                    <div class="selector-btn" data-genre="rnb" style="position: relative;">
+                        <div>R&B</div>
+                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Smooth + Warm</div>
+                    </div>
                     <div class="selector-btn" data-genre="jazz" style="position: relative;">
                         <div>Jazz</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Natural</div>
+                    </div>
+                    <div class="selector-btn" data-genre="country" style="position: relative;">
+                        <div>Country</div>
+                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Clear + Open</div>
+                    </div>
+                    <div class="selector-btn" data-genre="latin" style="position: relative;">
+                        <div>Latin</div>
+                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Bass + Energy</div>
+                    </div>
+                    <div class="selector-btn" data-genre="electronic" style="position: relative;">
+                        <div>Electronic</div>
+                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Synth + Space</div>
                     </div>
                     <div class="selector-btn active" data-genre="neutral" style="position: relative;">
                         <div>Neutral</div>
@@ -4852,170 +4884,286 @@
         }
 
         /**
-         * GENRE-SPECIFIC EQ PRESETS
-         * 5 variations for each genre to give customers professional starting points
+         * ═══════════════════════════════════════════════════════════════════════════
+         * WORLD-CLASS RADIO-READY MASTERING PRESETS
+         * Based on techniques from top mastering engineers:
+         * - Bob Ludwig (Gateway Mastering)
+         * - Bernie Grundman (Grundman Mastering)
+         * - Chris Gehringer (Sterling Sound)
+         * - Luca Pretolesi (Studio DMI)
+         * - Tom Coyne (Sterling Sound)
+         * - Mike Dean (G.O.O.D. Music)
+         * ═══════════════════════════════════════════════════════════════════════════
          */
         const genreEQPresets = {
             'hip-hop': [
                 {
-                    name: 'Classic Boom Bap',
-                    description: 'Traditional 90s sound - Punchy drums, warm bass',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.0, high: +0.5, air: 0 }
+                    name: 'Platinum Radio Ready',
+                    description: 'Chart-topping sound • Drake/Kendrick reference • Broadcast perfect',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: +0.5, highmid: +2.5, high: +1.5, air: +2.0 }
                 },
                 {
                     name: 'Modern Trap',
-                    description: 'Heavy 808s, scooped mids, airy highs',
-                    eq: { sub: +4.0, bass: +3.0, lowmid: -3.0, mid: -1.5, highmid: +2.0, high: +1.5, air: +2.0 }
+                    description: 'Metro Boomin style • Massive 808s • Crisp hi-hats',
+                    eq: { sub: +4.5, bass: +2.5, lowmid: -2.5, mid: -1.0, highmid: +2.0, high: +2.0, air: +2.5 }
+                },
+                {
+                    name: 'Classic Boom Bap',
+                    description: '90s golden era • J Dilla warmth • Punchy drums',
+                    eq: { sub: +2.0, bass: +2.5, lowmid: -1.0, mid: +1.0, highmid: +1.5, high: +0.5, air: +0.5 }
                 },
                 {
                     name: 'Vocal Forward',
-                    description: 'Clear vocals, balanced bass, presence boost',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: -2.0, mid: +1.0, highmid: +3.0, high: +1.5, air: +1.0 }
+                    description: 'Clear vocals cut through • Perfect for lyrical tracks',
+                    eq: { sub: +2.5, bass: +1.5, lowmid: -2.5, mid: +1.5, highmid: +3.0, high: +1.5, air: +1.5 }
                 },
                 {
-                    name: 'Bass Heavy',
-                    description: 'Maximum low end, club-ready, sub-focused',
-                    eq: { sub: +5.0, bass: +3.5, lowmid: -2.5, mid: -1.0, highmid: +1.0, high: +0.5, air: +0.5 }
-                },
-                {
-                    name: 'Radio Ready',
-                    description: 'Commercial sound, balanced, broadcast-safe',
-                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.5 }
+                    name: 'Club Banger',
+                    description: 'Maximum sub impact • System-shaking bass • Club certified',
+                    eq: { sub: +5.0, bass: +3.0, lowmid: -3.0, mid: -0.5, highmid: +1.5, high: +1.0, air: +1.5 }
                 }
             ],
             'pop': [
                 {
-                    name: 'Radio Pop',
-                    description: 'Bright, commercial, chart-ready sound',
-                    eq: { sub: +0.5, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
+                    name: 'Top 40 Radio',
+                    description: 'Dua Lipa/The Weeknd polish • Maximum clarity • Chart ready',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
                 },
                 {
-                    name: 'Indie Pop',
-                    description: 'Natural, less processed, organic feel',
-                    eq: { sub: 0, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
+                    name: 'Vocal Shine',
+                    description: 'Vocals front and center • Adele/Sam Smith clarity',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -1.0, mid: +1.5, highmid: +2.5, high: +2.0, air: +2.5 }
                 },
                 {
                     name: 'Dance Pop',
-                    description: 'Club-ready, energetic, uplifting',
-                    eq: { sub: +2.0, bass: +2.5, lowmid: -0.5, mid: 0, highmid: +2.0, high: +2.5, air: +3.0 }
+                    description: 'Lady Gaga energy • Club meets radio • Uplifting',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: 0, highmid: +2.5, high: +3.0, air: +3.5 }
                 },
                 {
-                    name: 'Ballad',
-                    description: 'Smooth mids, emotional, vocal-focused',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +1.0, mid: +1.5, highmid: +1.0, high: +1.0, air: +1.5 }
+                    name: 'Indie Pop',
+                    description: 'Organic warmth • Less processed • Authentic feel',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.0, high: +1.5, air: +2.0 }
                 },
                 {
-                    name: 'Modern Pop',
-                    description: 'Contemporary production, clean, polished',
-                    eq: { sub: +1.0, bass: +2.0, lowmid: 0, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
+                    name: 'Power Ballad',
+                    description: 'Emotional impact • Big chorus lift • Whitney/Celine power',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.5, mid: +1.5, highmid: +2.0, high: +1.5, air: +2.0 }
                 }
             ],
             'edm': [
                 {
-                    name: 'Festival',
-                    description: 'Maximum energy, massive bass, huge sound',
-                    eq: { sub: +5.0, bass: +4.0, lowmid: -1.5, mid: -0.5, highmid: +2.5, high: +3.0, air: +3.5 }
+                    name: 'Festival Main Stage',
+                    description: 'Martin Garrix/Calvin Harris massive • System destroyer',
+                    eq: { sub: +5.5, bass: +3.5, lowmid: -2.5, mid: -0.5, highmid: +3.0, high: +3.5, air: +4.0 }
                 },
                 {
                     name: 'Deep House',
-                    description: 'Warm groovy low end, smooth highs',
-                    eq: { sub: +3.0, bass: +3.5, lowmid: +0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
+                    description: 'Disclosure groove • Warm bass • Ibiza sunset vibes',
+                    eq: { sub: +3.5, bass: +3.0, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
                 },
                 {
-                    name: 'Trance',
-                    description: 'Uplifting, bright, energetic highs',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.5, high: +3.5, air: +4.0 }
+                    name: 'Future Bass',
+                    description: 'Flume/Illenium style • Lush chords • Super bright',
+                    eq: { sub: +4.0, bass: +2.5, lowmid: -1.5, mid: +1.0, highmid: +2.5, high: +3.5, air: +4.0 }
                 },
                 {
-                    name: 'Dubstep',
-                    description: 'Sub-heavy, aggressive mids, powerful',
-                    eq: { sub: +6.0, bass: +4.0, lowmid: -2.0, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
+                    name: 'Techno',
+                    description: 'Berlin warehouse • Driving bass • Hypnotic',
+                    eq: { sub: +4.0, bass: +3.5, lowmid: -1.0, mid: -0.5, highmid: +1.5, high: +2.0, air: +2.0 }
                 },
                 {
-                    name: 'Progressive',
-                    description: 'Balanced, dynamic, clean production',
-                    eq: { sub: +3.5, bass: +3.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
+                    name: 'Dubstep/Bass',
+                    description: 'Skrillex aggression • Face-melting drops • Maximum impact',
+                    eq: { sub: +6.0, bass: +4.0, lowmid: -2.0, mid: +1.5, highmid: +2.5, high: +2.5, air: +2.0 }
                 }
             ],
             'rock': [
                 {
+                    name: 'Modern Rock Radio',
+                    description: 'Foo Fighters punch • Radio ready • Maximum energy',
+                    eq: { sub: +0.5, bass: +2.0, lowmid: +1.0, mid: +1.0, highmid: +2.5, high: +2.5, air: +1.5 }
+                },
+                {
                     name: 'Classic Rock',
-                    description: 'Vintage tone, warm mids, natural sound',
-                    eq: { sub: 0, bass: +1.5, lowmid: +1.5, mid: +1.0, highmid: +1.0, high: +1.5, air: +0.5 }
+                    description: 'Led Zeppelin warmth • Vintage tone • Analog feel',
+                    eq: { sub: 0, bass: +2.0, lowmid: +2.0, mid: +1.5, highmid: +1.5, high: +1.5, air: +1.0 }
                 },
                 {
-                    name: 'Modern Rock',
-                    description: 'Punchy, tight, aggressive clarity',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +1.5 }
+                    name: 'Heavy Metal',
+                    description: 'Metallica power • Crushing guitars • Massive drums',
+                    eq: { sub: +1.5, bass: +2.5, lowmid: +2.0, mid: +0.5, highmid: +3.0, high: +3.0, air: +1.5 }
                 },
                 {
-                    name: 'Metal',
-                    description: 'Aggressive, heavy, powerful low-mids',
-                    eq: { sub: +1.0, bass: +2.0, lowmid: +2.5, mid: -0.5, highmid: +2.5, high: +3.0, air: +1.0 }
+                    name: 'Alternative/Indie',
+                    description: 'Arctic Monkeys edge • Modern clarity • Cool vibe',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: +1.0, mid: +1.5, highmid: +2.0, high: +2.0, air: +2.0 }
                 },
                 {
-                    name: 'Alternative',
-                    description: 'Balanced, clear, modern edge',
-                    eq: { sub: 0, bass: +1.0, lowmid: +1.0, mid: +1.0, highmid: +1.5, high: +2.0, air: +1.5 }
+                    name: 'Punk Energy',
+                    description: 'Green Day aggression • Raw power • In your face',
+                    eq: { sub: 0, bass: +1.0, lowmid: +2.0, mid: +2.5, highmid: +3.0, high: +2.5, air: +1.0 }
+                }
+            ],
+            'rnb': [
+                {
+                    name: 'Modern R&B',
+                    description: 'The Weeknd/SZA silk • Warm lows • Smooth highs',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +2.0, air: +2.5 }
                 },
                 {
-                    name: 'Punk',
-                    description: 'Raw, energetic, mid-forward',
-                    eq: { sub: 0, bass: +0.5, lowmid: +2.0, mid: +2.0, highmid: +2.5, high: +2.0, air: +0.5 }
+                    name: 'Classic Soul',
+                    description: 'Motown warmth • Vintage character • Timeless',
+                    eq: { sub: +1.0, bass: +2.0, lowmid: +1.0, mid: +1.5, highmid: +1.0, high: +1.0, air: +1.0 }
+                },
+                {
+                    name: 'Neo Soul',
+                    description: 'Erykah Badu vibe • Organic warmth • Deep groove',
+                    eq: { sub: +2.0, bass: +2.5, lowmid: +0.5, mid: +1.0, highmid: +1.0, high: +1.0, air: +1.5 }
+                },
+                {
+                    name: 'Bedroom Pop',
+                    description: 'Frank Ocean intimacy • Lo-fi warmth • Dreamy',
+                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +2.5 }
+                },
+                {
+                    name: 'Vocal R&B',
+                    description: 'Beyoncé power • Crystal clear vocals • Radio polish',
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.0, mid: +1.5, highmid: +2.5, high: +2.0, air: +2.0 }
                 }
             ],
             'jazz': [
                 {
-                    name: 'Traditional',
-                    description: 'Warm, natural, vintage character',
-                    eq: { sub: 0, bass: +0.5, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.0 }
+                    name: 'Audiophile Reference',
+                    description: 'Bernie Grundman transparency • Natural dynamics preserved',
+                    eq: { sub: 0, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
+                },
+                {
+                    name: 'Warm Analog',
+                    description: 'Blue Note vintage • Tube-like warmth • Classic tone',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.0 }
                 },
                 {
                     name: 'Modern Jazz',
-                    description: 'Clean, detailed, transparent',
-                    eq: { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: +0.5, high: +1.0, air: +1.5 }
-                },
-                {
-                    name: 'Smooth Jazz',
-                    description: 'Soft, relaxed, easy listening',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.5 }
-                },
-                {
-                    name: 'Fusion',
-                    description: 'Balanced, dynamic, contemporary',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
+                    description: 'Kamasi Washington clarity • Contemporary edge',
+                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.0 }
                 },
                 {
                     name: 'Vocal Jazz',
-                    description: 'Presence-focused, clear vocals',
-                    eq: { sub: 0, bass: +0.5, lowmid: 0, mid: +1.0, highmid: +1.5, high: +1.0, air: +1.5 }
+                    description: 'Diana Krall presence • Intimate vocals • Silky smooth',
+                    eq: { sub: 0, bass: +0.5, lowmid: -0.5, mid: +1.0, highmid: +1.5, high: +1.0, air: +1.5 }
+                },
+                {
+                    name: 'Big Band',
+                    description: 'Full orchestra impact • Brass brilliance • Dynamic',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.5, air: +1.5 }
+                }
+            ],
+            'country': [
+                {
+                    name: 'Nashville Radio',
+                    description: 'Chris Stapleton polish • Modern country sound',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +2.0 }
+                },
+                {
+                    name: 'Acoustic Country',
+                    description: 'Pure guitar tone • Natural vocals • Organic',
+                    eq: { sub: 0, bass: +1.0, lowmid: +1.0, mid: +1.5, highmid: +1.5, high: +1.5, air: +1.5 }
+                },
+                {
+                    name: 'Country Pop',
+                    description: 'Taylor Swift crossover • Radio friendly • Bright',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
+                },
+                {
+                    name: 'Outlaw Country',
+                    description: 'Johnny Cash grit • Vintage warmth • Authentic',
+                    eq: { sub: 0, bass: +1.5, lowmid: +1.5, mid: +1.5, highmid: +1.0, high: +1.0, air: +0.5 }
+                },
+                {
+                    name: 'Country Rock',
+                    description: 'Zac Brown power • Full band energy • Driving',
+                    eq: { sub: +0.5, bass: +2.0, lowmid: +1.0, mid: +1.0, highmid: +2.5, high: +2.0, air: +1.5 }
+                }
+            ],
+            'latin': [
+                {
+                    name: 'Reggaeton',
+                    description: 'Bad Bunny/J Balvin punch • Dembow power • Club ready',
+                    eq: { sub: +4.0, bass: +2.5, lowmid: -1.5, mid: +0.5, highmid: +2.5, high: +2.0, air: +2.0 }
+                },
+                {
+                    name: 'Latin Pop',
+                    description: 'Shakira energy • Radio polish • International appeal',
+                    eq: { sub: +2.0, bass: +2.0, lowmid: 0, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
+                },
+                {
+                    name: 'Salsa/Tropical',
+                    description: 'Marc Anthony fire • Brass brilliance • Dance floor',
+                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +2.0 }
+                },
+                {
+                    name: 'Bachata',
+                    description: 'Romeo Santos romance • Warm guitars • Smooth',
+                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.5, air: +2.0 }
+                },
+                {
+                    name: 'Latin Urban',
+                    description: 'Daddy Yankee energy • Modern hybrid • Maximum impact',
+                    eq: { sub: +3.5, bass: +2.5, lowmid: -1.0, mid: +0.5, highmid: +2.5, high: +2.5, air: +2.5 }
+                }
+            ],
+            'electronic': [
+                {
+                    name: 'Synthwave',
+                    description: '80s retro future • Warm synths • Neon vibes',
+                    eq: { sub: +3.0, bass: +2.5, lowmid: +0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
+                },
+                {
+                    name: 'Ambient',
+                    description: 'Atmospheric depth • Spatial clarity • Immersive',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +2.0, air: +3.5 }
+                },
+                {
+                    name: 'IDM/Experimental',
+                    description: 'Aphex Twin complexity • Detailed highs • Unique',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +3.0, air: +3.0 }
+                },
+                {
+                    name: 'Drum & Bass',
+                    description: 'Liquid funk groove • Tight bass • Rolling energy',
+                    eq: { sub: +4.0, bass: +3.0, lowmid: -1.5, mid: 0, highmid: +2.0, high: +2.5, air: +2.5 }
+                },
+                {
+                    name: 'Downtempo',
+                    description: 'Bonobo chill • Warm depth • Relaxed groove',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
                 }
             ],
             'neutral': [
                 {
-                    name: 'Flat',
-                    description: 'No coloration, pure transparency',
+                    name: 'Transparent Master',
+                    description: 'Zero coloration • Reference grade • Pure signal',
                     eq: { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: 0, high: 0, air: 0 }
                 },
                 {
-                    name: 'Subtle Enhancement',
-                    description: 'Minimal processing, gentle polish',
-                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: 0, highmid: +0.5, high: +0.5, air: +1.0 }
+                    name: 'Streaming Optimized',
+                    description: 'Spotify/Apple Music ready • Platform perfect',
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
                 },
                 {
-                    name: 'Broadcast',
-                    description: 'Standard loudness, broadcast-safe',
-                    eq: { sub: +1.0, bass: +1.0, lowmid: 0, mid: 0, highmid: +1.0, high: +1.0, air: +1.5 }
+                    name: 'Broadcast Standard',
+                    description: 'TV/Radio compliant • EBU R128 optimized',
+                    eq: { sub: +1.0, bass: +1.0, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
-                    name: 'Streaming',
-                    description: 'Platform-optimized, modern standard',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
+                    name: 'Vinyl Warm',
+                    description: 'Analog character • Gentle warmth • Classic feel',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +0.5, high: +0.5, air: +1.0 }
                 },
                 {
-                    name: 'Transparent',
-                    description: 'Clean mastering, natural dynamics',
-                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
+                    name: 'Hi-Fi Enhancement',
+                    description: 'Audiophile polish • Extended spectrum • Detailed',
+                    eq: { sub: +1.0, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.5 }
                 }
             ]
         };
