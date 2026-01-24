@@ -2640,9 +2640,14 @@
                         });
                     }
 
-                    // 💳 STRIPE: Initialize payment processing
+                    // 💳 STRIPE: Initialize payment processing (wrapped to prevent audio chain disruption)
                     if (typeof initializeStripe === 'function') {
-                        initializeStripe(); // Does not return a promise
+                        try {
+                            initializeStripe(); // Does not return a promise
+                        } catch (stripeError) {
+                            console.warn('⚠️ Stripe initialization skipped (no payment UI on this page):', stripeError.message);
+                            // This is OK - audio chain setup continues
+                        }
                     }
 
                     // ✨ CRITICAL FIX: Initialize audio playback connection
@@ -6478,6 +6483,9 @@
             let drawDataArray = null;
             let drawLeftTimeDomain = null;
             let drawRightTimeDomain = null;
+            let kWeightedTimeDomain = null; // For LUFS metering in updateMeters()
+            let peakLeftTimeDomain = null;  // For peak metering in updateMeters()
+            let peakRightTimeDomain = null; // For peak metering in updateMeters()
             let lastPlayheadCanvasWidth = 0;
             let lastPlayheadCanvasHeight = 0;
 
@@ -7208,9 +7216,12 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // SKIP real-time LUFS calculation if meters are locked (show stable mastered value)
             if (kWeightedAnalyser && !metersLocked) {
-                // Get K-weighted time domain data
-                const kData = new Float32Array(kWeightedAnalyser.fftSize);
-                kWeightedAnalyser.getFloatTimeDomainData(kData);
+                // Get K-weighted time domain data (reuse pre-allocated array)
+                if (!kWeightedTimeDomain || kWeightedTimeDomain.length !== kWeightedAnalyser.fftSize) {
+                    kWeightedTimeDomain = new Float32Array(kWeightedAnalyser.fftSize);
+                }
+                kWeightedAnalyser.getFloatTimeDomainData(kWeightedTimeDomain);
+                const kData = kWeightedTimeDomain; // Reference to pre-allocated array
 
                 // Calculate mean square for current block (400ms equivalent)
                 let kMeanSquare = 0;
@@ -7389,13 +7400,19 @@
             let plr = 0; // Initialize PLR for quality score
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // GET L/R CHANNEL DATA - Always needed for phase correlation
+            // GET L/R CHANNEL DATA - Always needed for phase correlation (reuse pre-allocated arrays)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             if (leftAnalyser && rightAnalyser) {
-                const leftData = new Float32Array(leftAnalyser.fftSize);
-                const rightData = new Float32Array(rightAnalyser.fftSize);
-                leftAnalyser.getFloatTimeDomainData(leftData);
-                rightAnalyser.getFloatTimeDomainData(rightData);
+                if (!peakLeftTimeDomain || peakLeftTimeDomain.length !== leftAnalyser.fftSize) {
+                    peakLeftTimeDomain = new Float32Array(leftAnalyser.fftSize);
+                }
+                if (!peakRightTimeDomain || peakRightTimeDomain.length !== rightAnalyser.fftSize) {
+                    peakRightTimeDomain = new Float32Array(rightAnalyser.fftSize);
+                }
+                leftAnalyser.getFloatTimeDomainData(peakLeftTimeDomain);
+                rightAnalyser.getFloatTimeDomainData(peakRightTimeDomain);
+                const leftData = peakLeftTimeDomain;  // Reference to pre-allocated array
+                const rightData = peakRightTimeDomain; // Reference to pre-allocated array
 
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 // TRUE PEAK MEASUREMENT - Skip calculation if meters locked
