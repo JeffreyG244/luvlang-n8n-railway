@@ -278,19 +278,37 @@ function createFramebuffer(texture) {
 // SPECTRUM DATA → TEXTURE CONVERSION
 // ═══════════════════════════════════════════════════════════════════════════
 
+// PRE-ALLOCATE ARRAYS to prevent garbage collection during playback
+let _webglPixels = null;
+let _webglDataArray = null;
+let _webglLastWidth = 0;
+let _webglLastHeight = 0;
+
 function renderSpectrumToTexture(analyser, audioContext) {
     if (!gl || !currentFrameTexture) return;
 
     const width = canvas.width;
     const height = canvas.height;
 
-    // Create pixel buffer (RGBA)
-    const pixels = new Uint8Array(width * height * 4);
+    // Create pixel buffer (RGBA) - REUSE if size unchanged
+    const pixelSize = width * height * 4;
+    if (!_webglPixels || _webglPixels.length !== pixelSize) {
+        _webglPixels = new Uint8Array(pixelSize);
+        _webglLastWidth = width;
+        _webglLastHeight = height;
+    } else {
+        // Clear the existing buffer instead of creating new one
+        _webglPixels.fill(0);
+    }
+    const pixels = _webglPixels;
 
-    // Get frequency data from analyzer
+    // Get frequency data from analyzer - REUSE array
     const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
+    if (!_webglDataArray || _webglDataArray.length !== bufferLength) {
+        _webglDataArray = new Float32Array(bufferLength);
+    }
+    analyser.getFloatFrequencyData(_webglDataArray);
+    const dataArray = _webglDataArray;
 
     const nyquist = audioContext.sampleRate / 2;
 

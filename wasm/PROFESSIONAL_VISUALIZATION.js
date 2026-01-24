@@ -17,6 +17,11 @@ const PEAK_DECAY_RATE = 0.5; // dB per frame
 const goniometerHistory = [];
 const GONIOMETER_HISTORY_LENGTH = 100;
 
+// PRE-ALLOCATE ARRAYS to prevent garbage collection during playback
+let _profSpectrumData = null;
+let _profSpectrumLastW = 0;
+let _profSpectrumLastH = 0;
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 1. SPECTRUM ANALYZER + EQ CURVE (Panel 1)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -27,10 +32,16 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
 
-    // Set canvas resolution
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // Set canvas resolution - ONLY if dimensions changed
+    const targetW = width * window.devicePixelRatio;
+    const targetH = height * window.devicePixelRatio;
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        _profSpectrumLastW = targetW;
+        _profSpectrumLastH = targetH;
+    }
 
     // Clear with premium dark gradient
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -82,8 +93,12 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
 
     // ═══ SPECTRUM ANALYZER (Filled Area) ═══
     const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
+    // REUSE pre-allocated array to prevent garbage collection
+    if (!_profSpectrumData || _profSpectrumData.length !== bufferLength) {
+        _profSpectrumData = new Float32Array(bufferLength);
+    }
+    analyser.getFloatFrequencyData(_profSpectrumData);
+    const dataArray = _profSpectrumData;
 
     const nyquist = audioContext.sampleRate / 2;
 
@@ -218,9 +233,14 @@ window.drawStereoMeter = function(canvas, level, peakHold, isLeft) {
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
 
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // ONLY resize canvas if dimensions changed
+    const targetW = width * window.devicePixelRatio;
+    const targetH = height * window.devicePixelRatio;
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
 
     // Dark background
     ctx.fillStyle = '#000000';
@@ -333,9 +353,14 @@ window.drawGoniometer = function(canvas, leftData, rightData) {
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
 
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // ONLY resize canvas if dimensions changed
+    const targetW = width * window.devicePixelRatio;
+    const targetH = height * window.devicePixelRatio;
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
 
     const centerX = width / 2;
     const centerY = height / 2;

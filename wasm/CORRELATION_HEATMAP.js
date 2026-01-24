@@ -99,20 +99,37 @@ function correlationToColor(correlation) {
 // PHASE CORRELATION ANALYSIS - Per-Frequency Band
 // ═══════════════════════════════════════════════════════════════════════════
 
+// PRE-ALLOCATE ARRAYS to prevent garbage collection during playback
+let _corrLeftFreq = null;
+let _corrRightFreq = null;
+let _corrLeftTime = null;
+let _corrRightTime = null;
+
 function calculateFrequencyCorrelation(leftAnalyser, rightAnalyser, audioContext) {
     if (!leftAnalyser || !rightAnalyser) return null;
 
-    // Get complex FFT data (frequency + phase)
+    // Get complex FFT data (frequency + phase) - REUSE pre-allocated arrays
     const bufferLength = leftAnalyser.frequencyBinCount;
-    const leftFreq = new Float32Array(bufferLength);
-    const rightFreq = new Float32Array(bufferLength);
-    const leftTime = new Float32Array(leftAnalyser.fftSize);
-    const rightTime = new Float32Array(rightAnalyser.fftSize);
+    const fftSize = leftAnalyser.fftSize;
 
-    leftAnalyser.getFloatFrequencyData(leftFreq);
-    rightAnalyser.getFloatFrequencyData(rightFreq);
-    leftAnalyser.getFloatTimeDomainData(leftTime);
-    rightAnalyser.getFloatTimeDomainData(rightTime);
+    if (!_corrLeftFreq || _corrLeftFreq.length !== bufferLength) {
+        _corrLeftFreq = new Float32Array(bufferLength);
+        _corrRightFreq = new Float32Array(bufferLength);
+    }
+    if (!_corrLeftTime || _corrLeftTime.length !== fftSize) {
+        _corrLeftTime = new Float32Array(fftSize);
+        _corrRightTime = new Float32Array(fftSize);
+    }
+
+    leftAnalyser.getFloatFrequencyData(_corrLeftFreq);
+    rightAnalyser.getFloatFrequencyData(_corrRightFreq);
+    leftAnalyser.getFloatTimeDomainData(_corrLeftTime);
+    rightAnalyser.getFloatTimeDomainData(_corrRightTime);
+
+    const leftFreq = _corrLeftFreq;
+    const rightFreq = _corrRightFreq;
+    const leftTime = _corrLeftTime;
+    const rightTime = _corrRightTime;
 
     const sampleRate = audioContext.sampleRate;
     const nyquist = sampleRate / 2;
