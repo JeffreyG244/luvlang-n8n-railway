@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX5-AUDIO-PRIORITY]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX6-NO-DEBUG]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -7175,75 +7175,9 @@
                 // (don't return early - keep measuring peaks and phase)
             }
 
-            // Debug: Log that updateMeters is being called AND check DOM elements + computed styles
-            if (Math.random() < 0.01) {
-                console.log('═══════════════════════════════════════════════');
-                console.log('🎚️ updateMeters() CALLED (REAL-TIME MODE)');
-                console.log('   kWeightedAnalyser:', kWeightedAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   leftAnalyser:', leftAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   rightAnalyser:', rightAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   DOM Elements:');
-
-                const lufsValue = document.getElementById('lufsValue');
-                const lufsMeter = document.getElementById('lufsMeter');
-                const peakValue = document.getElementById('peakValue');
-                const peakMeter = document.getElementById('peakMeter');
-                const phaseValue = document.getElementById('phaseValue');
-                const phaseMeter = document.getElementById('phaseMeter');
-                const metersContainer = document.querySelector('.meters-container');
-                const rightSidebar = document.querySelector('.right-sidebar');
-
-                console.log('     - lufsValue:', lufsValue ? 'EXISTS' : 'MISSING');
-                console.log('     - lufsMeter:', lufsMeter ? 'EXISTS' : 'MISSING');
-                console.log('     - peakValue:', peakValue ? 'EXISTS' : 'MISSING');
-                console.log('     - peakMeter:', peakMeter ? 'EXISTS' : 'MISSING');
-                console.log('     - phaseValue:', phaseValue ? 'EXISTS' : 'MISSING');
-                console.log('     - phaseMeter:', phaseMeter ? 'EXISTS' : 'MISSING');
-
-                // Check computed styles
-                if (metersContainer) {
-                    const style = window.getComputedStyle(metersContainer);
-                    console.log('   meters-container computed:');
-                    console.log('     - display:', style.display);
-                    console.log('     - visibility:', style.visibility);
-                    console.log('     - opacity:', style.opacity);
-                }
-
-                if (rightSidebar) {
-                    const style = window.getComputedStyle(rightSidebar);
-                    console.log('   right-sidebar computed:');
-                    console.log('     - display:', style.display);
-                    console.log('     - visibility:', style.visibility);
-                    console.log('     - opacity:', style.opacity);
-                }
-
-                if (lufsValue) {
-                    const style = window.getComputedStyle(lufsValue);
-                    console.log('   lufsValue computed:');
-                    console.log('     - opacity:', style.opacity);
-                    console.log('     - color:', style.color);
-                }
-
-                if (lufsMeter) {
-                    const style = window.getComputedStyle(lufsMeter);
-                    const parent = lufsMeter.parentElement;
-                    const parentStyle = parent ? window.getComputedStyle(parent) : null;
-                    console.log('   lufsMeter computed:');
-                    console.log('     - width:', style.width);
-                    console.log('     - height:', style.height);
-                    console.log('     - opacity:', style.opacity);
-                    console.log('     - background:', style.background);
-                    if (parentStyle) {
-                        console.log('   lufsMeter PARENT (.meter-bar) computed:');
-                        console.log('     - width:', parentStyle.width);
-                        console.log('     - height:', parentStyle.height);
-                        console.log('     - opacity:', parentStyle.opacity);
-                        console.log('     - display:', parentStyle.display);
-                    }
-                }
-
-                console.log('═══════════════════════════════════════════════');
-            }
+            // Debug logging DISABLED for performance - was calling getComputedStyle every 1% of frames
+            // Enable with: window.DEBUG_METERS = true
+            // if (window.DEBUG_METERS && Math.random() < 0.01) { ... }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // TRUE K-WEIGHTED LUFS WITH PROPER GATING (ITU-R BS.1770-5 COMPLIANT)
