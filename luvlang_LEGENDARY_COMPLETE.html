@@ -2323,6 +2323,11 @@
         // K-weighting filters for ITU-R BS.1770-5 LUFS measurement
         let kWeightingHPF1 = null;
 
+        // PRE-ALLOCATED ARRAYS for metering (prevents garbage collection during animation)
+        let kWeightedTimeDomain = null;  // For LUFS metering in updateMeters()
+        let peakLeftTimeDomain = null;   // For peak metering in updateMeters()
+        let peakRightTimeDomain = null;  // For peak metering in updateMeters()
+
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // AUTHENTICATION UI HANDLERS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -6509,12 +6514,11 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             // PRE-ALLOCATE ARRAYS (prevents garbage collection during animation)
+            // NOTE: kWeightedTimeDomain, peakLeftTimeDomain, peakRightTimeDomain are declared globally (near line 2325)
+            // because updateMeters() is defined outside this function scope
             let drawDataArray = null;
             let drawLeftTimeDomain = null;
             let drawRightTimeDomain = null;
-            let kWeightedTimeDomain = null; // For LUFS metering in updateMeters()
-            let peakLeftTimeDomain = null;  // For peak metering in updateMeters()
-            let peakRightTimeDomain = null; // For peak metering in updateMeters()
             let lastPlayheadCanvasWidth = 0;
             let lastPlayheadCanvasHeight = 0;
 
