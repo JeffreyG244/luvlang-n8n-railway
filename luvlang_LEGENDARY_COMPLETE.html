@@ -3112,11 +3112,11 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function setupWebAudio(audioElement) {
             try {
-                // Create audio context with professional quality settings
+                // Create audio context with optimized settings
+                // NOTE: Removed forced 48kHz - let browser use native sample rate to avoid resampling overhead
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        sampleRate: 48000,        // Professional broadcast standard
-                        latencyHint: 'playback'   // Optimize for quality
+                        latencyHint: 'interactive'   // Balance quality and low latency
                     });
 
                     // Make audioContext globally accessible for ULTIMATE_VISUALS
@@ -7516,6 +7516,14 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // PROFESSIONAL DRAW LOOP - 3-Panel Visualization System
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            // PRE-ALLOCATE ARRAYS - Reuse to prevent garbage collection during playback
+            let preAllocDataArray = null;
+            let preAllocLeftTime = null;
+            let preAllocRightTime = null;
+            let lastPlayheadCanvasWidth = 0;
+            let lastPlayheadCanvasHeight = 0;
+
             function draw() {
                 if (!analyser) {
                     // DON'T LOG - too spammy
@@ -7526,9 +7534,12 @@
                 // When audio is paused, analyzers will return silence (which is correct)
                 // This allows static waveform, broadcast meters, and UI to remain visible
 
-                // Get audio data
-                const dataArray = new Float32Array(analyser.frequencyBinCount);
-                analyser.getFloatFrequencyData(dataArray);
+                // Get audio data - REUSE pre-allocated array
+                if (!preAllocDataArray || preAllocDataArray.length !== analyser.frequencyBinCount) {
+                    preAllocDataArray = new Float32Array(analyser.frequencyBinCount);
+                }
+                analyser.getFloatFrequencyData(preAllocDataArray);
+                const dataArray = preAllocDataArray;
 
                 // ═══ PANEL 1: SPECTRUM ANALYZER + EQ CURVE (WebGL with Persistence) ═══
                 // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
@@ -7547,11 +7558,17 @@
 
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (window.drawStereoMeter && leftAnalyser && rightAnalyser) {
-                    // Get time domain data for peak metering
-                    const leftTimeDomain = new Float32Array(leftAnalyser.fftSize);
-                    const rightTimeDomain = new Float32Array(rightAnalyser.fftSize);
-                    leftAnalyser.getFloatTimeDomainData(leftTimeDomain);
-                    rightAnalyser.getFloatTimeDomainData(rightTimeDomain);
+                    // Get time domain data for peak metering - REUSE pre-allocated arrays
+                    if (!preAllocLeftTime || preAllocLeftTime.length !== leftAnalyser.fftSize) {
+                        preAllocLeftTime = new Float32Array(leftAnalyser.fftSize);
+                    }
+                    if (!preAllocRightTime || preAllocRightTime.length !== rightAnalyser.fftSize) {
+                        preAllocRightTime = new Float32Array(rightAnalyser.fftSize);
+                    }
+                    leftAnalyser.getFloatTimeDomainData(preAllocLeftTime);
+                    rightAnalyser.getFloatTimeDomainData(preAllocRightTime);
+                    const leftTimeDomain = preAllocLeftTime;
+                    const rightTimeDomain = preAllocRightTime;
 
                     // Calculate RMS levels
                     let leftSum = 0, rightSum = 0;
@@ -7590,9 +7607,14 @@
                     const width = waveformCanvasPlayhead.offsetWidth;
                     const height = waveformCanvasPlayhead.offsetHeight;
 
-                    waveformCanvasPlayhead.width = width * window.devicePixelRatio;
-                    waveformCanvasPlayhead.height = height * window.devicePixelRatio;
-                    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                    // ONLY resize canvas if dimensions changed (resizing every frame causes audio skipping!)
+                    const targetWidth = width * window.devicePixelRatio;
+                    const targetHeight = height * window.devicePixelRatio;
+                    if (waveformCanvasPlayhead.width !== targetWidth || waveformCanvasPlayhead.height !== targetHeight) {
+                        waveformCanvasPlayhead.width = targetWidth;
+                        waveformCanvasPlayhead.height = targetHeight;
+                        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                    }
 
                     // Clear
                     ctx.clearRect(0, 0, width, height);
