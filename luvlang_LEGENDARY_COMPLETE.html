@@ -3568,30 +3568,16 @@
             audioElement._loadedHandler = loadedHandler;
             audioElement.addEventListener('loadedmetadata', loadedHandler, { once: true });
 
-            // Handler for canplaythrough - auto-play when enough data is buffered
+            // Handler for canplaythrough - all processing done, ready to play
             const canPlayHandler = async () => {
-                console.log('🎵 Enough audio buffered - starting playback...');
+                console.log('🎵 Audio fully buffered and ready...');
 
-                // AUTO-PLAY: Start playback when enough audio is buffered (no skipping)
+                // DO ALL HEAVY PROCESSING FIRST (before any playback)
                 try {
-                    if (audioContext && audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-                    await audioElement.play();
-                    playBtn.textContent = '⏸️';
-                    isPlaying = true;
-                    console.log('🎵 Auto-play started smoothly');
-                } catch (err) {
-                    console.log('⚠️ Auto-play prevented by browser:', err);
-                }
-
-                // DEFER: Decode audioBuffer AFTER playback starts (prevents skipping)
-                setTimeout(async () => {
-                    try {
-                        console.log('🔄 Decoding audio buffer in background...');
-                        const arrayBuffer = await uploadedFile.arrayBuffer();
-                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                    console.log('🔄 Decoding audio buffer...');
+                    const arrayBuffer = await uploadedFile.arrayBuffer();
+                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
                         // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                         window.audioBuffer = audioBuffer;
@@ -3682,10 +3668,23 @@
                             console.log('   ✅ Elite frequency-domain phase analysis ready');
                         }
 
-                    } catch (error) {
-                        console.error('⚠️ Error decoding audio buffer:', error);
+                } catch (error) {
+                    console.error('⚠️ Error decoding audio buffer:', error);
+                }
+
+                // ALL PROCESSING DONE - Now safe to auto-play without skipping
+                console.log('✅ All processing complete - starting playback...');
+                try {
+                    if (audioContext && audioContext.state === 'suspended') {
+                        await audioContext.resume();
                     }
-                }, 500); // 500ms delay to let playback stabilize first
+                    await audioElement.play();
+                    playBtn.textContent = '⏸️';
+                    isPlaying = true;
+                    console.log('🎵 Playback started smoothly (after all processing)');
+                } catch (err) {
+                    console.log('⚠️ Auto-play prevented by browser - click play button:', err);
+                }
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
@@ -3694,7 +3693,7 @@
                 window.uploadedFileName = file.name;
                 setTimeout(() => {
                     showSetupModal(file.name);
-                }, 800);
+                }, 500);
             };
             audioElement._canPlayHandler = canPlayHandler;
             audioElement.addEventListener('canplaythrough', canPlayHandler, { once: true });
