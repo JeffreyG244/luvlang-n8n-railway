@@ -1475,7 +1475,7 @@
     <a href="#mainContent" class="skip-to-main">Skip to main content</a>
 
     <!-- HIDDEN AUDIO ELEMENT -->
-    <audio id="audioElement" style="display: none;" aria-hidden="true" preload="auto"></audio>
+    <audio id="audioElement" style="display: none;" aria-hidden="true"></audio>
     <input type="file" id="audioFileInput" accept="audio/*" style="display: none;" aria-label="Upload audio file">
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -1597,25 +1597,9 @@
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Rock</div>
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Body + Bite</div>
                     </button>
-                    <button class="setup-genre-btn" data-genre="rnb" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">R&B</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Smooth + Warm</div>
-                    </button>
                     <button class="setup-genre-btn" data-genre="jazz" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Jazz</div>
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Natural</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="country" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Country</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Clear + Open</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="latin" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Latin</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Bass + Energy</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="electronic" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Electronic</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Synth + Space</div>
                     </button>
                     <button class="setup-genre-btn" data-genre="neutral" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
                         <div style="font-size: 0.85rem; font-weight: 600; color: white;">Other</div>
@@ -1828,7 +1812,7 @@
             <!-- GENRE SELECTOR with EQ Presets -->
             <div class="selector-group">
                 <div class="section-title">Genre</div>
-                <div class="selector-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="selector-grid">
                     <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
                         <div>Hip-Hop</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Sub + Presence</div>
@@ -1845,25 +1829,9 @@
                         <div>Rock</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Body + Bite</div>
                     </div>
-                    <div class="selector-btn" data-genre="rnb" style="position: relative;">
-                        <div>R&B</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Smooth + Warm</div>
-                    </div>
                     <div class="selector-btn" data-genre="jazz" style="position: relative;">
                         <div>Jazz</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Natural</div>
-                    </div>
-                    <div class="selector-btn" data-genre="country" style="position: relative;">
-                        <div>Country</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Clear + Open</div>
-                    </div>
-                    <div class="selector-btn" data-genre="latin" style="position: relative;">
-                        <div>Latin</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Bass + Energy</div>
-                    </div>
-                    <div class="selector-btn" data-genre="electronic" style="position: relative;">
-                        <div>Electronic</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Synth + Space</div>
                     </div>
                     <div class="selector-btn active" data-genre="neutral" style="position: relative;">
                         <div>Neutral</div>
@@ -3147,9 +3115,9 @@
                 // Create audio context with professional quality settings
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        latencyHint: 'interactive'   // Lower latency, prevents skipping
+                        sampleRate: 48000,        // Professional broadcast standard
+                        latencyHint: 'playback'   // Optimize for quality
                     });
-                    // NOTE: Removed forced 48kHz - let browser use native rate to avoid resampling
 
                     // Make audioContext globally accessible for ULTIMATE_VISUALS
                     window.audioContext = audioContext;
@@ -3476,11 +3444,8 @@
                 console.log('   Parallel: K-Weighted Path → LUFS Meter');
                 console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
 
-                // DELAY visualization start - let audio chain stabilize first
-                setTimeout(() => {
-                    console.log('🎨 Starting visualization after delay...');
-                    startVisualization();
-                }, 1000);
+                // Start visualization
+                startVisualization();
 
             } catch (error) {
                 console.error('❌ Web Audio setup error:', error);
@@ -3523,24 +3488,6 @@
             `;
 
             const fileURL = URL.createObjectURL(file);
-
-            // Clean up previous blob URL before setting new source
-            if (window.currentBlobURL) {
-                URL.revokeObjectURL(window.currentBlobURL);
-                console.log('🧹 Previous blob URL cleaned up');
-            }
-            window.currentBlobURL = fileURL;
-
-            // CRITICAL: Remove old event listeners to prevent stacking
-            const oldLoadedHandler = audioElement._loadedHandler;
-            const oldCanPlayHandler = audioElement._canPlayHandler;
-            if (oldLoadedHandler) {
-                audioElement.removeEventListener('loadedmetadata', oldLoadedHandler);
-            }
-            if (oldCanPlayHandler) {
-                audioElement.removeEventListener('canplaythrough', oldCanPlayHandler);
-            }
-
             audioElement.src = fileURL;
             audioElement.load();
 
@@ -3553,8 +3500,7 @@
             document.getElementById('savePresetBtn').disabled = false;
             document.getElementById('loadPresetBtn').disabled = false;
 
-            // Handler for loadedmetadata - setup Web Audio chain
-            const loadedHandler = () => {
+            audioElement.addEventListener('loadedmetadata', async () => {
                 const duration = audioElement.duration || 0;
                 console.log('✅ Audio loaded, duration:', duration.toFixed(2), 'seconds');
                 console.log('   Ready for playback or AI mastering');
@@ -3567,128 +3513,144 @@
                 playBtn.disabled = false;
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
-            };
-            audioElement._loadedHandler = loadedHandler;
-            audioElement.addEventListener('loadedmetadata', loadedHandler, { once: true });
 
-            // Handler for canplaythrough - start playback immediately, process in background
-            const canPlayHandler = async () => {
-                console.log('🎵 Audio fully buffered - starting playback FIRST...');
-
-                // START PLAYBACK IMMEDIATELY (before any heavy processing)
-                try {
+                // AUTO-PLAY: Start playback automatically when file is loaded
+                setTimeout(() => {
                     if (audioContext && audioContext.state === 'suspended') {
-                        await audioContext.resume();
+                        audioContext.resume().then(() => {
+                            audioElement.play().then(() => {
+                                playBtn.textContent = '⏸️';
+                                isPlaying = true;
+                                console.log('🎵 Auto-play started');
+                            }).catch(err => {
+                                console.log('⚠️ Auto-play prevented by browser:', err);
+                            });
+                        });
+                    } else {
+                        audioElement.play().then(() => {
+                            playBtn.textContent = '⏸️';
+                            isPlaying = true;
+                            console.log('🎵 Auto-play started');
+                        }).catch(err => {
+                            console.log('⚠️ Auto-play prevented by browser:', err);
+                        });
                     }
-                    await audioElement.play();
-                    playBtn.textContent = '⏸️';
-                    isPlaying = true;
-                    console.log('🎵 Playback started!');
-                } catch (err) {
-                    console.log('⚠️ Auto-play blocked:', err.message);
+                }, 300); // Small delay to ensure everything is ready
+
+                // Store blob URL for cleanup when new file is loaded
+                // DO NOT revoke immediately - audio element needs it for playback!
+                if (window.currentBlobURL) {
+                    URL.revokeObjectURL(window.currentBlobURL);
+                    console.log('🧹 Previous blob URL cleaned up');
                 }
+                window.currentBlobURL = fileURL;
 
-                // NOW do heavy processing in background (after playback has started)
-                setTimeout(async () => {
-                    try {
-                        console.log('🔄 Background: Decoding audio buffer...');
-                        const arrayBuffer = await uploadedFile.arrayBuffer();
-                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                // CRITICAL: Decode audioBuffer for AI Auto Master
+                try {
+                    const arrayBuffer = await uploadedFile.arrayBuffer();
+                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
-                        // Make audioBuffer globally accessible for ULTIMATE_VISUALS
-                        window.audioBuffer = audioBuffer;
+                    // Make audioBuffer globally accessible for ULTIMATE_VISUALS
+                    window.audioBuffer = audioBuffer;
 
-                        // Store original peaks for transient ghost layer
-                        window.originalPeaksData = audioBuffer.getChannelData(0).slice();
+                    // Store original peaks for transient ghost layer
+                    window.originalPeaksData = audioBuffer.getChannelData(0).slice();
 
-                        console.log('✅ Audio buffer decoded for AI processing');
+                    console.log('✅ Audio buffer decoded for AI processing');
 
-                        // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
-                        // This ensures EQ and saturation work in their optimal range
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                        console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
+                    // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
+                    // This ensures EQ and saturation work in their optimal range
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
 
-                        // Calculate RMS level of the uploaded audio
-                        const channelData = audioBuffer.getChannelData(0);
-                        let sumSquares = 0;
-                        for (let i = 0; i < channelData.length; i++) {
-                            sumSquares += channelData[i] * channelData[i];
-                        }
-                        const rms = Math.sqrt(sumSquares / channelData.length);
-                        const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
-
-                        console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
-
-                        // If signal is too quiet (below -18dBFS), auto-boost it
-                        const targetRMS = -18; // Analog sweet spot
-                        const masterGainSlider = document.getElementById('masterGainSlider');
-                        const masterGainValue = document.getElementById('masterGainValue');
-
-                        if (rmsDB < targetRMS - 1) {
-                            // Calculate how much gain is needed
-                            const gainNeeded = targetRMS - rmsDB;
-
-                            // Apply to master gain slider (limit to +12dB max for safety)
-                            const safeGain = Math.min(gainNeeded, 12);
-
-                            if (masterGainSlider && masterGainValue) {
-                                masterGainSlider.value = safeGain;
-                                masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
-
-                                // Apply to actual audio processing
-                                if (masterGain) {
-                                    masterGain.gain.value = Math.pow(10, safeGain / 20);
-                                }
-
-                                console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
-                                console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
-                                console.log('   🎯 Signal now in optimal range for processing');
-                            }
-                        } else {
-                            console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
-                            console.log('   No gain adjustment needed');
-                        }
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                        // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                        console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
-
-                        // Try immediately
-                        drawWaveformFromBuffer(audioBuffer);
-
-                        // Try again after 100ms (canvas might need time to be ready)
-                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
-
-                        // And once more after 500ms to be absolutely sure
-                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
-
-                        console.log('   Waveform draw attempts scheduled (3 times)');
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                        // Initialize WebGL spectrum analyzer (with persistence/ghosting)
-                        if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
-                            console.log('🎨 Initializing WebGL Spectrum with Persistence...');
-                            const success = window.WebGLSpectrum.init(spectrumCanvas);
-                            if (success) {
-                                console.log('   ✅ WebGL Persistence System active - Elite analog look enabled');
-                            } else {
-                                console.log('   ⚠️ WebGL failed, falling back to Canvas 2D');
-                            }
-                        }
-
-                        // Draw correlation heatmap legend (static, one-time)
-                        if (window.drawCorrelationLegend && correlationLegendCanvas) {
-                            console.log('🎨 Drawing Correlation Heatmap legend...');
-                            window.drawCorrelationLegend(correlationLegendCanvas);
-                            console.log('   ✅ Elite frequency-domain phase analysis ready');
-                        }
-
-                    } catch (error) {
-                        console.error('⚠️ Background processing error:', error);
+                    // Calculate RMS level of the uploaded audio
+                    const channelData = audioBuffer.getChannelData(0);
+                    let sumSquares = 0;
+                    for (let i = 0; i < channelData.length; i++) {
+                        sumSquares += channelData[i] * channelData[i];
                     }
-                }, 1000); // 1 second delay to let playback stabilize first
+                    const rms = Math.sqrt(sumSquares / channelData.length);
+                    const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
+
+                    console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
+
+                    // If signal is too quiet (below -18dBFS), auto-boost it
+                    const targetRMS = -18; // Analog sweet spot
+                    const masterGainSlider = document.getElementById('masterGainSlider');
+                    const masterGainValue = document.getElementById('masterGainValue');
+
+                    if (rmsDB < targetRMS - 1) {
+                        // Calculate how much gain is needed
+                        const gainNeeded = targetRMS - rmsDB;
+
+                        // Apply to master gain slider (limit to +12dB max for safety)
+                        const safeGain = Math.min(gainNeeded, 12);
+
+                        if (masterGainSlider && masterGainValue) {
+                            masterGainSlider.value = safeGain;
+                            masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
+
+                            // Apply to actual audio processing
+                            if (masterGain) {
+                                masterGain.gain.value = Math.pow(10, safeGain / 20);
+                            }
+
+                            console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
+                            console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
+                            console.log('   🎯 Signal now in optimal range for processing');
+                        }
+                    } else {
+                        console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
+                        console.log('   No gain adjustment needed');
+                    }
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
+
+                    // Try immediately
+                    drawWaveformFromBuffer(audioBuffer);
+
+                    // Try again after 100ms (canvas might need time to be ready)
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
+
+                    // And once more after 500ms to be absolutely sure
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
+
+                    console.log('   Waveform draw attempts scheduled (3 times)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Initialize WebGL spectrum analyzer (with persistence/ghosting)
+                    if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
+                        console.log('🎨 Initializing WebGL Spectrum with Persistence...');
+                        const success = window.WebGLSpectrum.init(spectrumCanvas);
+                        if (success) {
+                            console.log('   ✅ WebGL Persistence System active - Elite analog look enabled');
+                        } else {
+                            console.log('   ⚠️ WebGL failed, falling back to Canvas 2D');
+                        }
+                    }
+
+                    // Draw correlation heatmap legend (static, one-time)
+                    if (window.drawCorrelationLegend && correlationLegendCanvas) {
+                        console.log('🎨 Drawing Correlation Heatmap legend...');
+                        window.drawCorrelationLegend(correlationLegendCanvas);
+                        console.log('   ✅ Elite frequency-domain phase analysis ready');
+                    }
+
+                    // REMOVED: Old ultimateWaveformViz code
+                    setTimeout(() => {
+                        if (false && window.ultimateWaveformViz && window.audioBuffer) {
+                            // Disabled - we use the original waveform system
+                            console.log('🎨 Waveform auto-loaded');
+                        }
+                    }, 200);
+
+                } catch (error) {
+                    console.error('⚠️ Error decoding audio buffer:', error);
+                }
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
@@ -3698,9 +3660,7 @@
                 setTimeout(() => {
                     showSetupModal(file.name);
                 }, 800);
-            };
-            audioElement._canPlayHandler = canPlayHandler;
-            audioElement.addEventListener('canplaythrough', canPlayHandler, { once: true });
+            });
         }
 
         // CRITICAL: Attach file upload event listeners with error handling
@@ -4892,286 +4852,170 @@
         }
 
         /**
-         * ═══════════════════════════════════════════════════════════════════════════
-         * WORLD-CLASS RADIO-READY MASTERING PRESETS
-         * Based on techniques from top mastering engineers:
-         * - Bob Ludwig (Gateway Mastering)
-         * - Bernie Grundman (Grundman Mastering)
-         * - Chris Gehringer (Sterling Sound)
-         * - Luca Pretolesi (Studio DMI)
-         * - Tom Coyne (Sterling Sound)
-         * - Mike Dean (G.O.O.D. Music)
-         * ═══════════════════════════════════════════════════════════════════════════
+         * GENRE-SPECIFIC EQ PRESETS
+         * 5 variations for each genre to give customers professional starting points
          */
         const genreEQPresets = {
             'hip-hop': [
                 {
-                    name: 'Platinum Radio Ready',
-                    description: 'Chart-topping sound • Drake/Kendrick reference • Broadcast perfect',
-                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: +0.5, highmid: +2.5, high: +1.5, air: +2.0 }
+                    name: 'Classic Boom Bap',
+                    description: 'Traditional 90s sound - Punchy drums, warm bass',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.0, high: +0.5, air: 0 }
                 },
                 {
                     name: 'Modern Trap',
-                    description: 'Metro Boomin style • Massive 808s • Crisp hi-hats',
-                    eq: { sub: +4.5, bass: +2.5, lowmid: -2.5, mid: -1.0, highmid: +2.0, high: +2.0, air: +2.5 }
-                },
-                {
-                    name: 'Classic Boom Bap',
-                    description: '90s golden era • J Dilla warmth • Punchy drums',
-                    eq: { sub: +2.0, bass: +2.5, lowmid: -1.0, mid: +1.0, highmid: +1.5, high: +0.5, air: +0.5 }
+                    description: 'Heavy 808s, scooped mids, airy highs',
+                    eq: { sub: +4.0, bass: +3.0, lowmid: -3.0, mid: -1.5, highmid: +2.0, high: +1.5, air: +2.0 }
                 },
                 {
                     name: 'Vocal Forward',
-                    description: 'Clear vocals cut through • Perfect for lyrical tracks',
-                    eq: { sub: +2.5, bass: +1.5, lowmid: -2.5, mid: +1.5, highmid: +3.0, high: +1.5, air: +1.5 }
+                    description: 'Clear vocals, balanced bass, presence boost',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -2.0, mid: +1.0, highmid: +3.0, high: +1.5, air: +1.0 }
                 },
                 {
-                    name: 'Club Banger',
-                    description: 'Maximum sub impact • System-shaking bass • Club certified',
-                    eq: { sub: +5.0, bass: +3.0, lowmid: -3.0, mid: -0.5, highmid: +1.5, high: +1.0, air: +1.5 }
+                    name: 'Bass Heavy',
+                    description: 'Maximum low end, club-ready, sub-focused',
+                    eq: { sub: +5.0, bass: +3.5, lowmid: -2.5, mid: -1.0, highmid: +1.0, high: +0.5, air: +0.5 }
+                },
+                {
+                    name: 'Radio Ready',
+                    description: 'Commercial sound, balanced, broadcast-safe',
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.5 }
                 }
             ],
             'pop': [
                 {
-                    name: 'Top 40 Radio',
-                    description: 'Dua Lipa/The Weeknd polish • Maximum clarity • Chart ready',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
-                },
-                {
-                    name: 'Vocal Shine',
-                    description: 'Vocals front and center • Adele/Sam Smith clarity',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: -1.0, mid: +1.5, highmid: +2.5, high: +2.0, air: +2.5 }
-                },
-                {
-                    name: 'Dance Pop',
-                    description: 'Lady Gaga energy • Club meets radio • Uplifting',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: 0, highmid: +2.5, high: +3.0, air: +3.5 }
+                    name: 'Radio Pop',
+                    description: 'Bright, commercial, chart-ready sound',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
                 },
                 {
                     name: 'Indie Pop',
-                    description: 'Organic warmth • Less processed • Authentic feel',
-                    eq: { sub: +0.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.0, high: +1.5, air: +2.0 }
+                    description: 'Natural, less processed, organic feel',
+                    eq: { sub: 0, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
                 },
                 {
-                    name: 'Power Ballad',
-                    description: 'Emotional impact • Big chorus lift • Whitney/Celine power',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.5, mid: +1.5, highmid: +2.0, high: +1.5, air: +2.0 }
+                    name: 'Dance Pop',
+                    description: 'Club-ready, energetic, uplifting',
+                    eq: { sub: +2.0, bass: +2.5, lowmid: -0.5, mid: 0, highmid: +2.0, high: +2.5, air: +3.0 }
+                },
+                {
+                    name: 'Ballad',
+                    description: 'Smooth mids, emotional, vocal-focused',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +1.0, mid: +1.5, highmid: +1.0, high: +1.0, air: +1.5 }
+                },
+                {
+                    name: 'Modern Pop',
+                    description: 'Contemporary production, clean, polished',
+                    eq: { sub: +1.0, bass: +2.0, lowmid: 0, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
                 }
             ],
             'edm': [
                 {
-                    name: 'Festival Main Stage',
-                    description: 'Martin Garrix/Calvin Harris massive • System destroyer',
-                    eq: { sub: +5.5, bass: +3.5, lowmid: -2.5, mid: -0.5, highmid: +3.0, high: +3.5, air: +4.0 }
+                    name: 'Festival',
+                    description: 'Maximum energy, massive bass, huge sound',
+                    eq: { sub: +5.0, bass: +4.0, lowmid: -1.5, mid: -0.5, highmid: +2.5, high: +3.0, air: +3.5 }
                 },
                 {
                     name: 'Deep House',
-                    description: 'Disclosure groove • Warm bass • Ibiza sunset vibes',
-                    eq: { sub: +3.5, bass: +3.0, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
+                    description: 'Warm groovy low end, smooth highs',
+                    eq: { sub: +3.0, bass: +3.5, lowmid: +0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
                 },
                 {
-                    name: 'Future Bass',
-                    description: 'Flume/Illenium style • Lush chords • Super bright',
-                    eq: { sub: +4.0, bass: +2.5, lowmid: -1.5, mid: +1.0, highmid: +2.5, high: +3.5, air: +4.0 }
+                    name: 'Trance',
+                    description: 'Uplifting, bright, energetic highs',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.5, high: +3.5, air: +4.0 }
                 },
                 {
-                    name: 'Techno',
-                    description: 'Berlin warehouse • Driving bass • Hypnotic',
-                    eq: { sub: +4.0, bass: +3.5, lowmid: -1.0, mid: -0.5, highmid: +1.5, high: +2.0, air: +2.0 }
+                    name: 'Dubstep',
+                    description: 'Sub-heavy, aggressive mids, powerful',
+                    eq: { sub: +6.0, bass: +4.0, lowmid: -2.0, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
-                    name: 'Dubstep/Bass',
-                    description: 'Skrillex aggression • Face-melting drops • Maximum impact',
-                    eq: { sub: +6.0, bass: +4.0, lowmid: -2.0, mid: +1.5, highmid: +2.5, high: +2.5, air: +2.0 }
+                    name: 'Progressive',
+                    description: 'Balanced, dynamic, clean production',
+                    eq: { sub: +3.5, bass: +3.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
                 }
             ],
             'rock': [
                 {
-                    name: 'Modern Rock Radio',
-                    description: 'Foo Fighters punch • Radio ready • Maximum energy',
-                    eq: { sub: +0.5, bass: +2.0, lowmid: +1.0, mid: +1.0, highmid: +2.5, high: +2.5, air: +1.5 }
-                },
-                {
                     name: 'Classic Rock',
-                    description: 'Led Zeppelin warmth • Vintage tone • Analog feel',
-                    eq: { sub: 0, bass: +2.0, lowmid: +2.0, mid: +1.5, highmid: +1.5, high: +1.5, air: +1.0 }
+                    description: 'Vintage tone, warm mids, natural sound',
+                    eq: { sub: 0, bass: +1.5, lowmid: +1.5, mid: +1.0, highmid: +1.0, high: +1.5, air: +0.5 }
                 },
                 {
-                    name: 'Heavy Metal',
-                    description: 'Metallica power • Crushing guitars • Massive drums',
-                    eq: { sub: +1.5, bass: +2.5, lowmid: +2.0, mid: +0.5, highmid: +3.0, high: +3.0, air: +1.5 }
+                    name: 'Modern Rock',
+                    description: 'Punchy, tight, aggressive clarity',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +1.5 }
                 },
                 {
-                    name: 'Alternative/Indie',
-                    description: 'Arctic Monkeys edge • Modern clarity • Cool vibe',
-                    eq: { sub: +0.5, bass: +1.5, lowmid: +1.0, mid: +1.5, highmid: +2.0, high: +2.0, air: +2.0 }
+                    name: 'Metal',
+                    description: 'Aggressive, heavy, powerful low-mids',
+                    eq: { sub: +1.0, bass: +2.0, lowmid: +2.5, mid: -0.5, highmid: +2.5, high: +3.0, air: +1.0 }
                 },
                 {
-                    name: 'Punk Energy',
-                    description: 'Green Day aggression • Raw power • In your face',
-                    eq: { sub: 0, bass: +1.0, lowmid: +2.0, mid: +2.5, highmid: +3.0, high: +2.5, air: +1.0 }
-                }
-            ],
-            'rnb': [
-                {
-                    name: 'Modern R&B',
-                    description: 'The Weeknd/SZA silk • Warm lows • Smooth highs',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +2.0, air: +2.5 }
+                    name: 'Alternative',
+                    description: 'Balanced, clear, modern edge',
+                    eq: { sub: 0, bass: +1.0, lowmid: +1.0, mid: +1.0, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
-                    name: 'Classic Soul',
-                    description: 'Motown warmth • Vintage character • Timeless',
-                    eq: { sub: +1.0, bass: +2.0, lowmid: +1.0, mid: +1.5, highmid: +1.0, high: +1.0, air: +1.0 }
-                },
-                {
-                    name: 'Neo Soul',
-                    description: 'Erykah Badu vibe • Organic warmth • Deep groove',
-                    eq: { sub: +2.0, bass: +2.5, lowmid: +0.5, mid: +1.0, highmid: +1.0, high: +1.0, air: +1.5 }
-                },
-                {
-                    name: 'Bedroom Pop',
-                    description: 'Frank Ocean intimacy • Lo-fi warmth • Dreamy',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +2.5 }
-                },
-                {
-                    name: 'Vocal R&B',
-                    description: 'Beyoncé power • Crystal clear vocals • Radio polish',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.0, mid: +1.5, highmid: +2.5, high: +2.0, air: +2.0 }
+                    name: 'Punk',
+                    description: 'Raw, energetic, mid-forward',
+                    eq: { sub: 0, bass: +0.5, lowmid: +2.0, mid: +2.0, highmid: +2.5, high: +2.0, air: +0.5 }
                 }
             ],
             'jazz': [
                 {
-                    name: 'Audiophile Reference',
-                    description: 'Bernie Grundman transparency • Natural dynamics preserved',
-                    eq: { sub: 0, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
-                },
-                {
-                    name: 'Warm Analog',
-                    description: 'Blue Note vintage • Tube-like warmth • Classic tone',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.0 }
+                    name: 'Traditional',
+                    description: 'Warm, natural, vintage character',
+                    eq: { sub: 0, bass: +0.5, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.0 }
                 },
                 {
                     name: 'Modern Jazz',
-                    description: 'Kamasi Washington clarity • Contemporary edge',
-                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.0 }
+                    description: 'Clean, detailed, transparent',
+                    eq: { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: +0.5, high: +1.0, air: +1.5 }
+                },
+                {
+                    name: 'Smooth Jazz',
+                    description: 'Soft, relaxed, easy listening',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: 0, high: +0.5, air: +1.5 }
+                },
+                {
+                    name: 'Fusion',
+                    description: 'Balanced, dynamic, contemporary',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Vocal Jazz',
-                    description: 'Diana Krall presence • Intimate vocals • Silky smooth',
-                    eq: { sub: 0, bass: +0.5, lowmid: -0.5, mid: +1.0, highmid: +1.5, high: +1.0, air: +1.5 }
-                },
-                {
-                    name: 'Big Band',
-                    description: 'Full orchestra impact • Brass brilliance • Dynamic',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.5, air: +1.5 }
-                }
-            ],
-            'country': [
-                {
-                    name: 'Nashville Radio',
-                    description: 'Chris Stapleton polish • Modern country sound',
-                    eq: { sub: +0.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +2.0 }
-                },
-                {
-                    name: 'Acoustic Country',
-                    description: 'Pure guitar tone • Natural vocals • Organic',
-                    eq: { sub: 0, bass: +1.0, lowmid: +1.0, mid: +1.5, highmid: +1.5, high: +1.5, air: +1.5 }
-                },
-                {
-                    name: 'Country Pop',
-                    description: 'Taylor Swift crossover • Radio friendly • Bright',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
-                },
-                {
-                    name: 'Outlaw Country',
-                    description: 'Johnny Cash grit • Vintage warmth • Authentic',
-                    eq: { sub: 0, bass: +1.5, lowmid: +1.5, mid: +1.5, highmid: +1.0, high: +1.0, air: +0.5 }
-                },
-                {
-                    name: 'Country Rock',
-                    description: 'Zac Brown power • Full band energy • Driving',
-                    eq: { sub: +0.5, bass: +2.0, lowmid: +1.0, mid: +1.0, highmid: +2.5, high: +2.0, air: +1.5 }
-                }
-            ],
-            'latin': [
-                {
-                    name: 'Reggaeton',
-                    description: 'Bad Bunny/J Balvin punch • Dembow power • Club ready',
-                    eq: { sub: +4.0, bass: +2.5, lowmid: -1.5, mid: +0.5, highmid: +2.5, high: +2.0, air: +2.0 }
-                },
-                {
-                    name: 'Latin Pop',
-                    description: 'Shakira energy • Radio polish • International appeal',
-                    eq: { sub: +2.0, bass: +2.0, lowmid: 0, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
-                },
-                {
-                    name: 'Salsa/Tropical',
-                    description: 'Marc Anthony fire • Brass brilliance • Dance floor',
-                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +2.0 }
-                },
-                {
-                    name: 'Bachata',
-                    description: 'Romeo Santos romance • Warm guitars • Smooth',
-                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.5, air: +2.0 }
-                },
-                {
-                    name: 'Latin Urban',
-                    description: 'Daddy Yankee energy • Modern hybrid • Maximum impact',
-                    eq: { sub: +3.5, bass: +2.5, lowmid: -1.0, mid: +0.5, highmid: +2.5, high: +2.5, air: +2.5 }
-                }
-            ],
-            'electronic': [
-                {
-                    name: 'Synthwave',
-                    description: '80s retro future • Warm synths • Neon vibes',
-                    eq: { sub: +3.0, bass: +2.5, lowmid: +0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +3.0 }
-                },
-                {
-                    name: 'Ambient',
-                    description: 'Atmospheric depth • Spatial clarity • Immersive',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +2.0, air: +3.5 }
-                },
-                {
-                    name: 'IDM/Experimental',
-                    description: 'Aphex Twin complexity • Detailed highs • Unique',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +3.0, air: +3.0 }
-                },
-                {
-                    name: 'Drum & Bass',
-                    description: 'Liquid funk groove • Tight bass • Rolling energy',
-                    eq: { sub: +4.0, bass: +3.0, lowmid: -1.5, mid: 0, highmid: +2.0, high: +2.5, air: +2.5 }
-                },
-                {
-                    name: 'Downtempo',
-                    description: 'Bonobo chill • Warm depth • Relaxed groove',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
+                    description: 'Presence-focused, clear vocals',
+                    eq: { sub: 0, bass: +0.5, lowmid: 0, mid: +1.0, highmid: +1.5, high: +1.0, air: +1.5 }
                 }
             ],
             'neutral': [
                 {
-                    name: 'Transparent Master',
-                    description: 'Zero coloration • Reference grade • Pure signal',
+                    name: 'Flat',
+                    description: 'No coloration, pure transparency',
                     eq: { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: 0, high: 0, air: 0 }
                 },
                 {
-                    name: 'Streaming Optimized',
-                    description: 'Spotify/Apple Music ready • Platform perfect',
-                    eq: { sub: +1.5, bass: +1.0, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
+                    name: 'Subtle Enhancement',
+                    description: 'Minimal processing, gentle polish',
+                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: 0, highmid: +0.5, high: +0.5, air: +1.0 }
                 },
                 {
-                    name: 'Broadcast Standard',
-                    description: 'TV/Radio compliant • EBU R128 optimized',
-                    eq: { sub: +1.0, bass: +1.0, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
+                    name: 'Broadcast',
+                    description: 'Standard loudness, broadcast-safe',
+                    eq: { sub: +1.0, bass: +1.0, lowmid: 0, mid: 0, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
-                    name: 'Vinyl Warm',
-                    description: 'Analog character • Gentle warmth • Classic feel',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.5, mid: +0.5, highmid: +0.5, high: +0.5, air: +1.0 }
+                    name: 'Streaming',
+                    description: 'Platform-optimized, modern standard',
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.5, air: +2.0 }
                 },
                 {
-                    name: 'Hi-Fi Enhancement',
-                    description: 'Audiophile polish • Extended spectrum • Detailed',
-                    eq: { sub: +1.0, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.5 }
+                    name: 'Transparent',
+                    description: 'Clean mastering, natural dynamics',
+                    eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: +0.5, highmid: +0.5, high: +1.0, air: +1.5 }
                 }
             ]
         };
@@ -5274,43 +5118,7 @@
         }
 
         /**
-         * Ensure EQ chain is connected (not bypassed)
-         * IMPORTANT: Only reconnect if EQ was actually bypassed to prevent audio glitches
-         */
-        function ensureEQChainConnected() {
-            if (!sourceNode || !eqSubFilter || !audioContext) {
-                console.warn('⚠️ Audio chain not ready - EQ will apply when audio loads');
-                return false;
-            }
-
-            // Only reconnect if EQ was actually bypassed - prevents audio glitches
-            if (eqBypassed) {
-                console.log('🔧 Re-enabling EQ (was bypassed)');
-                eqBypassed = false;
-                const bypassBtn = document.getElementById('eqBypassBtn');
-                if (bypassBtn) {
-                    bypassBtn.textContent = 'EQ Active';
-                    bypassBtn.style.background = '';
-                }
-
-                // Only reconnect when coming back from bypass
-                try {
-                    sourceNode.disconnect();
-                    sourceNode.connect(eqSubFilter);
-                    // Rest of chain should already be connected
-                    console.log('✅ EQ chain re-enabled from bypass');
-                } catch (e) {
-                    console.warn('EQ reconnection note:', e.message);
-                }
-            }
-            // If not bypassed, chain is already connected - don't disconnect/reconnect!
-
-            return true;
-        }
-
-        /**
          * Apply a specific genre EQ preset variation
-         * REAL-TIME AUDIO FEEDBACK - User MUST hear the difference immediately!
          */
         function applyGenreEQPreset(genreName, presetIndex) {
             const presets = genreEQPresets[genreName.toLowerCase()];
@@ -5323,98 +5131,42 @@
             const eqValues = preset.eq;
 
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            console.log(`🎵 APPLYING EQ PRESET: ${genreName.toUpperCase()} → "${preset.name}"`);
-            console.log(`   ${preset.description}`);
-            console.log(`   ┌─────────────────────────────────────────┐`);
-            console.log(`   │ SUB:     ${(eqValues.sub>=0?'+':'')+eqValues.sub.toFixed(1).padStart(5)} dB │ HIGH-MID: ${(eqValues.highmid>=0?'+':'')+eqValues.highmid.toFixed(1).padStart(5)} dB │`);
-            console.log(`   │ BASS:    ${(eqValues.bass>=0?'+':'')+eqValues.bass.toFixed(1).padStart(5)} dB │ HIGH:     ${(eqValues.high>=0?'+':'')+eqValues.high.toFixed(1).padStart(5)} dB │`);
-            console.log(`   │ LOW-MID: ${(eqValues.lowmid>=0?'+':'')+eqValues.lowmid.toFixed(1).padStart(5)} dB │ AIR:      ${(eqValues.air>=0?'+':'')+eqValues.air.toFixed(1).padStart(5)} dB │`);
-            console.log(`   │ MID:     ${(eqValues.mid>=0?'+':'')+eqValues.mid.toFixed(1).padStart(5)} dB │                      │`);
-            console.log(`   └─────────────────────────────────────────┘`);
+            console.log(`🎵 Applying ${genreName.toUpperCase()} EQ Preset: "${preset.name}"`);
+            console.log(`   Description: ${preset.description}`);
+            console.log(`   EQ Settings:`);
+            console.log(`     Sub (45Hz):     ${eqValues.sub>=0?'+':''}${eqValues.sub.toFixed(1)} dB`);
+            console.log(`     Bass (100Hz):   ${eqValues.bass>=0?'+':''}${eqValues.bass.toFixed(1)} dB`);
+            console.log(`     LowMid (400Hz): ${eqValues.lowmid>=0?'+':''}${eqValues.lowmid.toFixed(1)} dB`);
+            console.log(`     Mid (1kHz):     ${eqValues.mid>=0?'+':''}${eqValues.mid.toFixed(1)} dB`);
+            console.log(`     HighMid (3.5k): ${eqValues.highmid>=0?'+':''}${eqValues.highmid.toFixed(1)} dB`);
+            console.log(`     High (8kHz):    ${eqValues.high>=0?'+':''}${eqValues.high.toFixed(1)} dB`);
+            console.log(`     Air (12kHz):    ${eqValues.air>=0?'+':''}${eqValues.air.toFixed(1)} dB`);
 
-            // Resume audio context if suspended (browser autoplay policy)
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('   ✅ AudioContext resumed for EQ preview');
-                });
-            }
+            // Store original values for animation (apply EQ even without audioBuffer - filters affect media element source)
+            const originalEQ = {
+                sub: eqSubFilter ? eqSubFilter.gain.value : 0,
+                bass: eqBassFilter ? eqBassFilter.gain.value : 0,
+                lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
+                mid: eqMidFilter ? eqMidFilter.gain.value : 0,
+                highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
+                high: eqHighFilter ? eqHighFilter.gain.value : 0,
+                air: eqAirFilter ? eqAirFilter.gain.value : 0
+            };
 
-            // Check if filters exist (chain should already be connected from setupWebAudio)
-            if (!eqSubFilter) {
-                console.error('❌ EQ filters not initialized - upload a track first');
-                return;
-            }
-
-            // IMMEDIATE APPLICATION - Apply EQ values directly for instant feedback
-            const now = audioContext ? audioContext.currentTime : 0;
-            const rampTime = 0.05; // 50ms ramp for smooth but fast transition
-
-            // Apply each band with fast ramp
-            if (audioContext) {
-                eqSubFilter.gain.cancelScheduledValues(now);
-                eqSubFilter.gain.setValueAtTime(eqSubFilter.gain.value, now);
-                eqSubFilter.gain.linearRampToValueAtTime(eqValues.sub, now + rampTime);
-
-                eqBassFilter.gain.cancelScheduledValues(now);
-                eqBassFilter.gain.setValueAtTime(eqBassFilter.gain.value, now);
-                eqBassFilter.gain.linearRampToValueAtTime(eqValues.bass, now + rampTime);
-
-                eqLowMidFilter.gain.cancelScheduledValues(now);
-                eqLowMidFilter.gain.setValueAtTime(eqLowMidFilter.gain.value, now);
-                eqLowMidFilter.gain.linearRampToValueAtTime(eqValues.lowmid, now + rampTime);
-
-                eqMidFilter.gain.cancelScheduledValues(now);
-                eqMidFilter.gain.setValueAtTime(eqMidFilter.gain.value, now);
-                eqMidFilter.gain.linearRampToValueAtTime(eqValues.mid, now + rampTime);
-
-                eqHighMidFilter.gain.cancelScheduledValues(now);
-                eqHighMidFilter.gain.setValueAtTime(eqHighMidFilter.gain.value, now);
-                eqHighMidFilter.gain.linearRampToValueAtTime(eqValues.highmid, now + rampTime);
-
-                eqHighFilter.gain.cancelScheduledValues(now);
-                eqHighFilter.gain.setValueAtTime(eqHighFilter.gain.value, now);
-                eqHighFilter.gain.linearRampToValueAtTime(eqValues.high, now + rampTime);
-
-                eqAirFilter.gain.cancelScheduledValues(now);
-                eqAirFilter.gain.setValueAtTime(eqAirFilter.gain.value, now);
-                eqAirFilter.gain.linearRampToValueAtTime(eqValues.air, now + rampTime);
-
-                console.log(`   ✅ EQ applied with 50ms ramp - LISTEN for the change!`);
-            } else {
-                // Fallback: direct assignment
-                eqSubFilter.gain.value = eqValues.sub;
-                eqBassFilter.gain.value = eqValues.bass;
-                eqLowMidFilter.gain.value = eqValues.lowmid;
-                eqMidFilter.gain.value = eqValues.mid;
-                eqHighMidFilter.gain.value = eqValues.highmid;
-                eqHighFilter.gain.value = eqValues.high;
-                eqAirFilter.gain.value = eqValues.air;
-                console.log(`   ✅ EQ applied directly`);
-            }
-
-            // Update UI to reflect new EQ values
-            updateEQUI(eqValues);
-
+            // Animate EQ transition (smooth 400ms transition)
+            animateEQTransition(originalEQ, eqValues, 400);
+            console.log(`✅ EQ applied successfully - Listen to the difference!`);
             console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         }
 
         /**
          * Genre Preset Mapping (The Tonal Character)
          * Configures EQ, compression, and effects based on genre
-         * REAL-TIME AUDIO FEEDBACK - User MUST hear the difference immediately!
          */
         function applyGenrePreset(genreName, animate = true) {
-            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-            console.log(`🎸 GENRE PRESET: ${genreName.toUpperCase()}`);
+            console.log(`🎵 Applying Genre Preset: ${genreName}`);
 
-            // Resume audio context if suspended (browser autoplay policy)
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log('   ✅ AudioContext resumed for genre preview');
-                });
-            }
-
-            // Store original values for animation (chain already connected from setupWebAudio)
+            // Store original values for animation
             const originalEQ = {
                 sub: eqSubFilter ? eqSubFilter.gain.value : 0,
                 bass: eqBassFilter ? eqBassFilter.gain.value : 0,
@@ -5561,51 +5313,12 @@
                     };
             }
 
-            // Apply EQ settings with FAST ramp for real-time feedback
-            if (eqSubFilter && audioContext) {
-                const now = audioContext.currentTime;
-                const rampTime = 0.05; // 50ms ramp - fast but smooth
-
-                eqSubFilter.gain.cancelScheduledValues(now);
-                eqSubFilter.gain.setValueAtTime(eqSubFilter.gain.value, now);
-                eqSubFilter.gain.linearRampToValueAtTime(preset.eq.sub, now + rampTime);
-
-                eqBassFilter.gain.cancelScheduledValues(now);
-                eqBassFilter.gain.setValueAtTime(eqBassFilter.gain.value, now);
-                eqBassFilter.gain.linearRampToValueAtTime(preset.eq.bass, now + rampTime);
-
-                eqLowMidFilter.gain.cancelScheduledValues(now);
-                eqLowMidFilter.gain.setValueAtTime(eqLowMidFilter.gain.value, now);
-                eqLowMidFilter.gain.linearRampToValueAtTime(preset.eq.lowmid, now + rampTime);
-
-                eqMidFilter.gain.cancelScheduledValues(now);
-                eqMidFilter.gain.setValueAtTime(eqMidFilter.gain.value, now);
-                eqMidFilter.gain.linearRampToValueAtTime(preset.eq.mid, now + rampTime);
-
-                eqHighMidFilter.gain.cancelScheduledValues(now);
-                eqHighMidFilter.gain.setValueAtTime(eqHighMidFilter.gain.value, now);
-                eqHighMidFilter.gain.linearRampToValueAtTime(preset.eq.highmid, now + rampTime);
-
-                eqHighFilter.gain.cancelScheduledValues(now);
-                eqHighFilter.gain.setValueAtTime(eqHighFilter.gain.value, now);
-                eqHighFilter.gain.linearRampToValueAtTime(preset.eq.high, now + rampTime);
-
-                eqAirFilter.gain.cancelScheduledValues(now);
-                eqAirFilter.gain.setValueAtTime(eqAirFilter.gain.value, now);
-                eqAirFilter.gain.linearRampToValueAtTime(preset.eq.air, now + rampTime);
-
-                console.log(`   ✅ EQ applied with 50ms ramp - LISTEN for the change!`);
+            // Apply EQ settings with animation
+            if (animate) {
+                animateEQTransition(originalEQ, preset.eq, 500); // 500ms animation
             } else {
-                // Fallback: use original animation or direct apply
-                if (animate) {
-                    animateEQTransition(originalEQ, preset.eq, 100); // Faster 100ms
-                } else {
-                    applyEQValues(preset.eq);
-                }
+                applyEQValues(preset.eq);
             }
-
-            // Update UI
-            updateEQUI(preset.eq);
 
             // Apply compression settings
             if (compressor && preset.compression) {
@@ -5613,14 +5326,12 @@
                 compressor.ratio.value = preset.compression.ratio;
                 compressor.attack.value = preset.compression.attack;
                 compressor.release.value = preset.compression.release;
-                console.log(`   🎛️ Compression: ${preset.compression.ratio}:1 ratio, ${preset.compression.threshold}dB threshold`);
             }
 
             // Store preset for later use
             window.currentGenrePreset = preset;
 
-            console.log(`   ✅ Genre preset applied - You should hear the EQ change!`);
-            console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+            console.log('✅ Genre preset applied successfully');
             return preset;
         }
 
@@ -7799,33 +7510,18 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // PROFESSIONAL DRAW LOOP - 3-Panel Visualization System
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            let lastDrawTime = 0;
-            const targetFPS = 24; // Reduced from 60fps to prevent audio skipping
-            const frameInterval = 1000 / targetFPS;
-
-            function draw(timestamp) {
+            function draw() {
                 if (!analyser) {
                     // DON'T LOG - too spammy
-                    animationFrame = requestAnimationFrame(draw);
                     return;
                 }
-
-                // THROTTLE: Skip frames to reduce CPU load and prevent audio skipping
-                if (timestamp - lastDrawTime < frameInterval) {
-                    animationFrame = requestAnimationFrame(draw);
-                    return;
-                }
-                lastDrawTime = timestamp;
 
                 // ALWAYS RUN VISUALIZATION LOOP
                 // When audio is paused, analyzers will return silence (which is correct)
                 // This allows static waveform, broadcast meters, and UI to remain visible
 
-                // Get audio data (reuse array if possible)
-                if (!window._freqDataArray || window._freqDataArray.length !== analyser.frequencyBinCount) {
-                    window._freqDataArray = new Float32Array(analyser.frequencyBinCount);
-                }
-                const dataArray = window._freqDataArray;
+                // Get audio data
+                const dataArray = new Float32Array(analyser.frequencyBinCount);
                 analyser.getFloatFrequencyData(dataArray);
 
                 // ═══ PANEL 1: SPECTRUM ANALYZER + EQ CURVE (WebGL with Persistence) ═══
@@ -7845,25 +7541,20 @@
 
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (window.drawStereoMeter && leftAnalyser && rightAnalyser) {
-                    // Reuse arrays to prevent garbage collection (reduces audio glitches)
-                    if (!window._leftTimeDomain || window._leftTimeDomain.length !== leftAnalyser.fftSize) {
-                        window._leftTimeDomain = new Float32Array(leftAnalyser.fftSize);
-                        window._rightTimeDomain = new Float32Array(rightAnalyser.fftSize);
-                    }
-                    const leftTimeDomain = window._leftTimeDomain;
-                    const rightTimeDomain = window._rightTimeDomain;
+                    // Get time domain data for peak metering
+                    const leftTimeDomain = new Float32Array(leftAnalyser.fftSize);
+                    const rightTimeDomain = new Float32Array(rightAnalyser.fftSize);
                     leftAnalyser.getFloatTimeDomainData(leftTimeDomain);
                     rightAnalyser.getFloatTimeDomainData(rightTimeDomain);
 
-                    // Calculate RMS levels (optimized loop)
+                    // Calculate RMS levels
                     let leftSum = 0, rightSum = 0;
-                    const len = leftTimeDomain.length;
-                    for (let i = 0; i < len; i++) {
+                    for (let i = 0; i < leftTimeDomain.length; i++) {
                         leftSum += leftTimeDomain[i] * leftTimeDomain[i];
                         rightSum += rightTimeDomain[i] * rightTimeDomain[i];
                     }
-                    const leftLevel = Math.sqrt(leftSum / len);
-                    const rightLevel = Math.sqrt(rightSum / len);
+                    const leftLevel = Math.sqrt(leftSum / leftTimeDomain.length);
+                    const rightLevel = Math.sqrt(rightSum / rightTimeDomain.length);
 
                     // Initialize peak hold objects if needed
                     if (!window.leftPeakHoldObj) window.leftPeakHoldObj = { level: -Infinity, time: 0 };
@@ -7968,7 +7659,7 @@
             }
 
             console.log('🚀 Starting draw() loop NOW...');
-            animationFrame = requestAnimationFrame(draw); // Use RAF for initial call with timestamp
+            draw();
             console.log('✅ draw() loop started!');
         }
 
@@ -9871,50 +9562,28 @@
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
 
-                    // ═══════════════════════════════════════════════════════════════════
-                    // REAL-TIME LUFS DEMONSTRATION - User MUST hear the difference!
-                    // ═══════════════════════════════════════════════════════════════════
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log(`🔊 LUFS TARGET: ${targetLUFS} LUFS (${platformName})`);
+                    // AUTO-ADJUST GAIN: When platform changes, adjust gain to new target
+                    console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
 
-                    // Resume audio context if suspended (browser autoplay policy)
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume().then(() => {
-                            console.log('   ✅ AudioContext resumed');
-                        });
-                    }
+                    if (audioBuffer && uploadedFile && masterGain) {
+                        // Get current LUFS
+                        const currentLUFS = integratedLUFS || -14;
 
-                    // Store base gain on first selection (reference point)
-                    if (!window.lufsBaseGain) {
-                        window.lufsBaseGain = masterGain ? masterGain.gain.value : 1.0;
-                        window.lufsBaseTarget = -14; // Streaming is the reference
-                        console.log(`   📌 Base gain set: ${window.lufsBaseGain.toFixed(3)} at -14 LUFS`);
-                    }
+                        // Calculate gain adjustment to reach new platform target
+                        const gainAdjustmentDB = targetLUFS - currentLUFS;
+                        const clampedGainDB = Math.max(-12, Math.min(12, gainAdjustmentDB));
+                        const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
-                    // Calculate gain offset from base (-14 LUFS)
-                    // -14 LUFS = 0dB offset (loudest - streaming standard)
-                    // -16 LUFS = -2dB offset (quieter - Apple/Podcast)
-                    const gainOffsetDB = targetLUFS - (-14); // e.g., -16 - (-14) = -2dB
-                    const gainMultiplier = Math.pow(10, gainOffsetDB / 20);
-                    const newGain = window.lufsBaseGain * gainMultiplier;
-
-                    if (masterGain && audioContext) {
-                        // Apply gain change IMMEDIATELY for real-time feedback
-                        const now = audioContext.currentTime;
-                        masterGain.gain.cancelScheduledValues(now);
-                        masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-                        masterGain.gain.linearRampToValueAtTime(newGain, now + 0.05); // 50ms ramp
-
-                        console.log(`   🎚️ Gain offset: ${gainOffsetDB > 0 ? '+' : ''}${gainOffsetDB} dB`);
-                        console.log(`   🔊 Output gain: ${newGain.toFixed(3)} (${(20 * Math.log10(newGain)).toFixed(1)} dB)`);
-                        console.log(`   ✅ You should hear the volume ${gainOffsetDB < 0 ? 'DECREASE' : gainOffsetDB > 0 ? 'INCREASE' : 'stay the same'}`);
+                        // Apply gain adjustment if significant
+                        if (Math.abs(gainAdjustmentDB) > 0.3) {
+                            masterGain.gain.setTargetAtTime(newGainLinear, audioContext.currentTime, 0.15);
+                            console.log(`🎯 Platform Switch: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS | Gain ${gainAdjustmentDB > 0 ? '+' : ''}${gainAdjustmentDB.toFixed(2)} dB`);
+                        } else {
+                            console.log(`✓ Already at target (${currentLUFS.toFixed(1)} LUFS)`);
+                        }
                     } else {
-                        console.log('   ⚠️ Audio not playing - upload and play a track to hear the difference');
+                        console.log('⚠️ Audio not loaded yet - load a track to hear the difference');
                     }
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    // Store current target for reference
-                    window.currentLUFSTarget = targetLUFS;
                 }
 
                 // Handle genre preset changes
