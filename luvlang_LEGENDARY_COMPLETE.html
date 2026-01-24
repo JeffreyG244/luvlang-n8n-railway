@@ -1535,95 +1535,7 @@
     </div>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         SETUP MODAL - Platform & Genre Selection (Shows FIRST after upload)
-         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <div id="setupModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10002; justify-content: center; align-items: center;">
-        <div style="background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%); padding: 40px 50px; border-radius: 20px; max-width: 600px; width: 90%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1);">
-
-            <div style="font-size: 2.5rem; margin-bottom: 15px;">🎯</div>
-
-            <h2 style="font-size: 1.8rem; margin: 0 0 10px 0; background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                Let's Set Up Your Master
-            </h2>
-
-            <p id="setupFileName" style="color: rgba(255,255,255,0.6); margin-bottom: 25px; font-size: 0.95rem;"></p>
-
-            <!-- Platform Selection -->
-            <div style="margin-bottom: 25px; text-align: left;">
-                <div style="font-size: 0.85rem; font-weight: 600; color: #00d4ff; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                    1. Where will this play? <span style="color: #ff6b6b;">*</span>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <button class="setup-platform-btn" data-platform="streaming" style="padding: 15px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 1.5rem; margin-bottom: 5px;">📱</div>
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Streaming</div>
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 3px;">-14 LUFS</div>
-                    </button>
-                    <button class="setup-platform-btn" data-platform="apple" style="padding: 15px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 1.5rem; margin-bottom: 5px;">🍎</div>
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Apple Music</div>
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 3px;">-16 LUFS</div>
-                    </button>
-                    <button class="setup-platform-btn" data-platform="podcast" style="padding: 15px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 1.5rem; margin-bottom: 5px;">🎙️</div>
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Podcast</div>
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 3px;">-16 LUFS</div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Genre Selection -->
-            <div style="margin-bottom: 25px; text-align: left;">
-                <div style="font-size: 0.85rem; font-weight: 600; color: #b84fff; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
-                    2. What's your genre? <span style="color: #ff6b6b;">*</span>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                    <button class="setup-genre-btn" data-genre="hip-hop" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Hip-Hop</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Sub + Presence</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="pop" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Pop</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Balanced + Air</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="edm" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">EDM</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Massive Bass</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="rock" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Rock</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Body + Bite</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="jazz" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Jazz</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Natural</div>
-                    </button>
-                    <button class="setup-genre-btn" data-genre="neutral" style="padding: 12px 10px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); border-radius: 10px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.85rem; font-weight: 600; color: white;">Other</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Neutral EQ</div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Genre Presets Preview (shows on genre hover) -->
-            <div id="setupGenrePreview" style="display: none; background: rgba(184, 79, 255, 0.1); border: 1px solid rgba(184, 79, 255, 0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: left;">
-                <div style="font-size: 0.75rem; color: #b84fff; font-weight: 600; margin-bottom: 10px;" id="setupPreviewTitle">Hip-Hop Presets</div>
-                <div id="setupPreviewList" style="font-size: 0.7rem; color: rgba(255,255,255,0.7); line-height: 1.6;"></div>
-            </div>
-
-            <!-- Continue Button -->
-            <button id="setupContinueBtn" disabled style="width: 100%; padding: 16px; background: linear-gradient(135deg, #444, #333); border: none; border-radius: 12px; color: rgba(255,255,255,0.4); font-size: 1.1rem; font-weight: 700; cursor: not-allowed; transition: all 0.3s;">
-                Select Platform & Genre to Continue
-            </button>
-
-            <p style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 15px;">
-                You can change these settings later in the sidebar
-            </p>
-        </div>
-    </div>
-
-    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         AI vs DIY CHOICE MODAL - Shows after setup is complete
+         AI vs DIY CHOICE MODAL - Shows after file upload
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div id="masteringChoiceModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10001; justify-content: center; align-items: center;">
         <div style="background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%); padding: 50px; border-radius: 20px; max-width: 700px; width: 90%; text-align: center; box-shadow: 0 30px 80px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1);">
@@ -3625,10 +3537,9 @@
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
 
-                // Store filename and show setup modal (Platform & Genre selection first)
-                window.uploadedFileName = file.name;
+                // Show the AI vs DIY choice modal after file loads
                 setTimeout(() => {
-                    showSetupModal(file.name);
+                    showMasteringChoiceModal(file.name);
                 }, 800);
             });
         }
@@ -3675,179 +3586,6 @@
         // Track mastering state
         window.masteringComplete = false;
         window.masteringMethod = null; // 'ai' or 'diy'
-        window.setupComplete = false;
-        window.selectedSetupPlatform = null;
-        window.selectedSetupGenre = null;
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // SETUP MODAL - Platform & Genre Selection (Shows FIRST)
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        // Show the setup modal
-        function showSetupModal(fileName) {
-            const modal = document.getElementById('setupModal');
-            const fileNameEl = document.getElementById('setupFileName');
-
-            if (modal) {
-                if (fileNameEl) fileNameEl.textContent = `File: ${fileName}`;
-                modal.style.display = 'flex';
-                window.setupComplete = false;
-                window.selectedSetupPlatform = null;
-                window.selectedSetupGenre = null;
-                updateSetupContinueButton();
-                console.log('🎯 Showing Setup Modal (Platform & Genre)');
-            }
-        }
-
-        // Hide the setup modal
-        function hideSetupModal() {
-            const modal = document.getElementById('setupModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Update continue button state
-        function updateSetupContinueButton() {
-            const btn = document.getElementById('setupContinueBtn');
-            if (btn) {
-                if (window.selectedSetupPlatform && window.selectedSetupGenre) {
-                    btn.disabled = false;
-                    btn.style.background = 'linear-gradient(135deg, #00d4ff 0%, #b84fff 100%)';
-                    btn.style.color = 'white';
-                    btn.style.cursor = 'pointer';
-                    btn.textContent = '✓ Continue to Mastering';
-                } else {
-                    btn.disabled = true;
-                    btn.style.background = 'linear-gradient(135deg, #444, #333)';
-                    btn.style.color = 'rgba(255,255,255,0.4)';
-                    btn.style.cursor = 'not-allowed';
-                    const needPlatform = !window.selectedSetupPlatform;
-                    const needGenre = !window.selectedSetupGenre;
-                    if (needPlatform && needGenre) {
-                        btn.textContent = 'Select Platform & Genre to Continue';
-                    } else if (needPlatform) {
-                        btn.textContent = 'Select a Platform to Continue';
-                    } else {
-                        btn.textContent = 'Select a Genre to Continue';
-                    }
-                }
-            }
-        }
-
-        // Genre presets for preview
-        const genrePresetPreviews = {
-            'hip-hop': ['Classic Boom Bap - Punchy drums, warm bass', 'Modern Trap - Heavy 808s, airy highs', 'Vocal Forward - Clear vocals, presence', 'Bass Heavy - Maximum low end', 'Radio Ready - Commercial sound'],
-            'pop': ['Radio Pop - Bright, chart-ready', 'Indie Pop - Natural, organic', 'Dance Pop - Club-ready, energetic', 'Ballad - Smooth, vocal-focused', 'Modern Pop - Polished, pristine'],
-            'edm': ['Festival Banger - Maximum impact', 'Deep House - Groove-focused', 'Dubstep - Heavy drops', 'Trance - Euphoric, wide', 'Future Bass - Lush chords'],
-            'rock': ['Classic Rock - Warm, powerful', 'Modern Rock - Tight, punchy', 'Metal - Aggressive, defined', 'Indie Rock - Raw, authentic', 'Arena Rock - Big, wide'],
-            'jazz': ['Smooth Jazz - Polished, warm', 'Live Jazz - Natural, dynamic', 'Fusion - Modern, punchy', 'Vocal Jazz - Intimate, clear', 'Big Band - Full, rich'],
-            'neutral': ['Flat Response - No coloration', 'Gentle Warmth - Subtle enhancement', 'Slight Brightness - Air boost', 'Reference - Mastering standard']
-        };
-
-        // Show genre presets preview on hover
-        function showGenrePreview(genre) {
-            const preview = document.getElementById('setupGenrePreview');
-            const title = document.getElementById('setupPreviewTitle');
-            const list = document.getElementById('setupPreviewList');
-
-            if (preview && title && list) {
-                const presets = genrePresetPreviews[genre];
-                if (presets) {
-                    const genreName = genre.charAt(0).toUpperCase() + genre.slice(1).replace('-', ' ');
-                    title.textContent = `${genreName} EQ Presets Available:`;
-                    list.innerHTML = presets.map(p => `• ${p}`).join('<br>');
-                    preview.style.display = 'block';
-                }
-            }
-        }
-
-        // Hide genre preview
-        function hideGenrePreview() {
-            const preview = document.getElementById('setupGenrePreview');
-            if (preview) {
-                preview.style.display = 'none';
-            }
-        }
-
-        // Setup platform button handlers
-        document.querySelectorAll('.setup-platform-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active from all
-                document.querySelectorAll('.setup-platform-btn').forEach(b => {
-                    b.style.background = 'rgba(255,255,255,0.05)';
-                    b.style.borderColor = 'rgba(255,255,255,0.15)';
-                });
-                // Activate this one
-                this.style.background = 'rgba(0, 212, 255, 0.2)';
-                this.style.borderColor = '#00d4ff';
-                window.selectedSetupPlatform = this.dataset.platform;
-
-                // Also update the sidebar selector
-                const sidebarBtns = document.querySelectorAll('.selector-btn[data-platform]');
-                sidebarBtns.forEach(sb => sb.classList.remove('active'));
-                const matchingBtn = document.querySelector(`.selector-btn[data-platform="${this.dataset.platform}"]`);
-                if (matchingBtn) matchingBtn.classList.add('active');
-
-                updateSetupContinueButton();
-                console.log(`📱 Platform selected: ${this.dataset.platform}`);
-            });
-        });
-
-        // Setup genre button handlers
-        document.querySelectorAll('.setup-genre-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Remove active from all
-                document.querySelectorAll('.setup-genre-btn').forEach(b => {
-                    b.style.background = 'rgba(255,255,255,0.05)';
-                    b.style.borderColor = 'rgba(255,255,255,0.15)';
-                });
-                // Activate this one
-                this.style.background = 'rgba(184, 79, 255, 0.2)';
-                this.style.borderColor = '#b84fff';
-                window.selectedSetupGenre = this.dataset.genre;
-
-                // Also update the sidebar selector and show presets
-                const sidebarBtns = document.querySelectorAll('.selector-btn[data-genre]');
-                sidebarBtns.forEach(sb => sb.classList.remove('active'));
-                const matchingBtn = document.querySelector(`.selector-btn[data-genre="${this.dataset.genre}"]`);
-                if (matchingBtn) {
-                    matchingBtn.classList.add('active');
-                    // Show genre presets in sidebar
-                    showGenreEQPresets(this.dataset.genre);
-                }
-
-                updateSetupContinueButton();
-                console.log(`🎵 Genre selected: ${this.dataset.genre}`);
-            });
-
-            // Hover to show preset preview
-            btn.addEventListener('mouseenter', function() {
-                showGenrePreview(this.dataset.genre);
-            });
-        });
-
-        // Continue button handler
-        document.getElementById('setupContinueBtn')?.addEventListener('click', function() {
-            if (window.selectedSetupPlatform && window.selectedSetupGenre) {
-                window.setupComplete = true;
-                hideSetupModal();
-
-                // Apply the genre preset
-                if (window.audioBuffer && typeof applyGenrePreset === 'function') {
-                    applyGenrePreset(window.selectedSetupGenre, true);
-                }
-
-                // Now show the AI vs DIY choice modal
-                setTimeout(() => {
-                    showMasteringChoiceModal(window.uploadedFileName || 'your track');
-                }, 300);
-            }
-        });
-
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // AI vs DIY CHOICE MODAL
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         // Show the AI vs DIY choice modal
         function showMasteringChoiceModal(fileName) {
@@ -4035,14 +3773,10 @@
                 analysisPanel.style.display = 'none';
             }
 
-            // Reset setup state and show setup modal again
-            window.setupComplete = false;
-            window.selectedSetupPlatform = null;
-            window.selectedSetupGenre = null;
-
+            // Show the choice modal again
             if (window.uploadedFile) {
                 setTimeout(() => {
-                    showSetupModal(window.uploadedFile.name);
+                    showMasteringChoiceModal(window.uploadedFile.name);
                 }, 300);
             }
 
@@ -9475,17 +9209,6 @@
                     }
                 }
             });
-
-            // Add hover to show presets for genre buttons
-            if (btn.getAttribute('data-genre')) {
-                btn.addEventListener('mouseenter', function() {
-                    const genre = this.getAttribute('data-genre');
-                    if (genre) {
-                        // Show genre presets on hover (even without clicking)
-                        showGenreEQPresets(genre);
-                    }
-                });
-            }
         });
 
         document.querySelectorAll('.export-format-btn').forEach(btn => {
