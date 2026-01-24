@@ -3675,13 +3675,27 @@
                     console.error('⚠️ Error decoding audio buffer:', error);
                 }
 
-                // ALL PROCESSING DONE - Ready for playback
-                console.log('✅ All processing complete - ready for playback');
-                console.log('🎵 Click PLAY button to start (auto-play disabled to prevent skipping)');
+                // ALL PROCESSING DONE - Now safe to play
+                console.log('✅ All processing complete - starting playback...');
 
-                // Update play button to show it's ready
-                playBtn.style.animation = 'pulse 1s ease-in-out 3';
-                playBtn.title = 'Click to play your track!';
+                // Wait for audio chain to fully stabilize, then auto-play
+                setTimeout(async () => {
+                    try {
+                        if (audioContext && audioContext.state === 'suspended') {
+                            console.log('⚡ Resuming AudioContext...');
+                            await audioContext.resume();
+                        }
+                        console.log('▶ Starting playback...');
+                        await audioElement.play();
+                        playBtn.textContent = '⏸️';
+                        isPlaying = true;
+                        console.log('🎵 Playback started successfully');
+                    } catch (err) {
+                        console.log('⚠️ Auto-play blocked by browser - click play button:', err.message);
+                        playBtn.style.animation = 'pulse 1s ease-in-out 3';
+                        playBtn.title = 'Click to play your track!';
+                    }
+                }, 500); // 500ms delay to let audio chain stabilize
 
                 // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
