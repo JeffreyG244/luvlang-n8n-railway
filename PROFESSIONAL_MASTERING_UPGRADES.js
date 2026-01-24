@@ -971,8 +971,9 @@ class TransientSustainShaper {
 /**
  * IRC-style Limiter with multiple modes
  * Similar to Ozone's IRC I, II, III, IV, V modes
+ * NOTE: Renamed to avoid conflict with AdvancedLimiter in ADVANCED_PROCESSING_FEATURES.js
  */
-class AdvancedLimiter {
+class AdvancedLimiterIRC {
     constructor(audioContext) {
         this.audioContext = audioContext;
         this.sampleRate = audioContext.sampleRate;
