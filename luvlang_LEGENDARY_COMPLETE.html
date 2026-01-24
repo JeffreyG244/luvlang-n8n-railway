@@ -5339,10 +5339,7 @@
                 });
             }
 
-            // Ensure EQ chain is connected before applying
-            ensureEQChainConnected();
-
-            // Check if filters exist
+            // Check if filters exist (chain should already be connected from setupWebAudio)
             if (!eqSubFilter) {
                 console.error('❌ EQ filters not initialized - upload a track first');
                 return;
@@ -5417,10 +5414,7 @@
                 });
             }
 
-            // Ensure EQ chain is connected
-            ensureEQChainConnected();
-
-            // Store original values for animation
+            // Store original values for animation (chain already connected from setupWebAudio)
             const originalEQ = {
                 sub: eqSubFilter ? eqSubFilter.gain.value : 0,
                 bass: eqBassFilter ? eqBassFilter.gain.value : 0,
