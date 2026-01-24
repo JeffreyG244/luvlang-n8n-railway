@@ -45,6 +45,12 @@ for (let i = 0; i < NUM_FREQ_BANDS; i++) {
 // Correlation history buffer (2D array: [time][frequency])
 const correlationHistory = [];
 
+// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
+let corrLeftFreq = null;
+let corrRightFreq = null;
+let corrLeftTime = null;
+let corrRightTime = null;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // COLOR MAPPING - Professional Phase Correlation Colors
 // ═══════════════════════════════════════════════════════════════════════════
@@ -102,17 +108,21 @@ function correlationToColor(correlation) {
 function calculateFrequencyCorrelation(leftAnalyser, rightAnalyser, audioContext) {
     if (!leftAnalyser || !rightAnalyser) return null;
 
-    // Get complex FFT data (frequency + phase)
+    // Get complex FFT data (frequency + phase) - reuse pre-allocated arrays
     const bufferLength = leftAnalyser.frequencyBinCount;
-    const leftFreq = new Float32Array(bufferLength);
-    const rightFreq = new Float32Array(bufferLength);
-    const leftTime = new Float32Array(leftAnalyser.fftSize);
-    const rightTime = new Float32Array(rightAnalyser.fftSize);
+    if (!corrLeftFreq || corrLeftFreq.length !== bufferLength) {
+        corrLeftFreq = new Float32Array(bufferLength);
+        corrRightFreq = new Float32Array(bufferLength);
+    }
+    if (!corrLeftTime || corrLeftTime.length !== leftAnalyser.fftSize) {
+        corrLeftTime = new Float32Array(leftAnalyser.fftSize);
+        corrRightTime = new Float32Array(rightAnalyser.fftSize);
+    }
 
-    leftAnalyser.getFloatFrequencyData(leftFreq);
-    rightAnalyser.getFloatFrequencyData(rightFreq);
-    leftAnalyser.getFloatTimeDomainData(leftTime);
-    rightAnalyser.getFloatTimeDomainData(rightTime);
+    leftAnalyser.getFloatFrequencyData(corrLeftFreq);
+    rightAnalyser.getFloatFrequencyData(corrRightFreq);
+    leftAnalyser.getFloatTimeDomainData(corrLeftTime);
+    rightAnalyser.getFloatTimeDomainData(corrRightTime);
 
     const sampleRate = audioContext.sampleRate;
     const nyquist = sampleRate / 2;
@@ -131,17 +141,17 @@ function calculateFrequencyCorrelation(leftAnalyser, rightAnalyser, audioContext
         let count = 0;
 
         // Use a sliding window in time domain, weighted by frequency content in this band
-        const windowSize = Math.min(leftTime.length, 1024);
+        const windowSize = Math.min(corrLeftTime.length, 1024);
 
         for (let i = 0; i < windowSize; i++) {
-            const L = leftTime[i];
-            const R = rightTime[i];
+            const L = corrLeftTime[i];
+            const R = corrRightTime[i];
 
             // Weight by average magnitude in this frequency band
             let weight = 0;
             for (let bin = binLow; bin <= Math.min(binHigh, bufferLength - 1); bin++) {
-                const dbL = leftFreq[bin];
-                const dbR = rightFreq[bin];
+                const dbL = corrLeftFreq[bin];
+                const dbR = corrRightFreq[bin];
                 // Convert dB to linear (approximate)
                 const magL = Math.pow(10, dbL / 20);
                 const magR = Math.pow(10, dbR / 20);

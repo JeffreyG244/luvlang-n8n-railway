@@ -5,16 +5,16 @@
 
 // Supabase configuration
 // ✅ Using the PUBLIC/ANON key (safe for client-side use)
-const SUPABASE_URL = 'https://jzclawsctaczhgvfpssx.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_9Bf4Bt5Y91aGdpFfYs7Zrg_mozxhGDA';
+const SUPABASE_URL = 'https://tzskjzkolyiwhijslqmq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c2tqemtvbHlpd2hpanNscW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NTY3ODAsImV4cCI6MjA2NDIzMjc4MH0.EvlZrWKZVsUks6VArpizk98kmOc8nVS7vvjUbd4ThMw';
 
-// Initialize Supabase client
-let supabase = null;
+// Initialize Supabase client instance (not the library - that's window.supabase from CDN)
+let supabaseClient = null;
 let currentUser = null;
 
-// Make supabase available globally for payment integration
+// Make supabase client available globally for payment integration
 if (typeof window !== 'undefined') {
-    window.supabase = null;
+    window.supabaseClient = null;
     window.currentUser = null;
 }
 
@@ -41,7 +41,7 @@ async function initializeSupabase() {
         });
     }
 
-    if (isInitialized && supabase) {
+    if (isInitialized && supabaseClient) {
         console.log('✅ Supabase already initialized');
         return true;
     }
@@ -60,17 +60,17 @@ async function initializeSupabase() {
             }
         }
 
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // Make globally available
-        window.supabaseClient = supabase;
+        window.supabaseClient = supabaseClient;
 
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
         // Try to check auth session, but don't block if it fails
         try {
-            const { data: { session }, error } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
 
             if (error) {
                 console.warn('⚠️ Auth session check failed:', error.message);
@@ -91,7 +91,7 @@ async function initializeSupabase() {
 
         // Listen for auth state changes
         try {
-            supabase.auth.onAuthStateChange((event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
 
                 if (session) {
@@ -126,7 +126,7 @@ async function initializeSupabase() {
  */
 async function signUp(email, password, displayName) {
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -158,7 +158,7 @@ async function signUp(email, password, displayName) {
  */
 async function signIn(email, password) {
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
@@ -181,7 +181,7 @@ async function signIn(email, password) {
  */
 async function signOut() {
     try {
-        const { error } = await supabase.auth.signOut();
+        const { error } = await supabaseClient.auth.signOut();
 
         if (error) throw error;
 
@@ -201,7 +201,7 @@ async function signOut() {
  */
 async function createUserProfile(userId, email, displayName) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_profiles')
             .insert([
                 {
@@ -234,7 +234,7 @@ async function savePreset(presetName, presetData) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_presets')
             .insert([
                 {
@@ -269,7 +269,7 @@ async function loadPresets() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_presets')
             .select('*')
             .eq('user_id', currentUser.id)
@@ -296,7 +296,7 @@ async function saveMasteringHistory(sessionData) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('mastering_history')
             .insert([
                 {
@@ -332,7 +332,7 @@ async function loadMasteringHistory(limit = 10) {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('mastering_history')
             .select('*')
             .eq('user_id', currentUser.id)
@@ -359,7 +359,7 @@ async function getUserSubscription() {
     }
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('user_profiles')
             .select('subscription_tier')
             .eq('id', currentUser.id)
@@ -368,7 +368,7 @@ async function getUserSubscription() {
         if (error) throw error;
 
         // Get tier limits from subscription_tiers table
-        const { data: tierData, error: tierError } = await supabase
+        const { data: tierData, error: tierError } = await supabaseClient
             .from('subscription_tiers')
             .select('*')
             .eq('tier_name', data.subscription_tier)

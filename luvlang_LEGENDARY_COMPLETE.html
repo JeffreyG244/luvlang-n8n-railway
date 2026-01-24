@@ -2267,8 +2267,8 @@
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          LEGENDARY PRODUCTION FIXES - Industry-Beating Accuracy
+         NOTE: transient-detector-worklet.js is loaded via audioContext.audioWorklet.addModule()
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="transient-detector-worklet.js"></script>
     <script src="transient-integration.js"></script>
     <script src="offline-analysis-engine.js"></script>
     <script src="interactive-waveform.js"></script>
@@ -6467,6 +6467,14 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // PROFESSIONAL DRAW LOOP - 3-Panel Visualization System
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            // PRE-ALLOCATE ARRAYS (prevents garbage collection during animation)
+            let drawDataArray = null;
+            let drawLeftTimeDomain = null;
+            let drawRightTimeDomain = null;
+            let lastPlayheadCanvasWidth = 0;
+            let lastPlayheadCanvasHeight = 0;
+
             function draw() {
                 if (!analyser) {
                     // DON'T LOG - too spammy
@@ -6477,9 +6485,11 @@
                 // When audio is paused, analyzers will return silence (which is correct)
                 // This allows static waveform, broadcast meters, and UI to remain visible
 
-                // Get audio data
-                const dataArray = new Float32Array(analyser.frequencyBinCount);
-                analyser.getFloatFrequencyData(dataArray);
+                // Get audio data (reuse pre-allocated array)
+                if (!drawDataArray || drawDataArray.length !== analyser.frequencyBinCount) {
+                    drawDataArray = new Float32Array(analyser.frequencyBinCount);
+                }
+                analyser.getFloatFrequencyData(drawDataArray);
 
                 // ═══ PANEL 1: SPECTRUM ANALYZER + EQ CURVE (WebGL with Persistence) ═══
                 // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
@@ -6498,20 +6508,24 @@
 
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (window.drawStereoMeter && leftAnalyser && rightAnalyser) {
-                    // Get time domain data for peak metering
-                    const leftTimeDomain = new Float32Array(leftAnalyser.fftSize);
-                    const rightTimeDomain = new Float32Array(rightAnalyser.fftSize);
-                    leftAnalyser.getFloatTimeDomainData(leftTimeDomain);
-                    rightAnalyser.getFloatTimeDomainData(rightTimeDomain);
+                    // Get time domain data for peak metering (reuse pre-allocated arrays)
+                    if (!drawLeftTimeDomain || drawLeftTimeDomain.length !== leftAnalyser.fftSize) {
+                        drawLeftTimeDomain = new Float32Array(leftAnalyser.fftSize);
+                    }
+                    if (!drawRightTimeDomain || drawRightTimeDomain.length !== rightAnalyser.fftSize) {
+                        drawRightTimeDomain = new Float32Array(rightAnalyser.fftSize);
+                    }
+                    leftAnalyser.getFloatTimeDomainData(drawLeftTimeDomain);
+                    rightAnalyser.getFloatTimeDomainData(drawRightTimeDomain);
 
                     // Calculate RMS levels
                     let leftSum = 0, rightSum = 0;
-                    for (let i = 0; i < leftTimeDomain.length; i++) {
-                        leftSum += leftTimeDomain[i] * leftTimeDomain[i];
-                        rightSum += rightTimeDomain[i] * rightTimeDomain[i];
+                    for (let i = 0; i < drawLeftTimeDomain.length; i++) {
+                        leftSum += drawLeftTimeDomain[i] * drawLeftTimeDomain[i];
+                        rightSum += drawRightTimeDomain[i] * drawRightTimeDomain[i];
                     }
-                    const leftLevel = Math.sqrt(leftSum / leftTimeDomain.length);
-                    const rightLevel = Math.sqrt(rightSum / rightTimeDomain.length);
+                    const leftLevel = Math.sqrt(leftSum / drawLeftTimeDomain.length);
+                    const rightLevel = Math.sqrt(rightSum / drawRightTimeDomain.length);
 
                     // Initialize peak hold objects if needed
                     if (!window.leftPeakHoldObj) window.leftPeakHoldObj = { level: -Infinity, time: 0 };
@@ -6523,7 +6537,7 @@
 
                     // ═══ GONIOMETER (Phase Correlation Scope) ═══
                     if (window.drawGoniometer && goniometerCanvas) {
-                        window.drawGoniometer(goniometerCanvas, leftTimeDomain, rightTimeDomain);
+                        window.drawGoniometer(goniometerCanvas, drawLeftTimeDomain, drawRightTimeDomain);
                     }
 
                     // ═══ CORRELATION HEATMAP (ELITE FEATURE - TOP 1%) ═══
@@ -6541,9 +6555,16 @@
                     const width = waveformCanvasPlayhead.offsetWidth;
                     const height = waveformCanvasPlayhead.offsetHeight;
 
-                    waveformCanvasPlayhead.width = width * window.devicePixelRatio;
-                    waveformCanvasPlayhead.height = height * window.devicePixelRatio;
-                    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                    // Only resize canvas if dimensions changed (prevents expensive recreate every frame)
+                    const targetWidth = width * window.devicePixelRatio;
+                    const targetHeight = height * window.devicePixelRatio;
+                    if (lastPlayheadCanvasWidth !== targetWidth || lastPlayheadCanvasHeight !== targetHeight) {
+                        waveformCanvasPlayhead.width = targetWidth;
+                        waveformCanvasPlayhead.height = targetHeight;
+                        lastPlayheadCanvasWidth = targetWidth;
+                        lastPlayheadCanvasHeight = targetHeight;
+                    }
+                    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 
                     // Clear
                     ctx.clearRect(0, 0, width, height);
@@ -6551,7 +6572,7 @@
                     // Draw playhead ALWAYS (playing or paused)
                     if (audioElement && audioElement.duration > 0) {
                         const playheadX = (audioElement.currentTime / audioElement.duration) * width;
-                        console.log('🎯 Drawing playhead at X=' + playheadX.toFixed(0) + ' (time: ' + audioElement.currentTime.toFixed(1) + 's)');
+                        // NOTE: Removed console.log - was causing 60 logs/second performance issue
 
                         // ULTRA BRIGHT VERTICAL LINE - Impossible to miss
                         ctx.shadowBlur = 20;
@@ -6610,7 +6631,7 @@
                 }
 
                 // Continue broadcast metering
-                updateMeters(dataArray);
+                updateMeters(drawDataArray);
 
                 animationFrame = requestAnimationFrame(draw);
             }

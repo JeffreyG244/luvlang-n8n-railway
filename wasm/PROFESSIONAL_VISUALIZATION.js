@@ -17,6 +17,11 @@ const PEAK_DECAY_RATE = 0.5; // dB per frame
 const goniometerHistory = [];
 const GONIOMETER_HISTORY_LENGTH = 100;
 
+// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
+let profSpectrumDataArray = null;
+let profSpectrumLastWidth = 0;
+let profSpectrumLastHeight = 0;
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 1. SPECTRUM ANALYZER + EQ CURVE (Panel 1)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -27,10 +32,16 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
 
-    // Set canvas resolution
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // Only resize canvas if dimensions changed (prevents expensive recreate every frame)
+    const targetWidth = width * window.devicePixelRatio;
+    const targetHeight = height * window.devicePixelRatio;
+    if (profSpectrumLastWidth !== targetWidth || profSpectrumLastHeight !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        profSpectrumLastWidth = targetWidth;
+        profSpectrumLastHeight = targetHeight;
+    }
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
 
     // Clear with premium dark gradient
     const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -82,8 +93,11 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
 
     // ═══ SPECTRUM ANALYZER (Filled Area) ═══
     const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
+    // Reuse pre-allocated array to prevent GC pressure
+    if (!profSpectrumDataArray || profSpectrumDataArray.length !== bufferLength) {
+        profSpectrumDataArray = new Float32Array(bufferLength);
+    }
+    analyser.getFloatFrequencyData(profSpectrumDataArray);
 
     const nyquist = audioContext.sampleRate / 2;
 
@@ -94,7 +108,7 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     for (let i = 0; i < 300; i++) {
         const freq = 20 * Math.pow(20000/20, i / 300);
         const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = dataArray[Math.min(binIndex, bufferLength - 1)];
+        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
 
         const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
         const normalized = Math.max(0, Math.min(1, (db + 72) / 72));
@@ -123,7 +137,7 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     for (let i = 0; i < 300; i++) {
         const freq = 20 * Math.pow(20000/20, i / 300);
         const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = dataArray[Math.min(binIndex, bufferLength - 1)];
+        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
 
         const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
         const normalized = Math.max(0, Math.min(1, (db + 72) / 72));

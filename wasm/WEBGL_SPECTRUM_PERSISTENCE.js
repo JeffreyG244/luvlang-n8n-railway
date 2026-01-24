@@ -102,6 +102,11 @@ let currentFrameTexture = null;
 let DECAY_RATE = 0.95;  // 0.95 = ~300ms trail (professional feel)
 const GLOW_COLOR = [1.0, 0.843, 0.0]; // #FFD700 (Legendary Gold)
 
+// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
+let webglSpectrumDataArray = null;
+let webglPixelBuffer = null;
+let webglLastPixelBufferSize = 0;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -284,13 +289,22 @@ function renderSpectrumToTexture(analyser, audioContext) {
     const width = canvas.width;
     const height = canvas.height;
 
-    // Create pixel buffer (RGBA)
-    const pixels = new Uint8Array(width * height * 4);
+    // Reuse pixel buffer (prevents massive GC pressure - this can be 8MB+ for HD!)
+    const requiredSize = width * height * 4;
+    if (!webglPixelBuffer || webglLastPixelBufferSize !== requiredSize) {
+        webglPixelBuffer = new Uint8Array(requiredSize);
+        webglLastPixelBufferSize = requiredSize;
+    }
+    // Clear the buffer (faster than creating new)
+    webglPixelBuffer.fill(0);
+    const pixels = webglPixelBuffer;
 
-    // Get frequency data from analyzer
+    // Get frequency data from analyzer (reuse pre-allocated array)
     const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Float32Array(bufferLength);
-    analyser.getFloatFrequencyData(dataArray);
+    if (!webglSpectrumDataArray || webglSpectrumDataArray.length !== bufferLength) {
+        webglSpectrumDataArray = new Float32Array(bufferLength);
+    }
+    analyser.getFloatFrequencyData(webglSpectrumDataArray);
 
     const nyquist = audioContext.sampleRate / 2;
 
@@ -300,7 +314,7 @@ function renderSpectrumToTexture(analyser, audioContext) {
         // Logarithmic frequency mapping (20Hz - 20kHz)
         const freq = 20 * Math.pow(20000 / 20, i / numBars);
         const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = dataArray[Math.min(binIndex, bufferLength - 1)];
+        const db = webglSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
 
         // Convert dB to normalized height (0.0 - 1.0)
         const normalized = Math.max(0, (db + 100) / 100); // -100dB to 0dB range
