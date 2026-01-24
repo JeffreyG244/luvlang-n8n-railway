@@ -1939,99 +1939,70 @@
                     <!-- AI Features Grid (Hidden by Default) -->
                     <div id="aiIndividualFeatures" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
                         <!-- Feature 1: AI Stem Separation -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiStemSepBtn" onclick="safeRunAIFeature('showAIStemSeparation')" style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="stemSeparation" data-description="Separates your track into Vocals, Drums, Bass, and Other stems using AI">
+                        <button class="eq-bypass-btn" id="aiStemSepBtn" onclick="showAIStemSeparation()" style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); font-size: 0.7rem; padding: 10px;">
                             🎵 Stem Separation<br><span style="font-size: 0.6rem; opacity: 0.8;">Vocals/Drums/Bass</span>
-                            <span class="ai-feature-status" id="stemSepStatus"></span>
                         </button>
 
                         <!-- Feature 2: Dynamic EQ -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiDynamicEQBtn" onclick="safeRunAIFeature('showAIDynamicEQ')" style="background: linear-gradient(135deg, #4ecdc4, #44a08d); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="dynamicEQ" data-description="Frequency-dependent compression that tames harsh frequencies and balances the mix">
+                        <button class="eq-bypass-btn" id="aiDynamicEQBtn" onclick="showAIDynamicEQ()" style="background: linear-gradient(135deg, #4ecdc4, #44a08d); font-size: 0.7rem; padding: 10px;">
                             🎚️ Dynamic EQ<br><span style="font-size: 0.6rem; opacity: 0.8;">Spectral Compression</span>
-                            <span class="ai-feature-status" id="dynamicEQStatus"></span>
                         </button>
 
                         <!-- Feature 3: Processing Chain -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiChainBtn" onclick="safeRunAIFeature('showAIChainOptimizer')" style="background: linear-gradient(135deg, #f093fb, #f5576c); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="chainOptimizer" data-description="Determines the optimal order for EQ, compression, limiting, and other effects">
+                        <button class="eq-bypass-btn" id="aiChainBtn" onclick="showAIChainOptimizer()" style="background: linear-gradient(135deg, #f093fb, #f5576c); font-size: 0.7rem; padding: 10px;">
                             ⚙️ Chain Optimizer<br><span style="font-size: 0.6rem; opacity: 0.8;">Optimal Effect Order</span>
-                            <span class="ai-feature-status" id="chainStatus"></span>
                         </button>
 
                         <!-- Feature 4: Artifact Detection -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiArtifactBtn" onclick="safeRunAIFeature('runAIArtifactDetection')" style="background: linear-gradient(135deg, #fa709a, #fee140); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="artifactDetector" data-description="Detects clipping, distortion, noise, phase issues, and 10 other audio problems">
+                        <button class="eq-bypass-btn" id="aiArtifactBtn" onclick="runAIArtifactDetection()" style="background: linear-gradient(135deg, #fa709a, #fee140); font-size: 0.7rem; padding: 10px;">
                             🔍 Artifact Detection<br><span style="font-size: 0.6rem; opacity: 0.8;">10 Problem Types</span>
-                            <span class="ai-feature-status" id="artifactStatus"></span>
                         </button>
 
                         <!-- Feature 5: Smart Mode -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiSmartModeBtn" onclick="safeRunAIFeature('runAISmartMode')" style="background: linear-gradient(135deg, #30cfd0, #330867); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="smartMode" data-description="Auto-detects genre and style, then applies optimized settings for that music type">
+                        <button class="eq-bypass-btn" id="aiSmartModeBtn" onclick="runAISmartMode()" style="background: linear-gradient(135deg, #30cfd0, #330867); font-size: 0.7rem; padding: 10px;">
                             🧠 Smart Mode<br><span style="font-size: 0.6rem; opacity: 0.8;">Auto-Detect Genre</span>
-                            <span class="ai-feature-status" id="smartModeStatus"></span>
                         </button>
 
                         <!-- Feature 6: Quality Prediction -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiQualityBtn" onclick="safeRunAIFeature('runAIQualityPrediction')" style="background: linear-gradient(135deg, #a8edea, #fed6e3); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="qualityPredictor" data-description="Predicts the final quality score before processing and suggests improvements">
+                        <button class="eq-bypass-btn" id="aiQualityBtn" onclick="runAIQualityPrediction()" style="background: linear-gradient(135deg, #a8edea, #fed6e3); font-size: 0.7rem; padding: 10px;">
                             📊 Quality Prediction<br><span style="font-size: 0.6rem; opacity: 0.8;">Before Processing</span>
-                            <span class="ai-feature-status" id="qualityStatus"></span>
                         </button>
 
                         <!-- Feature 7: Audio Fingerprinting -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiFingerprintBtn" onclick="safeRunAIFeature('runAIFingerprinting')" style="background: linear-gradient(135deg, #ffecd2, #fcb69f); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="fingerprinting" data-description="Creates a unique audio fingerprint and finds similar reference tracks">
+                        <button class="eq-bypass-btn" id="aiFingerprintBtn" onclick="runAIFingerprinting()" style="background: linear-gradient(135deg, #ffecd2, #fcb69f); font-size: 0.7rem; padding: 10px;">
                             🔎 Fingerprinting<br><span style="font-size: 0.6rem; opacity: 0.8;">Find References</span>
-                            <span class="ai-feature-status" id="fingerprintStatus"></span>
                         </button>
 
                         <!-- Feature 8: AI Assistant -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiAssistantBtn" onclick="safeRunAIFeature('showAIAssistant')" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="aiAssistant" data-description="Natural language AI assistant - ask questions like 'make the bass louder'">
+                        <button class="eq-bypass-btn" id="aiAssistantBtn" onclick="showAIAssistant()" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 0.7rem; padding: 10px;">
                             💬 AI Assistant<br><span style="font-size: 0.6rem; opacity: 0.8;">Natural Language</span>
-                            <span class="ai-feature-status" id="assistantStatus"></span>
                         </button>
 
                         <!-- Feature 9: Multi-Track Mixing -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiMultiTrackBtn" onclick="safeRunAIFeature('showAIMultiTrack')" style="background: linear-gradient(135deg, #f83600, #f9d423); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="multiTrackMixer" data-description="Mix up to 32 tracks with AI-assisted balance, panning, and level matching">
+                        <button class="eq-bypass-btn" id="aiMultiTrackBtn" onclick="showAIMultiTrack()" style="background: linear-gradient(135deg, #f83600, #f9d423); font-size: 0.7rem; padding: 10px;">
                             🎛️ Multi-Track Mix<br><span style="font-size: 0.6rem; opacity: 0.8;">32 Track DAW</span>
-                            <span class="ai-feature-status" id="multiTrackStatus"></span>
                         </button>
 
                         <!-- Feature 10: Adaptive Learning -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiLearningBtn" onclick="safeRunAIFeature('showAILearning')" style="background: linear-gradient(135deg, #5ee7df, #b490ca); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="adaptiveLearning" data-description="Learns from your preferences over time to deliver personalized mastering">
+                        <button class="eq-bypass-btn" id="aiLearningBtn" onclick="showAILearning()" style="background: linear-gradient(135deg, #5ee7df, #b490ca); font-size: 0.7rem; padding: 10px;">
                             📚 Adaptive Learning<br><span style="font-size: 0.6rem; opacity: 0.8;">Personalized AI</span>
-                            <span class="ai-feature-status" id="learningStatus"></span>
                         </button>
 
                         <!-- Feature 11: Intelligent Dithering -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiDitheringBtn" onclick="safeRunAIFeature('showAIDithering')" style="background: linear-gradient(135deg, #c471f5, #fa71cd); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="dithering" data-description="Selects the best dithering algorithm (TPDF, POW-R, etc.) for your audio">
+                        <button class="eq-bypass-btn" id="aiDitheringBtn" onclick="showAIDithering()" style="background: linear-gradient(135deg, #c471f5, #fa71cd); font-size: 0.7rem; padding: 10px;">
                             🎲 Smart Dithering<br><span style="font-size: 0.6rem; opacity: 0.8;">6 Algorithms</span>
-                            <span class="ai-feature-status" id="ditheringStatus"></span>
                         </button>
 
                         <!-- Feature 12: Room Compensation -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiRoomBtn" onclick="safeRunAIFeature('showAIRoomComp')" style="background: linear-gradient(135deg, #ff9a9e, #fecfef); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="roomCompensator" data-description="Calibrates for your listening environment and speaker characteristics">
+                        <button class="eq-bypass-btn" id="aiRoomBtn" onclick="showAIRoomComp()" style="background: linear-gradient(135deg, #ff9a9e, #fecfef); font-size: 0.7rem; padding: 10px;">
                             🎧 Room Calibration<br><span style="font-size: 0.6rem; opacity: 0.8;">Speaker Correction</span>
-                            <span class="ai-feature-status" id="roomStatus"></span>
                         </button>
 
                         <!-- Feature 13: Neural Models -->
-                        <button class="eq-bypass-btn ai-feature-btn" id="aiNeuralBtn" onclick="safeRunAIFeature('showAINeuralModels')" style="background: linear-gradient(135deg, #fe8c00, #f83600); font-size: 0.7rem; padding: 10px; position: relative;"
-                            data-feature="neuralModels" data-description="Genre-specific neural networks trained on professional masters">
+                        <button class="eq-bypass-btn" id="aiNeuralBtn" onclick="showAINeuralModels()" style="background: linear-gradient(135deg, #fe8c00, #f83600); font-size: 0.7rem; padding: 10px;">
                             🧬 Neural Models<br><span style="font-size: 0.6rem; opacity: 0.8;">Genre-Specific</span>
-                            <span class="ai-feature-status" id="neuralStatus"></span>
                         </button>
                     </div>
-
-                    <!-- Hover tooltip for AI features -->
-                    <div id="aiFeatureTooltip" style="display: none; position: fixed; background: rgba(0,0,0,0.95); color: white; padding: 12px 16px; border-radius: 8px; font-size: 0.8rem; max-width: 280px; z-index: 10002; border: 1px solid rgba(0,212,255,0.5); box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
 
                     <!-- AI Results Display -->
                     <div id="aiResultsDisplay" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; line-height: 1.6; max-height: 300px; overflow-y: auto; display: none; margin-top: 15px; position: relative;">
@@ -10977,153 +10948,8 @@
             }
         }
 
-        // Track AI processing state
-        window.aiProcessingComplete = false;
-        window.aiProcessingResults = null;
-        window.aiFeatureResults = {}; // Store results from each feature
-
-        // Safe wrapper for AI feature functions to prevent page breaks
-        function safeRunAIFeature(functionName) {
-            try {
-                // Check if audio is loaded
-                if (!window.audioBuffer) {
-                    alert('Please upload an audio file first.');
-                    return;
-                }
-
-                // Check if AI Suite is ready
-                if (!window.aiSuite) {
-                    alert('AI Suite is still loading. Please wait a moment.');
-                    return;
-                }
-
-                // Get the function
-                const func = window[functionName];
-                if (typeof func === 'function') {
-                    console.log(`🤖 Running AI feature: ${functionName}`);
-                    func();
-                } else {
-                    console.error(`Function ${functionName} not found`);
-                    showAIResults('⚠️ Feature Not Available', `The feature "${functionName}" is being loaded. Please try again in a moment.`);
-                }
-            } catch (error) {
-                console.error(`Error running ${functionName}:`, error);
-                showAIResults('❌ Error', `An error occurred: ${error.message}`);
-            }
-        }
-
-        // Show AI results in the results panel (prevents page breaks)
-        function showAIResults(title, content) {
-            const resultsDisplay = document.getElementById('aiResultsDisplay');
-            if (resultsDisplay) {
-                resultsDisplay.style.display = 'block';
-                resultsDisplay.innerHTML = `
-                    <button onclick="clearAIResults()" style="position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 4px 8px; font-size: 0.65rem; cursor: pointer; border-radius: 4px;">✕ Clear</button>
-                    <div style="color: #00d4ff; font-weight: 700; margin-bottom: 10px;">${title}</div>
-                    <div style="color: rgba(255,255,255,0.9);">${content}</div>
-                `;
-            }
-        }
-        window.showAIResults = showAIResults;
-
-        // Clear AI results
-        function clearAIResults() {
-            const resultsDisplay = document.getElementById('aiResultsDisplay');
-            if (resultsDisplay) {
-                resultsDisplay.style.display = 'none';
-                resultsDisplay.innerHTML = '';
-            }
-        }
-        window.clearAIResults = clearAIResults;
-
-        // Toggle AI features visibility
-        function toggleAIFeatures() {
-            const container = document.getElementById('aiIndividualFeatures');
-            const btn = document.getElementById('toggleAIFeaturesBtn');
-
-            if (container && btn) {
-                if (container.style.display === 'none' || container.style.display === '') {
-                    container.style.display = 'grid';
-                    btn.textContent = '▲ Hide Individual AI Features (13)';
-                } else {
-                    container.style.display = 'none';
-                    btn.textContent = '▼ Show Individual AI Features (13)';
-                }
-            }
-        }
-        window.toggleAIFeatures = toggleAIFeatures;
-
-        // Hover tooltip for AI features
-        document.addEventListener('DOMContentLoaded', () => {
-            const tooltip = document.getElementById('aiFeatureTooltip');
-            const aiButtons = document.querySelectorAll('.ai-feature-btn');
-
-            aiButtons.forEach(btn => {
-                btn.addEventListener('mouseenter', (e) => {
-                    const description = btn.dataset.description;
-                    const feature = btn.dataset.feature;
-                    const result = window.aiFeatureResults[feature];
-
-                    if (tooltip && description) {
-                        let tooltipContent = `<strong>${btn.innerText.split('\n')[0]}</strong><br><br>${description}`;
-
-                        // Show what it did if we have results
-                        if (result) {
-                            tooltipContent += `<br><br><span style="color: #00ff88;">✅ Last Result:</span><br>${result}`;
-                        }
-
-                        tooltip.innerHTML = tooltipContent;
-                        tooltip.style.display = 'block';
-
-                        // Position tooltip near the button
-                        const rect = btn.getBoundingClientRect();
-                        tooltip.style.left = `${rect.left}px`;
-                        tooltip.style.top = `${rect.bottom + 10}px`;
-
-                        // Make sure tooltip stays on screen
-                        const tooltipRect = tooltip.getBoundingClientRect();
-                        if (tooltipRect.right > window.innerWidth) {
-                            tooltip.style.left = `${window.innerWidth - tooltipRect.width - 20}px`;
-                        }
-                        if (tooltipRect.bottom > window.innerHeight) {
-                            tooltip.style.top = `${rect.top - tooltipRect.height - 10}px`;
-                        }
-                    }
-                });
-
-                btn.addEventListener('mouseleave', () => {
-                    if (tooltip) {
-                        tooltip.style.display = 'none';
-                    }
-                });
-            });
-        });
-
         // Full AI Master - Run All Features
         async function runFullAIMaster() {
-            // Check if already processed
-            if (window.aiProcessingComplete && window.masteringComplete) {
-                const reprocess = confirm(
-                    '⚡ AI MASTERING ALREADY COMPLETE!\n\n' +
-                    'Your track has already been processed by AI.\n\n' +
-                    'Click "OK" to reset and reprocess\n' +
-                    'Click "Cancel" to keep current master'
-                );
-
-                if (!reprocess) {
-                    return; // Keep current master
-                }
-
-                // Reset for reprocessing
-                window.aiProcessingComplete = false;
-                window.masteringComplete = false;
-                window.aiProcessingResults = null;
-
-                // Hide purchase banner
-                const banner = document.getElementById('purchaseReadyBanner');
-                if (banner) banner.style.display = 'none';
-            }
-
             if (!window.aiSuite  || !window.audioBuffer) {
                 alert(!window.audioBuffer ? 'Please upload an audio file first.' : 'AI Suite loading...');
                 return;
@@ -11293,30 +11119,6 @@
 
                     analysisPanel.innerHTML = html;
                     window.lastAIResults = results;
-
-                    // Mark AI processing as complete
-                    window.aiProcessingComplete = true;
-                    window.aiProcessingResults = {
-                        currentLUFS: currentLUFS,
-                        targetLUFS: targetLUFS,
-                        gainAdjustment: clampedGainDB,
-                        platform: platform,
-                        genre: mode.genre,
-                        qualityScore: prediction.score,
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // Update AI button to show it's complete
-                    const aiBtn = document.querySelector('button[onclick="runFullAIMaster()"]');
-                    if (aiBtn) {
-                        aiBtn.innerHTML = `
-                            ✅ AI MASTER COMPLETE
-                            <div style="font-size: 0.65rem; font-weight: 400; opacity: 0.9; margin-top: 5px;">
-                                Click to reprocess • ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS
-                            </div>
-                        `;
-                        aiBtn.style.background = 'linear-gradient(135deg, #00ff88, #00d4ff)';
-                    }
 
                     // Trigger the purchase flow
                     if (typeof completeMastering === 'function') {
