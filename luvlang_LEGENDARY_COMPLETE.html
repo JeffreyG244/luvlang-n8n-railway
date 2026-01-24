@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX4-WINDOW]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX5-AUDIO-PRIORITY]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -2601,7 +2601,7 @@
                 // Create audio context - use hardware's native sample rate to avoid CPU-intensive resampling
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        latencyHint: 'balanced'   // Balance between latency and smooth playback
+                        latencyHint: 'playback'   // Prioritize smooth audio over low latency
                     });
 
                     // Make audioContext globally accessible for ULTIMATE_VISUALS
@@ -2849,18 +2849,18 @@
 
                 console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
 
-                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (8192 FFT - balanced quality/performance)
-                // Note: 32768 FFT was causing audio skipping due to excessive CPU load
+                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (4096 FFT - optimized for performance)
+                // Note: 32768 → 8192 → 4096 FFT for smooth audio playback
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 8192;  // Reduced from 32768 - still high quality but 4x faster
-                analyser.smoothingTimeConstant = 0.1;  // Slight smoothing reduces CPU spikes
+                analyser.fftSize = 4096;  // Reduced from 8192 - good quality, better performance
+                analyser.smoothingTimeConstant = 0.2;  // Smoothing reduces visual jitter and CPU spikes
                 analyser.minDecibels = -100;
                 analyser.maxDecibels = 0;
 
                 // Make analyser globally accessible for ULTIMATE_VISUALS
                 window.analyser = analyser;
 
-                console.log('✅ Spectrum Analyzer created (FFT: 8192, -100dB to 0dB)');
+                console.log('✅ Spectrum Analyzer created (FFT: 4096, -100dB to 0dB)');
 
                 // ═══════════════════════════════════════════════════════════════════
                 // REMOVED: Old ULTIMATE_VISUALS auto-init code (abandoned system)
@@ -3440,7 +3440,7 @@
             const integratedLUFS = (rms > 0.00001) ? (-0.691 + 10 * Math.log10(rms)) : -70;
 
             // 2. SPECTRAL ANALYSIS (Frequency distribution)
-            const fftSize = 8192;
+            const fftSize = 4096;  // Reduced for performance
             const halfFFT = fftSize / 2;
             let subBassEnergy = 0, bassEnergy = 0, midEnergy = 0, highEnergy = 0;
 
@@ -6527,12 +6527,12 @@
             // Toggle in console: window.PERFORMANCE_MODE = true/false
             window.PERFORMANCE_MODE = false;
 
-            // THROTTLE: Reduce to 30fps to prevent audio skipping
+            // THROTTLE: Reduce to 20fps to prioritize audio over visualization
             let lastDrawTime = 0;
-            const DRAW_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
+            const DRAW_INTERVAL = 50; // ~20fps (1000ms / 20 = 50ms) - prioritize audio
 
             function draw() {
-                // THROTTLE: Skip frames to maintain 30fps max
+                // THROTTLE: Skip frames to maintain 20fps max
                 const now = performance.now();
                 if (now - lastDrawTime < DRAW_INTERVAL) {
                     animationFrame = requestAnimationFrame(draw);
