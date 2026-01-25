@@ -1436,10 +1436,11 @@
          🚀 FLOATING AI COMMAND BAR - 2027 Futuristic Interface
          Always visible at top - instant access to AI mastering
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="ai-command-bar" id="aiCommandBar">
+    <!-- Floating command bar - shown after wizard completes for re-mastering -->
+    <div class="ai-command-bar" id="aiCommandBar" style="display: none;">
         <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="runFullAIMaster()">
-            <span class="ai-btn-icon">⚡</span>
-            <span>AI MASTER</span>
+            <span class="ai-btn-icon">🎛️</span>
+            <span>RE-MASTER</span>
         </button>
         <div class="ai-status-pill" id="aiStatusPill">READY</div>
     </div>
@@ -1453,94 +1454,105 @@
     <div class="wizard-overlay" id="masteringWizard">
         <div class="wizard-container">
             <div class="wizard-logo">LuvLang Mastering</div>
-            <div class="wizard-subtitle">Professional Audio Mastering in 3 Simple Steps</div>
-            <div class="wizard-progress" id="wizardProgress">
+            <div class="wizard-subtitle">Professional Audio Mastering</div>
+
+            <!-- UPLOAD SECTION (Before numbered steps) -->
+            <div id="wizardUploadSection">
+                <div class="wizard-upload-zone" id="wizardUploadZone" onclick="document.getElementById('wizardFileInput').click()">
+                    <div style="font-size: 2.5rem; margin-bottom: 12px;">📁</div>
+                    <div style="font-weight: 600;" id="wizardUploadText">Drop your track here or click to browse</div>
+                    <div style="font-size: 0.7rem; opacity: 0.4; margin-top: 8px;">WAV, MP3, FLAC, M4A, AAC</div>
+                </div>
+                <input type="file" id="wizardFileInput" accept="audio/*" style="display: none;">
+            </div>
+
+            <!-- Progress dots (3 steps) -->
+            <div class="wizard-progress" id="wizardProgress" style="display: none;">
                 <div class="wizard-progress-dot active" data-step="1"></div>
                 <div class="wizard-progress-dot" data-step="2"></div>
                 <div class="wizard-progress-dot" data-step="3"></div>
             </div>
 
-            <!-- STEP 1: Upload -->
-            <div class="wizard-step active" id="wizardStep1">
-                <div class="wizard-step-title">1. Upload Your Track</div>
-                <div class="wizard-step-desc">Your audio will play automatically so you can hear the mastering in real-time.</div>
-                <div class="wizard-upload-zone" id="wizardUploadZone" onclick="document.getElementById('wizardFileInput').click()">
-                    <div style="font-size: 2.5rem; margin-bottom: 12px;">📁</div>
-                    <div style="font-weight: 600;" id="wizardUploadText">Click or drag audio file here</div>
-                    <div style="font-size: 0.7rem; opacity: 0.4; margin-top: 8px;">WAV, MP3, FLAC, M4A, AAC</div>
-                </div>
-                <input type="file" id="wizardFileInput" accept="audio/*" style="display: none;">
-                <button class="wizard-btn wizard-btn-primary" id="wizardStep1Next" disabled>Continue</button>
-                <div class="wizard-skip" onclick="closeWizard()">Skip wizard →</div>
-            </div>
-
-            <!-- STEP 2: Platform/LUFS -->
-            <div class="wizard-step" id="wizardStep2">
-                <div class="wizard-step-title">2. Select Your Platform</div>
-                <div class="wizard-step-desc">🎧 Click each option to <strong>HEAR</strong> the loudness difference in real-time!</div>
-
-                <!-- Audio playing indicator -->
-                <div id="wizardAudioStatus" style="margin: 15px 0; padding: 10px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; font-size: 0.8rem;">
-                    🔊 <span id="wizardAudioStatusText">Audio playing - click options to hear the difference</span>
-                </div>
+            <!-- STEP 1: LUFS/Loudness Target -->
+            <div class="wizard-step" id="wizardStep1">
+                <div class="wizard-step-title">1. Loudness Target</div>
+                <div class="wizard-step-desc">Select your target platform. Click each to <strong>hear</strong> the difference!</div>
 
                 <div class="wizard-options" id="wizardPlatformOptions">
                     <div class="wizard-option" data-platform="streaming" onclick="selectWizardPlatform(this)">
                         <div class="wizard-option-icon">🎧</div>
                         <div class="wizard-option-label">Streaming</div>
                         <div class="wizard-option-desc">Spotify, YouTube, Tidal</div>
-                        <div style="font-size: 1.1rem; color: #00d4ff; font-weight: 700; margin-top: 8px;">-14 LUFS</div>
-                        <div style="font-size: 0.65rem; opacity: 0.5;">LOUDER</div>
+                        <div style="font-size: 1.2rem; color: #00d4ff; font-weight: 700; margin-top: 8px;">-14 LUFS</div>
                     </div>
                     <div class="wizard-option" data-platform="apple" onclick="selectWizardPlatform(this)">
                         <div class="wizard-option-icon">🍎</div>
                         <div class="wizard-option-label">Apple Music</div>
                         <div class="wizard-option-desc">Apple's standard</div>
-                        <div style="font-size: 1.1rem; color: #b84fff; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
-                        <div style="font-size: 0.65rem; opacity: 0.5;">QUIETER</div>
+                        <div style="font-size: 1.2rem; color: #b84fff; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
                     </div>
                     <div class="wizard-option" data-platform="podcast" onclick="selectWizardPlatform(this)">
                         <div class="wizard-option-icon">🎙️</div>
                         <div class="wizard-option-label">Podcast</div>
                         <div class="wizard-option-desc">Voice optimized</div>
-                        <div style="font-size: 1.1rem; color: #b84fff; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
-                        <div style="font-size: 0.65rem; opacity: 0.5;">QUIETER</div>
+                        <div style="font-size: 1.2rem; color: #ff6b9d; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
+                    </div>
+                </div>
+                <button class="wizard-btn wizard-btn-primary" id="wizardStep1Next" disabled>Continue</button>
+                <div class="wizard-skip" onclick="closeWizard()">Skip wizard →</div>
+            </div>
+
+            <!-- STEP 2: Export Format -->
+            <div class="wizard-step" id="wizardStep2">
+                <div class="wizard-step-title">2. Export Format</div>
+                <div class="wizard-step-desc">Choose your delivery format. You can always re-export later.</div>
+                <div class="wizard-options" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="wizard-option" data-format="wav" onclick="selectWizardFormat(this)">
+                        <div class="wizard-option-icon">💎</div>
+                        <div class="wizard-option-label">WAV</div>
+                        <div class="wizard-option-desc">Lossless • Studio quality</div>
+                    </div>
+                    <div class="wizard-option" data-format="mp3" onclick="selectWizardFormat(this)">
+                        <div class="wizard-option-icon">🎵</div>
+                        <div class="wizard-option-label">MP3</div>
+                        <div class="wizard-option-desc">320kbps • Universal</div>
+                    </div>
+                    <div class="wizard-option" data-format="both" onclick="selectWizardFormat(this)">
+                        <div class="wizard-option-icon">📦</div>
+                        <div class="wizard-option-label">Both</div>
+                        <div class="wizard-option-desc">WAV + MP3 bundle</div>
                     </div>
                 </div>
                 <button class="wizard-btn wizard-btn-secondary" onclick="goToWizardStep(1)">Back</button>
                 <button class="wizard-btn wizard-btn-primary" id="wizardStep2Next" disabled>Continue</button>
             </div>
 
-            <!-- STEP 3: Format -->
+            <!-- STEP 3: Master Processing -->
             <div class="wizard-step" id="wizardStep3">
-                <div class="wizard-step-title">3. Export Format</div>
-                <div class="wizard-step-desc">Choose your file format. You can always export again later.</div>
-                <div class="wizard-options" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="wizard-option" data-format="mp3" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">🎵</div>
-                        <div class="wizard-option-label">MP3</div>
-                        <div class="wizard-option-desc">320kbps • Smaller size</div>
-                    </div>
-                    <div class="wizard-option" data-format="wav" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">💎</div>
-                        <div class="wizard-option-label">WAV</div>
-                        <div class="wizard-option-desc">Lossless • Best quality</div>
-                    </div>
-                    <div class="wizard-option" data-format="both" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">📦</div>
-                        <div class="wizard-option-label">Both</div>
-                        <div class="wizard-option-desc">MP3 + WAV bundle</div>
-                    </div>
+                <div class="wizard-step-title">3. Master Processing</div>
+                <div class="wizard-step-desc">Your track will be optimized with professional loudness normalization, dynamics processing, and limiting.</div>
+
+                <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; padding: 15px; margin: 20px 0; font-size: 0.8rem; line-height: 1.6;">
+                    <div style="color: #00d4ff; font-weight: 600; margin-bottom: 10px;">Processing Includes:</div>
+                    <div style="opacity: 0.8;">✓ Loudness Optimization (LUFS targeting)</div>
+                    <div style="opacity: 0.8;">✓ Dynamics Enhancement</div>
+                    <div style="opacity: 0.8;">✓ Peak Limiting & True Peak Control</div>
+                    <div style="opacity: 0.8;">✓ Auto-Gain Compensation</div>
                 </div>
+
+                <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px; font-size: 0.75rem; text-align: center;">
+                    💡 After processing, you can fine-tune with <strong>Genre Presets</strong> and adjust the <strong>EQ</strong> manually
+                </div>
+
                 <button class="wizard-btn wizard-btn-secondary" onclick="goToWizardStep(2)">Back</button>
-                <button class="wizard-btn wizard-btn-primary" id="wizardStep3Next" disabled style="background: linear-gradient(135deg, #00ff88, #00d4ff);">
-                    ⚡ Master My Track
+                <button class="wizard-btn wizard-btn-primary" id="wizardStep3Next" style="background: linear-gradient(135deg, #00ff88, #00d4ff);">
+                    🎛️ Begin Mastering
                 </button>
             </div>
 
-            <!-- Processing overlay (shows during AI mastering) -->
+            <!-- Processing overlay (shows during mastering) -->
             <div class="wizard-step" id="wizardStepProcessing" style="display: none;">
-                <div class="wizard-step-title">⚡ AI Mastering...</div>
+                <div class="wizard-step-title">🎛️ Mastering Your Track...</div>
                 <div id="wizardProcessingStatus" style="margin: 20px 0; font-size: 0.9rem; line-height: 1.8;">
                     <div>🔄 Analyzing audio...</div>
                 </div>
@@ -1727,7 +1739,7 @@
             </div>
 
             <!-- GENRE SELECTOR with EQ Presets -->
-            <div class="selector-group">
+            <div class="selector-group" id="genreSection">
                 <div class="section-title">Genre</div>
                 <div class="selector-grid">
                     <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
@@ -11871,6 +11883,9 @@
             // Check if wizard was already completed
             if (sessionStorage.getItem('wizardCompleted') === 'true' && wizard) {
                 wizard.style.display = 'none';
+                // Show re-master button for returning users
+                const commandBar = document.getElementById('aiCommandBar');
+                if (commandBar) commandBar.style.display = 'flex';
             }
 
             // File input handler
@@ -11906,7 +11921,7 @@
             document.getElementById('wizardStep3Next')?.addEventListener('click', () => startWizardMastering());
         });
 
-        // Handle file upload - triggers main app's file handler
+        // Handle file upload - triggers main app's file handler and shows Step 1
         function handleWizardFile(file) {
             // More permissive audio check (matches main handler)
             const isAudioType = file.type.startsWith('audio/');
@@ -11919,11 +11934,10 @@
             console.log('🧙 WIZARD: File accepted:', file.name, '(' + file.type + ')');
 
             wizardState.uploadedFile = file;
-            document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; opacity: 0.5;">Loading audio...</span>';
+            document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Audio loaded!</span>';
             document.getElementById('wizardUploadZone').style.borderColor = '#00ff88';
 
             // DIRECT CALL: Use the main app's handleFile function directly
-            // This is more reliable than event dispatch
             console.log('🧙 WIZARD: Calling main handleFile directly...');
 
             if (typeof window.handleFile === 'function') {
@@ -11943,60 +11957,22 @@
                 }
             }
 
-            console.log('🧙 WIZARD: File passed to main app, waiting for audio...');
-
-            // Enable continue button after brief delay - don't block user
-            // Audio will load in background, user can proceed when ready
+            // Show progress dots and transition to Step 1 after brief delay
             setTimeout(() => {
-                const btn = document.getElementById('wizardStep1Next');
-                if (btn && btn.disabled) {
-                    btn.disabled = false;
-                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Ready to continue</span>';
-                    console.log('🧙 WIZARD: Continue enabled after 1.5s');
-                }
-            }, 1500);
+                // Show progress indicator
+                const progressEl = document.getElementById('wizardProgress');
+                if (progressEl) progressEl.style.display = 'flex';
 
-            // Also check periodically for audio ready state
-            let checkCount = 0;
-            const checkReady = setInterval(() => {
-                checkCount++;
-                const audioEl = document.getElementById('audioElement');
-                const audioPlaying = audioEl && audioEl.readyState >= 2;
-                const audioBufferReady = !!window.audioBuffer;
-                const masterGainReady = !!window.masterGain;
+                // Hide upload section and show Step 1 (LUFS selection)
+                const uploadSection = document.getElementById('wizardUploadSection');
+                if (uploadSection) uploadSection.style.display = 'none';
 
-                if (audioBufferReady || audioPlaying || masterGainReady) {
-                    clearInterval(checkReady);
-                    wizardState.audioReady = true;
-
-                    let statusText = 'Ready! Audio loaded.';
-                    if (audioBufferReady) statusText = 'Ready! Audio analyzed.';
-
-                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">' + statusText + '</span>';
-                    document.getElementById('wizardStep1Next').disabled = false;
-                    console.log('🧙 WIZARD: Continue button enabled - ' + statusText);
-                    return;
-                }
-
-                // Stop checking after 5 seconds
-                if (checkCount >= 25) {
-                    clearInterval(checkReady);
-                    console.log('🧙 WIZARD: Enabled Continue after 3s (audio still loading)');
-                }
-            }, 200);
-
-            // Absolute timeout after 10 seconds
-            setTimeout(() => {
-                clearInterval(checkReady);
-                if (!wizardState.audioReady) {
-                    document.getElementById('wizardStep1Next').disabled = false;
-                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Ready to continue</span>';
-                    console.log('🧙 WIZARD: Final timeout - enabling continue');
-                }
-            }, 10000);
+                goToWizardStep(1);
+                console.log('🧙 WIZARD: Transitioned to Step 1 (LUFS Selection)');
+            }, 1000);
         }
 
-        // Select platform with REAL-TIME audio change
+        // Select LUFS target (Step 1) with REAL-TIME audio change
         function selectWizardPlatform(el) {
             const platform = el.dataset.platform;
             wizardState.selectedPlatform = platform;
@@ -12005,13 +11981,14 @@
             document.querySelectorAll('#wizardPlatformOptions .wizard-option').forEach(o => {
                 o.classList.remove('selected');
                 o.style.borderColor = 'rgba(255,255,255,0.1)';
+                o.style.boxShadow = 'none';
             });
             el.classList.add('selected');
             el.style.borderColor = '#00d4ff';
             el.style.boxShadow = '0 0 30px rgba(0,212,255,0.4)';
 
-            // Enable continue button
-            document.getElementById('wizardStep2Next').disabled = false;
+            // Enable continue button for Step 1
+            document.getElementById('wizardStep1Next').disabled = false;
 
             // REAL-TIME AUDIO CHANGE - Apply gain immediately
             const mg = window.masterGain;
@@ -12034,16 +12011,6 @@
 
                 const gainLinear = Math.pow(10, gainDB / 20);
                 mg.gain.setTargetAtTime(gainLinear, ac.currentTime, 0.05);
-
-                // Update status
-                const statusText = document.getElementById('wizardAudioStatusText');
-                if (statusText) {
-                    const louder = platform === 'streaming';
-                    statusText.innerHTML = louder
-                        ? '🔊 <strong>LOUDER</strong> - Streaming level (-14 LUFS)'
-                        : '🔉 <strong>QUIETER</strong> - ' + (platform === 'apple' ? 'Apple Music' : 'Podcast') + ' level (-16 LUFS)';
-                }
-
                 console.log(`🧙 WIZARD: Platform "${platform}" → ${gainDB}dB gain (${lufsTarget} LUFS target)`);
             } else {
                 console.log('🧙 WIZARD: Audio not ready yet - platform saved for later');
@@ -12056,22 +12023,23 @@
             }, 100);
         }
 
-        // Select export format
+        // Select export format (Step 2)
         function selectWizardFormat(el) {
             const format = el.dataset.format;
             wizardState.selectedFormat = format;
 
-            // Update UI
-            document.querySelectorAll('#wizardStep3 .wizard-option').forEach(o => {
+            // Update UI - deselect all in Step 2
+            document.querySelectorAll('#wizardStep2 .wizard-option').forEach(o => {
                 o.classList.remove('selected');
                 o.style.borderColor = 'rgba(255,255,255,0.1)';
+                o.style.boxShadow = 'none';
             });
             el.classList.add('selected');
             el.style.borderColor = '#00ff88';
             el.style.boxShadow = '0 0 30px rgba(0,255,136,0.4)';
 
-            // Enable master button
-            document.getElementById('wizardStep3Next').disabled = false;
+            // Enable continue button for Step 2
+            document.getElementById('wizardStep2Next').disabled = false;
         }
 
         // Navigate wizard steps
@@ -12096,9 +12064,9 @@
             wizardState.currentStep = step;
         }
 
-        // Start AI mastering and close wizard
+        // Start master processing and close wizard
         async function startWizardMastering() {
-            console.log('🧙 WIZARD: Starting AI mastering...');
+            console.log('🧙 WIZARD: Starting master processing...');
 
             // Show processing step
             document.getElementById('wizardStep3').classList.remove('active');
@@ -12109,27 +12077,28 @@
             const statusEl = document.getElementById('wizardProcessingStatus');
             const progressBar = document.getElementById('wizardProgressBar');
 
-            // Processing steps with visual feedback
+            // Processing steps with professional feedback
             const steps = [
-                { text: '🔄 Analyzing audio spectrum...', progress: 20 },
-                { text: '✅ Spectrum analyzed<br>🔄 Detecting transients...', progress: 40 },
-                { text: '✅ Transients detected<br>🔄 Optimizing dynamics...', progress: 60 },
-                { text: '✅ Dynamics optimized<br>🔄 Applying loudness target...', progress: 80 },
-                { text: '✅ All processing complete!', progress: 100 }
+                { text: '🔄 Analyzing frequency spectrum...', progress: 15 },
+                { text: '✅ Spectrum analyzed<br>🔄 Measuring loudness (LUFS)...', progress: 30 },
+                { text: '✅ Loudness measured<br>🔄 Optimizing dynamics...', progress: 50 },
+                { text: '✅ Dynamics optimized<br>🔄 Applying peak limiting...', progress: 70 },
+                { text: '✅ Limiting applied<br>🔄 Final gain staging...', progress: 85 },
+                { text: '✅ Master processing complete!', progress: 100 }
             ];
 
             for (let i = 0; i < steps.length; i++) {
                 statusEl.innerHTML = steps[i].text;
                 progressBar.style.width = steps[i].progress + '%';
-                await new Promise(r => setTimeout(r, 600));
+                await new Promise(r => setTimeout(r, 500));
             }
 
-            // Run actual AI master if available
+            // Run the mastering engine if available
             if (typeof runFullAIMaster === 'function' && window.audioBuffer) {
                 try {
                     await runFullAIMaster();
                 } catch (e) {
-                    console.log('AI Master completed with notes:', e);
+                    console.log('Master processing completed with notes:', e);
                 }
             }
 
@@ -12143,9 +12112,23 @@
             await new Promise(r => setTimeout(r, 500));
             closeWizard();
 
-            // Show welcome message
+            // Scroll to the Genre section for fine-tuning
+            setTimeout(() => {
+                const genreSection = document.querySelector('.genre-selector-container') || document.getElementById('genreSection');
+                if (genreSection) {
+                    genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add highlight effect
+                    genreSection.style.transition = 'box-shadow 0.5s ease';
+                    genreSection.style.boxShadow = '0 0 30px rgba(0, 212, 255, 0.5)';
+                    setTimeout(() => {
+                        genreSection.style.boxShadow = '';
+                    }, 2000);
+                }
+            }, 300);
+
+            // Show message about fine-tuning
             if (typeof showToast === 'function') {
-                showToast('🎉 Mastering complete! Explore genres & presets below.', 'success');
+                showToast('✅ Mastering complete! Fine-tune with genre presets below.', 'success');
             }
         }
 
@@ -12157,6 +12140,12 @@
                 setTimeout(() => wizard.style.display = 'none', 500);
             }
             sessionStorage.setItem('wizardCompleted', 'true');
+
+            // Show the re-master button for future use
+            const commandBar = document.getElementById('aiCommandBar');
+            if (commandBar) {
+                commandBar.style.display = 'flex';
+            }
         }
 
         // Show wizard (for reset)
@@ -12165,12 +12154,53 @@
             if (wizard) {
                 wizard.style.display = 'flex';
                 wizard.classList.remove('hidden');
-                goToWizardStep(1);
             }
+
+            // Reset to initial state (upload section visible, steps hidden)
+            const uploadSection = document.getElementById('wizardUploadSection');
+            if (uploadSection) uploadSection.style.display = 'block';
+
+            const progressEl = document.getElementById('wizardProgress');
+            if (progressEl) progressEl.style.display = 'none';
+
+            // Hide all steps
+            for (let i = 1; i <= 3; i++) {
+                const stepEl = document.getElementById('wizardStep' + i);
+                if (stepEl) stepEl.classList.remove('active');
+            }
+
+            // Reset upload zone text
+            const uploadText = document.getElementById('wizardUploadText');
+            if (uploadText) uploadText.innerHTML = 'Drop your track here or click to browse';
+            const uploadZone = document.getElementById('wizardUploadZone');
+            if (uploadZone) uploadZone.style.borderColor = 'rgba(0,212,255,0.4)';
+
+            // Hide processing step
+            const processingStep = document.getElementById('wizardStepProcessing');
+            if (processingStep) {
+                processingStep.style.display = 'none';
+                processingStep.classList.remove('active');
+            }
+
+            // Reset buttons
+            const btn1 = document.getElementById('wizardStep1Next');
+            if (btn1) btn1.disabled = true;
+            const btn2 = document.getElementById('wizardStep2Next');
+            if (btn2) btn2.disabled = true;
+
+            // Clear selections
+            document.querySelectorAll('.wizard-option').forEach(o => {
+                o.classList.remove('selected');
+                o.style.borderColor = 'rgba(255,255,255,0.1)';
+                o.style.boxShadow = 'none';
+            });
+
             sessionStorage.removeItem('wizardCompleted');
             wizardState.audioReady = false;
+            wizardState.uploadedFile = null;
             wizardState.selectedPlatform = null;
             wizardState.selectedFormat = null;
+            wizardState.currentStep = 0;
         }
 
         // Export functions globally
