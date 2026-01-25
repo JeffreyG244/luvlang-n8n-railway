@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX11-NO-VIZ-10SEC]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX12-NO-WEBAUDIO-10SEC]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -3054,36 +3054,30 @@
                 console.log('   Ready for playback or AI mastering');
                 console.log('   Audio element can play:', audioElement.readyState >= 2);
 
-                // Setup Web Audio processing chain
-                setupWebAudio(audioElement);
+                // FIX12: DELAY Web Audio connection by 10 seconds
+                // This tests if createMediaElementSource itself causes skipping
+                console.log('⏳ FIX12: Web Audio DELAYED 10 seconds - audio plays directly first');
+                console.log('   If audio is smooth for 10 seconds, MediaElementSource is the problem');
+                setTimeout(() => {
+                    console.log('🔧 FIX12: Now connecting Web Audio...');
+                    setupWebAudio(audioElement);
+                }, 10000);
 
                 // Enable play button explicitly
                 playBtn.disabled = false;
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
 
-                // AUTO-PLAY: Start playback automatically when file is loaded
-                setTimeout(() => {
-                    if (audioContext && audioContext.state === 'suspended') {
-                        audioContext.resume().then(() => {
-                            audioElement.play().then(() => {
-                                playBtn.textContent = '⏸️';
-                                isPlaying = true;
-                                console.log('🎵 Auto-play started');
-                            }).catch(err => {
-                                console.log('⚠️ Auto-play prevented by browser:', err);
-                            });
-                        });
-                    } else {
-                        audioElement.play().then(() => {
-                            playBtn.textContent = '⏸️';
-                            isPlaying = true;
-                            console.log('🎵 Auto-play started');
-                        }).catch(err => {
-                            console.log('⚠️ Auto-play prevented by browser:', err);
-                        });
-                    }
-                }, 300); // Small delay to ensure everything is ready
+                // AUTO-PLAY: Start playback IMMEDIATELY (no Web Audio yet)
+                // FIX12: Play directly through audio element first
+                audioElement.play().then(() => {
+                    playBtn.textContent = '⏸️';
+                    isPlaying = true;
+                    console.log('🎵 FIX12: Auto-play started (DIRECT - no Web Audio yet)');
+                    console.log('   Listen for 10 seconds - if smooth, Web Audio is the problem');
+                }).catch(err => {
+                    console.log('⚠️ Auto-play prevented by browser:', err);
+                });
 
                 // Store blob URL for cleanup when new file is loaded
                 // DO NOT revoke immediately - audio element needs it for playback!
