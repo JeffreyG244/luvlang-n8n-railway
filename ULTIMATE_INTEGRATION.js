@@ -1105,16 +1105,18 @@ window.LuvLangUltimate = LuvLangUltimate;
 window.initializeUltimateIntegration = initializeUltimateIntegration;
 
 // Auto-initialize when audioContext is created
+// FIX10: Increased delay from 500ms to 5000ms to allow audio to stabilize before heavy init
 const originalSetupWebAudio = window.setupWebAudio;
 if (typeof originalSetupWebAudio === 'function') {
     window.setupWebAudio = function(...args) {
         const result = originalSetupWebAudio.apply(this, args);
 
-        // Initialize after a short delay to ensure audioContext is ready
+        // Initialize after 5 SECONDS to let audio playback stabilize first
         if (window.audioContext && !LuvLangUltimate.initialized) {
+            console.log('⏳ ULTIMATE Integration deferred 5 seconds for smooth audio...');
             setTimeout(() => {
                 initializeUltimateIntegration(window.audioContext);
-            }, 500);
+            }, 5000); // FIX10: Was 500ms, now 5000ms
         }
 
         return result;
