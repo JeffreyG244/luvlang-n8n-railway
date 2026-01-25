@@ -3080,7 +3080,7 @@
                 dynEqLowComp.ratio.value = 2;       // Gentler ratio
                 dynEqLowComp.attack.value = 0.02;   // Slower attack for musicality
                 dynEqLowComp.release.value = 0.2;   // Smoother release
-                dynEqLowGain.gain.value = 0.15;     // FIX: Subtle blend (was 1.0!)
+                dynEqLowGain.gain.value = 0;        // DISABLED by default - was causing robotic sound
 
                 // Mid band (800Hz-3kHz) - Controls harshness/honk
                 const dynEqMidFilter = audioContext.createBiquadFilter();
@@ -3094,7 +3094,7 @@
                 dynEqMidComp.ratio.value = 2;       // Gentler ratio
                 dynEqMidComp.attack.value = 0.015;  // Slower attack (was 5ms - too fast!)
                 dynEqMidComp.release.value = 0.15;  // Smoother release
-                dynEqMidGain.gain.value = 0.12;     // FIX: Subtle blend (was 1.0!)
+                dynEqMidGain.gain.value = 0;        // DISABLED by default - was causing robotic sound
 
                 // High band (5kHz-12kHz) - Controls sibilance/brightness
                 const dynEqHighFilter = audioContext.createBiquadFilter();
@@ -3108,7 +3108,7 @@
                 dynEqHighComp.ratio.value = 2.5;    // Gentler ratio (was 4:1 - too harsh!)
                 dynEqHighComp.attack.value = 0.008; // Slower attack (was 2ms - causing artifacts!)
                 dynEqHighComp.release.value = 0.12; // Smoother release
-                dynEqHighGain.gain.value = 0.13;    // FIX: Subtle blend (was 1.0!)
+                dynEqHighGain.gain.value = 0;       // DISABLED by default - was causing robotic sound
 
                 // Dynamic EQ input/output
                 const dynEqInput = audioContext.createGain();
@@ -3116,9 +3116,9 @@
                 const dynEqDry = audioContext.createGain();
                 dynEqInput.gain.value = 1.0;
                 dynEqOutput.gain.value = 1.0;
-                // FIX: Proper gain staging to avoid phase issues and robotic sound
-                // Total must equal 1.0: dry + all bands = 1.0
-                dynEqDry.gain.value = 0.6;  // Dry signal (primary)
+                // DISABLED by default - Dynamic EQ was causing robotic sound
+                // User can enable via window.dynamicEQ.enable()
+                dynEqDry.gain.value = 1.0;  // 100% dry = bypass
 
                 // Connect Dynamic EQ (parallel processing)
                 dynEqInput.connect(dynEqLowFilter);
@@ -3142,7 +3142,7 @@
 
                 // Store Dynamic EQ controls for UI
                 window.dynamicEQ = {
-                    enabled: true,
+                    enabled: false,  // DISABLED by default - was causing robotic sound
                     bands: {
                         low: { filter: dynEqLowFilter, comp: dynEqLowComp, gain: dynEqLowGain },
                         mid: { filter: dynEqMidFilter, comp: dynEqMidComp, gain: dynEqMidGain },
@@ -3187,13 +3187,13 @@
 
                 console.log('✅ Dynamic EQ created (3-band frequency-dependent compression)');
 
-                // ⚡ COMPRESSOR - Musical & Transparent (Steely Dan style)
+                // ⚡ COMPRESSOR - Ultra-Transparent (minimal coloration)
                 compressor = audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -24;   // Gentle threshold (adjusted adaptively)
-                compressor.knee.value = 6;          // PROFESSIONAL: 6dB knee for transparency (not 30!)
-                compressor.ratio.value = 3;         // Gentle ratio (adjusted by AI)
-                compressor.attack.value = 0.003;    // Fast attack (3ms) for transient control
-                compressor.release.value = 0.25;    // Musical release (250ms)
+                compressor.threshold.value = -18;   // Higher threshold = less compression
+                compressor.knee.value = 10;         // Soft knee for transparency
+                compressor.ratio.value = 2;         // Gentle ratio (was 3)
+                compressor.attack.value = 0.010;    // Slower attack (10ms) preserves transients
+                compressor.release.value = 0.3;     // Musical release (300ms)
 
                 // EQ Compensation Gain (automatic makeup gain for EQ boosts)
                 eqCompensationGain = audioContext.createGain();
@@ -3228,13 +3228,13 @@
                 transientSustainComp.knee.value = 6;
 
                 // Mix controls for attack/sustain
-                // FIX: More transparent blend - dry signal is primary
+                // DISABLED by default - transient shaper was causing robotic sound
                 const transientAttackGain = audioContext.createGain();
                 const transientSustainGain = audioContext.createGain();
                 const transientDryGain = audioContext.createGain();
-                transientAttackGain.gain.value = 0.15;  // Subtle punch (was 0.3 - too aggressive)
-                transientSustainGain.gain.value = 0.1;  // Subtle body (was 0.2)
-                transientDryGain.gain.value = 0.75;     // Original signal dominant (was 0.5)
+                transientAttackGain.gain.value = 0;     // DISABLED - was causing artifacts
+                transientSustainGain.gain.value = 0;    // DISABLED
+                transientDryGain.gain.value = 1.0;      // 100% dry = bypass
 
                 // Connect transient shaper
                 transientInput.connect(transientAttackComp);
