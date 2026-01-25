@@ -1104,19 +1104,17 @@ async function initializeUltimateIntegration(audioContext) {
 window.LuvLangUltimate = LuvLangUltimate;
 window.initializeUltimateIntegration = initializeUltimateIntegration;
 
-// Auto-initialize when audioContext is created
+// Auto-initialize ULTIMATE features after audio starts playing
 const originalSetupWebAudio = window.setupWebAudio;
 if (typeof originalSetupWebAudio === 'function') {
     window.setupWebAudio = function(...args) {
         const result = originalSetupWebAudio.apply(this, args);
-
-        // Initialize after a short delay to ensure audioContext is ready
         if (window.audioContext && !LuvLangUltimate.initialized) {
+            // Wait 8 seconds to ensure smooth playback first
             setTimeout(() => {
                 initializeUltimateIntegration(window.audioContext);
-            }, 500);
+            }, 8000);
         }
-
         return result;
     };
 }
