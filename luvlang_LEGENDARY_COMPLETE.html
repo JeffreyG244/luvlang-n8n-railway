@@ -511,6 +511,35 @@
             box-shadow: 0 8px 30px rgba(0, 212, 255, 0.8);
         }
 
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           REACTIVE EQ GLOW - Spectrum-reactive fader animation
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .eq-fader-track.reactive {
+            transition: box-shadow 0.08s ease-out, border-color 0.08s ease-out;
+        }
+
+        .eq-fader-track.reactive-active {
+            border-color: rgba(0, 212, 255, 0.6);
+        }
+
+        .eq-fader-container {
+            transition: transform 0.1s ease-out;
+        }
+
+        .eq-fader-container.pulse {
+            transform: scale(1.02);
+        }
+
+        @keyframes eqBandPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.2); }
+            50% { box-shadow: 0 0 25px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 255, 136, 0.3); }
+        }
+
+        .eq-fader-value.active {
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+        }
+
         .eq-fader-value {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem;
@@ -3047,11 +3076,11 @@
                 dynEqLowFilter.frequency.value = 150;
                 dynEqLowFilter.Q.value = 1.5;
                 dynEqLowFilter.gain.value = 0;
-                dynEqLowComp.threshold.value = -18;
-                dynEqLowComp.ratio.value = 3;
-                dynEqLowComp.attack.value = 0.01;
-                dynEqLowComp.release.value = 0.15;
-                dynEqLowGain.gain.value = 1.0;
+                dynEqLowComp.threshold.value = -24;  // Higher threshold = less aggressive
+                dynEqLowComp.ratio.value = 2;       // Gentler ratio
+                dynEqLowComp.attack.value = 0.02;   // Slower attack for musicality
+                dynEqLowComp.release.value = 0.2;   // Smoother release
+                dynEqLowGain.gain.value = 0.15;     // FIX: Subtle blend (was 1.0!)
 
                 // Mid band (800Hz-3kHz) - Controls harshness/honk
                 const dynEqMidFilter = audioContext.createBiquadFilter();
@@ -3061,11 +3090,11 @@
                 dynEqMidFilter.frequency.value = 2000;
                 dynEqMidFilter.Q.value = 2.0;
                 dynEqMidFilter.gain.value = 0;
-                dynEqMidComp.threshold.value = -15;
-                dynEqMidComp.ratio.value = 2.5;
-                dynEqMidComp.attack.value = 0.005;
-                dynEqMidComp.release.value = 0.1;
-                dynEqMidGain.gain.value = 1.0;
+                dynEqMidComp.threshold.value = -20;  // Higher threshold = less aggressive
+                dynEqMidComp.ratio.value = 2;       // Gentler ratio
+                dynEqMidComp.attack.value = 0.015;  // Slower attack (was 5ms - too fast!)
+                dynEqMidComp.release.value = 0.15;  // Smoother release
+                dynEqMidGain.gain.value = 0.12;     // FIX: Subtle blend (was 1.0!)
 
                 // High band (5kHz-12kHz) - Controls sibilance/brightness
                 const dynEqHighFilter = audioContext.createBiquadFilter();
@@ -3075,11 +3104,11 @@
                 dynEqHighFilter.frequency.value = 8000;
                 dynEqHighFilter.Q.value = 1.5;
                 dynEqHighFilter.gain.value = 0;
-                dynEqHighComp.threshold.value = -20;
-                dynEqHighComp.ratio.value = 4;
-                dynEqHighComp.attack.value = 0.002;
-                dynEqHighComp.release.value = 0.08;
-                dynEqHighGain.gain.value = 1.0;
+                dynEqHighComp.threshold.value = -22;  // Higher threshold = less aggressive
+                dynEqHighComp.ratio.value = 2.5;    // Gentler ratio (was 4:1 - too harsh!)
+                dynEqHighComp.attack.value = 0.008; // Slower attack (was 2ms - causing artifacts!)
+                dynEqHighComp.release.value = 0.12; // Smoother release
+                dynEqHighGain.gain.value = 0.13;    // FIX: Subtle blend (was 1.0!)
 
                 // Dynamic EQ input/output
                 const dynEqInput = audioContext.createGain();
@@ -3087,7 +3116,9 @@
                 const dynEqDry = audioContext.createGain();
                 dynEqInput.gain.value = 1.0;
                 dynEqOutput.gain.value = 1.0;
-                dynEqDry.gain.value = 0.7;  // Dry signal
+                // FIX: Proper gain staging to avoid phase issues and robotic sound
+                // Total must equal 1.0: dry + all bands = 1.0
+                dynEqDry.gain.value = 0.6;  // Dry signal (primary)
 
                 // Connect Dynamic EQ (parallel processing)
                 dynEqInput.connect(dynEqLowFilter);
@@ -3136,12 +3167,13 @@
                         }
                     },
                     enable: () => {
-                        dynEqDry.gain.value = 0.7;
-                        dynEqLowGain.gain.value = 1.0;
-                        dynEqMidGain.gain.value = 1.0;
-                        dynEqHighGain.gain.value = 1.0;
+                        // Proper gain staging: 0.6 + 0.15 + 0.12 + 0.13 = 1.0
+                        dynEqDry.gain.value = 0.6;
+                        dynEqLowGain.gain.value = 0.15;
+                        dynEqMidGain.gain.value = 0.12;
+                        dynEqHighGain.gain.value = 0.13;
                         window.dynamicEQ.enabled = true;
-                        console.log('✅ Dynamic EQ enabled');
+                        console.log('✅ Dynamic EQ enabled (transparent mode)');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
@@ -3179,12 +3211,13 @@
                 transientOutput.gain.value = 1.0;
 
                 // Fast attack path (for transient punch)
+                // FIX: Attack was 0.1ms causing robotic/clicking artifacts!
                 const transientAttackComp = audioContext.createDynamicsCompressor();
-                transientAttackComp.threshold.value = -20;
-                transientAttackComp.ratio.value = 4;
-                transientAttackComp.attack.value = 0.0001;  // Ultra-fast 0.1ms
-                transientAttackComp.release.value = 0.05;   // Fast 50ms
-                transientAttackComp.knee.value = 3;
+                transientAttackComp.threshold.value = -24;  // Higher threshold = less aggressive
+                transientAttackComp.ratio.value = 3;        // Gentler ratio
+                transientAttackComp.attack.value = 0.003;   // Musical 3ms (was 0.1ms - too fast!)
+                transientAttackComp.release.value = 0.08;   // Smoother 80ms
+                transientAttackComp.knee.value = 6;         // Softer knee
 
                 // Slow sustain path (for body)
                 const transientSustainComp = audioContext.createDynamicsCompressor();
@@ -3195,12 +3228,13 @@
                 transientSustainComp.knee.value = 6;
 
                 // Mix controls for attack/sustain
+                // FIX: More transparent blend - dry signal is primary
                 const transientAttackGain = audioContext.createGain();
                 const transientSustainGain = audioContext.createGain();
                 const transientDryGain = audioContext.createGain();
-                transientAttackGain.gain.value = 0.3;   // Subtle punch enhancement
-                transientSustainGain.gain.value = 0.2;  // Subtle body
-                transientDryGain.gain.value = 0.5;      // Original signal
+                transientAttackGain.gain.value = 0.15;  // Subtle punch (was 0.3 - too aggressive)
+                transientSustainGain.gain.value = 0.1;  // Subtle body (was 0.2)
+                transientDryGain.gain.value = 0.75;     // Original signal dominant (was 0.5)
 
                 // Connect transient shaper
                 transientInput.connect(transientAttackComp);
@@ -7186,6 +7220,11 @@
                     }
                 }
 
+                // ═══ REACTIVE EQ FADERS - Spectrum-driven glow animation ═══
+                if (!window.PERFORMANCE_MODE && drawDataArray) {
+                    updateReactiveEQFaders(drawDataArray);
+                }
+
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (!window.PERFORMANCE_MODE && window.drawStereoMeter && leftAnalyser && rightAnalyser) {
                     // Get time domain data for peak metering (reuse pre-allocated arrays)
@@ -7319,6 +7358,94 @@
             console.log('🚀 Starting draw() loop NOW...');
             draw();
             console.log('✅ draw() loop started!');
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // REACTIVE EQ FADERS - Spectrum-driven glow animation
+        // Makes EQ sliders glow based on frequency energy (modern DAW feature)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const eqBandFrequencies = {
+            sub: { center: 40, range: [20, 80] },
+            bass: { center: 120, range: [80, 200] },
+            lowmid: { center: 350, range: [200, 600] },
+            mid: { center: 1000, range: [600, 2000] },
+            highmid: { center: 3500, range: [2000, 6000] },
+            high: { center: 8000, range: [6000, 12000] },
+            air: { center: 14000, range: [12000, 20000] }
+        };
+
+        // Smoothed values for animation
+        const eqBandLevels = { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: 0, high: 0, air: 0 };
+
+        function updateReactiveEQFaders(frequencyData) {
+            if (!analyser || !audioContext || !frequencyData) return;
+
+            const sampleRate = audioContext.sampleRate;
+            const binCount = frequencyData.length;
+            const binFreqWidth = sampleRate / (binCount * 2);
+
+            // Calculate energy for each EQ band
+            for (const [band, config] of Object.entries(eqBandFrequencies)) {
+                const lowBin = Math.floor(config.range[0] / binFreqWidth);
+                const highBin = Math.min(Math.ceil(config.range[1] / binFreqWidth), binCount - 1);
+
+                let sum = 0;
+                let count = 0;
+                for (let i = lowBin; i <= highBin; i++) {
+                    // Convert dB to linear, then average
+                    const db = frequencyData[i];
+                    const linear = Math.pow(10, (db + 100) / 40); // Normalize -100dB to 0dB
+                    sum += linear;
+                    count++;
+                }
+
+                const avgLevel = count > 0 ? sum / count : 0;
+                // Smooth the level (attack fast, release slow)
+                const smoothing = avgLevel > eqBandLevels[band] ? 0.3 : 0.92;
+                eqBandLevels[band] = eqBandLevels[band] * smoothing + avgLevel * (1 - smoothing);
+            }
+
+            // Apply visual effects to EQ faders
+            for (const [band, level] of Object.entries(eqBandLevels)) {
+                const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
+                const container = track?.closest('.eq-fader-container');
+                const valueEl = document.getElementById(`eq${band.charAt(0).toUpperCase() + band.slice(1)}Value`);
+
+                if (!track) continue;
+
+                // Normalize level to 0-1 range
+                const normalizedLevel = Math.min(Math.max(level / 1.5, 0), 1);
+                const intensity = Math.pow(normalizedLevel, 0.7); // Gamma for better visual response
+
+                // Apply reactive glow to track
+                track.classList.add('reactive');
+                if (intensity > 0.3) {
+                    track.classList.add('reactive-active');
+                    const glowIntensity = intensity * 0.8;
+                    const hue = band === 'sub' || band === 'bass' ? 280 : // Purple for bass
+                               band === 'air' || band === 'high' ? 180 : // Cyan for highs
+                               200; // Blue for mids
+                    track.style.boxShadow = `0 0 ${15 * intensity}px rgba(${hue === 280 ? '184, 79, 255' : hue === 180 ? '0, 255, 200' : '0, 212, 255'}, ${glowIntensity})`;
+                } else {
+                    track.classList.remove('reactive-active');
+                    track.style.boxShadow = '';
+                }
+
+                // Pulse container on strong hits
+                if (container && intensity > 0.7) {
+                    container.classList.add('pulse');
+                    setTimeout(() => container.classList.remove('pulse'), 100);
+                }
+
+                // Highlight value text when band is active
+                if (valueEl) {
+                    if (intensity > 0.4) {
+                        valueEl.classList.add('active');
+                    } else {
+                        valueEl.classList.remove('active');
+                    }
+                }
+            }
         }
 
         // FORCE GLOBAL - Override any external scripts
