@@ -7206,8 +7206,8 @@
                 // PERFORMANCE MODE: Skip heavy visualizations
                 if (!window.PERFORMANCE_MODE) {
                     // 🏆 GHOST REFERENCE CURVE - Draw genre-specific target BEFORE spectrum
-                    if (spectrumCanvas && detectedGenre && detectedGenre !== 'Balanced') {
-                        // Only draw if we have a specific genre detected (not default)
+                    // Always show reference curve (even for 'Balanced')
+                    if (spectrumCanvas && detectedGenre) {
                         drawReferenceCurve(spectrumCanvas, detectedGenre);
                     }
 
@@ -7365,13 +7365,13 @@
         // Makes EQ sliders glow based on frequency energy (modern DAW feature)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         const eqBandFrequencies = {
-            sub: { center: 40, range: [20, 80] },
-            bass: { center: 120, range: [80, 200] },
-            lowmid: { center: 350, range: [200, 600] },
-            mid: { center: 1000, range: [600, 2000] },
-            highmid: { center: 3500, range: [2000, 6000] },
-            high: { center: 8000, range: [6000, 12000] },
-            air: { center: 14000, range: [12000, 20000] }
+            sub: { center: 40, range: [20, 80], valueId: 'eqSubValue' },
+            bass: { center: 120, range: [80, 200], valueId: 'eqBassValue' },
+            lowmid: { center: 350, range: [200, 600], valueId: 'eqLowMidValue' },
+            mid: { center: 1000, range: [600, 2000], valueId: 'eqMidValue' },
+            highmid: { center: 3500, range: [2000, 6000], valueId: 'eqHighMidValue' },
+            high: { center: 8000, range: [6000, 12000], valueId: 'eqHighValue' },
+            air: { center: 14000, range: [12000, 20000], valueId: 'eqAirValue' }
         };
 
         // Smoothed values for animation
@@ -7409,7 +7409,7 @@
             for (const [band, level] of Object.entries(eqBandLevels)) {
                 const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
                 const container = track?.closest('.eq-fader-container');
-                const valueEl = document.getElementById(`eq${band.charAt(0).toUpperCase() + band.slice(1)}Value`);
+                const valueEl = document.getElementById(eqBandFrequencies[band].valueId);
 
                 if (!track) continue;
 
