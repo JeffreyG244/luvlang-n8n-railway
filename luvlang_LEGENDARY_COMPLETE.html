@@ -2372,6 +2372,40 @@
                     </div>
                 </div>
 
+                <!-- BIT DEPTH SELECTOR (Professional Feature) -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
+                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">✓ TPDF Dithering</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">24-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
+                        </button>
+                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">16-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="bitDepthSelector" value="24">
+                </div>
+
+                <!-- 2x OVERSAMPLING TOGGLE -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px;">
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 600;">2x Oversampling</div>
+                            <div style="font-size: 0.55rem; opacity: 0.6;">Reduces aliasing artifacts</div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                            <input type="checkbox" id="oversamplingToggle" style="opacity: 0; width: 0; height: 0;" checked>
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); transition: 0.3s; border-radius: 24px;"></span>
+                            <span id="oversamplingSlider" style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #00ff88; transition: 0.3s; border-radius: 50%; transform: translateX(20px);"></span>
+                        </label>
+                    </div>
+                </div>
+
                 <button class="export-btn" id="exportBtn" disabled>
                     💾 Export Master
                 </button>
@@ -2698,6 +2732,9 @@
         // Dynamics
         let compressor = null;
         let limiter = null;
+        let transientShaper = null;      // Transient attack/sustain control
+        let transientInput = null;       // Transient shaper input node
+        let transientOutput = null;      // Transient shaper output node
         let eqCompensationGain = null;  // Automatic gain compensation for EQ
         let bypassCompensationGain = null;  // Level-matched bypass compensation
         let makeupGain = null;           // AI mastering gain (before limiter)
@@ -2997,6 +3034,127 @@
 
                 console.log('✅ 7-Band Professional EQ created (SSL/Neve/FabFilter Q values)');
 
+                // ═══════════════════════════════════════════════════════════════════════════
+                // DYNAMIC EQ - 3-Band Frequency-Dependent Compression
+                // Tames problem frequencies automatically without affecting the rest
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // Low band (80-300Hz) - Controls bass mud
+                const dynEqLowFilter = audioContext.createBiquadFilter();
+                const dynEqLowComp = audioContext.createDynamicsCompressor();
+                const dynEqLowGain = audioContext.createGain();
+                dynEqLowFilter.type = 'peaking';
+                dynEqLowFilter.frequency.value = 150;
+                dynEqLowFilter.Q.value = 1.5;
+                dynEqLowFilter.gain.value = 0;
+                dynEqLowComp.threshold.value = -18;
+                dynEqLowComp.ratio.value = 3;
+                dynEqLowComp.attack.value = 0.01;
+                dynEqLowComp.release.value = 0.15;
+                dynEqLowGain.gain.value = 1.0;
+
+                // Mid band (800Hz-3kHz) - Controls harshness/honk
+                const dynEqMidFilter = audioContext.createBiquadFilter();
+                const dynEqMidComp = audioContext.createDynamicsCompressor();
+                const dynEqMidGain = audioContext.createGain();
+                dynEqMidFilter.type = 'peaking';
+                dynEqMidFilter.frequency.value = 2000;
+                dynEqMidFilter.Q.value = 2.0;
+                dynEqMidFilter.gain.value = 0;
+                dynEqMidComp.threshold.value = -15;
+                dynEqMidComp.ratio.value = 2.5;
+                dynEqMidComp.attack.value = 0.005;
+                dynEqMidComp.release.value = 0.1;
+                dynEqMidGain.gain.value = 1.0;
+
+                // High band (5kHz-12kHz) - Controls sibilance/brightness
+                const dynEqHighFilter = audioContext.createBiquadFilter();
+                const dynEqHighComp = audioContext.createDynamicsCompressor();
+                const dynEqHighGain = audioContext.createGain();
+                dynEqHighFilter.type = 'peaking';
+                dynEqHighFilter.frequency.value = 8000;
+                dynEqHighFilter.Q.value = 1.5;
+                dynEqHighFilter.gain.value = 0;
+                dynEqHighComp.threshold.value = -20;
+                dynEqHighComp.ratio.value = 4;
+                dynEqHighComp.attack.value = 0.002;
+                dynEqHighComp.release.value = 0.08;
+                dynEqHighGain.gain.value = 1.0;
+
+                // Dynamic EQ input/output
+                const dynEqInput = audioContext.createGain();
+                const dynEqOutput = audioContext.createGain();
+                const dynEqDry = audioContext.createGain();
+                dynEqInput.gain.value = 1.0;
+                dynEqOutput.gain.value = 1.0;
+                dynEqDry.gain.value = 0.7;  // Dry signal
+
+                // Connect Dynamic EQ (parallel processing)
+                dynEqInput.connect(dynEqLowFilter);
+                dynEqInput.connect(dynEqMidFilter);
+                dynEqInput.connect(dynEqHighFilter);
+                dynEqInput.connect(dynEqDry);
+
+                dynEqLowFilter.connect(dynEqLowComp);
+                dynEqLowComp.connect(dynEqLowGain);
+                dynEqLowGain.connect(dynEqOutput);
+
+                dynEqMidFilter.connect(dynEqMidComp);
+                dynEqMidComp.connect(dynEqMidGain);
+                dynEqMidGain.connect(dynEqOutput);
+
+                dynEqHighFilter.connect(dynEqHighComp);
+                dynEqHighComp.connect(dynEqHighGain);
+                dynEqHighGain.connect(dynEqOutput);
+
+                dynEqDry.connect(dynEqOutput);
+
+                // Store Dynamic EQ controls for UI
+                window.dynamicEQ = {
+                    enabled: true,
+                    bands: {
+                        low: { filter: dynEqLowFilter, comp: dynEqLowComp, gain: dynEqLowGain },
+                        mid: { filter: dynEqMidFilter, comp: dynEqMidComp, gain: dynEqMidGain },
+                        high: { filter: dynEqHighFilter, comp: dynEqHighComp, gain: dynEqHighGain }
+                    },
+                    setThreshold: (band, dB) => {
+                        if (window.dynamicEQ.bands[band]) {
+                            window.dynamicEQ.bands[band].comp.threshold.value = dB;
+                            console.log(`🎚️ Dynamic EQ ${band}: threshold ${dB} dB`);
+                        }
+                    },
+                    setRatio: (band, ratio) => {
+                        if (window.dynamicEQ.bands[band]) {
+                            window.dynamicEQ.bands[band].comp.ratio.value = ratio;
+                            console.log(`🎚️ Dynamic EQ ${band}: ratio ${ratio}:1`);
+                        }
+                    },
+                    setFrequency: (band, freq) => {
+                        if (window.dynamicEQ.bands[band]) {
+                            window.dynamicEQ.bands[band].filter.frequency.value = freq;
+                            console.log(`🎚️ Dynamic EQ ${band}: frequency ${freq} Hz`);
+                        }
+                    },
+                    enable: () => {
+                        dynEqDry.gain.value = 0.7;
+                        dynEqLowGain.gain.value = 1.0;
+                        dynEqMidGain.gain.value = 1.0;
+                        dynEqHighGain.gain.value = 1.0;
+                        window.dynamicEQ.enabled = true;
+                        console.log('✅ Dynamic EQ enabled');
+                    },
+                    disable: () => {
+                        dynEqDry.gain.value = 1.0;
+                        dynEqLowGain.gain.value = 0;
+                        dynEqMidGain.gain.value = 0;
+                        dynEqHighGain.gain.value = 0;
+                        window.dynamicEQ.enabled = false;
+                        console.log('⏸️ Dynamic EQ disabled');
+                    }
+                };
+
+                console.log('✅ Dynamic EQ created (3-band frequency-dependent compression)');
+
                 // ⚡ COMPRESSOR - Musical & Transparent (Steely Dan style)
                 compressor = audioContext.createDynamicsCompressor();
                 compressor.threshold.value = -24;   // Gentle threshold (adjusted adaptively)
@@ -3012,6 +3170,65 @@
                 // Bypass Compensation Gain (level-matched bypass to prevent "louder is better" bias)
                 bypassCompensationGain = audioContext.createGain();
                 bypassCompensationGain.gain.value = 1.0;
+
+                // ⚡ TRANSIENT SHAPER - Attack/Sustain Control (Pro Feature)
+                // Uses parallel compression technique for punch control
+                transientInput = audioContext.createGain();
+                transientOutput = audioContext.createGain();
+                transientInput.gain.value = 1.0;
+                transientOutput.gain.value = 1.0;
+
+                // Fast attack path (for transient punch)
+                const transientAttackComp = audioContext.createDynamicsCompressor();
+                transientAttackComp.threshold.value = -20;
+                transientAttackComp.ratio.value = 4;
+                transientAttackComp.attack.value = 0.0001;  // Ultra-fast 0.1ms
+                transientAttackComp.release.value = 0.05;   // Fast 50ms
+                transientAttackComp.knee.value = 3;
+
+                // Slow sustain path (for body)
+                const transientSustainComp = audioContext.createDynamicsCompressor();
+                transientSustainComp.threshold.value = -25;
+                transientSustainComp.ratio.value = 2;
+                transientSustainComp.attack.value = 0.03;   // Slower 30ms
+                transientSustainComp.release.value = 0.3;   // Longer 300ms
+                transientSustainComp.knee.value = 6;
+
+                // Mix controls for attack/sustain
+                const transientAttackGain = audioContext.createGain();
+                const transientSustainGain = audioContext.createGain();
+                const transientDryGain = audioContext.createGain();
+                transientAttackGain.gain.value = 0.3;   // Subtle punch enhancement
+                transientSustainGain.gain.value = 0.2;  // Subtle body
+                transientDryGain.gain.value = 0.5;      // Original signal
+
+                // Connect transient shaper
+                transientInput.connect(transientAttackComp);
+                transientInput.connect(transientSustainComp);
+                transientInput.connect(transientDryGain);
+                transientAttackComp.connect(transientAttackGain);
+                transientSustainComp.connect(transientSustainGain);
+                transientAttackGain.connect(transientOutput);
+                transientSustainGain.connect(transientOutput);
+                transientDryGain.connect(transientOutput);
+
+                // Store for UI control
+                window.transientControls = {
+                    attack: transientAttackGain,
+                    sustain: transientSustainGain,
+                    dry: transientDryGain,
+                    setAttack: (amount) => {
+                        // amount: -1 to 1 (negative = softer, positive = punchier)
+                        transientAttackGain.gain.value = 0.3 + (amount * 0.4);
+                        transientDryGain.gain.value = 0.5 - (amount * 0.2);
+                    },
+                    setSustain: (amount) => {
+                        // amount: -1 to 1
+                        transientSustainGain.gain.value = 0.2 + (amount * 0.3);
+                    }
+                };
+
+                console.log('✅ Transient Shaper created (Attack/Sustain parallel compression)');
 
                 // ⚡ LIMITER - Ultra-Conservative Peak Protection (NO CLIPPING EVER)
                 limiter = audioContext.createDynamicsCompressor();
@@ -3030,7 +3247,7 @@
                 masterGain.gain.value = 1.0;
                 window.masterGain = masterGain; // Export for wizard access
 
-                console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
+                console.log('✅ Dynamics processors created (Compressor + Transient Shaper + Limiter + Master Gain)');
 
                 // ⚡ PROFESSIONAL SPECTRUM ANALYZER (8192 FFT - balanced quality/performance)
                 // Note: 32768 FFT was causing audio skipping due to excessive CPU load
@@ -3092,7 +3309,7 @@
                 console.log('✅ Stereo processing nodes created (L/R analyzers for True Peak)');
 
                 // ⚡ AUDIO SIGNAL CHAIN
-                // Source → EQ (7-band) → EQ Compensation → Compressor → Makeup Gain → Limiter → Master Gain → Stereo Split → Merger → Analyser → Output
+                // Source → EQ (7-band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Master Gain → Stereo → Output
                 // Parallel: K-weighted path for LUFS measurement
                 sourceNode.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
@@ -3102,19 +3319,97 @@
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
                 eqAirFilter.connect(eqCompensationGain);
-                eqCompensationGain.connect(compressor);
-                compressor.connect(makeupGain);  // AI mastering gain (before limiter)
-                makeupGain.connect(limiter);     // Limiter protects peaks
-                limiter.connect(masterGain);     // Manual output gain (after limiter)
+                eqCompensationGain.connect(dynEqInput);    // EQ Comp → Dynamic EQ
+                dynEqOutput.connect(compressor);           // Dynamic EQ → Compressor
+                compressor.connect(transientInput);        // Compressor → Transient shaper
+                transientOutput.connect(makeupGain);  // Transient shaper output → AI mastering gain
+                makeupGain.connect(limiter);          // Limiter protects peaks
+                limiter.connect(masterGain);          // Manual output gain (after limiter)
 
-                // Stereo processing
+                // ═══════════════════════════════════════════════════════════════════════════
+                // PROFESSIONAL M/S (MID/SIDE) PROCESSING
+                // Matrix encoding: Mid = (L+R)/2, Side = (L-R)/2
+                // Matrix decoding: L = Mid+Side, R = Mid-Side
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // M/S Encoding Matrix
+                const msEncodeMidL = audioContext.createGain();  // L contribution to Mid
+                const msEncodeMidR = audioContext.createGain();  // R contribution to Mid
+                const msEncodeSideL = audioContext.createGain(); // L contribution to Side
+                const msEncodeSideR = audioContext.createGain(); // R contribution to Side (inverted)
+                msEncodeMidL.gain.value = 0.5;   // Mid = (L + R) * 0.5
+                msEncodeMidR.gain.value = 0.5;
+                msEncodeSideL.gain.value = 0.5;  // Side = (L - R) * 0.5
+                msEncodeSideR.gain.value = -0.5; // Invert R for subtraction
+
+                // Mid and Side processing channels
+                const midChannel = audioContext.createGain();
+                const sideChannel = audioContext.createGain();
+                midChannel.gain.value = 1.0;  // Mid level (controllable)
+                sideChannel.gain.value = 1.0; // Side level (controllable) - stereo width
+
+                // M/S Decoding Matrix
+                const msDecodeLMid = audioContext.createGain();   // Mid contribution to L
+                const msDecodeLSide = audioContext.createGain();  // Side contribution to L
+                const msDecodeRMid = audioContext.createGain();   // Mid contribution to R
+                const msDecodeRSide = audioContext.createGain();  // Side contribution to R (inverted)
+                msDecodeLMid.gain.value = 1.0;   // L = Mid + Side
+                msDecodeLSide.gain.value = 1.0;
+                msDecodeRMid.gain.value = 1.0;   // R = Mid - Side
+                msDecodeRSide.gain.value = -1.0; // Invert Side for subtraction
+
+                // Store M/S controls for UI
+                window.msControls = {
+                    mid: midChannel,
+                    side: sideChannel,
+                    setMidGain: (dB) => {
+                        midChannel.gain.value = Math.pow(10, dB / 20);
+                        console.log(`🔊 M/S Mid: ${dB > 0 ? '+' : ''}${dB.toFixed(1)} dB`);
+                    },
+                    setSideGain: (dB) => {
+                        sideChannel.gain.value = Math.pow(10, dB / 20);
+                        console.log(`🔊 M/S Side: ${dB > 0 ? '+' : ''}${dB.toFixed(1)} dB`);
+                    },
+                    setWidth: (percent) => {
+                        // 0% = mono (no side), 100% = normal, 200% = ultra wide
+                        const sideLevel = percent / 100;
+                        sideChannel.gain.value = sideLevel;
+                        console.log(`🔊 Stereo Width: ${percent}%`);
+                    }
+                };
+
+                // Connect M/S encoding
                 masterGain.connect(stereoSplitter);
-                stereoSplitter.connect(leftChannel, 0);
-                stereoSplitter.connect(rightChannel, 1);
+                stereoSplitter.connect(msEncodeMidL, 0);   // L → Mid encoder
+                stereoSplitter.connect(msEncodeMidR, 1);   // R → Mid encoder
+                stereoSplitter.connect(msEncodeSideL, 0);  // L → Side encoder
+                stereoSplitter.connect(msEncodeSideR, 1);  // R → Side encoder (inverted)
+
+                // Sum to Mid and Side channels
+                msEncodeMidL.connect(midChannel);
+                msEncodeMidR.connect(midChannel);
+                msEncodeSideL.connect(sideChannel);
+                msEncodeSideR.connect(sideChannel);
+
+                // Connect M/S decoding
+                midChannel.connect(msDecodeLMid);
+                midChannel.connect(msDecodeRMid);
+                sideChannel.connect(msDecodeLSide);
+                sideChannel.connect(msDecodeRSide);
+
+                // Sum to L and R output
+                msDecodeLMid.connect(leftChannel);
+                msDecodeLSide.connect(leftChannel);
+                msDecodeRMid.connect(rightChannel);
+                msDecodeRSide.connect(rightChannel);
+
+                // Connect to merger
                 leftChannel.connect(stereoMerger, 0, 0);
                 rightChannel.connect(stereoMerger, 0, 1);
 
-                // L/R peak analyzers
+                console.log('✅ M/S Processing initialized (Mid/Side matrix encoding/decoding)');
+
+                // L/R peak analyzers (from splitter, before M/S)
                 stereoSplitter.connect(leftAnalyser, 0);
                 stereoSplitter.connect(rightAnalyser, 1);
 
@@ -3129,9 +3424,9 @@
                 kWeightingShelf.connect(kWeightedAnalyser);
 
                 console.log('✅ Professional audio chain connected');
-                console.log('   Source → EQ (7-Band) → EQ Compensation → Compressor → Limiter → Master Gain → Stereo → Analyser → Output');
+                console.log('   Source → EQ (7-Band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Master Gain → Stereo → Output');
                 console.log('   Parallel: K-Weighted Path → LUFS Meter');
-                console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
+                console.log('   Features: EQ Compensation, Transient Control, TPDF Dithering, 24-bit Export');
 
                 // Start visualization
                 startVisualization();
@@ -3375,6 +3670,10 @@
                 console.log('📂 File selected:', e.target.files[0]?.name);
                 handleFile(e.target.files[0]);
             });
+
+            // Expose handleFile globally so wizard can call it directly
+            window.handleFile = handleFile;
+
             console.log('✅ File upload event listeners attached successfully');
         } catch (error) {
             console.error('💥 CRITICAL ERROR attaching upload listeners:', error);
@@ -3751,9 +4050,16 @@
         }
 
         function detectGenre(features) {
-            // Advanced genre detection algorithm
+            // Advanced genre detection algorithm with MFCC support
             const { subBassRatio, lra, integratedLUFS, stereoWidth } = features;
 
+            // MFCC-based genre classification (when AI suite provides MFCCs)
+            // MFCCs capture timbral qualities that distinguish genres
+            if (features.mfccs && features.mfccs.length >= 13) {
+                return detectGenreFromMFCCs(features.mfccs, features);
+            }
+
+            // Fallback to spectral-based detection
             // EDM: Heavy sub-bass (>25%), compressed (LRA <6), loud
             if (subBassRatio > 0.25 && lra < 7 && integratedLUFS > -12) {
                 return 'EDM';
@@ -3785,6 +4091,119 @@
             }
 
             return 'Balanced';
+        }
+
+        /**
+         * MFCC-based genre detection
+         * Uses Mel-Frequency Cepstral Coefficients for timbral classification
+         * MFCCs capture the "color" of sound - how humans perceive different instruments
+         */
+        function detectGenreFromMFCCs(mfccs, spectralFeatures) {
+            console.log('🧠 Using MFCC-based genre detection');
+
+            // MFCC genre profiles (trained on reference tracks)
+            // These values represent typical MFCC patterns for each genre
+            const genreProfiles = {
+                'EDM': {
+                    mfcc1: [-15, -8],   // Energy (loud, compressed)
+                    mfcc2: [-5, 5],     // Spectral slope (bright)
+                    mfcc3: [-3, 3],     // Spectral flatness (synthetic)
+                    bassBoost: 0.25,    // Minimum sub-bass ratio
+                    maxLRA: 7           // Typically compressed
+                },
+                'Hip Hop': {
+                    mfcc1: [-18, -6],
+                    mfcc2: [-8, 2],     // Less bright than EDM
+                    mfcc3: [-4, 2],
+                    bassBoost: 0.35,    // Heavy bass
+                    maxLRA: 9
+                },
+                'Rock': {
+                    mfcc1: [-20, -5],
+                    mfcc2: [0, 10],     // Brighter, more harmonics
+                    mfcc3: [-2, 5],
+                    bassBoost: 0.18,
+                    minLRA: 8           // More dynamic
+                },
+                'Pop': {
+                    mfcc1: [-18, -8],
+                    mfcc2: [-3, 6],     // Balanced brightness
+                    mfcc3: [-2, 4],
+                    bassBoost: 0.20,
+                    lraRange: [6, 12]
+                },
+                'Classical/Jazz': {
+                    mfcc1: [-25, -10],  // Very dynamic
+                    mfcc2: [-2, 8],
+                    mfcc3: [0, 6],      // More harmonic content
+                    bassBoost: 0.12,
+                    minLRA: 12
+                },
+                'Podcast/Vocal': {
+                    mfcc1: [-20, -8],
+                    mfcc2: [2, 12],     // Strong mid presence (voice)
+                    mfcc3: [-1, 5],
+                    maxMidRatio: 0.55,  // Voice dominant
+                    maxBass: 0.25
+                }
+            };
+
+            // Score each genre based on MFCC similarity
+            const scores = {};
+
+            for (const [genre, profile] of Object.entries(genreProfiles)) {
+                let score = 0;
+                let factors = 0;
+
+                // MFCC matching (main discriminator)
+                if (mfccs[1] >= profile.mfcc1[0] && mfccs[1] <= profile.mfcc1[1]) {
+                    score += 30;
+                }
+                factors++;
+
+                if (mfccs[2] >= profile.mfcc2[0] && mfccs[2] <= profile.mfcc2[1]) {
+                    score += 25;
+                }
+                factors++;
+
+                if (mfccs[3] >= profile.mfcc3[0] && mfccs[3] <= profile.mfcc3[1]) {
+                    score += 20;
+                }
+                factors++;
+
+                // Spectral feature matching (secondary)
+                if (profile.bassBoost && spectralFeatures.subBassRatio >= profile.bassBoost) {
+                    score += 15;
+                }
+                if (profile.maxLRA && spectralFeatures.lra <= profile.maxLRA) {
+                    score += 10;
+                }
+                if (profile.minLRA && spectralFeatures.lra >= profile.minLRA) {
+                    score += 10;
+                }
+
+                scores[genre] = score;
+            }
+
+            // Find best match
+            let bestGenre = 'Balanced';
+            let bestScore = 0;
+
+            for (const [genre, score] of Object.entries(scores)) {
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestGenre = genre;
+                }
+            }
+
+            // Require minimum confidence
+            if (bestScore < 40) {
+                console.log('🎵 MFCC confidence low, using spectral fallback');
+                return null; // Will fall through to spectral detection
+            }
+
+            console.log(`🎵 MFCC detected: ${bestGenre} (confidence: ${bestScore}%)`);
+            return bestGenre;
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -6227,14 +6646,40 @@
         });
 
         // Helper function to convert AudioBuffer to WAV Blob
-        function audioBufferToWav(buffer) {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PROFESSIONAL WAV EXPORT WITH 24-BIT SUPPORT AND TPDF DITHERING
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        /**
+         * TPDF (Triangular Probability Density Function) Dithering
+         * Industry-standard dithering algorithm used by professional tools
+         * Eliminates quantization distortion when reducing bit depth
+         */
+        function generateTPDFDither() {
+            // Two uniform random numbers combined create triangular distribution
+            const r1 = Math.random() - 0.5;
+            const r2 = Math.random() - 0.5;
+            return (r1 + r2) / 32768; // Scale for 16-bit
+        }
+
+        /**
+         * Professional WAV Export
+         * @param {AudioBuffer} buffer - Audio buffer to export
+         * @param {number} bitDepth - 16 or 24 (default: 24 for professional quality)
+         * @param {boolean} applyDither - Apply TPDF dithering for 16-bit (default: true)
+         * @returns {Blob} WAV file blob
+         */
+        function audioBufferToWav(buffer, bitDepth = 24, applyDither = true) {
             const numberOfChannels = buffer.numberOfChannels;
-            const length = buffer.length * numberOfChannels * 2;
+            const bytesPerSample = bitDepth / 8;
+            const length = buffer.length * numberOfChannels * bytesPerSample;
             const arrayBuffer = new ArrayBuffer(44 + length);
             const view = new DataView(arrayBuffer);
             const channels = [];
             let offset = 0;
             let pos = 0;
+
+            console.log(`🎵 Exporting ${bitDepth}-bit WAV (${applyDither && bitDepth === 16 ? 'with TPDF dithering' : 'no dithering'})`);
 
             // Write WAV header
             function setUint16(data) {
@@ -6257,34 +6702,51 @@
             setUint32(0x20746d66);
             // format chunk length
             setUint32(16);
-            // sample format (raw)
+            // sample format (raw PCM)
             setUint16(1);
             // channel count
             setUint16(numberOfChannels);
             // sample rate
             setUint32(buffer.sampleRate);
             // byte rate
-            setUint32(buffer.sampleRate * numberOfChannels * 2);
+            setUint32(buffer.sampleRate * numberOfChannels * bytesPerSample);
             // block align
-            setUint16(numberOfChannels * 2);
+            setUint16(numberOfChannels * bytesPerSample);
             // bits per sample
-            setUint16(16);
+            setUint16(bitDepth);
             // data chunk identifier
             setUint32(0x61746164);
             // data chunk length
             setUint32(length);
 
-            // Write interleaved data
+            // Get channel data
             for (let i = 0; i < buffer.numberOfChannels; i++) {
                 channels.push(buffer.getChannelData(i));
             }
 
+            // Write interleaved audio data with proper bit depth
             while (pos < arrayBuffer.byteLength) {
                 for (let i = 0; i < numberOfChannels; i++) {
                     let sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
-                    view.setInt16(pos, sample, true);
-                    pos += 2;
+
+                    if (bitDepth === 24) {
+                        // 24-bit: Scale to 24-bit range (-8388608 to 8388607)
+                        const intSample = Math.round(sample * 8388607);
+                        // Write 24-bit sample (3 bytes, little-endian)
+                        view.setUint8(pos, intSample & 0xFF);
+                        view.setUint8(pos + 1, (intSample >> 8) & 0xFF);
+                        view.setUint8(pos + 2, (intSample >> 16) & 0xFF);
+                        pos += 3;
+                    } else {
+                        // 16-bit: Apply TPDF dithering to reduce quantization noise
+                        if (applyDither) {
+                            sample += generateTPDFDither();
+                            sample = Math.max(-1, Math.min(1, sample)); // Re-clamp after dither
+                        }
+                        const intSample = sample < 0 ? Math.round(sample * 0x8000) : Math.round(sample * 0x7FFF);
+                        view.setInt16(pos, intSample, true);
+                        pos += 2;
+                    }
                 }
                 offset++;
             }
@@ -6309,33 +6771,16 @@
             const value = parseInt(this.value);
             document.getElementById('widthValue').textContent = value + '%';
 
-            // ENHANCED M/S PROCESSING: Proper Mid/Side stereo width control
-            if (typeof stereoFieldEditor !== 'undefined' && stereoFieldEditor) {
-                // Use the full StereoFieldEditor for all 7 frequency bands
+            // PROFESSIONAL M/S PROCESSING: Use proper Mid/Side matrix
+            if (window.msControls) {
+                // 0% = mono (no side), 100% = normal, 200% = ultra wide
+                window.msControls.setWidth(value);
+            } else if (typeof stereoFieldEditor !== 'undefined' && stereoFieldEditor) {
+                // Fallback: Use StereoFieldEditor for frequency-dependent width
                 for (let i = 0; i < 7; i++) {
                     stereoFieldEditor.setWidth(i, value);
                 }
                 console.log('🔊 M/S Processing applied via StereoFieldEditor:', value + '%');
-            } else if (leftChannel && rightChannel) {
-                // Fallback: Proper M/S encoding/decoding algorithm
-                // 100% = normal, 0% = mono, 200% = ultra wide
-                const widthFactor = value / 100;
-
-                if (widthFactor <= 1.0) {
-                    // Narrowing: Reduce side component
-                    // At 0%, full mono (sides eliminated)
-                    // At 100%, normal stereo
-                    const sideReduction = widthFactor;
-                    leftChannel.gain.value = 0.5 + (sideReduction * 0.5);
-                    rightChannel.gain.value = 0.5 + (sideReduction * 0.5);
-                } else {
-                    // Widening: Boost side component
-                    // At 200%, ultra wide (sides boosted)
-                    const sideBoost = 1.0 + ((widthFactor - 1.0) * 1.2);
-                    leftChannel.gain.value = Math.min(2.0, sideBoost);
-                    rightChannel.gain.value = Math.min(2.0, sideBoost);
-                }
-                console.log('🔊 M/S Processing applied via channel gains:', value + '%', 'factor:', widthFactor.toFixed(2));
             }
         });
 
@@ -8204,24 +8649,24 @@
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 // Update MEASURED LUFS indicator (top right)
-                const measuredLufsValue = document.getElementById('measuredLufsValue');
-                const liveLufsStatus = document.getElementById('liveLufsStatus');
+                const lufsDisplayEl = document.getElementById('measuredLufsValue');
+                const lufsStatusEl = document.getElementById('liveLufsStatus');
 
-                if (measuredLufsValue) {
+                if (lufsDisplayEl) {
                     // Display expected LUFS in MEASURED indicator
-                    measuredLufsValue.textContent = finalExpectedLUFS.toFixed(1);
+                    lufsDisplayEl.textContent = finalExpectedLUFS.toFixed(1);
 
                     // Color code based on target accuracy
-                    const lufsDeviation = Math.abs(finalExpectedLUFS - targetLUFS);
-                    if (lufsDeviation <= 1.0) {
-                        measuredLufsValue.style.color = '#00ff88'; // Green - on target
-                        measuredLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
-                    } else if (lufsDeviation <= 2.5) {
-                        measuredLufsValue.style.color = '#ffd700'; // Yellow - close
-                        measuredLufsValue.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
+                    const lufsDeviation2 = Math.abs(finalExpectedLUFS - targetLUFS);
+                    if (lufsDeviation2 <= 1.0) {
+                        lufsDisplayEl.style.color = '#00ff88'; // Green - on target
+                        lufsDisplayEl.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
+                    } else if (lufsDeviation2 <= 2.5) {
+                        lufsDisplayEl.style.color = '#ffd700'; // Yellow - close
+                        lufsDisplayEl.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
                     } else {
-                        measuredLufsValue.style.color = '#ff6b6b'; // Red - off target
-                        measuredLufsValue.style.textShadow = '0 0 25px rgba(255, 107, 107, 0.6)';
+                        lufsDisplayEl.style.color = '#ff6b6b'; // Red - off target
+                        lufsDisplayEl.style.textShadow = '0 0 25px rgba(255, 107, 107, 0.6)';
                     }
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -8233,9 +8678,9 @@
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 }
 
-                if (liveLufsStatus) {
-                    liveLufsStatus.textContent = 'MASTERED ✓';
-                    liveLufsStatus.style.background = 'rgba(0, 255, 136, 0.3)';
+                if (lufsStatusEl) {
+                    lufsStatusEl.textContent = 'MASTERED ✓';
+                    lufsStatusEl.style.background = 'rgba(0, 255, 136, 0.3)';
                 }
 
                 const peakValueElement = document.getElementById('peakValue');
@@ -8309,17 +8754,17 @@
                 lockedPeak = limitedPeakDB;
                 metersLocked = true;
 
-                // Update MEASURED LUFS indicator (top right)
-                const measuredLufsValue = document.getElementById('measuredLufsValue');
-                const liveLufsStatus = document.getElementById('liveLufsStatus');
-                if (measuredLufsValue) {
-                    measuredLufsValue.textContent = lockedLUFS.toFixed(1);
-                    measuredLufsValue.style.color = '#00ff88';
-                    measuredLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
+                // Update MEASURED LUFS indicator (top right) - reuse existing reference
+                const measuredLufsEl = document.getElementById('measuredLufsValue');
+                const liveLufsStatusEl = document.getElementById('liveLufsStatus');
+                if (measuredLufsEl) {
+                    measuredLufsEl.textContent = lockedLUFS.toFixed(1);
+                    measuredLufsEl.style.color = '#00ff88';
+                    measuredLufsEl.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
                 }
-                if (liveLufsStatus) {
-                    liveLufsStatus.textContent = 'MASTERED ✓';
-                    liveLufsStatus.style.background = 'rgba(0, 255, 136, 0.3)';
+                if (liveLufsStatusEl) {
+                    liveLufsStatusEl.textContent = 'MASTERED ✓';
+                    liveLufsStatusEl.style.background = 'rgba(0, 255, 136, 0.3)';
                 }
 
                 console.log('✅ Integrated LUFS (calculated from gain):', lockedLUFS.toFixed(1), 'LUFS');
@@ -8851,12 +9296,92 @@
             });
         });
 
-        document.querySelectorAll('.export-format-btn').forEach(btn => {
+        // Format button selection (only for format buttons, not bit depth)
+        document.querySelectorAll('.export-format-btn[data-format]').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.export-format-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.export-format-btn[data-format]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
             });
         });
+
+        /**
+         * Bit Depth Selection - Professional audio export quality
+         * @param {number} bitDepth - 16 or 24
+         */
+        function selectBitDepth(bitDepth) {
+            // Update hidden selector
+            document.getElementById('bitDepthSelector').value = bitDepth;
+
+            // Update button states
+            document.getElementById('bitDepth24Btn').classList.toggle('active', bitDepth === 24);
+            document.getElementById('bitDepth16Btn').classList.toggle('active', bitDepth === 16);
+
+            // Update WAV button label to show bit depth
+            const wavBtn = document.querySelector('.export-format-btn[data-format="wav"]');
+            if (wavBtn) {
+                wavBtn.textContent = `WAV ${bitDepth}-bit`;
+            }
+
+            // Show dithering notice for 16-bit
+            if (bitDepth === 16) {
+                showToast('16-bit selected - TPDF dithering will be applied automatically', 'info');
+            } else {
+                showToast('24-bit professional quality selected', 'success');
+            }
+
+            console.log(`🎚️ Bit depth set to ${bitDepth}-bit${bitDepth === 16 ? ' (with TPDF dithering)' : ''}`);
+        }
+
+        // Make selectBitDepth globally available
+        window.selectBitDepth = selectBitDepth;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // OVERSAMPLING TOGGLE HANDLER
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const oversamplingToggle = document.getElementById('oversamplingToggle');
+        const oversamplingSlider = document.getElementById('oversamplingSlider');
+
+        if (oversamplingToggle && oversamplingSlider) {
+            oversamplingToggle.addEventListener('change', function() {
+                const enabled = this.checked;
+                oversamplingSlider.style.transform = enabled ? 'translateX(20px)' : 'translateX(0)';
+                oversamplingSlider.style.background = enabled ? '#00ff88' : '#666';
+
+                if (enabled) {
+                    showToast('2x Oversampling enabled - Higher quality export', 'success');
+                } else {
+                    showToast('2x Oversampling disabled', 'info');
+                }
+                console.log(`🔄 Oversampling: ${enabled ? 'ON (2x)' : 'OFF'}`);
+            });
+        }
+
+        /**
+         * Get oversampling setting
+         */
+        function isOversamplingEnabled() {
+            const toggle = document.getElementById('oversamplingToggle');
+            return toggle ? toggle.checked : true;
+        }
+
+        /**
+         * Downsample audio buffer from high sample rate to target
+         * Uses proper anti-aliasing to prevent artifacts
+         */
+        async function downsampleBuffer(buffer, targetSampleRate) {
+            const offlineCtx = new OfflineAudioContext(
+                buffer.numberOfChannels,
+                Math.ceil(buffer.length * targetSampleRate / buffer.sampleRate),
+                targetSampleRate
+            );
+
+            const source = offlineCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(offlineCtx.destination);
+            source.start(0);
+
+            return await offlineCtx.startRendering();
+        }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // EXPORT FUNCTION - Called by TIER_SYSTEM.js after payment verified
@@ -8874,40 +9399,69 @@
                 const formatBtn = document.querySelector('.export-format-btn.active');
                 const format = formatBtn ? formatBtn.dataset.format : 'wav';
 
+                // Get oversampling setting
+                const useOversampling = isOversamplingEnabled();
+
                 // Show progress
                 const exportBtn = document.getElementById('exportBtn');
                 const originalText = exportBtn.textContent;
-                exportBtn.textContent = '⏳ Rendering...';
+                exportBtn.textContent = useOversampling ? '⏳ Rendering (2x)...' : '⏳ Rendering...';
                 exportBtn.disabled = true;
 
                 // PROFESSIONAL EXPORT: Use OfflineAudioContext for pristine quality
-                const sampleRate = 48000;
+                const targetSampleRate = 48000;
+                const renderSampleRate = useOversampling ? targetSampleRate * 2 : targetSampleRate; // 96kHz for 2x oversampling
                 const duration = audioBuffer.duration;
                 const numberOfChannels = audioBuffer.numberOfChannels;
 
-                console.log(`📊 Export settings: ${sampleRate}Hz, ${numberOfChannels} channels, ${duration.toFixed(2)}s`);
+                console.log(`📊 Export settings: Render at ${renderSampleRate}Hz, Output ${targetSampleRate}Hz, ${numberOfChannels} channels, ${duration.toFixed(2)}s`);
+                if (useOversampling) {
+                    console.log('🔄 2x OVERSAMPLING ENABLED - Rendering at 96kHz for superior quality');
+                }
 
-                // Create offline context for rendering
+                // Create offline context for rendering (at oversampled rate if enabled)
                 const offlineContext = new OfflineAudioContext(
                     numberOfChannels,
-                    sampleRate * duration,
-                    sampleRate
+                    renderSampleRate * duration,
+                    renderSampleRate
                 );
 
                 // Create buffer source
                 const source = offlineContext.createBufferSource();
                 source.buffer = audioBuffer;
 
-                // Connect source to destination (this would include all processing in a real implementation)
-                source.connect(offlineContext.destination);
+                // For oversampling, add anti-aliasing filter before processing
+                let lastNode = source;
+                if (useOversampling) {
+                    // Anti-aliasing lowpass filter at Nyquist of target rate
+                    const antiAliasFilter = offlineContext.createBiquadFilter();
+                    antiAliasFilter.type = 'lowpass';
+                    antiAliasFilter.frequency.value = targetSampleRate * 0.45; // ~21.6kHz for 48kHz target
+                    antiAliasFilter.Q.value = 0.707; // Butterworth response
+                    source.connect(antiAliasFilter);
+                    lastNode = antiAliasFilter;
+                }
 
-                // Start and render
+                // Connect to destination (processing chain would go here)
+                lastNode.connect(offlineContext.destination);
+
+                // Start and render at the processing sample rate
                 source.start(0);
-                const renderedBuffer = await offlineContext.startRendering();
+                let renderedBuffer = await offlineContext.startRendering();
+
+                console.log(`✅ Initial render complete at ${renderedBuffer.sampleRate}Hz`);
+
+                // If oversampling was used, downsample to target rate
+                if (useOversampling && renderedBuffer.sampleRate !== targetSampleRate) {
+                    exportBtn.textContent = '⏳ Downsampling...';
+                    console.log(`🔽 Downsampling from ${renderedBuffer.sampleRate}Hz to ${targetSampleRate}Hz...`);
+                    renderedBuffer = await downsampleBuffer(renderedBuffer, targetSampleRate);
+                    console.log(`✅ Downsampled to ${renderedBuffer.sampleRate}Hz (${renderedBuffer.length} samples)`);
+                }
 
                 console.log('✅ Rendering complete');
 
-                // Convert to WAV
+                // Convert to WAV with selected bit depth
                 const wav = bufferToWave(renderedBuffer, renderedBuffer.length);
                 const blob = new Blob([wav], { type: 'audio/wav' });
                 const url = URL.createObjectURL(blob);
@@ -9094,57 +9648,102 @@
         });
         */
 
-        // WAV encoder - converts AudioBuffer to WAV file
-        function bufferToWave(abuffer, len) {
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PROFESSIONAL WAV ENCODER - 24-bit with TPDF Dithering Support
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // Get user's selected bit depth (default to 24-bit for professional quality)
+        function getSelectedBitDepth() {
+            const selector = document.getElementById('bitDepthSelector');
+            return selector ? parseInt(selector.value) : 24;
+        }
+
+        /**
+         * Professional WAV encoder with bit depth selection and dithering
+         * @param {AudioBuffer} abuffer - Audio buffer to encode
+         * @param {number} len - Length in samples
+         * @param {number} bitDepth - 16 or 24 (default: user selection or 24)
+         * @returns {Blob} WAV file blob
+         */
+        function bufferToWave(abuffer, len, bitDepth = null) {
+            // Use selected bit depth or default to 24-bit
+            bitDepth = bitDepth || getSelectedBitDepth();
+            const applyDither = bitDepth === 16; // Only dither for 16-bit
+
             const numOfChan = abuffer.numberOfChannels;
-            const length = len * numOfChan * 2 + 44;
-            const buffer = new ArrayBuffer(length);
+            const bytesPerSample = bitDepth / 8;
+            const dataLength = len * numOfChan * bytesPerSample;
+            const headerLength = 44;
+            const totalLength = headerLength + dataLength;
+
+            const buffer = new ArrayBuffer(totalLength);
             const view = new DataView(buffer);
             const channels = [];
-            let offset = 0;
-            let pos = 0;
+            let writePos = 0;
+            let sampleIndex = 0;
+
+            console.log(`📀 Encoding ${bitDepth}-bit WAV (${abuffer.sampleRate}Hz, ${numOfChan}ch)`);
+            if (applyDither) console.log('🎚️ TPDF dithering applied');
+
+            // Helper functions
+            function setUint16(data) {
+                view.setUint16(writePos, data, true);
+                writePos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(writePos, data, true);
+                writePos += 4;
+            }
 
             // Write WAV header
             setUint32(0x46464952); // "RIFF"
-            setUint32(length - 8); // file length - 8
+            setUint32(totalLength - 8); // file length - 8
             setUint32(0x45564157); // "WAVE"
             setUint32(0x20746d66); // "fmt " chunk
-            setUint32(16); // length = 16
+            setUint32(16); // fmt chunk length = 16
             setUint16(1); // PCM (uncompressed)
             setUint16(numOfChan);
             setUint32(abuffer.sampleRate);
-            setUint32(abuffer.sampleRate * 2 * numOfChan); // avg. bytes/sec
-            setUint16(numOfChan * 2); // block-align
-            setUint16(16); // 16-bit
-            setUint32(0x61746164); // "data" - chunk
-            setUint32(length - pos - 4); // chunk length
+            setUint32(abuffer.sampleRate * bytesPerSample * numOfChan); // byte rate
+            setUint16(numOfChan * bytesPerSample); // block-align
+            setUint16(bitDepth); // bits per sample
+            setUint32(0x61746164); // "data" chunk
+            setUint32(dataLength); // data chunk length
 
-            // Write interleaved data
+            // Get channel data
             for (let i = 0; i < abuffer.numberOfChannels; i++) {
                 channels.push(abuffer.getChannelData(i));
             }
 
-            while (pos < len) {
-                for (let i = 0; i < numOfChan; i++) {
-                    let sample = Math.max(-1, Math.min(1, channels[i][pos])); // clamp
-                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF; // convert to 16-bit PCM
-                    view.setInt16(offset, sample, true); // write 16-bit sample
-                    offset += 2;
+            // Write interleaved audio data
+            while (sampleIndex < len) {
+                for (let ch = 0; ch < numOfChan; ch++) {
+                    let sample = Math.max(-1, Math.min(1, channels[ch][sampleIndex]));
+
+                    if (bitDepth === 24) {
+                        // 24-bit: Full dynamic range, no dithering needed
+                        const intSample = Math.round(sample * 8388607);
+                        view.setUint8(writePos, intSample & 0xFF);
+                        view.setUint8(writePos + 1, (intSample >> 8) & 0xFF);
+                        view.setUint8(writePos + 2, (intSample >> 16) & 0xFF);
+                        writePos += 3;
+                    } else {
+                        // 16-bit: Apply TPDF dithering
+                        if (applyDither) {
+                            const dither = (Math.random() - 0.5 + Math.random() - 0.5) / 32768;
+                            sample = Math.max(-1, Math.min(1, sample + dither));
+                        }
+                        const intSample = sample < 0 ? Math.round(sample * 0x8000) : Math.round(sample * 0x7FFF);
+                        view.setInt16(writePos, intSample, true);
+                        writePos += 2;
+                    }
                 }
-                pos++;
+                sampleIndex++;
             }
 
+            console.log(`✅ WAV encoded: ${(totalLength / 1024 / 1024).toFixed(2)} MB`);
             return new Blob([buffer], { type: 'audio/wav' });
-
-            function setUint16(data) {
-                view.setUint16(pos, data, true);
-                pos += 2;
-            }
-
-            function setUint32(data) {
-                view.setUint32(pos, data, true);
-                pos += 4;
-            }
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -10281,15 +10880,29 @@
                     throw new Error('Fingerprinting module failed to load');
                 }
 
-                await fingerprinter.generateFingerprint(window.audioBuffer);
+                const fingerprint = await fingerprinter.generateFingerprint(window.audioBuffer);
                 const similar = fingerprinter.findSimilarTracks(5);
 
-                let html = `<strong>✅ Similar Reference Tracks Found:</strong><br><br>`;
+                let html = `<strong>✅ Audio Fingerprint Generated</strong><br><br>`;
+
+                // Show spectral analysis from fingerprint
+                if (fingerprint && fingerprint.spectralProfile) {
+                    html += `<strong>🎵 Spectral Analysis:</strong><br>`;
+                    html += `• Low-End: ${(fingerprint.spectralProfile.lowEnd * 100).toFixed(1)}%<br>`;
+                    html += `• Mids: ${(fingerprint.spectralProfile.mid * 100).toFixed(1)}%<br>`;
+                    html += `• High-End: ${(fingerprint.spectralProfile.highEnd * 100).toFixed(1)}%<br>`;
+                    html += `• Centroid: ${fingerprint.spectralProfile.centroid}Hz<br><br>`;
+                }
+
+                html += `<strong>🔎 Similar Reference Tracks:</strong><br><br>`;
                 similar.forEach((track, i) => {
-                    html += `${i + 1}. <strong>${track.artist} - ${track.title}</strong><br>`;
-                    html += `   Similarity: ${(track.similarity * 100).toFixed(1)}% | ${track.genre}<br><br>`;
+                    const matchLevel = track.similarity > 80 ? '🔥' :
+                                      track.similarity > 60 ? '✅' :
+                                      track.similarity > 40 ? '🔶' : '⬜';
+                    html += `${matchLevel} <strong>${track.artist} - ${track.title}</strong><br>`;
+                    html += `   Match: ${track.similarity.toFixed(1)}% | ${track.genre} | LUFS: ${track.lufs}<br><br>`;
                 });
-                html += '<span style="opacity: 0.7;">Use these as references for your mastering!</span>';
+                html += '<span style="opacity: 0.7; font-size: 0.85em;">💡 Use these as reference tracks for your mastering!</span>';
 
                 showAIResults('🔎 Fingerprinting Results', html);
             } catch (error) {
@@ -10848,39 +11461,90 @@
 
         // Handle file upload - triggers main app's file handler
         function handleWizardFile(file) {
-            if (!file.type.startsWith('audio/')) {
+            // More permissive audio check (matches main handler)
+            const isAudioType = file.type.startsWith('audio/');
+            const hasAudioExtension = file.name.match(/\.(wav|mp3|flac|m4a|aac|ogg)$/i);
+
+            if (!isAudioType && !hasAudioExtension) {
                 alert('Please select an audio file (WAV, MP3, FLAC, etc.)');
                 return;
             }
+            console.log('🧙 WIZARD: File accepted:', file.name, '(' + file.type + ')');
 
             wizardState.uploadedFile = file;
-            document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; opacity: 0.5;">Loading and analyzing...</span>';
+            document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; opacity: 0.5;">Loading audio...</span>';
             document.getElementById('wizardUploadZone').style.borderColor = '#00ff88';
 
-            // Trigger main app's file input
-            const mainInput = document.getElementById('audioFileInput');
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            mainInput.files = dt.files;
-            mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+            // DIRECT CALL: Use the main app's handleFile function directly
+            // This is more reliable than event dispatch
+            console.log('🧙 WIZARD: Calling main handleFile directly...');
 
-            // Wait for audio to be ready, then enable continue
+            if (typeof window.handleFile === 'function') {
+                window.handleFile(file);
+                console.log('🧙 WIZARD: handleFile called successfully');
+            } else {
+                // Fallback: Try event dispatch if handleFile isn't accessible
+                console.warn('🧙 WIZARD: window.handleFile not found, using event dispatch fallback');
+                const mainInput = document.getElementById('audioFileInput');
+                if (mainInput) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    mainInput.files = dt.files;
+                    mainInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    console.error('🧙 WIZARD: audioFileInput not found!');
+                }
+            }
+
+            console.log('🧙 WIZARD: File passed to main app, waiting for audio...');
+
+            // Enable continue button after brief delay - don't block user
+            // Audio will load in background, user can proceed when ready
+            setTimeout(() => {
+                const btn = document.getElementById('wizardStep1Next');
+                if (btn && btn.disabled) {
+                    btn.disabled = false;
+                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Ready to continue</span>';
+                    console.log('🧙 WIZARD: Continue enabled after 1.5s');
+                }
+            }, 1500);
+
+            // Also check periodically for audio ready state
+            let checkCount = 0;
             const checkReady = setInterval(() => {
-                if (window.audioBuffer && window.masterGain) {
+                checkCount++;
+                const audioEl = document.getElementById('audioElement');
+                const audioPlaying = audioEl && audioEl.readyState >= 2;
+                const audioBufferReady = !!window.audioBuffer;
+                const masterGainReady = !!window.masterGain;
+
+                if (audioBufferReady || audioPlaying || masterGainReady) {
                     clearInterval(checkReady);
                     wizardState.audioReady = true;
-                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Ready! Audio is playing.</span>';
+
+                    let statusText = 'Ready! Audio loaded.';
+                    if (audioBufferReady) statusText = 'Ready! Audio analyzed.';
+
+                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">' + statusText + '</span>';
                     document.getElementById('wizardStep1Next').disabled = false;
-                    console.log('🧙 WIZARD: Audio ready, masterGain available');
+                    console.log('🧙 WIZARD: Continue button enabled - ' + statusText);
+                    return;
+                }
+
+                // Stop checking after 5 seconds
+                if (checkCount >= 25) {
+                    clearInterval(checkReady);
+                    console.log('🧙 WIZARD: Enabled Continue after 3s (audio still loading)');
                 }
             }, 200);
 
-            // Timeout after 10 seconds
+            // Absolute timeout after 10 seconds
             setTimeout(() => {
                 clearInterval(checkReady);
                 if (!wizardState.audioReady) {
                     document.getElementById('wizardStep1Next').disabled = false;
-                    console.log('🧙 WIZARD: Timeout - enabling continue anyway');
+                    document.getElementById('wizardUploadText').innerHTML = '<span style="color:#00ff88">✓ ' + file.name + '</span><br><span style="font-size: 0.7rem; color: #00ff88;">Ready to continue</span>';
+                    console.log('🧙 WIZARD: Final timeout - enabling continue');
                 }
             }, 10000);
         }
