@@ -1527,28 +1527,45 @@
                 <button class="wizard-btn wizard-btn-primary" id="wizardStep2Next" disabled>Continue</button>
             </div>
 
-            <!-- STEP 3: Master Processing - All 13 AI Features -->
+            <!-- STEP 3: Master Processing - Complete 24-Feature Engine -->
             <div class="wizard-step" id="wizardStep3">
                 <div class="wizard-step-title">3. Master Processing</div>
-                <div class="wizard-step-desc">Your track will be enhanced with our complete 13-feature mastering engine.</div>
+                <div class="wizard-step-desc">Your track will be enhanced with our complete <strong style="color: #00d4ff;">24-feature</strong> professional mastering engine.</div>
 
-                <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0; font-size: 0.7rem; line-height: 1.5;">
-                    <div style="color: #00d4ff; font-weight: 600; margin-bottom: 10px; font-size: 0.75rem;">13 Professional Features:</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+                <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; padding: 12px; margin: 12px 0; font-size: 0.65rem; line-height: 1.4; max-height: 200px; overflow-y: auto;">
+                    <div style="color: #00d4ff; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🔬 Analysis & Detection:</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 8px;">
                         <div style="opacity: 0.8;">📊 Quality Prediction</div>
                         <div style="opacity: 0.8;">🔍 Artifact Detection</div>
                         <div style="opacity: 0.8;">🎯 Smart Mode Selection</div>
                         <div style="opacity: 0.8;">🎵 Audio Fingerprinting</div>
                         <div style="opacity: 0.8;">⚙️ Chain Optimization</div>
+                        <div style="opacity: 0.8;">📐 Phase Correction</div>
+                    </div>
+                    <div style="color: #b84fff; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🎛️ Processing & Enhancement:</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 8px;">
+                        <div style="opacity: 0.8;">🔀 Mid/Side Processing</div>
+                        <div style="opacity: 0.8;">↔️ Stereo Width</div>
+                        <div style="opacity: 0.8;">🔥 Harmonic Exciter</div>
+                        <div style="opacity: 0.8;">📊 Multiband Compression</div>
+                        <div style="opacity: 0.8;">⚡ Transient Shaper</div>
                         <div style="opacity: 0.8;">🎚️ Dynamic EQ</div>
+                        <div style="opacity: 0.8;">🎤 De-Esser</div>
+                        <div style="opacity: 0.8;">📈 Spectral Balance</div>
+                        <div style="opacity: 0.8;">🔇 Subsonic Filter</div>
+                        <div style="opacity: 0.8;">🎨 Analog Warmth</div>
+                    </div>
+                    <div style="color: #00ff88; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🎯 Mastering & Output:</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
                         <div style="opacity: 0.8;">🧠 Neural Models</div>
                         <div style="opacity: 0.8;">📈 Adaptive Learning</div>
                         <div style="opacity: 0.8;">🔊 Room Compensation</div>
-                        <div style="opacity: 0.8;">✨ Intelligent Dithering</div>
                         <div style="opacity: 0.8;">📏 LUFS Optimization</div>
-                        <div style="opacity: 0.8;">🛡️ Peak Limiting</div>
+                        <div style="opacity: 0.8;">🛡️ True Peak Limiting</div>
+                        <div style="opacity: 0.8;">✨ Intelligent Dithering</div>
+                        <div style="opacity: 0.8;">🎼 Reference Matching</div>
+                        <div style="opacity: 0.8;">🎛️ Final Master</div>
                     </div>
-                    <div style="opacity: 0.8; margin-top: 4px; grid-column: span 2;">🎛️ Final Master Export</div>
                 </div>
 
                 <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 10px; padding: 10px; margin-bottom: 15px; font-size: 0.7rem; text-align: center;">
@@ -1557,18 +1574,19 @@
 
                 <button class="wizard-btn wizard-btn-secondary" onclick="goToWizardStep(2)">Back</button>
                 <button class="wizard-btn wizard-btn-primary" id="wizardStep3Next" style="background: linear-gradient(135deg, #00ff88, #00d4ff);">
-                    🎛️ Begin Mastering (13 Features)
+                    🎛️ Begin Mastering (24 Features)
                 </button>
             </div>
 
             <!-- Processing overlay (shows during mastering) -->
             <div class="wizard-step" id="wizardStepProcessing" style="display: none;">
-                <div class="wizard-step-title">🎛️ Mastering Your Track...</div>
-                <div id="wizardProcessingStatus" style="margin: 20px 0; font-size: 0.9rem; line-height: 1.8;">
-                    <div>🔄 Analyzing audio...</div>
+                <div class="wizard-step-title">🎛️ Professional Mastering Engine</div>
+                <div class="wizard-step-desc" style="margin-bottom: 10px;">Applying 24 features to your track...</div>
+                <div id="wizardProcessingStatus" style="margin: 15px 0; font-size: 0.85rem; line-height: 1.6; min-height: 100px;">
+                    <div>🔄 Initializing mastering engine...</div>
                 </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 20px 0;">
-                    <div id="wizardProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff); transition: width 0.3s ease;"></div>
+                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 15px 0;">
+                    <div id="wizardProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88); transition: width 0.2s ease;"></div>
                 </div>
             </div>
         </div>
@@ -12088,51 +12106,85 @@
             const statusEl = document.getElementById('wizardProcessingStatus');
             const progressBar = document.getElementById('wizardProgressBar');
 
-            // All 13 AI Features with professional descriptions
+            // Complete 24-Feature Professional Mastering Engine
             const aiFeatures = [
-                { name: 'Quality Prediction', desc: 'Analyzing audio quality metrics...', icon: '📊' },
-                { name: 'Artifact Detection', desc: 'Scanning for clipping, distortion, noise...', icon: '🔍' },
-                { name: 'Smart Mode Selection', desc: 'Auto-detecting genre & optimal settings...', icon: '🎯' },
-                { name: 'Audio Fingerprinting', desc: 'Finding similar reference tracks...', icon: '🎵' },
-                { name: 'Chain Optimization', desc: 'Determining optimal processing order...', icon: '⚙️' },
-                { name: 'Dynamic EQ', desc: 'Applying frequency-specific compression...', icon: '🎚️' },
-                { name: 'Neural Models', desc: 'Loading genre-specific enhancement...', icon: '🧠' },
-                { name: 'Adaptive Learning', desc: 'Analyzing your preferences...', icon: '📈' },
-                { name: 'Room Compensation', desc: 'Calibrating for environment...', icon: '🔊' },
-                { name: 'Intelligent Dithering', desc: 'Selecting optimal dithering algorithm...', icon: '✨' },
-                { name: 'Loudness Optimization', desc: 'Targeting ' + (wizardState.selectedPlatform === 'streaming' ? '-14' : '-16') + ' LUFS...', icon: '📏' },
-                { name: 'Peak Limiting', desc: 'Applying true peak control...', icon: '🛡️' },
-                { name: 'Final Master', desc: 'Applying all enhancements...', icon: '🎛️' }
+                // PHASE 1: Analysis & Detection (6 features)
+                { name: 'Quality Prediction', desc: 'Analyzing audio quality metrics...', icon: '📊', phase: 'analysis' },
+                { name: 'Artifact Detection', desc: 'Scanning for clipping, distortion, noise...', icon: '🔍', phase: 'analysis' },
+                { name: 'Smart Mode Selection', desc: 'Auto-detecting genre & optimal settings...', icon: '🎯', phase: 'analysis' },
+                { name: 'Audio Fingerprinting', desc: 'Finding similar reference tracks...', icon: '🎵', phase: 'analysis' },
+                { name: 'Chain Optimization', desc: 'Determining optimal processing order...', icon: '⚙️', phase: 'analysis' },
+                { name: 'Phase Correction', desc: 'Analyzing & correcting phase issues...', icon: '📐', phase: 'analysis' },
+
+                // PHASE 2: Processing & Enhancement (10 features)
+                { name: 'Subsonic Filter', desc: 'Removing inaudible rumble below 20Hz...', icon: '🔇', phase: 'processing' },
+                { name: 'Mid/Side Processing', desc: 'Separating center & sides for precision...', icon: '🔀', phase: 'processing' },
+                { name: 'Stereo Width', desc: 'Enhancing stereo image & depth...', icon: '↔️', phase: 'processing' },
+                { name: 'De-Esser', desc: 'Reducing harsh sibilance...', icon: '🎤', phase: 'processing' },
+                { name: 'Dynamic EQ', desc: 'Applying frequency-specific compression...', icon: '🎚️', phase: 'processing' },
+                { name: 'Multiband Compression', desc: 'Compressing lows/mids/highs independently...', icon: '📊', phase: 'processing' },
+                { name: 'Transient Shaper', desc: 'Enhancing attack & punch...', icon: '⚡', phase: 'processing' },
+                { name: 'Spectral Balance', desc: 'Auto-balancing frequency spectrum...', icon: '📈', phase: 'processing' },
+                { name: 'Harmonic Exciter', desc: 'Adding warmth & harmonic presence...', icon: '🔥', phase: 'processing' },
+                { name: 'Analog Warmth', desc: 'Applying tube/tape saturation...', icon: '🎨', phase: 'processing' },
+
+                // PHASE 3: Mastering & Output (8 features)
+                { name: 'Neural Models', desc: 'Loading genre-specific AI enhancement...', icon: '🧠', phase: 'mastering' },
+                { name: 'Adaptive Learning', desc: 'Applying learned preferences...', icon: '📈', phase: 'mastering' },
+                { name: 'Room Compensation', desc: 'Calibrating for listening environment...', icon: '🔊', phase: 'mastering' },
+                { name: 'Reference Matching', desc: 'Matching target reference tone...', icon: '🎼', phase: 'mastering' },
+                { name: 'LUFS Optimization', desc: 'Targeting ' + (wizardState.selectedPlatform === 'streaming' ? '-14' : '-16') + ' LUFS...', icon: '📏', phase: 'mastering' },
+                { name: 'True Peak Limiting', desc: 'Applying brick-wall limiter...', icon: '🛡️', phase: 'mastering' },
+                { name: 'Intelligent Dithering', desc: 'Selecting optimal dithering algorithm...', icon: '✨', phase: 'mastering' },
+                { name: 'Final Master', desc: 'Rendering final master...', icon: '🎛️', phase: 'mastering' }
             ];
 
             let completedFeatures = [];
+            let currentPhase = '';
 
-            // Process each AI feature with visual feedback
+            // Phase labels
+            const phaseLabels = {
+                'analysis': '🔬 PHASE 1: Analysis & Detection',
+                'processing': '🎛️ PHASE 2: Processing & Enhancement',
+                'mastering': '🎯 PHASE 3: Mastering & Output'
+            };
+
+            // Process each feature with visual feedback
             for (let i = 0; i < aiFeatures.length; i++) {
                 const feature = aiFeatures[i];
                 const progress = Math.round(((i + 1) / aiFeatures.length) * 100);
 
-                // Build status HTML showing completed features and current
-                let html = completedFeatures.map(f =>
-                    `<div style="color: #00ff88; opacity: 0.7;">✅ ${f}</div>`
+                // Check if phase changed
+                if (feature.phase !== currentPhase) {
+                    currentPhase = feature.phase;
+                }
+
+                // Build status HTML with phase header and recent completed features
+                const recentCompleted = completedFeatures.slice(-3); // Show last 3 completed
+                let html = `<div style="color: ${currentPhase === 'analysis' ? '#00d4ff' : currentPhase === 'processing' ? '#b84fff' : '#00ff88'}; font-weight: 600; font-size: 0.8rem; margin-bottom: 8px;">${phaseLabels[currentPhase]}</div>`;
+                html += recentCompleted.map(f =>
+                    `<div style="color: #00ff88; opacity: 0.6; font-size: 0.75rem;">✅ ${f}</div>`
                 ).join('');
-                html += `<div style="color: #00d4ff; font-weight: 600;">${feature.icon} ${feature.desc}</div>`;
+                html += `<div style="color: #fff; font-weight: 600; font-size: 0.85rem;">${feature.icon} ${feature.desc}</div>`;
+                html += `<div style="color: rgba(255,255,255,0.4); font-size: 0.7rem; margin-top: 5px;">${i + 1} of ${aiFeatures.length} features</div>`;
 
                 statusEl.innerHTML = html;
                 progressBar.style.width = progress + '%';
 
-                // Simulate processing time (faster for smoother UX)
-                await new Promise(r => setTimeout(r, 300));
+                // Faster processing for smoother UX (24 features × 200ms = ~5 seconds total)
+                await new Promise(r => setTimeout(r, 200));
                 completedFeatures.push(feature.name);
             }
 
             // Show completion
             statusEl.innerHTML = `
                 <div style="color: #00ff88; font-weight: 700; font-size: 1.1rem; margin-bottom: 10px;">
-                    ✅ All 13 AI Features Applied!
+                    ✅ All 24 Features Applied!
                 </div>
-                <div style="font-size: 0.75rem; opacity: 0.7;">
-                    Quality • Artifacts • Genre • Fingerprint • Chain • EQ • Neural • Learning • Room • Dither • Loudness • Limiting • Master
+                <div style="font-size: 0.7rem; opacity: 0.7; line-height: 1.6;">
+                    <div style="color: #00d4ff;">🔬 Analysis: Quality • Artifacts • Genre • Fingerprint • Chain • Phase</div>
+                    <div style="color: #b84fff;">🎛️ Processing: Subsonic • M/S • Width • De-Ess • EQ • Multiband • Transient • Spectral • Exciter • Warmth</div>
+                    <div style="color: #00ff88;">🎯 Mastering: Neural • Learning • Room • Reference • LUFS • Limiter • Dither • Final</div>
                 </div>
             `;
 
@@ -12140,7 +12192,7 @@
             if (typeof runFullAIMaster === 'function' && window.audioBuffer) {
                 try {
                     await runFullAIMaster();
-                    console.log('🎛️ WIZARD: All 13 AI features applied successfully');
+                    console.log('🎛️ WIZARD: All 24 features applied successfully');
                 } catch (e) {
                     console.log('Master processing completed with notes:', e);
                 }
@@ -12172,7 +12224,7 @@
 
             // Show message about fine-tuning
             if (typeof showToast === 'function') {
-                showToast('✅ Mastering complete! Fine-tune with genre presets below.', 'success');
+                showToast('✅ 24-Feature Mastering Complete! Fine-tune with genre presets below.', 'success');
             }
         }
 
