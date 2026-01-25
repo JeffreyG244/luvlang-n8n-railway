@@ -1726,13 +1726,24 @@
                 </div>
 
                 <div style="padding: 15px;">
-                    <!-- Main AI Master Button (Prominent) -->
-                    <button class="eq-bypass-btn" onclick="runFullAIMaster()" style="width: 100%; padding: 20px; background: linear-gradient(135deg, #00d4ff, #b84fff); font-weight: 700; font-size: 0.9rem; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);">
+                    <!-- Main AI Master Button (Prominent with GLOW animation) -->
+                    <button class="eq-bypass-btn" id="aiMasterBtn" onclick="runFullAIMaster()" style="width: 100%; padding: 20px; background: linear-gradient(135deg, #00d4ff, #b84fff); font-weight: 700; font-size: 0.9rem; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.4); animation: aiButtonGlow 2s ease-in-out infinite; position: relative; overflow: hidden;">
                         ⚡ RUN FULL AI MASTER
                         <div style="font-size: 0.65rem; font-weight: 400; opacity: 0.9; margin-top: 5px;">
                             Complete AI Analysis & Enhancement • Uses All 13 Features
                         </div>
                     </button>
+                    <style>
+                        @keyframes aiButtonGlow {
+                            0%, 100% { box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.3); }
+                            50% { box-shadow: 0 4px 25px rgba(0, 212, 255, 0.6), 0 0 50px rgba(184, 79, 255, 0.5), 0 0 80px rgba(0, 212, 255, 0.3); }
+                        }
+                        #aiMasterBtn:hover {
+                            animation: none;
+                            box-shadow: 0 4px 30px rgba(0, 212, 255, 0.8), 0 0 60px rgba(184, 79, 255, 0.6);
+                            transform: scale(1.02);
+                        }
+                    </style>
 
                     <!-- Toggle Individual Features -->
                     <div style="text-align: center; margin-bottom: 15px;">
@@ -2194,6 +2205,33 @@
              RIGHT SIDEBAR - Professional Meters, Master, Export
              ═════════════════════════════════════════════════════════════════ -->
         <div class="right-sidebar">
+
+            <!-- 🎯 LIVE LUFS INDICATOR - Always Visible at Top -->
+            <div id="liveLufsIndicator" style="position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #0a0a12 0%, #1a1a28 100%); border: 2px solid rgba(0, 212, 255, 0.4); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="font-size: 0.7rem; color: #00d4ff; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;">🎯 LIVE LUFS</div>
+                    <div id="liveLufsStatus" style="font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; background: rgba(0, 255, 136, 0.2); color: #00ff88; font-weight: 600;">MONITORING</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <!-- LIVE (Real-time) -->
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">LIVE</div>
+                        <div id="liveLufsValue" style="font-size: 2rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);">-∞</div>
+                        <div style="font-size: 0.6rem; color: rgba(0,255,136,0.6);">LUFS</div>
+                    </div>
+                    <!-- MEASURED (After AI) -->
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">MEASURED</div>
+                        <div id="measuredLufsValue" style="font-size: 2rem; font-weight: 800; color: #00d4ff; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">--</div>
+                        <div style="font-size: 0.6rem; color: rgba(0,212,255,0.6);">LUFS</div>
+                    </div>
+                </div>
+                <!-- Target indicator -->
+                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Target:</div>
+                    <div id="liveLufsTarget" style="font-size: 0.8rem; font-weight: 700; color: #ffd700;">-14 LUFS (Streaming)</div>
+                </div>
+            </div>
 
             <!-- 📊 PROFESSIONAL BROADCAST METERS - Redesigned for Clarity -->
             <div class="meters-container">
@@ -7493,9 +7531,28 @@
 
                     const lufsValueElement = document.getElementById('lufsValue');
                     const lufsMeterElement = document.getElementById('lufsMeter');
+                    const liveLufsValue = document.getElementById('liveLufsValue');
 
                     if (lufsValueElement) {
                         lufsValueElement.textContent = smoothedLUFS.toFixed(1);
+                    }
+
+                    // Update LIVE LUFS indicator (top right)
+                    if (liveLufsValue) {
+                        liveLufsValue.textContent = smoothedLUFS.toFixed(1);
+                        // Color based on proximity to target
+                        const target = -14; // Default
+                        const diff = Math.abs(smoothedLUFS - target);
+                        if (diff <= 1) {
+                            liveLufsValue.style.color = '#00ff88'; // Green - on target
+                            liveLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
+                        } else if (diff <= 3) {
+                            liveLufsValue.style.color = '#ffd700'; // Yellow - close
+                            liveLufsValue.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
+                        } else {
+                            liveLufsValue.style.color = '#ff6b6b'; // Red - off target
+                            liveLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                        }
                     }
 
                     const lufsPercent = Math.max(0, Math.min(100, ((smoothedLUFS + 60) / 60) * 100));
@@ -8334,6 +8391,19 @@
                 lockedLUFS = calculatedIntegratedLUFS;
                 lockedPeak = limitedPeakDB;
                 metersLocked = true;
+
+                // Update MEASURED LUFS indicator (top right)
+                const measuredLufsValue = document.getElementById('measuredLufsValue');
+                const liveLufsStatus = document.getElementById('liveLufsStatus');
+                if (measuredLufsValue) {
+                    measuredLufsValue.textContent = lockedLUFS.toFixed(1);
+                    measuredLufsValue.style.color = '#00ff88';
+                    measuredLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
+                }
+                if (liveLufsStatus) {
+                    liveLufsStatus.textContent = 'MASTERED ✓';
+                    liveLufsStatus.style.background = 'rgba(0, 255, 136, 0.3)';
+                }
 
                 console.log('✅ Integrated LUFS (calculated from gain):', lockedLUFS.toFixed(1), 'LUFS');
                 console.log('   (Before:', beforeLUFS.toFixed(1), 'LUFS + Gain:', safeGain.toFixed(1), 'dB)');
