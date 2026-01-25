@@ -2998,6 +2998,45 @@
 
                 console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
 
+                // 🧙 WIZARD: Apply pending settings now that masterGain is ready
+                if (window.wizardPendingApplication && window.wizardState) {
+                    console.log('🧙 WIZARD: masterGain ready - applying deferred settings NOW...');
+
+                    // Apply platform preset with audible gain change
+                    if (window.wizardState.selectedPlatform) {
+                        setTimeout(() => {
+                            const platformBtn = document.querySelector('.selector-btn[data-platform="' + window.wizardState.selectedPlatform + '"]');
+                            if (platformBtn) {
+                                platformBtn.click();
+                                console.log('🧙 WIZARD: Applied platform preset -', window.wizardState.selectedPlatform);
+                            }
+                        }, 100);
+                    }
+
+                    // Apply genre preset with EQ changes
+                    if (window.wizardState.selectedGenre) {
+                        setTimeout(() => {
+                            const genreBtn = document.querySelector('.selector-btn[data-genre="' + window.wizardState.selectedGenre + '"]');
+                            if (genreBtn) {
+                                genreBtn.click();
+                                console.log('🧙 WIZARD: Applied genre preset -', window.wizardState.selectedGenre);
+                            }
+                        }, 200);
+                    }
+
+                    // Run AI Auto Master if that mode was selected
+                    if (window.wizardState.selectedMode === 'ai') {
+                        setTimeout(() => {
+                            if (typeof runFullAIMaster === 'function') {
+                                console.log('🧙 WIZARD: Running AI Auto Master...');
+                                runFullAIMaster();
+                            }
+                        }, 500);
+                    }
+
+                    window.wizardPendingApplication = false;
+                }
+
                 // ⚡ PROFESSIONAL SPECTRUM ANALYZER (8192 FFT - balanced quality/performance)
                 // Note: 32768 FFT was causing audio skipping due to excessive CPU load
                 analyser = audioContext.createAnalyser();
@@ -3209,41 +3248,13 @@
                     // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                     window.audioBuffer = audioBuffer;
 
-                    // 🧙 WIZARD: Apply deferred platform/genre/mode settings now that audio is ready
+                    // 🧙 WIZARD: Apply deferred settings AFTER setupWebAudio completes
+                    // We need to wait for masterGain to be created
                     if (window.wizardState) {
-                        console.log('🧙 WIZARD: Audio loaded - applying deferred settings...');
+                        console.log('🧙 WIZARD: Audio buffer ready - will apply settings after Web Audio setup...');
 
-                        // Apply platform preset with audible gain change
-                        if (window.wizardState.selectedPlatform) {
-                            setTimeout(() => {
-                                const platformBtn = document.querySelector('.selector-btn[data-platform="' + window.wizardState.selectedPlatform + '"]');
-                                if (platformBtn) {
-                                    platformBtn.click();
-                                    console.log('🧙 WIZARD: Applied platform preset -', window.wizardState.selectedPlatform);
-                                }
-                            }, 100);
-                        }
-
-                        // Apply genre preset with EQ changes
-                        if (window.wizardState.selectedGenre) {
-                            setTimeout(() => {
-                                const genreBtn = document.querySelector('.selector-btn[data-genre="' + window.wizardState.selectedGenre + '"]');
-                                if (genreBtn) {
-                                    genreBtn.click();
-                                    console.log('🧙 WIZARD: Applied genre preset -', window.wizardState.selectedGenre);
-                                }
-                            }, 200);
-                        }
-
-                        // Run AI Auto Master if that mode was selected
-                        if (window.wizardState.selectedMode === 'ai') {
-                            setTimeout(() => {
-                                if (typeof runFullAIMaster === 'function') {
-                                    console.log('🧙 WIZARD: Running AI Auto Master...');
-                                    runFullAIMaster();
-                                }
-                            }, 500);
-                        }
+                        // Store flag to apply settings after setupWebAudio
+                        window.wizardPendingApplication = true;
                     }
 
                     // Store original peaks for transient ghost layer
