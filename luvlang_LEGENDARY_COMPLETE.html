@@ -2226,10 +2226,18 @@
                         <div style="font-size: 0.6rem; color: rgba(0,212,255,0.6);">LUFS</div>
                     </div>
                 </div>
-                <!-- Target indicator -->
-                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Target:</div>
-                    <div id="liveLufsTarget" style="font-size: 0.8rem; font-weight: 700; color: #ffd700;">-14 LUFS (Streaming)</div>
+                <!-- Target indicator + Auto LUFS Toggle -->
+                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Target:</div>
+                        <div id="liveLufsTarget" style="font-size: 0.8rem; font-weight: 700; color: #ffd700;">-14 LUFS (Streaming)</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">Auto-Adjust:</div>
+                        <button id="autoLUFSToggle" onclick="toggleAutoLUFS()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: rgba(255, 255, 255, 0.6); font-size: 0.6rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 700;" title="Auto LUFS Compensation - Automatically adjusts gain to maintain platform target">
+                            OFF
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2242,27 +2250,7 @@
                     </button>
                 </div>
 
-                <!-- LOUDNESS METER CARD (Primary) -->
-                <div style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(0, 212, 255, 0.02)); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: nowrap; gap: 8px;">
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">LOUDNESS</div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div id="lufsTarget" style="font-size: 0.65rem; color: rgba(0, 212, 255, 0.8); font-weight: 600; white-space: nowrap;">Target: -14 LUFS</div>
-                            <button id="autoLUFSToggle" onclick="toggleAutoLUFS()" style="background: rgba(255, 255, 255, 0.1); border: none; color: rgba(255, 255, 255, 0.5); font-size: 0.55rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: 700; white-space: nowrap;" title="Auto LUFS Compensation - Automatically adjusts gain to maintain platform target">
-                                OFF
-                            </button>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap;">
-                        <div id="lufsValue" style="font-size: 2.5rem; font-weight: 700; color: #00d4ff; line-height: 1; font-family: 'Courier New', monospace; white-space: nowrap;">-∞</div>
-                        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); font-weight: 600; white-space: nowrap;">LUFS</div>
-                    </div>
-                    <div class="meter-bar" style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                        <div class="meter-bar-fill" id="lufsMeter" style="height: 100%; background: linear-gradient(90deg, #00ff88, #00d4ff); transition: width 0.3s ease;"></div>
-                    </div>
-                </div>
-
-                <!-- STEREO & PEAK METER CARDS (Secondary - Side by Side) -->
+                <!-- STEREO & PEAK METER CARDS -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                     <!-- Phase Correlation -->
                     <div style="background: linear-gradient(135deg, rgba(156, 39, 176, 0.08), rgba(156, 39, 176, 0.02)); border: 1px solid rgba(156, 39, 176, 0.3); border-radius: 10px; padding: 12px;">
@@ -7308,51 +7296,36 @@
             // PROFESSIONAL METERING: LUFS locked to stable integrated value (no fluctuation)
             // Peak and Phase meters stay REAL-TIME (should fluctuate with audio)
             if (metersLocked && lockedLUFS !== null) {
-                // Only lock LUFS meter - keep peak and phase in real-time
-                const lufsValueElement = document.getElementById('lufsValue');
-                const lufsMeterElement = document.getElementById('lufsMeter');
-
-                if (lufsValueElement) {
-                    // STABLE integrated LUFS (like professional mastering tools)
-                    lufsValueElement.textContent = lockedLUFS.toFixed(1);
+                // Update the MEASURED LUFS value (locked after AI mastering)
+                const measuredLufsValue = document.getElementById('measuredLufsValue');
+                if (measuredLufsValue) {
+                    measuredLufsValue.textContent = lockedLUFS.toFixed(1);
                 }
 
-                // Update LUFS meter bar (stable width and color)
-                if (lufsMeterElement) {
-                    const lufsPercent = Math.max(0, Math.min(100, ((lockedLUFS + 60) / 60) * 100));
-                    lufsMeterElement.style.width = lufsPercent + '%';
+                // Color based on target
+                const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
+                let platformTarget = -14;
+                if (selectedPlatform) {
+                    const platform = selectedPlatform.getAttribute('data-platform');
+                    if (platform === 'youtube') platformTarget = -14;
+                    else if (platform === 'apple') platformTarget = -16;
+                    else if (platform === 'tidal') platformTarget = -14;
+                    else platformTarget = -14;
+                }
 
-                    // Set color based on locked value
-                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
-                    let platformTarget = -14;
-                    if (selectedPlatform) {
-                        const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'youtube') platformTarget = -14;
-                        else if (platform === 'apple') platformTarget = -16;
-                        else if (platform === 'tidal') platformTarget = -14;
-                        else platformTarget = -14;
-                    }
+                const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
 
-                    const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
-
-                    // Dynamic thresholds based on platform target
-                    let clipThreshold, hotThreshold;
-                    if (platformTarget === -16) { // Apple Music/Podcast
-                        clipThreshold = -12;
-                        hotThreshold = -14;
-                    } else { // Streaming (-14)
-                        clipThreshold = -10;
-                        hotThreshold = -12;
-                    }
-
-                    if (lockedLUFS > clipThreshold) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (clip warning)
-                    } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (on target)
-                    } else if (lufsDeviation <= 3.5) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow
+                // Color the measured LUFS value based on target proximity
+                if (measuredLufsValue) {
+                    if (lufsDeviation <= 1.0) {
+                        measuredLufsValue.style.color = '#00ff88'; // Green - on target
+                        measuredLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
+                    } else if (lufsDeviation <= 2.5) {
+                        measuredLufsValue.style.color = '#ffd700'; // Yellow - close
+                        measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
                     } else {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange
+                        measuredLufsValue.style.color = '#ff6b6b'; // Red - off target
+                        measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
                     }
                 }
 
@@ -7369,8 +7342,8 @@
                 console.log('   rightAnalyser:', rightAnalyser ? 'EXISTS' : 'NULL');
                 console.log('   DOM Elements:');
 
-                const lufsValue = document.getElementById('lufsValue');
-                const lufsMeter = document.getElementById('lufsMeter');
+                const liveLufs = document.getElementById('liveLufsValue');
+                const measuredLufs = document.getElementById('measuredLufsValue');
                 const peakValue = document.getElementById('peakValue');
                 const peakMeter = document.getElementById('peakMeter');
                 const phaseValue = document.getElementById('phaseValue');
@@ -7378,8 +7351,8 @@
                 const metersContainer = document.querySelector('.meters-container');
                 const rightSidebar = document.querySelector('.right-sidebar');
 
-                console.log('     - lufsValue:', lufsValue ? 'EXISTS' : 'MISSING');
-                console.log('     - lufsMeter:', lufsMeter ? 'EXISTS' : 'MISSING');
+                console.log('     - liveLufsValue:', liveLufs ? 'EXISTS' : 'MISSING');
+                console.log('     - measuredLufsValue:', measuredLufs ? 'EXISTS' : 'MISSING');
                 console.log('     - peakValue:', peakValue ? 'EXISTS' : 'MISSING');
                 console.log('     - peakMeter:', peakMeter ? 'EXISTS' : 'MISSING');
                 console.log('     - phaseValue:', phaseValue ? 'EXISTS' : 'MISSING');
@@ -7402,29 +7375,18 @@
                     console.log('     - opacity:', style.opacity);
                 }
 
-                if (lufsValue) {
-                    const style = window.getComputedStyle(lufsValue);
-                    console.log('   lufsValue computed:');
+                if (liveLufs) {
+                    const style = window.getComputedStyle(liveLufs);
+                    console.log('   liveLufsValue computed:');
                     console.log('     - opacity:', style.opacity);
                     console.log('     - color:', style.color);
                 }
 
-                if (lufsMeter) {
-                    const style = window.getComputedStyle(lufsMeter);
-                    const parent = lufsMeter.parentElement;
-                    const parentStyle = parent ? window.getComputedStyle(parent) : null;
-                    console.log('   lufsMeter computed:');
-                    console.log('     - width:', style.width);
-                    console.log('     - height:', style.height);
+                if (measuredLufs) {
+                    const style = window.getComputedStyle(measuredLufs);
+                    console.log('   measuredLufsValue computed:');
                     console.log('     - opacity:', style.opacity);
-                    console.log('     - background:', style.background);
-                    if (parentStyle) {
-                        console.log('   lufsMeter PARENT (.meter-bar) computed:');
-                        console.log('     - width:', parentStyle.width);
-                        console.log('     - height:', parentStyle.height);
-                        console.log('     - opacity:', parentStyle.opacity);
-                        console.log('     - display:', parentStyle.display);
-                    }
+                    console.log('     - color:', style.color);
                 }
 
                 console.log('═══════════════════════════════════════════════');
@@ -7529,20 +7491,24 @@
                 if (currentTime - lastMeterUpdate >= METER_UPDATE_INTERVAL) {
                     lastMeterUpdate = currentTime;
 
-                    const lufsValueElement = document.getElementById('lufsValue');
-                    const lufsMeterElement = document.getElementById('lufsMeter');
                     const liveLufsValue = document.getElementById('liveLufsValue');
 
-                    if (lufsValueElement) {
-                        lufsValueElement.textContent = smoothedLUFS.toFixed(1);
+                    // Get platform target for color coding
+                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
+                    let platformTarget = -14; // Default Spotify
+                    if (selectedPlatform) {
+                        const platform = selectedPlatform.getAttribute('data-platform');
+                        if (platform === 'youtube') platformTarget = -14;
+                        else if (platform === 'apple') platformTarget = -16;
+                        else if (platform === 'tidal') platformTarget = -14;
+                        else platformTarget = -14; // Spotify
                     }
 
-                    // Update LIVE LUFS indicator (top right)
+                    // Update LIVE LUFS indicator (top right) - the only LUFS display
                     if (liveLufsValue) {
                         liveLufsValue.textContent = smoothedLUFS.toFixed(1);
                         // Color based on proximity to target
-                        const target = -14; // Default
-                        const diff = Math.abs(smoothedLUFS - target);
+                        const diff = Math.abs(smoothedLUFS - platformTarget);
                         if (diff <= 1) {
                             liveLufsValue.style.color = '#00ff88'; // Green - on target
                             liveLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
@@ -7554,12 +7520,6 @@
                             liveLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
                         }
                     }
-
-                    const lufsPercent = Math.max(0, Math.min(100, ((smoothedLUFS + 60) / 60) * 100));
-
-                    if (lufsMeterElement) {
-                        lufsMeterElement.style.width = lufsPercent + '%';
-                    }
                 } else {
                     // Skip this frame to prevent flickering
                     return;
@@ -7567,45 +7527,6 @@
 
                 // Use smoothed value for all subsequent calculations
                 const displayLUFS = smoothedLUFS;
-
-                // Dynamic color coding for LUFS based on selected platform target
-                const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
-                let platformTarget = -14; // Default Spotify
-                if (selectedPlatform) {
-                    const platform = selectedPlatform.getAttribute('data-platform');
-                    if (platform === 'youtube') platformTarget = -14;
-                    else if (platform === 'apple') platformTarget = -16;
-                    else if (platform === 'tidal') platformTarget = -14;
-                    else platformTarget = -14; // Spotify
-                }
-
-                // Check deviation from target (wider tolerance for stability)
-                const lufsDeviation = Math.abs(displayLUFS - platformTarget);
-
-                const lufsValueElement2 = document.getElementById('lufsValue');
-                const lufsMeterElement2 = document.getElementById('lufsMeter');
-
-                if (lufsMeterElement2) {
-                    // Dynamic thresholds based on platform target
-                    let clipThreshold2;
-                    if (platformTarget === -16) { // Apple Music/Podcast
-                        clipThreshold2 = -12;
-                    } else { // Streaming (-14)
-                        clipThreshold2 = -10;
-                    }
-
-                    if (displayLUFS > clipThreshold2) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff3333, #ff6666)'; // Red (clip warning)
-                    } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #00ff88, #00ddff)'; // Green (on target - within 2 LU)
-                    } else if (lufsDeviation <= 3.5) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ffaa00, #ffcc00)'; // Yellow (close - within 3.5 LU)
-                    } else if (displayLUFS < platformTarget - 5) {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Light green (too quiet)
-                    } else {
-                        lufsMeterElement2.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Orange (needs adjustment)
-                    }
-                }
 
                 // Short-term LUFS (3 seconds, ungated)
                 const shortTermBlocks = lufsGatingBuffer.slice(-8); // Last ~3 seconds
@@ -8282,43 +8203,39 @@
                 console.log('   Pre-compensation worked:', lufsDeviation <= 1.5 ? 'YES ✅' : 'Needs adjustment ⚠️');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                // Immediate meter update - show estimated values
-                // Real-time updateMeters() will soon replace with ACTUAL measured values
-                const lufsValueElement = document.getElementById('lufsValue');
-                const lufsMeterElement = document.getElementById('lufsMeter');
+                // Update MEASURED LUFS indicator (top right)
+                const measuredLufsValue = document.getElementById('measuredLufsValue');
+                const liveLufsStatus = document.getElementById('liveLufsStatus');
 
-                if (lufsValueElement) {
-                    // Display expected LUFS (updateMeters will update with real measurement)
-                    lufsValueElement.textContent = finalExpectedLUFS.toFixed(1);
+                if (measuredLufsValue) {
+                    // Display expected LUFS in MEASURED indicator
+                    measuredLufsValue.textContent = finalExpectedLUFS.toFixed(1);
+
+                    // Color code based on target accuracy
+                    const lufsDeviation = Math.abs(finalExpectedLUFS - targetLUFS);
+                    if (lufsDeviation <= 1.0) {
+                        measuredLufsValue.style.color = '#00ff88'; // Green - on target
+                        measuredLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
+                    } else if (lufsDeviation <= 2.5) {
+                        measuredLufsValue.style.color = '#ffd700'; // Yellow - close
+                        measuredLufsValue.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
+                    } else {
+                        measuredLufsValue.style.color = '#ff6b6b'; // Red - off target
+                        measuredLufsValue.style.textShadow = '0 0 25px rgba(255, 107, 107, 0.6)';
+                    }
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📊 INITIAL METER DISPLAY (will update with real measurements)');
+                    console.log('📊 MEASURED LUFS UPDATED');
                     console.log('   Platform:', selectedPlatformBtn ? selectedPlatformBtn.getAttribute('data-platform').toUpperCase() : 'SPOTIFY');
                     console.log('   Target LUFS:', targetLUFS, 'LUFS');
-                    console.log('   Expected LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
+                    console.log('   Measured LUFS:', finalExpectedLUFS.toFixed(1), 'LUFS');
                     console.log('   Deviation:', Math.abs(finalExpectedLUFS - targetLUFS).toFixed(1), 'LU');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 }
 
-                // Update LUFS meter bar with FINAL value
-                if (lufsMeterElement) {
-                    const lufsPercent = Math.max(0, Math.min(100, ((finalExpectedLUFS + 60) / 60) * 100));
-                    lufsMeterElement.style.width = lufsPercent + '%';
-
-                    // Color code based on target accuracy
-                    const lufsDeviation = Math.abs(finalExpectedLUFS - targetLUFS);
-                    if (lufsDeviation <= 0.5) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #00ff88, #00ddaa)'; // Perfect! (±0.5 LU)
-                    } else if (lufsDeviation <= 1.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)'; // Very Good (±1.0 LU)
-                    } else if (lufsDeviation <= 2.0) {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #8BC34A, #CDDC39)'; // Good (±2.0 LU)
-                    } else {
-                        lufsMeterElement.style.background = 'linear-gradient(90deg, #ff9500, #ffaa00)'; // Needs adjustment
-                    }
-
-                    console.log('   Meter Bar Width:', lufsPercent.toFixed(0) + '% (range: 0-100%)');
-                    console.log('   Meter Color:', lufsDeviation <= 0.5 ? '🟢 Green (Perfect ±0.5 LU)' : lufsDeviation <= 1.0 ? '🟢 Light Green (Very Good ±1.0 LU)' : lufsDeviation <= 2.0 ? '🟡 Yellow (Good ±2.0 LU)' : '🟠 Orange (Needs Adjustment)');
+                if (liveLufsStatus) {
+                    liveLufsStatus.textContent = 'MASTERED ✓';
+                    liveLufsStatus.style.background = 'rgba(0, 255, 136, 0.3)';
                 }
 
                 const peakValueElement = document.getElementById('peakValue');
