@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX8-3SEC-DEFER]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX9-MINIMAL-CHAIN]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -2911,47 +2911,76 @@
 
                 console.log('✅ Stereo processing nodes created (L/R analyzers for True Peak)');
 
-                // ⚡ AUDIO SIGNAL CHAIN
-                // Source → EQ (7-band) → EQ Compensation → Compressor → Makeup Gain → Limiter → Master Gain → Stereo Split → Merger → Analyser → Output
-                // Parallel: K-weighted path for LUFS measurement
-                sourceNode.connect(eqSubFilter);
-                eqSubFilter.connect(eqBassFilter);
-                eqBassFilter.connect(eqLowMidFilter);
-                eqLowMidFilter.connect(eqMidFilter);
-                eqMidFilter.connect(eqHighMidFilter);
-                eqHighMidFilter.connect(eqHighFilter);
-                eqHighFilter.connect(eqAirFilter);
-                eqAirFilter.connect(eqCompensationGain);
-                eqCompensationGain.connect(compressor);
-                compressor.connect(makeupGain);  // AI mastering gain (before limiter)
-                makeupGain.connect(limiter);     // Limiter protects peaks
-                limiter.connect(masterGain);     // Manual output gain (after limiter)
+                // ═══════════════════════════════════════════════════════════════════
+                // FIX9: MINIMAL CHAIN FOR INITIAL PLAYBACK
+                // Full processing chain was causing audio skipping.
+                // Now: Source → masterGain → analyser → destination (just 3 nodes)
+                // Full chain activates later when user clicks mastering button.
+                // ═══════════════════════════════════════════════════════════════════
 
-                // Stereo processing
-                masterGain.connect(stereoSplitter);
-                stereoSplitter.connect(leftChannel, 0);
-                stereoSplitter.connect(rightChannel, 1);
-                leftChannel.connect(stereoMerger, 0, 0);
-                rightChannel.connect(stereoMerger, 0, 1);
-
-                // L/R peak analyzers
-                stereoSplitter.connect(leftAnalyser, 0);
-                stereoSplitter.connect(rightAnalyser, 1);
-
-                // Main output path
-                stereoMerger.connect(analyser);
+                // MINIMAL CHAIN: Source → Master Gain → Analyser → Output
+                sourceNode.connect(masterGain);
+                masterGain.connect(analyser);
                 analyser.connect(audioContext.destination);
 
-                // K-weighted parallel path (for LUFS measurement)
-                stereoMerger.connect(kWeightingHPF1);
-                kWeightingHPF1.connect(kWeightingHPF2);
-                kWeightingHPF2.connect(kWeightingShelf);
-                kWeightingShelf.connect(kWeightedAnalyser);
+                // Store flag for chain state
+                window.fullChainActive = false;
 
-                console.log('✅ Professional audio chain connected');
-                console.log('   Source → EQ (7-Band) → EQ Compensation → Compressor → Limiter → Master Gain → Stereo → Analyser → Output');
-                console.log('   Parallel: K-Weighted Path → LUFS Meter');
-                console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
+                console.log('✅ MINIMAL audio chain connected (FIX9 - for smooth playback)');
+                console.log('   Source → Master Gain → Analyser → Output');
+                console.log('   💡 Full EQ/Compressor/Limiter chain activates when you click AI Master');
+
+                // Function to activate full chain (called when user clicks mastering button)
+                window.activateFullProcessingChain = function() {
+                    if (window.fullChainActive) {
+                        console.log('ℹ️ Full chain already active');
+                        return;
+                    }
+
+                    console.log('🔧 Activating full processing chain...');
+
+                    // Disconnect minimal chain
+                    sourceNode.disconnect();
+                    masterGain.disconnect();
+
+                    // Connect full chain
+                    sourceNode.connect(eqSubFilter);
+                    eqSubFilter.connect(eqBassFilter);
+                    eqBassFilter.connect(eqLowMidFilter);
+                    eqLowMidFilter.connect(eqMidFilter);
+                    eqMidFilter.connect(eqHighMidFilter);
+                    eqHighMidFilter.connect(eqHighFilter);
+                    eqHighFilter.connect(eqAirFilter);
+                    eqAirFilter.connect(eqCompensationGain);
+                    eqCompensationGain.connect(compressor);
+                    compressor.connect(makeupGain);
+                    makeupGain.connect(limiter);
+                    limiter.connect(masterGain);
+
+                    // Stereo processing
+                    masterGain.connect(stereoSplitter);
+                    stereoSplitter.connect(leftChannel, 0);
+                    stereoSplitter.connect(rightChannel, 1);
+                    leftChannel.connect(stereoMerger, 0, 0);
+                    rightChannel.connect(stereoMerger, 0, 1);
+
+                    // L/R peak analyzers
+                    stereoSplitter.connect(leftAnalyser, 0);
+                    stereoSplitter.connect(rightAnalyser, 1);
+
+                    // Main output
+                    stereoMerger.connect(analyser);
+                    analyser.connect(audioContext.destination);
+
+                    // K-weighted path
+                    stereoMerger.connect(kWeightingHPF1);
+                    kWeightingHPF1.connect(kWeightingHPF2);
+                    kWeightingHPF2.connect(kWeightingShelf);
+                    kWeightingShelf.connect(kWeightedAnalyser);
+
+                    window.fullChainActive = true;
+                    console.log('✅ Full processing chain NOW ACTIVE');
+                };
 
                 // Start visualization
                 try {
