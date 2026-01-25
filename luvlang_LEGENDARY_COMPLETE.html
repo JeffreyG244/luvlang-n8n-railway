@@ -2824,9 +2824,13 @@
                         });
                     }
 
-                    // 💳 STRIPE: Initialize payment processing
+                    // 💳 STRIPE: Initialize payment processing (wrapped in try-catch to prevent audio chain breakage)
                     if (typeof initializeStripe === 'function') {
-                        initializeStripe(); // Does not return a promise
+                        try {
+                            initializeStripe();
+                        } catch (stripeErr) {
+                            console.warn('⚠️ Stripe initialization skipped:', stripeErr.message);
+                        }
                     }
 
                     // ✨ CRITICAL FIX: Initialize audio playback connection
