@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX7-DEFERRED-AI]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX8-3SEC-DEFER]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -3062,98 +3062,48 @@
                 }
                 window.currentBlobURL = fileURL;
 
-                // CRITICAL: Decode audioBuffer for AI Auto Master
-                try {
-                    const arrayBuffer = await uploadedFile.arrayBuffer();
-                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                // ═══════════════════════════════════════════════════════════════════
+                // FIX8: COMPLETELY DEFER ALL HEAVY OPERATIONS
+                // The decodeAudioData call was competing with audio playback.
+                // Now we wait 3 FULL SECONDS before any CPU-intensive work.
+                // ═══════════════════════════════════════════════════════════════════
+                console.log('⏳ Audio playback starting - heavy operations deferred 3 seconds...');
 
-                    // Make audioBuffer globally accessible for ULTIMATE_VISUALS
-                    window.audioBuffer = audioBuffer;
-                    console.log('✅ Audio buffer decoded for AI processing');
+                setTimeout(async () => {
+                    console.log('🔄 Now performing deferred audio buffer decoding...');
 
-                    // DEFERRED: Heavy operations moved to idle time to prevent audio skipping
-                    const performHeavyOperations = () => {
-                        console.log('🔄 Performing deferred heavy operations...');
+                    try {
+                        const arrayBuffer = await uploadedFile.arrayBuffer();
+                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
-                        // Store original peaks for transient ghost layer (expensive copy)
-                        window.originalPeaksData = audioBuffer.getChannelData(0).slice();
+                        window.audioBuffer = audioBuffer;
+                        console.log('✅ Audio buffer decoded for AI processing');
 
-                        // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
-                        // Using SAMPLED approach (every 100th sample) to reduce CPU load
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                        console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
+                        // Store original peaks (deferred further)
+                        setTimeout(() => {
+                            window.originalPeaksData = audioBuffer.getChannelData(0).slice();
+                            console.log('✅ Peak data stored');
+                        }, 1000);
 
-                        const channelData = audioBuffer.getChannelData(0);
-                        let sumSquares = 0;
-                        let sampleCount = 0;
-                        const sampleStep = 100; // Only sample every 100th sample for speed
-                        for (let i = 0; i < channelData.length; i += sampleStep) {
-                            sumSquares += channelData[i] * channelData[i];
-                            sampleCount++;
-                        }
-                        const rms = Math.sqrt(sumSquares / sampleCount);
-                        const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
+                        // Draw waveform
+                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
 
-                        console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
-
-                        const targetRMS = -18;
-                        const masterGainSlider = document.getElementById('masterGainSlider');
-                        const masterGainValue = document.getElementById('masterGainValue');
-
-                        if (rmsDB < targetRMS - 1) {
-                            const gainNeeded = targetRMS - rmsDB;
-                            const safeGain = Math.min(gainNeeded, 12);
-
-                            if (masterGainSlider && masterGainValue) {
-                                masterGainSlider.value = safeGain;
-                                masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
-
-                                if (masterGain) {
-                                    masterGain.gain.value = Math.pow(10, safeGain / 20);
-                                }
-
-                                console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
+                        // Initialize WebGL spectrum
+                        setTimeout(() => {
+                            if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
+                                window.WebGLSpectrum.init(spectrumCanvas);
                             }
-                        } else {
-                            console.log('   ✅ Signal already at optimal level');
-                        }
-                        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    };
+                            if (window.drawCorrelationLegend && correlationLegendCanvas) {
+                                window.drawCorrelationLegend(correlationLegendCanvas);
+                            }
+                        }, 1500);
 
-                    // Use requestIdleCallback to run during idle time, or setTimeout as fallback
-                    if (window.requestIdleCallback) {
-                        window.requestIdleCallback(performHeavyOperations, { timeout: 3000 });
-                    } else {
-                        setTimeout(performHeavyOperations, 1000);
+                    } catch (error) {
+                        console.error('⚠️ Error decoding audio buffer:', error);
                     }
+                }, 3000); // 3 SECOND DELAY - let audio playback fully stabilize first
 
-                    // Draw waveform after a short delay (less critical than audio playback)
-                    console.log('📊 WAVEFORM: Scheduling draw...');
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 200);
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 600);
-
-                    // DEFERRED: Initialize WebGL spectrum analyzer after playback starts
-                    setTimeout(() => {
-                        if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
-                            console.log('🎨 Initializing WebGL Spectrum with Persistence...');
-                            const success = window.WebGLSpectrum.init(spectrumCanvas);
-                            if (success) {
-                                console.log('   ✅ WebGL Persistence System active');
-                            }
-                        }
-
-                        // Draw correlation heatmap legend (static, one-time)
-                        if (window.drawCorrelationLegend && correlationLegendCanvas) {
-                            window.drawCorrelationLegend(correlationLegendCanvas);
-                        }
-                    }, 800); // Defer WebGL init to allow audio to stabilize
-
-                } catch (error) {
-                    console.error('⚠️ Error decoding audio buffer:', error);
-                }
-
-                // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
             });
         }
