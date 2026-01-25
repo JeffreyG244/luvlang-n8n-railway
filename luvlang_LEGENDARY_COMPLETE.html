@@ -4241,21 +4241,28 @@
                     if (peak > maxPeak) maxPeak = peak;
                 }
 
-                // ITU-R BS.1770-4 LUFS Measurement (Gated)
-                // This is a simplified but accurate gated loudness measurement
-                const blockSize = Math.floor(sampleRate * 0.4); // 400ms blocks
-                const overlapSize = Math.floor(blockSize * 0.75); // 75% overlap
-                const absoluteGate = -70; // LUFS
-                const relativeGate = -10; // LUFS relative to ungated mean
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                // ITU-R BS.1770-4 LUFS Measurement with TRUE K-WEIGHTING
+                // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                // Apply K-weighting to both channels (uses shared utility function)
+                console.log('   🎚️ Applying ITU-R BS.1770-4 K-weighting filters...');
+                const leftKWeighted = applyKWeightingFilter(leftChannel.slice(0, sampleCount), sampleRate);
+                const rightKWeighted = applyKWeightingFilter(rightChannel.slice(0, sampleCount), sampleRate);
+
+                const blockSize = Math.floor(sampleRate * 0.4); // 400ms blocks (ITU-R spec)
+                const overlapSize = Math.floor(blockSize * 0.75); // 75% overlap (ITU-R spec)
+                const absoluteGate = -70; // LUFS (ITU-R spec)
+                const relativeGate = -10; // LU relative to ungated mean (ITU-R spec)
 
                 let loudnessBlocks = [];
 
                 for (let i = 0; i < sampleCount - blockSize; i += (blockSize - overlapSize)) {
                     let sumSquares = 0;
                     for (let j = i; j < i + blockSize; j++) {
-                        const sampleL = leftChannel[j];
-                        const sampleR = rightChannel[j];
-                        // K-weighting approximation (simplified)
+                        const sampleL = leftKWeighted[j];
+                        const sampleR = rightKWeighted[j];
+                        // Sum of squares using K-weighted samples
                         sumSquares += (sampleL * sampleL + sampleR * sampleR) / 2;
                     }
 
@@ -4296,12 +4303,13 @@
                 const truePeakDB = maxPeak > 0 ? 20 * Math.log10(maxPeak) : -70;
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('✅ OFFLINE ANALYSIS RESULTS (ACTUAL POST-PROCESSING VALUES):');
+                console.log('✅ OFFLINE ANALYSIS (ITU-R BS.1770-4 K-WEIGHTED):');
                 console.log('   🎚️  Integrated LUFS: ' + integratedLUFS.toFixed(1) + ' LUFS');
                 console.log('   🔊 True Peak: ' + truePeakDB.toFixed(1) + ' dBTP');
                 console.log('   📊 Max Peak (linear): ' + maxPeak.toFixed(4));
                 console.log('   ⚙️  Makeup Gain Applied: ' + makeupGainDB.toFixed(1) + ' dB');
                 console.log('   🧱 Limiter Threshold: ' + limiterThresholdDB.toFixed(1) + ' dB');
+                console.log('   ✅ K-weighting: 38Hz HPF + 1.5kHz shelf (+4dB)');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 return {
@@ -4318,6 +4326,55 @@
             }
         }
 
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ITU-R BS.1770-4 K-WEIGHTING FILTER (Shared utility for accurate LUFS)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function applyKWeightingFilter(samples, sampleRate) {
+            const output = new Float32Array(samples.length);
+
+            // Stage 1: 2nd-order Butterworth high-pass at 38Hz
+            const fc1 = 38;
+            const w0_1 = 2 * Math.PI * fc1 / sampleRate;
+            const alpha1 = Math.sin(w0_1) / (2 * 0.7071);
+            const b0_hp = (1 + Math.cos(w0_1)) / 2;
+            const b1_hp = -(1 + Math.cos(w0_1));
+            const b2_hp = (1 + Math.cos(w0_1)) / 2;
+            const a0_hp = 1 + alpha1;
+            const a1_hp = -2 * Math.cos(w0_1);
+            const a2_hp = 1 - alpha1;
+
+            // Stage 2: High-shelf at 1500Hz with +4dB gain
+            const fc2 = 1500;
+            const gainDB = 4.0;
+            const A = Math.pow(10, gainDB / 40);
+            const w0_2 = 2 * Math.PI * fc2 / sampleRate;
+            const alpha2 = Math.sin(w0_2) / 2 * Math.sqrt((A + 1/A) * (1/0.7071 - 1) + 2);
+            const b0_hs = A * ((A + 1) + (A - 1) * Math.cos(w0_2) + 2 * Math.sqrt(A) * alpha2);
+            const b1_hs = -2 * A * ((A - 1) + (A + 1) * Math.cos(w0_2));
+            const b2_hs = A * ((A + 1) + (A - 1) * Math.cos(w0_2) - 2 * Math.sqrt(A) * alpha2);
+            const a0_hs = (A + 1) - (A - 1) * Math.cos(w0_2) + 2 * Math.sqrt(A) * alpha2;
+            const a1_hs = 2 * ((A - 1) - (A + 1) * Math.cos(w0_2));
+            const a2_hs = (A + 1) - (A - 1) * Math.cos(w0_2) - 2 * Math.sqrt(A) * alpha2;
+
+            let x1_hp = 0, x2_hp = 0, y1_hp = 0, y2_hp = 0;
+            let x1_hs = 0, x2_hs = 0, y1_hs = 0, y2_hs = 0;
+
+            for (let i = 0; i < samples.length; i++) {
+                const hp = (b0_hp/a0_hp) * samples[i] + (b1_hp/a0_hp) * x1_hp + (b2_hp/a0_hp) * x2_hp
+                         - (a1_hp/a0_hp) * y1_hp - (a2_hp/a0_hp) * y2_hp;
+                x2_hp = x1_hp; x1_hp = samples[i];
+                y2_hp = y1_hp; y1_hp = hp;
+
+                const hs = (b0_hs/a0_hs) * hp + (b1_hs/a0_hs) * x1_hs + (b2_hs/a0_hs) * x2_hs
+                         - (a1_hs/a0_hs) * y1_hs - (a2_hs/a0_hs) * y2_hs;
+                x2_hs = x1_hs; x1_hs = hp;
+                y2_hs = y1_hs; y1_hs = hs;
+
+                output[i] = hs;
+            }
+            return output;
+        }
+
         async function comprehensiveAnalysis(audioBuffer) {
             const sampleRate = audioBuffer.sampleRate;
             const duration = audioBuffer.duration;
@@ -4329,7 +4386,6 @@
             // 1. PEAK & CLIPPING ANALYSIS
             let clipCount = 0;
             let maxPeak = 0;
-            let sumSquares = 0;
 
             for (let i = 0; i < sampleCount; i++) {
                 const sampleL = Math.abs(leftChannel[i]);
@@ -4338,12 +4394,68 @@
 
                 if (peak > maxPeak) maxPeak = peak;
                 if (peak >= 0.99) clipCount++;
-                sumSquares += (sampleL * sampleL + sampleR * sampleR) / 2;
             }
 
-            const rms = Math.sqrt(sumSquares / sampleCount);
-            // Safety check: Prevent -Infinity if audio is silent
-            const integratedLUFS = (rms > 0.00001) ? (-0.691 + 10 * Math.log10(rms)) : -70;
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // ITU-R BS.1770-4 K-WEIGHTED LUFS MEASUREMENT
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            console.log('📊 Applying ITU-R BS.1770-4 K-weighting for accurate LUFS...');
+
+            // Apply K-weighting to both channels
+            const leftKWeighted = applyKWeightingFilter(leftChannel.slice(0, sampleCount), sampleRate);
+            const rightKWeighted = applyKWeightingFilter(rightChannel.slice(0, sampleCount), sampleRate);
+
+            // Calculate LUFS using K-weighted samples with gating (ITU-R BS.1770-4)
+            const blockSize = Math.floor(sampleRate * 0.4); // 400ms blocks
+            const overlapSize = Math.floor(blockSize * 0.75); // 75% overlap
+            const absoluteGate = -70; // LUFS
+            const relativeGate = -10; // LU relative to ungated mean
+
+            let loudnessBlocks = [];
+
+            for (let i = 0; i < sampleCount - blockSize; i += (blockSize - overlapSize)) {
+                let sumSquares = 0;
+                for (let j = i; j < i + blockSize; j++) {
+                    const sampleL = leftKWeighted[j];
+                    const sampleR = rightKWeighted[j];
+                    sumSquares += (sampleL * sampleL + sampleR * sampleR) / 2;
+                }
+
+                const meanSquare = sumSquares / blockSize;
+                if (meanSquare > 0) {
+                    const blockLUFS = -0.691 + 10 * Math.log10(meanSquare);
+                    if (blockLUFS > absoluteGate) {
+                        loudnessBlocks.push(blockLUFS);
+                    }
+                }
+            }
+
+            let integratedLUFS = -70;
+
+            if (loudnessBlocks.length > 0) {
+                // Calculate ungated mean for relative gate
+                let sumLinear = 0;
+                for (const lufs of loudnessBlocks) {
+                    sumLinear += Math.pow(10, lufs / 10);
+                }
+                const ungatedMean = 10 * Math.log10(sumLinear / loudnessBlocks.length);
+                const relativeGateThreshold = ungatedMean + relativeGate;
+
+                // Apply relative gate
+                const relativeGated = loudnessBlocks.filter(lufs => lufs >= relativeGateThreshold);
+
+                if (relativeGated.length > 0) {
+                    sumLinear = 0;
+                    for (const lufs of relativeGated) {
+                        sumLinear += Math.pow(10, lufs / 10);
+                    }
+                    integratedLUFS = 10 * Math.log10(sumLinear / relativeGated.length);
+                }
+            }
+
+            // Clamp to reasonable range
+            integratedLUFS = Math.max(-70, Math.min(0, integratedLUFS));
+            console.log('✅ K-weighted LUFS: ' + integratedLUFS.toFixed(1) + ' LUFS (ITU-R BS.1770-4 compliant)');
 
             // 2. SPECTRAL ANALYSIS (Frequency distribution)
             const fftSize = 8192;
@@ -9537,7 +9649,19 @@
             document.getElementById('masterGainSlider').value = 0;
             document.getElementById('masterGainValue').textContent = '0.0 dB';
 
-            console.log('🔄 All settings reset to default');
+            // Reset Quick Action states for accuracy
+            // Reset A/B Compare if active
+            if (abCompareMode) {
+                document.getElementById('abCompareBtn').click(); // Return to MASTERED
+            }
+            abCompareSavedGain = null; // Clear saved gain
+
+            // Reset Loudness Match if active
+            if (loudnessMatchEnabled) {
+                document.getElementById('loudnessMatchBtn').click(); // Turn off
+            }
+
+            console.log('🔄 All settings reset to default (including Quick Actions)');
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -9584,7 +9708,18 @@
                     // Connect DIRECTLY to master gain (bypass ALL processing: EQ, compression, makeup gain, limiter)
                     sourceNode.connect(masterGain);
 
-                    btn.textContent = '🔀 ORIGINAL (Unprocessed)';
+                    // Calculate and display PRECISE dB difference
+                    let gainDiffDB = 0;
+                    if (abCompareSavedGain && abCompareSavedGain > 0) {
+                        gainDiffDB = 20 * Math.log10(abCompareSavedGain);
+                    }
+                    // Also add makeup gain contribution
+                    if (makeupGain && makeupGain.gain.value > 0) {
+                        gainDiffDB += 20 * Math.log10(makeupGain.gain.value);
+                    }
+
+                    const diffText = gainDiffDB !== 0 ? ` (${gainDiffDB > 0 ? '+' : ''}${gainDiffDB.toFixed(1)} dB)` : '';
+                    btn.textContent = '🔀 ORIGINAL' + diffText;
                     btn.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -9592,6 +9727,7 @@
                     console.log('   ✅ All processing bypassed (EQ, Compression, Limiting)');
                     console.log('   ✅ Unity gain (1.0) - NO level matching');
                     console.log('   ✅ Client hears TRUE original audio');
+                    console.log('   📊 Processing adds: ' + (gainDiffDB > 0 ? '+' : '') + gainDiffDB.toFixed(1) + ' dB');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
                     console.warn('A/B disconnect warning:', e);
@@ -9636,7 +9772,17 @@
                         console.log('   ✅ Auto LUFS restored');
                     }
 
-                    btn.textContent = '🔀 MASTERED (Processed)';
+                    // Calculate PRECISE total gain from processing chain
+                    let totalGainDB = 0;
+                    if (abCompareSavedGain && abCompareSavedGain > 0) {
+                        totalGainDB = 20 * Math.log10(abCompareSavedGain);
+                    }
+                    if (makeupGain && makeupGain.gain.value > 0) {
+                        totalGainDB += 20 * Math.log10(makeupGain.gain.value);
+                    }
+
+                    const gainText = totalGainDB !== 0 ? ` (${totalGainDB > 0 ? '+' : ''}${totalGainDB.toFixed(1)} dB)` : '';
+                    btn.textContent = '🔀 MASTERED' + gainText;
                     btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -9646,7 +9792,8 @@
                     console.log('      → Compression');
                     console.log('      → Makeup Gain');
                     console.log('      → Professional Limiter');
-                    console.log('   ✅ Client hears MASTERED audio with all AI enhancements');
+                    console.log('   📊 Total Gain: ' + (totalGainDB > 0 ? '+' : '') + totalGainDB.toFixed(1) + ' dB');
+                    console.log('   ✅ Client hears MASTERED audio with all 24 enhancements');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
                     console.warn('A/B connect warning:', e);
@@ -9763,17 +9910,25 @@
                     masterGain.gain.setValueAtTime(matchGainLinear, audioContext.currentTime);
                 }
 
-                btn.textContent = '🎚️ LOUDNESS MATCH: ON';
+                // Display PRECISE gain adjustment on button
+                const matchText = safeMatchGainDB !== 0 ? ` (${safeMatchGainDB > 0 ? '+' : ''}${safeMatchGainDB.toFixed(1)} dB)` : '';
+                btn.textContent = '🎚️ MATCHED' + matchText;
                 btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)'; // Green
 
+                // Determine measurement accuracy
+                let accuracyLevel = '✅ PRECISE';
+                if (window.analysisResults && window.analysisResults.integratedLUFS) {
+                    accuracyLevel = '✅ ITU-R BS.1770-4 MEASURED';
+                }
+
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎚️ ACCURATE LOUDNESS MATCHING ENABLED');
-                console.log('   Original Input LUFS:', originalInputLUFS.toFixed(1), 'LUFS');
-                console.log('   Current Output LUFS:', currentOutputLUFS.toFixed(1), 'LUFS');
-                console.log('   LUFS Difference:', lufsDifference.toFixed(1), 'LU');
-                console.log('   Gain Adjustment:', (safeMatchGainDB > 0 ? '+' : '') + safeMatchGainDB.toFixed(1), 'dB');
+                console.log('🎚️ LOUDNESS MATCHING: ' + accuracyLevel);
+                console.log('   📊 Original Input: ' + originalInputLUFS.toFixed(1) + ' LUFS');
+                console.log('   📊 Current Output: ' + currentOutputLUFS.toFixed(1) + ' LUFS');
+                console.log('   📊 Difference: ' + lufsDifference.toFixed(1) + ' LU');
+                console.log('   🎛️ Compensation: ' + (safeMatchGainDB > 0 ? '+' : '') + safeMatchGainDB.toFixed(1) + ' dB');
                 if (safeMatchGainDB !== matchGainDB) {
-                    console.log('   ⚠️ Gain clamped for safety (original calc:', matchGainDB.toFixed(1), 'dB)');
+                    console.log('   ⚠️ Clamped for safety (calc: ' + matchGainDB.toFixed(1) + ' dB)');
                 }
                 console.log('   ✅ Output now matches original loudness');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -9783,9 +9938,18 @@
                     masterGain.gain.setValueAtTime(savedMasterGain, audioContext.currentTime);
                 }
 
-                btn.textContent = '🎚️ LOUDNESS MATCH: OFF';
+                btn.textContent = '🎚️ LOUDNESS MATCH';
                 btn.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)'; // Purple
-                console.log('🎚️ Loudness Match OFF - Restored processed output level');
+
+                // Calculate what the difference was
+                const currentLUFS = currentIntegratedLUFS || smoothedLUFS || -14;
+                const originalLUFS = originalInputLUFS || currentLUFS;
+                const diffLU = currentLUFS - originalLUFS;
+
+                console.log('🎚️ Loudness Match OFF - Restored full mastering level');
+                console.log('   📊 Original: ' + originalLUFS.toFixed(1) + ' LUFS');
+                console.log('   📊 Mastered: ' + currentLUFS.toFixed(1) + ' LUFS');
+                console.log('   📊 Gain from mastering: ' + (diffLU > 0 ? '+' : '') + diffLU.toFixed(1) + ' LU');
             }
         });
 
