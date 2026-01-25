@@ -2994,6 +2994,7 @@
                 // Master Gain (Manual control - AFTER limiter for final output level)
                 masterGain = audioContext.createGain();
                 masterGain.gain.value = 1.0;
+                window.masterGain = masterGain; // Export for wizard access
 
                 console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
 
@@ -3207,6 +3208,43 @@
 
                     // Make audioBuffer globally accessible for ULTIMATE_VISUALS
                     window.audioBuffer = audioBuffer;
+
+                    // 🧙 WIZARD: Apply deferred platform/genre/mode settings now that audio is ready
+                    if (window.wizardState) {
+                        console.log('🧙 WIZARD: Audio loaded - applying deferred settings...');
+
+                        // Apply platform preset with audible gain change
+                        if (window.wizardState.selectedPlatform) {
+                            setTimeout(() => {
+                                const platformBtn = document.querySelector('.selector-btn[data-platform="' + window.wizardState.selectedPlatform + '"]');
+                                if (platformBtn) {
+                                    platformBtn.click();
+                                    console.log('🧙 WIZARD: Applied platform preset -', window.wizardState.selectedPlatform);
+                                }
+                            }, 100);
+                        }
+
+                        // Apply genre preset with EQ changes
+                        if (window.wizardState.selectedGenre) {
+                            setTimeout(() => {
+                                const genreBtn = document.querySelector('.selector-btn[data-genre="' + window.wizardState.selectedGenre + '"]');
+                                if (genreBtn) {
+                                    genreBtn.click();
+                                    console.log('🧙 WIZARD: Applied genre preset -', window.wizardState.selectedGenre);
+                                }
+                            }, 200);
+                        }
+
+                        // Run AI Auto Master if that mode was selected
+                        if (window.wizardState.selectedMode === 'ai') {
+                            setTimeout(() => {
+                                if (typeof runFullAIMaster === 'function') {
+                                    console.log('🧙 WIZARD: Running AI Auto Master...');
+                                    runFullAIMaster();
+                                }
+                            }, 500);
+                        }
+                    }
 
                     // Store original peaks for transient ghost layer
                     window.originalPeaksData = audioBuffer.getChannelData(0).slice();
@@ -8801,9 +8839,13 @@
                         platformGainDB = -2; // 2dB quieter for -16 LUFS targets
                     }
 
-                    if (masterGain && audioContext) {
+                    // Use window.masterGain for global access
+                    const mg = window.masterGain || masterGain;
+                    const ac = window.audioContext || audioContext;
+
+                    if (mg && ac) {
                         const gainLinear = Math.pow(10, platformGainDB / 20);
-                        masterGain.gain.setTargetAtTime(gainLinear, audioContext.currentTime, 0.1);
+                        mg.gain.setTargetAtTime(gainLinear, ac.currentTime, 0.1);
                         console.log(`🎯 LUFS CHANGE: ${platformName} → ${platformGainDB}dB gain (Target: ${targetLUFS} LUFS)`);
 
                         // Show toast notification
@@ -8814,7 +8856,11 @@
                             showToast(msg, 'success');
                         }
                     } else {
-                        console.log('⚠️ Audio context not ready - play audio to hear difference');
+                        // Show toast anyway to confirm selection
+                        if (typeof showToast === 'function') {
+                            showToast(`${platformName} selected (${targetLUFS} LUFS)`, 'info');
+                        }
+                        console.log('⚠️ Audio context not ready - load audio to hear difference');
                     }
                 }
 
@@ -10602,9 +10648,11 @@
                 const clampedGainDB = Math.max(-12, Math.min(12, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
-                // Apply gain adjustment
-                if (masterGain && Math.abs(gainAdjustmentDB) > 0.5) {
-                    masterGain.gain.setTargetAtTime(newGainLinear, audioContext.currentTime, 0.1);
+                // Apply gain adjustment (use window.masterGain for global access)
+                const mg = window.masterGain || masterGain;
+                const ac = window.audioContext || audioContext;
+                if (mg && ac && Math.abs(gainAdjustmentDB) > 0.5) {
+                    mg.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
                     console.log(`🎯 AI Master: Adjusting gain ${gainAdjustmentDB > 0 ? '+' : ''}${gainAdjustmentDB.toFixed(2)} dB to reach ${targetLUFS} LUFS`);
                 }
 
@@ -10815,11 +10863,27 @@
             }
 
             document.getElementById('wizardStep1Next')?.addEventListener('click', () => goToWizardStep(2));
-            document.getElementById('wizardStep2Next')?.addEventListener('click', () => { applyWizardPlatform(); goToWizardStep(3); });
-            document.getElementById('wizardStep3Next')?.addEventListener('click', () => { applyWizardGenre(); goToWizardStep(4); });
+            document.getElementById('wizardStep2Next')?.addEventListener('click', () => goToWizardStep(3));
+            document.getElementById('wizardStep3Next')?.addEventListener('click', () => goToWizardStep(4));
             document.getElementById('wizardStep4Next')?.addEventListener('click', () => {
                 closeWizard();
-                if (wizardState.selectedMode === 'ai' && typeof runFullAIMaster === 'function') setTimeout(() => runFullAIMaster(), 500);
+                // Platform/Genre/AI settings are applied automatically when audio loads (see main script)
+                // If audio is already loaded, apply immediately
+                if (window.audioBuffer) {
+                    if (wizardState.selectedPlatform) {
+                        const platformBtn = document.querySelector('.selector-btn[data-platform="' + wizardState.selectedPlatform + '"]');
+                        if (platformBtn) platformBtn.click();
+                    }
+                    if (wizardState.selectedGenre) {
+                        setTimeout(() => {
+                            const genreBtn = document.querySelector('.selector-btn[data-genre="' + wizardState.selectedGenre + '"]');
+                            if (genreBtn) genreBtn.click();
+                        }, 100);
+                    }
+                    if (wizardState.selectedMode === 'ai' && typeof runFullAIMaster === 'function') {
+                        setTimeout(() => runFullAIMaster(), 300);
+                    }
+                }
             });
         });
 
