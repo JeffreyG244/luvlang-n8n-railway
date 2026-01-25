@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX12-NO-WEBAUDIO-10SEC]');
+        console.log('🚀 LuvLang Mastering - Script starting...');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -2322,12 +2322,6 @@
 
         // K-weighting filters for ITU-R BS.1770-5 LUFS measurement
         let kWeightingHPF1 = null;
-
-        // PRE-ALLOCATED ARRAYS for metering (prevents garbage collection during animation)
-        // Using window.* to ensure global scope access from ALL functions
-        window.kWeightedTimeDomain = null;  // For LUFS metering in updateMeters()
-        window.peakLeftTimeDomain = null;   // For peak metering in updateMeters()
-        window.peakRightTimeDomain = null;  // For peak metering in updateMeters()
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // AUTHENTICATION UI HANDLERS
@@ -2601,7 +2595,7 @@
                 // Create audio context - use hardware's native sample rate to avoid CPU-intensive resampling
                 if (!audioContext) {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                        latencyHint: 'playback'   // Prioritize smooth audio over low latency
+                        latencyHint: 'balanced'   // Balance between latency and smooth playback
                     });
 
                     // Make audioContext globally accessible for ULTIMATE_VISUALS
@@ -2609,35 +2603,30 @@
 
                     console.log('✅ Audio Context created at ' + audioContext.sampleRate + 'Hz (native)');
 
-                    // Initialize revolutionary feature engines (wrapped to prevent audio chain disruption)
-                    try {
-                        if (typeof StemMasteringEngine !== 'undefined') {
-                            stemMasteringEngine = new StemMasteringEngine(audioContext);
-                            console.log('✅ Stem Mastering Engine loaded');
-                        }
-                        if (typeof CodecPreviewEngine !== 'undefined') {
-                            codecPreviewEngine = new CodecPreviewEngine(audioContext);
-                            console.log('✅ Codec Preview Engine loaded');
-                        }
-                        if (typeof PodcastMasteringEngine !== 'undefined') {
-                            podcastMasteringEngine = new PodcastMasteringEngine(audioContext);
-                            console.log('✅ Podcast Mastering Suite loaded');
-                        }
-                        if (typeof SpectralRepairEngine !== 'undefined') {
-                            spectralRepairEngine = new SpectralRepairEngine(audioContext);
-                            console.log('✅ Spectral Repair Engine loaded');
-                        }
-                        if (typeof StereoFieldEditor !== 'undefined') {
-                            stereoFieldEditor = new StereoFieldEditor(audioContext);
-                            console.log('✅ Stereo Field Editor loaded');
-                        }
-                        if (typeof SpectralDenoiser !== 'undefined') {
-                            spectralDenoiser = new SpectralDenoiser(audioContext);
-                            console.log('✅ Spectral De-noiser loaded');
-                        }
-                    } catch (engineError) {
-                        console.warn('⚠️ Some feature engines failed to load:', engineError.message);
-                        // Continue - audio chain will still work without these optional features
+                    // Initialize revolutionary feature engines
+                    if (typeof StemMasteringEngine !== 'undefined') {
+                        stemMasteringEngine = new StemMasteringEngine(audioContext);
+                        console.log('✅ Stem Mastering Engine loaded');
+                    }
+                    if (typeof CodecPreviewEngine !== 'undefined') {
+                        codecPreviewEngine = new CodecPreviewEngine(audioContext);
+                        console.log('✅ Codec Preview Engine loaded');
+                    }
+                    if (typeof PodcastMasteringEngine !== 'undefined') {
+                        podcastMasteringEngine = new PodcastMasteringEngine(audioContext);
+                        console.log('✅ Podcast Mastering Suite loaded');
+                    }
+                    if (typeof SpectralRepairEngine !== 'undefined') {
+                        spectralRepairEngine = new SpectralRepairEngine(audioContext);
+                        console.log('✅ Spectral Repair Engine loaded');
+                    }
+                    if (typeof StereoFieldEditor !== 'undefined') {
+                        stereoFieldEditor = new StereoFieldEditor(audioContext);
+                        console.log('✅ Stereo Field Editor loaded');
+                    }
+                    if (typeof SpectralDenoiser !== 'undefined') {
+                        spectralDenoiser = new SpectralDenoiser(audioContext);
+                        console.log('✅ Spectral De-noiser loaded');
                     }
 
                     // ✨ SUPABASE: Initialize cloud sync and authentication
@@ -2651,90 +2640,66 @@
                         });
                     }
 
-                    // 💳 STRIPE: Initialize payment processing (wrapped to prevent audio chain disruption)
+                    // 💳 STRIPE: Initialize payment processing
                     if (typeof initializeStripe === 'function') {
-                        try {
-                            initializeStripe(); // Does not return a promise
-                        } catch (stripeError) {
-                            console.warn('⚠️ Stripe initialization skipped (no payment UI on this page):', stripeError.message);
-                            // This is OK - audio chain setup continues
-                        }
+                        initializeStripe(); // Does not return a promise
                     }
 
-                    // ✨ CRITICAL FIX: Initialize audio playback connection (wrapped to prevent audio chain disruption)
+                    // ✨ CRITICAL FIX: Initialize audio playback connection
                     if (typeof ensureAudioPlayback === 'function') {
-                        try {
-                            ensureAudioPlayback();
-                        } catch (e) {
-                            console.warn('⚠️ ensureAudioPlayback skipped:', e.message);
-                        }
+                        ensureAudioPlayback();
                     }
 
-                    // ✨ LEGENDARY: Initialize legendary features now that audioContext exists (wrapped to prevent audio chain disruption)
+                    // ✨ LEGENDARY: Initialize legendary features now that audioContext exists
                     if (typeof initializeLegendaryFeatures === 'function') {
-                        try {
-                            initializeLegendaryFeatures();
-                        } catch (e) {
-                            console.warn('⚠️ initializeLegendaryFeatures skipped:', e.message);
-                        }
+                        initializeLegendaryFeatures();
                     }
 
                     // 🤖 AI SUITE: Initialize AI Mastering Suite now that audioContext exists
-                    // DEFERRED LOADING: Wait 2 seconds for audio playback to stabilize before loading heavy modules
                     if (!window.aiSuite && typeof LuvlangAIMasteringSuite !== 'undefined') {
-                        console.log('🚀 AI Suite initialization DEFERRED (will load in 2s to allow smooth playback)...');
+                        console.log('🚀 Initializing AI Mastering Suite...');
                         try {
                             window.aiSuite = new LuvlangAIMasteringSuite(audioContext);
 
-                            // DEFER heavy module loading to prevent audio skipping
-                            const loadAIModules = () => {
-                                window.aiSuite.loadAll().then(success => {
-                                    if (success) {
-                                        console.log('✅ AI MASTERING SUITE LOADED - 13/13 FEATURES ACTIVE');
-                                        console.log('💡 Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
-                                    } else {
-                                        console.warn('⚠️ Some AI modules failed to load');
-                                    }
-                                }).catch(err => {
-                                    console.error('❌ AI Suite loading failed:', err);
-                                });
-                            };
+                            // Load AI modules (ready for manual use)
+                            window.aiSuite.loadAll().then(success => {
+                                if (success) {
+                                    console.log('✅ AI MASTERING SUITE LOADED - 13/13 FEATURES ACTIVE');
+                                    console.log('💡 Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
 
-                            // Use requestIdleCallback if available (loads when browser is idle)
-                            // Otherwise use setTimeout with 2 second delay
-                            if (window.requestIdleCallback) {
-                                window.requestIdleCallback(loadAIModules, { timeout: 5000 });
-                            } else {
-                                setTimeout(loadAIModules, 2000);
-                            }
+                                    // DISABLED: Auto-trigger causes browser freeze on large files
+                                    // User can manually click "RUN FULL AI MASTER" button when ready
+                                    // setTimeout(() => {
+                                    //     if (typeof runFullAIMaster === 'function' && window.audioBuffer) {
+                                    //         runFullAIMaster();
+                                    //     }
+                                    // }, 500);
+                                } else {
+                                    console.warn('⚠️ Some AI modules failed to load');
+                                }
+                            }).catch(err => {
+                                console.error('❌ AI Suite loading failed:', err);
+                            });
                         } catch (error) {
                             console.error('❌ AI Suite initialization failed:', error);
                         }
                     }
 
-                    // ✨ PROFESSIONAL: Initialize Professional Mastering Engine (wrapped to prevent audio chain disruption)
+                    // ✨ PROFESSIONAL: Initialize Professional Mastering Engine
                     if (typeof initProfessionalEngine === 'function') {
-                        try {
-                            window.professionalMasteringEngine = initProfessionalEngine(audioContext);
-                            console.log('✅ Professional Mastering Engine initialized');
-                        } catch (e) {
-                            console.warn('⚠️ Professional Mastering Engine skipped:', e.message);
-                        }
+                        window.professionalMasteringEngine = initProfessionalEngine(audioContext);
+                        console.log('✅ Professional Mastering Engine initialized');
                     }
 
-                    // ✨ ADVANCED: Initialize Advanced Processors (wrapped to prevent audio chain disruption)
+                    // ✨ ADVANCED: Initialize Advanced Processors
                     if (typeof AdvancedLimiter !== 'undefined') {
-                        try {
-                            window.advancedLimiter = new AdvancedLimiter(audioContext);
-                            window.stereoImager = new StereoImager(audioContext);
-                            window.harmonicExciter = new HarmonicExciter(audioContext);
-                            window.enhancedEQ = new EnhancedEQ(audioContext);
-                            window.referenceTrackMatcher = new ReferenceTrackMatcher(audioContext);
-                            window.presetManager = new PresetManager();
-                            console.log('✅ All advanced processors initialized');
-                        } catch (e) {
-                            console.warn('⚠️ Advanced processors skipped:', e.message);
-                        }
+                        window.advancedLimiter = new AdvancedLimiter(audioContext);
+                        window.stereoImager = new StereoImager(audioContext);
+                        window.harmonicExciter = new HarmonicExciter(audioContext);
+                        window.enhancedEQ = new EnhancedEQ(audioContext);
+                        window.referenceTrackMatcher = new ReferenceTrackMatcher(audioContext);
+                        window.presetManager = new PresetManager();
+                        console.log('✅ All advanced processors initialized');
                     }
                 }
 
@@ -2852,18 +2817,18 @@
 
                 console.log('✅ Dynamics processors created (Compressor + Makeup Gain + Limiter + Master Gain)');
 
-                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (4096 FFT - optimized for performance)
-                // Note: 32768 → 8192 → 4096 FFT for smooth audio playback
+                // ⚡ PROFESSIONAL SPECTRUM ANALYZER (8192 FFT - balanced quality/performance)
+                // Note: 32768 FFT was causing audio skipping due to excessive CPU load
                 analyser = audioContext.createAnalyser();
-                analyser.fftSize = 4096;  // Reduced from 8192 - good quality, better performance
-                analyser.smoothingTimeConstant = 0.2;  // Smoothing reduces visual jitter and CPU spikes
+                analyser.fftSize = 8192;  // Reduced from 32768 - still high quality but 4x faster
+                analyser.smoothingTimeConstant = 0.1;  // Slight smoothing reduces CPU spikes
                 analyser.minDecibels = -100;
                 analyser.maxDecibels = 0;
 
                 // Make analyser globally accessible for ULTIMATE_VISUALS
                 window.analyser = analyser;
 
-                console.log('✅ Spectrum Analyzer created (FFT: 4096, -100dB to 0dB)');
+                console.log('✅ Spectrum Analyzer created (FFT: 8192, -100dB to 0dB)');
 
                 // ═══════════════════════════════════════════════════════════════════
                 // REMOVED: Old ULTIMATE_VISUALS auto-init code (abandoned system)
@@ -2911,92 +2876,53 @@
 
                 console.log('✅ Stereo processing nodes created (L/R analyzers for True Peak)');
 
-                // ═══════════════════════════════════════════════════════════════════
-                // FIX9: MINIMAL CHAIN FOR INITIAL PLAYBACK
-                // Full processing chain was causing audio skipping.
-                // Now: Source → masterGain → analyser → destination (just 3 nodes)
-                // Full chain activates later when user clicks mastering button.
-                // ═══════════════════════════════════════════════════════════════════
+                // ⚡ AUDIO SIGNAL CHAIN
+                // Source → EQ (7-band) → EQ Compensation → Compressor → Makeup Gain → Limiter → Master Gain → Stereo Split → Merger → Analyser → Output
+                // Parallel: K-weighted path for LUFS measurement
+                sourceNode.connect(eqSubFilter);
+                eqSubFilter.connect(eqBassFilter);
+                eqBassFilter.connect(eqLowMidFilter);
+                eqLowMidFilter.connect(eqMidFilter);
+                eqMidFilter.connect(eqHighMidFilter);
+                eqHighMidFilter.connect(eqHighFilter);
+                eqHighFilter.connect(eqAirFilter);
+                eqAirFilter.connect(eqCompensationGain);
+                eqCompensationGain.connect(compressor);
+                compressor.connect(makeupGain);  // AI mastering gain (before limiter)
+                makeupGain.connect(limiter);     // Limiter protects peaks
+                limiter.connect(masterGain);     // Manual output gain (after limiter)
 
-                // MINIMAL CHAIN: Source → Master Gain → Analyser → Output
-                sourceNode.connect(masterGain);
-                masterGain.connect(analyser);
+                // Stereo processing
+                masterGain.connect(stereoSplitter);
+                stereoSplitter.connect(leftChannel, 0);
+                stereoSplitter.connect(rightChannel, 1);
+                leftChannel.connect(stereoMerger, 0, 0);
+                rightChannel.connect(stereoMerger, 0, 1);
+
+                // L/R peak analyzers
+                stereoSplitter.connect(leftAnalyser, 0);
+                stereoSplitter.connect(rightAnalyser, 1);
+
+                // Main output path
+                stereoMerger.connect(analyser);
                 analyser.connect(audioContext.destination);
 
-                // Store flag for chain state
-                window.fullChainActive = false;
+                // K-weighted parallel path (for LUFS measurement)
+                stereoMerger.connect(kWeightingHPF1);
+                kWeightingHPF1.connect(kWeightingHPF2);
+                kWeightingHPF2.connect(kWeightingShelf);
+                kWeightingShelf.connect(kWeightedAnalyser);
 
-                console.log('✅ MINIMAL audio chain connected (FIX9 - for smooth playback)');
-                console.log('   Source → Master Gain → Analyser → Output');
-                console.log('   💡 Full EQ/Compressor/Limiter chain activates when you click AI Master');
+                console.log('✅ Professional audio chain connected');
+                console.log('   Source → EQ (7-Band) → EQ Compensation → Compressor → Limiter → Master Gain → Stereo → Analyser → Output');
+                console.log('   Parallel: K-Weighted Path → LUFS Meter');
+                console.log('   EQ Compensation: Automatic gain reduction when EQ is boosted');
 
-                // Function to activate full chain (called when user clicks mastering button)
-                window.activateFullProcessingChain = function() {
-                    if (window.fullChainActive) {
-                        console.log('ℹ️ Full chain already active');
-                        return;
-                    }
-
-                    console.log('🔧 Activating full processing chain...');
-
-                    // Disconnect minimal chain
-                    sourceNode.disconnect();
-                    masterGain.disconnect();
-
-                    // Connect full chain
-                    sourceNode.connect(eqSubFilter);
-                    eqSubFilter.connect(eqBassFilter);
-                    eqBassFilter.connect(eqLowMidFilter);
-                    eqLowMidFilter.connect(eqMidFilter);
-                    eqMidFilter.connect(eqHighMidFilter);
-                    eqHighMidFilter.connect(eqHighFilter);
-                    eqHighFilter.connect(eqAirFilter);
-                    eqAirFilter.connect(eqCompensationGain);
-                    eqCompensationGain.connect(compressor);
-                    compressor.connect(makeupGain);
-                    makeupGain.connect(limiter);
-                    limiter.connect(masterGain);
-
-                    // Stereo processing
-                    masterGain.connect(stereoSplitter);
-                    stereoSplitter.connect(leftChannel, 0);
-                    stereoSplitter.connect(rightChannel, 1);
-                    leftChannel.connect(stereoMerger, 0, 0);
-                    rightChannel.connect(stereoMerger, 0, 1);
-
-                    // L/R peak analyzers
-                    stereoSplitter.connect(leftAnalyser, 0);
-                    stereoSplitter.connect(rightAnalyser, 1);
-
-                    // Main output
-                    stereoMerger.connect(analyser);
-                    analyser.connect(audioContext.destination);
-
-                    // K-weighted path
-                    stereoMerger.connect(kWeightingHPF1);
-                    kWeightingHPF1.connect(kWeightingHPF2);
-                    kWeightingHPF2.connect(kWeightingShelf);
-                    kWeightingShelf.connect(kWeightedAnalyser);
-
-                    window.fullChainActive = true;
-                    console.log('✅ Full processing chain NOW ACTIVE');
-                };
-
-                // FIX11: Delay visualization by 10 seconds to test if draw loop causes skipping
-                console.log('⏳ FIX11: Visualization delayed 10 seconds - testing if draw loop causes audio skipping');
-                setTimeout(() => {
-                    try {
-                        startVisualization();
-                    } catch (vizError) {
-                        console.error('⚠️ Visualization startup failed:', vizError.message);
-                    }
-                }, 10000);
-
-                console.log('🎉 AUDIO CHAIN SETUP COMPLETE - Ready for playback!');
+                // Start visualization
+                startVisualization();
 
             } catch (error) {
                 console.error('❌ Web Audio setup error:', error);
-                console.error('   Stack:', error.stack);
             }
         }
 
@@ -3054,30 +2980,36 @@
                 console.log('   Ready for playback or AI mastering');
                 console.log('   Audio element can play:', audioElement.readyState >= 2);
 
-                // FIX12: DELAY Web Audio connection by 10 seconds
-                // This tests if createMediaElementSource itself causes skipping
-                console.log('⏳ FIX12: Web Audio DELAYED 10 seconds - audio plays directly first');
-                console.log('   If audio is smooth for 10 seconds, MediaElementSource is the problem');
-                setTimeout(() => {
-                    console.log('🔧 FIX12: Now connecting Web Audio...');
-                    setupWebAudio(audioElement);
-                }, 10000);
+                // Setup Web Audio processing chain
+                setupWebAudio(audioElement);
 
                 // Enable play button explicitly
                 playBtn.disabled = false;
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
 
-                // AUTO-PLAY: Start playback IMMEDIATELY (no Web Audio yet)
-                // FIX12: Play directly through audio element first
-                audioElement.play().then(() => {
-                    playBtn.textContent = '⏸️';
-                    isPlaying = true;
-                    console.log('🎵 FIX12: Auto-play started (DIRECT - no Web Audio yet)');
-                    console.log('   Listen for 10 seconds - if smooth, Web Audio is the problem');
-                }).catch(err => {
-                    console.log('⚠️ Auto-play prevented by browser:', err);
-                });
+                // AUTO-PLAY: Start playback automatically when file is loaded
+                setTimeout(() => {
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            audioElement.play().then(() => {
+                                playBtn.textContent = '⏸️';
+                                isPlaying = true;
+                                console.log('🎵 Auto-play started');
+                            }).catch(err => {
+                                console.log('⚠️ Auto-play prevented by browser:', err);
+                            });
+                        });
+                    } else {
+                        audioElement.play().then(() => {
+                            playBtn.textContent = '⏸️';
+                            isPlaying = true;
+                            console.log('🎵 Auto-play started');
+                        }).catch(err => {
+                            console.log('⚠️ Auto-play prevented by browser:', err);
+                        });
+                    }
+                }, 300); // Small delay to ensure everything is ready
 
                 // Store blob URL for cleanup when new file is loaded
                 // DO NOT revoke immediately - audio element needs it for playback!
@@ -3087,48 +3019,114 @@
                 }
                 window.currentBlobURL = fileURL;
 
-                // ═══════════════════════════════════════════════════════════════════
-                // FIX8: COMPLETELY DEFER ALL HEAVY OPERATIONS
-                // The decodeAudioData call was competing with audio playback.
-                // Now we wait 3 FULL SECONDS before any CPU-intensive work.
-                // ═══════════════════════════════════════════════════════════════════
-                console.log('⏳ Audio playback starting - heavy operations deferred 3 seconds...');
+                // CRITICAL: Decode audioBuffer for AI Auto Master
+                try {
+                    const arrayBuffer = await uploadedFile.arrayBuffer();
+                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                    audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
-                setTimeout(async () => {
-                    console.log('🔄 Now performing deferred audio buffer decoding...');
+                    // Make audioBuffer globally accessible for ULTIMATE_VISUALS
+                    window.audioBuffer = audioBuffer;
 
-                    try {
-                        const arrayBuffer = await uploadedFile.arrayBuffer();
-                        const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
-                        audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
+                    // Store original peaks for transient ghost layer
+                    window.originalPeaksData = audioBuffer.getChannelData(0).slice();
 
-                        window.audioBuffer = audioBuffer;
-                        console.log('✅ Audio buffer decoded for AI processing');
+                    console.log('✅ Audio buffer decoded for AI processing');
 
-                        // Store original peaks (deferred further)
-                        setTimeout(() => {
-                            window.originalPeaksData = audioBuffer.getChannelData(0).slice();
-                            console.log('✅ Peak data stored');
-                        }, 1000);
+                    // 🏆 AUTO-GAIN STAGING - Normalize quiet files to -18dBFS sweet spot
+                    // This ensures EQ and saturation work in their optimal range
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🎚️ AUTO-GAIN STAGING: Analyzing input level...');
 
-                        // Draw waveform
-                        setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
-
-                        // Initialize WebGL spectrum
-                        setTimeout(() => {
-                            if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
-                                window.WebGLSpectrum.init(spectrumCanvas);
-                            }
-                            if (window.drawCorrelationLegend && correlationLegendCanvas) {
-                                window.drawCorrelationLegend(correlationLegendCanvas);
-                            }
-                        }, 1500);
-
-                    } catch (error) {
-                        console.error('⚠️ Error decoding audio buffer:', error);
+                    // Calculate RMS level of the uploaded audio
+                    const channelData = audioBuffer.getChannelData(0);
+                    let sumSquares = 0;
+                    for (let i = 0; i < channelData.length; i++) {
+                        sumSquares += channelData[i] * channelData[i];
                     }
-                }, 3000); // 3 SECOND DELAY - let audio playback fully stabilize first
+                    const rms = Math.sqrt(sumSquares / channelData.length);
+                    const rmsDB = rms > 0 ? 20 * Math.log10(rms) : -70;
 
+                    console.log('   Current RMS Level:', rmsDB.toFixed(1), 'dBFS');
+
+                    // If signal is too quiet (below -18dBFS), auto-boost it
+                    const targetRMS = -18; // Analog sweet spot
+                    const masterGainSlider = document.getElementById('masterGainSlider');
+                    const masterGainValue = document.getElementById('masterGainValue');
+
+                    if (rmsDB < targetRMS - 1) {
+                        // Calculate how much gain is needed
+                        const gainNeeded = targetRMS - rmsDB;
+
+                        // Apply to master gain slider (limit to +12dB max for safety)
+                        const safeGain = Math.min(gainNeeded, 12);
+
+                        if (masterGainSlider && masterGainValue) {
+                            masterGainSlider.value = safeGain;
+                            masterGainValue.textContent = safeGain.toFixed(1) + ' dB';
+
+                            // Apply to actual audio processing
+                            if (masterGain) {
+                                masterGain.gain.value = Math.pow(10, safeGain / 20);
+                            }
+
+                            console.log('   ✅ AUTO-GAIN APPLIED: +' + safeGain.toFixed(1) + ' dB');
+                            console.log('   New Target RMS: ~' + (rmsDB + safeGain).toFixed(1), 'dBFS');
+                            console.log('   🎯 Signal now in optimal range for processing');
+                        }
+                    } else {
+                        console.log('   ✅ Signal already at optimal level (-18dBFS sweet spot)');
+                        console.log('   No gain adjustment needed');
+                    }
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
+
+                    // Try immediately
+                    drawWaveformFromBuffer(audioBuffer);
+
+                    // Try again after 100ms (canvas might need time to be ready)
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
+
+                    // And once more after 500ms to be absolutely sure
+                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
+
+                    console.log('   Waveform draw attempts scheduled (3 times)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                    // Initialize WebGL spectrum analyzer (with persistence/ghosting)
+                    if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
+                        console.log('🎨 Initializing WebGL Spectrum with Persistence...');
+                        const success = window.WebGLSpectrum.init(spectrumCanvas);
+                        if (success) {
+                            console.log('   ✅ WebGL Persistence System active - Elite analog look enabled');
+                        } else {
+                            console.log('   ⚠️ WebGL failed, falling back to Canvas 2D');
+                        }
+                    }
+
+                    // Draw correlation heatmap legend (static, one-time)
+                    if (window.drawCorrelationLegend && correlationLegendCanvas) {
+                        console.log('🎨 Drawing Correlation Heatmap legend...');
+                        window.drawCorrelationLegend(correlationLegendCanvas);
+                        console.log('   ✅ Elite frequency-domain phase analysis ready');
+                    }
+
+                    // REMOVED: Old ultimateWaveformViz code
+                    setTimeout(() => {
+                        if (false && window.ultimateWaveformViz && window.audioBuffer) {
+                            // Disabled - we use the original waveform system
+                            console.log('🎨 Waveform auto-loaded');
+                        }
+                    }, 200);
+
+                } catch (error) {
+                    console.error('⚠️ Error decoding audio buffer:', error);
+                }
+
+                // NO AUTO-PROCESSING - User must click AI button to master
                 console.log('💡 TIP: Click "⚡ RUN FULL AI MASTER" button to analyze and enhance audio');
             });
         }
@@ -3402,7 +3400,7 @@
             const integratedLUFS = (rms > 0.00001) ? (-0.691 + 10 * Math.log10(rms)) : -70;
 
             // 2. SPECTRAL ANALYSIS (Frequency distribution)
-            const fftSize = 4096;  // Reduced for performance
+            const fftSize = 8192;
             const halfFFT = fftSize / 2;
             let subBassEnergy = 0, bassEnergy = 0, midEnergy = 0, highEnergy = 0;
 
@@ -6477,8 +6475,6 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
             // PRE-ALLOCATE ARRAYS (prevents garbage collection during animation)
-            // NOTE: kWeightedTimeDomain, peakLeftTimeDomain, peakRightTimeDomain are declared globally (near line 2325)
-            // because updateMeters() is defined outside this function scope
             let drawDataArray = null;
             let drawLeftTimeDomain = null;
             let drawRightTimeDomain = null;
@@ -6489,12 +6485,12 @@
             // Toggle in console: window.PERFORMANCE_MODE = true/false
             window.PERFORMANCE_MODE = false;
 
-            // THROTTLE: Reduce to 20fps to prioritize audio over visualization
+            // THROTTLE: Reduce to 30fps to prevent audio skipping
             let lastDrawTime = 0;
-            const DRAW_INTERVAL = 50; // ~20fps (1000ms / 20 = 50ms) - prioritize audio
+            const DRAW_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
 
             function draw() {
-                // THROTTLE: Skip frames to maintain 20fps max
+                // THROTTLE: Skip frames to maintain 30fps max
                 const now = performance.now();
                 if (now - lastDrawTime < DRAW_INTERVAL) {
                     animationFrame = requestAnimationFrame(draw);
@@ -7137,21 +7133,84 @@
                 // (don't return early - keep measuring peaks and phase)
             }
 
-            // Debug logging DISABLED for performance - was calling getComputedStyle every 1% of frames
-            // Enable with: window.DEBUG_METERS = true
-            // if (window.DEBUG_METERS && Math.random() < 0.01) { ... }
+            // Debug: Log that updateMeters is being called AND check DOM elements + computed styles
+            if (Math.random() < 0.01) {
+                console.log('═══════════════════════════════════════════════');
+                console.log('🎚️ updateMeters() CALLED (REAL-TIME MODE)');
+                console.log('   kWeightedAnalyser:', kWeightedAnalyser ? 'EXISTS' : 'NULL');
+                console.log('   leftAnalyser:', leftAnalyser ? 'EXISTS' : 'NULL');
+                console.log('   rightAnalyser:', rightAnalyser ? 'EXISTS' : 'NULL');
+                console.log('   DOM Elements:');
+
+                const lufsValue = document.getElementById('lufsValue');
+                const lufsMeter = document.getElementById('lufsMeter');
+                const peakValue = document.getElementById('peakValue');
+                const peakMeter = document.getElementById('peakMeter');
+                const phaseValue = document.getElementById('phaseValue');
+                const phaseMeter = document.getElementById('phaseMeter');
+                const metersContainer = document.querySelector('.meters-container');
+                const rightSidebar = document.querySelector('.right-sidebar');
+
+                console.log('     - lufsValue:', lufsValue ? 'EXISTS' : 'MISSING');
+                console.log('     - lufsMeter:', lufsMeter ? 'EXISTS' : 'MISSING');
+                console.log('     - peakValue:', peakValue ? 'EXISTS' : 'MISSING');
+                console.log('     - peakMeter:', peakMeter ? 'EXISTS' : 'MISSING');
+                console.log('     - phaseValue:', phaseValue ? 'EXISTS' : 'MISSING');
+                console.log('     - phaseMeter:', phaseMeter ? 'EXISTS' : 'MISSING');
+
+                // Check computed styles
+                if (metersContainer) {
+                    const style = window.getComputedStyle(metersContainer);
+                    console.log('   meters-container computed:');
+                    console.log('     - display:', style.display);
+                    console.log('     - visibility:', style.visibility);
+                    console.log('     - opacity:', style.opacity);
+                }
+
+                if (rightSidebar) {
+                    const style = window.getComputedStyle(rightSidebar);
+                    console.log('   right-sidebar computed:');
+                    console.log('     - display:', style.display);
+                    console.log('     - visibility:', style.visibility);
+                    console.log('     - opacity:', style.opacity);
+                }
+
+                if (lufsValue) {
+                    const style = window.getComputedStyle(lufsValue);
+                    console.log('   lufsValue computed:');
+                    console.log('     - opacity:', style.opacity);
+                    console.log('     - color:', style.color);
+                }
+
+                if (lufsMeter) {
+                    const style = window.getComputedStyle(lufsMeter);
+                    const parent = lufsMeter.parentElement;
+                    const parentStyle = parent ? window.getComputedStyle(parent) : null;
+                    console.log('   lufsMeter computed:');
+                    console.log('     - width:', style.width);
+                    console.log('     - height:', style.height);
+                    console.log('     - opacity:', style.opacity);
+                    console.log('     - background:', style.background);
+                    if (parentStyle) {
+                        console.log('   lufsMeter PARENT (.meter-bar) computed:');
+                        console.log('     - width:', parentStyle.width);
+                        console.log('     - height:', parentStyle.height);
+                        console.log('     - opacity:', parentStyle.opacity);
+                        console.log('     - display:', parentStyle.display);
+                    }
+                }
+
+                console.log('═══════════════════════════════════════════════');
+            }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // TRUE K-WEIGHTED LUFS WITH PROPER GATING (ITU-R BS.1770-5 COMPLIANT)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // SKIP real-time LUFS calculation if meters are locked (show stable mastered value)
             if (kWeightedAnalyser && !metersLocked) {
-                // Get K-weighted time domain data (reuse pre-allocated array from window scope)
-                if (!window.kWeightedTimeDomain || window.kWeightedTimeDomain.length !== kWeightedAnalyser.fftSize) {
-                    window.kWeightedTimeDomain = new Float32Array(kWeightedAnalyser.fftSize);
-                }
-                kWeightedAnalyser.getFloatTimeDomainData(window.kWeightedTimeDomain);
-                const kData = window.kWeightedTimeDomain; // Reference to pre-allocated array
+                // Get K-weighted time domain data
+                const kData = new Float32Array(kWeightedAnalyser.fftSize);
+                kWeightedAnalyser.getFloatTimeDomainData(kData);
 
                 // Calculate mean square for current block (400ms equivalent)
                 let kMeanSquare = 0;
@@ -7330,19 +7389,13 @@
             let plr = 0; // Initialize PLR for quality score
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // GET L/R CHANNEL DATA - Always needed for phase correlation (reuse pre-allocated arrays)
+            // GET L/R CHANNEL DATA - Always needed for phase correlation
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             if (leftAnalyser && rightAnalyser) {
-                if (!window.peakLeftTimeDomain || window.peakLeftTimeDomain.length !== leftAnalyser.fftSize) {
-                    window.peakLeftTimeDomain = new Float32Array(leftAnalyser.fftSize);
-                }
-                if (!window.peakRightTimeDomain || window.peakRightTimeDomain.length !== rightAnalyser.fftSize) {
-                    window.peakRightTimeDomain = new Float32Array(rightAnalyser.fftSize);
-                }
-                leftAnalyser.getFloatTimeDomainData(window.peakLeftTimeDomain);
-                rightAnalyser.getFloatTimeDomainData(window.peakRightTimeDomain);
-                const leftData = window.peakLeftTimeDomain;  // Reference to pre-allocated array
-                const rightData = window.peakRightTimeDomain; // Reference to pre-allocated array
+                const leftData = new Float32Array(leftAnalyser.fftSize);
+                const rightData = new Float32Array(rightAnalyser.fftSize);
+                leftAnalyser.getFloatTimeDomainData(leftData);
+                rightAnalyser.getFloatTimeDomainData(rightData);
 
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 // TRUE PEAK MEASUREMENT - Skip calculation if meters locked
