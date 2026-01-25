@@ -2552,40 +2552,56 @@
                     </div>
                 </div>
 
-                <!-- 🏆 ADVANCED/PRO METERS - Hidden by default, expandable for professionals -->
-                <!-- 3. Short-term LUFS - PRO (for verse/chorus analysis) -->
-                <div class="meter-item advanced-meter" style="display: none;">
-                    <div class="meter-label">Short-term LUFS (3s)</div>
-                    <div class="meter-value" id="shortLufsValue">-∞</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Verse/chorus loudness variation</div>
-                </div>
+                <!-- 🏆 PRO METERS - Professional broadcast analysis (hidden by default) -->
+                <div class="advanced-meter" id="proMetersPanel" style="display: none; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.05)); border: 1px solid rgba(102, 126, 234, 0.3); border-radius: 12px;">
 
-                <!-- 4. Momentary LUFS - PRO (for transient analysis) -->
-                <div class="meter-item advanced-meter" style="display: none;">
-                    <div class="meter-label">Momentary LUFS (400ms)</div>
-                    <div class="meter-value" id="momentaryLufsValue">-∞</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Real-time loudness (400ms window)</div>
-                </div>
+                    <!-- Row 1: Short-term & LRA -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <!-- Short-term LUFS -->
+                        <div style="background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">SHORT-TERM</div>
+                            <div id="shortLufsValue" style="font-size: 1.4rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', 'Courier New', monospace;">-∞</div>
+                            <div style="font-size: 0.5rem; color: rgba(0,212,255,0.6); margin-top: 2px;">LUFS (3s)</div>
+                        </div>
 
-                <!-- 5. Loudness Range (LRA) - PRO (broadcast requirement) -->
-                <div class="meter-item advanced-meter" style="display: none;">
-                    <div class="meter-label">Loudness Range (LRA)</div>
-                    <div class="meter-value" id="lraValue">-- dB</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Dynamic range (EBU R128)</div>
-                </div>
+                        <!-- Loudness Range -->
+                        <div style="background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">LRA</div>
+                            <div id="lraValue" style="font-size: 1.4rem; font-weight: 700; color: #ffc107; font-family: 'JetBrains Mono', 'Courier New', monospace;">--</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,193,7,0.6); margin-top: 2px;">LU Range</div>
+                        </div>
+                    </div>
 
-                <!-- 6. Crest Factor - PRO (for mastering engineers) -->
-                <div class="meter-item advanced-meter" style="display: none;">
-                    <div class="meter-label">Crest Factor</div>
-                    <div class="meter-value" id="crestValue">-- dB</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">Peak-to-RMS ratio</div>
-                </div>
+                    <!-- Row 2: Momentary & Crest -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <!-- Momentary LUFS -->
+                        <div style="background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">MOMENTARY</div>
+                            <div id="momentaryLufsValue" style="font-size: 1.4rem; font-weight: 700; color: #00ff88; font-family: 'JetBrains Mono', 'Courier New', monospace;">-∞</div>
+                            <div style="font-size: 0.5rem; color: rgba(0,255,136,0.6); margin-top: 2px;">LUFS (400ms)</div>
+                        </div>
 
-                <!-- 7. PLR (Peak to Loudness Ratio) - PRO (streaming optimization) -->
-                <div class="meter-item advanced-meter" style="display: none;">
-                    <div class="meter-label">PLR (Peak/Loudness)</div>
-                    <div class="meter-value" id="plrValue">-- dB</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; margin-top: 2px;">True Peak to LUFS ratio</div>
+                        <!-- Crest Factor -->
+                        <div style="background: rgba(233, 30, 99, 0.08); border: 1px solid rgba(233, 30, 99, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CREST</div>
+                            <div id="crestValue" style="font-size: 1.4rem; font-weight: 700; color: #e91e63; font-family: 'JetBrains Mono', 'Courier New', monospace;">--</div>
+                            <div style="font-size: 0.5rem; color: rgba(233,30,99,0.6); margin-top: 2px;">dB (Peak/RMS)</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: PLR (Full Width) -->
+                    <div style="background: rgba(156, 39, 176, 0.08); border: 1px solid rgba(156, 39, 176, 0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PLR (Peak to Loudness Ratio)</div>
+                        <div id="plrValue" style="font-size: 1.4rem; font-weight: 700; color: #9c27b0; font-family: 'JetBrains Mono', 'Courier New', monospace;">--</div>
+                        <div style="font-size: 0.5rem; color: rgba(156,39,176,0.6); margin-top: 2px;">dB • Streaming headroom indicator</div>
+                    </div>
+
+                    <!-- EBU R128 Compliance Note -->
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; text-align: center;">
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); letter-spacing: 0.5px;">
+                            📡 EBU R128 / ITU-R BS.1770-4 Compliant
+                        </div>
+                    </div>
                 </div>
             </div>
 
