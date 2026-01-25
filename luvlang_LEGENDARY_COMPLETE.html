@@ -6497,9 +6497,11 @@
                     // Disconnect source from EQ chain
                     sourceNode.disconnect();
 
-                    // Connect source through bypass compensation to compressor
+                    // Connect source through bypass compensation → Dynamic EQ → compressor
+                    // (Dynamic EQ is at unity/bypass by default, but must stay in chain for consistency)
                     sourceNode.connect(bypassCompensationGain);
-                    bypassCompensationGain.connect(compressor);
+                    bypassCompensationGain.connect(dynEqInput);
+                    dynEqOutput.connect(compressor);
 
                     this.classList.add('bypassed');
                     this.textContent = 'EQ Bypassed (Level Matched)';
@@ -6521,7 +6523,7 @@
                     sourceNode.disconnect();
 
                     // Reconnect full EQ chain:
-                    // Source → Sub → Bass → LowMid → Mid → HighMid → High → Air → EQ Compensation → Compressor
+                    // Source → Sub → Bass → LowMid → Mid → HighMid → High → Air → EQ Comp → Dynamic EQ → Compressor
                     sourceNode.connect(eqSubFilter);
                     eqSubFilter.connect(eqBassFilter);
                     eqBassFilter.connect(eqLowMidFilter);
@@ -6530,7 +6532,8 @@
                     eqHighMidFilter.connect(eqHighFilter);
                     eqHighFilter.connect(eqAirFilter);
                     eqAirFilter.connect(eqCompensationGain);
-                    eqCompensationGain.connect(compressor);
+                    eqCompensationGain.connect(dynEqInput);  // → Dynamic EQ (even if bypassed, it's unity gain)
+                    dynEqOutput.connect(compressor);
 
                     this.classList.remove('bypassed');
                     this.textContent = 'EQ Active';
@@ -9184,7 +9187,7 @@
             } else {
                 // Mode A: MASTERED - hear with ALL AI processing applied
                 try {
-                    // Reconnect FULL processing chain
+                    // Reconnect FULL processing chain (must match original chain exactly!)
                     sourceNode.disconnect();
                     if (!eqBypassed) {
                         // Full EQ chain (7-band parametric)
@@ -9196,13 +9199,15 @@
                         eqHighMidFilter.connect(eqHighFilter);
                         eqHighFilter.connect(eqAirFilter);
                         eqAirFilter.connect(eqCompensationGain);
-                        eqCompensationGain.connect(compressor);
+                        eqCompensationGain.connect(dynEqInput);  // → Dynamic EQ
                     } else {
-                        // EQ bypassed, connect to compressor
-                        sourceNode.connect(compressor);
+                        // EQ bypassed, connect to Dynamic EQ input
+                        sourceNode.connect(dynEqInput);
                     }
-                    // Continue chain: Compression → Makeup Gain → Limiter → Master Output
-                    compressor.connect(makeupGain);
+                    // Continue chain: Dynamic EQ → Compressor → Transient Shaper → Makeup Gain → Limiter → Master
+                    dynEqOutput.connect(compressor);
+                    compressor.connect(transientInput);
+                    transientOutput.connect(makeupGain);
                     makeupGain.connect(limiter);
                     limiter.connect(masterGain);
 
