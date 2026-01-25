@@ -75,6 +75,147 @@
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           🚀 2027 FUTURISTIC UI - FLOATING AI COMMAND BAR
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .ai-command-bar {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 40, 0.98));
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(0, 212, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .ai-command-bar::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 52px;
+            background: linear-gradient(135deg, #00d4ff, #b84fff, #00d4ff);
+            z-index: -1;
+            opacity: 0.5;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+
+        .ai-master-btn-floating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #00d4ff 0%, #b84fff 50%, #ff00ff 100%);
+            background-size: 200% 200%;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: gradientShift 4s ease-in-out infinite, pulseGlow 2s ease-in-out infinite;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .ai-master-btn-floating:hover {
+            transform: scale(1.05);
+            box-shadow:
+                0 0 30px rgba(0, 212, 255, 0.8),
+                0 0 60px rgba(184, 79, 255, 0.6),
+                0 0 90px rgba(255, 0, 255, 0.4);
+        }
+
+        .ai-master-btn-floating::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 70%
+            );
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow:
+                    0 0 20px rgba(0, 212, 255, 0.5),
+                    0 0 40px rgba(184, 79, 255, 0.3);
+            }
+            50% {
+                box-shadow:
+                    0 0 30px rgba(0, 212, 255, 0.8),
+                    0 0 60px rgba(184, 79, 255, 0.5),
+                    0 0 80px rgba(255, 0, 255, 0.3);
+            }
+        }
+
+        .ai-btn-icon {
+            font-size: 1.3rem;
+            animation: iconPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .ai-status-pill {
+            padding: 6px 14px;
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #00ff88;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-status-pill.processing {
+            background: rgba(255, 170, 0, 0.15);
+            border-color: rgba(255, 170, 0, 0.4);
+            color: #ffaa00;
+            animation: statusPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            HEADER & BRANDING
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .header-logo {
@@ -497,7 +638,8 @@
             background: linear-gradient(135deg, #00d4ff, #0088cc);
             border-radius: 10px;
             cursor: grab;
-            transition: box-shadow 0.2s ease;
+            /* Smooth animation for preset changes */
+            transition: top 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.15s ease;
             border: 2px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
         }
@@ -509,6 +651,26 @@
         .eq-fader-thumb:active {
             cursor: grabbing;
             box-shadow: 0 8px 30px rgba(0, 212, 255, 0.8);
+        }
+
+        /* Animated glow when preset is applied */
+        .eq-fader-thumb.preset-active {
+            animation: presetPulse 0.6s ease-out;
+        }
+
+        @keyframes presetPulse {
+            0% {
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 0 50px rgba(0, 212, 255, 0.6);
+                transform: translateX(-50%) scale(1.2);
+            }
+            100% {
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+                transform: translateX(-50%) scale(1);
+            }
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1271,6 +1433,18 @@
 </head>
 <body>
     <!-- ═══════════════════════════════════════════════════════════════════════════
+         🚀 FLOATING AI COMMAND BAR - 2027 Futuristic Interface
+         Always visible at top - instant access to AI mastering
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="ai-command-bar" id="aiCommandBar">
+        <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="runFullAIMaster()">
+            <span class="ai-btn-icon">⚡</span>
+            <span>AI MASTER</span>
+        </button>
+        <div class="ai-status-pill" id="aiStatusPill">READY</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
          MASTERING WIZARD - Simplified 3-Step Flow
          1. Upload (audio plays immediately)
          2. Platform/LUFS (hear real-time difference)
@@ -1755,24 +1929,10 @@
                 </div>
 
                 <div style="padding: 15px;">
-                    <!-- Main AI Master Button (Prominent with GLOW animation) -->
-                    <button class="eq-bypass-btn" id="aiMasterBtn" onclick="runFullAIMaster()" style="width: 100%; padding: 20px; background: linear-gradient(135deg, #00d4ff, #b84fff); font-weight: 700; font-size: 0.9rem; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.4); animation: aiButtonGlow 2s ease-in-out infinite; position: relative; overflow: hidden;">
-                        ⚡ RUN FULL AI MASTER
-                        <div style="font-size: 0.65rem; font-weight: 400; opacity: 0.9; margin-top: 5px;">
-                            Complete AI Analysis & Enhancement • Uses All 13 Features
-                        </div>
-                    </button>
-                    <style>
-                        @keyframes aiButtonGlow {
-                            0%, 100% { box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3), 0 0 30px rgba(0, 212, 255, 0.3); }
-                            50% { box-shadow: 0 4px 25px rgba(0, 212, 255, 0.6), 0 0 50px rgba(184, 79, 255, 0.5), 0 0 80px rgba(0, 212, 255, 0.3); }
-                        }
-                        #aiMasterBtn:hover {
-                            animation: none;
-                            box-shadow: 0 4px 30px rgba(0, 212, 255, 0.8), 0 0 60px rgba(184, 79, 255, 0.6);
-                            transform: scale(1.02);
-                        }
-                    </style>
+                    <!-- AI Master via floating bar - show helpful tip -->
+                    <div style="text-align: center; padding: 12px; background: rgba(0, 212, 255, 0.1); border-radius: 8px; margin-bottom: 15px; font-size: 0.75rem; color: rgba(255,255,255,0.7);">
+                        💡 Use the <strong style="color: #00d4ff;">⚡ AI MASTER</strong> button at the top for one-click mastering
+                    </div>
 
                     <!-- Toggle Individual Features -->
                     <div style="text-align: center; margin-bottom: 15px;">
@@ -5011,6 +5171,14 @@
                 if (progress < 1.0) {
                     requestAnimationFrame(animate);
                 } else {
+                    // Trigger visual pulse on all faders when animation completes
+                    bands.forEach(band => {
+                        const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
+                        if (thumb) {
+                            thumb.classList.add('preset-active');
+                            setTimeout(() => thumb.classList.remove('preset-active'), 600);
+                        }
+                    });
                     console.log('✅ EQ animation complete');
                 }
             }
@@ -5854,12 +6022,18 @@
             panel.classList.add('visible');
         }
 
-        // Helper function to update EQ fader UI positions
-        function updateEQFaderPosition(band, gainDB) {
+        // Helper function to update EQ fader UI positions with animation
+        function updateEQFaderPosition(band, gainDB, animate = false) {
             const percent = (12 - gainDB) / 24; // Map ±12dB to 0-1
             const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
             if (thumb) {
                 thumb.style.top = (percent * 100) + '%';
+
+                // Trigger pulse animation for visual feedback
+                if (animate) {
+                    thumb.classList.add('preset-active');
+                    setTimeout(() => thumb.classList.remove('preset-active'), 600);
+                }
             }
         }
 
@@ -11334,6 +11508,13 @@
                 return;
             }
 
+            // Update floating status pill to PROCESSING
+            const statusPill = document.getElementById('aiStatusPill');
+            if (statusPill) {
+                statusPill.textContent = 'PROCESSING';
+                statusPill.classList.add('processing');
+            }
+
             try {
                 // Show initial progress panel
                 const analysisPanel = document.getElementById('analysisPanel');
@@ -11500,12 +11681,46 @@
 
                     analysisPanel.innerHTML = html;
                     window.lastAIResults = results;
+
+                    // Update floating status pill to COMPLETE
+                    const statusPill = document.getElementById('aiStatusPill');
+                    if (statusPill) {
+                        statusPill.textContent = 'COMPLETE';
+                        statusPill.classList.remove('processing');
+                        statusPill.style.color = '#00ff88';
+                        statusPill.style.borderColor = 'rgba(0, 255, 136, 0.6)';
+                        statusPill.style.background = 'rgba(0, 255, 136, 0.2)';
+                        // Reset to READY after 3 seconds
+                        setTimeout(() => {
+                            statusPill.textContent = 'READY';
+                            statusPill.style.color = '';
+                            statusPill.style.borderColor = '';
+                            statusPill.style.background = '';
+                        }, 3000);
+                    }
                 }, 500);
 
             } catch (error) {
                 const analysisPanel = document.getElementById('analysisPanel');
                 analysisPanel.innerHTML = `<div style="color: #ff6b6b; text-align: center;"><strong>❌ AI Master Error</strong><br>${error.message}</div>`;
                 console.error('Full AI Master failed:', error);
+
+                // Update floating status pill to ERROR
+                const statusPill = document.getElementById('aiStatusPill');
+                if (statusPill) {
+                    statusPill.textContent = 'ERROR';
+                    statusPill.classList.remove('processing');
+                    statusPill.style.color = '#ff6b6b';
+                    statusPill.style.borderColor = 'rgba(255, 107, 107, 0.6)';
+                    statusPill.style.background = 'rgba(255, 107, 107, 0.15)';
+                    // Reset to READY after 5 seconds
+                    setTimeout(() => {
+                        statusPill.textContent = 'READY';
+                        statusPill.style.color = '';
+                        statusPill.style.borderColor = '';
+                        statusPill.style.background = '';
+                    }, 5000);
+                }
             }
         }
 
