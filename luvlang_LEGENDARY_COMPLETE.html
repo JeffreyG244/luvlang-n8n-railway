@@ -2294,7 +2294,7 @@
             console.error('   At:', event.filename, 'Line:', event.lineno);
         });
 
-        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX10-5SEC-ULTIMATE]');
+        console.log('🚀 LuvLang Mastering - Script starting... [BUILD: 2026-01-24-FIX11-NO-VIZ-10SEC]');
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -2982,13 +2982,15 @@
                     console.log('✅ Full processing chain NOW ACTIVE');
                 };
 
-                // Start visualization
-                try {
-                    startVisualization();
-                } catch (vizError) {
-                    console.error('⚠️ Visualization startup failed:', vizError.message);
-                    // Audio chain is already connected, so audio will still work
-                }
+                // FIX11: Delay visualization by 10 seconds to test if draw loop causes skipping
+                console.log('⏳ FIX11: Visualization delayed 10 seconds - testing if draw loop causes audio skipping');
+                setTimeout(() => {
+                    try {
+                        startVisualization();
+                    } catch (vizError) {
+                        console.error('⚠️ Visualization startup failed:', vizError.message);
+                    }
+                }, 10000);
 
                 console.log('🎉 AUDIO CHAIN SETUP COMPLETE - Ready for playback!');
 
