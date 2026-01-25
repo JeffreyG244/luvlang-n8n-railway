@@ -7741,6 +7741,11 @@
                     if (window.WebGLSpectrum && window.WebGLSpectrum.isReady() && analyser && audioContext) {
                         // Elite WebGL rendering with persistence/ghosting
                         window.WebGLSpectrum.render(analyser, audioContext);
+
+                        // Draw peak hold dots ON TOP of WebGL spectrum (using 2D overlay)
+                        if (spectrumCanvas && window.spectrumPeakHold) {
+                            drawSpectrumPeakDots(spectrumCanvas);
+                        }
                     } else if (window.drawProfessionalSpectrum && spectrumCanvas && audioContext) {
                         // Fallback to Canvas 2D if WebGL not available
                         window.drawProfessionalSpectrum(spectrumCanvas, analyser, audioContext);
@@ -7918,6 +7923,82 @@
         };
         window.spectrumPeakHold = spectrumPeakHold; // Export for drawEQGraph
 
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // DRAW SPECTRUM PEAK DOTS - White dots showing max frequency output
+        // These overlay on top of the WebGL spectrum to show peak hold markers
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function drawSpectrumPeakDots(canvas) {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            const peakBands = [
+                { name: 'sub', freq: 40 },
+                { name: 'bass', freq: 120 },
+                { name: 'lowmid', freq: 350 },
+                { name: 'mid', freq: 1000 },
+                { name: 'highmid', freq: 3500 },
+                { name: 'high', freq: 8000 },
+                { name: 'air', freq: 14000 }
+            ];
+
+            for (const band of peakBands) {
+                const peakData = window.spectrumPeakHold[band.name];
+                if (!peakData || peakData.peak < -55) continue; // Skip if too quiet
+
+                // Calculate X position (logarithmic frequency scale)
+                const x = width * (Math.log10(band.freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+
+                // Calculate Y position from peak dB (-60 to 0 range mapped to canvas)
+                const normalizedPeak = (peakData.peak + 60) / 60; // 0 to 1
+                const y = height - (normalizedPeak * (height - 100)) - 50; // Leave margins
+
+                // Calculate age for fade effect (newer = brighter)
+                const age = performance.now() - peakData.time;
+                const fadeAlpha = age < 1500 ? 1.0 : Math.max(0.3, 1.0 - (age - 1500) / 3000);
+
+                // ━━━ DOTTED VERTICAL LINE from peak to bottom ━━━
+                ctx.setLineDash([2, 4]); // Dotted pattern
+                ctx.strokeStyle = `rgba(255, 255, 255, ${fadeAlpha * 0.3})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, height - 50);
+                ctx.stroke();
+                ctx.setLineDash([]); // Reset
+
+                // ━━━ WHITE PEAK DOT with glow ━━━
+                ctx.shadowBlur = 15 * fadeAlpha;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+
+                // Outer glow ring
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                const outerGlow = ctx.createRadialGradient(x, y, 0, x, y, 8);
+                outerGlow.addColorStop(0, `rgba(255, 255, 255, ${fadeAlpha * 0.6})`);
+                outerGlow.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                ctx.fillStyle = outerGlow;
+                ctx.fill();
+
+                // Inner bright dot (WHITE)
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
+                ctx.fill();
+
+                // Core bright center
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            }
+        }
+        window.drawSpectrumPeakDots = drawSpectrumPeakDots;
+
         function updateReactiveEQFaders(frequencyData) {
             if (!analyser || !audioContext || !frequencyData) return;
 
@@ -8023,33 +8104,54 @@
                 ctx.fillRect(0, height * (0.25 * i + 0.1), width, 1);
             }
 
-            // Logarithmic Frequency Grid with Glassmorphism (20Hz - 20kHz)
-            const logFreqs = [20, 30, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000, 10000, 20000];
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // DOTTED WHITE GRID LINES - Professional EQ Reference Grid
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            const logFreqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+            // VERTICAL frequency lines - DOTTED WHITE
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.lineWidth = 1;
+            ctx.setLineDash([2, 4]); // Dotted pattern: 2px dash, 4px gap
 
-            // Draw vertical frequency lines (logarithmic spacing)
             for (const freq of logFreqs) {
                 const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
 
-                // Glassmorphism effect - subtle gradient line
-                const lineGradient = ctx.createLinearGradient(x, 0, x, height);
-                lineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.03)');
-                lineGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
-                lineGradient.addColorStop(1, 'rgba(255, 255, 255, 0.03)');
-                ctx.strokeStyle = lineGradient;
+                ctx.beginPath();
+                ctx.moveTo(x, 40);
+                ctx.lineTo(x, height - 40);
+                ctx.stroke();
+
+                // Frequency labels at bottom
+                ctx.save();
+                ctx.setLineDash([]); // No dash for text
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.font = '9px -apple-system, "Segoe UI", sans-serif';
+                ctx.textAlign = 'center';
+                const label = freq >= 1000 ? (freq / 1000) + 'k' : freq.toString();
+                ctx.fillText(label, x, height - 25);
+                ctx.restore();
+            }
+
+            // HORIZONTAL dB grid lines - DOTTED WHITE
+            const dbLevels = [+12, +6, 0, -6, -12, -18, -24];
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.setLineDash([2, 4]); // Dotted pattern
+
+            for (const db of dbLevels) {
+                const y = height / 2 - (db / 24 * (height / 2 - 50));
 
                 ctx.beginPath();
-                ctx.moveTo(x, 60);
-                ctx.lineTo(x, height - 55);
+                ctx.moveTo(50, y);
+                ctx.lineTo(width - 20, y);
                 ctx.stroke();
             }
 
-            // Horizontal dB grid lines with glassmorphism
-            const dbLevels = [+12, +6, 0, -6, -12, -18, -24];
+            ctx.setLineDash([]); // Reset dash pattern
+
+            // dB labels on left side
             ctx.font = '10px -apple-system, "Segoe UI", sans-serif';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.textAlign = 'right';
 
             for (const db of dbLevels) {
