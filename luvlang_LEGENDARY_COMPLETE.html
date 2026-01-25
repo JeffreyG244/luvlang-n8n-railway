@@ -7377,6 +7377,20 @@
         // Smoothed values for animation
         const eqBandLevels = { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: 0, high: 0, air: 0 };
 
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SPECTRUM PEAK HOLD - Dotted markers showing audio peaks at EQ frequencies
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const spectrumPeakHold = {
+            sub: { peak: -60, time: 0 },
+            bass: { peak: -60, time: 0 },
+            lowmid: { peak: -60, time: 0 },
+            mid: { peak: -60, time: 0 },
+            highmid: { peak: -60, time: 0 },
+            high: { peak: -60, time: 0 },
+            air: { peak: -60, time: 0 }
+        };
+        window.spectrumPeakHold = spectrumPeakHold; // Export for drawEQGraph
+
         function updateReactiveEQFaders(frequencyData) {
             if (!analyser || !audioContext || !frequencyData) return;
 
@@ -7403,6 +7417,22 @@
                 // Smooth the level (attack fast, release slow)
                 const smoothing = avgLevel > eqBandLevels[band] ? 0.3 : 0.92;
                 eqBandLevels[band] = eqBandLevels[band] * smoothing + avgLevel * (1 - smoothing);
+
+                // Update spectrum peak hold (for dotted peak markers)
+                // Convert to dB scale for visualization
+                const levelDB = avgLevel > 0 ? 20 * Math.log10(avgLevel) - 40 : -60;
+                const now = performance.now();
+                if (spectrumPeakHold[band]) {
+                    if (levelDB > spectrumPeakHold[band].peak) {
+                        // New peak - capture it
+                        spectrumPeakHold[band].peak = levelDB;
+                        spectrumPeakHold[band].time = now;
+                    } else if (now - spectrumPeakHold[band].time > 1500) {
+                        // Decay after 1.5s hold time (3dB/second decay)
+                        spectrumPeakHold[band].peak -= 0.1; // ~3dB/s at 30fps
+                        if (spectrumPeakHold[band].peak < -60) spectrumPeakHold[band].peak = -60;
+                    }
+                }
             }
 
             // Apply visual effects to EQ faders
@@ -7790,6 +7820,76 @@
                 }
 
                 ctx.shadowBlur = 0;
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // SPECTRUM PEAK HOLD DOTS - Real-time audio peaks at EQ frequencies
+            // Dotted markers showing where audio energy peaks are
+            // ═══════════════════════════════════════════════════════════════════
+            if (window.spectrumPeakHold) {
+                const peakBands = [
+                    { name: 'sub', freq: 40 },
+                    { name: 'bass', freq: 120 },
+                    { name: 'lowmid', freq: 350 },
+                    { name: 'mid', freq: 1000 },
+                    { name: 'highmid', freq: 3500 },
+                    { name: 'high', freq: 8000 },
+                    { name: 'air', freq: 14000 }
+                ];
+
+                for (const band of peakBands) {
+                    const peakData = window.spectrumPeakHold[band.name];
+                    if (!peakData || peakData.peak < -55) continue; // Skip if too quiet
+
+                    // Calculate X position (logarithmic frequency scale)
+                    const x = width * (Math.log10(band.freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+
+                    // Calculate Y position from peak dB (-60 to 0 range mapped to canvas)
+                    // Map -60dB to bottom, 0dB to top
+                    const normalizedPeak = (peakData.peak + 60) / 60; // 0 to 1
+                    const y = height - (normalizedPeak * (height - 80)) - 40; // Leave margins
+
+                    // Calculate age for fade effect (newer = brighter)
+                    const age = performance.now() - peakData.time;
+                    const fadeAlpha = age < 1500 ? 1.0 : Math.max(0.3, 1.0 - (age - 1500) / 3000);
+
+                    // Draw dotted vertical line from peak to bottom
+                    ctx.setLineDash([3, 6]); // Dotted pattern
+                    ctx.strokeStyle = `rgba(0, 255, 200, ${fadeAlpha * 0.4})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x, height - 40);
+                    ctx.stroke();
+                    ctx.setLineDash([]); // Reset
+
+                    // Draw peak hold dot (cyan/teal color)
+                    ctx.shadowBlur = 12 * fadeAlpha;
+                    ctx.shadowColor = 'rgba(0, 255, 200, 0.8)';
+
+                    // Outer glow ring
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    const outerGlow = ctx.createRadialGradient(x, y, 0, x, y, 6);
+                    outerGlow.addColorStop(0, `rgba(0, 255, 200, ${fadeAlpha * 0.5})`);
+                    outerGlow.addColorStop(1, `rgba(0, 255, 200, 0)`);
+                    ctx.fillStyle = outerGlow;
+                    ctx.fill();
+
+                    // Inner bright dot
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 255, ${fadeAlpha})`;
+                    ctx.fill();
+
+                    // White core
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
+                    ctx.fill();
+
+                    ctx.shadowBlur = 0;
+                }
             }
 
             // No title text - clean modern premium look (like FabFilter Pro-Q 3)
