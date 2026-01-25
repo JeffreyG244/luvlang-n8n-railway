@@ -2498,16 +2498,16 @@
                     <div id="liveLufsStatus" style="font-size: 0.6rem; padding: 3px 8px; border-radius: 4px; background: rgba(0, 255, 136, 0.2); color: #00ff88; font-weight: 600;">MONITORING</div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <!-- LIVE (Real-time) -->
+                    <!-- MOMENTARY (Real-time smoothed) -->
                     <div style="text-align: center;">
-                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">LIVE</div>
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">MOMENTARY</div>
                         <div id="liveLufsValue" style="font-size: 2rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);">-∞</div>
                         <div style="font-size: 0.6rem; color: rgba(0,255,136,0.6);">LUFS</div>
                     </div>
-                    <!-- MEASURED (After AI) -->
+                    <!-- INTEGRATED (Gated average) -->
                     <div style="text-align: center;">
-                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">MEASURED</div>
-                        <div id="measuredLufsValue" style="font-size: 2rem; font-weight: 800; color: #00d4ff; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">--</div>
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-bottom: 5px; text-transform: uppercase;">INTEGRATED</div>
+                        <div id="measuredLufsValue" style="font-size: 2rem; font-weight: 800; color: #00d4ff; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);">-∞</div>
                         <div style="font-size: 0.6rem; color: rgba(0,212,255,0.6);">LUFS</div>
                     </div>
                 </div>
@@ -8703,7 +8703,7 @@
                         else platformTarget = -14; // Spotify
                     }
 
-                    // Update LIVE LUFS indicator (top right) - the only LUFS display
+                    // Update LIVE LUFS indicator (real-time fluctuating)
                     if (liveLufsValue) {
                         liveLufsValue.textContent = smoothedLUFS.toFixed(1);
                         // Color based on proximity to target
@@ -8717,6 +8717,25 @@
                         } else {
                             liveLufsValue.style.color = '#ff6b6b'; // Red - off target
                             liveLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                        }
+                    }
+
+                    // Update MEASURED LUFS (integrated average - more stable)
+                    const measuredLufsDisplay = document.getElementById('measuredLufsValue');
+                    if (measuredLufsDisplay) {
+                        // Use integrated LUFS (more stable than smoothed)
+                        measuredLufsDisplay.textContent = integratedLUFS.toFixed(1);
+                        // Color based on proximity to target
+                        const diff = Math.abs(integratedLUFS - platformTarget);
+                        if (diff <= 1) {
+                            measuredLufsDisplay.style.color = '#00ff88';
+                            measuredLufsDisplay.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
+                        } else if (diff <= 3) {
+                            measuredLufsDisplay.style.color = '#00d4ff';
+                            measuredLufsDisplay.style.textShadow = '0 0 20px rgba(0, 212, 255, 0.5)';
+                        } else {
+                            measuredLufsDisplay.style.color = '#ffd700';
+                            measuredLufsDisplay.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
                         }
                     }
                 } else {
