@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 2.1.0 | Build: 2026-01-25-v4 | PRO SPECTRUM with Peak Hold Envelope -->
+<!-- VERSION 3.0.0 | Build: 2026-01-26 | ADVANCED MASTERING ENGINE - World-Class Features -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -2432,6 +2432,37 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════
+                 🚀 ADVANCED MASTERING FEATURES - World-Class Processing
+                 ═══════════════════════════════════════════════════════════════════ -->
+            <div class="advanced-features-section" style="margin-bottom: 15px;">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span>🚀 Advanced Processing</span>
+                    <span style="font-size: 0.6rem; padding: 2px 8px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 10px; color: #000; font-weight: 700;">PRO</span>
+                </div>
+
+                <!-- IRC Limiter Mode Selector -->
+                <div id="limiterModeContainer"></div>
+
+                <!-- Soft Clipper -->
+                <div id="softClipperContainer"></div>
+
+                <!-- Upward Compression -->
+                <div id="upwardCompContainer"></div>
+
+                <!-- Unlimiter / Dynamics Restoration -->
+                <div id="unlimiterContainer"></div>
+
+                <!-- Loudness History Graph -->
+                <div id="loudnessHistoryContainer"></div>
+
+                <!-- Spectrogram -->
+                <div id="spectrogramContainer"></div>
+
+                <!-- Linear Phase EQ Toggle -->
+                <div id="linearPhaseContainer"></div>
             </div>
 
             <!-- MASTER SECTION -->
@@ -12914,6 +12945,74 @@
          Handles tier switching, module locking, checkout, and Stripe payments
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="TIER_SYSTEM.js"></script>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         🚀 ADVANCED MASTERING ENGINE - World-Class Professional Features
+         IRC Limiter, Upward Compression, Unlimiter, Soft Clipper
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script src="ADVANCED_MASTERING_ENGINE.js"></script>
+    <script src="ADVANCED_MASTERING_UI.js"></script>
+
+    <!-- Initialize Advanced Mastering Engine -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for audio context
+            const waitForAudioContext = () => {
+                return new Promise(resolve => {
+                    const check = () => {
+                        if (window.audioContext) {
+                            resolve(window.audioContext);
+                        } else {
+                            setTimeout(check, 100);
+                        }
+                    };
+                    check();
+                });
+            };
+
+            try {
+                const ctx = await waitForAudioContext();
+
+                // Initialize Advanced Mastering Engine
+                window.advancedEngine = new AdvancedMasteringEngine(ctx);
+                await window.advancedEngine.init();
+
+                // Create UI Components
+                if (typeof createLimiterModeUI === 'function') {
+                    createLimiterModeUI('limiterModeContainer');
+                }
+                if (typeof createSoftClipperUI === 'function') {
+                    createSoftClipperUI('softClipperContainer');
+                }
+                if (typeof createUpwardCompressorUI === 'function') {
+                    createUpwardCompressorUI('upwardCompContainer');
+                }
+                if (typeof createUnlimiterUI === 'function') {
+                    createUnlimiterUI('unlimiterContainer');
+                }
+                if (typeof createLoudnessHistoryUI === 'function') {
+                    createLoudnessHistoryUI('loudnessHistoryContainer');
+                }
+                if (typeof createSpectrogramUI === 'function') {
+                    createSpectrogramUI('spectrogramContainer');
+                }
+                if (typeof createLinearPhaseToggle === 'function') {
+                    createLinearPhaseToggle('linearPhaseContainer');
+                }
+
+                console.log('🚀 Advanced Mastering Engine ready');
+                console.log('   - IRC Limiter (5 modes: Transparent, Balanced, Punchy, Aggressive, Transient)');
+                console.log('   - Upward Compression (boost quiet details)');
+                console.log('   - Unlimiter / Dynamics Restoration');
+                console.log('   - Soft Clipper (tube-style saturation)');
+                console.log('   - Loudness History Graph');
+                console.log('   - Spectrogram (time × frequency)');
+                console.log('   - Linear Phase EQ mode');
+            } catch (e) {
+                console.warn('Advanced Engine init deferred:', e);
+            }
+        });
+    </script>
 
 </body>
 </html>
