@@ -66,42 +66,26 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, width, height);
 
-    // ═══ FREQUENCY GRID (Logarithmic) ═══
+    // ═══ FREQUENCY LABELS ONLY (no vertical grid lines) ═══
     const frequencies = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-    ctx.lineWidth = 1;
     ctx.font = '9px -apple-system, sans-serif';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.textAlign = 'center';
 
     for (const freq of frequencies) {
         const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-
-        // Vertical grid line
-        ctx.beginPath();
-        ctx.moveTo(x, 30);
-        ctx.lineTo(x, height - 30);
-        ctx.stroke();
-
-        // Frequency label
+        // Frequency label only - no vertical lines
         let label = freq >= 1000 ? (freq / 1000).toFixed(0) + 'k' : freq.toString();
         ctx.fillText(label, x, height - 10);
     }
 
-    // ═══ dB GRID (Horizontal) ═══
+    // ═══ dB LABELS ONLY (no horizontal grid lines) ═══
     const dbLevels = [0, -12, -24, -36, -48, -60, -72];
     ctx.textAlign = 'right';
 
     for (const db of dbLevels) {
         const y = 30 + ((Math.abs(db) / 72) * (height - 60));
-
-        ctx.strokeStyle = db === 0 ? 'rgba(255, 100, 100, 0.15)' : 'rgba(255, 255, 255, 0.03)';
-        ctx.beginPath();
-        ctx.moveTo(40, y);
-        ctx.lineTo(width - 20, y);
-        ctx.stroke();
-
-        // dB label
+        // dB label only - no horizontal lines
         ctx.fillStyle = db === 0 ? 'rgba(255, 100, 100, 0.6)' : 'rgba(255, 255, 255, 0.3)';
         ctx.fillText(db.toString(), 35, y + 3);
     }
