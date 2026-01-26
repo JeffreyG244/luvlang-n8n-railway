@@ -1,44 +1,26 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// PROFESSIONAL VISUALIZATION SYSTEM
-// FabFilter Pro-Q 3 / iZotope Ozone / Waves Quality
+// PRO SPECTRUM - HARDWARE GRADE ANALYZER
+// Clean, minimal, professional - like Ozone/SPAN/Pro-Q
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// GLOBAL STATE FOR METERING
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-let leftPeakHold = -Infinity;
-let rightPeakHold = -Infinity;
-let leftPeakHoldTime = 0;
-let rightPeakHoldTime = 0;
-const PEAK_HOLD_DURATION = 1500; // ms
-const PEAK_DECAY_RATE = 0.5; // dB per frame
-
-// Goniometer history buffer
-const goniometerHistory = [];
-const GONIOMETER_HISTORY_LENGTH = 100;
-
-// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
 let profSpectrumDataArray = null;
 let profSpectrumLastWidth = 0;
 let profSpectrumLastHeight = 0;
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// PEAK HOLD ENVELOPE - Professional dotted line tracing peaks
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SPECTRUM_POINTS = 300;
-let spectrumPeakHoldValues = new Float32Array(SPECTRUM_POINTS);
-let spectrumPeakHoldTimes = new Float32Array(SPECTRUM_POINTS);
-const SPECTRUM_PEAK_HOLD_MS = 2000; // Hold for 2 seconds
-const SPECTRUM_PEAK_DECAY = 0.5; // Decay rate after hold
+// 64 frequency bands - hardware style
+const NUM_BARS = 64;
+let barValues = new Float32Array(NUM_BARS);
+let peakValues = new Float32Array(NUM_BARS);
+let peakTimes = new Float32Array(NUM_BARS);
 
-// Initialize peak hold
-for (let i = 0; i < SPECTRUM_POINTS; i++) {
-    spectrumPeakHoldValues[i] = 0;
-    spectrumPeakHoldTimes[i] = 0;
+for (let i = 0; i < NUM_BARS; i++) {
+    barValues[i] = 0;
+    peakValues[i] = 0;
+    peakTimes[i] = 0;
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 1. SPECTRUM ANALYZER + EQ CURVE (Panel 1)
+// MAIN SPECTRUM - Hardware bar graph style
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     if (!canvas || !analyser || !audioContext) return;
@@ -46,581 +28,222 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     const ctx = canvas.getContext('2d');
     const width = canvas.offsetWidth;
     const height = canvas.offsetHeight;
+    const now = performance.now();
 
-    // Only resize canvas if dimensions changed (prevents expensive recreate every frame)
-    const targetWidth = width * window.devicePixelRatio;
-    const targetHeight = height * window.devicePixelRatio;
-    if (profSpectrumLastWidth !== targetWidth || profSpectrumLastHeight !== targetHeight) {
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        profSpectrumLastWidth = targetWidth;
-        profSpectrumLastHeight = targetHeight;
+    const dpr = window.devicePixelRatio || 1;
+    if (profSpectrumLastWidth !== width * dpr || profSpectrumLastHeight !== height * dpr) {
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        profSpectrumLastWidth = width * dpr;
+        profSpectrumLastHeight = height * dpr;
     }
-    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Clear with premium dark gradient
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, '#000000');
-    bgGradient.addColorStop(0.5, '#0a0a0f');
-    bgGradient.addColorStop(1, '#000000');
-    ctx.fillStyle = bgGradient;
+    // Pure black background
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
 
-    // ═══ FREQUENCY LABELS ONLY (no vertical grid lines) ═══
-    const frequencies = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-    ctx.font = '9px -apple-system, sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.textAlign = 'center';
-
-    for (const freq of frequencies) {
-        const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-        // Frequency label only - no vertical lines
-        let label = freq >= 1000 ? (freq / 1000).toFixed(0) + 'k' : freq.toString();
-        ctx.fillText(label, x, height - 10);
-    }
-
-    // ═══ dB LABELS ONLY (no horizontal grid lines) ═══
-    const dbLevels = [0, -12, -24, -36, -48, -60, -72];
-    ctx.textAlign = 'right';
-
-    for (const db of dbLevels) {
-        const y = 30 + ((Math.abs(db) / 72) * (height - 60));
-        // dB label only - no horizontal lines
-        ctx.fillStyle = db === 0 ? 'rgba(255, 100, 100, 0.6)' : 'rgba(255, 255, 255, 0.3)';
-        ctx.fillText(db.toString(), 35, y + 3);
-    }
-
-    // ═══ SPECTRUM ANALYZER (Filled Area) ═══
+    // Get FFT data
     const bufferLength = analyser.frequencyBinCount;
-    // Reuse pre-allocated array to prevent GC pressure
     if (!profSpectrumDataArray || profSpectrumDataArray.length !== bufferLength) {
         profSpectrumDataArray = new Float32Array(bufferLength);
     }
     analyser.getFloatFrequencyData(profSpectrumDataArray);
 
     const nyquist = audioContext.sampleRate / 2;
+    const barWidth = (width - 10) / NUM_BARS - 1;
+    const maxHeight = height - 25;
 
-    // Draw smooth filled spectrum
-    ctx.beginPath();
-    ctx.moveTo(40, height - 30);
+    // Process each bar
+    for (let i = 0; i < NUM_BARS; i++) {
+        // Logarithmic frequency mapping
+        const t = i / NUM_BARS;
+        const freq = 20 * Math.pow(1000, t);
+        const bin = Math.round((freq / nyquist) * bufferLength);
+        const db = profSpectrumDataArray[Math.min(bin, bufferLength - 1)];
 
-    for (let i = 0; i < 300; i++) {
-        const freq = 20 * Math.pow(20000/20, i / 300);
-        const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
+        // Normalize -80dB to 0dB
+        const normalized = Math.max(0, Math.min(1, (db + 80) / 80));
 
-        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-        const normalized = Math.max(0, Math.min(1, (db + 72) / 72));
-        const y = 30 + (1 - normalized) * (height - 60);
-
-        if (i === 0) {
-            ctx.lineTo(x, y);
+        // Smooth attack/release
+        const target = normalized;
+        if (target > barValues[i]) {
+            barValues[i] += (target - barValues[i]) * 0.5; // Fast attack
         } else {
-            ctx.lineTo(x, y);
+            barValues[i] += (target - barValues[i]) * 0.15; // Slow release
+        }
+
+        const barHeight = barValues[i] * maxHeight;
+        const x = 5 + i * (barWidth + 1);
+        const y = height - 20 - barHeight;
+
+        // Peak hold
+        if (barHeight > peakValues[i]) {
+            peakValues[i] = barHeight;
+            peakTimes[i] = now;
+        } else if (now - peakTimes[i] > 800) {
+            peakValues[i] = Math.max(0, peakValues[i] - 2);
+        }
+
+        // Bar color - subtle gradient from dark to bright cyan
+        const intensity = barValues[i];
+        const r = Math.floor(intensity * 30);
+        const g = Math.floor(150 + intensity * 105);
+        const b = Math.floor(180 + intensity * 75);
+
+        // Draw bar
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillRect(x, y, barWidth, barHeight);
+
+        // Subtle top highlight
+        if (barHeight > 2) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + intensity * 0.2})`;
+            ctx.fillRect(x, y, barWidth, 1);
+        }
+
+        // Peak hold indicator - thin white line
+        if (peakValues[i] > 2) {
+            const peakY = height - 20 - peakValues[i];
+            const age = now - peakTimes[i];
+            const alpha = age < 800 ? 1 : Math.max(0.3, 1 - (age - 800) / 1000);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.fillRect(x, peakY, barWidth, 2);
         }
     }
 
-    ctx.lineTo(width - 20, height - 30);
-    ctx.closePath();
+    // Frequency labels - minimal
+    ctx.font = '9px system-ui, -apple-system, sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.textAlign = 'center';
 
-    // Gradient fill (blue-cyan) - INCREASED OPACITY FOR VISIBILITY
-    const specGradient = ctx.createLinearGradient(0, 30, 0, height);
-    specGradient.addColorStop(0, 'rgba(0, 212, 255, 0.7)');  // Bright cyan at peaks
-    specGradient.addColorStop(0.5, 'rgba(0, 150, 200, 0.5)'); // Medium blue
-    specGradient.addColorStop(1, 'rgba(0, 100, 150, 0.2)');   // Dark blue at bottom
-    ctx.fillStyle = specGradient;
-    ctx.fill();
+    const labels = [
+        { f: 50, l: '50' }, { f: 100, l: '100' }, { f: 200, l: '200' },
+        { f: 500, l: '500' }, { f: 1000, l: '1k' }, { f: 2000, l: '2k' },
+        { f: 5000, l: '5k' }, { f: 10000, l: '10k' }
+    ];
 
-    // Top line with glow
-    ctx.beginPath();
-    for (let i = 0; i < 300; i++) {
-        const freq = 20 * Math.pow(20000/20, i / 300);
-        const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
-
-        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-        const normalized = Math.max(0, Math.min(1, (db + 72) / 72));
-        const y = 30 + (1 - normalized) * (height - 60);
-
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    for (const { f, l } of labels) {
+        const t = (Math.log10(f) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+        const x = 5 + t * (width - 10);
+        ctx.fillText(l, x, height - 5);
     }
-    ctx.strokeStyle = 'rgba(0, 212, 255, 0.9)';  // Brighter line
-    ctx.lineWidth = 2;  // Thicker for visibility
-    ctx.shadowBlur = 10;  // More glow
-    ctx.shadowColor = 'rgba(0, 212, 255, 0.8)';  // Brighter glow
-    ctx.stroke();
-    ctx.shadowBlur = 0;
 
-    // ═══ PEAK HOLD ENVELOPE - Professional Dotted Line ═══
+    // dB scale on left - very subtle
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    const dbMarks = [0, -20, -40, -60];
+    for (const db of dbMarks) {
+        const y = 15 + (Math.abs(db) / 80) * maxHeight;
+        ctx.fillText(`${db}`, width - 3, y);
+    }
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// STEREO METERS - Clean hardware style
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let leftPeakHold = -60, rightPeakHold = -60;
+let leftPeakTime = 0, rightPeakTime = 0;
+
+window.drawStereoMeters = function(canvas, leftLevel, rightLevel) {
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
     const now = performance.now();
 
-    // Update peak hold values and draw
-    ctx.beginPath();
-    let peakLineStarted = false;
-
-    for (let i = 0; i < 300; i++) {
-        const freq = 20 * Math.pow(20000/20, i / 300);
-        const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
-
-        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-        const normalized = Math.max(0, Math.min(1, (db + 72) / 72));
-        const currentY = 30 + (1 - normalized) * (height - 60);
-
-        // Update peak hold
-        if (currentY < spectrumPeakHoldValues[i] || spectrumPeakHoldValues[i] === 0) {
-            spectrumPeakHoldValues[i] = currentY;
-            spectrumPeakHoldTimes[i] = now;
-        } else if (now - spectrumPeakHoldTimes[i] > SPECTRUM_PEAK_HOLD_MS) {
-            // Decay after hold time
-            spectrumPeakHoldValues[i] += SPECTRUM_PEAK_DECAY;
-            if (spectrumPeakHoldValues[i] > height - 30) {
-                spectrumPeakHoldValues[i] = height - 30;
-            }
-        }
-
-        // Draw peak hold line
-        const peakY = spectrumPeakHoldValues[i];
-        if (peakY < height - 35) {
-            if (!peakLineStarted) {
-                ctx.moveTo(x, peakY);
-                peakLineStarted = true;
-            } else {
-                ctx.lineTo(x, peakY);
-            }
-        }
-    }
-
-    // Draw the peak hold line (white/cyan)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 4]); // Dotted line!
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset
-
-    // ═══ PEAK HOLD DOTS - Bright dots along the envelope ═══
-    for (let i = 0; i < 300; i += 8) { // Every 8th point for dot spacing
-        const freq = 20 * Math.pow(20000/20, i / 300);
-        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-        const peakY = spectrumPeakHoldValues[i];
-        const age = now - spectrumPeakHoldTimes[i];
-
-        if (peakY < height - 35) {
-            // Calculate alpha based on age
-            const alpha = age < SPECTRUM_PEAK_HOLD_MS ? 1.0 : Math.max(0.3, 1.0 - (age - SPECTRUM_PEAK_HOLD_MS) / 2000);
-
-            // Draw glowing dot
-            ctx.beginPath();
-            ctx.arc(x, peakY, 3, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.fill();
-
-            // Glow
-            ctx.beginPath();
-            ctx.arc(x, peakY, 6, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(0, 212, 255, ${alpha * 0.4})`;
-            ctx.fill();
-        }
-    }
-
-    // ═══ EQ CURVE OVERLAY (Bright Cyan with Glow) ═══
-    if (window.eqBands && window.audioContext) {
-        const eqCurve = calculateEQResponse(width);
-
-        ctx.beginPath();
-        for (let i = 0; i < eqCurve.length; i++) {
-            const x = 40 + (width - 60) * (i / eqCurve.length);
-            const gain = eqCurve[i]; // in dB
-            const y = (height / 2) - (gain / 12) * (height / 4);
-
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = '#00d4ff';
-        ctx.lineWidth = 2.5;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = 'rgba(0, 212, 255, 0.6)';
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-    }
-};
-
-// Calculate EQ frequency response curve
-function calculateEQResponse(resolution) {
-    const curve = new Array(resolution).fill(0);
-
-    if (!window.eqBands || !window.audioContext) return curve;
-
-    const sampleRate = window.audioContext.sampleRate;
-
-    for (let i = 0; i < resolution; i++) {
-        const freq = 20 * Math.pow(20000/20, i / resolution);
-        let totalGain = 0;
-
-        // Sum up all EQ bands
-        for (const band of window.eqBands) {
-            if (!band.filter) continue;
-
-            const Q = band.filter.Q.value;
-            const centerFreq = band.filter.frequency.value;
-            const gain = band.filter.gain.value;
-
-            // Peaking EQ response calculation
-            const w0 = 2 * Math.PI * centerFreq / sampleRate;
-            const w = 2 * Math.PI * freq / sampleRate;
-            const A = Math.pow(10, gain / 40);
-            const alpha = Math.sin(w0) / (2 * Q);
-
-            const b0 = 1 + alpha * A;
-            const b1 = -2 * Math.cos(w0);
-            const b2 = 1 - alpha * A;
-            const a0 = 1 + alpha / A;
-            const a1 = -2 * Math.cos(w0);
-            const a2 = 1 - alpha / A;
-
-            const phi = Math.sin(w / 2);
-            const r = ((b0 + b2) * Math.pow(phi, 2) - (b2 - b0) + 2 * b1 * Math.pow(phi, 2)) /
-                      ((a0 + a2) * Math.pow(phi, 2) - (a2 - a0) + 2 * a1 * Math.pow(phi, 2));
-
-            const bandGain = 20 * Math.log10(Math.abs(r));
-            totalGain += bandGain;
-        }
-
-        curve[i] = totalGain;
-    }
-
-    return curve;
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 2. STEREO METERS (L/R Channels with Peak Hold)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-window.drawStereoMeter = function(canvas, level, peakHold, isLeft) {
-    if (!canvas) return { level: -Infinity, holdTime: 0 };
-
-    const ctx = canvas.getContext('2d');
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-    // Dark background
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
 
-    // Convert linear to dB
-    const dbLevel = level > 0 ? 20 * Math.log10(level) : -Infinity;
+    const meterH = (height - 8) / 2;
+    const meterW = width - 25;
 
-    // Update peak hold
-    const now = Date.now();
-    if (dbLevel > peakHold.level || (now - peakHold.time) > PEAK_HOLD_DURATION) {
-        if (dbLevel > peakHold.level) {
-            peakHold.level = dbLevel;
-            peakHold.time = now;
-        } else {
-            peakHold.level -= PEAK_DECAY_RATE;
-            peakHold.level = Math.max(peakHold.level, -60);
-        }
-    }
+    // Peak hold
+    if (leftLevel > leftPeakHold) { leftPeakHold = leftLevel; leftPeakTime = now; }
+    else if (now - leftPeakTime > 1000) leftPeakHold = Math.max(leftLevel, leftPeakHold - 0.5);
 
-    // Draw meter bar (bottom to top) - PROFESSIONAL LED-STYLE SEGMENTS
-    const meterHeight = Math.max(0, Math.min(height, ((dbLevel + 60) / 60) * height));
+    if (rightLevel > rightPeakHold) { rightPeakHold = rightLevel; rightPeakTime = now; }
+    else if (now - rightPeakTime > 1000) rightPeakHold = Math.max(rightLevel, rightPeakHold - 0.5);
 
-    // Draw segmented LED-style meter (like professional hardware)
-    const segmentHeight = 4;  // Height of each LED segment
-    const segmentGap = 1;     // Gap between segments
-    const totalSegmentHeight = segmentHeight + segmentGap;
-    const numSegments = Math.ceil(height / totalSegmentHeight);
-    const activeSegments = Math.floor((meterHeight / height) * numSegments);
+    [{ l: leftLevel, p: leftPeakHold, y: 2, n: 'L' },
+     { l: rightLevel, p: rightPeakHold, y: meterH + 6, n: 'R' }].forEach(m => {
+        // Background track
+        ctx.fillStyle = '#111';
+        ctx.fillRect(18, m.y, meterW, meterH - 2);
 
-    for (let i = 0; i < activeSegments; i++) {
-        const y = height - (i + 1) * totalSegmentHeight;
-        const segmentLevel = i / numSegments;
+        // Level - segmented look
+        const lvl = Math.max(0, Math.min(1, (m.l + 60) / 60));
+        const segments = 40;
+        const segW = meterW / segments;
 
-        // Color based on level (green → yellow → red)
-        let color;
-        if (segmentLevel < 0.6) {
-            color = '#00ff88';  // Green
-        } else if (segmentLevel < 0.75) {
-            color = '#88ff00';  // Yellow-green
-        } else if (segmentLevel < 0.9) {
-            color = '#ffaa00';  // Orange
-        } else {
-            color = '#ff3333';  // Red
+        for (let s = 0; s < segments * lvl; s++) {
+            const t = s / segments;
+            let color;
+            if (t < 0.6) color = `rgb(0, ${150 + t * 100}, ${180 + t * 50})`;
+            else if (t < 0.85) color = `rgb(${(t - 0.6) * 400}, ${200 - (t - 0.6) * 200}, 50)`;
+            else color = '#ff3333';
+
+            ctx.fillStyle = color;
+            ctx.fillRect(18 + s * segW, m.y + 1, segW - 1, meterH - 4);
         }
 
-        // Draw segment with glow
-        ctx.fillStyle = color;
-        ctx.shadowBlur = 3;
-        ctx.shadowColor = color;
-        ctx.fillRect(3, y, width - 6, segmentHeight);
-        ctx.shadowBlur = 0;
+        // Peak marker
+        const pkX = 18 + Math.max(0, Math.min(1, (m.p + 60) / 60)) * meterW;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(pkX - 1, m.y, 2, meterH - 2);
 
-        // Add highlight for 3D effect
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(3, y, width - 6, 1);
-    }
-
-    // Peak hold indicator (bright glowing line with color based on level)
-    if (peakHold.level > -60) {
-        const peakY = height - ((peakHold.level + 60) / 60) * height;
-        const peakLevel = (peakHold.level + 60) / 60;
-
-        // Color based on peak level
-        let peakColor;
-        if (peakLevel < 0.6) peakColor = '#00ffaa';
-        else if (peakLevel < 0.9) peakColor = '#ffaa00';
-        else peakColor = '#ff0000';
-
-        // Draw with glow effect
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = peakColor;
-        ctx.fillStyle = peakColor;
-        ctx.fillRect(0, peakY - 2, width, 3);
-        ctx.shadowBlur = 0;
-
-        // Bright highlight on top
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.fillRect(0, peakY - 2, width, 1);
-    }
-
-    // Border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
-
-    // dB markers
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'left';
-
-    const markers = [0, -6, -12, -18, -24, -40, -60];
-    for (const db of markers) {
-        const y = height - ((db + 60) / 60) * height;
-
-        // Tick mark
-        ctx.fillRect(width - 3, y - 0.5, 3, 1);
-    }
-
-    return peakHold;
+        // Label
+        ctx.font = '9px system-ui';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'left';
+        ctx.fillText(m.n, 5, m.y + meterH / 2 + 3);
+    });
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 3. GONIOMETER (Phase Correlation Scope)
+// GONIOMETER - Phase scope
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-window.drawGoniometer = function(canvas, leftData, rightData) {
-    if (!canvas || !leftData || !rightData) return;
+window.drawGoniometer = function(canvas, leftSamples, rightSamples) {
+    if (!canvas || !leftSamples || !rightSamples) return;
 
     const ctx = canvas.getContext('2d');
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
+    const w = canvas.width, h = canvas.height;
+    const cx = w / 2, cy = h / 2;
+    const scale = Math.min(w, h) * 0.4;
 
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    // Fade
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fillRect(0, 0, w, h);
 
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) / 2 - 10;
-
-    // Dark background
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, width, height);
-
-    // Draw circular grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.lineWidth = 1;
-    for (let r = radius / 4; r <= radius; r += radius / 4) {
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
-        ctx.stroke();
-    }
-
-    // Draw center cross
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.beginPath();
-    ctx.moveTo(centerX - radius, centerY);
-    ctx.lineTo(centerX + radius, centerY);
-    ctx.moveTo(centerX, centerY - radius);
-    ctx.lineTo(centerX, centerY + radius);
-    ctx.stroke();
-
-    // Draw diagonal lines (L/R correlation indicators)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.beginPath();
-    ctx.moveTo(centerX - radius * 0.7, centerY - radius * 0.7);
-    ctx.lineTo(centerX + radius * 0.7, centerY + radius * 0.7);
-    ctx.moveTo(centerX - radius * 0.7, centerY + radius * 0.7);
-    ctx.lineTo(centerX + radius * 0.7, centerY - radius * 0.7);
-    ctx.stroke();
-
-    // Calculate and draw L/R correlation points
-    const step = Math.max(1, Math.floor(leftData.length / 200));
-
-    ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.shadowBlur = 3;
-    ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
-
-    ctx.beginPath();
-    let firstPoint = true;
-
-    for (let i = 0; i < leftData.length; i += step) {
-        const L = leftData[i];
-        const R = rightData[i];
-
-        // Convert to Mid/Side
-        const mid = (L + R) / 2;
-        const side = (L - R) / 2;
-
-        const x = centerX + (mid * radius * 0.9);
-        const y = centerY - (side * radius * 0.9);
-
-        if (firstPoint) {
-            ctx.moveTo(x, y);
-            firstPoint = false;
-        } else {
-            ctx.lineTo(x, y);
-        }
-    }
-
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Draw circular border
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    // Crosshairs
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+    ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+    ctx.moveTo(0, 0); ctx.lineTo(w, h);
+    ctx.moveTo(w, 0); ctx.lineTo(0, h);
+    ctx.stroke();
+
+    // Samples
+    const n = Math.min(leftSamples.length, rightSamples.length, 512);
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        const x = cx + (rightSamples[i] - leftSamples[i]) * scale * 0.7;
+        const y = cy - (rightSamples[i] + leftSamples[i]) * scale * 0.5;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(0, 180, 220, 0.5)';
     ctx.stroke();
 
     // Labels
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.font = '9px -apple-system, sans-serif';
+    ctx.font = '8px system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.textAlign = 'center';
-    ctx.fillText('M+S', centerX + radius - 15, centerY - radius + 15);
-    ctx.fillText('M-S', centerX - radius + 15, centerY - radius + 15);
+    ctx.fillText('M', cx, 10);
+    ctx.fillText('S', cx, h - 4);
+    ctx.textAlign = 'left'; ctx.fillText('L', 3, cy + 3);
+    ctx.textAlign = 'right'; ctx.fillText('R', w - 3, cy + 3);
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 4. ENHANCED WAVEFORM (Purple-to-Cyan Gradient with Glow)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-window.drawProfessionalWaveform = function(canvas, audioBuffer) {
-    if (!canvas || !audioBuffer) {
-        console.log('❌ drawProfessionalWaveform: missing canvas or audioBuffer');
-        return;
-    }
-
-    const ctx = canvas.getContext('2d');
-    const width = canvas.offsetWidth;
-    const height = canvas.offsetHeight;
-
-    // Only log detailed info on first draw or if there's an issue
-    if (!window.waveformDrawnOnce) {
-        console.log(`🎨 Waveform: ${width}x${height}px, ${audioBuffer.duration.toFixed(2)}s, ${audioBuffer.numberOfChannels}ch`);
-        window.waveformDrawnOnce = true;
-    }
-
-    if (width === 0 || height === 0) {
-        console.log('❌ Canvas has zero dimensions! Cannot draw waveform.');
-        return;
-    }
-
-    canvas.width = width * window.devicePixelRatio;
-    canvas.height = height * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-    // Premium dark gradient background
-    const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-    bgGradient.addColorStop(0, '#000000');
-    bgGradient.addColorStop(0.5, '#050508');
-    bgGradient.addColorStop(1, '#000000');
-    ctx.fillStyle = bgGradient;
-    ctx.fillRect(0, 0, width, height);
-
-    // Get stereo channels
-    const leftData = audioBuffer.getChannelData(0);
-    const rightData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftData;
-    const step = Math.ceil(leftData.length / width);
-    const centerY = height / 2;
-    const amp = height / 2 * 0.85;
-
-    // Create gradient for waveform (purple to cyan)
-    const waveGradient = ctx.createLinearGradient(0, 0, width, 0);
-    waveGradient.addColorStop(0, '#b84fff');
-    waveGradient.addColorStop(0.3, '#8b5cf6');
-    waveGradient.addColorStop(0.6, '#06b6d4');
-    waveGradient.addColorStop(1, '#00d4ff');
-
-    // Draw filled waveform
-    ctx.shadowBlur = 6;
-    ctx.shadowColor = 'rgba(0, 212, 255, 0.4)';
-
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-
-    // Top half
-    for (let i = 0; i < width; i++) {
-        let maxL = -1.0, maxR = -1.0;
-
-        for (let j = 0; j < step; j++) {
-            const index = (i * step) + j;
-            if (index < leftData.length) {
-                if (Math.abs(leftData[index]) > maxL) maxL = Math.abs(leftData[index]);
-                if (Math.abs(rightData[index]) > maxR) maxR = Math.abs(rightData[index]);
-            }
-        }
-
-        const max = Math.max(maxL, maxR);
-        const y = centerY - (max * amp);
-        ctx.lineTo(i, y);
-    }
-
-    // Bottom half
-    for (let i = width - 1; i >= 0; i--) {
-        let maxL = -1.0, maxR = -1.0;
-
-        for (let j = 0; j < step; j++) {
-            const index = (i * step) + j;
-            if (index < leftData.length) {
-                if (Math.abs(leftData[index]) > maxL) maxL = Math.abs(leftData[index]);
-                if (Math.abs(rightData[index]) > maxR) maxR = Math.abs(rightData[index]);
-            }
-        }
-
-        const max = Math.max(maxL, maxR);
-        const y = centerY + (max * amp);
-        ctx.lineTo(i, y);
-    }
-
-    ctx.closePath();
-
-    // Fill with gradient - Professional purple-to-cyan
-    const fillGradient = ctx.createLinearGradient(0, 0, width, 0);
-    fillGradient.addColorStop(0, 'rgba(184, 79, 255, 0.6)');   // Purple (brighter)
-    fillGradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.5)'); // Mid purple (brighter)
-    fillGradient.addColorStop(1, 'rgba(0, 212, 255, 0.6)');    // Cyan (brighter)
-    ctx.fillStyle = fillGradient;
-    ctx.fill();
-
-    // Draw outline with glow
-    ctx.strokeStyle = waveGradient;
-    ctx.lineWidth = 2;  // Thicker for visibility
-    ctx.globalAlpha = 0.9;  // Bright outline
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
-    ctx.shadowBlur = 0;
-
-    // Center line
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-    ctx.lineTo(width, centerY);
-    ctx.stroke();
-};
-
-console.log('✅ PROFESSIONAL_VISUALIZATION.js loaded');
+console.log('✅ PRO SPECTRUM - Hardware Grade Analyzer loaded');
