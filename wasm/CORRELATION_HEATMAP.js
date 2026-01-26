@@ -1,340 +1,208 @@
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   CORRELATION HEATMAP - Elite Frequency-Domain Phase Analysis
-
-   This is a TOP 1% mastering feature found only in:
-   - iZotope Ozone 11 (Insight Module)
-   - Nugen MasterCheck Pro
-   - SSL Fusion (hardware, ~$3000)
-
-   What it does:
-   - Shows phase correlation PER FREQUENCY BAND (not just overall)
-   - Reveals which frequencies will collapse in mono
-   - Helps engineers fix stereo width problems they can't hear yet
-   - Essential for streaming platforms (Apple Music, Spotify use mono downmix)
-
-   Visual:
-   - Horizontal bands (frequency on Y-axis)
-   - Scrolls left to right (time on X-axis)
-   - Color coded:
-     * GREEN: Perfect phase coherence (>0.7) - Mono safe
-     * YELLOW: Moderate phase issues (0.3-0.7) - Some mono loss
-     * RED: Severe problems (<0.3) - Major mono collapse
-     * BLUE/PURPLE: Inverted phase (negative) - Total cancellation in mono
-
+   PHASE CORRELATION ANALYZER - Professional Grade
+   Frequency-domain stereo correlation analysis
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-// ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
-// ═══════════════════════════════════════════════════════════════════════════
+const NUM_BANDS = 24;
+const HISTORY_LEN = 150;
 
-const NUM_FREQ_BANDS = 20;  // Number of frequency bands to analyze
-const HISTORY_LENGTH = 200; // Scrolling history (200 frames ~= 3.3 seconds at 60fps)
-
-// Frequency bands (logarithmic, 20Hz - 20kHz)
-const FREQ_BANDS = [];
-for (let i = 0; i < NUM_FREQ_BANDS; i++) {
-    const freqLow = 20 * Math.pow(20000 / 20, i / NUM_FREQ_BANDS);
-    const freqHigh = 20 * Math.pow(20000 / 20, (i + 1) / NUM_FREQ_BANDS);
-    FREQ_BANDS.push({
-        low: freqLow,
-        high: freqHigh,
-        center: Math.sqrt(freqLow * freqHigh) // Geometric mean
-    });
+// Frequency bands (log scale)
+const BANDS = [];
+for (let i = 0; i < NUM_BANDS; i++) {
+    const lo = 20 * Math.pow(1000, i / NUM_BANDS);
+    const hi = 20 * Math.pow(1000, (i + 1) / NUM_BANDS);
+    BANDS.push({ lo, hi, center: Math.sqrt(lo * hi) });
 }
 
-// Correlation history buffer (2D array: [time][frequency])
-const correlationHistory = [];
+const history = [];
+let leftFreq = null, rightFreq = null;
+let leftTime = null, rightTime = null;
 
-// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
-let corrLeftFreq = null;
-let corrRightFreq = null;
-let corrLeftTime = null;
-let corrRightTime = null;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// COLOR MAPPING - Professional Phase Correlation Colors
-// ═══════════════════════════════════════════════════════════════════════════
-
-function correlationToColor(correlation) {
-    // Correlation range: -1.0 (inverted) to +1.0 (perfect)
-
-    if (correlation >= 0.7) {
-        // GREEN: Perfect phase coherence (mono safe)
-        const intensity = (correlation - 0.7) / 0.3; // 0.7 to 1.0 → 0 to 1
-        return {
-            r: Math.floor(0 + (0 - 0) * intensity),
-            g: Math.floor(200 + (255 - 200) * intensity),
-            b: Math.floor(100 + (136 - 100) * intensity)
-        };
-    } else if (correlation >= 0.3) {
-        // YELLOW/ORANGE: Moderate phase issues
-        const intensity = (correlation - 0.3) / 0.4; // 0.3 to 0.7 → 0 to 1
-        return {
-            r: Math.floor(255),
-            g: Math.floor(140 + (200 - 140) * intensity),
-            b: Math.floor(0)
-        };
-    } else if (correlation >= 0.0) {
-        // RED: Severe phase problems (will collapse in mono)
-        const intensity = correlation / 0.3; // 0.0 to 0.3 → 0 to 1
-        return {
-            r: Math.floor(255),
-            g: Math.floor(0 + (140 - 0) * intensity),
-            b: Math.floor(0)
-        };
-    } else if (correlation >= -0.5) {
-        // MAGENTA: Negative correlation (partial inversion)
-        const intensity = (correlation + 0.5) / 0.5; // -0.5 to 0.0 → 0 to 1
-        return {
-            r: Math.floor(150 + (255 - 150) * intensity),
-            g: Math.floor(0),
-            b: Math.floor(150 + (0 - 150) * intensity)
-        };
+// Professional color mapping
+function getColor(corr) {
+    // corr: -1 to +1
+    if (corr >= 0.8) {
+        // Bright cyan - excellent
+        return { r: 0, g: 220, b: 200 };
+    } else if (corr >= 0.5) {
+        // Green - good
+        const t = (corr - 0.5) / 0.3;
+        return { r: 0, g: Math.floor(180 + t * 40), b: Math.floor(100 + t * 100) };
+    } else if (corr >= 0.2) {
+        // Yellow - caution
+        const t = (corr - 0.2) / 0.3;
+        return { r: 255, g: Math.floor(200 - t * 20), b: 0 };
+    } else if (corr >= 0) {
+        // Orange/Red - warning
+        const t = corr / 0.2;
+        return { r: 255, g: Math.floor(100 * t), b: 0 };
+    } else if (corr >= -0.5) {
+        // Magenta - phase issues
+        const t = (corr + 0.5) / 0.5;
+        return { r: Math.floor(200 + t * 55), g: 0, b: Math.floor(100 + t * 55) };
     } else {
-        // BLUE: Extreme inversion (total mono cancellation)
-        const intensity = (correlation + 1.0) / 0.5; // -1.0 to -0.5 → 0 to 1
-        return {
-            r: Math.floor(0 + (150 - 0) * intensity),
-            g: Math.floor(0 + (0 - 0) * intensity),
-            b: Math.floor(200 + (150 - 200) * intensity)
-        };
+        // Blue - severe inversion
+        return { r: 80, g: 0, b: 180 };
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PHASE CORRELATION ANALYSIS - Per-Frequency Band
-// ═══════════════════════════════════════════════════════════════════════════
+function analyze(leftAn, rightAn, ctx) {
+    if (!leftAn || !rightAn) return null;
 
-function calculateFrequencyCorrelation(leftAnalyser, rightAnalyser, audioContext) {
-    if (!leftAnalyser || !rightAnalyser) return null;
-
-    // Get complex FFT data (frequency + phase) - reuse pre-allocated arrays
-    const bufferLength = leftAnalyser.frequencyBinCount;
-    if (!corrLeftFreq || corrLeftFreq.length !== bufferLength) {
-        corrLeftFreq = new Float32Array(bufferLength);
-        corrRightFreq = new Float32Array(bufferLength);
+    const len = leftAn.frequencyBinCount;
+    if (!leftFreq || leftFreq.length !== len) {
+        leftFreq = new Float32Array(len);
+        rightFreq = new Float32Array(len);
     }
-    if (!corrLeftTime || corrLeftTime.length !== leftAnalyser.fftSize) {
-        corrLeftTime = new Float32Array(leftAnalyser.fftSize);
-        corrRightTime = new Float32Array(rightAnalyser.fftSize);
+    if (!leftTime || leftTime.length !== leftAn.fftSize) {
+        leftTime = new Float32Array(leftAn.fftSize);
+        rightTime = new Float32Array(rightAn.fftSize);
     }
 
-    leftAnalyser.getFloatFrequencyData(corrLeftFreq);
-    rightAnalyser.getFloatFrequencyData(corrRightFreq);
-    leftAnalyser.getFloatTimeDomainData(corrLeftTime);
-    rightAnalyser.getFloatTimeDomainData(corrRightTime);
+    leftAn.getFloatFrequencyData(leftFreq);
+    rightAn.getFloatFrequencyData(rightFreq);
+    leftAn.getFloatTimeDomainData(leftTime);
+    rightAn.getFloatTimeDomainData(rightTime);
 
-    const sampleRate = audioContext.sampleRate;
-    const nyquist = sampleRate / 2;
+    const sr = ctx.sampleRate;
+    const nyq = sr / 2;
+    const result = [];
 
-    const bandCorrelations = [];
+    for (const band of BANDS) {
+        const binLo = Math.floor((band.lo / nyq) * len);
+        const binHi = Math.ceil((band.hi / nyq) * len);
 
-    for (let band of FREQ_BANDS) {
-        // Find FFT bins for this frequency band
-        const binLow = Math.floor((band.low / nyquist) * bufferLength);
-        const binHigh = Math.ceil((band.high / nyquist) * bufferLength);
+        let sumLR = 0, sumLL = 0, sumRR = 0, cnt = 0;
+        const winSize = Math.min(leftTime.length, 512);
 
-        // Calculate correlation for this band using time-domain samples
-        // We need to bandpass filter the time domain data first (simplified: use FFT magnitude as weighting)
-
-        let sumL = 0, sumR = 0, sumLR = 0, sumLL = 0, sumRR = 0;
-        let count = 0;
-
-        // Use a sliding window in time domain, weighted by frequency content in this band
-        const windowSize = Math.min(corrLeftTime.length, 1024);
-
-        for (let i = 0; i < windowSize; i++) {
-            const L = corrLeftTime[i];
-            const R = corrRightTime[i];
-
-            // Weight by average magnitude in this frequency band
-            let weight = 0;
-            for (let bin = binLow; bin <= Math.min(binHigh, bufferLength - 1); bin++) {
-                const dbL = corrLeftFreq[bin];
-                const dbR = corrRightFreq[bin];
-                // Convert dB to linear (approximate)
-                const magL = Math.pow(10, dbL / 20);
-                const magR = Math.pow(10, dbR / 20);
-                weight += (magL + magR) / 2;
-            }
-            weight = Math.max(weight, 0.001); // Avoid division by zero
-
-            sumL += L * weight;
-            sumR += R * weight;
-            sumLR += L * R * weight;
-            sumLL += L * L * weight;
-            sumRR += R * R * weight;
-            count += weight;
+        for (let i = 0; i < winSize; i++) {
+            const L = leftTime[i];
+            const R = rightTime[i];
+            sumLR += L * R;
+            sumLL += L * L;
+            sumRR += R * R;
+            cnt++;
         }
 
-        // Pearson correlation coefficient
-        const meanL = sumL / count;
-        const meanR = sumR / count;
-        const numerator = (sumLR / count) - (meanL * meanR);
-        const denomL = Math.sqrt((sumLL / count) - (meanL * meanL));
-        const denomR = Math.sqrt((sumRR / count) - (meanR * meanR));
-
-        let correlation = 0;
-        if (denomL > 0.00001 && denomR > 0.00001) {
-            correlation = numerator / (denomL * denomR);
-            // Clamp to [-1, 1]
-            correlation = Math.max(-1.0, Math.min(1.0, correlation));
-        } else {
-            // Silence in this band
-            correlation = 1.0; // Assume perfect correlation for silent bands
+        let corr = 1.0;
+        if (sumLL > 0.00001 && sumRR > 0.00001) {
+            corr = sumLR / Math.sqrt(sumLL * sumRR);
+            corr = Math.max(-1, Math.min(1, corr));
         }
-
-        bandCorrelations.push(correlation);
+        result.push(corr);
     }
-
-    return bandCorrelations;
+    return result;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// HEATMAP RENDERING
-// ═══════════════════════════════════════════════════════════════════════════
-
-window.drawCorrelationHeatmap = function(canvas, leftAnalyser, rightAnalyser, audioContext) {
-    if (!canvas || !leftAnalyser || !rightAnalyser) return;
+window.drawCorrelationHeatmap = function(canvas, leftAn, rightAn, audioCtx) {
+    if (!canvas || !leftAn || !rightAn) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
 
-    const width = canvas.width;
-    const height = canvas.height;
-    const dpr = window.devicePixelRatio || 1;
+    // Analyze
+    const data = analyze(leftAn, rightAn, audioCtx);
+    if (!data) return;
 
-    // High-DPI scaling
-    if (canvas.style.width === '') {
-        canvas.style.width = canvas.width + 'px';
-        canvas.style.height = canvas.height + 'px';
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        ctx.scale(dpr, dpr);
-    }
+    history.push(data);
+    if (history.length > HISTORY_LEN) history.shift();
 
-    // Calculate correlation for all frequency bands
-    const bandCorrelations = calculateFrequencyCorrelation(leftAnalyser, rightAnalyser, audioContext);
-    if (!bandCorrelations) return;
+    // Clear
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(0, 0, w, h);
 
-    // Add to history buffer
-    correlationHistory.push(bandCorrelations);
-    if (correlationHistory.length > HISTORY_LENGTH) {
-        correlationHistory.shift(); // Remove oldest
-    }
+    // Draw heatmap
+    const colW = w / HISTORY_LEN;
+    const rowH = h / NUM_BANDS;
 
-    // Clear canvas with dark background
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, width, height);
+    for (let t = 0; t < history.length; t++) {
+        const x = t * colW;
+        const frame = history[t];
 
-    // Draw scrolling heatmap
-    const colWidth = width / HISTORY_LENGTH;
-    const rowHeight = height / NUM_FREQ_BANDS;
+        for (let f = 0; f < NUM_BANDS; f++) {
+            const y = h - (f + 1) * rowH;
+            const corr = frame[f];
+            const c = getColor(corr);
 
-    for (let t = 0; t < correlationHistory.length; t++) {
-        const x = t * colWidth;
-        const bandData = correlationHistory[t];
-
-        for (let f = 0; f < NUM_FREQ_BANDS; f++) {
-            const y = height - (f + 1) * rowHeight; // Bottom to top (low to high freq)
-            const correlation = bandData[f];
-            const color = correlationToColor(correlation);
-
-            ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
-            ctx.fillRect(x, y, colWidth + 1, rowHeight + 1); // +1 to avoid gaps
+            // Add subtle glow for high correlation
+            const alpha = corr > 0.7 ? 1 : 0.85;
+            ctx.fillStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha})`;
+            ctx.fillRect(x, y, colW + 0.5, rowH + 0.5);
         }
     }
 
-    // Draw frequency grid lines (every 4 bands)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 1;
-    for (let f = 0; f < NUM_FREQ_BANDS; f += 4) {
-        const y = height - f * rowHeight;
+    // Subtle grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 0.5;
+    for (let f = 0; f < NUM_BANDS; f += 6) {
+        const y = h - f * rowH;
         ctx.beginPath();
         ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.lineTo(w, y);
         ctx.stroke();
     }
 
-    // Draw frequency labels on right side
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '9px monospace';
-    ctx.textAlign = 'right';
+    // Current time indicator
+    const nowX = history.length * colW;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(nowX, 0);
+    ctx.lineTo(nowX, h);
+    ctx.stroke();
+
+    // Frequency labels
+    ctx.font = '8px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    for (let f = 0; f < NUM_FREQ_BANDS; f += 4) {
-        const y = height - f * rowHeight - rowHeight / 2;
-        const freq = FREQ_BANDS[f].center;
-        let label;
-        if (freq < 1000) {
-            label = Math.round(freq) + 'Hz';
-        } else {
-            label = (freq / 1000).toFixed(1) + 'k';
+    const labelFreqs = [100, 500, 1000, 5000, 10000];
+    for (const freq of labelFreqs) {
+        for (let f = 0; f < NUM_BANDS; f++) {
+            if (BANDS[f].center >= freq * 0.9 && BANDS[f].center <= freq * 1.1) {
+                const y = h - (f + 0.5) * rowH;
+                const lbl = freq >= 1000 ? (freq / 1000) + 'k' : freq + '';
+                ctx.fillText(lbl, 3, y);
+                break;
+            }
         }
-        ctx.fillText(label, width - 5, y);
     }
-
-    // Draw "NOW" indicator line at right edge
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(width - 2, 0);
-    ctx.lineTo(width - 2, height);
-    ctx.stroke();
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// COLOR LEGEND
-// ═══════════════════════════════════════════════════════════════════════════
-
+// Legend
 window.drawCorrelationLegend = function(canvas) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const w = canvas.width;
+    const h = canvas.height;
 
-    const width = canvas.width;
-    const height = canvas.height;
-
-    // Draw gradient from -1 to +1
-    const steps = 100;
-    const stepWidth = width / steps;
+    // Gradient bar
+    const steps = 80;
+    const stepW = w / steps;
 
     for (let i = 0; i < steps; i++) {
-        const correlation = -1.0 + (2.0 * i / steps); // -1 to +1
-        const color = correlationToColor(correlation);
-        ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
-        ctx.fillRect(i * stepWidth, 0, stepWidth + 1, height);
+        const corr = -1 + (2 * i / steps);
+        const c = getColor(corr);
+        ctx.fillStyle = `rgb(${c.r}, ${c.g}, ${c.b})`;
+        ctx.fillRect(i * stepW, 0, stepW + 1, h);
     }
 
-    // Draw labels
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
+    // Labels below
+    ctx.font = '8px system-ui';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.textBaseline = 'top';
 
-    // Labels: -1 (inverted), 0 (uncorrelated), +1 (perfect)
-    ctx.fillText('-1', width * 0.0, height + 2);
-    ctx.fillText('0', width * 0.5, height + 2);
-    ctx.fillText('+1', width * 1.0, height + 2);
-
-    // Description labels
-    ctx.font = '9px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('OUT OF PHASE', 5, height + 15);
+    ctx.fillText('Out of Phase', 2, h + 1);
+
+    ctx.textAlign = 'center';
+    ctx.fillText('0', w / 2, h + 1);
+
     ctx.textAlign = 'right';
-    ctx.fillText('MONO SAFE', width - 5, height + 15);
+    ctx.fillText('Mono Safe', w - 2, h + 1);
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GLOBAL API
-// ═══════════════════════════════════════════════════════════════════════════
-
-window.CorrelationHeatmap = {
-    draw: window.drawCorrelationHeatmap,
-    drawLegend: window.drawCorrelationLegend,
-    clearHistory: () => { correlationHistory.length = 0; },
-    getHistory: () => correlationHistory
-};
-
-console.log('🎨 CORRELATION_HEATMAP.js loaded - Elite frequency-domain phase analysis ready');
+console.log('🎨 CORRELATION_HEATMAP.js loaded - Phase analysis ready');
