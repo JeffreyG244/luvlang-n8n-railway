@@ -2061,11 +2061,11 @@
             </div>
 
             <div class="complete-actions">
-                <button class="complete-btn secondary" id="abCompareBtn" onclick="toggleABCompare()">
+                <button class="complete-btn secondary" id="overlayAbCompareBtn" onclick="toggleABCompare()">
                     <span class="btn-icon">🔀</span>
                     <span>Compare</span>
                 </button>
-                <button class="complete-btn secondary" id="playMasteredBtn" onclick="playMasteredPreview()">
+                <button class="complete-btn secondary" id="overlayPlayMasteredBtn" onclick="playMasteredPreview()">
                     <span class="btn-icon">▶</span>
                     <span>Listen</span>
                 </button>
@@ -13092,6 +13092,17 @@
                     console.log('🔊 SWITCHED TO MASTERED AUDIO - Dry: OFF, Wet: ON');
                 }
 
+                // ═══════════════════════════════════════════════════════════════
+                // ENABLE A/B COMPARE BUTTON - Now user can compare original vs mastered
+                // ═══════════════════════════════════════════════════════════════
+                const sidebarAbBtn = document.getElementById('abCompareBtn');
+                if (sidebarAbBtn) {
+                    sidebarAbBtn.disabled = false;
+                    sidebarAbBtn.style.opacity = '1';
+                    sidebarAbBtn.style.cursor = 'pointer';
+                    console.log('✅ A/B Compare button ENABLED');
+                }
+
                 // Get current LUFS from locked meters or real-time measurement
                 const currentLUFS = integratedLUFS || -14;
 
@@ -13878,11 +13889,21 @@
             const abBtn = document.getElementById('abCompareBtn');
             const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
 
+            // Update sidebar A/B button
             if (abBtn) {
                 abBtn.classList.toggle('active', isABCompareActive);
-                // Update button text directly (no span wrapper)
                 abBtn.textContent = isABCompareActive ? '🔀 ORIGINAL' : '🔀 MASTERED';
             }
+
+            // Update overlay A/B button (in mastering complete modal)
+            const overlayAbBtn = document.getElementById('overlayAbCompareBtn');
+            if (overlayAbBtn) {
+                overlayAbBtn.classList.toggle('active', isABCompareActive);
+                const spanText = overlayAbBtn.querySelector('span:last-child');
+                if (spanText) spanText.textContent = isABCompareActive ? 'Original' : 'Compare';
+            }
+
+            // Update export bar A/B button
             if (exportBarAbBtn) {
                 exportBarAbBtn.classList.toggle('active', isABCompareActive);
                 exportBarAbBtn.textContent = isABCompareActive ? 'Original' : 'A/B';
