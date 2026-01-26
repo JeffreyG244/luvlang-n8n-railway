@@ -176,16 +176,33 @@ window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
     ctx.fillRect(meterX, meterY, meterW, meterH);
 
     // Level bar - VERTICAL segmented (bottom to top)
+    // Colors match dB scale: -60/-40=dim, -24/-18=green, -12/-6=orange, 0=red
     const levelNorm = (clampedDB + 60) / 60;
     const segments = 40;
     const segH = meterH / segments;
 
     for (let s = 0; s < segments * levelNorm; s++) {
-        const t = s / segments;
+        const t = s / segments; // 0 = bottom (-60dB), 1 = top (0dB)
+        const dB = -60 + t * 60; // Convert to dB
+
         let color;
-        if (t < 0.65) color = `rgb(0, ${150 + t * 100}, ${180 + t * 50})`;
-        else if (t < 0.85) color = `rgb(${(t - 0.65) * 500}, ${200 - (t - 0.65) * 300}, 50)`;
-        else color = '#ff4444';
+        if (dB < -40) {
+            // -60 to -40: dim cyan/gray
+            color = 'rgba(100, 150, 180, 0.5)';
+        } else if (dB < -24) {
+            // -40 to -24: brighter cyan transitioning to green
+            const p = (dB + 40) / 16;
+            color = `rgb(0, ${Math.floor(150 + p * 105)}, ${Math.floor(180 - p * 50)})`;
+        } else if (dB < -12) {
+            // -24 to -12: green (#00ff88)
+            color = '#00ff88';
+        } else if (dB < -6) {
+            // -12 to -6: orange/yellow (#ffaa00)
+            color = '#ffaa00';
+        } else {
+            // -6 to 0: red (#ff3333)
+            color = '#ff3333';
+        }
 
         ctx.fillStyle = color;
         // Draw from bottom up
