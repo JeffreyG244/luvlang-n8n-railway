@@ -367,20 +367,23 @@ async function getUserSubscription() {
 
         if (error) throw error;
 
-        // Get tier limits from subscription_tiers table
+        // Get tier limits from mastering_tiers table
         const { data: tierData, error: tierError } = await supabaseClient
-            .from('subscription_tiers')
+            .from('mastering_tiers')
             .select('*')
             .eq('tier_name', data.subscription_tier)
             .single();
 
         if (tierError) throw tierError;
 
+        // Extract max_presets from features JSON or use default
+        const maxPresets = tierData.features?.max_presets || 999;
+
         return {
             tier: data.subscription_tier,
             limits: {
-                presets: tierData.max_presets,
-                historyDays: tierData.history_retention_days,
+                presets: maxPresets,
+                historyDays: 365, // Default to 1 year
                 features: tierData.features
             }
         };
