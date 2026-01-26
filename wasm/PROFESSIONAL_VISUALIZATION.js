@@ -139,7 +139,7 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEREO METER - Single channel meter (called separately for L/R)
+// STEREO METER - VERTICAL single channel meter (called separately for L/R)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
     if (!canvas) return peakHoldObj;
@@ -165,19 +165,20 @@ window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
         peakHoldObj.level = Math.max(levelDB, peakHoldObj.level - 0.5);
     }
 
-    // Meter dimensions
+    // VERTICAL Meter dimensions
     const meterX = 5;
+    const meterY = 5;
     const meterW = width - 10;
-    const meterH = height - 4;
+    const meterH = height - 10;
 
     // Background track
     ctx.fillStyle = '#151515';
-    ctx.fillRect(meterX, 2, meterW, meterH);
+    ctx.fillRect(meterX, meterY, meterW, meterH);
 
-    // Level bar - segmented
+    // Level bar - VERTICAL segmented (bottom to top)
     const levelNorm = (clampedDB + 60) / 60;
-    const segments = 30;
-    const segW = meterW / segments;
+    const segments = 40;
+    const segH = meterH / segments;
 
     for (let s = 0; s < segments * levelNorm; s++) {
         const t = s / segments;
@@ -187,14 +188,16 @@ window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
         else color = '#ff4444';
 
         ctx.fillStyle = color;
-        ctx.fillRect(meterX + s * segW + 1, 3, segW - 2, meterH - 2);
+        // Draw from bottom up
+        const segY = meterY + meterH - (s + 1) * segH;
+        ctx.fillRect(meterX + 1, segY + 1, meterW - 2, segH - 2);
     }
 
-    // Peak hold marker
+    // Peak hold marker - horizontal line
     const peakNorm = (Math.max(-60, peakHoldObj.level) + 60) / 60;
-    const peakX = meterX + peakNorm * meterW;
+    const peakY = meterY + meterH - peakNorm * meterH;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(peakX - 1, 2, 2, meterH);
+    ctx.fillRect(meterX, peakY - 1, meterW, 2);
 
     return peakHoldObj;
 };
