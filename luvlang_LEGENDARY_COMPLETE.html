@@ -1016,7 +1016,7 @@
             transform: translateY(0);
         }
 
-        /* Custom Tooltip for Feature Tiles */
+        /* Custom Tooltip for Feature Tiles - INSTANT */
         .feature-tooltip-popup {
             position: fixed;
             background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
@@ -1028,12 +1028,11 @@
             z-index: 99999;
             pointer-events: none;
             opacity: 0;
-            transform: translateY(5px);
-            transition: opacity 0.15s ease, transform 0.15s ease;
+            visibility: hidden;
         }
         .feature-tooltip-popup.visible {
             opacity: 1;
-            transform: translateY(0);
+            visibility: visible;
         }
         .feature-tooltip-popup .tooltip-title {
             font-size: 0.85rem;
@@ -2271,7 +2270,7 @@
                 </div>
             </div>
 
-            <!-- Feature Tile Tooltip Script -->
+            <!-- Feature Tile Tooltip Script - INSTANT display -->
             <script>
             (function() {
                 // Create tooltip element
@@ -2280,11 +2279,23 @@
                 tooltip.innerHTML = '<div class="tooltip-title"></div><div class="tooltip-desc"></div>';
                 document.body.appendChild(tooltip);
 
-                // Handle feature tile hover
-                document.addEventListener('mouseover', function(e) {
+                // On page load: Move all title attributes to data-tooltip to prevent native tooltip delay
+                function convertTitles() {
+                    document.querySelectorAll('.feature-tile[title]').forEach(tile => {
+                        tile.dataset.tooltip = tile.title;
+                        tile.removeAttribute('title');
+                    });
+                }
+                convertTitles();
+                // Also run after dynamic content loads
+                setTimeout(convertTitles, 1000);
+                setTimeout(convertTitles, 3000);
+
+                // Handle feature tile hover - INSTANT
+                document.addEventListener('mouseenter', function(e) {
                     const tile = e.target.closest('.feature-tile');
-                    if (tile && tile.title) {
-                        const titleText = tile.title;
+                    if (tile && (tile.dataset.tooltip || tile.title)) {
+                        const titleText = tile.dataset.tooltip || tile.title;
                         const [name, ...descParts] = titleText.split(':');
                         const desc = descParts.join(':').trim();
 
@@ -2293,13 +2304,14 @@
                         tooltip.querySelector('.tooltip-desc').textContent = desc || titleText;
 
                         const rect = tile.getBoundingClientRect();
-                        let left = rect.right + 10;
-                        let top = rect.top;
+                        let left = rect.right + 12;
+                        let top = rect.top + (rect.height / 2) - 40;
 
                         // Keep tooltip on screen
                         if (left + 290 > window.innerWidth) {
-                            left = rect.left - 290;
+                            left = rect.left - 295;
                         }
+                        if (top < 10) top = 10;
                         if (top + 100 > window.innerHeight) {
                             top = window.innerHeight - 110;
                         }
@@ -2307,23 +2319,15 @@
                         tooltip.style.left = left + 'px';
                         tooltip.style.top = top + 'px';
                         tooltip.classList.add('visible');
-
-                        // Prevent native tooltip
-                        tile.dataset.originalTitle = tile.title;
-                        tile.title = '';
                     }
-                });
+                }, true);
 
-                document.addEventListener('mouseout', function(e) {
+                document.addEventListener('mouseleave', function(e) {
                     const tile = e.target.closest('.feature-tile');
                     if (tile) {
                         tooltip.classList.remove('visible');
-                        // Restore title
-                        if (tile.dataset.originalTitle) {
-                            tile.title = tile.dataset.originalTitle;
-                        }
                     }
-                });
+                }, true);
             })();
             </script>
 
