@@ -139,65 +139,64 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEREO METERS - Clean hardware style
+// STEREO METER - Single channel meter (called separately for L/R)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-let leftPeakHold = -60, rightPeakHold = -60;
-let leftPeakTime = 0, rightPeakTime = 0;
-
-window.drawStereoMeters = function(canvas, leftLevel, rightLevel) {
-    if (!canvas) return;
+window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
+    if (!canvas) return peakHoldObj;
 
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
     const now = performance.now();
 
-    ctx.fillStyle = '#000';
+    // Clear
+    ctx.fillStyle = '#0a0a0a';
     ctx.fillRect(0, 0, width, height);
 
-    const meterH = (height - 8) / 2;
-    const meterW = width - 25;
+    // Convert linear level to dB
+    const levelDB = level > 0 ? 20 * Math.log10(level) : -60;
+    const clampedDB = Math.max(-60, Math.min(0, levelDB));
 
-    // Peak hold
-    if (leftLevel > leftPeakHold) { leftPeakHold = leftLevel; leftPeakTime = now; }
-    else if (now - leftPeakTime > 1000) leftPeakHold = Math.max(leftLevel, leftPeakHold - 0.5);
+    // Update peak hold
+    if (levelDB > peakHoldObj.level) {
+        peakHoldObj.level = levelDB;
+        peakHoldObj.time = now;
+    } else if (now - peakHoldObj.time > 1500) {
+        peakHoldObj.level = Math.max(levelDB, peakHoldObj.level - 0.5);
+    }
 
-    if (rightLevel > rightPeakHold) { rightPeakHold = rightLevel; rightPeakTime = now; }
-    else if (now - rightPeakTime > 1000) rightPeakHold = Math.max(rightLevel, rightPeakHold - 0.5);
+    // Meter dimensions
+    const meterX = 5;
+    const meterW = width - 10;
+    const meterH = height - 4;
 
-    [{ l: leftLevel, p: leftPeakHold, y: 2, n: 'L' },
-     { l: rightLevel, p: rightPeakHold, y: meterH + 6, n: 'R' }].forEach(m => {
-        // Background track
-        ctx.fillStyle = '#111';
-        ctx.fillRect(18, m.y, meterW, meterH - 2);
+    // Background track
+    ctx.fillStyle = '#151515';
+    ctx.fillRect(meterX, 2, meterW, meterH);
 
-        // Level - segmented look
-        const lvl = Math.max(0, Math.min(1, (m.l + 60) / 60));
-        const segments = 40;
-        const segW = meterW / segments;
+    // Level bar - segmented
+    const levelNorm = (clampedDB + 60) / 60;
+    const segments = 30;
+    const segW = meterW / segments;
 
-        for (let s = 0; s < segments * lvl; s++) {
-            const t = s / segments;
-            let color;
-            if (t < 0.6) color = `rgb(0, ${150 + t * 100}, ${180 + t * 50})`;
-            else if (t < 0.85) color = `rgb(${(t - 0.6) * 400}, ${200 - (t - 0.6) * 200}, 50)`;
-            else color = '#ff3333';
+    for (let s = 0; s < segments * levelNorm; s++) {
+        const t = s / segments;
+        let color;
+        if (t < 0.65) color = `rgb(0, ${150 + t * 100}, ${180 + t * 50})`;
+        else if (t < 0.85) color = `rgb(${(t - 0.65) * 500}, ${200 - (t - 0.65) * 300}, 50)`;
+        else color = '#ff4444';
 
-            ctx.fillStyle = color;
-            ctx.fillRect(18 + s * segW, m.y + 1, segW - 1, meterH - 4);
-        }
+        ctx.fillStyle = color;
+        ctx.fillRect(meterX + s * segW + 1, 3, segW - 2, meterH - 2);
+    }
 
-        // Peak marker
-        const pkX = 18 + Math.max(0, Math.min(1, (m.p + 60) / 60)) * meterW;
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(pkX - 1, m.y, 2, meterH - 2);
+    // Peak hold marker
+    const peakNorm = (Math.max(-60, peakHoldObj.level) + 60) / 60;
+    const peakX = meterX + peakNorm * meterW;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(peakX - 1, 2, 2, meterH);
 
-        // Label
-        ctx.font = '9px system-ui';
-        ctx.fillStyle = '#666';
-        ctx.textAlign = 'left';
-        ctx.fillText(m.n, 5, m.y + meterH / 2 + 3);
-    });
+    return peakHoldObj;
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
