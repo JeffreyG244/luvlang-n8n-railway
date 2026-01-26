@@ -1853,12 +1853,12 @@
 
             <div class="complete-stats">
                 <div class="stat-box">
-                    <div class="stat-label">Original</div>
+                    <div class="stat-label">Before</div>
                     <div class="stat-value" id="completeOriginalLUFS">-18.2 LUFS</div>
                 </div>
                 <div class="stat-arrow">→</div>
                 <div class="stat-box highlight">
-                    <div class="stat-label">Mastered</div>
+                    <div class="stat-label">After</div>
                     <div class="stat-value" id="completeMasteredLUFS">-14.0 LUFS</div>
                 </div>
             </div>
@@ -1866,17 +1866,17 @@
             <div class="complete-actions">
                 <button class="complete-btn secondary" id="abCompareBtn" onclick="toggleABCompare()">
                     <span class="btn-icon">🔀</span>
-                    <span>A/B Compare</span>
+                    <span>Compare</span>
                 </button>
                 <button class="complete-btn secondary" id="playMasteredBtn" onclick="playMasteredPreview()">
                     <span class="btn-icon">▶</span>
-                    <span>Play Mastered</span>
+                    <span>Listen</span>
                 </button>
             </div>
 
             <button class="complete-btn primary export-cta" onclick="openPricingModal(); closeMasteringComplete();">
                 <span class="btn-icon">⬇</span>
-                <span>Export Mastered Track</span>
+                <span>Export Track</span>
             </button>
 
             <button class="complete-link" onclick="closeMasteringComplete()">
@@ -13479,7 +13479,7 @@
 
             if (abBtn) {
                 abBtn.classList.toggle('active', isABCompareActive);
-                abBtn.querySelector('span:last-child').textContent = isABCompareActive ? 'Playing Original' : 'A/B Compare';
+                abBtn.querySelector('span:last-child').textContent = isABCompareActive ? 'Original' : 'Compare';
             }
             if (exportBarAbBtn) {
                 exportBarAbBtn.classList.toggle('active', isABCompareActive);
@@ -13528,7 +13528,7 @@
 
                 const btn = document.getElementById('playMasteredBtn');
                 if (btn) {
-                    btn.querySelector('span:last-child').textContent = 'Play Mastered';
+                    btn.querySelector('span:last-child').textContent = 'Listen';
                     btn.querySelector('.btn-icon').textContent = '▶';
                 }
             }
