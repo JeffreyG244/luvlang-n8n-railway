@@ -1,286 +1,186 @@
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   WEBGL SPECTRUM ANALYZER - Elite Persistence/Ghosting System
+   PRO SPECTRUM ANALYZER - STUDIO GRADE
 
-   Features:
-   - GPU-accelerated rendering (60fps guaranteed)
-   - Phosphor-style persistence trails (analog oscilloscope look)
-   - Ping-pong framebuffer for smooth decay
-   - Bloom/glow on bright peaks
-   - EQ curve overlay with transparency
-   - Legendary gold color scheme (#FFD700)
-
-   This is the rendering tech used in:
-   - FabFilter Pro-Q 3
-   - iZotope Ozone 11
-   - Waves SSL Channel
+   Professional mastering-quality spectrum visualization
+   - Smooth gradient fill (not flat color)
+   - Sharp peak line with glow
+   - Peak hold envelope that traces the curve
+   - 60fps GPU-accelerated rendering
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SHADER SOURCE CODE
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Simple passthrough vertex shader
 const VERTEX_SHADER = `
     attribute vec2 a_position;
     attribute vec2 a_texCoord;
     varying vec2 v_texCoord;
-
     void main() {
         gl_Position = vec4(a_position, 0.0, 1.0);
         v_texCoord = a_texCoord;
     }
 `;
 
-// Persistence/ghosting fragment shader - THE SECRET SAUCE
 const PERSISTENCE_SHADER = `
     precision highp float;
-
-    uniform sampler2D u_currentFrame;  // New spectrum data
-    uniform sampler2D u_prevFrame;     // Last drawn frame
-    uniform float u_decay;             // Decay rate (0.90 - 0.98)
+    uniform sampler2D u_currentFrame;
+    uniform sampler2D u_prevFrame;
+    uniform float u_decay;
     uniform vec2 u_resolution;
-    uniform vec3 u_glowColor;          // #FFD700 (Legendary Gold)
-
     varying vec2 v_texCoord;
 
     void main() {
-        // Sample the new data and the old data
         vec4 current = texture2D(u_currentFrame, v_texCoord);
         vec4 previous = texture2D(u_prevFrame, v_texCoord);
-
-        // THE MAGIC: Fade the old frame and add the new one
-        // Max() ensures that peaks stay bright, while decay creates the trail
         vec4 blended = max(current, previous * u_decay);
 
-        // Add bloom/glow effect to bright peaks
+        // Bloom on bright areas
         float brightness = dot(blended.rgb, vec3(0.299, 0.587, 0.114));
         if (brightness > 0.5) {
-            blended.rgb += u_glowColor * (brightness - 0.5) * 0.3;
+            blended.rgb += vec3(0.1, 0.05, 0.15) * (brightness - 0.5);
         }
-
         gl_FragColor = blended;
     }
 `;
 
-// Basic texture rendering shader
 const DISPLAY_SHADER = `
     precision highp float;
-
     uniform sampler2D u_texture;
     varying vec2 v_texCoord;
-
     void main() {
         gl_FragColor = texture2D(u_texture, v_texCoord);
     }
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// WEBGL CONTEXT AND STATE
+// WEBGL STATE
 // ═══════════════════════════════════════════════════════════════════════════
 
 let gl = null;
 let canvas = null;
-
-// Shader programs
 let persistenceProgram = null;
 let displayProgram = null;
-
-// Framebuffers (ping-pong system)
 let framebufferA = null;
 let framebufferB = null;
 let textureA = null;
 let textureB = null;
-
-// Geometry buffers
 let quadBuffer = null;
 let texCoordBuffer = null;
-
-// Uniforms
 let currentFrameTexture = null;
+let DECAY_RATE = 0.92;
 
-// Settings (mutable for runtime adjustment)
-let DECAY_RATE = 0.95;  // 0.95 = ~300ms trail (professional feel)
-const GLOW_COLOR = [1.0, 0.843, 0.0]; // #FFD700 (Legendary Gold)
+// Pre-allocated buffers
+let spectrumDataArray = null;
+let pixelBuffer = null;
+let lastBufferSize = 0;
 
-// PRE-ALLOCATED ARRAYS (prevents garbage collection during animation)
-let webglSpectrumDataArray = null;
-let webglPixelBuffer = null;
-let webglLastPixelBufferSize = 0;
+// Peak hold for envelope
+let peakHoldValues = null;
+let peakHoldTimes = null;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initWebGL(canvasElement) {
-    console.log('🎨 Initializing WebGL Persistence System...');
+    console.log('🎨 PRO SPECTRUM v3.0 initializing...');
 
     canvas = canvasElement;
-    gl = canvas.getContext('webgl', {
-        alpha: true,
-        antialias: true,
-        premultipliedAlpha: false
-    });
+    gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
 
     if (!gl) {
-        console.error('❌ WebGL not supported!');
+        console.error('WebGL not supported');
         return false;
     }
 
-    console.log('   ✅ WebGL context created');
-
-    // Compile shaders
     persistenceProgram = createProgram(VERTEX_SHADER, PERSISTENCE_SHADER);
     displayProgram = createProgram(VERTEX_SHADER, DISPLAY_SHADER);
 
-    if (!persistenceProgram || !displayProgram) {
-        console.error('❌ Shader compilation failed!');
-        return false;
-    }
+    if (!persistenceProgram || !displayProgram) return false;
 
-    console.log('   ✅ Shaders compiled');
+    quadBuffer = createBuffer(new Float32Array([-1,-1, 1,-1, -1,1, 1,1]));
+    texCoordBuffer = createBuffer(new Float32Array([0,0, 1,0, 0,1, 1,1]));
 
-    // Create geometry (full-screen quad)
-    quadBuffer = createBuffer(new Float32Array([
-        -1, -1,
-         1, -1,
-        -1,  1,
-         1,  1
-    ]));
-
-    texCoordBuffer = createBuffer(new Float32Array([
-        0, 0,
-        1, 0,
-        0, 1,
-        1, 1
-    ]));
-
-    console.log('   ✅ Geometry buffers created');
-
-    // Create framebuffers and textures
-    const width = canvas.width;
-    const height = canvas.height;
-
-    textureA = createTexture(width, height);
-    textureB = createTexture(width, height);
+    const w = canvas.width, h = canvas.height;
+    textureA = createTexture(w, h);
+    textureB = createTexture(w, h);
     framebufferA = createFramebuffer(textureA);
     framebufferB = createFramebuffer(textureB);
+    currentFrameTexture = createTexture(w, h);
 
-    // Create texture for current frame spectrum data
-    currentFrameTexture = createTexture(width, height);
-
-    console.log(`   ✅ Framebuffers created (${width}x${height})`);
-
-    // Set viewport
-    gl.viewport(0, 0, width, height);
-
-    // Enable blending for glow effects
+    gl.viewport(0, 0, w, h);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    console.log('✅ WebGL Persistence System ready!');
+    // Initialize peak hold arrays
+    peakHoldValues = new Float32Array(1024);
+    peakHoldTimes = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) {
+        peakHoldValues[i] = -100;
+        peakHoldTimes[i] = 0;
+    }
+
+    console.log('✅ PRO SPECTRUM ready - Studio grade visualization');
     return true;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SHADER COMPILATION UTILITIES
-// ═══════════════════════════════════════════════════════════════════════════
 
 function createShader(type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
-
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
+        console.error('Shader error:', gl.getShaderInfoLog(shader));
         return null;
     }
-
     return shader;
 }
 
-function createProgram(vertexSource, fragmentSource) {
-    const vertexShader = createShader(gl.VERTEX_SHADER, vertexSource);
-    const fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentSource);
+function createProgram(vs, fs) {
+    const v = createShader(gl.VERTEX_SHADER, vs);
+    const f = createShader(gl.FRAGMENT_SHADER, fs);
+    if (!v || !f) return null;
 
-    if (!vertexShader || !fragmentShader) {
+    const prog = gl.createProgram();
+    gl.attachShader(prog, v);
+    gl.attachShader(prog, f);
+    gl.linkProgram(prog);
+
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        console.error('Program error:', gl.getProgramInfoLog(prog));
         return null;
     }
-
-    const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Program linking error:', gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        return null;
-    }
-
-    return program;
+    return prog;
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// WEBGL RESOURCE CREATION
-// ═══════════════════════════════════════════════════════════════════════════
 
 function createBuffer(data) {
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    return buffer;
+    return buf;
 }
 
-function createTexture(width, height) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-
-    // Allocate storage
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        width,
-        height,
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        null
-    );
-
-    // Set filtering (linear for smooth trails)
+function createTexture(w, h) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-    return texture;
+    return tex;
 }
 
-function createFramebuffer(texture) {
-    const framebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        texture,
-        0
-    );
-
-    // Check framebuffer status
-    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-    if (status !== gl.FRAMEBUFFER_COMPLETE) {
-        console.error('Framebuffer incomplete:', status);
-    }
-
+function createFramebuffer(tex) {
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    return framebuffer;
+    return fb;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SPECTRUM DATA → TEXTURE CONVERSION
+// PRO SPECTRUM RENDERING
 // ═══════════════════════════════════════════════════════════════════════════
 
 function renderSpectrumToTexture(analyser, audioContext) {
@@ -288,223 +188,268 @@ function renderSpectrumToTexture(analyser, audioContext) {
 
     const width = canvas.width;
     const height = canvas.height;
+    const now = performance.now();
 
-    // Reuse pixel buffer (prevents massive GC pressure - this can be 8MB+ for HD!)
-    const requiredSize = width * height * 4;
-    if (!webglPixelBuffer || webglLastPixelBufferSize !== requiredSize) {
-        webglPixelBuffer = new Uint8Array(requiredSize);
-        webglLastPixelBufferSize = requiredSize;
+    // Allocate pixel buffer
+    const size = width * height * 4;
+    if (!pixelBuffer || lastBufferSize !== size) {
+        pixelBuffer = new Uint8Array(size);
+        lastBufferSize = size;
     }
-    // Clear the buffer (faster than creating new)
-    webglPixelBuffer.fill(0);
-    const pixels = webglPixelBuffer;
+    pixelBuffer.fill(0);
 
-    // Get frequency data from analyzer (reuse pre-allocated array)
-    const bufferLength = analyser.frequencyBinCount;
-    if (!webglSpectrumDataArray || webglSpectrumDataArray.length !== bufferLength) {
-        webglSpectrumDataArray = new Float32Array(bufferLength);
+    // Get FFT data
+    const binCount = analyser.frequencyBinCount;
+    if (!spectrumDataArray || spectrumDataArray.length !== binCount) {
+        spectrumDataArray = new Float32Array(binCount);
     }
-    analyser.getFloatFrequencyData(webglSpectrumDataArray);
+    analyser.getFloatFrequencyData(spectrumDataArray);
 
     const nyquist = audioContext.sampleRate / 2;
+    const numPoints = 512;
 
-    // Draw spectrum bars
-    const numBars = 300;
-    for (let i = 0; i < numBars; i++) {
-        // Logarithmic frequency mapping (20Hz - 20kHz)
-        const freq = 20 * Math.pow(20000 / 20, i / numBars);
-        const binIndex = Math.round((freq / nyquist) * bufferLength);
-        const db = webglSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
+    // Calculate spectrum heights
+    const heights = new Float32Array(numPoints);
+    for (let i = 0; i < numPoints; i++) {
+        const freq = 20 * Math.pow(1000, i / numPoints); // 20Hz to 20kHz log scale
+        const bin = Math.round((freq / nyquist) * binCount);
+        const db = spectrumDataArray[Math.min(bin, binCount - 1)];
+        const norm = Math.max(0, Math.min(1, (db + 90) / 90));
+        heights[i] = Math.pow(norm, 0.7) * (height - 20);
+    }
 
-        // Convert dB to normalized height (0.0 - 1.0)
-        const normalized = Math.max(0, (db + 100) / 100); // -100dB to 0dB range
-        const barHeight = Math.pow(normalized, 0.5) * height; // Square root for better visual
+    // Update peak hold envelope
+    for (let i = 0; i < numPoints; i++) {
+        if (heights[i] > peakHoldValues[i]) {
+            peakHoldValues[i] = heights[i];
+            peakHoldTimes[i] = now;
+        }
+        // Decay peaks after 1.5 seconds
+        if (now - peakHoldTimes[i] > 1500) {
+            peakHoldValues[i] = Math.max(heights[i], peakHoldValues[i] - 2);
+        }
+    }
 
-        // Calculate bar position in texture
-        const barWidth = width / numBars;
-        const x1 = Math.floor(i * barWidth);
-        const x2 = Math.floor((i + 1) * barWidth);
+    // ═══ DRAW SPECTRUM ═══
+    for (let i = 0; i < numPoints - 1; i++) {
+        const x1 = Math.floor((i / numPoints) * width);
+        const x2 = Math.floor(((i + 1) / numPoints) * width);
+        const h1 = heights[i];
+        const h2 = heights[i + 1];
+        const t = i / numPoints; // 0-1 frequency position
 
-        // Gold color gradient based on height
-        const intensity = normalized;
-        const r = Math.floor(255 * intensity);
-        const g = Math.floor(215 * intensity);
-        const b = Math.floor(0 * intensity);
-        const a = Math.floor(255 * intensity);
+        // Color gradient: Deep blue → Cyan → Purple → Magenta
+        let r, g, b;
+        if (t < 0.25) {
+            // Deep blue to Cyan
+            const p = t / 0.25;
+            r = Math.floor(20 + 0 * p);
+            g = Math.floor(40 + 180 * p);
+            b = Math.floor(120 + 135 * p);
+        } else if (t < 0.5) {
+            // Cyan to Purple
+            const p = (t - 0.25) / 0.25;
+            r = Math.floor(20 + 110 * p);
+            g = Math.floor(220 - 140 * p);
+            b = 255;
+        } else if (t < 0.75) {
+            // Purple to Magenta
+            const p = (t - 0.5) / 0.25;
+            r = Math.floor(130 + 125 * p);
+            g = Math.floor(80 - 40 * p);
+            b = Math.floor(255 - 55 * p);
+        } else {
+            // Magenta to Pink
+            const p = (t - 0.75) / 0.25;
+            r = 255;
+            g = Math.floor(40 + 80 * p);
+            b = Math.floor(200 + 55 * p);
+        }
 
-        // Fill pixels for this bar
+        // Draw filled spectrum with vertical gradient
         for (let x = x1; x < x2; x++) {
-            for (let y = 0; y < barHeight; y++) {
-                const pixelIndex = (y * width + x) * 4;
-                pixels[pixelIndex + 0] = r;
-                pixels[pixelIndex + 1] = g;
-                pixels[pixelIndex + 2] = b;
-                pixels[pixelIndex + 3] = a;
+            const interp = (x - x1) / Math.max(1, x2 - x1);
+            const lineH = Math.floor(h1 + (h2 - h1) * interp);
+
+            // Fill from bottom to peak with gradient (darker at bottom)
+            for (let y = 0; y < lineH; y++) {
+                const idx = (y * width + x) * 4;
+                const vertGrad = Math.pow(y / height, 0.8); // Brighter toward top
+                const fillAlpha = 0.15 + vertGrad * 0.45;
+
+                pixelBuffer[idx + 0] = Math.floor(r * fillAlpha);
+                pixelBuffer[idx + 1] = Math.floor(g * fillAlpha);
+                pixelBuffer[idx + 2] = Math.floor(b * fillAlpha);
+                pixelBuffer[idx + 3] = Math.floor(180 * fillAlpha);
+            }
+
+            // Draw bright peak line (2px with glow)
+            for (let dy = -2; dy <= 2; dy++) {
+                const py = Math.max(0, Math.min(height - 1, lineH + dy));
+                const idx = (py * width + x) * 4;
+                const glow = 1.0 - Math.abs(dy) * 0.3;
+
+                pixelBuffer[idx + 0] = Math.min(255, Math.floor((r + 80) * glow));
+                pixelBuffer[idx + 1] = Math.min(255, Math.floor((g + 60) * glow));
+                pixelBuffer[idx + 2] = Math.min(255, Math.floor((b + 40) * glow));
+                pixelBuffer[idx + 3] = Math.floor(255 * glow);
             }
         }
     }
 
-    // Draw EQ curve overlay (if available)
-    if (window.eqBands && window.eqBands.length > 0) {
-        drawEQCurveToPixels(pixels, width, height, audioContext);
+    // ═══ DRAW PEAK HOLD ENVELOPE - PROFESSIONAL DOTTED LINE ═══
+    // Bright white/cyan dots tracing the peak envelope - very visible
+    for (let i = 0; i < numPoints - 1; i++) {
+        const x1 = Math.floor((i / numPoints) * width);
+        const x2 = Math.floor(((i + 1) / numPoints) * width);
+        const ph1 = peakHoldValues[i];
+        const ph2 = peakHoldValues[i + 1];
+        const age1 = now - peakHoldTimes[i];
+        const age2 = now - peakHoldTimes[i + 1];
+
+        // Calculate fade based on age (dots stay visible longer)
+        const alpha1 = age1 < 2000 ? 1.0 : Math.max(0, 1.0 - (age1 - 2000) / 1500);
+        const alpha2 = age2 < 2000 ? 1.0 : Math.max(0, 1.0 - (age2 - 2000) / 1500);
+
+        if (alpha1 <= 0 && alpha2 <= 0) continue;
+        if (ph1 < 3 && ph2 < 3) continue;
+
+        // Draw peak hold dots DENSELY along the envelope - every 4 pixels
+        for (let x = x1; x < x2; x += 4) {
+            const interp = (x - x1) / Math.max(1, x2 - x1);
+            const peakY = Math.floor(ph1 + (ph2 - ph1) * interp);
+            const alpha = alpha1 + (alpha2 - alpha1) * interp;
+
+            if (peakY < 3 || alpha <= 0) continue;
+
+            // Draw BRIGHT dot with larger glow (4px diameter)
+            for (let dy = -3; dy <= 3; dy++) {
+                for (let dx = -3; dx <= 3; dx++) {
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 3.5) continue;
+
+                    const px = Math.max(0, Math.min(width - 1, x + dx));
+                    const py = Math.max(0, Math.min(height - 1, peakY + dy));
+                    const idx = (py * width + px) * 4;
+
+                    // Brighter core, glowing edge
+                    const coreBrightness = dist < 1.5 ? 1.0 : Math.max(0, 1.0 - (dist - 1.5) / 2.0);
+                    const brightness = coreBrightness * alpha;
+
+                    // Pure white center, cyan/white glow
+                    const r = dist < 1.0 ? 255 : 200;
+                    const g = dist < 1.0 ? 255 : 255;
+                    const b = 255;
+
+                    pixelBuffer[idx + 0] = Math.min(255, Math.max(pixelBuffer[idx + 0], Math.floor(r * brightness)));
+                    pixelBuffer[idx + 1] = Math.min(255, Math.max(pixelBuffer[idx + 1], Math.floor(g * brightness)));
+                    pixelBuffer[idx + 2] = Math.min(255, Math.max(pixelBuffer[idx + 2], Math.floor(b * brightness)));
+                    pixelBuffer[idx + 3] = Math.min(255, Math.max(pixelBuffer[idx + 3], Math.floor(255 * brightness)));
+                }
+            }
+        }
+    }
+
+    // ═══ DRAW CONTINUOUS PEAK LINE (connects the dots) ═══
+    // Draw a thin glowing line connecting all peak dots
+    for (let i = 0; i < numPoints - 1; i++) {
+        const x1 = Math.floor((i / numPoints) * width);
+        const x2 = Math.floor(((i + 1) / numPoints) * width);
+        const ph1 = peakHoldValues[i];
+        const ph2 = peakHoldValues[i + 1];
+        const age = Math.min(now - peakHoldTimes[i], now - peakHoldTimes[i + 1]);
+        const lineAlpha = age < 2000 ? 0.8 : Math.max(0, 0.8 - (age - 2000) / 2000);
+
+        if (lineAlpha <= 0 || (ph1 < 3 && ph2 < 3)) continue;
+
+        // Draw thin line connecting peaks
+        for (let x = x1; x <= x2; x++) {
+            const interp = (x - x1) / Math.max(1, x2 - x1);
+            const peakY = Math.floor(ph1 + (ph2 - ph1) * interp);
+            if (peakY < 3) continue;
+
+            // 1px line with slight glow
+            for (let dy = -1; dy <= 1; dy++) {
+                const py = Math.max(0, Math.min(height - 1, peakY + dy));
+                const idx = (py * width + x) * 4;
+                const glow = dy === 0 ? lineAlpha : lineAlpha * 0.3;
+
+                pixelBuffer[idx + 0] = Math.min(255, Math.max(pixelBuffer[idx + 0], Math.floor(200 * glow)));
+                pixelBuffer[idx + 1] = Math.min(255, Math.max(pixelBuffer[idx + 1], Math.floor(255 * glow)));
+                pixelBuffer[idx + 2] = Math.min(255, Math.max(pixelBuffer[idx + 2], Math.floor(255 * glow)));
+                pixelBuffer[idx + 3] = Math.min(255, Math.max(pixelBuffer[idx + 3], Math.floor(200 * glow)));
+            }
+        }
     }
 
     // Upload to texture
     gl.bindTexture(gl.TEXTURE_2D, currentFrameTexture);
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        width,
-        height,
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        pixels
-    );
-}
-
-function drawEQCurveToPixels(pixels, width, height, audioContext) {
-    const sampleRate = audioContext.sampleRate;
-
-    for (let i = 0; i < width; i++) {
-        const freq = 20 * Math.pow(20000 / 20, i / width);
-        let totalGain = 0;
-
-        // Calculate EQ response at this frequency
-        for (const band of window.eqBands) {
-            if (!band.enabled) continue;
-
-            const centerFreq = band.frequency;
-            const gain = band.gain;
-            const Q = band.q;
-
-            const w0 = 2 * Math.PI * centerFreq / sampleRate;
-            const w = 2 * Math.PI * freq / sampleRate;
-            const A = Math.pow(10, gain / 40);
-            const alpha = Math.sin(w0) / (2 * Q);
-
-            // Biquad peaking filter response
-            const cos_w = Math.cos(w);
-            const cos_w0 = Math.cos(w0);
-
-            const b0 = 1 + alpha * A;
-            const b1 = -2 * cos_w0;
-            const b2 = 1 - alpha * A;
-            const a0 = 1 + alpha / A;
-            const a1 = -2 * cos_w0;
-            const a2 = 1 - alpha / A;
-
-            // Complex transfer function magnitude
-            const real_num = b0 + b1 * cos_w + b2 * Math.cos(2 * w);
-            const imag_num = -b1 * Math.sin(w) - b2 * Math.sin(2 * w);
-            const real_den = a0 + a1 * cos_w + a2 * Math.cos(2 * w);
-            const imag_den = -a1 * Math.sin(w) - a2 * Math.sin(2 * w);
-
-            const mag_num = Math.sqrt(real_num * real_num + imag_num * imag_num);
-            const mag_den = Math.sqrt(real_den * real_den + imag_den * imag_den);
-
-            const response_gain = 20 * Math.log10(mag_num / mag_den);
-            totalGain += response_gain;
-        }
-
-        // Draw EQ curve line (cyan with transparency)
-        const curveHeight = height * 0.5 + (totalGain / 24) * height * 0.4; // ±24dB range
-        const y = Math.floor(Math.max(0, Math.min(height - 1, curveHeight)));
-
-        // Draw a 3-pixel thick line for visibility
-        for (let dy = -1; dy <= 1; dy++) {
-            const pixelY = Math.max(0, Math.min(height - 1, y + dy));
-            const pixelIndex = (pixelY * width + i) * 4;
-
-            // Cyan color with high alpha
-            pixels[pixelIndex + 0] = 0;
-            pixels[pixelIndex + 1] = 212;
-            pixels[pixelIndex + 2] = 255;
-            pixels[pixelIndex + 3] = 220;
-        }
-    }
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelBuffer);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// RENDERING PIPELINE
+// RENDER PIPELINE
 // ═══════════════════════════════════════════════════════════════════════════
 
-let pingPong = false; // Toggle between framebuffers
+let pingPong = false;
 
 function render(analyser, audioContext) {
     if (!gl || !persistenceProgram || !displayProgram) return;
 
-    // Step 1: Render current spectrum data to texture
     renderSpectrumToTexture(analyser, audioContext);
 
-    // Step 2: Apply persistence shader (blend current with previous)
-    const inputFramebuffer = pingPong ? framebufferB : framebufferA;
-    const outputFramebuffer = pingPong ? framebufferA : framebufferB;
-    const inputTexture = pingPong ? textureB : textureA;
-    const outputTexture = pingPong ? textureA : textureB;
+    // Persistence pass
+    const inFB = pingPong ? framebufferB : framebufferA;
+    const outFB = pingPong ? framebufferA : framebufferB;
+    const inTex = pingPong ? textureB : textureA;
+    const outTex = pingPong ? textureA : textureB;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, outputFramebuffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, outFB);
     gl.useProgram(persistenceProgram);
 
-    // Set uniforms
-    const u_currentFrame = gl.getUniformLocation(persistenceProgram, 'u_currentFrame');
-    const u_prevFrame = gl.getUniformLocation(persistenceProgram, 'u_prevFrame');
-    const u_decay = gl.getUniformLocation(persistenceProgram, 'u_decay');
-    const u_resolution = gl.getUniformLocation(persistenceProgram, 'u_resolution');
-    const u_glowColor = gl.getUniformLocation(persistenceProgram, 'u_glowColor');
+    gl.uniform1i(gl.getUniformLocation(persistenceProgram, 'u_currentFrame'), 0);
+    gl.uniform1i(gl.getUniformLocation(persistenceProgram, 'u_prevFrame'), 1);
+    gl.uniform1f(gl.getUniformLocation(persistenceProgram, 'u_decay'), DECAY_RATE);
+    gl.uniform2f(gl.getUniformLocation(persistenceProgram, 'u_resolution'), canvas.width, canvas.height);
 
-    gl.uniform1i(u_currentFrame, 0);
-    gl.uniform1i(u_prevFrame, 1);
-    gl.uniform1f(u_decay, DECAY_RATE);
-    gl.uniform2f(u_resolution, canvas.width, canvas.height);
-    gl.uniform3fv(u_glowColor, GLOW_COLOR);
-
-    // Bind textures
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, currentFrameTexture);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+    gl.bindTexture(gl.TEXTURE_2D, inTex);
 
-    // Set vertex attributes
-    const a_position = gl.getAttribLocation(persistenceProgram, 'a_position');
-    const a_texCoord = gl.getAttribLocation(persistenceProgram, 'a_texCoord');
+    const pos = gl.getAttribLocation(persistenceProgram, 'a_position');
+    const tex = gl.getAttribLocation(persistenceProgram, 'a_texCoord');
 
     gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-    gl.enableVertexAttribArray(a_position);
-    gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.enableVertexAttribArray(a_texCoord);
-    gl.vertexAttribPointer(a_texCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(tex);
+    gl.vertexAttribPointer(tex, 2, gl.FLOAT, false, 0, 0);
 
-    // Draw
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // Step 3: Display final result to screen
+    // Display pass
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.useProgram(displayProgram);
-
-    const u_texture = gl.getUniformLocation(displayProgram, 'u_texture');
-    gl.uniform1i(u_texture, 0);
-
+    gl.uniform1i(gl.getUniformLocation(displayProgram, 'u_texture'), 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, outputTexture);
+    gl.bindTexture(gl.TEXTURE_2D, outTex);
 
-    const a_position_display = gl.getAttribLocation(displayProgram, 'a_position');
-    const a_texCoord_display = gl.getAttribLocation(displayProgram, 'a_texCoord');
+    const pos2 = gl.getAttribLocation(displayProgram, 'a_position');
+    const tex2 = gl.getAttribLocation(displayProgram, 'a_texCoord');
 
     gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
-    gl.enableVertexAttribArray(a_position_display);
-    gl.vertexAttribPointer(a_position_display, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(pos2);
+    gl.vertexAttribPointer(pos2, 2, gl.FLOAT, false, 0, 0);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.enableVertexAttribArray(a_texCoord_display);
-    gl.vertexAttribPointer(a_texCoord_display, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(tex2);
+    gl.vertexAttribPointer(tex2, 2, gl.FLOAT, false, 0, 0);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-    // Toggle ping-pong
     pingPong = !pingPong;
 }
 
@@ -519,4 +464,4 @@ window.WebGLSpectrum = {
     isReady: () => gl !== null
 };
 
-console.log('🎨 WEBGL_SPECTRUM_PERSISTENCE.js loaded - Use window.WebGLSpectrum.init(canvas)');
+console.log('🎨 PRO SPECTRUM v3.0 loaded');
