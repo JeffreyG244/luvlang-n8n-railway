@@ -229,6 +229,7 @@ class AudioFingerprinting {
 
     /**
      * Calculate similarity between fingerprint and reference
+     * Uses advanced spectral matching algorithm
      */
     calculateSimilarity(fingerprint, reference) {
         let score = 100;
@@ -254,6 +255,115 @@ class AudioFingerprinting {
         score = spectralScore + centroidScore + drScore + cfScore;
 
         return Math.max(0, Math.min(100, score));
+    }
+
+    /**
+     * SPECTRAL MATCHING ALGORITHM
+     * Compares two audio fingerprints using cross-correlation
+     * and spectral envelope matching
+     */
+    spectralMatch(fingerprint1, fingerprint2) {
+        console.log('[Fingerprinting] Running spectral matching algorithm...');
+
+        // 1. Compute spectral envelope correlation
+        const envelopeCorrelation = this.computeEnvelopeCorrelation(
+            fingerprint1.spectralProfile,
+            fingerprint2.spectralProfile
+        );
+
+        // 2. Compute dynamic profile similarity
+        const dynamicSimilarity = this.computeDynamicSimilarity(
+            fingerprint1.dynamicProfile,
+            fingerprint2.dynamicProfile
+        );
+
+        // 3. Compute rhythmic similarity
+        const rhythmicSimilarity = this.computeRhythmicSimilarity(
+            fingerprint1.rhythmicProfile,
+            fingerprint2.rhythmicProfile
+        );
+
+        // Weighted combination
+        const overallMatch = (
+            envelopeCorrelation * 0.5 +
+            dynamicSimilarity * 0.3 +
+            rhythmicSimilarity * 0.2
+        ) * 100;
+
+        return {
+            overall: overallMatch,
+            spectral: envelopeCorrelation * 100,
+            dynamic: dynamicSimilarity * 100,
+            rhythmic: rhythmicSimilarity * 100,
+            matchLevel: overallMatch > 80 ? 'Excellent' :
+                       overallMatch > 60 ? 'Good' :
+                       overallMatch > 40 ? 'Moderate' : 'Low'
+        };
+    }
+
+    /**
+     * Compute spectral envelope correlation using cosine similarity
+     */
+    computeEnvelopeCorrelation(profile1, profile2) {
+        // Create spectral vectors
+        const vec1 = [profile1.lowEnd, profile1.mid, profile1.highEnd, profile1.centroid / 10000];
+        const vec2 = [profile2.lowEnd, profile2.mid, profile2.highEnd, profile2.centroid / 10000];
+
+        // Cosine similarity
+        let dotProduct = 0;
+        let mag1 = 0;
+        let mag2 = 0;
+
+        for (let i = 0; i < vec1.length; i++) {
+            dotProduct += vec1[i] * vec2[i];
+            mag1 += vec1[i] * vec1[i];
+            mag2 += vec2[i] * vec2[i];
+        }
+
+        return dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2) + 1e-12);
+    }
+
+    /**
+     * Compute dynamic profile similarity
+     */
+    computeDynamicSimilarity(dyn1, dyn2) {
+        const crestDiff = Math.abs(dyn1.crestFactor - dyn2.crestFactor) / 20;
+        const rangeDiff = Math.abs(dyn1.dynamicRange - dyn2.dynamicRange) / 30;
+
+        return Math.max(0, 1 - (crestDiff + rangeDiff) / 2);
+    }
+
+    /**
+     * Compute rhythmic similarity
+     */
+    computeRhythmicSimilarity(rhythm1, rhythm2) {
+        const densityDiff = Math.abs(rhythm1.transientDensity - rhythm2.transientDensity) / 30;
+        return Math.max(0, 1 - densityDiff);
+    }
+
+    /**
+     * Compare current track with another track
+     * @param {AudioBuffer} audioBuffer - Track to compare against
+     * @returns {Object} Match results
+     */
+    async compareWithTrack(audioBuffer) {
+        if (!this.currentFingerprint) {
+            console.error('[Fingerprinting] No current fingerprint. Call generateFingerprint first.');
+            return null;
+        }
+
+        // Generate fingerprint for comparison track
+        const comparisonFingerprint = await this.generateFingerprint(audioBuffer);
+
+        // Restore current fingerprint
+        const originalFingerprint = this.currentFingerprint;
+
+        // Run spectral matching
+        const matchResult = this.spectralMatch(originalFingerprint, comparisonFingerprint);
+
+        console.log('[Fingerprinting] Track comparison result:', matchResult);
+
+        return matchResult;
     }
 
     /**

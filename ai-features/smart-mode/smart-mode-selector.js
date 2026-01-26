@@ -333,7 +333,8 @@ class SmartModeSelector {
     }
 
     /**
-     * Analyze timbre
+     * Analyze timbre with MFCC (Mel-Frequency Cepstral Coefficients)
+     * MFCCs are the gold standard for audio content analysis
      */
     analyzeTimbr(audioData, sampleRate) {
         const spectrum = this.computeAverageSpectrum(audioData, 2048);
@@ -353,11 +354,139 @@ class SmartModeSelector {
         const warmth = this.sumBins(spectrum, 200, 800, sampleRate, spectrum.length) /
                       this.sumBins(spectrum, 0, sampleRate / 2, sampleRate, spectrum.length);
 
+        // Compute MFCCs for advanced timbral analysis
+        const mfccs = this.computeMFCCs(audioData, sampleRate);
+
         return {
             harmonic: harmonicContent,
             noisiness,
-            warmth
+            warmth,
+            mfccs  // 13 MFCC coefficients
         };
+    }
+
+    /**
+     * Compute MFCCs - Mel-Frequency Cepstral Coefficients
+     * Industry standard for audio content classification
+     * @param {Float32Array} audioData - Mono audio samples
+     * @param {number} sampleRate - Sample rate in Hz
+     * @returns {Float32Array} 13 MFCC coefficients
+     */
+    computeMFCCs(audioData, sampleRate) {
+        const numMFCCs = 13;
+        const numMelBands = 26;
+        const fftSize = 2048;
+        const hopSize = 512;
+
+        // Pre-emphasis filter (boost high frequencies)
+        const preEmphasis = 0.97;
+        const emphasized = new Float32Array(audioData.length);
+        emphasized[0] = audioData[0];
+        for (let i = 1; i < audioData.length; i++) {
+            emphasized[i] = audioData[i] - preEmphasis * audioData[i - 1];
+        }
+
+        // Compute mel filterbank
+        const melFilterBank = this.createMelFilterBank(numMelBands, fftSize, sampleRate);
+
+        // Process frames
+        const numFrames = Math.floor((audioData.length - fftSize) / hopSize);
+        const frameMFCCs = [];
+
+        for (let frame = 0; frame < Math.min(numFrames, 100); frame++) { // Limit frames for performance
+            const frameStart = frame * hopSize;
+
+            // Apply Hamming window
+            const windowed = new Float32Array(fftSize);
+            for (let i = 0; i < fftSize && frameStart + i < emphasized.length; i++) {
+                const hamming = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / (fftSize - 1));
+                windowed[i] = emphasized[frameStart + i] * hamming;
+            }
+
+            // Compute power spectrum (simplified - uses time domain approximation)
+            const powerSpectrum = new Float32Array(fftSize / 2);
+            for (let k = 0; k < fftSize / 2; k++) {
+                let real = 0, imag = 0;
+                for (let n = 0; n < fftSize; n++) {
+                    const angle = -2 * Math.PI * k * n / fftSize;
+                    real += windowed[n] * Math.cos(angle);
+                    imag += windowed[n] * Math.sin(angle);
+                }
+                powerSpectrum[k] = (real * real + imag * imag) / fftSize;
+            }
+
+            // Apply mel filterbank
+            const melEnergies = new Float32Array(numMelBands);
+            for (let m = 0; m < numMelBands; m++) {
+                for (let k = 0; k < fftSize / 2; k++) {
+                    melEnergies[m] += powerSpectrum[k] * melFilterBank[m][k];
+                }
+                melEnergies[m] = Math.log(melEnergies[m] + 1e-12);
+            }
+
+            // DCT to get MFCCs
+            const mfcc = new Float32Array(numMFCCs);
+            for (let i = 0; i < numMFCCs; i++) {
+                for (let j = 0; j < numMelBands; j++) {
+                    mfcc[i] += melEnergies[j] * Math.cos(Math.PI * i * (j + 0.5) / numMelBands);
+                }
+            }
+            frameMFCCs.push(mfcc);
+        }
+
+        // Average MFCCs across all frames
+        const avgMFCCs = new Float32Array(numMFCCs);
+        for (let i = 0; i < numMFCCs; i++) {
+            for (const frame of frameMFCCs) {
+                avgMFCCs[i] += frame[i];
+            }
+            avgMFCCs[i] /= frameMFCCs.length || 1;
+        }
+
+        console.log('[Smart Mode] MFCC computation complete:', avgMFCCs);
+        return avgMFCCs;
+    }
+
+    /**
+     * Create Mel filterbank for MFCC computation
+     */
+    createMelFilterBank(numFilters, fftSize, sampleRate) {
+        const filterBank = [];
+        const nyquist = sampleRate / 2;
+
+        // Convert Hz to Mel scale
+        const hzToMel = (hz) => 2595 * Math.log10(1 + hz / 700);
+        const melToHz = (mel) => 700 * (Math.pow(10, mel / 2595) - 1);
+
+        const lowMel = hzToMel(0);
+        const highMel = hzToMel(nyquist);
+
+        // Create mel points
+        const melPoints = new Float32Array(numFilters + 2);
+        for (let i = 0; i < numFilters + 2; i++) {
+            melPoints[i] = lowMel + (highMel - lowMel) * i / (numFilters + 1);
+        }
+
+        // Convert back to Hz and to FFT bins
+        const binPoints = new Int32Array(numFilters + 2);
+        for (let i = 0; i < numFilters + 2; i++) {
+            const hz = melToHz(melPoints[i]);
+            binPoints[i] = Math.floor((fftSize / 2 + 1) * hz / nyquist);
+        }
+
+        // Create triangular filters
+        for (let m = 1; m <= numFilters; m++) {
+            const filter = new Float32Array(fftSize / 2);
+            for (let k = binPoints[m - 1]; k < binPoints[m]; k++) {
+                filter[k] = (k - binPoints[m - 1]) / (binPoints[m] - binPoints[m - 1] + 1e-12);
+            }
+            for (let k = binPoints[m]; k < binPoints[m + 1]; k++) {
+                filter[k] = (binPoints[m + 1] - k) / (binPoints[m + 1] - binPoints[m] + 1e-12);
+            }
+            filterBank.push(filter);
+        }
+
+        return filterBank;
     }
 
     /**
