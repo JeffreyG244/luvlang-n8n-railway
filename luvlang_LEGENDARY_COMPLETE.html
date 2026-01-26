@@ -1016,6 +1016,40 @@
             transform: translateY(0);
         }
 
+        /* Custom Tooltip for Feature Tiles */
+        .feature-tooltip-popup {
+            position: fixed;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 10px;
+            padding: 12px 16px;
+            max-width: 280px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.15);
+            z-index: 99999;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.15s ease, transform 0.15s ease;
+        }
+        .feature-tooltip-popup.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .feature-tooltip-popup .tooltip-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feature-tooltip-popup .tooltip-desc {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
         .analysis-results h4 {
             font-size: 1.1rem;
             margin-bottom: 20px;
@@ -2227,6 +2261,62 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Feature Tile Tooltip Script -->
+            <script>
+            (function() {
+                // Create tooltip element
+                const tooltip = document.createElement('div');
+                tooltip.className = 'feature-tooltip-popup';
+                tooltip.innerHTML = '<div class="tooltip-title"></div><div class="tooltip-desc"></div>';
+                document.body.appendChild(tooltip);
+
+                // Handle feature tile hover
+                document.addEventListener('mouseover', function(e) {
+                    const tile = e.target.closest('.feature-tile');
+                    if (tile && tile.title) {
+                        const titleText = tile.title;
+                        const [name, ...descParts] = titleText.split(':');
+                        const desc = descParts.join(':').trim();
+
+                        const icon = tile.querySelector('div')?.textContent || '';
+                        tooltip.querySelector('.tooltip-title').innerHTML = icon + ' ' + name;
+                        tooltip.querySelector('.tooltip-desc').textContent = desc || titleText;
+
+                        const rect = tile.getBoundingClientRect();
+                        let left = rect.right + 10;
+                        let top = rect.top;
+
+                        // Keep tooltip on screen
+                        if (left + 290 > window.innerWidth) {
+                            left = rect.left - 290;
+                        }
+                        if (top + 100 > window.innerHeight) {
+                            top = window.innerHeight - 110;
+                        }
+
+                        tooltip.style.left = left + 'px';
+                        tooltip.style.top = top + 'px';
+                        tooltip.classList.add('visible');
+
+                        // Prevent native tooltip
+                        tile.dataset.originalTitle = tile.title;
+                        tile.title = '';
+                    }
+                });
+
+                document.addEventListener('mouseout', function(e) {
+                    const tile = e.target.closest('.feature-tile');
+                    if (tile) {
+                        tooltip.classList.remove('visible');
+                        // Restore title
+                        if (tile.dataset.originalTitle) {
+                            tile.title = tile.dataset.originalTitle;
+                        }
+                    }
+                });
+            })();
+            </script>
 
             <!-- TRANSPORT CONTROLS -->
             <div class="transport-controls">
