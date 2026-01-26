@@ -5,8 +5,8 @@
 
 // Supabase configuration
 // ✅ Using the PUBLIC/ANON key (safe for client-side use)
-const SUPABASE_URL = 'https://tzskjzkolyiwhijslqmq.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6c2tqemtvbHlpd2hpanNscW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NTY3ODAsImV4cCI6MjA2NDIzMjc4MH0.EvlZrWKZVsUks6VArpizk98kmOc8nVS7vvjUbd4ThMw';
+const SUPABASE_URL = 'https://jzclawsctaczhgvfpssx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6Y2xhd3NjdGFjemhndmZwc3N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1MjE2MDEsImV4cCI6MjA4NDA5NzYwMX0.3c08nfLITB4Z-DUZv4f-35CoZN7TXBHLgktgqB5c0K0';
 
 // Initialize Supabase client instance (not the library - that's window.supabase from CDN)
 let supabaseClient = null;
