@@ -265,6 +265,13 @@ function initializeStripe() {
         return;
     }
 
+    // Check if card-element exists before mounting
+    const cardContainer = document.getElementById('card-element');
+    if (!cardContainer) {
+        console.log('ℹ️ Stripe card element not on this page - payment form will initialize when needed');
+        return;
+    }
+
     // Create card element
     const elements = stripe.elements();
     cardElement = elements.create('card', {
@@ -287,10 +294,12 @@ function initializeStripe() {
     // Handle real-time validation errors
     cardElement.on('change', function(event) {
         const displayError = document.getElementById('card-errors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-        } else {
-            displayError.textContent = '';
+        if (displayError) {
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
         }
     });
 
