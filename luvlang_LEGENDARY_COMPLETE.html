@@ -360,16 +360,6 @@
             cursor: not-allowed;
         }
 
-        /* Ensure buttons are always clickable - prevent tooltip/overlay blocking */
-        .action-btn,
-        .complete-btn,
-        .guide-action-btn,
-        .export-bar-btn {
-            position: relative;
-            z-index: 100;
-            pointer-events: auto !important;
-        }
-
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL EQ GRAPH (CRITICAL - User specifically wants this)
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -2061,11 +2051,11 @@
             </div>
 
             <div class="complete-actions">
-                <button class="complete-btn secondary" id="overlayAbCompareBtn" onclick="toggleABCompare()">
+                <button class="complete-btn secondary" id="abCompareBtn" onclick="toggleABCompare()">
                     <span class="btn-icon">🔀</span>
                     <span>Compare</span>
                 </button>
-                <button class="complete-btn secondary" id="overlayPlayMasteredBtn" onclick="playMasteredPreview()">
+                <button class="complete-btn secondary" id="playMasteredBtn" onclick="playMasteredPreview()">
                     <span class="btn-icon">▶</span>
                     <span>Listen</span>
                 </button>
@@ -2568,7 +2558,7 @@
 
             <!-- QUICK ACTIONS -->
             <div class="section-title">Quick Actions</div>
-            <button class="action-btn action-btn-secondary" id="abCompareBtn" style="background: linear-gradient(135deg, #ff9a56, #ff5733);">
+            <button class="action-btn action-btn-secondary" id="abCompareBtn" disabled style="background: linear-gradient(135deg, #ff9a56, #ff5733);">
                 🔀 MASTERED
             </button>
             <button class="action-btn action-btn-secondary" id="loudnessMatchBtn" disabled style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
@@ -4385,7 +4375,6 @@
                 window.isMasteringApplied = false;
 
                 console.log('✅ Bypass system ready - Playing DRY (raw) audio');
-                console.log('   Initial gains: DRY=' + dryGain.gain.value + ', WET=' + wetGain.gain.value);
 
                 // ⚡ AUDIO SIGNAL CHAIN (WET PATH - through processing)
                 // Source → EQ (7-band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Wet Gain → Output
@@ -10484,10 +10473,163 @@
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // A/B COMPARE - Now handled by window.toggleABCompare() function
-        // The button uses onclick="toggleABCompare()" which toggles EQ values
-        // This is more reliable than disconnecting/reconnecting sourceNode
+        // A/B COMPARE BUTTON - Toggle between processed and original
+        // 🏆 LEVEL-MATCHED BYPASS - Professional objective comparison
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // The human ear thinks "Louder is Better." To avoid being fooled by volume,
+        // we automatically compensate the processed signal to match the original loudness
+        // when comparing. This lets you hear the QUALITY differences, not just volume.
+        let abCompareSavedGain = null;  // Master gain saved on first A/B toggle
+        let abCompareSavedMakeupGain = null;  // Makeup gain saved on first A/B toggle
+
+        document.getElementById('abCompareBtn').addEventListener('click', function() {
+            const btn = this;
+
+            // Check if we have a valid source
+            if (!sourceNode) {
+                console.warn('🔀 A/B: No sourceNode available');
+                btn.textContent = '🔀 MASTERED';
+                abCompareMode = false;
+                return;
+            }
+
+            abCompareMode = !abCompareMode;
+
+            if (abCompareMode) {
+                // Mode B: ORIGINAL - hear TRUE unprocessed audio (NO level matching!)
+                // Clients NEED to hear the loudness difference - that's what they're paying for!
+                try {
+                    // DISABLE Auto LUFS during A/B compare (prevents gain interference)
+                    window.abCompareAutoLUFSWasEnabled = window.autoLUFSCompensation;
+                    window.autoLUFSCompensation = false;
+                    console.log('⏸️ Auto LUFS disabled for A/B compare');
+
+                    // ALWAYS save current gains BEFORE switching (not just on first toggle)
+                    // This ensures we capture the latest mastered state
+                    abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
+                    abCompareSavedMakeupGain = makeupGain ? makeupGain.gain.value : 1.0;
+                    console.log('💾 Saved mastered gains:');
+                    console.log('   Master:', abCompareSavedGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedGain)).toFixed(1) + ' dB)');
+                    console.log('   Makeup:', abCompareSavedMakeupGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedMakeupGain)).toFixed(1) + ' dB)');
+
+                    // TRUE ORIGINAL: Unity gain (1.0) - NO level matching!
+                    // This allows clients to hear the REAL loudness increase from mastering
+                    if (masterGain) {
+                        masterGain.gain.setValueAtTime(1.0, audioContext.currentTime);
+                        console.log('   🎚️ Master gain set to UNITY (1.0) - TRUE original level');
+                    }
+
+                    // Disconnect entire processing chain
+                    sourceNode.disconnect();
+
+                    // Connect DIRECTLY to master gain (bypass ALL processing: EQ, compression, makeup gain, limiter)
+                    sourceNode.connect(masterGain);
+
+                    // Calculate and display PRECISE dB difference
+                    let gainDiffDB = 0;
+                    if (abCompareSavedGain && abCompareSavedGain > 0) {
+                        gainDiffDB = 20 * Math.log10(abCompareSavedGain);
+                    }
+                    // Also add makeup gain contribution
+                    if (makeupGain && makeupGain.gain.value > 0) {
+                        gainDiffDB += 20 * Math.log10(makeupGain.gain.value);
+                    }
+
+                    const diffText = gainDiffDB !== 0 ? ` (${gainDiffDB > 0 ? '+' : ''}${gainDiffDB.toFixed(1)} dB)` : '';
+                    btn.textContent = '🔀 ORIGINAL' + diffText;
+                    btn.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🔀 A/B Compare: ORIGINAL MODE (B)');
+                    console.log('   ✅ All processing bypassed (EQ, Compression, Limiting)');
+                    console.log('   ✅ Unity gain (1.0) - NO level matching');
+                    console.log('   ✅ Client hears TRUE original audio');
+                    console.log('   📊 Processing adds: ' + (gainDiffDB > 0 ? '+' : '') + gainDiffDB.toFixed(1) + ' dB');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                } catch (e) {
+                    console.error('🔀 A/B bypass error:', e);
+                    // Reset button state on error
+                    btn.textContent = '🔀 MASTERED';
+                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abCompareMode = false;
+                }
+            } else {
+                // Mode A: MASTERED - hear with ALL AI processing applied
+                try {
+                    // Reconnect FULL processing chain (must match original chain exactly!)
+                    sourceNode.disconnect();
+                    if (!eqBypassed) {
+                        // Full EQ chain (7-band parametric)
+                        sourceNode.connect(eqSubFilter);
+                        eqSubFilter.connect(eqBassFilter);
+                        eqBassFilter.connect(eqLowMidFilter);
+                        eqLowMidFilter.connect(eqMidFilter);
+                        eqMidFilter.connect(eqHighMidFilter);
+                        eqHighMidFilter.connect(eqHighFilter);
+                        eqHighFilter.connect(eqAirFilter);
+                        eqAirFilter.connect(eqCompensationGain);
+                        eqCompensationGain.connect(dynEqInput);  // → Dynamic EQ
+                    } else {
+                        // EQ bypassed, connect to Dynamic EQ input
+                        sourceNode.connect(dynEqInput);
+                    }
+                    // Continue chain: Dynamic EQ → Compressor → Transient Shaper → Makeup Gain → Limiter → Master
+                    dynEqOutput.connect(compressor);
+                    compressor.connect(transientInput);
+                    transientOutput.connect(makeupGain);
+                    makeupGain.connect(limiter);
+                    limiter.connect(masterGain);
+
+                    // Restore MASTERED gains (both master and makeup)
+                    if (masterGain && abCompareSavedGain !== null) {
+                        masterGain.gain.setValueAtTime(abCompareSavedGain, audioContext.currentTime);
+                        const masterDB = 20 * Math.log10(abCompareSavedGain);
+                        console.log('   🔊 Master gain restored to:', abCompareSavedGain.toFixed(3), '(' + masterDB.toFixed(1) + ' dB)');
+                    }
+                    if (makeupGain && abCompareSavedMakeupGain !== null) {
+                        makeupGain.gain.setValueAtTime(abCompareSavedMakeupGain, audioContext.currentTime);
+                        const makeupDB = 20 * Math.log10(abCompareSavedMakeupGain);
+                        console.log('   🔊 Makeup gain restored to:', abCompareSavedMakeupGain.toFixed(3), '(' + makeupDB.toFixed(1) + ' dB)');
+                    }
+
+                    // RESTORE Auto LUFS if it was enabled before
+                    if (window.abCompareAutoLUFSWasEnabled) {
+                        window.autoLUFSCompensation = true;
+                        console.log('   ✅ Auto LUFS restored');
+                    }
+
+                    // Calculate PRECISE total gain from processing chain
+                    let totalGainDB = 0;
+                    if (abCompareSavedGain && abCompareSavedGain > 0) {
+                        totalGainDB = 20 * Math.log10(abCompareSavedGain);
+                    }
+                    if (abCompareSavedMakeupGain && abCompareSavedMakeupGain > 0) {
+                        totalGainDB += 20 * Math.log10(abCompareSavedMakeupGain);
+                    }
+
+                    const gainText = totalGainDB !== 0 ? ` (${totalGainDB > 0 ? '+' : ''}${totalGainDB.toFixed(1)} dB)` : '';
+                    btn.textContent = '🔀 MASTERED' + gainText;
+                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🔀 A/B Compare: MASTERED MODE (A)');
+                    console.log('   ✅ Full processing chain active:');
+                    console.log('      → 7-Band Parametric EQ');
+                    console.log('      → Compression');
+                    console.log('      → Makeup Gain');
+                    console.log('      → Professional Limiter');
+                    console.log('   📊 Total Gain: ' + (totalGainDB > 0 ? '+' : '') + totalGainDB.toFixed(1) + ' dB');
+                    console.log('   ✅ Client hears MASTERED audio with all 24 enhancements');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                } catch (e) {
+                    console.error('🔀 A/B reconnect error:', e);
+                    // Reset button state on error
+                    btn.textContent = '🔀 MASTERED';
+                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abCompareMode = false;
+                }
+            }
+        });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // 🏆 ADVANCED METERS TOGGLE - Simple vs Broadcast/Pro Mode
@@ -12846,85 +12988,66 @@
                 // APPLY REAL AUDIO PROCESSING TO CONNECTED NODES
                 // ═══════════════════════════════════════════════════════════════
 
-                // ═══════════════════════════════════════════════════════════════
-                // DRAMATIC MASTERING PROCESSING - CLEARLY AUDIBLE DIFFERENCE
-                // These values are intentionally aggressive for demonstration
-                // ═══════════════════════════════════════════════════════════════
-
-                // 1. 7-BAND EQ - DRAMATIC mastering curve
+                // 1. 7-BAND EQ - Professional mastering curve
                 if (window.eqSubFilter) {
-                    // Sub bass: SIGNIFICANT boost for impact
-                    window.eqSubFilter.gain.setTargetAtTime(4.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Sub Bass EQ: +4.5dB at 40Hz (DRAMATIC)');
+                    // Sub bass: slight boost for warmth
+                    window.eqSubFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Sub Bass EQ: +1.5dB at 40Hz');
                 }
                 if (window.eqBassFilter) {
-                    // Bass: punch and warmth
-                    window.eqBassFilter.gain.setTargetAtTime(3.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Bass EQ: +3.5dB at 100Hz (DRAMATIC)');
-                }
-                if (window.eqLowMidFilter) {
-                    // Low-mid: slight cut to reduce mud
-                    window.eqLowMidFilter.gain.setTargetAtTime(-2.0, ac.currentTime, 0.1);
-                    console.log('  ✓ Low-Mid EQ: -2.0dB at 300Hz (clarity cut)');
-                }
-                if (window.eqMidFilter) {
-                    // Mid: presence
-                    window.eqMidFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Mid EQ: +1.5dB at 1kHz');
-                }
-                if (window.eqHighMidFilter) {
-                    // High-mid: edge and bite
-                    window.eqHighMidFilter.gain.setTargetAtTime(3.0, ac.currentTime, 0.1);
-                    console.log('  ✓ High-Mid EQ: +3.0dB at 3kHz (presence)');
+                    // Bass: tighten low end
+                    window.eqBassFilter.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    console.log('  ✓ Bass EQ: +1.0dB at 100Hz');
                 }
                 if (window.eqHighFilter) {
-                    // High: SIGNIFICANT presence/clarity
-                    window.eqHighFilter.gain.setTargetAtTime(5.0, ac.currentTime, 0.1);
-                    console.log('  ✓ High EQ: +5.0dB at 8kHz (DRAMATIC)');
+                    // High: add presence/clarity
+                    window.eqHighFilter.gain.setTargetAtTime(2.0, ac.currentTime, 0.1);
+                    console.log('  ✓ High EQ: +2.0dB at 8kHz');
                 }
                 if (window.eqAirFilter) {
-                    // Air: MAXIMUM sparkle/shine
-                    window.eqAirFilter.gain.setTargetAtTime(6.0, ac.currentTime, 0.1);
-                    console.log('  ✓ Air EQ: +6.0dB at 12kHz (DRAMATIC SPARKLE)');
+                    // Air: add sparkle/shine
+                    window.eqAirFilter.gain.setTargetAtTime(2.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Air EQ: +2.5dB at 12kHz');
                 }
 
-                // 2. COMPRESSOR - AGGRESSIVE glue compression
+                // 2. COMPRESSOR - Glue compression for punch
                 if (window.compressor) {
-                    window.compressor.threshold.setTargetAtTime(-28, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(5, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(0.003, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(0.12, ac.currentTime, 0.1);
-                    window.compressor.knee.setTargetAtTime(3, ac.currentTime, 0.1);
-                    console.log('  ✓ Compressor: -28dB threshold, 5:1 ratio (AGGRESSIVE)');
+                    window.compressor.threshold.setTargetAtTime(-18, ac.currentTime, 0.1);
+                    window.compressor.ratio.setTargetAtTime(3, ac.currentTime, 0.1);
+                    window.compressor.attack.setTargetAtTime(0.01, ac.currentTime, 0.1);
+                    window.compressor.release.setTargetAtTime(0.15, ac.currentTime, 0.1);
+                    window.compressor.knee.setTargetAtTime(6, ac.currentTime, 0.1);
+                    console.log('  ✓ Compressor: -18dB threshold, 3:1 ratio');
                 }
 
-                // 3. LIMITER - AGGRESSIVE loudness maximizing
+                // 3. LIMITER - Maximize loudness
                 if (window.limiter) {
-                    window.limiter.threshold.setTargetAtTime(-3.0, ac.currentTime, 0.1);
+                    window.limiter.threshold.setTargetAtTime(-1.5, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.0005, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.03, ac.currentTime, 0.1);
-                    console.log('  ✓ Limiter: -3.0dB ceiling, 20:1 (LOUD)');
+                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.05, ac.currentTime, 0.1);
+                    console.log('  ✓ Limiter: -1.5dB ceiling, 20:1 limiting');
                 }
 
-                // 4. MAKEUP GAIN - SIGNIFICANT boost to restore loudness
+                // 4. MAKEUP GAIN - Compensate for compression
                 if (window.makeupGain) {
-                    const makeupDB = 6.0; // +6dB makeup for LOUD mastered sound
+                    // Add makeup gain to restore perceived loudness
+                    const makeupDB = 3.5; // +3.5dB makeup
                     const makeupLinear = Math.pow(10, makeupDB / 20);
                     window.makeupGain.gain.setTargetAtTime(makeupLinear, ac.currentTime, 0.1);
-                    console.log('  ✓ Makeup Gain: +6.0dB (DRAMATIC)');
+                    console.log('  ✓ Makeup Gain: +3.5dB');
                 }
 
-                // 5. STEREO WIDTH - WIDE stereo image
+                // 5. STEREO WIDTH - Widen the image
                 if (window.sideChannel) {
-                    window.sideChannel.gain.setTargetAtTime(1.35, ac.currentTime, 0.1);
-                    console.log('  ✓ Stereo Width: +35% wider (DRAMATIC)');
+                    window.sideChannel.gain.setTargetAtTime(1.15, ac.currentTime, 0.1);
+                    console.log('  ✓ Stereo Width: +15% wider');
                 }
 
-                // 6. TRANSIENT SHAPER - PUNCHY attack
+                // 6. TRANSIENT SHAPER - Add punch
                 if (window.transientAttackGain) {
-                    window.transientAttackGain.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Transient Attack: +50% (PUNCHY)');
+                    window.transientAttackGain.gain.setTargetAtTime(1.3, ac.currentTime, 0.1);
+                    console.log('  ✓ Transient Attack: +30%');
                 }
 
                 console.log('✅ Mastering chain applied - YOU SHOULD HEAR THE DIFFERENCE!');
@@ -12937,17 +13060,6 @@
                     window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Fade in wet
                     window.isMasteringApplied = true;
                     console.log('🔊 SWITCHED TO MASTERED AUDIO - Dry: OFF, Wet: ON');
-                }
-
-                // ═══════════════════════════════════════════════════════════════
-                // ENABLE A/B COMPARE BUTTON - Now user can compare original vs mastered
-                // ═══════════════════════════════════════════════════════════════
-                const sidebarAbBtn = document.getElementById('abCompareBtn');
-                if (sidebarAbBtn) {
-                    sidebarAbBtn.disabled = false;
-                    sidebarAbBtn.style.opacity = '1';
-                    sidebarAbBtn.style.cursor = 'pointer';
-                    console.log('✅ A/B Compare button ENABLED');
                 }
 
                 // Get current LUFS from locked meters or real-time measurement
@@ -13736,62 +13848,29 @@
             const abBtn = document.getElementById('abCompareBtn');
             const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
 
-            // Update sidebar A/B button
             if (abBtn) {
                 abBtn.classList.toggle('active', isABCompareActive);
-                abBtn.textContent = isABCompareActive ? '🔀 ORIGINAL' : '🔀 MASTERED';
+                abBtn.querySelector('span:last-child').textContent = isABCompareActive ? 'Original' : 'Compare';
             }
-
-            // Update overlay A/B button (in mastering complete modal)
-            const overlayAbBtn = document.getElementById('overlayAbCompareBtn');
-            if (overlayAbBtn) {
-                overlayAbBtn.classList.toggle('active', isABCompareActive);
-                const spanText = overlayAbBtn.querySelector('span:last-child');
-                if (spanText) spanText.textContent = isABCompareActive ? 'Original' : 'Compare';
-            }
-
-            // Update export bar A/B button
             if (exportBarAbBtn) {
                 exportBarAbBtn.classList.toggle('active', isABCompareActive);
                 exportBarAbBtn.textContent = isABCompareActive ? 'Original' : 'A/B';
             }
 
-            // Toggle processing ON/OFF by resetting EQ values
-            // This is more reliable than DRY/WET path switching
-            if (isABCompareActive) {
-                // ORIGINAL MODE - Bypass all processing (set EQ to flat)
-                console.log('🔀 A/B: Switching to ORIGINAL (flat EQ, no processing)');
-                if (window.eqSubFilter) window.eqSubFilter.gain.value = 0;
-                if (window.eqBassFilter) window.eqBassFilter.gain.value = 0;
-                if (window.eqLowMidFilter) window.eqLowMidFilter.gain.value = 0;
-                if (window.eqMidFilter) window.eqMidFilter.gain.value = 0;
-                if (window.eqHighMidFilter) window.eqHighMidFilter.gain.value = 0;
-                if (window.eqHighFilter) window.eqHighFilter.gain.value = 0;
-                if (window.eqAirFilter) window.eqAirFilter.gain.value = 0;
-                if (window.compressor) {
-                    window.compressor.threshold.value = 0;
-                    window.compressor.ratio.value = 1;
+            // Toggle between DRY (original) and WET (mastered) using gain nodes
+            if (window.dryGain && window.wetGain && window.audioContext) {
+                const ac = window.audioContext;
+                if (isABCompareActive) {
+                    // Switch to ORIGINAL (dry)
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    console.log('🔀 A/B: Playing ORIGINAL (dry, no processing)');
+                } else {
+                    // Switch to MASTERED (wet)
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    console.log('🔀 A/B: Playing MASTERED (wet, full processing)');
                 }
-                if (window.makeupGain) window.makeupGain.gain.value = 1.0;
-                if (window.sideChannel) window.sideChannel.gain.value = 1.0;
-                console.log('   All processing BYPASSED');
-            } else {
-                // MASTERED MODE - Re-apply dramatic processing
-                console.log('🔀 A/B: Switching to MASTERED (full processing)');
-                if (window.eqSubFilter) window.eqSubFilter.gain.value = 4.5;
-                if (window.eqBassFilter) window.eqBassFilter.gain.value = 3.5;
-                if (window.eqLowMidFilter) window.eqLowMidFilter.gain.value = -2.0;
-                if (window.eqMidFilter) window.eqMidFilter.gain.value = 1.5;
-                if (window.eqHighMidFilter) window.eqHighMidFilter.gain.value = 3.0;
-                if (window.eqHighFilter) window.eqHighFilter.gain.value = 5.0;
-                if (window.eqAirFilter) window.eqAirFilter.gain.value = 6.0;
-                if (window.compressor) {
-                    window.compressor.threshold.value = -28;
-                    window.compressor.ratio.value = 5;
-                }
-                if (window.makeupGain) window.makeupGain.gain.value = Math.pow(10, 6.0 / 20);
-                if (window.sideChannel) window.sideChannel.gain.value = 1.35;
-                console.log('   All processing APPLIED');
             }
 
             // Visual feedback
