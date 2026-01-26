@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 2.0.0 | Build: 2026-01-25-v3 | 3-Step Wizard with Real-Time LUFS -->
+<!-- VERSION 2.1.0 | Build: 2026-01-25-v4 | PRO SPECTRUM with Peak Hold Envelope -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -410,12 +410,28 @@
             padding-left: 5px;
         }
 
-        .spectrum-panel canvas {
+        .spectrum-panel canvas#spectrumCanvas {
             width: 100%;
             height: 400px;
             background: linear-gradient(180deg, #000000 0%, #0a0a0f 50%, #000000 100%);
             border-radius: 8px;
             display: block;
+        }
+
+        /* Pro Overlay canvas for grid, labels, and peak hold envelope */
+        .spectrum-panel canvas#spectrumOverlayCanvas {
+            position: absolute;
+            top: 28px;
+            left: 15px;
+            width: calc(100% - 30px);
+            height: 400px;
+            pointer-events: none;
+            background: transparent;
+            z-index: 100;
+            border-radius: 8px;
+        }
+
+        .viz-panel {
             box-shadow:
                 inset 0 0 25px rgba(0, 0, 0, 0.9),
                 inset 0 4px 8px rgba(0, 0, 0, 0.7),
@@ -584,6 +600,82 @@
             background: rgba(0, 255, 0, 0.2);
             border-color: #00ff00;
             color: #00ff00;
+        }
+
+        /* Feature Cards for 24 Mastering Features */
+        .feature-card {
+            background: linear-gradient(135deg, rgba(30,30,35,0.95) 0%, rgba(20,20,25,0.98) 100%);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px 10px;
+            text-align: center;
+            cursor: help;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(0, 212, 255, 0.6);
+            background: linear-gradient(135deg, rgba(40,40,50,0.95) 0%, rgba(25,25,35,0.98) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.15), inset 0 1px 0 rgba(0, 212, 255, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .feature-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .feature-status {
+            font-size: 0.6rem;
+            color: #00ff88;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .feature-status.inactive {
+            color: #888;
+        }
+
+        /* Custom tooltip for feature cards */
+        .feature-card::after {
+            content: attr(title);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(5px);
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.98) 0%, rgba(10, 30, 50, 0.98) 100%);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 400;
+            line-height: 1.4;
+            white-space: normal;
+            width: 180px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+            pointer-events: none;
+            z-index: 1000;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .feature-card:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
         }
 
         .eq-faders {
@@ -1814,10 +1906,10 @@
             <!-- QUICK ACTIONS -->
             <div class="section-title">Quick Actions</div>
             <button class="action-btn action-btn-secondary" id="abCompareBtn" disabled style="background: linear-gradient(135deg, #ff9a56, #ff5733);">
-                🔀 A/B COMPARE
+                🔀 MASTERED
             </button>
             <button class="action-btn action-btn-secondary" id="loudnessMatchBtn" disabled style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                🎚️ LOUDNESS MATCH: OFF
+                🎚️ MATCHED OFF
             </button>
             <button class="action-btn action-btn-secondary" id="resetBtn" disabled>
                 🔄 Reset All
@@ -1877,9 +1969,11 @@
                  ═══════════════════════════════════════════════════════════════ -->
 
             <!-- PANEL 1: SPECTRUM ANALYZER + EQ CURVE -->
-            <div class="viz-panel spectrum-panel">
-                <div class="panel-title">SPECTRUM ANALYZER + EQ</div>
+            <div class="viz-panel spectrum-panel" style="position: relative;">
+                <div class="panel-title">PRO SPECTRUM + EQ</div>
                 <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
+                <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
+                <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
             </div>
 
             <!-- PANEL 2: STEREO METERS + PHASE SCOPE -->
@@ -1939,258 +2033,6 @@
                     <canvas id="correlationHeatmapCanvas" width="800" height="200" style="width: 100%; height: 100px; display: block;"></canvas>
                     <div style="margin-top: 10px; position: relative;">
                         <canvas id="correlationLegendCanvas" width="400" height="15" style="width: 100%; height: 15px; display: block;"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANEL 3: DYNAMIC WAVEFORM -->
-            <div class="viz-panel waveform-panel-viz">
-                <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
-                <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
-                    <canvas id="waveformCanvasStatic" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
-                    <canvas id="waveformCanvasPlayhead" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
-                    <!-- VISIBLE SCRUBBER HANDLE -->
-                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 10000; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
-                        <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
-                        <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COMPREHENSIVE AUDIO ANALYSIS PANEL (NEW - INDUSTRY LEADING) -->
-            <div class="analysis-panel" id="analysisPanel">
-                <!-- Results will be populated by JavaScript -->
-            </div>
-
-            <!-- PROFESSIONAL MASTERING ENGINE - 24 FEATURES -->
-            <div class="eq-section" style="margin-top: 15px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(184, 79, 255, 0.1)); border: 2px solid rgba(0, 212, 255, 0.3);">
-                <div class="eq-header">
-                    <div class="section-title" style="margin-bottom: 0;">🎛️ MASTERING ENGINE</div>
-                    <button class="eq-bypass-btn" id="aiSuiteStatusBtn" style="background: linear-gradient(135deg, #00d4ff, #b84fff); font-size: 0.7rem;">24/24 Active</button>
-                </div>
-
-                <div style="padding: 15px;">
-                    <!-- Re-master tip -->
-                    <div style="text-align: center; padding: 12px; background: rgba(0, 212, 255, 0.1); border-radius: 8px; margin-bottom: 15px; font-size: 0.75rem; color: rgba(255,255,255,0.7);">
-                        💡 Use the <strong style="color: #00d4ff;">MASTER</strong> button (top) to run all 24 features
-                    </div>
-
-                    <!-- Toggle Individual Features -->
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <button class="eq-bypass-btn" onclick="toggleAIFeatures()" id="toggleAIFeaturesBtn" style="background: rgba(255, 255, 255, 0.1); font-size: 0.7rem; padding: 8px 15px;">
-                            ▼ Show All 24 Mastering Features
-                        </button>
-                    </div>
-
-                    <!-- AI Features Grid (Hidden by Default) -->
-                    <div id="aiIndividualFeatures" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
-                        <!-- Feature 1: AI Stem Separation -->
-                        <button class="eq-bypass-btn" id="aiStemSepBtn" onclick="showAIStemSeparation()" style="background: linear-gradient(135deg, #ff6b6b, #ff8e53); font-size: 0.7rem; padding: 10px;">
-                            🎵 Stem Separation<br><span style="font-size: 0.6rem; opacity: 0.8;">Vocals/Drums/Bass</span>
-                        </button>
-
-                        <!-- Feature 2: Dynamic EQ -->
-                        <button class="eq-bypass-btn" id="aiDynamicEQBtn" onclick="showAIDynamicEQ()" style="background: linear-gradient(135deg, #4ecdc4, #44a08d); font-size: 0.7rem; padding: 10px;">
-                            🎚️ Dynamic EQ<br><span style="font-size: 0.6rem; opacity: 0.8;">Spectral Compression</span>
-                        </button>
-
-                        <!-- Feature 3: Processing Chain -->
-                        <button class="eq-bypass-btn" id="aiChainBtn" onclick="showAIChainOptimizer()" style="background: linear-gradient(135deg, #f093fb, #f5576c); font-size: 0.7rem; padding: 10px;">
-                            ⚙️ Chain Optimizer<br><span style="font-size: 0.6rem; opacity: 0.8;">Optimal Effect Order</span>
-                        </button>
-
-                        <!-- Feature 4: Artifact Detection -->
-                        <button class="eq-bypass-btn" id="aiArtifactBtn" onclick="runAIArtifactDetection()" style="background: linear-gradient(135deg, #fa709a, #fee140); font-size: 0.7rem; padding: 10px;">
-                            🔍 Artifact Detection<br><span style="font-size: 0.6rem; opacity: 0.8;">10 Problem Types</span>
-                        </button>
-
-                        <!-- Feature 5: Smart Mode -->
-                        <button class="eq-bypass-btn" id="aiSmartModeBtn" onclick="runAISmartMode()" style="background: linear-gradient(135deg, #30cfd0, #330867); font-size: 0.7rem; padding: 10px;">
-                            🧠 Smart Mode<br><span style="font-size: 0.6rem; opacity: 0.8;">Auto-Detect Genre</span>
-                        </button>
-
-                        <!-- Feature 6: Quality Prediction -->
-                        <button class="eq-bypass-btn" id="aiQualityBtn" onclick="runAIQualityPrediction()" style="background: linear-gradient(135deg, #a8edea, #fed6e3); font-size: 0.7rem; padding: 10px;">
-                            📊 Quality Prediction<br><span style="font-size: 0.6rem; opacity: 0.8;">Before Processing</span>
-                        </button>
-
-                        <!-- Feature 7: Audio Fingerprinting -->
-                        <button class="eq-bypass-btn" id="aiFingerprintBtn" onclick="runAIFingerprinting()" style="background: linear-gradient(135deg, #ffecd2, #fcb69f); font-size: 0.7rem; padding: 10px;">
-                            🔎 Fingerprinting<br><span style="font-size: 0.6rem; opacity: 0.8;">Find References</span>
-                        </button>
-
-                        <!-- Feature 8: AI Assistant -->
-                        <button class="eq-bypass-btn" id="aiAssistantBtn" onclick="showAIAssistant()" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 0.7rem; padding: 10px;">
-                            💬 AI Assistant<br><span style="font-size: 0.6rem; opacity: 0.8;">Natural Language</span>
-                        </button>
-
-                        <!-- Feature 9: Multi-Track Mixing -->
-                        <button class="eq-bypass-btn" id="aiMultiTrackBtn" onclick="showAIMultiTrack()" style="background: linear-gradient(135deg, #f83600, #f9d423); font-size: 0.7rem; padding: 10px;">
-                            🎛️ Multi-Track Mix<br><span style="font-size: 0.6rem; opacity: 0.8;">32 Track DAW</span>
-                        </button>
-
-                        <!-- Feature 10: Adaptive Learning -->
-                        <button class="eq-bypass-btn" id="aiLearningBtn" onclick="showAILearning()" style="background: linear-gradient(135deg, #5ee7df, #b490ca); font-size: 0.7rem; padding: 10px;">
-                            📚 Adaptive Learning<br><span style="font-size: 0.6rem; opacity: 0.8;">Personalized AI</span>
-                        </button>
-
-                        <!-- Feature 11: Intelligent Dithering -->
-                        <button class="eq-bypass-btn" id="aiDitheringBtn" onclick="showAIDithering()" style="background: linear-gradient(135deg, #c471f5, #fa71cd); font-size: 0.7rem; padding: 10px;">
-                            🎲 Smart Dithering<br><span style="font-size: 0.6rem; opacity: 0.8;">6 Algorithms</span>
-                        </button>
-
-                        <!-- Feature 12: Room Compensation -->
-                        <button class="eq-bypass-btn" id="aiRoomBtn" onclick="showAIRoomComp()" style="background: linear-gradient(135deg, #ff9a9e, #fecfef); font-size: 0.7rem; padding: 10px;">
-                            🎧 Room Calibration<br><span style="font-size: 0.6rem; opacity: 0.8;">Speaker Correction</span>
-                        </button>
-
-                        <!-- Feature 13: Neural Models -->
-                        <button class="eq-bypass-btn" id="aiNeuralBtn" onclick="showAINeuralModels()" style="background: linear-gradient(135deg, #fe8c00, #f83600); font-size: 0.7rem; padding: 10px;">
-                            🧬 Neural Models<br><span style="font-size: 0.6rem; opacity: 0.8;">Genre-Specific</span>
-                        </button>
-
-                        <!-- Feature 14: Subsonic Filter -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #1a1a2e, #16213e); font-size: 0.7rem; padding: 10px;">
-                            🔇 Subsonic Filter<br><span style="font-size: 0.6rem; opacity: 0.8;">25Hz Highpass</span>
-                        </button>
-
-                        <!-- Feature 15: Mid/Side Processing -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #0f3460, #16213e); font-size: 0.7rem; padding: 10px;">
-                            🔀 Mid/Side<br><span style="font-size: 0.6rem; opacity: 0.8;">Stereo Field Control</span>
-                        </button>
-
-                        <!-- Feature 16: Stereo Width -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #533483, #e94560); font-size: 0.7rem; padding: 10px;">
-                            ↔️ Stereo Width<br><span style="font-size: 0.6rem; opacity: 0.8;">Image Enhancement</span>
-                        </button>
-
-                        <!-- Feature 17: De-Esser -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #ff6b6b, #c44569); font-size: 0.7rem; padding: 10px;">
-                            🎤 De-Esser<br><span style="font-size: 0.6rem; opacity: 0.8;">Sibilance Control</span>
-                        </button>
-
-                        <!-- Feature 18: Multiband Compression -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #574b90, #303952); font-size: 0.7rem; padding: 10px;">
-                            📊 Multiband Comp<br><span style="font-size: 0.6rem; opacity: 0.8;">3-Band Dynamics</span>
-                        </button>
-
-                        <!-- Feature 19: Transient Shaper -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #f9ca24, #f0932b); font-size: 0.7rem; padding: 10px;">
-                            ⚡ Transient Shaper<br><span style="font-size: 0.6rem; opacity: 0.8;">Attack/Sustain</span>
-                        </button>
-
-                        <!-- Feature 20: Spectral Balance -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #6ab04c, #badc58); font-size: 0.7rem; padding: 10px;">
-                            📈 Spectral Balance<br><span style="font-size: 0.6rem; opacity: 0.8;">Auto-EQ</span>
-                        </button>
-
-                        <!-- Feature 21: Harmonic Exciter -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #eb4d4b, #ff6348); font-size: 0.7rem; padding: 10px;">
-                            🔥 Harmonic Exciter<br><span style="font-size: 0.6rem; opacity: 0.8;">Presence & Air</span>
-                        </button>
-
-                        <!-- Feature 22: Analog Warmth -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #e17055, #d63031); font-size: 0.7rem; padding: 10px;">
-                            🎨 Analog Warmth<br><span style="font-size: 0.6rem; opacity: 0.8;">Tube Saturation</span>
-                        </button>
-
-                        <!-- Feature 23: Reference Matching -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #00b894, #00cec9); font-size: 0.7rem; padding: 10px;">
-                            🎼 Reference Match<br><span style="font-size: 0.6rem; opacity: 0.8;">Tone Matching</span>
-                        </button>
-
-                        <!-- Feature 24: Phase Correction -->
-                        <button class="eq-bypass-btn" style="background: linear-gradient(135deg, #0984e3, #74b9ff); font-size: 0.7rem; padding: 10px;">
-                            📐 Phase Correction<br><span style="font-size: 0.6rem; opacity: 0.8;">Phase Alignment</span>
-                        </button>
-                    </div>
-
-                    <!-- AI Results Display -->
-                    <div id="aiResultsDisplay" style="background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; line-height: 1.6; max-height: 300px; overflow-y: auto; display: none; margin-top: 15px; position: relative;">
-                        <!-- AI results will appear here -->
-                        <button onclick="clearAIResults()" style="position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.1); border: none; color: white; padding: 4px 8px; font-size: 0.65rem; cursor: pointer; border-radius: 4px;">✕ Clear</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TRANSPORT CONTROLS -->
-            <div class="transport-controls">
-                <button class="play-btn" id="playBtn">▶</button>
-                <div class="progress-bar" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-            </div>
-
-            <!-- SPECTRAL DE-NOISER (NEW FEATURE) -->
-            <div class="eq-section" style="margin-top: 15px;">
-                <div class="eq-header">
-                    <div class="section-title" style="margin-bottom: 0;">🎤 Spectral De-noiser (AI-Powered Noise Removal)</div>
-                    <button class="eq-bypass-btn" id="denoiserBypassBtn">De-noiser Active</button>
-                </div>
-
-                <div style="padding: 15px; background: rgba(184, 79, 255, 0.05); border-radius: 8px;">
-                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 12px;">
-                        Remove hiss, hum, clicks, and background noise • Select quiet section first to learn noise profile
-                    </div>
-
-                    <!-- Noise Type Controls -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div>
-                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                                <input type="checkbox" id="denoiseHiss" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('hiss', this.checked)">
-                                Hiss (High Frequency)
-                            </label>
-                            <input type="range" min="0" max="100" value="50" id="denoiseHissAmount" style="width: 100%;"
-                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('hiss', this.value); document.getElementById('hissValue').textContent = this.value + '%';">
-                            <div style="font-size: 0.65rem; opacity: 0.6;" id="hissValue">50%</div>
-                        </div>
-
-                        <div>
-                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                                <input type="checkbox" id="denoiseHum" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('hum', this.checked)">
-                                Hum (Low Frequency)
-                            </label>
-                            <input type="range" min="0" max="100" value="50" id="denoiseHumAmount" style="width: 100%;"
-                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('hum', this.value); document.getElementById('humValue').textContent = this.value + '%';">
-                            <div style="font-size: 0.65rem; opacity: 0.6;" id="humValue">50%</div>
-                        </div>
-
-                        <div>
-                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                                <input type="checkbox" id="denoiseClicks" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('clicks', this.checked)">
-                                Clicks & Crackle
-                            </label>
-                            <input type="range" min="0" max="100" value="50" id="denoiseClicksAmount" style="width: 100%;"
-                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('clicks', this.value); document.getElementById('clicksValue').textContent = this.value + '%';">
-                            <div style="font-size: 0.65rem; opacity: 0.6;" id="clicksValue">50%</div>
-                        </div>
-
-                        <div>
-                            <label style="font-size: 0.7rem; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
-                                <input type="checkbox" id="denoiseBroadband" onchange="if(spectralDenoiser) spectralDenoiser.setNoiseTypeEnabled('broadband', this.checked)">
-                                Broadband Noise
-                            </label>
-                            <input type="range" min="0" max="100" value="50" id="denoiseBroadbandAmount" style="width: 100%;"
-                                   oninput="if(spectralDenoiser) spectralDenoiser.setNoiseReduction('broadband', this.value); document.getElementById('broadbandValue').textContent = this.value + '%';">
-                            <div style="font-size: 0.65rem; opacity: 0.6;" id="broadbandValue">50%</div>
-                        </div>
-                    </div>
-
-                    <!-- Threshold Control -->
-                    <div style="margin-bottom: 12px;">
-                        <label style="font-size: 0.7rem; opacity: 0.8; display: block; margin-bottom: 4px;">Noise Gate Threshold</label>
-                        <input type="range" min="-60" max="0" value="-40" id="denoiseThreshold" style="width: 100%;"
-                               oninput="if(spectralDenoiser) spectralDenoiser.setThreshold(this.value); document.getElementById('thresholdValue').textContent = this.value + ' dB';">
-                        <div style="font-size: 0.65rem; opacity: 0.6;" id="thresholdValue">-40 dB</div>
-                    </div>
-
-                    <!-- Preset Buttons -->
-                    <div style="display: flex; gap: 8px;">
-                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('gentle')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Gentle</button>
-                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('moderate')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Moderate</button>
-                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.applyPreset('aggressive')" style="flex: 1; padding: 6px; font-size: 0.7rem;">Aggressive</button>
-                        <button class="selector-btn" onclick="if(spectralDenoiser) spectralDenoiser.reset()" style="flex: 1; padding: 6px; font-size: 0.7rem;">Reset</button>
                     </div>
                 </div>
             </div>
@@ -2296,191 +2138,154 @@
                 </div>
             </div>
 
-            <!-- DYNAMICS SECTION -->
-            <div class="dynamics-section">
-                <div class="section-title">Dynamics & Processing</div>
-                <div class="dynamics-controls">
-
-                    <div class="control-item">
-                        <div class="control-header">
-                            <div class="control-name">Compression</div>
-                            <div class="control-value" id="compValue">0%</div>
-                        </div>
-                        <input type="range" class="slider" id="compSlider" min="0" max="100" value="0">
+            <!-- PANEL 3: DYNAMIC WAVEFORM -->
+            <div class="viz-panel waveform-panel-viz">
+                <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
+                <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
+                    <canvas id="waveformCanvasStatic" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
+                    <canvas id="waveformCanvasPlayhead" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <!-- VISIBLE SCRUBBER HANDLE -->
+                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 10000; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
+                        <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
+                        <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
                     </div>
-
-                    <div class="control-item" id="stereoWidthModule">
-                        <div class="feature-lock-tooltip">Advanced Hardware Required</div>
-                        <div class="control-header">
-                            <div class="control-name">Stereo Width</div>
-                            <div class="control-value" id="widthValue">100%</div>
-                        </div>
-                        <input type="range" class="slider" id="widthSlider" min="0" max="200" value="100">
-                    </div>
-
-                    <div class="control-item">
-                        <div class="control-header">
-                            <div class="control-name">Limiter Ceiling</div>
-                            <div class="control-value" id="limiterValue">-1.5 dB</div>
-                        </div>
-                        <input type="range" class="slider" id="limiterSlider" min="-10" max="0" step="0.1" value="-1.5">
-                        <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 8px; text-align: center;">
-                            GR: <span id="limiterGR" style="color: #00ff88; font-weight: 600;">0.0 dB</span>
-                        </div>
-                    </div>
-
-                    <div class="control-item">
-                        <div class="control-header">
-                            <div class="control-name">Output Gain</div>
-                            <div class="control-value" id="outputGainValue">0.0 dB</div>
-                        </div>
-                        <input type="range" class="slider" id="outputGainSlider" min="-12" max="12" step="0.1" value="0">
-                    </div>
-
                 </div>
             </div>
 
-            <!-- MULTIBAND COMPRESSION -->
-            <div id="multibandModule" style="position: relative;">
-                <div class="feature-lock-tooltip">Premium Hardware Required</div>
-                <div class="section-title" style="margin-top: 25px;">
-                    🎛️ Multiband Compression
-                    <button class="eq-bypass-btn" id="multibandToggleBtn" style="margin-left: 15px;">OFF</button>
+            <!-- COMPREHENSIVE AUDIO ANALYSIS PANEL (NEW - INDUSTRY LEADING) -->
+            <div class="analysis-panel" id="analysisPanel">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+
+            <!-- TRANSPORT CONTROLS -->
+            <div class="transport-controls">
+                <button class="play-btn" id="playBtn">▶</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
+                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+            </div>
 
-                <div id="multibandSection" style="display: none; background: rgba(184, 79, 255, 0.05); border: 1px solid rgba(184, 79, 255, 0.2); border-radius: 12px; padding: 20px; margin-top: 15px;">
-                <!-- Preset Selector -->
-                <div style="margin-bottom: 20px;">
-                    <label style="font-size: 0.8rem; opacity: 0.7;">Genre Preset:</label>
-                    <select id="multibandPresetSelect" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 6px; margin-top: 5px;">
-                        <option value="balanced">Balanced (4:1 all bands)</option>
-                        <option value="edm">EDM (Heavy sub, light highs)</option>
-                        <option value="hiphop">Hip-Hop (Punchy bass)</option>
-                        <option value="rock">Rock (Balanced attack)</option>
-                        <option value="pop">Pop (Modern commercial)</option>
-                    </select>
-                </div>
-
-                <!-- 4 Bands -->
-                <div class="multiband-bands" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                    <!-- SUB BAND -->
-                    <div class="multiband-band">
-                        <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff; margin-bottom: 8px;">SUB (20-120Hz)</div>
-                        <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 10px;">
-                            <div>Threshold: <span id="mbSubThreshold">-20 dB</span></div>
-                            <div>Ratio: <span id="mbSubRatio">4:1</span></div>
-                        </div>
-                        <div class="gain-reduction-meter" style="height: 80px; background: rgba(0,0,0,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-                            <div id="mbSubGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff00, #ffff00, #ff0000); height: 0%; transition: height 0.1s;"></div>
-                        </div>
-                        <div style="text-align: center; font-size: 0.7rem; margin-top: 5px;">GR: <span id="mbSubGRValue">0 dB</span></div>
+            <!-- SPECTRAL DE-NOISER (COMPACT AUTO MODE) -->
+            <div class="eq-section" style="margin-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(184, 79, 255, 0.08); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.8rem;">🎤 De-noise</span>
+                        <select id="denoisePresetSelect" onchange="applyDenoisePreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.7rem;">
+                            <option value="off">Off</option>
+                            <option value="auto" selected>Auto</option>
+                            <option value="gentle">Gentle</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="aggressive">Aggressive</option>
+                        </select>
                     </div>
-
-                    <!-- LOW-MID BAND -->
-                    <div class="multiband-band">
-                        <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff; margin-bottom: 8px;">LOW-MID (120Hz-1kHz)</div>
-                        <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 10px;">
-                            <div>Threshold: <span id="mbLowMidThreshold">-18 dB</span></div>
-                            <div>Ratio: <span id="mbLowMidRatio">4:1</span></div>
-                        </div>
-                        <div class="gain-reduction-meter" style="height: 80px; background: rgba(0,0,0,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-                            <div id="mbLowMidGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff00, #ffff00, #ff0000); height: 0%; transition: height 0.1s;"></div>
-                        </div>
-                        <div style="text-align: center; font-size: 0.7rem; margin-top: 5px;">GR: <span id="mbLowMidGRValue">0 dB</span></div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="denoiseStatus" style="font-size: 0.65rem; color: #00ff88;">✓ Auto</span>
+                        <button class="eq-bypass-btn" id="denoiserBypassBtn" style="padding: 4px 10px; font-size: 0.65rem;">Active</button>
                     </div>
-
-                    <!-- HIGH-MID BAND -->
-                    <div class="multiband-band">
-                        <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff; margin-bottom: 8px;">HIGH-MID (1-8kHz)</div>
-                        <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 10px;">
-                            <div>Threshold: <span id="mbHighMidThreshold">-16 dB</span></div>
-                            <div>Ratio: <span id="mbHighMidRatio">4:1</span></div>
-                        </div>
-                        <div class="gain-reduction-meter" style="height: 80px; background: rgba(0,0,0,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-                            <div id="mbHighMidGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff00, #ffff00, #ff0000); height: 0%; transition: height 0.1s;"></div>
-                        </div>
-                        <div style="text-align: center; font-size: 0.7rem; margin-top: 5px;">GR: <span id="mbHighMidGRValue">0 dB</span></div>
-                    </div>
-
-                    <!-- HIGHS BAND -->
-                    <div class="multiband-band">
-                        <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff; margin-bottom: 8px;">HIGHS (8-20kHz)</div>
-                        <div style="font-size: 0.7rem; opacity: 0.5; margin-bottom: 10px;">
-                            <div>Threshold: <span id="mbHighsThreshold">-14 dB</span></div>
-                            <div>Ratio: <span id="mbHighsRatio">3:1</span></div>
-                        </div>
-                        <div class="gain-reduction-meter" style="height: 80px; background: rgba(0,0,0,0.3); border-radius: 4px; position: relative; overflow: hidden;">
-                            <div id="mbHighsGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff00, #ffff00, #ff0000); height: 0%; transition: height 0.1s;"></div>
-                        </div>
-                        <div style="text-align: center; font-size: 0.7rem; margin-top: 5px;">GR: <span id="mbHighsGRValue">0 dB</span></div>
-                    </div>
-                </div>
                 </div>
             </div>
 
-            <!-- M/S PROCESSING -->
-            <div id="msModule" style="position: relative;">
-                <div class="feature-lock-tooltip">Premium Hardware Required</div>
-                <div class="section-title" style="margin-top: 25px;">
-                    🔊 M/S Processing (Mid/Side)
-                    <button class="eq-bypass-btn" id="msToggleBtn" style="margin-left: 15px;">OFF</button>
-                </div>
-
-                <div id="msSection" style="display: none; background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 12px; padding: 20px; margin-top: 15px;">
-                <!-- Preset Selector -->
-                <div style="margin-bottom: 20px;">
-                    <label style="font-size: 0.8rem; opacity: 0.7;">M/S Preset:</label>
-                    <select id="msPresetSelect" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 6px; margin-top: 5px;">
-                        <option value="natural">Natural (Subtle)</option>
-                        <option value="wideHighs">Wide Highs (Radio)</option>
-                        <option value="vocalFocus">Vocal Focus (Center)</option>
-                        <option value="clubReady">Club Ready (Wide)</option>
-                    </select>
-                </div>
-
-                <!-- Mid Channel Controls -->
-                <div style="margin-bottom: 20px;">
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #00d4ff; margin-bottom: 10px;">MID (Center) - Vocals, Kick, Snare</div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">Low</label>
-                            <input type="range" id="msMidLow" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msMidLowValue">0 dB</span></div>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">Mid</label>
-                            <input type="range" id="msMidMid" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msMidMidValue">0 dB</span></div>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">High</label>
-                            <input type="range" id="msMidHigh" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msMidHighValue">0 dB</span></div>
-                        </div>
+            <!-- DYNAMICS SECTION (COMPACT) -->
+            <div class="dynamics-section" style="padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span class="section-title" style="margin: 0; font-size: 0.85rem;">🎚️ Dynamics</span>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <select id="dynamicsPresetSelect" onchange="applyDynamicsPreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.65rem;">
+                            <option value="off">Manual</option>
+                            <option value="gentle">Gentle</option>
+                            <option value="balanced" selected>Balanced</option>
+                            <option value="punchy">Punchy</option>
+                            <option value="loud">Loud</option>
+                        </select>
+                        <span id="limiterGR" style="font-size: 0.6rem; color: #00ff88; min-width: 45px;">GR: 0dB</span>
                     </div>
                 </div>
-
-                <!-- Side Channel Controls -->
-                <div>
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #b84fff; margin-bottom: 10px;">SIDE (Stereo) - Synths, FX, Ambience</div>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">Low</label>
-                            <input type="range" id="msSideLow" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msSideLowValue">0 dB</span></div>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">Mid</label>
-                            <input type="range" id="msSideMid" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msSideMidValue">0 dB</span></div>
-                        </div>
-                        <div>
-                            <label style="font-size: 0.7rem; opacity: 0.7;">High</label>
-                            <input type="range" id="msSideHigh" min="-12" max="12" value="0" step="0.5" style="width: 100%;">
-                            <div style="text-align: center; font-size: 0.7rem; margin-top: 2px;"><span id="msSideHighValue">0 dB</span></div>
-                        </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px;">Comp</div>
+                        <input type="range" class="slider" id="compSlider" min="0" max="100" value="0" style="width: 100%;">
+                        <div style="font-size: 0.6rem; color: #00d4ff;" id="compValue">0%</div>
+                    </div>
+                    <div style="text-align: center;" id="stereoWidthModule">
+                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px;">Width</div>
+                        <input type="range" class="slider" id="widthSlider" min="0" max="200" value="100" style="width: 100%;">
+                        <div style="font-size: 0.6rem; color: #00d4ff;" id="widthValue">100%</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px;">Ceiling</div>
+                        <input type="range" class="slider" id="limiterSlider" min="-10" max="0" step="0.1" value="-1.5" style="width: 100%;">
+                        <div style="font-size: 0.6rem; color: #00d4ff;" id="limiterValue">-1.5dB</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px;">Output</div>
+                        <input type="range" class="slider" id="outputGainSlider" min="-12" max="12" step="0.1" value="0" style="width: 100%;">
+                        <div style="font-size: 0.6rem; color: #00d4ff;" id="outputGainValue">0dB</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- MULTIBAND (COMPACT - Hidden by Default) -->
+            <div id="multibandModule" style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(184, 79, 255, 0.08); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.8rem;">🎛️ Multiband</span>
+                        <select id="multibandPresetSelect" onchange="applyMultibandPreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.65rem;">
+                            <option value="off" selected>Off</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="edm">EDM</option>
+                            <option value="hiphop">Hip-Hop</option>
+                            <option value="rock">Rock</option>
+                            <option value="pop">Pop</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <span id="mbGRDisplay" style="font-size: 0.6rem; opacity: 0.6;">4-band dynamics</span>
+                        <button class="eq-bypass-btn" id="multibandToggleBtn" style="padding: 4px 10px; font-size: 0.65rem;">OFF</button>
+                    </div>
+                </div>
+                <!-- Compact GR meters (only shown when expanded) -->
+                <div id="multibandSection" style="display: none; padding: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center;">
+                        <div><div style="font-size: 0.55rem; color: #00d4ff;">SUB</div><div style="height: 30px; background: rgba(0,0,0,0.3); border-radius: 3px; position: relative; overflow: hidden;"><div id="mbSubGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff88, #ffff00); height: 0%;"></div></div><div style="font-size: 0.5rem; opacity: 0.6;" id="mbSubGRValue">0dB</div></div>
+                        <div><div style="font-size: 0.55rem; color: #00d4ff;">LOW</div><div style="height: 30px; background: rgba(0,0,0,0.3); border-radius: 3px; position: relative; overflow: hidden;"><div id="mbLowMidGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff88, #ffff00); height: 0%;"></div></div><div style="font-size: 0.5rem; opacity: 0.6;" id="mbLowMidGRValue">0dB</div></div>
+                        <div><div style="font-size: 0.55rem; color: #00d4ff;">MID</div><div style="height: 30px; background: rgba(0,0,0,0.3); border-radius: 3px; position: relative; overflow: hidden;"><div id="mbHighMidGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff88, #ffff00); height: 0%;"></div></div><div style="font-size: 0.5rem; opacity: 0.6;" id="mbHighMidGRValue">0dB</div></div>
+                        <div><div style="font-size: 0.55rem; color: #00d4ff;">HIGH</div><div style="height: 30px; background: rgba(0,0,0,0.3); border-radius: 3px; position: relative; overflow: hidden;"><div id="mbHighsGR" style="position: absolute; bottom: 0; width: 100%; background: linear-gradient(to top, #00ff88, #ffff00); height: 0%;"></div></div><div style="font-size: 0.5rem; opacity: 0.6;" id="mbHighsGRValue">0dB</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- M/S PROCESSING (COMPACT) -->
+            <div id="msModule" style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0, 212, 255, 0.08); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.8rem;">🔊 M/S</span>
+                        <select id="msPresetSelect" onchange="applyMSPreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.65rem;">
+                            <option value="off" selected>Off</option>
+                            <option value="natural">Natural</option>
+                            <option value="wideHighs">Wide Highs</option>
+                            <option value="vocalFocus">Vocal Focus</option>
+                            <option value="clubReady">Club Ready</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <span style="font-size: 0.6rem; opacity: 0.6;">Mid/Side stereo</span>
+                        <button class="eq-bypass-btn" id="msToggleBtn" style="padding: 4px 10px; font-size: 0.65rem;">OFF</button>
+                    </div>
+                </div>
+                <div id="msSection" style="display: none; background: rgba(0, 212, 255, 0.05); border-radius: 0 0 8px 8px; padding: 10px; margin-top: -4px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div>
+                            <div style="font-size: 0.65rem; color: #00d4ff; margin-bottom: 6px;">MID (Center)</div>
+                            <input type="range" id="msMidGain" min="-6" max="6" value="0" step="0.5" style="width: 100%;">
+                            <div style="font-size: 0.55rem; text-align: center;" id="msMidGainValue">0 dB</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.65rem; color: #b84fff; margin-bottom: 6px;">SIDE (Stereo)</div>
+                            <input type="range" id="msSideGain" min="-6" max="6" value="0" step="0.5" style="width: 100%;">
+                            <div style="font-size: 0.55rem; text-align: center;" id="msSideGainValue">0 dB</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -7758,13 +7563,66 @@
                         // Elite WebGL rendering with persistence/ghosting
                         window.WebGLSpectrum.render(analyser, audioContext);
 
-                        // Draw peak hold dots ON TOP of WebGL spectrum (using 2D overlay)
-                        if (spectrumCanvas && window.spectrumPeakHold) {
-                            drawSpectrumPeakDots(spectrumCanvas);
+                        // ━━━ PRO SPECTRUM OVERLAY - Grid & Labels Only ━━━
+                        // Peak hold is now rendered in WebGL for better performance
+                        const overlayCanvas = document.getElementById('spectrumOverlayCanvas');
+                        if (overlayCanvas) {
+                            const ctx = overlayCanvas.getContext('2d');
+                            if (ctx) {
+                                const width = overlayCanvas.width;
+                                const height = overlayCanvas.height;
+                                ctx.clearRect(0, 0, width, height);
+
+                                // Frequency labels at bottom
+                                const freqLabels = [20, 50, 100, 200, 500, '1k', '2k', '5k', '10k', '20k'];
+                                const freqValues = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+                                ctx.font = '10px "JetBrains Mono", monospace';
+                                ctx.textAlign = 'center';
+                                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+
+                                freqValues.forEach((freq, idx) => {
+                                    const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+                                    ctx.fillText(freqLabels[idx], x, height - 5);
+                                });
+
+                                // dB labels on left
+                                ctx.textAlign = 'left';
+                                const dbLabels = ['0', '-20', '-40', '-60'];
+                                dbLabels.forEach((label, idx) => {
+                                    const y = 15 + (idx * (height - 30) / 3);
+                                    ctx.fillText(label + 'dB', 5, y);
+                                });
+                            }
                         }
                     } else if (window.drawProfessionalSpectrum && spectrumCanvas && audioContext) {
                         // Fallback to Canvas 2D if WebGL not available
+                        if (!window._fallbackDebugLogged) {
+                            console.log('⚠️ Using Canvas 2D fallback (WebGL not ready)');
+                            window._fallbackDebugLogged = true;
+                        }
                         window.drawProfessionalSpectrum(spectrumCanvas, analyser, audioContext);
+
+                        // Also draw overlay for Canvas 2D mode
+                        const overlayCanvas = document.getElementById('spectrumOverlayCanvas');
+                        if (overlayCanvas && window.spectrumPeakHold) {
+                            const ctx = overlayCanvas.getContext('2d');
+                            if (ctx) {
+                                ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+                                drawSpectrumPeakDots(overlayCanvas);
+                            }
+                        }
+                    } else {
+                        // Neither WebGL nor Canvas 2D
+                        if (!window._noRendererLogged) {
+                            console.log('❌ No spectrum renderer available:', {
+                                webgl: !!window.WebGLSpectrum,
+                                webglReady: window.WebGLSpectrum?.isReady?.(),
+                                canvas2d: !!window.drawProfessionalSpectrum,
+                                analyser: !!analyser,
+                                audioContext: !!audioContext
+                            });
+                            window._noRendererLogged = true;
+                        }
                     }
                 }
 
@@ -9791,12 +9649,21 @@
             if (abCompareMode) {
                 document.getElementById('abCompareBtn').click(); // Return to MASTERED
             }
-            abCompareSavedGain = null; // Clear saved gain
+            abCompareSavedGain = null; // Clear saved master gain
+            abCompareSavedMakeupGain = null; // Clear saved makeup gain
+            // Ensure A/B button shows MASTERED
+            const abBtn = document.getElementById('abCompareBtn');
+            abBtn.textContent = '🔀 MASTERED';
+            abBtn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
 
             // Reset Loudness Match if active
             if (loudnessMatchEnabled) {
                 document.getElementById('loudnessMatchBtn').click(); // Turn off
             }
+            // Ensure Loudness Match button shows MATCHED OFF
+            const lmBtn = document.getElementById('loudnessMatchBtn');
+            lmBtn.textContent = '🎚️ MATCHED OFF';
+            lmBtn.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)';
 
             console.log('🔄 All settings reset to default (including Quick Actions)');
         });
@@ -9808,13 +9675,21 @@
         // The human ear thinks "Louder is Better." To avoid being fooled by volume,
         // we automatically compensate the processed signal to match the original loudness
         // when comparing. This lets you hear the QUALITY differences, not just volume.
-        let abCompareSavedGain = null;  // Will be set on first A/B toggle to prevent progressive reduction bug
+        let abCompareSavedGain = null;  // Master gain saved on first A/B toggle
+        let abCompareSavedMakeupGain = null;  // Makeup gain saved on first A/B toggle
 
         document.getElementById('abCompareBtn').addEventListener('click', function() {
-            if (!sourceNode) return;
+            const btn = this;
+
+            // Check if we have a valid source
+            if (!sourceNode) {
+                console.warn('🔀 A/B: No sourceNode available');
+                btn.textContent = '🔀 MASTERED';
+                abCompareMode = false;
+                return;
+            }
 
             abCompareMode = !abCompareMode;
-            const btn = this;
 
             if (abCompareMode) {
                 // Mode B: ORIGINAL - hear TRUE unprocessed audio (NO level matching!)
@@ -9825,17 +9700,18 @@
                     window.autoLUFSCompensation = false;
                     console.log('⏸️ Auto LUFS disabled for A/B compare');
 
-                    // Save ORIGINAL master gain ONLY on first bypass (prevent progressive reduction bug)
-                    if (abCompareSavedGain === null || abCompareSavedGain === undefined) {
-                        abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
-                        console.log('💾 Saved mastered master gain:', abCompareSavedGain.toFixed(3), '(will restore to this)');
-                    }
+                    // ALWAYS save current gains BEFORE switching (not just on first toggle)
+                    // This ensures we capture the latest mastered state
+                    abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
+                    abCompareSavedMakeupGain = makeupGain ? makeupGain.gain.value : 1.0;
+                    console.log('💾 Saved mastered gains:');
+                    console.log('   Master:', abCompareSavedGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedGain)).toFixed(1) + ' dB)');
+                    console.log('   Makeup:', abCompareSavedMakeupGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedMakeupGain)).toFixed(1) + ' dB)');
 
                     // TRUE ORIGINAL: Unity gain (1.0) - NO level matching!
                     // This allows clients to hear the REAL loudness increase from mastering
-                    // Professional mastering engineers NEVER level-match A/B - clients pay for loudness!
                     if (masterGain) {
-                        masterGain.gain.value = 1.0;
+                        masterGain.gain.setValueAtTime(1.0, audioContext.currentTime);
                         console.log('   🎚️ Master gain set to UNITY (1.0) - TRUE original level');
                     }
 
@@ -9867,7 +9743,11 @@
                     console.log('   📊 Processing adds: ' + (gainDiffDB > 0 ? '+' : '') + gainDiffDB.toFixed(1) + ' dB');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
-                    console.warn('A/B disconnect warning:', e);
+                    console.error('🔀 A/B bypass error:', e);
+                    // Reset button state on error
+                    btn.textContent = '🔀 MASTERED';
+                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abCompareMode = false;
                 }
             } else {
                 // Mode A: MASTERED - hear with ALL AI processing applied
@@ -9896,11 +9776,16 @@
                     makeupGain.connect(limiter);
                     limiter.connect(masterGain);
 
-                    // Restore MASTERED master gain (includes all AI mastering adjustments)
+                    // Restore MASTERED gains (both master and makeup)
                     if (masterGain && abCompareSavedGain !== null) {
-                        masterGain.gain.value = abCompareSavedGain;
-                        const gainDB = 20 * Math.log10(abCompareSavedGain);
-                        console.log('   🔊 Master gain restored to:', abCompareSavedGain.toFixed(3), '(' + gainDB.toFixed(1) + ' dB)');
+                        masterGain.gain.setValueAtTime(abCompareSavedGain, audioContext.currentTime);
+                        const masterDB = 20 * Math.log10(abCompareSavedGain);
+                        console.log('   🔊 Master gain restored to:', abCompareSavedGain.toFixed(3), '(' + masterDB.toFixed(1) + ' dB)');
+                    }
+                    if (makeupGain && abCompareSavedMakeupGain !== null) {
+                        makeupGain.gain.setValueAtTime(abCompareSavedMakeupGain, audioContext.currentTime);
+                        const makeupDB = 20 * Math.log10(abCompareSavedMakeupGain);
+                        console.log('   🔊 Makeup gain restored to:', abCompareSavedMakeupGain.toFixed(3), '(' + makeupDB.toFixed(1) + ' dB)');
                     }
 
                     // RESTORE Auto LUFS if it was enabled before
@@ -9914,8 +9799,8 @@
                     if (abCompareSavedGain && abCompareSavedGain > 0) {
                         totalGainDB = 20 * Math.log10(abCompareSavedGain);
                     }
-                    if (makeupGain && makeupGain.gain.value > 0) {
-                        totalGainDB += 20 * Math.log10(makeupGain.gain.value);
+                    if (abCompareSavedMakeupGain && abCompareSavedMakeupGain > 0) {
+                        totalGainDB += 20 * Math.log10(abCompareSavedMakeupGain);
                     }
 
                     const gainText = totalGainDB !== 0 ? ` (${totalGainDB > 0 ? '+' : ''}${totalGainDB.toFixed(1)} dB)` : '';
@@ -9933,7 +9818,11 @@
                     console.log('   ✅ Client hears MASTERED audio with all 24 enhancements');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 } catch (e) {
-                    console.warn('A/B connect warning:', e);
+                    console.error('🔀 A/B reconnect error:', e);
+                    // Reset button state on error
+                    btn.textContent = '🔀 MASTERED';
+                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abCompareMode = false;
                 }
             }
         });
@@ -10049,7 +9938,7 @@
 
                 // Display PRECISE gain adjustment on button
                 const matchText = safeMatchGainDB !== 0 ? ` (${safeMatchGainDB > 0 ? '+' : ''}${safeMatchGainDB.toFixed(1)} dB)` : '';
-                btn.textContent = '🎚️ MATCHED' + matchText;
+                btn.textContent = '🎚️ MATCHED ON' + matchText;
                 btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)'; // Green
 
                 // Determine measurement accuracy
@@ -10075,7 +9964,7 @@
                     masterGain.gain.setValueAtTime(savedMasterGain, audioContext.currentTime);
                 }
 
-                btn.textContent = '🎚️ LOUDNESS MATCH';
+                btn.textContent = '🎚️ MATCHED OFF';
                 btn.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)'; // Purple
 
                 // Calculate what the difference was
@@ -11488,7 +11377,7 @@
     <script src="PROFESSIONAL_MASTERING_ENGINE.js"></script>
     <script src="ADVANCED_PROCESSING_FEATURES.js"></script>
     <script src="wasm/PROFESSIONAL_VISUALIZATION.js"></script>
-    <script src="wasm/WEBGL_SPECTRUM_PERSISTENCE.js"></script>
+    <script src="wasm/WEBGL_SPECTRUM_PERSISTENCE.js?v=3"></script>
     <script src="wasm/CORRELATION_HEATMAP.js"></script>
     <script src="INTEGRATION_SCRIPT_FIXED.js"></script>
 
@@ -11530,11 +11419,136 @@
 
             if (featuresDiv.style.display === 'none') {
                 featuresDiv.style.display = 'grid';
-                toggleBtn.innerHTML = '▲ Hide Individual AI Features (13)';
+                toggleBtn.innerHTML = '▲ Hide 24 Mastering Features';
             } else {
                 featuresDiv.style.display = 'none';
-                toggleBtn.innerHTML = '▼ Show Individual AI Features (13)';
+                toggleBtn.innerHTML = '▼ Show All 24 Mastering Features';
             }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // COMPACT AUTO PRESET FUNCTIONS
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // De-noise Preset (Auto mode)
+        function applyDenoisePreset(preset) {
+            const statusEl = document.getElementById('denoiseStatus');
+            const bypassBtn = document.getElementById('denoiserBypassBtn');
+
+            if (preset === 'off') {
+                if (spectralDenoiser) spectralDenoiser.bypass(true);
+                bypassBtn.textContent = 'OFF';
+                bypassBtn.style.background = 'rgba(255,255,255,0.1)';
+                statusEl.textContent = '○ Off';
+                statusEl.style.color = '#888';
+            } else {
+                if (spectralDenoiser) {
+                    spectralDenoiser.bypass(false);
+                    if (preset !== 'auto') spectralDenoiser.applyPreset(preset);
+                }
+                bypassBtn.textContent = 'Active';
+                bypassBtn.style.background = '';
+                statusEl.textContent = preset === 'auto' ? '✓ Auto' : '✓ ' + preset.charAt(0).toUpperCase() + preset.slice(1);
+                statusEl.style.color = '#00ff88';
+            }
+            console.log('🎤 De-noise:', preset);
+        }
+
+        // Dynamics Preset (Auto mode)
+        function applyDynamicsPreset(preset) {
+            const presets = {
+                off: { comp: 0, width: 100, ceiling: -1.5, output: 0 },
+                gentle: { comp: 20, width: 105, ceiling: -1.0, output: 0 },
+                balanced: { comp: 40, width: 110, ceiling: -1.0, output: 1 },
+                punchy: { comp: 60, width: 115, ceiling: -0.5, output: 2 },
+                loud: { comp: 80, width: 120, ceiling: -0.3, output: 3 }
+            };
+
+            const p = presets[preset] || presets.balanced;
+
+            document.getElementById('compSlider').value = p.comp;
+            document.getElementById('compValue').textContent = p.comp + '%';
+            document.getElementById('widthSlider').value = p.width;
+            document.getElementById('widthValue').textContent = p.width + '%';
+            document.getElementById('limiterSlider').value = p.ceiling;
+            document.getElementById('limiterValue').textContent = p.ceiling + 'dB';
+            document.getElementById('outputGainSlider').value = p.output;
+            document.getElementById('outputGainValue').textContent = p.output + 'dB';
+
+            // Trigger the slider change events
+            document.getElementById('compSlider').dispatchEvent(new Event('input'));
+            document.getElementById('widthSlider').dispatchEvent(new Event('input'));
+            document.getElementById('limiterSlider').dispatchEvent(new Event('input'));
+            document.getElementById('outputGainSlider').dispatchEvent(new Event('input'));
+
+            console.log('🎚️ Dynamics preset:', preset);
+        }
+
+        // Multiband Preset
+        function applyMultibandPreset(preset) {
+            const toggleBtn = document.getElementById('multibandToggleBtn');
+            const section = document.getElementById('multibandSection');
+
+            if (preset === 'off') {
+                if (window.multibandCompressor) window.multibandCompressor.disable();
+                toggleBtn.textContent = 'OFF';
+                toggleBtn.style.background = 'rgba(255,255,255,0.1)';
+                section.style.display = 'none';
+            } else {
+                if (window.multibandCompressor) {
+                    window.multibandCompressor.enable();
+                    window.multibandCompressor.applyPreset(preset);
+                }
+                toggleBtn.textContent = 'ON';
+                toggleBtn.style.background = 'rgba(0, 255, 136, 0.3)';
+                section.style.display = 'block';
+            }
+            console.log('🎛️ Multiband preset:', preset);
+        }
+
+        // M/S Preset
+        function applyMSPreset(preset) {
+            const toggleBtn = document.getElementById('msToggleBtn');
+            const section = document.getElementById('msSection');
+            const midGain = document.getElementById('msMidGain');
+            const sideGain = document.getElementById('msSideGain');
+
+            const presets = {
+                off: { mid: 0, side: 0 },
+                natural: { mid: 0, side: 1 },
+                wideHighs: { mid: -1, side: 3 },
+                vocalFocus: { mid: 2, side: -1 },
+                clubReady: { mid: 0, side: 4 }
+            };
+
+            const p = presets[preset] || presets.off;
+
+            if (preset === 'off') {
+                toggleBtn.textContent = 'OFF';
+                toggleBtn.style.background = 'rgba(255,255,255,0.1)';
+                section.style.display = 'none';
+            } else {
+                toggleBtn.textContent = 'ON';
+                toggleBtn.style.background = 'rgba(0, 255, 136, 0.3)';
+                section.style.display = 'block';
+            }
+
+            if (midGain) {
+                midGain.value = p.mid;
+                document.getElementById('msMidGainValue').textContent = p.mid + ' dB';
+            }
+            if (sideGain) {
+                sideGain.value = p.side;
+                document.getElementById('msSideGainValue').textContent = p.side + ' dB';
+            }
+
+            // Apply to audio if M/S processor exists
+            if (window.msProcessor) {
+                window.msProcessor.setMidGain(p.mid);
+                window.msProcessor.setSideGain(p.side);
+            }
+
+            console.log('🔊 M/S preset:', preset);
         }
 
         // Toggle Auto LUFS Compensation
@@ -12331,7 +12345,7 @@
     </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         🚀 AI MASTERING SUITE - 13 REVOLUTIONARY FEATURES
+         🚀 MASTERING ENGINE SUITE - 24 PROFESSIONAL FEATURES
          World's Most Advanced Browser-Based Mastering Platform
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 
