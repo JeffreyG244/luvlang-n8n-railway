@@ -23,6 +23,21 @@ let profSpectrumLastWidth = 0;
 let profSpectrumLastHeight = 0;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PEAK HOLD ENVELOPE - Professional dotted line tracing peaks
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const SPECTRUM_POINTS = 300;
+let spectrumPeakHoldValues = new Float32Array(SPECTRUM_POINTS);
+let spectrumPeakHoldTimes = new Float32Array(SPECTRUM_POINTS);
+const SPECTRUM_PEAK_HOLD_MS = 2000; // Hold for 2 seconds
+const SPECTRUM_PEAK_DECAY = 0.5; // Decay rate after hold
+
+// Initialize peak hold
+for (let i = 0; i < SPECTRUM_POINTS; i++) {
+    spectrumPeakHoldValues[i] = 0;
+    spectrumPeakHoldTimes[i] = 0;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 1. SPECTRUM ANALYZER + EQ CURVE (Panel 1)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
@@ -152,6 +167,78 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
     ctx.shadowColor = 'rgba(0, 212, 255, 0.8)';  // Brighter glow
     ctx.stroke();
     ctx.shadowBlur = 0;
+
+    // ═══ PEAK HOLD ENVELOPE - Professional Dotted Line ═══
+    const now = performance.now();
+
+    // Update peak hold values and draw
+    ctx.beginPath();
+    let peakLineStarted = false;
+
+    for (let i = 0; i < 300; i++) {
+        const freq = 20 * Math.pow(20000/20, i / 300);
+        const binIndex = Math.round((freq / nyquist) * bufferLength);
+        const db = profSpectrumDataArray[Math.min(binIndex, bufferLength - 1)];
+
+        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+        const normalized = Math.max(0, Math.min(1, (db + 72) / 72));
+        const currentY = 30 + (1 - normalized) * (height - 60);
+
+        // Update peak hold
+        if (currentY < spectrumPeakHoldValues[i] || spectrumPeakHoldValues[i] === 0) {
+            spectrumPeakHoldValues[i] = currentY;
+            spectrumPeakHoldTimes[i] = now;
+        } else if (now - spectrumPeakHoldTimes[i] > SPECTRUM_PEAK_HOLD_MS) {
+            // Decay after hold time
+            spectrumPeakHoldValues[i] += SPECTRUM_PEAK_DECAY;
+            if (spectrumPeakHoldValues[i] > height - 30) {
+                spectrumPeakHoldValues[i] = height - 30;
+            }
+        }
+
+        // Draw peak hold line
+        const peakY = spectrumPeakHoldValues[i];
+        if (peakY < height - 35) {
+            if (!peakLineStarted) {
+                ctx.moveTo(x, peakY);
+                peakLineStarted = true;
+            } else {
+                ctx.lineTo(x, peakY);
+            }
+        }
+    }
+
+    // Draw the peak hold line (white/cyan)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]); // Dotted line!
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset
+
+    // ═══ PEAK HOLD DOTS - Bright dots along the envelope ═══
+    for (let i = 0; i < 300; i += 8) { // Every 8th point for dot spacing
+        const freq = 20 * Math.pow(20000/20, i / 300);
+        const x = 40 + (width - 60) * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+        const peakY = spectrumPeakHoldValues[i];
+        const age = now - spectrumPeakHoldTimes[i];
+
+        if (peakY < height - 35) {
+            // Calculate alpha based on age
+            const alpha = age < SPECTRUM_PEAK_HOLD_MS ? 1.0 : Math.max(0.3, 1.0 - (age - SPECTRUM_PEAK_HOLD_MS) / 2000);
+
+            // Draw glowing dot
+            ctx.beginPath();
+            ctx.arc(x, peakY, 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.fill();
+
+            // Glow
+            ctx.beginPath();
+            ctx.arc(x, peakY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 212, 255, ${alpha * 0.4})`;
+            ctx.fill();
+        }
+    }
 
     // ═══ EQ CURVE OVERLAY (Bright Cyan with Glow) ═══
     if (window.eqBands && window.audioContext) {
