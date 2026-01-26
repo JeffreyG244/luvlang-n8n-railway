@@ -10493,151 +10493,36 @@
         let abCompareSavedGain = null;  // Master gain saved on first A/B toggle
         let abCompareSavedMakeupGain = null;  // Makeup gain saved on first A/B toggle
 
+        // A/B Compare Button - Uses DRY/WET system (no sourceNode disconnection!)
         document.getElementById('abCompareBtn').addEventListener('click', function() {
-            const btn = this;
-
-            // Check if we have a valid source
-            if (!sourceNode) {
-                console.warn('🔀 A/B: No sourceNode available');
-                btn.textContent = '🔀 MASTERED';
-                abCompareMode = false;
-                return;
-            }
-
-            abCompareMode = !abCompareMode;
-
-            if (abCompareMode) {
-                // Mode B: ORIGINAL - hear TRUE unprocessed audio (NO level matching!)
-                // Clients NEED to hear the loudness difference - that's what they're paying for!
-                try {
-                    // DISABLE Auto LUFS during A/B compare (prevents gain interference)
-                    window.abCompareAutoLUFSWasEnabled = window.autoLUFSCompensation;
-                    window.autoLUFSCompensation = false;
-                    console.log('⏸️ Auto LUFS disabled for A/B compare');
-
-                    // ALWAYS save current gains BEFORE switching (not just on first toggle)
-                    // This ensures we capture the latest mastered state
-                    abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
-                    abCompareSavedMakeupGain = makeupGain ? makeupGain.gain.value : 1.0;
-                    console.log('💾 Saved mastered gains:');
-                    console.log('   Master:', abCompareSavedGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedGain)).toFixed(1) + ' dB)');
-                    console.log('   Makeup:', abCompareSavedMakeupGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedMakeupGain)).toFixed(1) + ' dB)');
-
-                    // TRUE ORIGINAL: Unity gain (1.0) - NO level matching!
-                    // This allows clients to hear the REAL loudness increase from mastering
-                    if (masterGain) {
-                        masterGain.gain.setValueAtTime(1.0, audioContext.currentTime);
-                        console.log('   🎚️ Master gain set to UNITY (1.0) - TRUE original level');
-                    }
-
-                    // Disconnect entire processing chain
-                    sourceNode.disconnect();
-
-                    // Connect DIRECTLY to master gain (bypass ALL processing: EQ, compression, makeup gain, limiter)
-                    sourceNode.connect(masterGain);
-
-                    // Calculate and display PRECISE dB difference
-                    let gainDiffDB = 0;
-                    if (abCompareSavedGain && abCompareSavedGain > 0) {
-                        gainDiffDB = 20 * Math.log10(abCompareSavedGain);
-                    }
-                    // Also add makeup gain contribution
-                    if (makeupGain && makeupGain.gain.value > 0) {
-                        gainDiffDB += 20 * Math.log10(makeupGain.gain.value);
-                    }
-
-                    const diffText = gainDiffDB !== 0 ? ` (${gainDiffDB > 0 ? '+' : ''}${gainDiffDB.toFixed(1)} dB)` : '';
-                    btn.textContent = '🔀 ORIGINAL' + diffText;
-                    btn.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
-
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔀 A/B Compare: ORIGINAL MODE (B)');
-                    console.log('   ✅ All processing bypassed (EQ, Compression, Limiting)');
-                    console.log('   ✅ Unity gain (1.0) - NO level matching');
-                    console.log('   ✅ Client hears TRUE original audio');
-                    console.log('   📊 Processing adds: ' + (gainDiffDB > 0 ? '+' : '') + gainDiffDB.toFixed(1) + ' dB');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                } catch (e) {
-                    console.error('🔀 A/B bypass error:', e);
-                    // Reset button state on error
-                    btn.textContent = '🔀 MASTERED';
-                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
-                    abCompareMode = false;
-                }
+            // Call the proper toggleABCompare function that uses DRY/WET gains
+            // This prevents audio cutout by avoiding sourceNode.disconnect()
+            if (typeof window.toggleABCompare === 'function') {
+                window.toggleABCompare();
             } else {
-                // Mode A: MASTERED - hear with ALL AI processing applied
-                try {
-                    // Reconnect FULL processing chain (must match original chain exactly!)
-                    sourceNode.disconnect();
-                    if (!eqBypassed) {
-                        // Full EQ chain (7-band parametric)
-                        sourceNode.connect(eqSubFilter);
-                        eqSubFilter.connect(eqBassFilter);
-                        eqBassFilter.connect(eqLowMidFilter);
-                        eqLowMidFilter.connect(eqMidFilter);
-                        eqMidFilter.connect(eqHighMidFilter);
-                        eqHighMidFilter.connect(eqHighFilter);
-                        eqHighFilter.connect(eqAirFilter);
-                        eqAirFilter.connect(eqCompensationGain);
-                        eqCompensationGain.connect(dynEqInput);  // → Dynamic EQ
+                // Fallback: direct DRY/WET toggle if toggleABCompare not yet defined
+                abCompareMode = !abCompareMode;
+                const btn = this;
+
+                if (window.dryGain && window.wetGain && window.audioContext) {
+                    const ac = window.audioContext;
+                    if (abCompareMode) {
+                        // ORIGINAL (dry) - raw unprocessed audio
+                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                        window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                        btn.textContent = '🔀 ORIGINAL';
+                        btn.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
+                        console.log('🔀 A/B: Playing ORIGINAL (DRY path - no processing)');
                     } else {
-                        // EQ bypassed, connect to Dynamic EQ input
-                        sourceNode.connect(dynEqInput);
+                        // MASTERED (wet) - fully processed audio
+                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                        btn.textContent = '🔀 MASTERED';
+                        btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                        console.log('🔀 A/B: Playing MASTERED (WET path - full processing)');
                     }
-                    // Continue chain: Dynamic EQ → Compressor → Transient Shaper → Makeup Gain → Limiter → Master
-                    dynEqOutput.connect(compressor);
-                    compressor.connect(transientInput);
-                    transientOutput.connect(makeupGain);
-                    makeupGain.connect(limiter);
-                    limiter.connect(masterGain);
-
-                    // Restore MASTERED gains (both master and makeup)
-                    if (masterGain && abCompareSavedGain !== null) {
-                        masterGain.gain.setValueAtTime(abCompareSavedGain, audioContext.currentTime);
-                        const masterDB = 20 * Math.log10(abCompareSavedGain);
-                        console.log('   🔊 Master gain restored to:', abCompareSavedGain.toFixed(3), '(' + masterDB.toFixed(1) + ' dB)');
-                    }
-                    if (makeupGain && abCompareSavedMakeupGain !== null) {
-                        makeupGain.gain.setValueAtTime(abCompareSavedMakeupGain, audioContext.currentTime);
-                        const makeupDB = 20 * Math.log10(abCompareSavedMakeupGain);
-                        console.log('   🔊 Makeup gain restored to:', abCompareSavedMakeupGain.toFixed(3), '(' + makeupDB.toFixed(1) + ' dB)');
-                    }
-
-                    // RESTORE Auto LUFS if it was enabled before
-                    if (window.abCompareAutoLUFSWasEnabled) {
-                        window.autoLUFSCompensation = true;
-                        console.log('   ✅ Auto LUFS restored');
-                    }
-
-                    // Calculate PRECISE total gain from processing chain
-                    let totalGainDB = 0;
-                    if (abCompareSavedGain && abCompareSavedGain > 0) {
-                        totalGainDB = 20 * Math.log10(abCompareSavedGain);
-                    }
-                    if (abCompareSavedMakeupGain && abCompareSavedMakeupGain > 0) {
-                        totalGainDB += 20 * Math.log10(abCompareSavedMakeupGain);
-                    }
-
-                    const gainText = totalGainDB !== 0 ? ` (${totalGainDB > 0 ? '+' : ''}${totalGainDB.toFixed(1)} dB)` : '';
-                    btn.textContent = '🔀 MASTERED' + gainText;
-                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
-
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔀 A/B Compare: MASTERED MODE (A)');
-                    console.log('   ✅ Full processing chain active:');
-                    console.log('      → 7-Band Parametric EQ');
-                    console.log('      → Compression');
-                    console.log('      → Makeup Gain');
-                    console.log('      → Professional Limiter');
-                    console.log('   📊 Total Gain: ' + (totalGainDB > 0 ? '+' : '') + totalGainDB.toFixed(1) + ' dB');
-                    console.log('   ✅ Client hears MASTERED audio with all 24 enhancements');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                } catch (e) {
-                    console.error('🔀 A/B reconnect error:', e);
-                    // Reset button state on error
-                    btn.textContent = '🔀 MASTERED';
-                    btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
-                    abCompareMode = false;
+                } else {
+                    console.warn('⚠️ A/B: Audio nodes not ready yet');
                 }
             }
         });
@@ -13873,6 +13758,7 @@
         // A/B Compare toggle
         window.toggleABCompare = function() {
             isABCompareActive = !isABCompareActive;
+            abCompareMode = isABCompareActive; // Sync both variables
 
             // Update button states
             const abBtn = document.getElementById('abCompareBtn');
@@ -13880,8 +13766,11 @@
 
             if (abBtn) {
                 abBtn.classList.toggle('active', isABCompareActive);
-                // Update button text directly (no span wrapper)
+                // Update button text and background
                 abBtn.textContent = isABCompareActive ? '🔀 ORIGINAL' : '🔀 MASTERED';
+                abBtn.style.background = isABCompareActive
+                    ? 'linear-gradient(135deg, #43e97b, #38f9d7)'   // Green for original
+                    : 'linear-gradient(135deg, #ff9a56, #ff5733)'; // Orange for mastered
             }
             if (exportBarAbBtn) {
                 exportBarAbBtn.classList.toggle('active', isABCompareActive);
