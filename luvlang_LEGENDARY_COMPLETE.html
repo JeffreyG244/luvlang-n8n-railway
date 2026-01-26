@@ -360,6 +360,16 @@
             cursor: not-allowed;
         }
 
+        /* Ensure buttons are always clickable - prevent tooltip/overlay blocking */
+        .action-btn,
+        .complete-btn,
+        .guide-action-btn,
+        .export-bar-btn {
+            position: relative;
+            z-index: 100;
+            pointer-events: auto !important;
+        }
+
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL EQ GRAPH (CRITICAL - User specifically wants this)
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -4375,6 +4385,7 @@
                 window.isMasteringApplied = false;
 
                 console.log('✅ Bypass system ready - Playing DRY (raw) audio');
+                console.log('   Initial gains: DRY=' + dryGain.gain.value + ', WET=' + wetGain.gain.value);
 
                 // ⚡ AUDIO SIGNAL CHAIN (WET PATH - through processing)
                 // Source → EQ (7-band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Wet Gain → Output
@@ -12988,66 +12999,85 @@
                 // APPLY REAL AUDIO PROCESSING TO CONNECTED NODES
                 // ═══════════════════════════════════════════════════════════════
 
-                // 1. 7-BAND EQ - Professional mastering curve
+                // ═══════════════════════════════════════════════════════════════
+                // DRAMATIC MASTERING PROCESSING - CLEARLY AUDIBLE DIFFERENCE
+                // These values are intentionally aggressive for demonstration
+                // ═══════════════════════════════════════════════════════════════
+
+                // 1. 7-BAND EQ - DRAMATIC mastering curve
                 if (window.eqSubFilter) {
-                    // Sub bass: slight boost for warmth
-                    window.eqSubFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Sub Bass EQ: +1.5dB at 40Hz');
+                    // Sub bass: SIGNIFICANT boost for impact
+                    window.eqSubFilter.gain.setTargetAtTime(4.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Sub Bass EQ: +4.5dB at 40Hz (DRAMATIC)');
                 }
                 if (window.eqBassFilter) {
-                    // Bass: tighten low end
-                    window.eqBassFilter.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
-                    console.log('  ✓ Bass EQ: +1.0dB at 100Hz');
+                    // Bass: punch and warmth
+                    window.eqBassFilter.gain.setTargetAtTime(3.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Bass EQ: +3.5dB at 100Hz (DRAMATIC)');
+                }
+                if (window.eqLowMidFilter) {
+                    // Low-mid: slight cut to reduce mud
+                    window.eqLowMidFilter.gain.setTargetAtTime(-2.0, ac.currentTime, 0.1);
+                    console.log('  ✓ Low-Mid EQ: -2.0dB at 300Hz (clarity cut)');
+                }
+                if (window.eqMidFilter) {
+                    // Mid: presence
+                    window.eqMidFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Mid EQ: +1.5dB at 1kHz');
+                }
+                if (window.eqHighMidFilter) {
+                    // High-mid: edge and bite
+                    window.eqHighMidFilter.gain.setTargetAtTime(3.0, ac.currentTime, 0.1);
+                    console.log('  ✓ High-Mid EQ: +3.0dB at 3kHz (presence)');
                 }
                 if (window.eqHighFilter) {
-                    // High: add presence/clarity
-                    window.eqHighFilter.gain.setTargetAtTime(2.0, ac.currentTime, 0.1);
-                    console.log('  ✓ High EQ: +2.0dB at 8kHz');
+                    // High: SIGNIFICANT presence/clarity
+                    window.eqHighFilter.gain.setTargetAtTime(5.0, ac.currentTime, 0.1);
+                    console.log('  ✓ High EQ: +5.0dB at 8kHz (DRAMATIC)');
                 }
                 if (window.eqAirFilter) {
-                    // Air: add sparkle/shine
-                    window.eqAirFilter.gain.setTargetAtTime(2.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Air EQ: +2.5dB at 12kHz');
+                    // Air: MAXIMUM sparkle/shine
+                    window.eqAirFilter.gain.setTargetAtTime(6.0, ac.currentTime, 0.1);
+                    console.log('  ✓ Air EQ: +6.0dB at 12kHz (DRAMATIC SPARKLE)');
                 }
 
-                // 2. COMPRESSOR - Glue compression for punch
+                // 2. COMPRESSOR - AGGRESSIVE glue compression
                 if (window.compressor) {
-                    window.compressor.threshold.setTargetAtTime(-18, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(3, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(0.01, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(0.15, ac.currentTime, 0.1);
-                    window.compressor.knee.setTargetAtTime(6, ac.currentTime, 0.1);
-                    console.log('  ✓ Compressor: -18dB threshold, 3:1 ratio');
+                    window.compressor.threshold.setTargetAtTime(-28, ac.currentTime, 0.1);
+                    window.compressor.ratio.setTargetAtTime(5, ac.currentTime, 0.1);
+                    window.compressor.attack.setTargetAtTime(0.003, ac.currentTime, 0.1);
+                    window.compressor.release.setTargetAtTime(0.12, ac.currentTime, 0.1);
+                    window.compressor.knee.setTargetAtTime(3, ac.currentTime, 0.1);
+                    console.log('  ✓ Compressor: -28dB threshold, 5:1 ratio (AGGRESSIVE)');
                 }
 
-                // 3. LIMITER - Maximize loudness
+                // 3. LIMITER - AGGRESSIVE loudness maximizing
                 if (window.limiter) {
-                    window.limiter.threshold.setTargetAtTime(-1.5, ac.currentTime, 0.1);
+                    window.limiter.threshold.setTargetAtTime(-3.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.05, ac.currentTime, 0.1);
-                    console.log('  ✓ Limiter: -1.5dB ceiling, 20:1 limiting');
+                    window.limiter.attack.setTargetAtTime(0.0005, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.03, ac.currentTime, 0.1);
+                    console.log('  ✓ Limiter: -3.0dB ceiling, 20:1 (LOUD)');
                 }
 
-                // 4. MAKEUP GAIN - Compensate for compression
+                // 4. MAKEUP GAIN - SIGNIFICANT boost to restore loudness
                 if (window.makeupGain) {
-                    // Add makeup gain to restore perceived loudness
-                    const makeupDB = 3.5; // +3.5dB makeup
+                    const makeupDB = 6.0; // +6dB makeup for LOUD mastered sound
                     const makeupLinear = Math.pow(10, makeupDB / 20);
                     window.makeupGain.gain.setTargetAtTime(makeupLinear, ac.currentTime, 0.1);
-                    console.log('  ✓ Makeup Gain: +3.5dB');
+                    console.log('  ✓ Makeup Gain: +6.0dB (DRAMATIC)');
                 }
 
-                // 5. STEREO WIDTH - Widen the image
+                // 5. STEREO WIDTH - WIDE stereo image
                 if (window.sideChannel) {
-                    window.sideChannel.gain.setTargetAtTime(1.15, ac.currentTime, 0.1);
-                    console.log('  ✓ Stereo Width: +15% wider');
+                    window.sideChannel.gain.setTargetAtTime(1.35, ac.currentTime, 0.1);
+                    console.log('  ✓ Stereo Width: +35% wider (DRAMATIC)');
                 }
 
-                // 6. TRANSIENT SHAPER - Add punch
+                // 6. TRANSIENT SHAPER - PUNCHY attack
                 if (window.transientAttackGain) {
-                    window.transientAttackGain.gain.setTargetAtTime(1.3, ac.currentTime, 0.1);
-                    console.log('  ✓ Transient Attack: +30%');
+                    window.transientAttackGain.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Transient Attack: +50% (PUNCHY)');
                 }
 
                 console.log('✅ Mastering chain applied - YOU SHOULD HEAR THE DIFFERENCE!');
@@ -13850,7 +13880,8 @@
 
             if (abBtn) {
                 abBtn.classList.toggle('active', isABCompareActive);
-                abBtn.querySelector('span:last-child').textContent = isABCompareActive ? 'Original' : 'Compare';
+                // Update button text directly (no span wrapper)
+                abBtn.textContent = isABCompareActive ? '🔀 ORIGINAL' : '🔀 MASTERED';
             }
             if (exportBarAbBtn) {
                 exportBarAbBtn.classList.toggle('active', isABCompareActive);
@@ -13861,16 +13892,20 @@
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
                 if (isABCompareActive) {
-                    // Switch to ORIGINAL (dry)
+                    // Switch to ORIGINAL (dry) - raw unprocessed audio
                     window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
                     window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
                     console.log('🔀 A/B: Playing ORIGINAL (dry, no processing)');
+                    console.log('   DRY gain: 1.0, WET gain: 0.0');
                 } else {
-                    // Switch to MASTERED (wet)
+                    // Switch to MASTERED (wet) - fully processed audio
                     window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
                     window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
                     console.log('🔀 A/B: Playing MASTERED (wet, full processing)');
+                    console.log('   DRY gain: 0.0, WET gain: 1.0');
                 }
+            } else {
+                console.warn('⚠️ A/B Toggle: Audio nodes not available');
             }
 
             // Visual feedback
