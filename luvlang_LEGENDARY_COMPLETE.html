@@ -12490,7 +12490,7 @@
                     ];
 
                     features.forEach(f => {
-                        html += `<div title="${f.desc}" style="background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02)); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 8px 4px; text-align: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,212,255,0.12)'; this.style.borderColor='rgba(0,212,255,0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02))'; this.style.borderColor='rgba(0,212,255,0.15)'; this.style.transform='translateY(0)';">
+                        html += `<div class="feature-tile" data-tooltip="${f.name}: ${f.desc}" style="background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02)); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 8px 4px; text-align: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,212,255,0.12)'; this.style.borderColor='rgba(0,212,255,0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02))'; this.style.borderColor='rgba(0,212,255,0.15)'; this.style.transform='translateY(0)';">
                             <div style="font-size: 0.9rem; opacity: 0.9;">${f.icon}</div>
                             <div style="font-size: 0.65rem; color: rgba(255,255,255,0.85); margin-top: 4px; font-weight: 600;">${f.name}</div>
                         </div>`;
