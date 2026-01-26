@@ -1827,6 +1827,193 @@
         .export-bar-btn.primary:hover {
             box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
         }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           GUIDED EXPERIENCE - Step-by-step interactive tour
+           ═══════════════════════════════════════════════════════════════════════════ */
+        .guide-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .guide-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 24px;
+            padding: 40px 48px;
+            text-align: center;
+            max-width: 560px;
+            width: 92%;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 212, 255, 0.15);
+            animation: slideUp 0.4s ease;
+        }
+
+        .guide-progress {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 32px;
+        }
+
+        .guide-step {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s;
+        }
+        .guide-step.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        .guide-step.done {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .guide-line {
+            width: 40px; height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .guide-line.done {
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+        }
+
+        .guide-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .guide-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 12px 0;
+        }
+
+        .guide-desc {
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0 0 28px 0;
+            line-height: 1.5;
+        }
+
+        /* Genre Grid */
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .genre-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .genre-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateY(-3px);
+        }
+        .genre-btn.selected {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .genre-icon { font-size: 1.8rem; }
+        .genre-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #fff;
+        }
+        .genre-desc {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin: 0;
+        }
+
+        /* Final Stats */
+        .guide-final-stats {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 28px;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .final-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .final-stat-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .final-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .guide-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .guide-action-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .guide-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            .genre-grid { grid-template-columns: repeat(2, 1fr); }
+            .guide-card { padding: 28px 24px; }
+        }
     </style>
 </head>
 <body>
@@ -1874,14 +2061,114 @@
                 </button>
             </div>
 
-            <button class="complete-btn primary export-cta" onclick="openPricingModal(); closeMasteringComplete();">
-                <span class="btn-icon">⬇</span>
-                <span>Export Track</span>
+            <button class="complete-btn primary export-cta" onclick="showGuideStep(2)">
+                <span class="btn-icon">→</span>
+                <span>Next: Choose Your Sound</span>
             </button>
 
-            <button class="complete-link" onclick="closeMasteringComplete()">
-                Fine-tune settings →
+            <button class="complete-link" onclick="skipGuide()">
+                Skip guide & fine-tune manually →
             </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         GUIDED EXPERIENCE - Step 2: Genre Selection
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="guide-overlay" id="guideStep2" style="display: none;">
+        <div class="guide-card">
+            <div class="guide-progress">
+                <div class="guide-step done">1</div>
+                <div class="guide-line done"></div>
+                <div class="guide-step active">2</div>
+                <div class="guide-line"></div>
+                <div class="guide-step">3</div>
+            </div>
+
+            <div class="guide-icon">🎨</div>
+            <h2 class="guide-title">Choose Your Sound</h2>
+            <p class="guide-desc">Select a genre preset to shape your master with style-specific curves and enhancements.</p>
+
+            <div class="genre-grid" id="guideGenreGrid">
+                <button class="genre-btn" data-genre="hiphop" onclick="selectGuideGenre('hiphop')">
+                    <span class="genre-icon">🎤</span>
+                    <span class="genre-name">Hip-Hop</span>
+                    <span class="genre-desc">Heavy bass, punchy drums</span>
+                </button>
+                <button class="genre-btn" data-genre="electronic" onclick="selectGuideGenre('electronic')">
+                    <span class="genre-icon">🎧</span>
+                    <span class="genre-name">Electronic</span>
+                    <span class="genre-desc">Wide stereo, crisp highs</span>
+                </button>
+                <button class="genre-btn" data-genre="pop" onclick="selectGuideGenre('pop')">
+                    <span class="genre-icon">🎵</span>
+                    <span class="genre-name">Pop</span>
+                    <span class="genre-desc">Balanced, radio-ready</span>
+                </button>
+                <button class="genre-btn" data-genre="rock" onclick="selectGuideGenre('rock')">
+                    <span class="genre-icon">🎸</span>
+                    <span class="genre-name">Rock</span>
+                    <span class="genre-desc">Powerful mids, drive</span>
+                </button>
+                <button class="genre-btn" data-genre="rnb" onclick="selectGuideGenre('rnb')">
+                    <span class="genre-icon">💜</span>
+                    <span class="genre-name">R&B / Soul</span>
+                    <span class="genre-desc">Warm, smooth, intimate</span>
+                </button>
+                <button class="genre-btn" data-genre="acoustic" onclick="selectGuideGenre('acoustic')">
+                    <span class="genre-icon">🪕</span>
+                    <span class="genre-name">Acoustic</span>
+                    <span class="genre-desc">Natural, dynamic</span>
+                </button>
+            </div>
+
+            <button class="complete-link" onclick="skipGuide()">
+                Skip & use default settings →
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         GUIDED EXPERIENCE - Step 3: Export
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="guide-overlay" id="guideStep3" style="display: none;">
+        <div class="guide-card">
+            <div class="guide-progress">
+                <div class="guide-step done">1</div>
+                <div class="guide-line done"></div>
+                <div class="guide-step done">2</div>
+                <div class="guide-line done"></div>
+                <div class="guide-step active">3</div>
+            </div>
+
+            <div class="guide-icon">✨</div>
+            <h2 class="guide-title">Your Track is Ready!</h2>
+            <p class="guide-desc">Your master is complete with <strong id="guideGenreName">your genre</strong> enhancements applied.</p>
+
+            <div class="guide-final-stats">
+                <div class="final-stat">
+                    <span class="final-stat-label">Loudness</span>
+                    <span class="final-stat-value" id="guideFinalLUFS">-14 LUFS</span>
+                </div>
+                <div class="final-stat">
+                    <span class="final-stat-label">Genre</span>
+                    <span class="final-stat-value" id="guideFinalGenre">Electronic</span>
+                </div>
+                <div class="final-stat">
+                    <span class="final-stat-label">Quality</span>
+                    <span class="final-stat-value">24-bit</span>
+                </div>
+            </div>
+
+            <button class="complete-btn primary export-cta" onclick="openPricingModal(); closeAllGuides();">
+                <span class="btn-icon">⬇</span>
+                <span>Export Your Master</span>
+            </button>
+
+            <div class="guide-actions">
+                <button class="guide-action-btn" onclick="toggleABCompare()">🔀 A/B Compare</button>
+                <button class="guide-action-btn" onclick="closeAllGuides()">🎛️ Fine-tune More</button>
+            </div>
         </div>
     </div>
 
@@ -13634,7 +13921,159 @@
             if (exportBar) exportBar.style.display = 'none';
         };
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // GUIDED EXPERIENCE - Step-by-step interactive tour
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let selectedGuideGenre = null;
+
+        // Genre presets - EQ curves and processing for each genre
+        const genrePresets = {
+            hiphop: {
+                name: 'Hip-Hop',
+                eq: { sub: 3.0, bass: 2.5, lowMid: -1.0, mid: 0, highMid: 1.0, high: 1.5, air: 2.0 },
+                compression: { threshold: -16, ratio: 4, attack: 0.005, release: 0.1 },
+                stereoWidth: 1.1,
+                desc: 'Heavy bass, punchy drums, crisp vocals'
+            },
+            electronic: {
+                name: 'Electronic',
+                eq: { sub: 2.5, bass: 1.5, lowMid: -0.5, mid: 0.5, highMid: 1.5, high: 2.5, air: 3.0 },
+                compression: { threshold: -14, ratio: 3, attack: 0.002, release: 0.08 },
+                stereoWidth: 1.2,
+                desc: 'Wide stereo, crisp highs, deep sub'
+            },
+            pop: {
+                name: 'Pop',
+                eq: { sub: 1.0, bass: 1.5, lowMid: 0, mid: 1.0, highMid: 1.5, high: 2.0, air: 2.5 },
+                compression: { threshold: -18, ratio: 3.5, attack: 0.01, release: 0.15 },
+                stereoWidth: 1.1,
+                desc: 'Balanced, radio-ready, polished'
+            },
+            rock: {
+                name: 'Rock',
+                eq: { sub: 1.5, bass: 2.0, lowMid: 0.5, mid: 1.5, highMid: 2.0, high: 1.5, air: 1.5 },
+                compression: { threshold: -15, ratio: 4, attack: 0.008, release: 0.12 },
+                stereoWidth: 1.05,
+                desc: 'Powerful mids, punchy, aggressive'
+            },
+            rnb: {
+                name: 'R&B / Soul',
+                eq: { sub: 2.0, bass: 2.0, lowMid: 0.5, mid: 0.5, highMid: 1.0, high: 1.5, air: 2.0 },
+                compression: { threshold: -20, ratio: 2.5, attack: 0.015, release: 0.2 },
+                stereoWidth: 1.15,
+                desc: 'Warm, smooth, intimate'
+            },
+            acoustic: {
+                name: 'Acoustic',
+                eq: { sub: 0.5, bass: 1.0, lowMid: 0, mid: 0.5, highMid: 1.0, high: 1.5, air: 2.0 },
+                compression: { threshold: -22, ratio: 2, attack: 0.02, release: 0.25 },
+                stereoWidth: 1.0,
+                desc: 'Natural, dynamic, transparent'
+            }
+        };
+
+        // Show guide step
+        window.showGuideStep = function(step) {
+            // Hide all overlays first
+            document.getElementById('masteringCompleteOverlay').style.display = 'none';
+            const step2 = document.getElementById('guideStep2');
+            const step3 = document.getElementById('guideStep3');
+
+            if (step === 2 && step2) {
+                step2.style.display = 'flex';
+            } else if (step === 3 && step3) {
+                step3.style.display = 'flex';
+            }
+        };
+
+        // Select genre in guide
+        window.selectGuideGenre = function(genre) {
+            selectedGuideGenre = genre;
+            const preset = genrePresets[genre];
+
+            // Visual feedback - highlight selected
+            document.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.genre === genre) {
+                    btn.classList.add('selected');
+                }
+            });
+
+            // Apply the genre preset to audio processing
+            const ac = window.audioContext;
+            if (ac && preset) {
+                console.log(`🎨 Applying ${preset.name} preset...`);
+
+                // Apply EQ
+                if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub, ac.currentTime, 0.1);
+                if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass, ac.currentTime, 0.1);
+                if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid, ac.currentTime, 0.1);
+                if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid, ac.currentTime, 0.1);
+                if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid, ac.currentTime, 0.1);
+                if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high, ac.currentTime, 0.1);
+                if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, ac.currentTime, 0.1);
+
+                // Apply compression
+                if (window.compressor) {
+                    window.compressor.threshold.setTargetAtTime(preset.compression.threshold, ac.currentTime, 0.1);
+                    window.compressor.ratio.setTargetAtTime(preset.compression.ratio, ac.currentTime, 0.1);
+                    window.compressor.attack.setTargetAtTime(preset.compression.attack, ac.currentTime, 0.1);
+                    window.compressor.release.setTargetAtTime(preset.compression.release, ac.currentTime, 0.1);
+                }
+
+                // Apply stereo width
+                if (window.sideChannel) {
+                    window.sideChannel.gain.setTargetAtTime(preset.stereoWidth, ac.currentTime, 0.1);
+                }
+
+                console.log(`✅ ${preset.name} preset applied!`);
+            }
+
+            // Short delay then go to step 3
+            setTimeout(() => {
+                // Update step 3 with genre info
+                const genreNameEl = document.getElementById('guideGenreName');
+                const finalGenreEl = document.getElementById('guideFinalGenre');
+                if (genreNameEl) genreNameEl.textContent = preset.name;
+                if (finalGenreEl) finalGenreEl.textContent = preset.name;
+
+                const finalLufsEl = document.getElementById('guideFinalLUFS');
+                if (finalLufsEl && window.lastMasteredLUFS) {
+                    finalLufsEl.textContent = window.lastMasteredLUFS.toFixed(1) + ' LUFS';
+                }
+
+                showGuideStep(3);
+            }, 800);
+        };
+
+        // Skip guide and go directly to interface
+        window.skipGuide = function() {
+            closeAllGuides();
+            closeMasteringComplete();
+        };
+
+        // Close all guide overlays
+        window.closeAllGuides = function() {
+            document.getElementById('masteringCompleteOverlay').style.display = 'none';
+            const step2 = document.getElementById('guideStep2');
+            const step3 = document.getElementById('guideStep3');
+            if (step2) step2.style.display = 'none';
+            if (step3) step3.style.display = 'none';
+
+            // Show persistent export bar
+            const exportBar = document.getElementById('persistentExportBar');
+            if (exportBar) {
+                exportBar.style.display = 'block';
+                const lufsEl = document.getElementById('exportBarLUFS');
+                if (lufsEl && window.lastMasteredLUFS) {
+                    lufsEl.textContent = window.lastMasteredLUFS.toFixed(1) + ' LUFS';
+                }
+            }
+        };
+
         console.log('✅ Mastering Complete overlay system loaded');
+        console.log('✅ Guided Experience system loaded');
     })();
     </script>
 
