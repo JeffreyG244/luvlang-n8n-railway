@@ -4070,9 +4070,27 @@
 
                 console.log('✅ Stereo processing nodes created (L/R analyzers for True Peak)');
 
-                // ⚡ AUDIO SIGNAL CHAIN
-                // Source → EQ (7-band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Master Gain → Stereo → Output
-                // Parallel: K-weighted path for LUFS measurement
+                // ═══════════════════════════════════════════════════════════════════════════
+                // DRY/WET BYPASS SYSTEM - Hear raw audio first, then mastered
+                // ═══════════════════════════════════════════════════════════════════════════
+                const dryGain = audioContext.createGain();
+                const wetGain = audioContext.createGain();
+                const outputMixer = audioContext.createGain();
+
+                // START WITH DRY (raw audio, no processing)
+                dryGain.gain.value = 1.0;  // Dry = ON
+                wetGain.gain.value = 0.0;  // Wet = OFF (until mastering completes)
+                outputMixer.gain.value = 1.0;
+
+                // Expose globally for A/B control
+                window.dryGain = dryGain;
+                window.wetGain = wetGain;
+                window.isMasteringApplied = false;
+
+                console.log('✅ Bypass system ready - Playing DRY (raw) audio');
+
+                // ⚡ AUDIO SIGNAL CHAIN (WET PATH - through processing)
+                // Source → EQ (7-band) → EQ Compensation → Compressor → Transient Shaper → Makeup Gain → Limiter → Wet Gain → Output
                 sourceNode.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
@@ -4175,9 +4193,27 @@
                 stereoSplitter.connect(leftAnalyser, 0);
                 stereoSplitter.connect(rightAnalyser, 1);
 
-                // Main output path
-                stereoMerger.connect(analyser);
+                // ═══════════════════════════════════════════════════════════════════════════
+                // DRY/WET OUTPUT MIXING
+                // DRY path: Source → dryGain → output (raw audio, no processing)
+                // WET path: Source → [all processing] → stereoMerger → wetGain → output
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // DRY PATH - direct from source (bypass all processing)
+                sourceNode.connect(dryGain);
+                dryGain.connect(outputMixer);
+
+                // WET PATH - through all processing (mastered)
+                stereoMerger.connect(wetGain);
+                wetGain.connect(outputMixer);
+
+                // Final output
+                outputMixer.connect(analyser);
                 analyser.connect(audioContext.destination);
+
+                console.log('🔊 BYPASS SYSTEM ACTIVE:');
+                console.log('   DRY (raw): ON - Hearing original track');
+                console.log('   WET (mastered): OFF - Will engage after mastering');
 
                 // K-weighted parallel path (for LUFS measurement)
                 stereoMerger.connect(kWeightingHPF1);
@@ -12729,6 +12765,16 @@
 
                 console.log('✅ Mastering chain applied - YOU SHOULD HEAR THE DIFFERENCE!');
 
+                // ═══════════════════════════════════════════════════════════════
+                // SWITCH FROM DRY TO WET - Now hearing the mastered version!
+                // ═══════════════════════════════════════════════════════════════
+                if (window.dryGain && window.wetGain) {
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Fade out dry
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Fade in wet
+                    window.isMasteringApplied = true;
+                    console.log('🔊 SWITCHED TO MASTERED AUDIO - Dry: OFF, Wet: ON');
+                }
+
                 // Get current LUFS from locked meters or real-time measurement
                 const currentLUFS = integratedLUFS || -14;
 
@@ -13524,10 +13570,20 @@
                 exportBarAbBtn.textContent = isABCompareActive ? 'Original' : 'A/B';
             }
 
-            // Toggle audio processing bypass
-            if (window.masterBypass !== undefined) {
-                window.masterBypass = isABCompareActive;
-                console.log(isABCompareActive ? '🔀 A/B: Playing ORIGINAL' : '🔀 A/B: Playing MASTERED');
+            // Toggle between DRY (original) and WET (mastered) using gain nodes
+            if (window.dryGain && window.wetGain && window.audioContext) {
+                const ac = window.audioContext;
+                if (isABCompareActive) {
+                    // Switch to ORIGINAL (dry)
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    console.log('🔀 A/B: Playing ORIGINAL (dry, no processing)');
+                } else {
+                    // Switch to MASTERED (wet)
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    console.log('🔀 A/B: Playing MASTERED (wet, full processing)');
+                }
             }
 
             // Visual feedback
