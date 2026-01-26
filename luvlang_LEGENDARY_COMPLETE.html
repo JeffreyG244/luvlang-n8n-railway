@@ -2083,7 +2083,75 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
-         GUIDED EXPERIENCE - Step 2: Genre Selection
+         PRE-MASTERING GENRE SELECTION - Real-time audio preview
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="guide-overlay" id="preMasteringGenreSelect" style="display: none;">
+        <div class="guide-card" style="max-width: 600px;">
+            <div class="guide-icon">🎛️</div>
+            <h2 class="guide-title">Select Your Genre</h2>
+            <p class="guide-desc" style="margin-bottom: 8px;">
+                <strong style="color: #00d4ff;">This is the most important step!</strong> Each genre has professionally crafted presets
+                optimized for that style's unique characteristics.
+            </p>
+            <p class="guide-desc" style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 20px;">
+                🎧 <strong>Click any genre to hear it instantly</strong> - explore different sounds before mastering.
+                You can always change genres or fine-tune presets later.
+            </p>
+
+            <div class="genre-grid" id="preMasterGenreGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                <button class="genre-btn" data-genre="hiphop" onclick="previewGenre('hiphop')">
+                    <span class="genre-icon">🎤</span>
+                    <span class="genre-name">Hip-Hop</span>
+                    <span class="genre-desc">Heavy bass, punchy drums</span>
+                </button>
+                <button class="genre-btn" data-genre="electronic" onclick="previewGenre('electronic')">
+                    <span class="genre-icon">🎧</span>
+                    <span class="genre-name">Electronic</span>
+                    <span class="genre-desc">Wide stereo, crisp highs</span>
+                </button>
+                <button class="genre-btn" data-genre="pop" onclick="previewGenre('pop')">
+                    <span class="genre-icon">🎵</span>
+                    <span class="genre-name">Pop</span>
+                    <span class="genre-desc">Balanced, radio-ready</span>
+                </button>
+                <button class="genre-btn" data-genre="rock" onclick="previewGenre('rock')">
+                    <span class="genre-icon">🎸</span>
+                    <span class="genre-name">Rock</span>
+                    <span class="genre-desc">Powerful mids, aggressive</span>
+                </button>
+                <button class="genre-btn" data-genre="rnb" onclick="previewGenre('rnb')">
+                    <span class="genre-icon">💜</span>
+                    <span class="genre-name">R&B / Soul</span>
+                    <span class="genre-desc">Warm, smooth, intimate</span>
+                </button>
+                <button class="genre-btn" data-genre="acoustic" onclick="previewGenre('acoustic')">
+                    <span class="genre-icon">🪕</span>
+                    <span class="genre-name">Acoustic</span>
+                    <span class="genre-desc">Natural, dynamic</span>
+                </button>
+            </div>
+
+            <div id="genrePreviewStatus" style="text-align: center; margin-bottom: 15px; min-height: 24px; color: #00d4ff; font-weight: 600;">
+                👆 Click a genre to preview
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="guide-btn-secondary" onclick="previewOriginal()" style="padding: 12px 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600;">
+                    🔀 Hear Original
+                </button>
+                <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="padding: 12px 32px; background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 700; opacity: 0.5;" disabled>
+                    ⚡ Start Mastering
+                </button>
+            </div>
+
+            <button class="complete-link" onclick="skipGenreSelection()" style="margin-top: 15px;">
+                Skip & use default (Pop) →
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         GUIDED EXPERIENCE - Step 2: Genre Selection (legacy, keeping for compatibility)
          ═══════════════════════════════════════════════════════════════════════════ -->
     <div class="guide-overlay" id="guideStep2" style="display: none;">
         <div class="guide-card">
@@ -12859,6 +12927,13 @@
                 return;
             }
 
+            // STEP 1: Show genre selection overlay FIRST
+            // User must pick a genre before mastering begins
+            showGenreSelection();
+        }
+
+        // Actual mastering logic (called after genre selection)
+        async function runActualMastering() {
             // Update floating status pill to PROCESSING
             const statusPill = document.getElementById('aiStatusPill');
             if (statusPill) {
@@ -13986,6 +14061,159 @@
                 compression: { threshold: -22, ratio: 2, attack: 0.02, release: 0.25 },
                 stereoWidth: 1.0,
                 desc: 'Natural, dynamic, transparent'
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PRE-MASTERING GENRE SELECTION - Real-time preview functions
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let selectedPreMasterGenre = null;
+
+        // Preview a genre in real-time (applies EQ/compression immediately)
+        window.previewGenre = function(genre) {
+            selectedPreMasterGenre = genre;
+            const preset = genrePresets[genre];
+            if (!preset) return;
+
+            const ac = window.audioContext;
+            if (!ac) {
+                console.warn('AudioContext not ready');
+                return;
+            }
+
+            // Switch to WET path so they hear the processing
+            if (window.dryGain && window.wetGain) {
+                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+            }
+
+            // Apply EQ preset in real-time
+            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub, ac.currentTime, 0.1);
+            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass, ac.currentTime, 0.1);
+            if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid, ac.currentTime, 0.1);
+            if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid, ac.currentTime, 0.1);
+            if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid, ac.currentTime, 0.1);
+            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high, ac.currentTime, 0.1);
+            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, ac.currentTime, 0.1);
+
+            // Apply compression preset
+            if (window.compressor) {
+                window.compressor.threshold.setTargetAtTime(preset.compression.threshold, ac.currentTime, 0.1);
+                window.compressor.ratio.setTargetAtTime(preset.compression.ratio, ac.currentTime, 0.1);
+                window.compressor.attack.setTargetAtTime(preset.compression.attack, ac.currentTime, 0.1);
+                window.compressor.release.setTargetAtTime(preset.compression.release, ac.currentTime, 0.1);
+            }
+
+            // Apply stereo width
+            if (window.msControls && window.msControls.side) {
+                window.msControls.side.gain.setTargetAtTime(preset.stereoWidth, ac.currentTime, 0.1);
+            }
+
+            // Update UI - highlight selected genre
+            document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.dataset.genre === genre) {
+                    btn.classList.add('selected');
+                }
+            });
+
+            // Update status message
+            const statusEl = document.getElementById('genrePreviewStatus');
+            if (statusEl) {
+                statusEl.innerHTML = `🎧 Now previewing: <strong>${preset.name}</strong> - ${preset.desc}`;
+                statusEl.style.color = '#00ff88';
+            }
+
+            // Enable the Start Mastering button
+            const startBtn = document.getElementById('startMasteringBtn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+            }
+
+            console.log(`🎨 Genre Preview: ${preset.name} applied in real-time`);
+        };
+
+        // Preview original (unprocessed) audio
+        window.previewOriginal = function() {
+            const ac = window.audioContext;
+            if (!ac) return;
+
+            // Switch to DRY path (original audio)
+            if (window.dryGain && window.wetGain) {
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+            }
+
+            // Remove genre selection highlight
+            document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            // Update status
+            const statusEl = document.getElementById('genrePreviewStatus');
+            if (statusEl) {
+                statusEl.innerHTML = '🔀 Now playing: <strong>Original (unprocessed)</strong>';
+                statusEl.style.color = '#ffd700';
+            }
+
+            console.log('🔀 Previewing original audio');
+        };
+
+        // Proceed with mastering after genre selection
+        window.proceedWithMastering = function() {
+            // Hide the genre selection overlay
+            const overlay = document.getElementById('preMasteringGenreSelect');
+            if (overlay) overlay.style.display = 'none';
+
+            // Run the actual mastering with selected genre
+            console.log(`⚡ Starting mastering with genre: ${selectedPreMasterGenre || 'default'}`);
+
+            // Call the actual mastering function (skip the genre selection step)
+            runActualMastering();
+        };
+
+        // Skip genre selection and use default
+        window.skipGenreSelection = function() {
+            selectedPreMasterGenre = 'pop'; // Default to Pop
+            previewGenre('pop');
+
+            // Short delay so they hear it, then proceed
+            setTimeout(() => {
+                proceedWithMastering();
+            }, 500);
+        };
+
+        // Show the pre-mastering genre selection overlay
+        window.showGenreSelection = function() {
+            const overlay = document.getElementById('preMasteringGenreSelect');
+            if (overlay) {
+                overlay.style.display = 'flex';
+
+                // Reset state
+                selectedPreMasterGenre = null;
+                const startBtn = document.getElementById('startMasteringBtn');
+                if (startBtn) {
+                    startBtn.disabled = true;
+                    startBtn.style.opacity = '0.5';
+                }
+
+                const statusEl = document.getElementById('genrePreviewStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = '👆 Click a genre to preview';
+                    statusEl.style.color = '#00d4ff';
+                }
+
+                // Remove any previous selection
+                document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+
+                // Make sure audio is playing so they can hear the preview
+                if (window.audioElement && window.audioElement.paused) {
+                    window.audioElement.play();
+                }
             }
         };
 
