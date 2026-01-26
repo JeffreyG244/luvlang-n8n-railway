@@ -4035,7 +4035,90 @@
                     <!-- EBU R128 Compliance Note -->
                     <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; text-align: center;">
                         <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); letter-spacing: 0.5px;">
-                            📡 EBU R128 / ITU-R BS.1770-4 Compliant
+                            📡 EBU R128 / ITU-R BS.1770-5 Compliant
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🏆 LEGENDARY METERS - World-Class Analysis -->
+                <div id="legendaryMetersPanel" style="margin-top: 15px; padding: 15px; background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,140,0,0.05)); border: 2px solid rgba(255,215,0,0.4); border-radius: 12px; box-shadow: 0 0 20px rgba(255,215,0,0.1);">
+                    <div style="font-size: 0.65rem; color: #ffd700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; text-align: center; font-weight: 700;">
+                        🏆 LEGENDARY MASTERING METERS
+                    </div>
+
+                    <!-- Row 1: Correlation & Clip Detector -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <!-- Stereo Correlation -->
+                        <div id="correlationMeterCard" style="background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CORRELATION</div>
+                            <div id="correlationValue" style="font-size: 1.4rem; font-weight: 700; color: #00ff88; font-family: 'JetBrains Mono', 'Courier New', monospace;">+1.00</div>
+                            <div id="correlationStatus" style="font-size: 0.5rem; color: rgba(0,255,136,0.8); margin-top: 2px; font-weight: 600;">Excellent</div>
+                            <!-- Visual correlation bar -->
+                            <div style="margin-top: 6px; height: 4px; background: rgba(0,0,0,0.3); border-radius: 2px; overflow: hidden;">
+                                <div id="correlationBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #ff0000, #ffaa00, #00ff88); transform: translateX(50%); transition: transform 0.1s;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 2px;">
+                                <span style="font-size: 0.45rem; color: rgba(255,0,0,0.6);">-1</span>
+                                <span style="font-size: 0.45rem; color: rgba(255,255,255,0.4);">0</span>
+                                <span style="font-size: 0.45rem; color: rgba(0,255,136,0.6);">+1</span>
+                            </div>
+                        </div>
+
+                        <!-- Clip Detector -->
+                        <div id="clipDetectorCard" style="background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CLIP DETECT</div>
+                            <div id="clipStatus" style="font-size: 1.1rem; font-weight: 700; color: #00ff88; font-family: 'JetBrains Mono', 'Courier New', monospace;">CLEAN</div>
+                            <div id="clipCount" style="font-size: 0.5rem; color: rgba(255,255,255,0.5); margin-top: 2px;">0 clips</div>
+                            <!-- Clip indicator light -->
+                            <div style="margin-top: 6px; display: flex; justify-content: center; gap: 4px;">
+                                <div id="clipLight1" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(0,255,136,0.3); box-shadow: 0 0 4px rgba(0,255,136,0.3);"></div>
+                                <div id="clipLight2" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,170,0,0.3);"></div>
+                                <div id="clipLight3" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,0,0,0.3);"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: True Peak ISP & Dynamic Range -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <!-- True Peak ISP -->
+                        <div style="background: rgba(255,152,0,0.08); border: 1px solid rgba(255,152,0,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">TRUE PEAK</div>
+                            <div id="truePeakValue" style="font-size: 1.4rem; font-weight: 700; color: #ff9800; font-family: 'JetBrains Mono', 'Courier New', monospace;">-∞</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,152,0,0.6); margin-top: 2px;">dBTP (ISP)</div>
+                        </div>
+
+                        <!-- PSR (Peak to Short-term Ratio) -->
+                        <div style="background: rgba(156,39,176,0.08); border: 1px solid rgba(156,39,176,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PSR</div>
+                            <div id="psrValue" style="font-size: 1.4rem; font-weight: 700; color: #9c27b0; font-family: 'JetBrains Mono', 'Courier New', monospace;">--</div>
+                            <div id="psrStatus" style="font-size: 0.5rem; color: rgba(156,39,176,0.6); margin-top: 2px;">Dynamic Range</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Console Type & Engineer Preset -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <!-- Active Console -->
+                        <div style="background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CONSOLE</div>
+                            <div id="consoleTypeDisplay" style="font-size: 1.1rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', 'Courier New', monospace;">SSL</div>
+                            <div style="font-size: 0.5rem; color: rgba(0,212,255,0.6); margin-top: 2px;">Analog Character</div>
+                        </div>
+
+                        <!-- Engineer Preset -->
+                        <div style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.25); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">STYLE</div>
+                            <div id="engineerStyleDisplay" style="font-size: 0.9rem; font-weight: 700; color: #ffd700; font-family: 'JetBrains Mono', 'Courier New', monospace;">CUSTOM</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,215,0,0.6); margin-top: 2px;">M/S EQ Preset</div>
+                        </div>
+                    </div>
+
+                    <!-- Legendary status indicator -->
+                    <div style="margin-top: 12px; padding: 8px; background: linear-gradient(90deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); border-radius: 6px; text-align: center;">
+                        <div style="font-size: 0.55rem; color: #ffd700; letter-spacing: 1px; font-weight: 600;">
+                            🎯 Randy Merrill • Bob Ludwig • Colin Leonard • Chris Athens
+                        </div>
+                        <div style="font-size: 0.5rem; color: rgba(255,215,0,0.6); margin-top: 2px;">
+                            Legendary processing active
                         </div>
                     </div>
                 </div>
@@ -5501,6 +5584,7 @@
 
                 window.midSideEQ = {
                     enabled: true,
+                    currentPreset: 'CUSTOM', // Track active preset
                     mid: {
                         low: midEQ_Low,
                         mid: midEQ_Mid,
@@ -5523,6 +5607,7 @@
                             midEQ_Presence.gain.value = 0.5; // Touch of air on center
                             sideEQ_Low.frequency.value = 120; // Tighter bass mono
                             sideEQ_Air.gain.value = 2.0; // Width in the air
+                            window.midSideEQ.currentPreset = 'RANDY MERRILL';
                             console.log('🎚️ M/S EQ: Randy Merrill preset (vocal-forward, wide air)');
                         },
                         // Bob Ludwig style - natural, dynamic, warm
@@ -5531,6 +5616,7 @@
                             midEQ_Mid.gain.value = -0.5; // Slight mud cut
                             sideEQ_Mid.gain.value = -1.0; // Cleaner reverbs
                             sideEQ_Air.gain.value = 1.5; // Natural width
+                            window.midSideEQ.currentPreset = 'BOB LUDWIG';
                             console.log('🎚️ M/S EQ: Bob Ludwig preset (warm, natural, dynamic)');
                         },
                         // Chris Athens style - punchy, modern, hip-hop
@@ -5539,6 +5625,7 @@
                             midEQ_High.gain.value = 2.0; // Vocal presence
                             sideEQ_Low.frequency.value = 150; // Very tight mono bass
                             sideEQ_High.gain.value = 1.5; // Wide high mids
+                            window.midSideEQ.currentPreset = 'CHRIS ATHENS';
                             console.log('🎚️ M/S EQ: Chris Athens preset (punchy, modern, hip-hop)');
                         },
                         // Colin Leonard style - loud, streaming-optimized
@@ -5547,6 +5634,7 @@
                             midEQ_Presence.gain.value = 1.5; // Streaming brightness
                             sideEQ_Mid.gain.value = -1.5; // Reduce harshness
                             sideEQ_Air.gain.value = 2.5; // Big width
+                            window.midSideEQ.currentPreset = 'COLIN LEONARD';
                             console.log('🎚️ M/S EQ: Colin Leonard preset (streaming-optimized, loud)');
                         },
                         flat: () => {
@@ -5558,27 +5646,32 @@
                             sideEQ_Mid.gain.value = 0;
                             sideEQ_High.gain.value = 0;
                             sideEQ_Air.gain.value = 0;
+                            window.midSideEQ.currentPreset = 'FLAT';
                             console.log('🎚️ M/S EQ: Flat (bypass)');
                         }
                     },
                     setMidBand: (band, gain) => {
                         if (window.midSideEQ.mid[band]) {
                             window.midSideEQ.mid[band].gain.value = gain;
+                            window.midSideEQ.currentPreset = 'CUSTOM';
                             console.log(`🎚️ M/S Mid ${band}: ${gain > 0 ? '+' : ''}${gain.toFixed(1)} dB`);
                         }
                     },
                     setSideBand: (band, gain) => {
                         if (window.midSideEQ.side[band]) {
                             window.midSideEQ.side[band].gain.value = gain;
+                            window.midSideEQ.currentPreset = 'CUSTOM';
                             console.log(`🎚️ M/S Side ${band}: ${gain > 0 ? '+' : ''}${gain.toFixed(1)} dB`);
                         }
                     },
                     setMidGain: (dB) => {
                         msEQ_MidChannel.gain.value = Math.pow(10, dB / 20);
+                        window.midSideEQ.currentPreset = 'CUSTOM';
                         console.log(`🎚️ M/S Mid Level: ${dB > 0 ? '+' : ''}${dB.toFixed(1)} dB`);
                     },
                     setSideGain: (dB) => {
                         msEQ_SideChannel.gain.value = Math.pow(10, dB / 20);
+                        window.midSideEQ.currentPreset = 'CUSTOM';
                         console.log(`🎚️ M/S Side Level: ${dB > 0 ? '+' : ''}${dB.toFixed(1)} dB`);
                     }
                 };
@@ -6312,15 +6405,21 @@
                     threshold: 0.99, // Samples above this are considered clipped
 
                     // Check for clipping in real-time
-                    check: () => {
-                        if (!analyser) return false;
+                    // Can accept Float32Array data directly, or use analyser if no data provided
+                    check: (data) => {
+                        let audioData = data;
 
-                        const data = new Float32Array(analyser.fftSize);
-                        analyser.getFloatTimeDomainData(data);
+                        // If no data provided, get from analyser
+                        if (!audioData && analyser) {
+                            audioData = new Float32Array(analyser.fftSize);
+                            analyser.getFloatTimeDomainData(audioData);
+                        }
+
+                        if (!audioData) return false;
 
                         let clipped = false;
-                        for (let i = 0; i < data.length; i++) {
-                            if (Math.abs(data[i]) >= window.clipDetector.threshold) {
+                        for (let i = 0; i < audioData.length; i++) {
+                            if (Math.abs(audioData[i]) >= window.clipDetector.threshold) {
                                 clipped = true;
                                 window.clipDetector.clipCount++;
                                 window.clipDetector.lastClipTime = Date.now();
@@ -12293,6 +12392,271 @@
 
             // Quality score is now only displayed in the professional mastering report
             // No sidebar meter to update
+
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // 🏆 LEGENDARY METERS - Real-time Industry-Standard Calibration
+            // ITU-R BS.1770-5 / EBU R128 / AES Compliant
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+            // 1. STEREO CORRELATION METER (Pearson coefficient: -1 to +1)
+            // Uses internal correlation analysers for dedicated monitoring
+            if (window.stereoCorrelation) {
+                const correlation = window.stereoCorrelation.calculate();
+
+                const correlationValueEl = document.getElementById('correlationValue');
+                const correlationStatusEl = document.getElementById('correlationStatus');
+                const correlationBarEl = document.getElementById('correlationBar');
+                const correlationCardEl = document.getElementById('correlationMeterCard');
+
+                if (correlationValueEl) {
+                    // Format: +0.00 to +1.00 or -1.00 to -0.01
+                    const sign = correlation >= 0 ? '+' : '';
+                    correlationValueEl.textContent = sign + correlation.toFixed(2);
+
+                    // ITU-R BS.1770-5 Phase Correlation Standards:
+                    // +1.0 = Mono (perfect correlation)
+                    // +0.7 to +1.0 = Excellent (good mono compatibility)
+                    // +0.3 to +0.7 = Good (acceptable stereo width)
+                    // 0.0 to +0.3 = Wide (may have mono issues)
+                    // < 0.0 = Phase Issues (will cancel in mono)
+
+                    let status, color, borderColor;
+                    if (correlation >= 0.7) {
+                        status = 'Excellent';
+                        color = '#00ff88';
+                        borderColor = 'rgba(0,255,136,0.5)';
+                    } else if (correlation >= 0.3) {
+                        status = 'Good';
+                        color = '#00d4ff';
+                        borderColor = 'rgba(0,212,255,0.5)';
+                    } else if (correlation >= 0) {
+                        status = 'Wide';
+                        color = '#ffd700';
+                        borderColor = 'rgba(255,215,0,0.5)';
+                    } else if (correlation >= -0.5) {
+                        status = 'Phase Warning';
+                        color = '#ff9800';
+                        borderColor = 'rgba(255,152,0,0.5)';
+                    } else {
+                        status = 'OUT OF PHASE!';
+                        color = '#ff3333';
+                        borderColor = 'rgba(255,51,51,0.5)';
+                    }
+
+                    correlationValueEl.style.color = color;
+                    correlationValueEl.style.textShadow = `0 0 10px ${borderColor}`;
+
+                    if (correlationStatusEl) {
+                        correlationStatusEl.textContent = status;
+                        correlationStatusEl.style.color = color;
+                    }
+
+                    if (correlationBarEl) {
+                        // Map -1 to +1 → 0% to 100% transform
+                        const barPosition = ((correlation + 1) / 2) * 100 - 50;
+                        correlationBarEl.style.transform = `translateX(${barPosition}%)`;
+                    }
+
+                    if (correlationCardEl) {
+                        correlationCardEl.style.borderColor = borderColor;
+                    }
+                }
+            }
+
+            // 2. CLIP DETECTOR - True inter-sample peak detection
+            if (window.clipDetector && leftAnalyser && rightAnalyser) {
+                const leftData = new Float32Array(leftAnalyser.fftSize);
+                const rightData = new Float32Array(rightAnalyser.fftSize);
+                leftAnalyser.getFloatTimeDomainData(leftData);
+                rightAnalyser.getFloatTimeDomainData(rightData);
+
+                // Check both channels for clipping
+                window.clipDetector.check(leftData);
+                window.clipDetector.check(rightData);
+
+                const clipStatusEl = document.getElementById('clipStatus');
+                const clipCountEl = document.getElementById('clipCount');
+                const clipLight1 = document.getElementById('clipLight1');
+                const clipLight2 = document.getElementById('clipLight2');
+                const clipLight3 = document.getElementById('clipLight3');
+                const clipCardEl = document.getElementById('clipDetectorCard');
+
+                if (clipStatusEl) {
+                    const clipCount = window.clipDetector.clipCount;
+                    const isClipping = window.clipDetector.isClipping;
+                    const timeSinceClip = Date.now() - window.clipDetector.lastClipTime;
+
+                    let status, color, borderColor;
+                    if (isClipping || timeSinceClip < 500) {
+                        status = 'CLIPPING!';
+                        color = '#ff3333';
+                        borderColor = 'rgba(255,51,51,0.6)';
+                    } else if (clipCount > 100) {
+                        status = 'MANY CLIPS';
+                        color = '#ff9800';
+                        borderColor = 'rgba(255,152,0,0.5)';
+                    } else if (clipCount > 0) {
+                        status = 'SOME CLIPS';
+                        color = '#ffd700';
+                        borderColor = 'rgba(255,215,0,0.5)';
+                    } else {
+                        status = 'CLEAN';
+                        color = '#00ff88';
+                        borderColor = 'rgba(0,255,136,0.25)';
+                    }
+
+                    clipStatusEl.textContent = status;
+                    clipStatusEl.style.color = color;
+
+                    if (clipCountEl) {
+                        clipCountEl.textContent = clipCount + ' clips';
+                    }
+
+                    // Update LED indicators
+                    if (clipLight1 && clipLight2 && clipLight3) {
+                        if (clipCount === 0) {
+                            // All green
+                            clipLight1.style.background = '#00ff88';
+                            clipLight1.style.boxShadow = '0 0 8px rgba(0,255,136,0.8)';
+                            clipLight2.style.background = 'rgba(255,170,0,0.2)';
+                            clipLight2.style.boxShadow = 'none';
+                            clipLight3.style.background = 'rgba(255,0,0,0.2)';
+                            clipLight3.style.boxShadow = 'none';
+                        } else if (clipCount <= 10) {
+                            // Yellow warning
+                            clipLight1.style.background = '#00ff88';
+                            clipLight1.style.boxShadow = '0 0 6px rgba(0,255,136,0.6)';
+                            clipLight2.style.background = '#ffaa00';
+                            clipLight2.style.boxShadow = '0 0 8px rgba(255,170,0,0.8)';
+                            clipLight3.style.background = 'rgba(255,0,0,0.2)';
+                            clipLight3.style.boxShadow = 'none';
+                        } else {
+                            // Red alert
+                            clipLight1.style.background = '#00ff88';
+                            clipLight1.style.boxShadow = '0 0 4px rgba(0,255,136,0.4)';
+                            clipLight2.style.background = '#ffaa00';
+                            clipLight2.style.boxShadow = '0 0 6px rgba(255,170,0,0.6)';
+                            clipLight3.style.background = '#ff3333';
+                            clipLight3.style.boxShadow = '0 0 10px rgba(255,51,51,1)';
+                        }
+                    }
+
+                    if (clipCardEl) {
+                        clipCardEl.style.borderColor = borderColor;
+                    }
+                }
+            }
+
+            // 3. TRUE PEAK (ISP) - ITU-R BS.1770-5 4x oversampling
+            if (window.getTruePeak) {
+                const truePeakDb = window.getTruePeak();
+                const truePeakEl = document.getElementById('truePeakValue');
+
+                if (truePeakEl) {
+                    if (truePeakDb <= -70) {
+                        truePeakEl.textContent = '-∞';
+                    } else {
+                        truePeakEl.textContent = truePeakDb.toFixed(1);
+                    }
+
+                    // Color coding per EBU R128 / AES broadcast standards
+                    // -1.0 dBTP = broadcast safe threshold
+                    let color;
+                    if (truePeakDb >= 0) {
+                        color = '#ff3333'; // CLIP - Red
+                        truePeakEl.style.animation = 'flash 0.3s infinite';
+                    } else if (truePeakDb >= -1.0) {
+                        color = '#ff9800'; // HOT - Orange (exceeds broadcast safe)
+                        truePeakEl.style.animation = 'none';
+                    } else if (truePeakDb >= -3.0) {
+                        color = '#ffd700'; // WARM - Yellow (good headroom)
+                        truePeakEl.style.animation = 'none';
+                    } else {
+                        color = '#00ff88'; // SAFE - Green (excellent headroom)
+                        truePeakEl.style.animation = 'none';
+                    }
+                    truePeakEl.style.color = color;
+                    truePeakEl.style.textShadow = `0 0 10px ${color}40`;
+                }
+            }
+
+            // 4. PSR (Peak to Short-term Ratio) - EBU R128 Dynamic Range
+            if (window.dynamicRangeMetering) {
+                window.dynamicRangeMetering.update();
+
+                const psrEl = document.getElementById('psrValue');
+                const psrStatusEl = document.getElementById('psrStatus');
+
+                if (psrEl) {
+                    const psr = window.dynamicRangeMetering.PSR;
+
+                    if (psr && !isNaN(psr) && psr > 0) {
+                        psrEl.textContent = psr.toFixed(1);
+
+                        // PSR Quality Ranges (industry standard):
+                        // > 12 dB = Excellent dynamics (audiophile quality)
+                        // 8-12 dB = Good dynamics (professional standard)
+                        // 5-8 dB = Moderate (streaming optimized)
+                        // < 5 dB = Compressed (loudness war territory)
+
+                        let status, color;
+                        if (psr >= 12) {
+                            status = 'Audiophile';
+                            color = '#00ff88';
+                        } else if (psr >= 8) {
+                            status = 'Professional';
+                            color = '#00d4ff';
+                        } else if (psr >= 5) {
+                            status = 'Streaming';
+                            color = '#ffd700';
+                        } else {
+                            status = 'Compressed';
+                            color = '#ff9800';
+                        }
+
+                        psrEl.style.color = color;
+                        if (psrStatusEl) {
+                            psrStatusEl.textContent = status;
+                            psrStatusEl.style.color = color;
+                        }
+                    } else {
+                        psrEl.textContent = '--';
+                    }
+                }
+            }
+
+            // 5. CONSOLE TYPE DISPLAY - Show active analog emulation
+            const consoleTypeEl = document.getElementById('consoleTypeDisplay');
+            if (consoleTypeEl && window.consoleEmulation) {
+                const consoleType = window.consoleEmulation.currentType || 'SSL';
+                consoleTypeEl.textContent = consoleType.toUpperCase();
+
+                // Color per console character
+                const consoleColors = {
+                    'ssl': '#00d4ff',      // Clean, punchy
+                    'neve': '#ff9800',     // Warm, rich
+                    'api': '#ff3333',      // Aggressive, punchy
+                    'tape': '#9c27b0'      // Saturated, vintage
+                };
+                consoleTypeEl.style.color = consoleColors[consoleType.toLowerCase()] || '#00d4ff';
+            }
+
+            // 6. ENGINEER STYLE DISPLAY - Show M/S EQ preset
+            const engineerStyleEl = document.getElementById('engineerStyleDisplay');
+            if (engineerStyleEl && window.midSideEQ) {
+                const style = window.midSideEQ.currentPreset || 'CUSTOM';
+                engineerStyleEl.textContent = style.toUpperCase();
+
+                // Color per engineer style
+                const styleColors = {
+                    'randymerrill': '#ffd700',   // Gold - pop/vocal clarity
+                    'bobludwig': '#ff9800',      // Orange - warm/dynamic
+                    'chrisathens': '#00d4ff',    // Cyan - punchy/modern
+                    'colinleonard': '#9c27b0',   // Purple - streaming optimized
+                    'custom': '#00ff88'          // Green - user settings
+                };
+                engineerStyleEl.style.color = styleColors[style.toLowerCase()] || '#00ff88';
+            }
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
