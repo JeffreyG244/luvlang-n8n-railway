@@ -1499,6 +1499,17 @@
             }
         }
 
+        @keyframes glowPulse {
+            0%, 100% {
+                opacity: 0.8;
+                text-shadow: 0 0 10px rgba(0,212,255,0.5), 0 0 20px rgba(0,212,255,0.3);
+            }
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 15px rgba(0,212,255,0.8), 0 0 30px rgba(0,212,255,0.5), 0 0 45px rgba(0,212,255,0.3);
+            }
+        }
+
         @keyframes flash {
             0%, 100% {
                 opacity: 1;
@@ -2253,11 +2264,9 @@
                     <div class="feature-tile" title="Chain Optimizer: AI determines the optimal processing order for your specific audio material" style="background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02)); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 8px 4px; text-align: center; cursor: pointer; transition: all 0.2s;"><div style="font-size: 0.9rem; opacity: 0.9;">⛓️</div><div style="font-size: 0.5rem; color: rgba(255,255,255,0.6); margin-top: 3px; font-weight: 500;">Chain</div></div>
                     <div class="feature-tile" title="Adaptive Learning: Learns from your adjustments and preferences to improve future mastering suggestions" style="background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,212,255,0.02)); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px; padding: 8px 4px; text-align: center; cursor: pointer; transition: all 0.2s;"><div style="font-size: 0.9rem; opacity: 0.9;">📚</div><div style="font-size: 0.5rem; color: rgba(255,255,255,0.6); margin-top: 3px; font-weight: 500;">Adaptive</div></div>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
-                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px;">Hover for module details</div>
-                    <div style="display: flex; gap: 4px;">
-                        <div style="width: 6px; height: 6px; border-radius: 50%; background: #00d4ff; animation: pulse 2s infinite;"></div>
-                        <div style="font-size: 0.55rem; color: #00d4ff; font-weight: 600;">READY</div>
+                <div style="display: flex; justify-content: center; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,212,255,0.1);">
+                    <div style="font-size: 0.7rem; color: #00d4ff; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; text-shadow: 0 0 10px rgba(0,212,255,0.5), 0 0 20px rgba(0,212,255,0.3), 0 0 30px rgba(0,212,255,0.2); animation: glowPulse 2s ease-in-out infinite;">
+                        ✨ Point to any feature to see what it does ✨
                     </div>
                 </div>
             </div>
@@ -12485,11 +12494,19 @@
 
                     html += `</div>`;
 
-                    // Footer - clean minimal version
+                    // Footer - glowing call-to-action
                     html += `
-                        <div style="display: flex; justify-content: center; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px;">Hover for details</div>
-                        </div>`;
+                        <div style="display: flex; justify-content: center; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,212,255,0.1);">
+                            <div style="font-size: 0.7rem; color: #00d4ff; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; text-shadow: 0 0 10px rgba(0,212,255,0.5), 0 0 20px rgba(0,212,255,0.3), 0 0 30px rgba(0,212,255,0.2); animation: glowPulse 2s ease-in-out infinite;">
+                                ✨ Point to any feature to see what it does ✨
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes glowPulse {
+                                0%, 100% { opacity: 0.8; text-shadow: 0 0 10px rgba(0,212,255,0.5), 0 0 20px rgba(0,212,255,0.3); }
+                                50% { opacity: 1; text-shadow: 0 0 15px rgba(0,212,255,0.8), 0 0 30px rgba(0,212,255,0.5), 0 0 45px rgba(0,212,255,0.3); }
+                            }
+                        </style>`;
 
                     analysisPanel.innerHTML = html;
                     window.lastAIResults = results;
