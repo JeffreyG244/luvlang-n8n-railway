@@ -3955,8 +3955,8 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">Auto-Adjust:</div>
-                        <button id="autoLUFSToggle" onclick="toggleAutoLUFS()" style="background: linear-gradient(135deg, #00ff88, #00d4ff); border: 1px solid rgba(0, 255, 136, 0.5); color: #000; font-size: 0.6rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 700;" title="Auto LUFS Compensation - Automatically adjusts gain to maintain platform target">
-                            AUTO
+                        <button id="autoLUFSToggle" onclick="toggleAutoLUFS()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: rgba(255, 255, 255, 0.6); font-size: 0.6rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 700;" title="Auto LUFS Compensation - Automatically adjusts gain to maintain platform target">
+                            OFF
                         </button>
                     </div>
                 </div>
@@ -4383,7 +4383,7 @@
         let audioContext = null;
 
         // AUTO LUFS COMPENSATION - ENABLED by default for professional -14 LUFS targeting
-        window.autoLUFSCompensation = true; // Always active for broadcast-ready output
+        window.autoLUFSCompensation = false; // Off by default - activates after mastering
         window.audioLoadTime = null; // Track when audio starts playing
         let sourceNode = null;
         let analyser = null;
@@ -6636,8 +6636,8 @@
                 const outputMixer = audioContext.createGain();
 
                 // START WITH DRY (raw audio, no processing)
-                dryGain.gain.value = 0.0;  // Dry = OFF (unprocessed audio bypassed)
-                wetGain.gain.value = 1.0;  // Wet = ON (mastering chain ALWAYS ACTIVE)
+                dryGain.gain.value = 1.0;  // Dry = ON (user hears ORIGINAL track on load)
+                wetGain.gain.value = 0.0;  // Wet = OFF (mastering engages AFTER processing completes)
                 outputMixer.gain.value = 1.0;
 
                 // Expose globally for A/B control
@@ -6916,31 +6916,18 @@
 
                     console.log('✅ Audio buffer decoded for AI processing');
 
-                    // 🏆 AUTO-LUFS TARGETING - Always normalize to -14 LUFS (streaming standard)
-                    // This ensures broadcast-ready output at all times
+                    // 📊 ANALYZE INPUT LOUDNESS (but don't apply gain yet - user hears original first)
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🎚️ AUTO-LUFS TARGETING: Analyzing input loudness...');
-
-                    // Get platform target (default -14 LUFS for streaming)
-                    const platformBtn = document.querySelector('.selector-btn[data-platform].active');
-                    const platform = platformBtn ? platformBtn.dataset.platform : 'spotify';
-                    let targetLUFS = -14;
-                    if (platform === 'apple' || platform === 'podcast') targetLUFS = -16;
-
-                    console.log('   Platform:', platform || 'Spotify (default)');
-                    console.log('   Target LUFS:', targetLUFS);
+                    console.log('📊 ANALYZING INPUT: Measuring loudness for mastering...');
 
                     // Calculate LUFS using K-weighted loudness (simplified ITU-R BS.1770)
                     const channelData = audioBuffer.getChannelData(0);
                     const rightChannel = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : channelData;
 
-                    // K-weighting approximation: boost high frequencies, cut low frequencies
-                    // This is a simplified version - full ITU spec uses shelf filters
                     let sumSquaresL = 0, sumSquaresR = 0;
                     const windowSize = Math.min(channelData.length, audioBuffer.sampleRate * 3); // 3 second window
 
                     for (let i = 0; i < windowSize; i++) {
-                        // Simple K-weighting approximation (emphasize 1-4kHz range)
                         sumSquaresL += channelData[i] * channelData[i];
                         sumSquaresR += rightChannel[i] * rightChannel[i];
                     }
@@ -6954,34 +6941,17 @@
 
                     console.log('   Input LUFS:', inputLUFS.toFixed(1), 'LUFS');
 
-                    // Calculate gain needed to hit target
-                    const gainNeeded = targetLUFS - inputLUFS;
+                    // Store input level for mastering (gain will be applied AFTER mastering button is clicked)
+                    window.autoLUFSInputLevel = inputLUFS;
+                    window.isMasteringApplied = false;
 
-                    // Apply gain to makeupGain node (before limiter in the chain)
-                    // Safety limits: max +18dB boost, max -6dB cut
-                    const safeGain = Math.max(-6, Math.min(18, gainNeeded));
-                    const linearGain = Math.pow(10, safeGain / 20);
-
-                    if (makeupGain && Math.abs(safeGain) > 0.5) {
-                        makeupGain.gain.value = linearGain;
-
-                        console.log('   ✅ AUTO-LUFS APPLIED: ' + (safeGain >= 0 ? '+' : '') + safeGain.toFixed(1) + ' dB');
-                        console.log('   Expected Output LUFS: ~' + (inputLUFS + safeGain).toFixed(1) + ' LUFS');
-                        console.log('   🎯 Output will be at ' + targetLUFS + ' LUFS (broadcast-ready)');
-
-                        if (safeGain !== gainNeeded) {
-                            console.log('   ⚠️  Gain was safety-limited from ' + gainNeeded.toFixed(1) + ' dB to ' + safeGain.toFixed(1) + ' dB');
-                        }
-                    } else if (Math.abs(gainNeeded) <= 0.5) {
-                        console.log('   ✅ Audio already at target loudness (' + inputLUFS.toFixed(1) + ' LUFS)');
-                        console.log('   No gain adjustment needed');
+                    // Reset makeup gain to neutral (no processing on load)
+                    if (makeupGain) {
+                        makeupGain.gain.value = 1.0;
                     }
 
-                    // Store for reference
-                    window.autoLUFSInputLevel = inputLUFS;
-                    window.autoLUFSGainApplied = safeGain;
-                    window.autoLUFSTargetLevel = targetLUFS;
-
+                    console.log('   🎧 Playing ORIGINAL track (no processing)');
+                    console.log('   💡 Click "AI Master" to hear the mastered version');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                     // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
