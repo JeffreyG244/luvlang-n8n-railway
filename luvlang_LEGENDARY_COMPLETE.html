@@ -3840,15 +3840,9 @@
                 </div>
                 <!-- Target indicator + Auto LUFS Toggle -->
                 <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Target:</div>
                         <div id="liveLufsTarget" style="font-size: 0.8rem; font-weight: 700; color: #ffd700;">-14 LUFS (Streaming)</div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4);">Auto-Adjust:</div>
-                        <button id="autoLUFSToggle" onclick="toggleAutoLUFS()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); color: rgba(255, 255, 255, 0.6); font-size: 0.6rem; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 700;" title="Auto LUFS Compensation - Automatically adjusts gain to maintain platform target">
-                            OFF
-                        </button>
                     </div>
                 </div>
             </div>
@@ -5240,14 +5234,29 @@
                 softClipper.oversample = '4x'; // High quality oversampling
 
                 // Soft clipper mix controls
+                const softClipInput = audioContext.createGain();
                 const softClipDry = audioContext.createGain();
                 const softClipWet = audioContext.createGain();
                 const softClipOutput = audioContext.createGain();
-                softClipDry.gain.value = 0.7;  // 70% dry
-                softClipWet.gain.value = 0.3;  // 30% soft clipped (subtle warmth)
+                softClipInput.gain.value = 1.0;
+                softClipDry.gain.value = 0.75;  // 75% dry
+                softClipWet.gain.value = 0.25;  // 25% soft clipped (subtle warmth)
                 softClipOutput.gain.value = 1.0;
 
+                // Internal soft clipper routing (parallel dry/wet)
+                softClipInput.connect(softClipDry);           // Dry path
+                softClipInput.connect(softClipper);           // Wet path through saturation
+                softClipper.connect(softClipWet);
+                softClipDry.connect(softClipOutput);          // Mix dry to output
+                softClipWet.connect(softClipOutput);          // Mix wet to output
+
+                // Expose for signal chain
+                window.softClipInput = softClipInput;
+                window.softClipOutput = softClipOutput;
+
                 window.softClipperControls = {
+                    input: softClipInput,
+                    output: softClipOutput,
                     dry: softClipDry,
                     wet: softClipWet,
                     setMix: (wetAmount) => {
@@ -5257,8 +5266,8 @@
                         console.log(`🔥 Soft Clipper: ${Math.round(wetAmount * 100)}% drive`);
                     },
                     enable: () => {
-                        softClipWet.gain.value = 0.3;
-                        softClipDry.gain.value = 0.7;
+                        softClipWet.gain.value = 0.25;
+                        softClipDry.gain.value = 0.75;
                         console.log('✅ Soft Clipper enabled');
                     },
                     disable: () => {
@@ -5267,7 +5276,7 @@
                         console.log('⏸️ Soft Clipper disabled');
                     }
                 };
-                console.log('✅ Soft Clipper created (warm saturation before limiter)');
+                console.log('✅ Soft Clipper created with internal routing');
 
                 // 10. OUTPUT DITHER - Essential for bit-depth reduction (24→16 bit)
                 // TPDF (Triangular Probability Density Function) dither
@@ -6663,32 +6672,42 @@
                 analogWarmth.connect(makeupGain);
                 console.log('   5. Makeup Gain (LUFS targeting)');
 
-                // STAGE 6: LIMITING - Professional True Peak Limiter (Industry Standard)
+                // STAGE 6: SOFT CLIPPER - Warm saturation before limiter
+                // Reduces limiter workload and adds subtle harmonic warmth
+                if (window.softClipInput && window.softClipOutput) {
+                    makeupGain.connect(window.softClipInput);
+                    window.softClipOutput.connect(limiter);
+                    console.log('   6. Soft Clipper (25% saturation, reduces limiter stress)');
+                } else {
+                    makeupGain.connect(limiter);
+                    console.log('   6. [Soft Clipper bypassed - direct to limiter]');
+                }
+
+                // STAGE 7: LIMITING - Professional True Peak Limiter (Industry Standard)
                 // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
                 limiter.threshold.value = -1.0;      // -1dBTP industry standard
                 limiter.knee.value = 2.0;            // Soft knee for musical transparency
                 limiter.ratio.value = 20;            // Brick-wall ratio
                 limiter.attack.value = 0.001;        // 1ms attack (fast but musical)
                 limiter.release.value = 0.150;       // 150ms release (Bob Ludwig style)
-                makeupGain.connect(limiter);
-                console.log('   6. Pro Limiter (-1dBTP, soft knee)');
+                console.log('   7. Pro Limiter (-1dBTP, soft knee)');
 
-                // STAGE 7: SAFETY CLIPPER (catches any peaks that escape limiter)
+                // STAGE 8: SAFETY CLIPPER (catches any peaks that escape limiter)
                 if (window.safetyClipper) {
                     limiter.connect(window.safetyClipper);
                     window.safetyClipper.connect(masterGain);
-                    console.log('   7. Safety Clipper (soft clip at -0.04dBFS)');
+                    console.log('   8. Safety Clipper (soft clip at -0.04dBFS)');
                 } else {
                     limiter.connect(masterGain);
                 }
 
-                // STAGE 8: OUTPUT - Master Gain
-                console.log('   8. Master Output');
+                // STAGE 9: OUTPUT - Master Gain
+                console.log('   9. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 8-STAGE MASTERING CHAIN READY');
-                console.log('   Subsonic → EQ → Comp → Warmth → Makeup → Limiter → Clipper → Out');
+                console.log('✅ 9-STAGE MASTERING CHAIN READY');
+                console.log('   Subsonic → EQ → Comp → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
