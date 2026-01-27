@@ -16514,10 +16514,10 @@
         // World-class audio comparison experience
         // ═══════════════════════════════════════════════════════════════════════════
 
-        // Show the explosive A/B modal after mastering
+        // A/B modal removed per user request - function disabled
         window.showABModal = function(originalLUFS, masteredLUFS, targetLUFS) {
-            const modal = document.getElementById('abModalOverlay');
-            if (!modal) return;
+            // Modal removed - do nothing
+            return;
 
             // Calculate metrics
             const loudnessGain = Math.abs((masteredLUFS || -14) - (originalLUFS || -20));
