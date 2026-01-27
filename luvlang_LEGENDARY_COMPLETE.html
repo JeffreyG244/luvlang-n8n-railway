@@ -16090,40 +16090,15 @@
                 else targetLUFS = -14.0;
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // PROCESSING CHAIN GAIN COMPENSATION
-                // The EQ, saturation, and compression stages ADD gain before makeup gain.
-                // We must subtract this to hit the target LUFS accurately.
+                // GAIN ADJUSTMENT FOR LUFS TARGETING
+                // Calculate makeup gain to reach target LUFS
+                // The limiter will handle any peaks - no need to over-compensate
                 // ════════════════════════════════════════════════════════════════════════════
-                let processingChainGain = 0;
 
-                // Estimate EQ gain (sum of positive band gains, averaged)
-                if (window.eqSubFilter || eqSubFilter) {
-                    const eqGains = [
-                        (window.eqSubFilter || eqSubFilter)?.gain?.value || 0,
-                        (window.eqBassFilter || eqBassFilter)?.gain?.value || 0,
-                        (window.eqLowMidFilter || eqLowMidFilter)?.gain?.value || 0,
-                        (window.eqMidFilter || eqMidFilter)?.gain?.value || 0,
-                        (window.eqHighMidFilter || eqHighMidFilter)?.gain?.value || 0,
-                        (window.eqHighFilter || eqHighFilter)?.gain?.value || 0,
-                        (window.eqAirFilter || eqAirFilter)?.gain?.value || 0
-                    ];
-                    // Calculate net EQ gain (positive boosts add loudness)
-                    const positiveEQGain = eqGains.filter(g => g > 0).reduce((a, b) => a + b, 0);
-                    // EQ boosts don't add dB linearly, but roughly 50% of total boost affects LUFS
-                    processingChainGain += positiveEQGain * 0.5;
-                }
+                // Direct LUFS targeting - let the limiter do its job
+                const gainAdjustmentDB = targetLUFS - currentLUFS;
 
-                // Estimate saturation/warmth gain (typically +0.5 to +1.5 dB)
-                // Saturation adds harmonics which increase perceived loudness
-                processingChainGain += 1.0;
-
-                // Compression typically increases RMS by ~1-2 dB (reduces peaks, allows more gain)
-                processingChainGain += 1.5;
-
-                console.log(`📊 Processing chain gain estimate: +${processingChainGain.toFixed(1)} dB`);
-
-                // Calculate gain adjustment with compensation
-                const gainAdjustmentDB = targetLUFS - currentLUFS - processingChainGain;
+                console.log(`📊 Direct LUFS targeting (no over-compensation)`);
                 // Clamp to reasonable range (-10 to +8 dB for mastering)
                 const clampedGainDB = Math.max(-10, Math.min(8, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
@@ -16133,20 +16108,17 @@
                 if (mkGain && ac) {
                     mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
                     console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
-                    console.log(`   Raw adjustment: ${(targetLUFS - currentLUFS).toFixed(1)} dB`);
-                    console.log(`   Chain compensation: -${processingChainGain.toFixed(1)} dB`);
-                    console.log(`   Final makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB`);
+                    console.log(`   Makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB`);
                 }
 
-                // Store the compensation for debugging
+                // Store for debugging
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
                     targetLUFS: targetLUFS,
-                    chainGainEstimate: processingChainGain,
-                    finalMakeupGainDB: clampedGainDB
+                    makeupGainDB: clampedGainDB
                 };
 
-                console.log('✅ LUFS targeting applied with processing chain compensation');
+                console.log('✅ LUFS targeting applied');
 
                 updateProgress(6, 'Applying Processing', 'complete');
                 console.log('[AI Suite] Steps 6-13: Processing complete (gain adjusted)');
