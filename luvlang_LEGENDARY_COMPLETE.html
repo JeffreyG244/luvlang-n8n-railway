@@ -6702,6 +6702,12 @@
                 stereoSplitter.connect(leftAnalyser, 0);
                 stereoSplitter.connect(rightAnalyser, 1);
 
+                // Connect True Peak analyser for ISP detection (ITU-R BS.1770-5)
+                if (window.truePeakAnalyser) {
+                    outputMixer.connect(window.truePeakAnalyser);
+                    console.log('✅ True Peak Analyser connected for ISP detection');
+                }
+
                 console.log('🔊 Audio routing complete');
 
                 // K-weighted parallel path (for LUFS measurement) - taps from makeup gain
