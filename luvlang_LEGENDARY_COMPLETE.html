@@ -5205,20 +5205,18 @@
                     }
                 };
 
-                // 6. ANALOG WARMTH - Tube saturation emulation
+                // 6. ANALOG WARMTH - Gentle tape-style saturation (series-safe)
                 const analogWarmth = audioContext.createWaveShaper();
                 const warmthCurve = new Float32Array(65536);
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1;
-                    // Tube-style asymmetric saturation
-                    if (x >= 0) {
-                        warmthCurve[i] = 1 - Math.exp(-x * 2);
-                    } else {
-                        warmthCurve[i] = -1 + Math.exp(x * 1.8);
-                    }
+                    // Gentle tape saturation - subtle, musical, series-safe
+                    // Using soft tanh-style curve with very mild compression
+                    const amount = 0.15; // 15% saturation intensity (very subtle)
+                    warmthCurve[i] = x * (1 - amount) + Math.tanh(x * 1.5) * amount;
                 }
                 analogWarmth.curve = warmthCurve;
-                analogWarmth.oversample = '2x';
+                analogWarmth.oversample = '4x'; // Higher oversampling for cleaner harmonics
 
                 // Warmth mix
                 const warmthDry = audioContext.createGain();
@@ -6658,39 +6656,54 @@
                 console.log('🔗 Building Professional Mastering Chain...');
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // CLEAN MASTERING CHAIN - Simple, Phase-Coherent, Professional
+                // PROFESSIONAL MASTERING CHAIN - Phase-Coherent, All Series Processing
                 // ════════════════════════════════════════════════════════════════════════════
 
-                // STAGE 1: INPUT → 7-Band EQ (no parallel processing)
-                sourceNode.connect(eqSubFilter);
+                // STAGE 1: INPUT CLEANUP - Subsonic Filter (removes rumble < 25Hz)
+                sourceNode.connect(subsonicFilter);
+                console.log('   1. Subsonic Filter (25Hz highpass - removes rumble)');
+
+                // STAGE 2: TONAL SHAPING - 7-Band Parametric EQ
+                subsonicFilter.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
                 eqLowMidFilter.connect(eqMidFilter);
                 eqMidFilter.connect(eqHighMidFilter);
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
-                console.log('   1. 7-Band Parametric EQ');
+                console.log('   2. 7-Band Parametric EQ');
 
-                // STAGE 2: EQ → Compressor (single glue compressor)
+                // STAGE 3: DYNAMICS - Glue Compressor
                 eqAirFilter.connect(compressor);
-                console.log('   2. Glue Compressor');
+                console.log('   3. Glue Compressor (bus compression)');
 
-                // STAGE 3: Compressor → Makeup Gain (LUFS targeting)
-                compressor.connect(makeupGain);
-                console.log('   3. Makeup Gain (LUFS targeting)');
+                // STAGE 4: WARMTH - Analog Saturation (series, not parallel - no phase issues)
+                // Using the analogWarmth waveshaper directly in series
+                compressor.connect(analogWarmth);
+                console.log('   4. Analog Warmth (tube-style saturation)');
 
-                // STAGE 4: Makeup Gain → Limiter (brick wall protection)
+                // STAGE 5: LOUDNESS - Makeup Gain (LUFS targeting)
+                analogWarmth.connect(makeupGain);
+                console.log('   5. Makeup Gain (LUFS targeting)');
+
+                // STAGE 6: LIMITING - Transparent brick-wall limiter
+                // Update limiter for more transparent settings
+                limiter.threshold.value = -2.0;      // -2dB threshold (more headroom)
+                limiter.knee.value = 3.0;            // Soft knee for transparency
+                limiter.ratio.value = 20;            // Brick-wall ratio
+                limiter.attack.value = 0.003;        // 3ms attack (catches peaks, preserves transients)
+                limiter.release.value = 0.15;        // 150ms release (smooth, musical)
                 makeupGain.connect(limiter);
-                console.log('   4. Limiter (peak protection)');
+                console.log('   6. Transparent Limiter (-2dB ceiling)');
 
-                // STAGE 5: Limiter → Master Gain → Output
+                // STAGE 7: OUTPUT - Master Gain
                 limiter.connect(masterGain);
-                console.log('   5. Master Output');
+                console.log('   7. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ CLEAN 5-STAGE MASTERING CHAIN READY');
-                console.log('   Input → EQ → Compressor → Makeup → Limiter → Output');
+                console.log('✅ 7-STAGE MASTERING CHAIN READY');
+                console.log('   Subsonic → EQ → Compressor → Warmth → Makeup → Limiter → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
