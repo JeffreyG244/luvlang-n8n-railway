@@ -5011,7 +5011,7 @@
                 compressor.threshold.value = -24;   // Industry standard mastering threshold
                 compressor.knee.value = 6;          // SSL-style soft knee
                 compressor.ratio.value = 2;         // Gentle 2:1 for glue (not squash)
-                compressor.attack.value = 0.030;    // 30ms attack - preserves ALL transients
+                compressor.attack.value = 0.015;    // 15ms attack - SSL G-Bus standard (tighter control)
                 compressor.release.value = 0.250;   // 250ms auto-release style (musical)
 
                 // EQ Compensation Gain (automatic makeup gain for EQ boosts)
@@ -5083,13 +5083,13 @@
 
                 console.log('✅ Transient Shaper created (Attack/Sustain parallel compression)');
 
-                // ⚡ LIMITER - Ultra-Conservative Peak Protection (NO CLIPPING EVER)
+                // ⚡ LIMITER - Professional True Peak Protection (Industry Standard)
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -4.5;     // VERY conservative -4.5dB to ensure NO clipping
-                limiter.knee.value = 0.5;           // Tight knee for precise limiting
+                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard (AES/SMPTE broadcast)
+                limiter.knee.value = 2.0;           // Soft knee for transparency
                 limiter.ratio.value = 20;           // Brick-wall limiting ratio
                 limiter.attack.value = 0.001;       // Ultra-fast attack (1ms) for peak control
-                limiter.release.value = 0.1;        // Fast release (100ms) for transparency
+                limiter.release.value = 0.08;       // 80ms release (fast for transparency)
 
                 // Makeup Gain (AI Mastering - BEFORE limiter for proper peak protection)
                 makeupGain = audioContext.createGain();
@@ -5222,8 +5222,8 @@
                 // Warmth mix
                 const warmthDry = audioContext.createGain();
                 const warmthWet = audioContext.createGain();
-                warmthDry.gain.value = 0.9;  // 90% dry
-                warmthWet.gain.value = 0.1;  // 10% wet
+                warmthDry.gain.value = 0.82; // 82% dry (more audible warmth)
+                warmthWet.gain.value = 0.18; // 18% wet - tape saturation more present
                 window.warmthControls = {
                     dry: warmthDry,
                     wet: warmthWet,
@@ -6687,15 +6687,15 @@
                 analogWarmth.connect(makeupGain);
                 console.log('   5. Makeup Gain (LUFS targeting)');
 
-                // STAGE 6: LIMITING - Transparent brick-wall limiter
-                // Update limiter for more transparent settings
-                limiter.threshold.value = -2.0;      // -2dB threshold (more headroom)
-                limiter.knee.value = 3.0;            // Soft knee for transparency
+                // STAGE 6: LIMITING - Professional True Peak Limiter (Industry Standard)
+                // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
+                limiter.threshold.value = -1.0;      // -1dBTP industry standard
+                limiter.knee.value = 2.0;            // Soft knee for transparency
                 limiter.ratio.value = 20;            // Brick-wall ratio
-                limiter.attack.value = 0.003;        // 3ms attack (catches peaks, preserves transients)
-                limiter.release.value = 0.15;        // 150ms release (smooth, musical)
+                limiter.attack.value = 0.001;        // 1ms attack (catches all peaks)
+                limiter.release.value = 0.08;        // 80ms release (fast, transparent)
                 makeupGain.connect(limiter);
-                console.log('   6. Transparent Limiter (-2dB ceiling)');
+                console.log('   6. Pro Limiter (-1dBTP ceiling)');
 
                 // STAGE 7: OUTPUT - Master Gain
                 limiter.connect(masterGain);
@@ -7129,20 +7129,20 @@
                 offlineCompressor.threshold.value = compressorSettings.threshold || -24;
                 offlineCompressor.knee.value = compressorSettings.knee || 6;
                 offlineCompressor.ratio.value = compressorSettings.ratio || 3;
-                offlineCompressor.attack.value = compressorSettings.attack || 0.003;
+                offlineCompressor.attack.value = compressorSettings.attack || 0.015;
                 offlineCompressor.release.value = compressorSettings.release || 0.25;
 
                 // 2. Makeup Gain (applied by AI mastering)
                 const offlineMakeupGain = offlineContext.createGain();
                 offlineMakeupGain.gain.value = Math.pow(10, makeupGainDB / 20);
 
-                // 3. Limiter (brick-wall peak protection)
+                // 3. Limiter (brick-wall peak protection) - matches live chain settings
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
                 offlineLimiter.threshold.value = limiterThresholdDB;
-                offlineLimiter.knee.value = 0.5;
+                offlineLimiter.knee.value = 2.0;    // Soft knee for transparency
                 offlineLimiter.ratio.value = 20;
                 offlineLimiter.attack.value = 0.001;
-                offlineLimiter.release.value = 0.1;
+                offlineLimiter.release.value = 0.08; // 80ms - fast, transparent
 
                 // Connect the chain: Source → Compressor → Makeup Gain → Limiter → Destination
                 source.connect(offlineCompressor);
@@ -13726,7 +13726,7 @@
                 const offlineCompressor = offlineContext.createDynamicsCompressor();
                 offlineCompressor.threshold.value = compressor ? compressor.threshold.value : -24;
                 offlineCompressor.ratio.value = compressor ? compressor.ratio.value : 2;
-                offlineCompressor.attack.value = compressor ? compressor.attack.value : 0.030;
+                offlineCompressor.attack.value = compressor ? compressor.attack.value : 0.015;
                 offlineCompressor.release.value = compressor ? compressor.release.value : 0.250;
                 offlineCompressor.knee.value = compressor ? compressor.knee.value : 6;
                 console.log('   3. Compressor: ' + offlineCompressor.threshold.value.toFixed(1) + 'dB, ' + offlineCompressor.ratio.value + ':1');
