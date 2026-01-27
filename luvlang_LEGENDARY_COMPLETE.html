@@ -15678,84 +15678,73 @@
                 // ═══════════════════════════════════════════════════════════════
 
                 // ═══════════════════════════════════════════════════════════════
-                // DRAMATIC MASTERING PROCESSING - CLEARLY AUDIBLE DIFFERENCE
-                // These values are intentionally aggressive for demonstration
+                // PROFESSIONAL MASTERING PROCESSING - Industry Standard Settings
+                // SSL/Neve/Sterling Sound reference values
                 // ═══════════════════════════════════════════════════════════════
 
-                // 1. 7-BAND EQ - DRAMATIC mastering curve
+                // 1. 7-BAND EQ - Professional mastering curve (subtle enhancement)
                 if (window.eqSubFilter) {
-                    // Sub bass: SIGNIFICANT boost for impact
-                    window.eqSubFilter.gain.setTargetAtTime(4.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Sub Bass EQ: +4.5dB at 40Hz (DRAMATIC)');
+                    window.eqSubFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Sub Bass EQ: +1.5dB at 40Hz');
                 }
                 if (window.eqBassFilter) {
-                    // Bass: punch and warmth
-                    window.eqBassFilter.gain.setTargetAtTime(3.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Bass EQ: +3.5dB at 100Hz (DRAMATIC)');
+                    window.eqBassFilter.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    console.log('  ✓ Bass EQ: +1.0dB at 100Hz');
                 }
                 if (window.eqLowMidFilter) {
-                    // Low-mid: slight cut to reduce mud
-                    window.eqLowMidFilter.gain.setTargetAtTime(-2.0, ac.currentTime, 0.1);
-                    console.log('  ✓ Low-Mid EQ: -2.0dB at 300Hz (clarity cut)');
+                    window.eqLowMidFilter.gain.setTargetAtTime(-1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Low-Mid EQ: -1.5dB at 300Hz (mud cut)');
                 }
                 if (window.eqMidFilter) {
-                    // Mid: presence
-                    window.eqMidFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Mid EQ: +1.5dB at 1kHz');
+                    window.eqMidFilter.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
+                    console.log('  ✓ Mid EQ: +0.5dB at 1kHz');
                 }
                 if (window.eqHighMidFilter) {
-                    // High-mid: edge and bite
-                    window.eqHighMidFilter.gain.setTargetAtTime(3.0, ac.currentTime, 0.1);
-                    console.log('  ✓ High-Mid EQ: +3.0dB at 3kHz (presence)');
+                    window.eqHighMidFilter.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    console.log('  ✓ High-Mid EQ: +1.0dB at 3kHz');
                 }
                 if (window.eqHighFilter) {
-                    // High: SIGNIFICANT presence/clarity
-                    window.eqHighFilter.gain.setTargetAtTime(5.0, ac.currentTime, 0.1);
-                    console.log('  ✓ High EQ: +5.0dB at 8kHz (DRAMATIC)');
+                    window.eqHighFilter.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
+                    console.log('  ✓ High EQ: +1.5dB at 8kHz');
                 }
                 if (window.eqAirFilter) {
-                    // Air: MAXIMUM sparkle/shine
-                    window.eqAirFilter.gain.setTargetAtTime(6.0, ac.currentTime, 0.1);
-                    console.log('  ✓ Air EQ: +6.0dB at 12kHz (DRAMATIC SPARKLE)');
+                    window.eqAirFilter.gain.setTargetAtTime(2.0, ac.currentTime, 0.1);
+                    console.log('  ✓ Air EQ: +2.0dB at 12kHz (sparkle)');
                 }
 
-                // 2. COMPRESSOR - AGGRESSIVE glue compression
+                // 2. COMPRESSOR - SSL-style glue compression
                 if (window.compressor) {
-                    window.compressor.threshold.setTargetAtTime(-28, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(5, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(0.003, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(0.12, ac.currentTime, 0.1);
-                    window.compressor.knee.setTargetAtTime(3, ac.currentTime, 0.1);
-                    console.log('  ✓ Compressor: -28dB threshold, 5:1 ratio (AGGRESSIVE)');
+                    window.compressor.threshold.setTargetAtTime(-24, ac.currentTime, 0.1);
+                    window.compressor.ratio.setTargetAtTime(2, ac.currentTime, 0.1);
+                    window.compressor.attack.setTargetAtTime(0.015, ac.currentTime, 0.1);
+                    window.compressor.release.setTargetAtTime(0.25, ac.currentTime, 0.1);
+                    window.compressor.knee.setTargetAtTime(6, ac.currentTime, 0.1);
+                    console.log('  ✓ Compressor: -24dB threshold, 2:1 ratio (glue)');
                 }
 
-                // 3. LIMITER - AGGRESSIVE loudness maximizing
+                // 3. LIMITER - Professional True Peak (-1dBTP)
                 if (window.limiter) {
-                    window.limiter.threshold.setTargetAtTime(-3.0, ac.currentTime, 0.1);
+                    window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.0005, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.03, ac.currentTime, 0.1);
-                    console.log('  ✓ Limiter: -3.0dB ceiling, 20:1 (LOUD)');
+                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.08, ac.currentTime, 0.1);
+                    console.log('  ✓ Limiter: -1.0dBTP ceiling (broadcast standard)');
                 }
 
-                // 4. MAKEUP GAIN - SIGNIFICANT boost to restore loudness
-                if (window.makeupGain) {
-                    const makeupDB = 6.0; // +6dB makeup for LOUD mastered sound
-                    const makeupLinear = Math.pow(10, makeupDB / 20);
-                    window.makeupGain.gain.setTargetAtTime(makeupLinear, ac.currentTime, 0.1);
-                    console.log('  ✓ Makeup Gain: +6.0dB (DRAMATIC)');
-                }
+                // 4. MAKEUP GAIN - Calculated based on LUFS target
+                // Gain is calculated later based on measured vs target LUFS
+                console.log('  ✓ Makeup Gain: Will be set by LUFS targeting');
 
-                // 5. STEREO WIDTH - WIDE stereo image
+                // 5. STEREO WIDTH - Subtle enhancement
                 if (window.sideChannel) {
-                    window.sideChannel.gain.setTargetAtTime(1.35, ac.currentTime, 0.1);
-                    console.log('  ✓ Stereo Width: +35% wider (DRAMATIC)');
+                    window.sideChannel.gain.setTargetAtTime(1.1, ac.currentTime, 0.1);
+                    console.log('  ✓ Stereo Width: +10% (subtle)');
                 }
 
-                // 6. TRANSIENT SHAPER - PUNCHY attack
+                // 6. TRANSIENT SHAPER - Subtle punch
                 if (window.transientAttackGain) {
-                    window.transientAttackGain.gain.setTargetAtTime(1.5, ac.currentTime, 0.1);
-                    console.log('  ✓ Transient Attack: +50% (PUNCHY)');
+                    window.transientAttackGain.gain.setTargetAtTime(1.15, ac.currentTime, 0.1);
+                    console.log('  ✓ Transient Attack: +15% (punch)');
                 }
 
                 console.log('✅ Mastering chain applied - YOU SHOULD HEAR THE DIFFERENCE!');
@@ -15770,8 +15759,9 @@
                     console.log('🔊 SWITCHED TO MASTERED AUDIO - Dry: OFF, Wet: ON');
                 }
 
-                // Get current LUFS from locked meters or real-time measurement
-                const currentLUFS = integratedLUFS || -14;
+                // Get input LUFS from stored measurement (measured when file was loaded)
+                const currentLUFS = window.originalInputLUFS || integratedLUFS || -18;
+                console.log('📊 Input LUFS for gain calc:', currentLUFS);
 
                 // Get platform target
                 const platformBtn = document.querySelector('.selector-btn[data-platform].active');
@@ -15780,17 +15770,17 @@
                 if (platform === 'apple' || platform === 'podcast') targetLUFS = -16.0;
                 else targetLUFS = -14.0;
 
-                // Calculate gain adjustment needed
+                // Calculate gain adjustment needed to reach target LUFS
                 const gainAdjustmentDB = targetLUFS - currentLUFS;
-                const clampedGainDB = Math.max(-12, Math.min(12, gainAdjustmentDB));
+                // Clamp to reasonable range (-6 to +8 dB for mastering)
+                const clampedGainDB = Math.max(-6, Math.min(8, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
-                // Apply gain adjustment (use window.masterGain for global access)
-                const mg = window.masterGain || masterGain;
-                const ac = window.audioContext || audioContext;
-                if (mg && ac && Math.abs(gainAdjustmentDB) > 0.5) {
-                    mg.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
-                    console.log(`🎯 AI Master: Adjusting gain ${gainAdjustmentDB > 0 ? '+' : ''}${gainAdjustmentDB.toFixed(2)} dB to reach ${targetLUFS} LUFS`);
+                // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
+                const mkGain = window.makeupGain || makeupGain;
+                if (mkGain && ac) {
+                    mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
+                    console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (${clampedGainDB > 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB makeup)`);
                 }
 
                 // Auto LUFS Compensation is DISABLED - gain is set once here, not continuously
