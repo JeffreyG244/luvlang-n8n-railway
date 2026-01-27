@@ -5433,8 +5433,9 @@
                 }
 
                 window.truePeakValue = 0;
-                window.truePeakHistory = new Float32Array(64); // Rolling history for accuracy
+                window.truePeakHistory = new Float32Array(16); // Shorter history for faster response
                 window.truePeakHistoryIdx = 0;
+                window.silenceCounter = 0;
 
                 window.getTruePeak = () => {
                     const data = new Float32Array(truePeakAnalyser.fftSize);
@@ -5464,6 +5465,19 @@
                         }
                     }
 
+                    // Detect silence and reset history when audio stops
+                    if (maxPeak < 0.0001) {
+                        window.silenceCounter++;
+                        // After ~10 frames of silence, clear history
+                        if (window.silenceCounter > 10) {
+                            window.truePeakHistory.fill(0);
+                            window.truePeakValue = 0;
+                            return -100; // Return -∞
+                        }
+                    } else {
+                        window.silenceCounter = 0;
+                    }
+
                     // Store in rolling history for peak hold
                     window.truePeakHistory[window.truePeakHistoryIdx] = maxPeak;
                     window.truePeakHistoryIdx = (window.truePeakHistoryIdx + 1) % window.truePeakHistory.length;
@@ -5475,7 +5489,7 @@
                     // Return in dBTP (True Peak)
                     return historyMax > 0.00001 ? 20 * Math.log10(historyMax) : -100;
                 };
-                console.log('✅ ITU-R BS.1770-5 True Peak Detector (4x oversampling, sinc interpolation)');
+                console.log('✅ ITU-R BS.1770-5 True Peak Detector (4x oversampling, auto-reset on silence)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // 🏆 LEGENDARY MASTERING FEATURES
