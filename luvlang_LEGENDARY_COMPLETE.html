@@ -2752,16 +2752,19 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="complete-actions" style="display: flex; gap: 12px; justify-content: center; margin-bottom: 15px;">
-                <button class="complete-btn secondary" id="overlayAbCompareBtn" onclick="toggleABCompare()" style="padding: 12px 20px;">
-                    <span class="btn-icon">🔀</span>
-                    <span>A/B Compare</span>
-                </button>
-                <button class="complete-btn secondary" id="playMasteredBtn" onclick="playMasteredPreview()" style="padding: 12px 20px;">
-                    <span class="btn-icon">▶</span>
-                    <span>Play Mastered</span>
-                </button>
+            <!-- Audio Toggle Switch -->
+            <div class="audio-toggle-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span id="toggleLabelUnmastered" style="font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.5); transition: all 0.3s;">UNMASTERED</span>
+                    <label class="audio-toggle-switch" style="position: relative; display: inline-block; width: 70px; height: 34px;">
+                        <input type="checkbox" id="audioToggleSwitch" checked onchange="handleAudioToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                        <span class="toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #ff9a56, #ff5733); transition: 0.3s; border-radius: 34px;">
+                            <span style="position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(36px);"></span>
+                        </span>
+                    </label>
+                    <span id="toggleLabelMastered" style="font-size: 0.9rem; font-weight: 700; color: #ff9a56; transition: all 0.3s;">MASTERED</span>
+                </div>
+                <div id="toggleStatusText" style="margin-top: 8px; font-size: 0.8rem; color: #ff9a56; font-weight: 600;">▶ Playing Mastered Track</div>
             </div>
 
             <button class="complete-btn primary export-cta" onclick="closeMasteringComplete()" style="width: 100%; padding: 14px; font-size: 1rem;">
@@ -2786,6 +2789,19 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        /* Audio Toggle Switch Styles */
+        .audio-toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #ff9a56, #ff5733);
+        }
+        .audio-toggle-switch input:not(:checked) + .toggle-slider {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .audio-toggle-switch input:checked + .toggle-slider span {
+            transform: translateX(36px);
+        }
+        .audio-toggle-switch input:not(:checked) + .toggle-slider span {
+            transform: translateX(0);
         }
     </style>
 
@@ -2862,10 +2878,18 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 12px; justify-content: center;">
-                <button class="guide-btn-secondary" onclick="previewOriginal()" style="padding: 12px 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600;">
-                    🔀 Hear Original
-                </button>
+            <!-- Genre Preview Toggle -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="genreToggleLabelOrig" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5);">ORIGINAL</span>
+                    <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
+                        <input type="checkbox" id="genrePreviewToggle" checked onchange="handleGenrePreviewToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #00d4ff, #b84fff); transition: 0.3s; border-radius: 30px;">
+                            <span style="position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(30px);"></span>
+                        </span>
+                    </label>
+                    <span id="genreToggleLabelPreview" style="font-size: 0.85rem; font-weight: 700; color: #00d4ff;">PREVIEW</span>
+                </div>
                 <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="padding: 12px 32px; background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 700; opacity: 0.5;" disabled>
                     ⚡ Start Mastering
                 </button>
@@ -3364,11 +3388,11 @@
             <!-- QUICK ACTIONS -->
             <div class="section-title">Quick Actions</div>
             <button class="action-btn action-btn-secondary" id="abCompareBtn" disabled style="background: linear-gradient(135deg, #ff9a56, #ff5733);">
-                🔀 MASTERED
+                MASTERED
             </button>
-            <button class="action-btn action-btn-secondary" id="loudnessMatchBtn" disabled style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                🎚️ MATCHED OFF
-            </button>
+            <div id="abStatusText" style="text-align: center; font-size: 0.75rem; margin-top: 5px; padding: 4px 8px; border-radius: 4px; background: rgba(255,136,0,0.2); color: #ff9a56; display: none;">
+                ▶ Playing Mastered Track
+            </div>
             <button class="action-btn action-btn-secondary" id="resetBtn" disabled>
                 🔄 Reset All
             </button>
@@ -5016,13 +5040,14 @@
 
                 console.log('✅ Transient Shaper created (Attack/Sustain parallel compression)');
 
-                // ⚡ LIMITER - Professional True Peak Protection (Industry Standard)
+                // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
+                // Musical, transparent limiting - catches peaks without pumping
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard (AES/SMPTE broadcast)
-                limiter.knee.value = 2.0;           // Soft knee for transparency
+                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard (broadcast safe ceiling)
+                limiter.knee.value = 3.0;           // Soft knee for transparency (Bob Ludwig style)
                 limiter.ratio.value = 20;           // Brick-wall limiting ratio
-                limiter.attack.value = 0.001;       // Ultra-fast attack (1ms) for peak control
-                limiter.release.value = 0.08;       // 80ms release (fast for transparency)
+                limiter.attack.value = 0.0005;      // 0.5ms attack (fast but not harsh)
+                limiter.release.value = 0.150;      // 150ms release (musical, prevents pumping)
 
                 // Makeup Gain (AI Mastering - BEFORE limiter for proper peak protection)
                 makeupGain = audioContext.createGain();
@@ -6569,9 +6594,10 @@
                 const wetGain = audioContext.createGain();
                 const outputMixer = audioContext.createGain();
 
-                // START WITH DRY (raw audio, no processing)
-                dryGain.gain.value = 1.0;  // Dry = ON (user hears ORIGINAL track on load)
-                wetGain.gain.value = 0.0;  // Wet = OFF (mastering engages AFTER processing completes)
+                // START WITH ORIGINAL AUDIO (no processing)
+                // dryGain = DIRECT path (original), wetGain = PROCESSED path (mastered)
+                dryGain.gain.value = 1.0;  // Original path ON (user hears ORIGINAL track on load)
+                wetGain.gain.value = 0.0;  // Processed path OFF
                 outputMixer.gain.value = 1.0;
 
                 // Expose globally for A/B control
@@ -6579,8 +6605,12 @@
                 window.wetGain = wetGain;
                 window.isMasteringApplied = false;
 
-                console.log('✅ Bypass system ready - Playing DRY (raw) audio');
-                console.log('   Initial gains: DRY=' + dryGain.gain.value + ', WET=' + wetGain.gain.value);
+                console.log('═══════════════════════════════════════════════════════════════');
+                console.log('🔒 BYPASS SYSTEM INITIALIZED - USER HEARS ORIGINAL AUDIO');
+                console.log('   Original path = ON  (wetGain: ' + wetGain.gain.value + ')');
+                console.log('   Processing path = OFF (dryGain: ' + dryGain.gain.value + ')');
+                console.log('   Click MASTER button to hear processed audio');
+                console.log('═══════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // ⚡ PROFESSIONAL MASTERING SIGNAL CHAIN (WET PATH)
@@ -6785,7 +6815,6 @@
             // Enable controls
             // document.getElementById('autoMasterBtn').disabled = false; // REMOVED: Old AI button removed
             document.getElementById('abCompareBtn').disabled = false;
-            document.getElementById('loudnessMatchBtn').disabled = false;
             document.getElementById('resetBtn').disabled = false;
             document.getElementById('exportBtn').disabled = false;
             document.getElementById('savePresetBtn').disabled = false;
@@ -6808,10 +6837,22 @@
                 // AUTO-PLAY: Start playback automatically when file is loaded
                 setTimeout(() => {
                     const startPlayback = () => {
+                        // ═══════════════════════════════════════════════════════════════
+                        // CRITICAL FIX: FORCE ORIGINAL AUDIO ON INITIAL LOAD
+                        // User MUST hear their ORIGINAL track first - NO PROCESSING!
+                        // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
+                        // ═══════════════════════════════════════════════════════════════
+                        if (window.dryGain && window.wetGain) {
+                            window.dryGain.gain.value = 1.0;  // Original path ON
+                            window.wetGain.gain.value = 0.0;  // Processed path OFF
+                            window.isMasteringApplied = false;
+                            console.log('🔒 BYPASS ENFORCED: Playing ORIGINAL audio');
+                        }
+
                         audioElement.play().then(() => {
                             playBtn.textContent = '⏸️';
                             isPlaying = true;
-                            console.log('🎵 Auto-play started');
+                            console.log('🎵 Auto-play started - Hearing ORIGINAL UNPROCESSED audio');
                         }).catch(err => {
                             console.log('⚠️ Auto-play prevented by browser:', err.message);
                         });
@@ -7069,13 +7110,13 @@
                 const offlineMakeupGain = offlineContext.createGain();
                 offlineMakeupGain.gain.value = Math.pow(10, makeupGainDB / 20);
 
-                // 3. Limiter (brick-wall peak protection) - matches live chain settings
+                // 3. Limiter (Bob Ludwig style) - matches live chain settings
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
                 offlineLimiter.threshold.value = limiterThresholdDB;
-                offlineLimiter.knee.value = 2.0;    // Soft knee for transparency
+                offlineLimiter.knee.value = 3.0;    // Soft knee for transparency (Bob Ludwig)
                 offlineLimiter.ratio.value = 20;
-                offlineLimiter.attack.value = 0.001;
-                offlineLimiter.release.value = 0.08; // 80ms - fast, transparent
+                offlineLimiter.attack.value = 0.0005;  // 0.5ms attack
+                offlineLimiter.release.value = 0.15;   // 150ms musical release
 
                 // Connect the chain: Source → Compressor → Makeup Gain → Limiter → Destination
                 source.connect(offlineCompressor);
@@ -9318,6 +9359,19 @@
                 playBtn.disabled = true;
 
                 try {
+                    // ═══════════════════════════════════════════════════════════════
+                    // CRITICAL FIX: Ensure ORIGINAL audio if mastering not applied
+                    // User hears ORIGINAL audio until they click MASTER button
+                    // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
+                    // ═══════════════════════════════════════════════════════════════
+                    if (!window.isMasteringApplied && window.dryGain && window.wetGain) {
+                        window.dryGain.gain.value = 1.0;  // Original path ON
+                        window.wetGain.gain.value = 0.0;  // Processed path OFF
+                        console.log('🔒 BYPASS ACTIVE: Playing ORIGINAL (no mastering applied yet)');
+                    } else if (window.isMasteringApplied) {
+                        console.log('🎧 MASTERED: Playing processed audio');
+                    }
+
                     // STEP 1: Resume AudioContext (required by browser autoplay policy)
                     if (audioContext && audioContext.state !== 'running') {
                         console.log('⚡ Resuming AudioContext (state:', audioContext.state + ')');
@@ -12481,15 +12535,15 @@
                 }
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                // Apply CONSERVATIVE limiter threshold to ensure peaks stay below -1.0 dBTP
+                // Apply BOB LUDWIG STYLE limiter - transparent, musical limiting at industry standard
                 if (limiter) {
-                    const SAFE_LIMITER_THRESHOLD = -3.0;  // Conservative threshold to ensure output peaks at -1.0 to -2.0 dBTP
-                    limiter.threshold.value = SAFE_LIMITER_THRESHOLD;
-                    limiter.ratio.value = 20;  // Brick-wall limiting
-                    limiter.attack.value = 0.001;  // 1ms attack (fast)
-                    limiter.release.value = 0.100;  // 100ms release
-                    limiter.knee.value = 0;  // Hard knee (no soft transition)
-                    console.log('   ✅ Limiter set to CONSERVATIVE threshold:', SAFE_LIMITER_THRESHOLD, 'dB (ensures -1.0 to -2.0 dBTP output)');
+                    const LIMITER_THRESHOLD = -1.0;  // Industry standard -1.0 dBTP (broadcast safe ceiling)
+                    limiter.threshold.value = LIMITER_THRESHOLD;
+                    limiter.ratio.value = 20;  // Brick-wall limiting for true peak control
+                    limiter.attack.value = 0.0005;  // 0.5ms attack (fast but not harsh)
+                    limiter.release.value = 0.150;  // 150ms release (musical, Bob Ludwig style)
+                    limiter.knee.value = 3;  // Soft knee for transparency
+                    console.log('   ✅ BOB LUDWIG STYLE Limiter: -1.0 dBTP ceiling, musical 150ms release');
                 }
 
                 // CRITICAL: Calculate gain needed to reach target LUFS
@@ -12506,8 +12560,8 @@
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
                 // Calculate maximum gain that won't cause clipping
-                // Target: Leave MORE headroom for limiter at -4.0 dBTP (very conservative)
-                const peakTargetBeforeLimiter = -4.0;
+                // BOB LUDWIG APPROACH: Let limiter handle peaks, target -1.5 dBTP before limiting
+                const peakTargetBeforeLimiter = -1.5;  // Trust the limiter to catch peaks
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS gain and peak-based gain
@@ -12540,7 +12594,8 @@
 
                 if (Math.abs(safeGain) > 0.1) {
                     // CRITICAL SAFETY: Hard limit to prevent over-loud/clipping audio
-                    const MAX_SAFE_GAIN_DB = 6.0;  // Never boost more than +6 dB
+                    // Bob Ludwig approach: Allow up to +9 dB for quieter tracks, limiter handles peaks
+                    const MAX_SAFE_GAIN_DB = 9.0;  // Allow up to +9 dB boost (limiter catches peaks)
                     if (safeGain > MAX_SAFE_GAIN_DB) {
                         console.warn('🚨 SAFETY LIMIT: Capping gain at +' + MAX_SAFE_GAIN_DB + ' dB (requested: +' + safeGain.toFixed(1) + ' dB)');
                         safeGain = MAX_SAFE_GAIN_DB;
@@ -12890,28 +12945,18 @@
             abCompareSavedMakeupGain = null; // Clear saved makeup gain
             // Ensure A/B button shows MASTERED
             const abBtn = document.getElementById('abCompareBtn');
-            abBtn.textContent = '🔀 MASTERED';
+            abBtn.textContent = 'MASTERED';
             abBtn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
 
-            // Reset Loudness Match if active
-            if (loudnessMatchEnabled) {
-                document.getElementById('loudnessMatchBtn').click(); // Turn off
-            }
-            // Ensure Loudness Match button shows MATCHED OFF
-            const lmBtn = document.getElementById('loudnessMatchBtn');
-            lmBtn.textContent = '🎚️ MATCHED OFF';
-            lmBtn.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)';
 
             console.log('🔄 All settings reset to default (including Quick Actions)');
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // A/B COMPARE BUTTON - Toggle between processed and original
-        // 🏆 LEVEL-MATCHED BYPASS - Professional objective comparison
+        // A/B COMPARE BUTTON - Simple toggle between MASTERED and UNMASTERED
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // The human ear thinks "Louder is Better." To avoid being fooled by volume,
-        // we automatically compensate the processed signal to match the original loudness
-        // when comparing. This lets you hear the QUALITY differences, not just volume.
+        // MASTERED = processed audio at target LUFS (-14 or -16)
+        // UNMASTERED = original audio as uploaded (no processing)
         let abCompareSavedGain = null;  // Master gain saved on first A/B toggle
         let abCompareSavedMakeupGain = null;  // Makeup gain saved on first A/B toggle
 
@@ -12921,7 +12966,7 @@
             // Check if we have a valid source
             if (!sourceNode) {
                 console.warn('🔀 A/B: No sourceNode available');
-                btn.textContent = '🔀 MASTERED';
+                btn.textContent = 'MASTERED';
                 abCompareMode = false;
                 return;
             }
@@ -12946,13 +12991,13 @@
                     console.log('   Master:', abCompareSavedGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedGain)).toFixed(1) + ' dB)');
                     console.log('   Makeup:', abCompareSavedMakeupGain.toFixed(3), '(' + (20 * Math.log10(abCompareSavedMakeupGain)).toFixed(1) + ' dB)');
 
-                    // Switch to DRY path (original unprocessed audio)
-                    // Using DRY/WET gains instead of sourceNode.disconnect() to prevent audio cutout
+                    // Switch to ORIGINAL audio path
+                    // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                     const ac = window.audioContext || audioContext;
                     if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // DRY ON
-                        window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // WET OFF
-                        console.log('   🎚️ Switched to DRY path (original audio)');
+                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Original ON
+                        window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Processed OFF
+                        console.log('   🎚️ Switched to ORIGINAL audio');
                     }
 
                     // Calculate and display PRECISE dB difference
@@ -12966,8 +13011,25 @@
                     }
 
                     const diffText = gainDiffDB !== 0 ? ` (${gainDiffDB > 0 ? '+' : ''}${gainDiffDB.toFixed(1)} dB)` : '';
-                    btn.textContent = '🔀 ORIGINAL' + diffText;
-                    btn.style.background = 'linear-gradient(135deg, #43e97b, #38f9d7)';
+                    btn.textContent = 'UNMASTERED';
+                    btn.style.background = 'rgba(255,255,255,0.1)';
+                    btn.style.color = '#ffffff';
+                    btn.style.border = '1px solid rgba(255,255,255,0.3)';
+                    btn.classList.remove('active');
+
+                    // Update status text
+                    const statusText = document.getElementById('abStatusText');
+                    if (statusText) {
+                        statusText.textContent = '▶ Playing Unmastered Track';
+                        statusText.style.background = 'rgba(255,255,255,0.1)';
+                        statusText.style.color = '#ffffff';
+                        statusText.style.display = 'block';
+                    }
+
+                    // Show notification to user
+                    if (typeof showToast === 'function') {
+                        showToast('▶ Playing Unmastered Track', 'info');
+                    }
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     console.log('🔀 A/B Compare: ORIGINAL MODE (B)');
@@ -12979,20 +13041,20 @@
                 } catch (e) {
                     console.error('🔀 A/B bypass error:', e);
                     // Reset button state on error
-                    btn.textContent = '🔀 MASTERED';
+                    btn.textContent = 'MASTERED';
                     btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
                     abCompareMode = false;
                 }
             } else {
                 // Mode A: MASTERED - hear with ALL AI processing applied
                 try {
-                    // Switch to WET path (mastered processed audio)
-                    // Using DRY/WET gains instead of sourceNode reconnect to prevent audio cutout
+                    // Switch to MASTERED audio path
+                    // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                     const ac = window.audioContext || audioContext;
                     if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // DRY OFF
-                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // WET ON
-                        console.log('   🎚️ Switched to WET path (mastered audio)');
+                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Original OFF
+                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Processed ON
+                        console.log('   🎚️ Switched to MASTERED audio');
                     }
 
                     // Restore MASTERED gains (both master and makeup)
@@ -13023,8 +13085,25 @@
                     }
 
                     const gainText = totalGainDB !== 0 ? ` (${totalGainDB > 0 ? '+' : ''}${totalGainDB.toFixed(1)} dB)` : '';
-                    btn.textContent = '🔀 MASTERED' + gainText;
+                    btn.textContent = 'MASTERED' + gainText;
                     btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    btn.style.color = '#ffffff';
+                    btn.style.border = 'none';
+                    btn.classList.add('active');
+
+                    // Update status text
+                    const statusText = document.getElementById('abStatusText');
+                    if (statusText) {
+                        statusText.textContent = '▶ Playing Mastered Track';
+                        statusText.style.background = 'rgba(255,136,0,0.2)';
+                        statusText.style.color = '#ff9a56';
+                        statusText.style.display = 'block';
+                    }
+
+                    // Show notification to user
+                    if (typeof showToast === 'function') {
+                        showToast('▶ Playing Mastered Track', 'success');
+                    }
 
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                     console.log('🔀 A/B Compare: MASTERED MODE (A)');
@@ -13039,7 +13118,7 @@
                 } catch (e) {
                     console.error('🔀 A/B reconnect error:', e);
                     // Reset button state on error
-                    btn.textContent = '🔀 MASTERED';
+                    btn.textContent = 'MASTERED';
                     btn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
                     abCompareMode = false;
                 }
@@ -13078,125 +13157,8 @@
             }
         });
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // LOUDNESS MATCH BUTTON - Professional A/B comparison at matched loudness
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        let loudnessMatchEnabled = false;
-        let savedMasterGain = 1.0;
-        let savedMakeupGain = 1.0;
-
-        document.getElementById('loudnessMatchBtn').addEventListener('click', function() {
-            loudnessMatchEnabled = !loudnessMatchEnabled;
-            const btn = this;
-
-            if (loudnessMatchEnabled) {
-                // ACCURATE LOUDNESS MATCHING using measured LUFS values
-
-                // Check if we have audio loaded
-                if (!audioBuffer) {
-                    alert('⚠️ Please upload an audio file first.');
-                    loudnessMatchEnabled = false;
-                    return;
-                }
-
-                // If originalInputLUFS is not set, try multiple fallback methods
-                if (originalInputLUFS === null) {
-                    // Fallback 1: Try to get from analysisResults
-                    if (window.analysisResults && window.analysisResults.integratedLUFS && isFinite(window.analysisResults.integratedLUFS)) {
-                        originalInputLUFS = window.analysisResults.integratedLUFS;
-                        console.log('📊 Using analysis results for original LUFS:', originalInputLUFS.toFixed(1), 'LUFS');
-                    }
-                    // Fallback 2: Estimate from current LUFS and makeup gain
-                    else if (currentIntegratedLUFS && makeupGain) {
-                        const makeupGainDB = 20 * Math.log10(makeupGain.gain.value);
-                        // Estimate: original ≈ current - makeup gain
-                        originalInputLUFS = currentIntegratedLUFS - makeupGainDB;
-                        console.log('⚠️ Estimating original LUFS from current state:', originalInputLUFS.toFixed(1), 'LUFS');
-                        console.log('   (Current:', currentIntegratedLUFS.toFixed(1), 'LUFS, Makeup:', makeupGainDB.toFixed(1), 'dB)');
-                    }
-                    // Fallback 3: Use a conservative default assumption
-                    else {
-                        // Most unmastered audio is around -18 to -23 LUFS
-                        // Assume the audio was quieter than current output
-                        const currentOutput = currentIntegratedLUFS || smoothedLUFS || -14;
-                        originalInputLUFS = currentOutput - 8; // Conservative 8 dB quieter estimate
-                        console.log('⚠️ No stored original LUFS - using conservative estimate:', originalInputLUFS.toFixed(1), 'LUFS');
-                        console.log('   (Based on current output:', currentOutput.toFixed(1), 'LUFS)');
-                        console.log('   For better accuracy, reload your audio file');
-                    }
-                }
-
-                // Validate that we have a reasonable original LUFS value
-                if (!isFinite(originalInputLUFS) || originalInputLUFS > 0 || originalInputLUFS < -70) {
-                    console.error('❌ Invalid original LUFS value:', originalInputLUFS);
-                    alert('⚠️ Cannot calculate loudness match.\n\nOriginal loudness is unknown. Please reload your audio file for accurate matching.');
-                    loudnessMatchEnabled = false;
-                    return;
-                }
-
-                // Save current gain values BEFORE applying loudness match
-                savedMasterGain = masterGain ? masterGain.gain.value : 1.0;
-                savedMakeupGain = makeupGain ? makeupGain.gain.value : 1.0;
-
-                // Get current output LUFS (use integrated LUFS or smoothed LUFS)
-                const currentOutputLUFS = currentIntegratedLUFS || smoothedLUFS || -14;
-
-                // Calculate PRECISE gain adjustment needed to match original loudness
-                // Formula: If output is louder, reduce gain. If quieter, increase gain.
-                const lufsDifference = currentOutputLUFS - originalInputLUFS;
-                const matchGainDB = -lufsDifference; // Negate because we want to compensate
-
-                // Safety check: Don't boost more than +6 dB or reduce more than -20 dB
-                const safeMatchGainDB = Math.max(-20, Math.min(6, matchGainDB));
-                const matchGainLinear = Math.pow(10, safeMatchGainDB / 20);
-
-                // Apply loudness matching via masterGain (after limiter)
-                if (masterGain) {
-                    masterGain.gain.setValueAtTime(matchGainLinear, audioContext.currentTime);
-                }
-
-                // Display PRECISE gain adjustment on button
-                const matchText = safeMatchGainDB !== 0 ? ` (${safeMatchGainDB > 0 ? '+' : ''}${safeMatchGainDB.toFixed(1)} dB)` : '';
-                btn.textContent = '🎚️ MATCHED ON' + matchText;
-                btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)'; // Green
-
-                // Determine measurement accuracy
-                let accuracyLevel = '✅ PRECISE';
-                if (window.analysisResults && window.analysisResults.integratedLUFS) {
-                    accuracyLevel = '✅ ITU-R BS.1770-4 MEASURED';
-                }
-
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎚️ LOUDNESS MATCHING: ' + accuracyLevel);
-                console.log('   📊 Original Input: ' + originalInputLUFS.toFixed(1) + ' LUFS');
-                console.log('   📊 Current Output: ' + currentOutputLUFS.toFixed(1) + ' LUFS');
-                console.log('   📊 Difference: ' + lufsDifference.toFixed(1) + ' LU');
-                console.log('   🎛️ Compensation: ' + (safeMatchGainDB > 0 ? '+' : '') + safeMatchGainDB.toFixed(1) + ' dB');
-                if (safeMatchGainDB !== matchGainDB) {
-                    console.log('   ⚠️ Clamped for safety (calc: ' + matchGainDB.toFixed(1) + ' dB)');
-                }
-                console.log('   ✅ Output now matches original loudness');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            } else {
-                // Restore original gain values
-                if (masterGain) {
-                    masterGain.gain.setValueAtTime(savedMasterGain, audioContext.currentTime);
-                }
-
-                btn.textContent = '🎚️ MATCHED OFF';
-                btn.style.background = 'linear-gradient(135deg, #9b59b6, #8e44ad)'; // Purple
-
-                // Calculate what the difference was
-                const currentLUFS = currentIntegratedLUFS || smoothedLUFS || -14;
-                const originalLUFS = originalInputLUFS || currentLUFS;
-                const diffLU = currentLUFS - originalLUFS;
-
-                console.log('🎚️ Loudness Match OFF - Restored full mastering level');
-                console.log('   📊 Original: ' + originalLUFS.toFixed(1) + ' LUFS');
-                console.log('   📊 Mastered: ' + currentLUFS.toFixed(1) + ' LUFS');
-                console.log('   📊 Gain from mastering: ' + (diffLU > 0 ? '+' : '') + diffLU.toFixed(1) + ' LU');
-            }
-        });
+        // Loudness Match removed - mastering automatically targets -14/-16 LUFS
+        // Simple toggle between UNMASTERED (original) and MASTERED (processed at target LUFS)
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // TOAST NOTIFICATION - Simple feedback for user
@@ -13681,9 +13643,9 @@
                 offlineMakeupGain.gain.value = makeupGain ? makeupGain.gain.value : 1.0;
                 console.log('   5. Makeup Gain: ' + (20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1) + 'dB');
 
-                // STAGE 6: TRANSPARENT LIMITER (brick-wall peak protection)
+                // STAGE 6: BOB LUDWIG STYLE LIMITER (musical peak protection)
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
-                offlineLimiter.threshold.value = limiter ? limiter.threshold.value : -2.0;
+                offlineLimiter.threshold.value = limiter ? limiter.threshold.value : -1.0;
                 offlineLimiter.ratio.value = 20;
                 offlineLimiter.attack.value = limiter ? limiter.attack.value : 0.003;
                 offlineLimiter.release.value = limiter ? limiter.release.value : 0.15;
@@ -15661,13 +15623,14 @@
                     console.log('  ✓ Compressor: -24dB threshold, 2:1 ratio (glue)');
                 }
 
-                // 3. LIMITER - Professional True Peak (-1dBTP)
+                // 3. LIMITER - Bob Ludwig Style True Peak (-1dBTP)
                 if (window.limiter) {
                     window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.08, ac.currentTime, 0.1);
-                    console.log('  ✓ Limiter: -1.0dBTP ceiling (broadcast standard)');
+                    window.limiter.attack.setTargetAtTime(0.0005, ac.currentTime, 0.1);  // 0.5ms attack
+                    window.limiter.release.setTargetAtTime(0.15, ac.currentTime, 0.1);   // 150ms musical release
+                    window.limiter.knee.setTargetAtTime(3, ac.currentTime, 0.1);         // Soft knee
+                    console.log('  ✓ Limiter: -1.0dBTP ceiling (Bob Ludwig style, 150ms release)');
                 }
 
                 // 4. MAKEUP GAIN - Calculated based on LUFS target
@@ -15689,13 +15652,19 @@
                 console.log('✅ Mastering chain applied - YOU SHOULD HEAR THE DIFFERENCE!');
 
                 // ═══════════════════════════════════════════════════════════════
-                // SWITCH FROM DRY TO WET - Now hearing the mastered version!
+                // SWITCH TO MASTERED AUDIO - Now hearing the processed version!
+                // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                 // ═══════════════════════════════════════════════════════════════
                 if (window.dryGain && window.wetGain) {
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Fade out dry
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Fade in wet
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Original path OFF
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Processed path ON
                     window.isMasteringApplied = true;
-                    console.log('🔊 SWITCHED TO MASTERED AUDIO - Dry: OFF, Wet: ON');
+                    console.log('═══════════════════════════════════════════════════════════════');
+                    console.log('🔊 MASTERING COMPLETE - SWITCHED TO PROCESSED AUDIO');
+                    console.log('   Processing path = ON  (dryGain: 1) → Mastered audio ACTIVE');
+                    console.log('   Original path = OFF (wetGain: 0) → Original audio MUTED');
+                    console.log('   Use A/B button to compare with original');
+                    console.log('═══════════════════════════════════════════════════════════════');
                 }
 
                 // Get input LUFS from stored measurement (measured when file was loaded)
@@ -16461,28 +16430,69 @@
             window.lastMasteredLUFS = afterLUFS;
 
             // ═══════════════════════════════════════════════════════════════════════════
-            // CRITICAL: Switch to WET (mastered) audio so user hears the difference!
+            // CRITICAL: Switch to MASTERED audio so user hears the difference!
+            // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
             // ═══════════════════════════════════════════════════════════════════════════
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
                 // Smooth crossfade to mastered audio
-                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // DRY OFF
-                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // WET ON
+                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Original path OFF
+                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Processed path ON
                 window.isMasteringApplied = true;
                 window.abCompareMode = false;  // Ensure A/B state is MASTERED mode
-                console.log('🔊 Switched to MASTERED audio - DRY:0, WET:1');
+                console.log('═══════════════════════════════════════════════════════════════');
+                console.log('🎧 RESULTS: Now playing MASTERED audio');
+                console.log('═══════════════════════════════════════════════════════════════');
+
+                // Show notification to user
+                if (typeof showToast === 'function') {
+                    showToast('🎧 Now playing: MASTERED - Use A/B button to compare!', 'success');
+                }
             }
 
-            // Update A/B button to reflect MASTERED state
+            // Update A/B button to reflect MASTERED state (button LIT when mastered)
             const abBtn = document.getElementById('abCompareBtn');
             if (abBtn) {
-                abBtn.textContent = '🔀 MASTERED';
-                abBtn.classList.remove('active');
+                abBtn.textContent = 'MASTERED';
+                abBtn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                abBtn.style.color = '#ffffff';
+                abBtn.style.border = 'none';
+                abBtn.classList.add('active');
             }
             const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
             if (exportBarAbBtn) {
-                exportBarAbBtn.textContent = 'A/B';
-                exportBarAbBtn.classList.remove('active');
+                exportBarAbBtn.textContent = 'MASTERED';
+                exportBarAbBtn.classList.add('active');
+            }
+
+            // Show status text
+            const statusText = document.getElementById('abStatusText');
+            if (statusText) {
+                statusText.textContent = '▶ Playing Mastered Track';
+                statusText.style.background = 'rgba(255,136,0,0.2)';
+                statusText.style.color = '#ff9a56';
+                statusText.style.display = 'block';
+            }
+
+            // Set the overlay toggle switch to MASTERED
+            const audioToggle = document.getElementById('audioToggleSwitch');
+            if (audioToggle) {
+                audioToggle.checked = true; // MASTERED
+            }
+            const labelUnmastered = document.getElementById('toggleLabelUnmastered');
+            const labelMastered = document.getElementById('toggleLabelMastered');
+            const toggleStatusText = document.getElementById('toggleStatusText');
+            if (labelUnmastered) {
+                labelUnmastered.style.color = 'rgba(255,255,255,0.5)';
+                labelUnmastered.style.fontWeight = '600';
+            }
+            if (labelMastered) {
+                labelMastered.style.color = '#ff9a56';
+                labelMastered.style.fontWeight = '700';
+            }
+            if (toggleStatusText) {
+                toggleStatusText.textContent = '▶ Playing Mastered Track';
+                toggleStatusText.style.color = '#ff9a56';
             }
 
             // A/B Modal removed per user request - go straight to results
@@ -16603,17 +16613,18 @@
         }
 
         // Apply the actual audio state
+        // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
         function applyABState() {
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
                 if (window.abCompareMode) {
-                    // Original (dry)
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);
+                    // Unmastered audio
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);  // Unmastered ON
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);  // Mastered OFF
                 } else {
-                    // Mastered (wet)
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);
+                    // Mastered audio
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);  // Unmastered OFF
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);  // Mastered ON
                 }
             }
         }
@@ -16733,89 +16744,212 @@
             const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
             const overlayAbBtn = document.getElementById('overlayAbCompareBtn');
 
+            // isActive = true means playing UNMASTERED (original), false means playing MASTERED
+            // Button LIT = MASTERED, Button NOT lit = UNMASTERED
             if (abBtn) {
-                abBtn.classList.toggle('active', isActive);
-                abBtn.textContent = isActive ? '🔀 ORIGINAL' : '🔀 MASTERED';
-                abBtn.style.background = isActive
-                    ? 'linear-gradient(135deg, #43e97b, #38f9d7)'
-                    : 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                abBtn.classList.toggle('active', !isActive);  // Lit when MASTERED
+                if (isActive) {
+                    // Playing UNMASTERED - white text, not lit
+                    abBtn.textContent = 'UNMASTERED';
+                    abBtn.style.background = 'rgba(255,255,255,0.1)';
+                    abBtn.style.color = '#ffffff';
+                    abBtn.style.border = '1px solid rgba(255,255,255,0.3)';
+                } else {
+                    // Playing MASTERED - gradient, lit
+                    abBtn.textContent = 'MASTERED';
+                    abBtn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abBtn.style.color = '#ffffff';
+                    abBtn.style.border = 'none';
+                }
             }
             if (exportBarAbBtn) {
-                exportBarAbBtn.classList.toggle('active', isActive);
-                exportBarAbBtn.textContent = isActive ? 'Original' : 'A/B';
+                exportBarAbBtn.classList.toggle('active', !isActive);
+                exportBarAbBtn.textContent = isActive ? 'UNMASTERED' : 'MASTERED';
             }
             if (overlayAbBtn) {
-                overlayAbBtn.classList.toggle('active', isActive);
-                overlayAbBtn.textContent = isActive ? '🔀 Hear Original' : '🔀 Hear Mastered';
+                overlayAbBtn.classList.toggle('active', !isActive);
+                overlayAbBtn.textContent = isActive ? 'UNMASTERED' : 'MASTERED';
             }
 
-            // Toggle between DRY (original) and WET (mastered) using gain nodes
+            // Update status text below button
+            const statusText = document.getElementById('abStatusText');
+            if (statusText) {
+                if (isActive) {
+                    statusText.textContent = '▶ Playing Unmastered Track';
+                    statusText.style.background = 'rgba(255,255,255,0.1)';
+                    statusText.style.color = '#ffffff';
+                } else {
+                    statusText.textContent = '▶ Playing Mastered Track';
+                    statusText.style.background = 'rgba(255,136,0,0.2)';
+                    statusText.style.color = '#ff9a56';
+                }
+                statusText.style.display = 'block';
+            }
+
+            // Sync the overlay toggle switch
+            const audioToggle = document.getElementById('audioToggleSwitch');
+            if (audioToggle) {
+                audioToggle.checked = !isActive; // checked = MASTERED
+                // Update toggle labels
+                const labelUnmastered = document.getElementById('toggleLabelUnmastered');
+                const labelMastered = document.getElementById('toggleLabelMastered');
+                const toggleStatusText = document.getElementById('toggleStatusText');
+                if (labelUnmastered) {
+                    labelUnmastered.style.color = isActive ? '#ffffff' : 'rgba(255,255,255,0.5)';
+                    labelUnmastered.style.fontWeight = isActive ? '700' : '600';
+                }
+                if (labelMastered) {
+                    labelMastered.style.color = isActive ? 'rgba(255,255,255,0.5)' : '#ff9a56';
+                    labelMastered.style.fontWeight = isActive ? '600' : '700';
+                }
+                if (toggleStatusText) {
+                    toggleStatusText.textContent = isActive ? '▶ Playing Unmastered Track' : '▶ Playing Mastered Track';
+                    toggleStatusText.style.color = isActive ? '#ffffff' : '#ff9a56';
+                }
+            }
+
+            // Show notification to user
+            if (typeof showToast === 'function') {
+                if (isActive) {
+                    showToast('▶ Playing Unmastered Track', 'info');
+                } else {
+                    showToast('▶ Playing Mastered Track', 'success');
+                }
+            }
+
+            // Toggle between UNMASTERED and MASTERED using gain nodes
+            // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
                 if (isActive) {
-                    // Switch to ORIGINAL (dry) - raw unprocessed audio
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
-                    console.log('🔀 A/B: Playing ORIGINAL (dry, no processing)');
+                    // Switch to UNMASTERED - raw unprocessed audio
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Unmastered ON
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Mastered OFF
+                    console.log('🔀 Playing UNMASTERED (no processing)');
                 } else {
-                    // Switch to MASTERED (wet) - fully processed audio
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
-                    console.log('🔀 A/B: Playing MASTERED (wet, full processing)');
+                    // Switch to MASTERED - fully processed audio
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Unmastered OFF
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Mastered ON
+                    console.log('🔀 Playing MASTERED (full processing)');
                 }
             } else {
-                console.warn('⚠️ A/B Toggle: Audio nodes not available');
+                console.warn('⚠️ Toggle: Audio nodes not available');
             }
 
             // Visual feedback on status pill
             const statusPill = document.getElementById('aiStatusPill');
             if (statusPill) {
                 if (isActive) {
-                    statusPill.textContent = 'ORIGINAL';
-                    statusPill.style.color = '#ffd700';
-                    statusPill.style.borderColor = 'rgba(255, 215, 0, 0.6)';
+                    statusPill.textContent = 'UNMASTERED';
+                    statusPill.style.color = '#ffffff';
+                    statusPill.style.borderColor = 'rgba(255, 255, 255, 0.6)';
                 } else {
                     statusPill.textContent = 'MASTERED';
-                    statusPill.style.color = '#00d4ff';
-                    statusPill.style.borderColor = 'rgba(0, 212, 255, 0.6)';
+                    statusPill.style.color = '#ff9a56';
+                    statusPill.style.borderColor = 'rgba(255, 136, 0, 0.6)';
                 }
             }
         };
 
-        // Play mastered preview - with proper error handling
-        window.playMasteredPreview = function() {
-            // Ensure we're playing the mastered version
-            if (window.abCompareMode) {
-                toggleABCompare(); // Switch back to mastered
+        // ═══════════════════════════════════════════════════════════════════
+        // AUDIO TOGGLE SWITCH HANDLER - Simple MASTERED / UNMASTERED toggle
+        // ═══════════════════════════════════════════════════════════════════
+        window.handleAudioToggle = function(isMastered) {
+            const ac = window.audioContext;
+
+            // Update toggle visual labels
+            const labelUnmastered = document.getElementById('toggleLabelUnmastered');
+            const labelMastered = document.getElementById('toggleLabelMastered');
+            const statusText = document.getElementById('toggleStatusText');
+            const toggleSlider = document.querySelector('#audioToggleSwitch + .toggle-slider span');
+
+            if (isMastered) {
+                // MASTERED - play processed audio at target LUFS
+                if (window.dryGain && window.wetGain && ac) {
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                }
+                window.abCompareMode = false;
+
+                // Update visuals
+                if (labelUnmastered) labelUnmastered.style.color = 'rgba(255,255,255,0.5)';
+                if (labelUnmastered) labelUnmastered.style.fontWeight = '600';
+                if (labelMastered) labelMastered.style.color = '#ff9a56';
+                if (labelMastered) labelMastered.style.fontWeight = '700';
+                if (statusText) statusText.textContent = '▶ Playing Mastered Track';
+                if (statusText) statusText.style.color = '#ff9a56';
+                if (toggleSlider) toggleSlider.style.transform = 'translateX(36px)';
+
+                console.log('🎧 TOGGLE: Playing MASTERED (processed at target LUFS)');
+                if (typeof showToast === 'function') showToast('▶ Playing Mastered Track', 'success');
+            } else {
+                // UNMASTERED - play original audio
+                if (window.dryGain && window.wetGain && ac) {
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                }
+                window.abCompareMode = true;
+
+                // Update visuals
+                if (labelUnmastered) labelUnmastered.style.color = '#ffffff';
+                if (labelUnmastered) labelUnmastered.style.fontWeight = '700';
+                if (labelMastered) labelMastered.style.color = 'rgba(255,255,255,0.5)';
+                if (labelMastered) labelMastered.style.fontWeight = '600';
+                if (statusText) statusText.textContent = '▶ Playing Unmastered Track';
+                if (statusText) statusText.style.color = '#ffffff';
+                if (toggleSlider) toggleSlider.style.transform = 'translateX(0)';
+
+                console.log('🎧 TOGGLE: Playing UNMASTERED (original audio)');
+                if (typeof showToast === 'function') showToast('▶ Playing Unmastered Track', 'info');
             }
 
-            const btn = document.getElementById('playMasteredBtn');
-            const updateButton = (playing) => {
-                if (!btn) return;
-                const iconEl = btn.querySelector('.btn-icon');
-                const textEl = btn.querySelector('span:last-child');
-                if (iconEl) iconEl.textContent = playing ? '⏸' : '▶';
-                if (textEl) textEl.textContent = playing ? 'Playing...' : 'Play Mastered';
-            };
-
-            // Start or pause playback
-            if (window.audioElement && window.audioElement.paused) {
-                const playPromise = window.audioElement.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            updateButton(true);
-                            console.log('▶ Playing mastered audio');
-                        })
-                        .catch(err => {
-                            console.warn('⚠️ Playback failed:', err.message);
-                            updateButton(false);
-                        });
+            // Sync with sidebar A/B button
+            const abBtn = document.getElementById('abCompareBtn');
+            if (abBtn) {
+                if (isMastered) {
+                    abBtn.textContent = 'MASTERED';
+                    abBtn.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                    abBtn.style.color = '#ffffff';
+                    abBtn.style.border = 'none';
+                } else {
+                    abBtn.textContent = 'UNMASTERED';
+                    abBtn.style.background = 'rgba(255,255,255,0.1)';
+                    abBtn.style.color = '#ffffff';
+                    abBtn.style.border = '1px solid rgba(255,255,255,0.3)';
                 }
-            } else if (window.audioElement) {
-                window.audioElement.pause();
-                updateButton(false);
-                console.log('⏸ Paused mastered audio');
+            }
+
+            // Start playback if not playing
+            if (window.audioElement && window.audioElement.paused) {
+                window.audioElement.play().catch(err => console.warn('Playback:', err.message));
+            }
+        };
+
+        // Genre preview toggle handler (for genre selection overlay)
+        window.handleGenrePreviewToggle = function(isPreview) {
+            const labelOrig = document.getElementById('genreToggleLabelOrig');
+            const labelPreview = document.getElementById('genreToggleLabelPreview');
+
+            if (isPreview) {
+                // Play with genre preset applied
+                if (labelOrig) labelOrig.style.color = 'rgba(255,255,255,0.5)';
+                if (labelPreview) labelPreview.style.color = '#00d4ff';
+                if (labelPreview) labelPreview.style.fontWeight = '700';
+
+                // Apply the currently selected genre preview
+                const selectedGenre = document.querySelector('.genre-btn.selected');
+                if (selectedGenre) {
+                    const genre = selectedGenre.dataset.genre;
+                    if (typeof previewGenre === 'function') previewGenre(genre);
+                }
+            } else {
+                // Play original
+                if (labelOrig) labelOrig.style.color = '#ffffff';
+                if (labelOrig) labelOrig.style.fontWeight = '700';
+                if (labelPreview) labelPreview.style.color = 'rgba(255,255,255,0.5)';
+                if (labelPreview) labelPreview.style.fontWeight = '600';
+
+                if (typeof previewOriginal === 'function') previewOriginal();
             }
         };
 
@@ -16896,10 +17030,12 @@
                 return;
             }
 
-            // Switch to WET path so they hear the processing
+            // Switch to MASTERED path so they hear the processing
+            // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
             if (window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Unmastered OFF
+                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Mastered ON
+                console.log('🎨 GENRE PREVIEW: Switching to MASTERED audio to preview ' + genre);
             }
 
             // Apply EQ preset in real-time
@@ -16954,10 +17090,12 @@
             const ac = window.audioContext;
             if (!ac) return;
 
-            // Switch to DRY path (original audio)
+            // Switch to UNMASTERED audio path
+            // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
             if (window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Unmastered ON
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Mastered OFF
+                console.log('🔀 PREVIEW: Switching to UNMASTERED audio - NO PROCESSING');
             }
 
             // Remove genre selection highlight
