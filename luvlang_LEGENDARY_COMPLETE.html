@@ -4916,15 +4916,18 @@
                 transientSustainComp.knee.value = 6;
 
                 // Mix controls for attack/sustain
-                // DISABLED by default - transient shaper was causing robotic sound
+                // BOB LUDWIG STYLE - Subtle parallel transient enhancement
+                // Conservative settings to add punch and depth without artifacts
                 const transientAttackGain = audioContext.createGain();
                 const transientSustainGain = audioContext.createGain();
                 const transientDryGain = audioContext.createGain();
-                transientAttackGain.gain.value = 0;     // DISABLED - was causing artifacts
-                transientSustainGain.gain.value = 0;    // DISABLED
-                transientDryGain.gain.value = 1.0;      // 100% dry = bypass
 
-                // Connect transient shaper
+                // Bob Ludwig approach: subtle enhancement, mostly dry
+                transientAttackGain.gain.value = 0.15;   // 15% attack (subtle punch)
+                transientSustainGain.gain.value = 0.10;  // 10% sustain (subtle depth/body)
+                transientDryGain.gain.value = 0.75;      // 75% dry (preserve original character)
+
+                // Connect transient shaper (parallel paths)
                 transientInput.connect(transientAttackComp);
                 transientInput.connect(transientSustainComp);
                 transientInput.connect(transientDryGain);
@@ -4934,23 +4937,43 @@
                 transientSustainGain.connect(transientOutput);
                 transientDryGain.connect(transientOutput);
 
+                // Expose for signal chain
+                window.transientInput = transientInput;
+                window.transientOutput = transientOutput;
+
                 // Store for UI control
                 window.transientControls = {
+                    input: transientInput,
+                    output: transientOutput,
                     attack: transientAttackGain,
                     sustain: transientSustainGain,
                     dry: transientDryGain,
                     setAttack: (amount) => {
-                        // amount: -1 to 1 (negative = softer, positive = punchier)
-                        transientAttackGain.gain.value = 0.3 + (amount * 0.4);
-                        transientDryGain.gain.value = 0.5 - (amount * 0.2);
+                        // amount: 0 to 1 (0 = no punch, 1 = max punch)
+                        transientAttackGain.gain.value = amount * 0.3; // Max 30%
+                        transientDryGain.gain.value = 0.75 - (amount * 0.15);
+                        console.log(`👊 Attack: ${Math.round(amount * 100)}%`);
                     },
                     setSustain: (amount) => {
-                        // amount: -1 to 1
-                        transientSustainGain.gain.value = 0.2 + (amount * 0.3);
+                        // amount: 0 to 1 (0 = no sustain, 1 = max body)
+                        transientSustainGain.gain.value = amount * 0.25; // Max 25%
+                        console.log(`🎸 Sustain: ${Math.round(amount * 100)}%`);
+                    },
+                    enable: () => {
+                        transientAttackGain.gain.value = 0.15;
+                        transientSustainGain.gain.value = 0.10;
+                        transientDryGain.gain.value = 0.75;
+                        console.log('✅ Transient Shaper enabled (Bob Ludwig style)');
+                    },
+                    disable: () => {
+                        transientAttackGain.gain.value = 0;
+                        transientSustainGain.gain.value = 0;
+                        transientDryGain.gain.value = 1.0;
+                        console.log('⏸️ Transient Shaper disabled');
                     }
                 };
 
-                console.log('✅ Transient Shaper created (Attack/Sustain parallel compression)');
+                console.log('✅ Transient Shaper created (Bob Ludwig style - 15% attack, 10% sustain)');
 
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
                 // Brick-wall limiting - prevents clipping with hard knee
@@ -6701,51 +6724,61 @@
                 // STAGE 4: DYNAMICS - Glue Compressor
                 console.log('   4. Glue Compressor (bus compression)');
 
-                // STAGE 5: WARMTH - Analog Saturation (series, not parallel - no phase issues)
+                // STAGE 5: TRANSIENT SHAPER - Bob Ludwig style punch and depth
+                // Parallel compression for attack (punch) and sustain (body/depth)
+                if (window.transientInput && window.transientOutput) {
+                    compressor.connect(window.transientInput);
+                    window.transientOutput.connect(analogWarmth);
+                    console.log('   5. Transient Shaper (Bob Ludwig: 15% punch, 10% depth)');
+                } else {
+                    compressor.connect(analogWarmth);
+                    console.log('   5. [Transient Shaper bypassed]');
+                }
+
+                // STAGE 6: WARMTH - Analog Saturation (series, not parallel - no phase issues)
                 // Using the analogWarmth waveshaper directly in series
-                compressor.connect(analogWarmth);
-                console.log('   5. Analog Warmth (tube-style saturation)');
+                console.log('   6. Analog Warmth (tube-style saturation)');
 
-                // STAGE 6: LOUDNESS - Makeup Gain (LUFS targeting)
+                // STAGE 7: LOUDNESS - Makeup Gain (LUFS targeting)
                 analogWarmth.connect(makeupGain);
-                console.log('   6. Makeup Gain (LUFS targeting)');
+                console.log('   7. Makeup Gain (LUFS targeting)');
 
-                // STAGE 7: SOFT CLIPPER - Warm saturation before limiter
+                // STAGE 8: SOFT CLIPPER - Warm saturation before limiter
                 // Reduces limiter workload and adds subtle harmonic warmth
                 if (window.softClipInput && window.softClipOutput) {
                     makeupGain.connect(window.softClipInput);
                     window.softClipOutput.connect(limiter);
-                    console.log('   7. Soft Clipper (25% saturation, reduces limiter stress)');
+                    console.log('   8. Soft Clipper (25% saturation, reduces limiter stress)');
                 } else {
                     makeupGain.connect(limiter);
-                    console.log('   7. [Soft Clipper bypassed - direct to limiter]');
+                    console.log('   8. [Soft Clipper bypassed - direct to limiter]');
                 }
 
-                // STAGE 8: LIMITING - Professional True Peak Limiter (Industry Standard)
+                // STAGE 9: LIMITING - Professional True Peak Limiter (Industry Standard)
                 // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
                 limiter.threshold.value = -1.0;      // -1dBTP industry standard
                 limiter.knee.value = 2.0;            // Soft knee for musical transparency
                 limiter.ratio.value = 20;            // Brick-wall ratio
                 limiter.attack.value = 0.001;        // 1ms attack (fast but musical)
                 limiter.release.value = 0.150;       // 150ms release (Bob Ludwig style)
-                console.log('   8. Pro Limiter (-1dBTP, soft knee)');
+                console.log('   9. Pro Limiter (-1dBTP, soft knee)');
 
-                // STAGE 9: SAFETY CLIPPER (catches any peaks that escape limiter)
+                // STAGE 10: SAFETY CLIPPER (catches any peaks that escape limiter)
                 if (window.safetyClipper) {
                     limiter.connect(window.safetyClipper);
                     window.safetyClipper.connect(masterGain);
-                    console.log('   9. Safety Clipper (soft clip at -0.04dBFS)');
+                    console.log('  10. Safety Clipper (soft clip at -0.04dBFS)');
                 } else {
                     limiter.connect(masterGain);
                 }
 
-                // STAGE 10: OUTPUT - Master Gain
-                console.log('  10. Master Output');
+                // STAGE 11: OUTPUT - Master Gain
+                console.log('  11. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 10-STAGE MASTERING CHAIN READY');
-                console.log('   Subsonic → EQ → Exciter → Comp → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
+                console.log('✅ 11-STAGE WORLD-CLASS MASTERING CHAIN READY');
+                console.log('   Subsonic → EQ → Exciter → Comp → Transient → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
