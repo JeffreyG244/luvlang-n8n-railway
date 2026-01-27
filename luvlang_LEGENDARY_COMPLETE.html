@@ -2630,73 +2630,6 @@
 </head>
 <body>
     <!-- ═══════════════════════════════════════════════════════════════════════════
-         🔥 EXPLOSIVE "HEAR THE DIFFERENCE" A/B COMPARISON MODAL
-         World-class audio comparison experience - shows after mastering
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="ab-modal-overlay" id="abModalOverlay">
-        <div class="ab-modal-container">
-            <div class="ab-modal-header">
-                <h1 class="ab-modal-title">Hear The Difference</h1>
-                <p class="ab-modal-subtitle">Your track has been professionally mastered. Toggle between versions to experience the transformation.</p>
-            </div>
-
-            <!-- Giant A/B Toggle -->
-            <div class="ab-toggle-container">
-                <div class="ab-toggle-label original" id="abLabelOriginal" onclick="setABToOriginal()">
-                    <span style="font-size: 1.5rem; margin-right: 8px;">🎵</span> Original
-                </div>
-                <div class="ab-mega-switch mastered" id="abMegaSwitch" onclick="toggleABSwitch()"></div>
-                <div class="ab-toggle-label mastered active" id="abLabelMastered" onclick="setABToMastered()">
-                    <span style="font-size: 1.5rem; margin-right: 8px;">🚀</span> Mastered
-                </div>
-            </div>
-
-            <!-- Waveform Comparison -->
-            <div class="ab-waveform-comparison">
-                <div class="ab-waveform-header">
-                    <span class="ab-waveform-label">Waveform Comparison</span>
-                    <span class="ab-waveform-label" id="abCurrentState" style="color: #00ff88;">Playing: MASTERED</span>
-                </div>
-                <div class="ab-waveform-canvas-container">
-                    <canvas id="abComparisonCanvas" class="ab-waveform-canvas"></canvas>
-                </div>
-            </div>
-
-            <!-- Metrics Grid -->
-            <div class="ab-metrics-grid">
-                <div class="ab-metric-card">
-                    <span class="ab-metric-icon">📊</span>
-                    <div class="ab-metric-value positive" id="abLoudnessGain">+6.0 dB</div>
-                    <div class="ab-metric-label">Loudness Gain</div>
-                </div>
-                <div class="ab-metric-card">
-                    <span class="ab-metric-icon">🎯</span>
-                    <div class="ab-metric-value neutral" id="abTargetLUFS">-14 LUFS</div>
-                    <div class="ab-metric-label">Target Hit</div>
-                </div>
-                <div class="ab-metric-card">
-                    <span class="ab-metric-icon">✨</span>
-                    <div class="ab-metric-value positive" id="abClarityBoost">+18%</div>
-                    <div class="ab-metric-label">Clarity Boost</div>
-                </div>
-                <div class="ab-metric-card">
-                    <span class="ab-metric-icon">🔊</span>
-                    <div class="ab-metric-value positive" id="abWidthBoost">+25%</div>
-                    <div class="ab-metric-label">Stereo Width</div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="ab-actions">
-                <button class="ab-btn-secondary" onclick="closeABModal()">Continue Editing</button>
-                <button class="ab-btn-primary" onclick="closeABModalAndExport()">
-                    <span style="margin-right: 8px;">⬇</span> Export Master
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════════
          🎛️ SIMPLE MODE / PRO MODE TOGGLE BAR
          Progressive disclosure for optimal UX
          ═══════════════════════════════════════════════════════════════════════════ -->
@@ -16552,21 +16485,7 @@
                 exportBarAbBtn.classList.remove('active');
             }
 
-            // 🔥 SHOW THE EXPLOSIVE A/B MODAL FIRST!
-            // This is the key experience - let users HEAR the difference
-            if (typeof window.showABModal === 'function') {
-                window.showABModal(beforeLUFS, afterLUFS, targetLUFS || afterLUFS);
-            } else {
-                console.warn('⚠️ showABModal not yet defined, will show when ready');
-                // Retry after a short delay if function not yet loaded
-                setTimeout(() => {
-                    if (typeof window.showABModal === 'function') {
-                        window.showABModal(beforeLUFS, afterLUFS, targetLUFS || afterLUFS);
-                    }
-                }, 500);
-            }
-
-            // Also prepare the results dashboard (shown when A/B modal closes)
+            // A/B Modal removed per user request - go straight to results
             showMasteringResults();
 
             console.log('🏆 World-Class Mastering Results displayed with A/B Experience!');
