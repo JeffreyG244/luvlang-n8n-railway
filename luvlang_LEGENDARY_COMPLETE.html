@@ -7770,18 +7770,10 @@
             ctx.fillText(`📊 Target: ${genre}`, 20, 30);
 
             ctx.restore();
-
-            console.log('🎯 Reference Curve drawn for genre:', genre);
         }
 
         function detectProblems(data) {
             const problems = [];
-
-            // DEBUG: Log what we're checking
-            console.log('🔍 DETECTING PROBLEMS...');
-            console.log('   Current LUFS:', data.integratedLUFS);
-            console.log('   Platform Target:', data.platformTarget);
-            console.log('   Checking if', data.integratedLUFS, '<', (data.platformTarget - 0.5), '=', data.integratedLUFS < (data.platformTarget - 0.5));
 
             // 1. Clipping
             if (data.clipCount > 0) {
@@ -7802,9 +7794,6 @@
                     message: `Track is ${shortfall}dB below target (${data.integratedLUFS.toFixed(1)} LUFS vs ${data.platformTarget} LUFS target)`,
                     solution: 'Will boost gain and apply compression'
                 });
-                console.log('   ✅ LOW_LEVEL problem detected! Shortfall:', shortfall, 'dB');
-            } else {
-                console.log('   ✅ LUFS is within target range (no low_level problem)');
             }
 
             // 3. Over-compressed
@@ -11194,7 +11183,6 @@
             // Smooth filled spectrum with professional gradients
             // ═══════════════════════════════════════════════════════════════════
             if (!dataArray || !audioContext) {
-                console.log('⚠️ No data to draw spectrum');
                 return;
             }
 
@@ -11645,65 +11633,6 @@
 
                 // Continue to let Peak and Phase meters update in real-time below
                 // (don't return early - keep measuring peaks and phase)
-            }
-
-            // Debug: Log that updateMeters is being called AND check DOM elements + computed styles
-            if (Math.random() < 0.01) {
-                console.log('═══════════════════════════════════════════════');
-                console.log('🎚️ updateMeters() CALLED (REAL-TIME MODE)');
-                console.log('   kWeightedAnalyser:', kWeightedAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   leftAnalyser:', leftAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   rightAnalyser:', rightAnalyser ? 'EXISTS' : 'NULL');
-                console.log('   DOM Elements:');
-
-                const liveLufs = document.getElementById('liveLufsValue');
-                const measuredLufs = document.getElementById('measuredLufsValue');
-                const peakValue = document.getElementById('peakValue');
-                const peakMeter = document.getElementById('peakMeter');
-                const phaseValue = document.getElementById('phaseValue');
-                const phaseMeter = document.getElementById('phaseMeter');
-                const metersContainer = document.querySelector('.meters-container');
-                const rightSidebar = document.querySelector('.right-sidebar');
-
-                console.log('     - liveLufsValue:', liveLufs ? 'EXISTS' : 'MISSING');
-                console.log('     - measuredLufsValue:', measuredLufs ? 'EXISTS' : 'MISSING');
-                console.log('     - peakValue:', peakValue ? 'EXISTS' : 'MISSING');
-                console.log('     - peakMeter:', peakMeter ? 'EXISTS' : 'MISSING');
-                console.log('     - phaseValue:', phaseValue ? 'EXISTS' : 'MISSING');
-                console.log('     - phaseMeter:', phaseMeter ? 'EXISTS' : 'MISSING');
-
-                // Check computed styles
-                if (metersContainer) {
-                    const style = window.getComputedStyle(metersContainer);
-                    console.log('   meters-container computed:');
-                    console.log('     - display:', style.display);
-                    console.log('     - visibility:', style.visibility);
-                    console.log('     - opacity:', style.opacity);
-                }
-
-                if (rightSidebar) {
-                    const style = window.getComputedStyle(rightSidebar);
-                    console.log('   right-sidebar computed:');
-                    console.log('     - display:', style.display);
-                    console.log('     - visibility:', style.visibility);
-                    console.log('     - opacity:', style.opacity);
-                }
-
-                if (liveLufs) {
-                    const style = window.getComputedStyle(liveLufs);
-                    console.log('   liveLufsValue computed:');
-                    console.log('     - opacity:', style.opacity);
-                    console.log('     - color:', style.color);
-                }
-
-                if (measuredLufs) {
-                    const style = window.getComputedStyle(measuredLufs);
-                    console.log('   measuredLufsValue computed:');
-                    console.log('     - opacity:', style.opacity);
-                    console.log('     - color:', style.color);
-                }
-
-                console.log('═══════════════════════════════════════════════');
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
