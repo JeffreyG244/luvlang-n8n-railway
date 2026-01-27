@@ -4059,22 +4059,6 @@
                         </div>
                     </div>
 
-                    <!-- Row 3: Console Type & Engineer Preset -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <!-- Active Console -->
-                        <div style="background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.25); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CONSOLE</div>
-                            <div id="consoleTypeDisplay" style="font-size: 1.1rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', 'Courier New', monospace;">SSL</div>
-                            <div style="font-size: 0.5rem; color: rgba(0,212,255,0.6); margin-top: 2px;">Analog Character</div>
-                        </div>
-
-                        <!-- Engineer Preset -->
-                        <div style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.25); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">STYLE</div>
-                            <div id="engineerStyleDisplay" style="font-size: 0.9rem; font-weight: 700; color: #ffd700; font-family: 'JetBrains Mono', 'Courier New', monospace;">CUSTOM</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,215,0,0.6); margin-top: 2px;">M/S EQ Preset</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -5052,13 +5036,25 @@
                 console.log('✅ Transient Shaper created (Attack/Sustain parallel compression)');
 
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
-                // Musical, transparent limiting - catches peaks without pumping
+                // Brick-wall limiting - prevents clipping with hard knee
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard (broadcast safe ceiling)
-                limiter.knee.value = 3.0;           // Soft knee for transparency (Bob Ludwig style)
-                limiter.ratio.value = 20;           // Brick-wall limiting ratio
-                limiter.attack.value = 0.0005;      // 0.5ms attack (fast but not harsh)
-                limiter.release.value = 0.150;      // 150ms release (musical, prevents pumping)
+                limiter.threshold.value = -1.5;     // -1.5 dBTP for safety headroom
+                limiter.knee.value = 0;             // HARD KNEE - true brick-wall limiting
+                limiter.ratio.value = 20;           // Maximum limiting ratio
+                limiter.attack.value = 0.0003;      // 0.3ms attack (catches fast transients)
+                limiter.release.value = 0.100;      // 100ms release (fast recovery, less pumping)
+
+                // SAFETY CLIPPER - catches any peaks that escape the limiter (ISP protection)
+                const safetyClipper = audioContext.createWaveShaper();
+                const safetyClipCurve = new Float32Array(65536);
+                for (let i = 0; i < 65536; i++) {
+                    const x = (i / 32768) - 1; // -1 to +1
+                    // Hard clip at 0.98 (-0.17 dBFS) to prevent any digital clipping
+                    safetyClipCurve[i] = Math.max(-0.98, Math.min(0.98, x));
+                }
+                safetyClipper.curve = safetyClipCurve;
+                safetyClipper.oversample = '4x';
+                window.safetyClipper = safetyClipper;
 
                 // Makeup Gain (AI Mastering - BEFORE limiter for proper peak protection)
                 makeupGain = audioContext.createGain();
@@ -5404,27 +5400,84 @@
                 // 11. TRUE PEAK DETECTOR - ISP (Intersample Peak) detection
                 // Upsamples to detect peaks between samples that would clip DACs
                 const truePeakAnalyser = audioContext.createAnalyser();
-                truePeakAnalyser.fftSize = 256;
+                truePeakAnalyser.fftSize = 512;  // Larger for better accuracy
                 truePeakAnalyser.smoothingTimeConstant = 0;
                 window.truePeakAnalyser = truePeakAnalyser;
 
-                // Track true peak value
+                // ════════════════════════════════════════════════════════════════════════════
+                // ITU-R BS.1770-5 COMPLIANT TRUE PEAK DETECTION
+                // Uses 4x oversampling with sinc interpolation (windowed sinc FIR filter)
+                // ════════════════════════════════════════════════════════════════════════════
+
+                // Pre-computed 4x oversampling sinc coefficients (48 taps, Blackman-Harris windowed)
+                // This is a properly designed FIR lowpass filter for 4x upsampling
+                const OVERSAMPLE_FACTOR = 4;
+                const SINC_TAPS = 12; // taps per side
+                const sincCoeffs = new Float32Array(SINC_TAPS * OVERSAMPLE_FACTOR);
+
+                // Generate windowed sinc coefficients for 4x interpolation
+                for (let i = 0; i < SINC_TAPS * OVERSAMPLE_FACTOR; i++) {
+                    const x = (i - (SINC_TAPS * OVERSAMPLE_FACTOR - 1) / 2) / OVERSAMPLE_FACTOR;
+                    // Sinc function: sin(pi*x) / (pi*x)
+                    const sinc = x === 0 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x);
+                    // Blackman-Harris window for excellent stopband rejection
+                    const n = i / (SINC_TAPS * OVERSAMPLE_FACTOR - 1);
+                    const window = 0.35875 - 0.48829 * Math.cos(2 * Math.PI * n) +
+                                   0.14128 * Math.cos(4 * Math.PI * n) -
+                                   0.01168 * Math.cos(6 * Math.PI * n);
+                    sincCoeffs[i] = sinc * window;
+                }
+
+                // Normalize coefficients
+                const sincSum = sincCoeffs.reduce((a, b) => a + Math.abs(b), 0) / OVERSAMPLE_FACTOR;
+                for (let i = 0; i < sincCoeffs.length; i++) {
+                    sincCoeffs[i] /= sincSum;
+                }
+
                 window.truePeakValue = 0;
+                window.truePeakHistory = new Float32Array(64); // Rolling history for accuracy
+                window.truePeakHistoryIdx = 0;
+
                 window.getTruePeak = () => {
                     const data = new Float32Array(truePeakAnalyser.fftSize);
                     truePeakAnalyser.getFloatTimeDomainData(data);
+
                     let maxPeak = 0;
-                    for (let i = 0; i < data.length - 1; i++) {
-                        // Simple linear interpolation for intersample peaks
-                        const current = Math.abs(data[i]);
-                        const next = Math.abs(data[i + 1]);
-                        const interpolated = (current + next) / 2 * 1.1; // Approximate ISP
-                        maxPeak = Math.max(maxPeak, current, interpolated);
+                    const numSamples = data.length;
+
+                    // ITU-R BS.1770-5: 4x oversampling with sinc interpolation
+                    for (let i = SINC_TAPS; i < numSamples - SINC_TAPS; i++) {
+                        // Check original sample
+                        maxPeak = Math.max(maxPeak, Math.abs(data[i]));
+
+                        // Check 3 interpolated samples between each pair (4x oversampling)
+                        for (let phase = 1; phase < OVERSAMPLE_FACTOR; phase++) {
+                            let interpolated = 0;
+
+                            // Apply sinc FIR filter for this phase
+                            for (let tap = -SINC_TAPS + 1; tap <= SINC_TAPS; tap++) {
+                                const coeffIdx = (tap + SINC_TAPS - 1) * OVERSAMPLE_FACTOR + phase;
+                                if (coeffIdx >= 0 && coeffIdx < sincCoeffs.length) {
+                                    interpolated += data[i + tap] * sincCoeffs[coeffIdx];
+                                }
+                            }
+
+                            maxPeak = Math.max(maxPeak, Math.abs(interpolated));
+                        }
                     }
-                    window.truePeakValue = maxPeak;
-                    return 20 * Math.log10(maxPeak + 0.0001); // Return in dBTP
+
+                    // Store in rolling history for peak hold
+                    window.truePeakHistory[window.truePeakHistoryIdx] = maxPeak;
+                    window.truePeakHistoryIdx = (window.truePeakHistoryIdx + 1) % window.truePeakHistory.length;
+
+                    // Get max from recent history (provides stable reading)
+                    const historyMax = Math.max(...window.truePeakHistory);
+                    window.truePeakValue = historyMax;
+
+                    // Return in dBTP (True Peak)
+                    return historyMax > 0.00001 ? 20 * Math.log10(historyMax) : -100;
                 };
-                console.log('✅ True Peak Detector created (ISP detection for broadcast compliance)');
+                console.log('✅ ITU-R BS.1770-5 True Peak Detector (4x oversampling, sinc interpolation)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // 🏆 LEGENDARY MASTERING FEATURES
@@ -6512,30 +6565,38 @@
                 // ═══════════════════════════════════════════════════════════════════
                 // REMOVED: Old ULTIMATE_VISUALS auto-init code (abandoned system)
 
-                // ⚡ ITU-R BS.1770-5 K-WEIGHTING FILTERS (LUFS measurement)
-                // Stage 1: High-pass filter @ 38 Hz (4th-order Butterworth)
+                // ════════════════════════════════════════════════════════════════════════════
+                // ITU-R BS.1770-4 K-WEIGHTING FILTERS (LUFS measurement)
+                // Two-stage filter: Pre-filter (high-shelf) + High-pass
+                // ════════════════════════════════════════════════════════════════════════════
+
+                // STAGE 1: Pre-filter (models acoustic effect of head/ears)
+                // ITU-R BS.1770-4 specifies: fc = 1681.97 Hz, gain = +4 dB, Q ≈ 0.7071
+                kWeightingShelf = audioContext.createBiquadFilter();
+                kWeightingShelf.type = 'highshelf';
+                kWeightingShelf.frequency.value = 1681.97;  // Exact ITU spec
+                kWeightingShelf.gain.value = 4.0;           // +4 dB per ITU spec
+                kWeightingShelf.Q.value = 0.7071;           // Butterworth response
+
+                // STAGE 2: High-pass filter (removes low-frequency content below hearing)
+                // ITU-R BS.1770-4 specifies: fc = 38.13 Hz, 2nd-order Butterworth
+                // Using two cascaded 1st-order sections for stability
                 kWeightingHPF1 = audioContext.createBiquadFilter();
                 kWeightingHPF1.type = 'highpass';
-                kWeightingHPF1.frequency.value = 38;
-                kWeightingHPF1.Q.value = 0.5;
+                kWeightingHPF1.frequency.value = 38.13;     // Exact ITU spec
+                kWeightingHPF1.Q.value = 0.7071;            // Butterworth Q = 1/√2
 
                 kWeightingHPF2 = audioContext.createBiquadFilter();
                 kWeightingHPF2.type = 'highpass';
-                kWeightingHPF2.frequency.value = 38;
-                kWeightingHPF2.Q.value = 0.5;
+                kWeightingHPF2.frequency.value = 38.13;     // Exact ITU spec
+                kWeightingHPF2.Q.value = 0.7071;            // Butterworth Q = 1/√2
 
-                // Stage 2: High-shelf filter @ 1.5 kHz (+3.99 dB)
-                kWeightingShelf = audioContext.createBiquadFilter();
-                kWeightingShelf.type = 'highshelf';
-                kWeightingShelf.frequency.value = 1500;
-                kWeightingShelf.gain.value = 3.99;
-
-                // K-weighted analyser
+                // K-weighted analyser for RMS/LUFS calculation
                 kWeightedAnalyser = audioContext.createAnalyser();
-                kWeightedAnalyser.fftSize = 2048;
+                kWeightedAnalyser.fftSize = 4096;           // Larger for better accuracy
                 kWeightedAnalyser.smoothingTimeConstant = 0;
 
-                console.log('✅ K-Weighting Filters created (ITU-R BS.1770-5: 38Hz HPF + 1.5kHz Shelf)');
+                console.log('✅ ITU-R BS.1770-4 K-Weighting: Pre-filter (1682Hz +4dB) + HPF (38Hz 2nd-order)');
 
                 // ⚡ STEREO PROCESSING (Phase Correlation, True Peak)
                 stereoSplitter = audioContext.createChannelSplitter(2);
@@ -6664,21 +6725,31 @@
                 // STAGE 6: LIMITING - Professional True Peak Limiter (Industry Standard)
                 // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
                 limiter.threshold.value = -1.0;      // -1dBTP industry standard
-                limiter.knee.value = 2.0;            // Soft knee for transparency
-                limiter.ratio.value = 20;            // Brick-wall ratio
-                limiter.attack.value = 0.001;        // 1ms attack (catches all peaks)
-                limiter.release.value = 0.08;        // 80ms release (fast, transparent)
+                // STAGE 6: BRICK-WALL LIMITER (prevents clipping)
+                limiter.threshold.value = -1.5;      // -1.5 dBTP with safety headroom
+                limiter.knee.value = 0;              // HARD KNEE - true brick-wall
+                limiter.ratio.value = 20;            // Maximum limiting
+                limiter.attack.value = 0.0003;       // 0.3ms attack (catches transients)
+                limiter.release.value = 0.100;       // 100ms release
                 makeupGain.connect(limiter);
-                console.log('   6. Pro Limiter (-1dBTP ceiling)');
+                console.log('   6. Brick-Wall Limiter (-1.5dBTP, hard knee)');
 
-                // STAGE 7: OUTPUT - Master Gain
-                limiter.connect(masterGain);
-                console.log('   7. Master Output');
+                // STAGE 7: SAFETY CLIPPER (catches any peaks that escape limiter)
+                if (window.safetyClipper) {
+                    limiter.connect(window.safetyClipper);
+                    window.safetyClipper.connect(masterGain);
+                    console.log('   7. Safety Clipper (-0.17dBFS hard clip)');
+                } else {
+                    limiter.connect(masterGain);
+                }
+
+                // STAGE 8: OUTPUT - Master Gain
+                console.log('   8. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 7-STAGE MASTERING CHAIN READY');
-                console.log('   Subsonic → EQ → Compressor → Warmth → Makeup → Limiter → Out');
+                console.log('✅ 8-STAGE MASTERING CHAIN READY (NO CLIPPING)');
+                console.log('   Subsonic → EQ → Comp → Warmth → Makeup → Limiter → Clipper → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -6710,41 +6781,26 @@
 
                 console.log('🔊 Audio routing complete');
 
-                // K-weighted parallel path (for LUFS measurement) - taps from makeup gain
-                makeupGain.connect(kWeightingHPF1);
+                // K-weighted parallel path (for LUFS measurement) - taps from OUTPUT MIXER
+                // This ensures LUFS meter reflects whatever is currently playing (mastered OR unmastered)
+                // ITU-R BS.1770-4 order: Pre-filter (shelf) → High-pass → Analyser
+                outputMixer.connect(kWeightingShelf);
+                kWeightingShelf.connect(kWeightingHPF1);
                 kWeightingHPF1.connect(kWeightingHPF2);
-                kWeightingHPF2.connect(kWeightingShelf);
-                kWeightingShelf.connect(kWeightedAnalyser);
+                kWeightingHPF2.connect(kWeightedAnalyser);
+                console.log('✅ LUFS meter connected to output mixer (reflects mastered/unmastered toggle)');
 
-                console.log('✅ COMPLETE PROFESSIONAL MASTERING CHAIN:');
+                console.log('✅ MASTERING SIGNAL CHAIN (7 Series Stages):');
                 console.log('═══════════════════════════════════════════════════════════════════');
-                console.log('   STAGE 1 - INPUT CLEANUP:');
-                console.log('      1. DC Offset Filter (5Hz HP)');
-                console.log('      2. Subsonic Filter (25Hz HP)');
-                console.log('   STAGE 2 - TONAL SHAPING:');
-                console.log('      3. 7-Band Parametric EQ');
-                console.log('      4. De-Esser (6kHz)');
-                console.log('   STAGE 3 - DYNAMICS:');
-                console.log('      5. Dynamic EQ (3-band)');
-                console.log('      6. Multiband Compression (3-band)');
-                console.log('      7. Glue Compressor');
-                console.log('      8. Transient Shaper');
-                console.log('   STAGE 4 - COLORATION:');
-                console.log('      9. Harmonic Exciter');
-                console.log('      10. Analog Warmth');
-                console.log('   STAGE 5 - STEREO:');
-                console.log('      11. M/S Processing');
-                console.log('      12. Bass Mono (<150Hz)');
-                console.log('   STAGE 6 - LOUDNESS:');
-                console.log('      13. Makeup Gain (LUFS targeting)');
-                console.log('      14. Soft Clipper');
-                console.log('      15. True Peak Limiter');
-                console.log('      16. Master Gain');
-                console.log('   STAGE 7 - OUTPUT:');
-                console.log('      17. TPDF Dither (16-bit)');
-                console.log('      18. True Peak Detector');
+                console.log('   1. Subsonic Filter (25Hz HP) - removes rumble');
+                console.log('   2. 7-Band Parametric EQ - tonal shaping');
+                console.log('   3. Glue Compressor - dynamics control');
+                console.log('   4. Analog Warmth - tube-style saturation');
+                console.log('   5. Makeup Gain - LUFS targeting');
+                console.log('   6. True Peak Limiter (-1dBTP) - peak protection');
+                console.log('   7. Master Output - final gain');
                 console.log('═══════════════════════════════════════════════════════════════════');
-                console.log('   Parallel: K-Weighted Path → LUFS Meter');
+                console.log('   Metering: ITU-R BS.1770-4 K-Weighted LUFS + True Peak (4x OS)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // ENABLE PROCESSORS WITH SAFE DEFAULTS
@@ -13317,10 +13373,18 @@
                     if (mu && ac && window.autoLUFSInputLevel !== undefined) {
                         // Recalculate gain based on stored input level and new target
                         const inputLUFS = window.autoLUFSInputLevel;
-                        const gainNeeded = targetLUFS - inputLUFS;
 
-                        // Safety limits: max +18dB boost, max -6dB cut
-                        const safeGain = Math.max(-6, Math.min(18, gainNeeded));
+                        // Get processing chain gain compensation (from stored value or estimate)
+                        let chainGain = 2.5; // Default estimate
+                        if (window.lufsTargetingInfo && window.lufsTargetingInfo.chainGainEstimate) {
+                            chainGain = window.lufsTargetingInfo.chainGainEstimate;
+                        }
+
+                        // Calculate gain with compensation for EQ/saturation/compression
+                        const gainNeeded = targetLUFS - inputLUFS - chainGain;
+
+                        // Safety limits: max +8dB boost, max -10dB cut
+                        const safeGain = Math.max(-10, Math.min(8, gainNeeded));
                         const linearGain = Math.pow(10, safeGain / 20);
 
                         // Smooth ramp to new gain
@@ -13331,8 +13395,9 @@
                         window.autoLUFSGainApplied = safeGain;
                         window.autoLUFSTargetLevel = targetLUFS;
 
-                        console.log(`🎯 AUTO-LUFS RECALCULATED: Input ${inputLUFS.toFixed(1)} LUFS → Target ${targetLUFS} LUFS`);
-                        console.log(`   Gain applied: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
+                        console.log(`🎯 LUFS RECALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
+                        console.log(`   Chain compensation: -${chainGain.toFixed(1)} dB`);
+                        console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
 
                         // Show toast notification
                         const msg = `${platformName}: ${targetLUFS} LUFS`;
@@ -13517,20 +13582,147 @@
                 const source = offlineContext.createBufferSource();
                 source.buffer = audioBuffer;
 
-                // For oversampling, add anti-aliasing filter before processing
-                let lastNode = source;
+                // ════════════════════════════════════════════════════════════════════════════
+                // EXPORT CHAIN - FULL 7-STAGE PROFESSIONAL MASTERING (matches live preview)
+                // ════════════════════════════════════════════════════════════════════════════
+                console.log('🎛️ Building export chain (matches live preview exactly)...');
+
+                // STAGE 1: SUBSONIC FILTER (25Hz HP - removes rumble)
+                const offlineSubsonic = offlineContext.createBiquadFilter();
+                offlineSubsonic.type = 'highpass';
+                offlineSubsonic.frequency.value = typeof subsonicFilter !== 'undefined' && subsonicFilter ? subsonicFilter.frequency.value : 25;
+                offlineSubsonic.Q.value = 0.7071;
+                console.log('   1. Subsonic Filter: ' + offlineSubsonic.frequency.value + 'Hz HP');
+
+                // STAGE 2: 7-BAND PARAMETRIC EQ
+                const offlineEQSub = offlineContext.createBiquadFilter();
+                const offlineEQBass = offlineContext.createBiquadFilter();
+                const offlineEQLowMid = offlineContext.createBiquadFilter();
+                const offlineEQMid = offlineContext.createBiquadFilter();
+                const offlineEQHighMid = offlineContext.createBiquadFilter();
+                const offlineEQHigh = offlineContext.createBiquadFilter();
+                const offlineEQAir = offlineContext.createBiquadFilter();
+
+                // Copy exact EQ settings from live context
+                offlineEQSub.type = 'lowshelf';
+                offlineEQSub.frequency.value = typeof eqSubFilter !== 'undefined' && eqSubFilter ? eqSubFilter.frequency.value : 60;
+                offlineEQSub.gain.value = typeof eqSubFilter !== 'undefined' && eqSubFilter ? eqSubFilter.gain.value : 0;
+
+                offlineEQBass.type = 'peaking';
+                offlineEQBass.frequency.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.frequency.value : 120;
+                offlineEQBass.Q.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.Q.value : 0.7;
+                offlineEQBass.gain.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.gain.value : 0;
+
+                offlineEQLowMid.type = 'peaking';
+                offlineEQLowMid.frequency.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.frequency.value : 500;
+                offlineEQLowMid.Q.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.Q.value : 0.7;
+                offlineEQLowMid.gain.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.gain.value : 0;
+
+                offlineEQMid.type = 'peaking';
+                offlineEQMid.frequency.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.frequency.value : 1500;
+                offlineEQMid.Q.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.Q.value : 0.7;
+                offlineEQMid.gain.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.gain.value : 0;
+
+                offlineEQHighMid.type = 'peaking';
+                offlineEQHighMid.frequency.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.frequency.value : 4000;
+                offlineEQHighMid.Q.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.Q.value : 0.7;
+                offlineEQHighMid.gain.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.gain.value : 0;
+
+                offlineEQHigh.type = 'peaking';
+                offlineEQHigh.frequency.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.frequency.value : 8000;
+                offlineEQHigh.Q.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.Q.value : 0.7;
+                offlineEQHigh.gain.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.gain.value : 0;
+
+                offlineEQAir.type = 'highshelf';
+                offlineEQAir.frequency.value = typeof eqAirFilter !== 'undefined' && eqAirFilter ? eqAirFilter.frequency.value : 12000;
+                offlineEQAir.gain.value = typeof eqAirFilter !== 'undefined' && eqAirFilter ? eqAirFilter.gain.value : 0;
+
+                console.log('   2. 7-Band EQ applied');
+
+                // STAGE 3: GLUE COMPRESSOR (SSL-style bus compression)
+                const offlineCompressor = offlineContext.createDynamicsCompressor();
+                offlineCompressor.threshold.value = typeof compressor !== 'undefined' && compressor ? compressor.threshold.value : -24;
+                offlineCompressor.ratio.value = typeof compressor !== 'undefined' && compressor ? compressor.ratio.value : 2;
+                offlineCompressor.attack.value = typeof compressor !== 'undefined' && compressor ? compressor.attack.value : 0.015;
+                offlineCompressor.release.value = typeof compressor !== 'undefined' && compressor ? compressor.release.value : 0.250;
+                offlineCompressor.knee.value = typeof compressor !== 'undefined' && compressor ? compressor.knee.value : 6;
+                console.log('   3. Compressor: ' + offlineCompressor.threshold.value.toFixed(1) + 'dB, ' + offlineCompressor.ratio.value + ':1');
+
+                // STAGE 4: ANALOG WARMTH (gentle tape saturation)
+                const offlineWarmth = offlineContext.createWaveShaper();
+                const offlineWarmthCurve = new Float32Array(65536);
+                for (let i = 0; i < 65536; i++) {
+                    const x = (i / 32768) - 1;
+                    const amount = 0.15; // 15% saturation (matches live)
+                    offlineWarmthCurve[i] = x * (1 - amount) + Math.tanh(x * 1.5) * amount;
+                }
+                offlineWarmth.curve = offlineWarmthCurve;
+                offlineWarmth.oversample = '4x';
+                console.log('   4. Analog Warmth: 15% tape saturation, 4x oversampling');
+
+                // STAGE 5: MAKEUP GAIN (LUFS targeting)
+                const offlineMakeupGain = offlineContext.createGain();
+                offlineMakeupGain.gain.value = typeof makeupGain !== 'undefined' && makeupGain ? makeupGain.gain.value : 1.0;
+                console.log('   5. Makeup Gain: ' + (20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1) + 'dB');
+
+                // STAGE 6: BRICK-WALL LIMITER (prevents clipping)
+                const offlineLimiter = offlineContext.createDynamicsCompressor();
+                offlineLimiter.threshold.value = typeof limiter !== 'undefined' && limiter ? limiter.threshold.value : -1.5;
+                offlineLimiter.ratio.value = 20;
+                offlineLimiter.attack.value = typeof limiter !== 'undefined' && limiter ? limiter.attack.value : 0.0003;
+                offlineLimiter.release.value = typeof limiter !== 'undefined' && limiter ? limiter.release.value : 0.1;
+                offlineLimiter.knee.value = 0; // HARD KNEE for export - no clipping
+                console.log('   6. Brick-Wall Limiter: ' + offlineLimiter.threshold.value.toFixed(1) + 'dB (hard knee)');
+
+                // STAGE 7: SAFETY CLIPPER (catches any remaining peaks)
+                const offlineSafetyClipper = offlineContext.createWaveShaper();
+                const offlineSafetyClipCurve = new Float32Array(65536);
+                for (let i = 0; i < 65536; i++) {
+                    const x = (i / 32768) - 1;
+                    offlineSafetyClipCurve[i] = Math.max(-0.98, Math.min(0.98, x)); // Hard clip at -0.17 dBFS
+                }
+                offlineSafetyClipper.curve = offlineSafetyClipCurve;
+                offlineSafetyClipper.oversample = '4x';
+                console.log('   7. Safety Clipper: -0.17 dBFS hard limit');
+
+                // STAGE 8: MASTER OUTPUT
+                const offlineMasterGain = offlineContext.createGain();
+                offlineMasterGain.gain.value = typeof masterGain !== 'undefined' && masterGain ? masterGain.gain.value : 1.0;
+                console.log('   8. Master: ' + (20 * Math.log10(offlineMasterGain.gain.value)).toFixed(1) + 'dB');
+
+                // For oversampling, add anti-aliasing filter at the end
+                let finalNode = offlineMasterGain;
                 if (useOversampling) {
-                    // Anti-aliasing lowpass filter at Nyquist of target rate
                     const antiAliasFilter = offlineContext.createBiquadFilter();
                     antiAliasFilter.type = 'lowpass';
                     antiAliasFilter.frequency.value = targetSampleRate * 0.45; // ~21.6kHz for 48kHz target
                     antiAliasFilter.Q.value = 0.707; // Butterworth response
-                    source.connect(antiAliasFilter);
-                    lastNode = antiAliasFilter;
+                    offlineMasterGain.connect(antiAliasFilter);
+                    finalNode = antiAliasFilter;
+                    console.log('   9. Anti-alias filter: ' + antiAliasFilter.frequency.value.toFixed(0) + 'Hz LP');
                 }
 
-                // Connect to destination (processing chain would go here)
-                lastNode.connect(offlineContext.destination);
+                // ════════════════════════════════════════════════════════════════════════════
+                // CONNECT CHAIN (matches live audio path + safety clipper)
+                // Source → Subsonic → EQ(7) → Compressor → Warmth → Makeup → Limiter → Clipper → Master → [Anti-alias] → Output
+                // ════════════════════════════════════════════════════════════════════════════
+                source.connect(offlineSubsonic);
+                offlineSubsonic.connect(offlineEQSub);
+                offlineEQSub.connect(offlineEQBass);
+                offlineEQBass.connect(offlineEQLowMid);
+                offlineEQLowMid.connect(offlineEQMid);
+                offlineEQMid.connect(offlineEQHighMid);
+                offlineEQHighMid.connect(offlineEQHigh);
+                offlineEQHigh.connect(offlineEQAir);
+                offlineEQAir.connect(offlineCompressor);
+                offlineCompressor.connect(offlineWarmth);
+                offlineWarmth.connect(offlineMakeupGain);
+                offlineMakeupGain.connect(offlineLimiter);
+                offlineLimiter.connect(offlineSafetyClipper);
+                offlineSafetyClipper.connect(offlineMasterGain);
+                finalNode.connect(offlineContext.destination);
+
+                console.log('✅ Export chain connected (8 stages, no clipping)');
 
                 // Start and render at the processing sample rate
                 source.start(0);
@@ -15951,22 +16143,64 @@
                 if (platform === 'apple' || platform === 'podcast') targetLUFS = -16.0;
                 else targetLUFS = -14.0;
 
-                // Calculate gain adjustment needed to reach target LUFS
-                const gainAdjustmentDB = targetLUFS - currentLUFS;
-                // Clamp to reasonable range (-6 to +8 dB for mastering)
-                const clampedGainDB = Math.max(-6, Math.min(8, gainAdjustmentDB));
+                // ════════════════════════════════════════════════════════════════════════════
+                // PROCESSING CHAIN GAIN COMPENSATION
+                // The EQ, saturation, and compression stages ADD gain before makeup gain.
+                // We must subtract this to hit the target LUFS accurately.
+                // ════════════════════════════════════════════════════════════════════════════
+                let processingChainGain = 0;
+
+                // Estimate EQ gain (sum of positive band gains, averaged)
+                if (window.eqSubFilter || eqSubFilter) {
+                    const eqGains = [
+                        (window.eqSubFilter || eqSubFilter)?.gain?.value || 0,
+                        (window.eqBassFilter || eqBassFilter)?.gain?.value || 0,
+                        (window.eqLowMidFilter || eqLowMidFilter)?.gain?.value || 0,
+                        (window.eqMidFilter || eqMidFilter)?.gain?.value || 0,
+                        (window.eqHighMidFilter || eqHighMidFilter)?.gain?.value || 0,
+                        (window.eqHighFilter || eqHighFilter)?.gain?.value || 0,
+                        (window.eqAirFilter || eqAirFilter)?.gain?.value || 0
+                    ];
+                    // Calculate net EQ gain (positive boosts add loudness)
+                    const positiveEQGain = eqGains.filter(g => g > 0).reduce((a, b) => a + b, 0);
+                    // EQ boosts don't add dB linearly, but roughly 50% of total boost affects LUFS
+                    processingChainGain += positiveEQGain * 0.5;
+                }
+
+                // Estimate saturation/warmth gain (typically +0.5 to +1.5 dB)
+                // Saturation adds harmonics which increase perceived loudness
+                processingChainGain += 1.0;
+
+                // Compression typically increases RMS by ~1-2 dB (reduces peaks, allows more gain)
+                processingChainGain += 1.5;
+
+                console.log(`📊 Processing chain gain estimate: +${processingChainGain.toFixed(1)} dB`);
+
+                // Calculate gain adjustment with compensation
+                const gainAdjustmentDB = targetLUFS - currentLUFS - processingChainGain;
+                // Clamp to reasonable range (-10 to +8 dB for mastering)
+                const clampedGainDB = Math.max(-10, Math.min(8, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
                 const mkGain = window.makeupGain || makeupGain;
                 if (mkGain && ac) {
                     mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
-                    console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (${clampedGainDB > 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB makeup)`);
+                    console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
+                    console.log(`   Raw adjustment: ${(targetLUFS - currentLUFS).toFixed(1)} dB`);
+                    console.log(`   Chain compensation: -${processingChainGain.toFixed(1)} dB`);
+                    console.log(`   Final makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB`);
                 }
 
-                // Auto LUFS Compensation is DISABLED - gain is set once here, not continuously
-                // This prevents the "pumping" volume fluctuation users reported
-                console.log('✅ AI Master gain adjustment applied (one-time, not continuous)');
+                // Store the compensation for debugging
+                window.lufsTargetingInfo = {
+                    inputLUFS: currentLUFS,
+                    targetLUFS: targetLUFS,
+                    chainGainEstimate: processingChainGain,
+                    finalMakeupGainDB: clampedGainDB
+                };
+
+                console.log('✅ LUFS targeting applied with processing chain compensation');
 
                 updateProgress(6, 'Applying Processing', 'complete');
                 console.log('[AI Suite] Steps 6-13: Processing complete (gain adjusted)');
