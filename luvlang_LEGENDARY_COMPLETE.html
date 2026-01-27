@@ -13397,17 +13397,14 @@
                         // Recalculate gain based on stored input level and new target
                         const inputLUFS = window.autoLUFSInputLevel;
 
-                        // Get processing chain gain compensation (from stored value or estimate)
-                        let chainGain = 2.5; // Default estimate
-                        if (window.lufsTargetingInfo && window.lufsTargetingInfo.chainGainEstimate) {
-                            chainGain = window.lufsTargetingInfo.chainGainEstimate;
-                        }
+                        // Add compensation for processing chain losses (+1.5 dB)
+                        const chainCompensation = 1.5;
 
-                        // Calculate gain with compensation for EQ/saturation/compression
-                        const gainNeeded = targetLUFS - inputLUFS - chainGain;
+                        // Calculate gain with compensation
+                        const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
 
-                        // Safety limits: max +8dB boost, max -10dB cut
-                        const safeGain = Math.max(-10, Math.min(8, gainNeeded));
+                        // Safety limits: max +12dB boost, max -10dB cut
+                        const safeGain = Math.max(-10, Math.min(12, gainNeeded));
                         const linearGain = Math.pow(10, safeGain / 20);
 
                         // Smooth ramp to new gain
@@ -13419,7 +13416,7 @@
                         window.autoLUFSTargetLevel = targetLUFS;
 
                         console.log(`🎯 LUFS RECALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
-                        console.log(`   Chain compensation: -${chainGain.toFixed(1)} dB`);
+                        console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
                         console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
 
                         // Show toast notification
