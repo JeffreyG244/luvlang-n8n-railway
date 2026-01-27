@@ -5026,22 +5026,50 @@
                 harmonicExciter.oversample = '2x';
                 window.harmonicExciter = harmonicExciter;
 
-                // Exciter Mix (dry/wet)
+                // Exciter Mix (dry/wet) with proper routing
+                const exciterInput = audioContext.createGain();
                 const exciterDry = audioContext.createGain();
                 const exciterWet = audioContext.createGain();
                 const exciterOutput = audioContext.createGain();
-                exciterDry.gain.value = 0.85;  // 85% dry
-                exciterWet.gain.value = 0.15;  // 15% wet (subtle)
+                exciterInput.gain.value = 1.0;
+                exciterDry.gain.value = 0.88;  // 88% dry
+                exciterWet.gain.value = 0.12;  // 12% wet (very subtle sparkle)
                 exciterOutput.gain.value = 1.0;
+
+                // Internal exciter routing (parallel dry/wet)
+                exciterInput.connect(exciterDry);             // Dry path
+                exciterInput.connect(harmonicExciter);        // Wet path through saturation
+                harmonicExciter.connect(exciterWet);
+                exciterDry.connect(exciterOutput);            // Mix dry to output
+                exciterWet.connect(exciterOutput);            // Mix wet to output
+
+                // Expose for signal chain
+                window.exciterInput = exciterInput;
+                window.exciterOutput = exciterOutput;
+
                 window.exciterControls = {
+                    input: exciterInput,
+                    output: exciterOutput,
                     dry: exciterDry,
                     wet: exciterWet,
                     setMix: (wetAmount) => {
                         // wetAmount: 0 to 1
                         exciterWet.gain.value = wetAmount * 0.3; // Max 30% wet
                         exciterDry.gain.value = 1 - (wetAmount * 0.3);
+                        console.log(`✨ Exciter: ${Math.round(wetAmount * 100)}% sparkle`);
+                    },
+                    enable: () => {
+                        exciterWet.gain.value = 0.12;
+                        exciterDry.gain.value = 0.88;
+                        console.log('✅ Harmonic Exciter enabled');
+                    },
+                    disable: () => {
+                        exciterWet.gain.value = 0;
+                        exciterDry.gain.value = 1.0;
+                        console.log('⏸️ Harmonic Exciter disabled');
                     }
                 };
+                console.log('✅ Harmonic Exciter created with internal routing');
 
                 // 4. MULTIBAND CROSSOVER - Split into low/mid/high
                 const mbLowPass = audioContext.createBiquadFilter();
@@ -6659,55 +6687,65 @@
                 eqHighFilter.connect(eqAirFilter);
                 console.log('   2. 7-Band Parametric EQ');
 
-                // STAGE 3: DYNAMICS - Glue Compressor
-                eqAirFilter.connect(compressor);
-                console.log('   3. Glue Compressor (bus compression)');
+                // STAGE 3: HARMONIC EXCITER - Subtle sparkle/air
+                // Adds high-frequency presence and clarity
+                if (window.exciterInput && window.exciterOutput) {
+                    eqAirFilter.connect(window.exciterInput);
+                    window.exciterOutput.connect(compressor);
+                    console.log('   3. Harmonic Exciter (12% sparkle for air/presence)');
+                } else {
+                    eqAirFilter.connect(compressor);
+                    console.log('   3. [Exciter bypassed - direct to compressor]');
+                }
 
-                // STAGE 4: WARMTH - Analog Saturation (series, not parallel - no phase issues)
+                // STAGE 4: DYNAMICS - Glue Compressor
+                console.log('   4. Glue Compressor (bus compression)');
+
+                // STAGE 5: WARMTH - Analog Saturation (series, not parallel - no phase issues)
                 // Using the analogWarmth waveshaper directly in series
                 compressor.connect(analogWarmth);
-                console.log('   4. Analog Warmth (tube-style saturation)');
+                console.log('   5. Analog Warmth (tube-style saturation)');
 
-                // STAGE 5: LOUDNESS - Makeup Gain (LUFS targeting)
+                // STAGE 6: LOUDNESS - Makeup Gain (LUFS targeting)
                 analogWarmth.connect(makeupGain);
-                console.log('   5. Makeup Gain (LUFS targeting)');
+                console.log('   6. Makeup Gain (LUFS targeting)');
 
-                // STAGE 6: SOFT CLIPPER - Warm saturation before limiter
+                // STAGE 7: SOFT CLIPPER - Warm saturation before limiter
                 // Reduces limiter workload and adds subtle harmonic warmth
                 if (window.softClipInput && window.softClipOutput) {
                     makeupGain.connect(window.softClipInput);
                     window.softClipOutput.connect(limiter);
-                    console.log('   6. Soft Clipper (25% saturation, reduces limiter stress)');
+                    console.log('   7. Soft Clipper (25% saturation, reduces limiter stress)');
                 } else {
                     makeupGain.connect(limiter);
-                    console.log('   6. [Soft Clipper bypassed - direct to limiter]');
+                    console.log('   7. [Soft Clipper bypassed - direct to limiter]');
                 }
 
-                // STAGE 7: LIMITING - Professional True Peak Limiter (Industry Standard)
+                // STAGE 8: LIMITING - Professional True Peak Limiter (Industry Standard)
                 // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
                 limiter.threshold.value = -1.0;      // -1dBTP industry standard
                 limiter.knee.value = 2.0;            // Soft knee for musical transparency
                 limiter.ratio.value = 20;            // Brick-wall ratio
                 limiter.attack.value = 0.001;        // 1ms attack (fast but musical)
                 limiter.release.value = 0.150;       // 150ms release (Bob Ludwig style)
-                console.log('   7. Pro Limiter (-1dBTP, soft knee)');
+                console.log('   8. Pro Limiter (-1dBTP, soft knee)');
 
-                // STAGE 8: SAFETY CLIPPER (catches any peaks that escape limiter)
+                // STAGE 9: SAFETY CLIPPER (catches any peaks that escape limiter)
                 if (window.safetyClipper) {
                     limiter.connect(window.safetyClipper);
                     window.safetyClipper.connect(masterGain);
-                    console.log('   8. Safety Clipper (soft clip at -0.04dBFS)');
+                    console.log('   9. Safety Clipper (soft clip at -0.04dBFS)');
                 } else {
                     limiter.connect(masterGain);
                 }
 
-                // STAGE 9: OUTPUT - Master Gain
-                console.log('   9. Master Output');
+                // STAGE 10: OUTPUT - Master Gain
+                console.log('  10. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 9-STAGE MASTERING CHAIN READY');
-                console.log('   Subsonic → EQ → Comp → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
+                console.log('✅ 10-STAGE MASTERING CHAIN READY');
+                console.log('   Subsonic → EQ → Exciter → Comp → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
