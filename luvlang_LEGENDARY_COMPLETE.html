@@ -2323,72 +2323,6 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════════════
-           🎛️ SIMPLE MODE / PRO MODE TOGGLE SYSTEM
-           Progressive disclosure for optimal UX
-           ═══════════════════════════════════════════════════════════════════════════ */
-        .mode-toggle-bar {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            background: linear-gradient(135deg, rgba(20,20,35,0.95), rgba(10,10,20,0.98));
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 50px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-
-        .mode-toggle-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: rgba(255,255,255,0.5);
-        }
-
-        .mode-toggle-label.active {
-            background: linear-gradient(135deg, #00d4ff, #0099cc);
-            color: #000;
-            font-weight: 700;
-        }
-
-        .mode-toggle-label:hover:not(.active) {
-            color: rgba(255,255,255,0.8);
-        }
-
-        /* Hide pro features in simple mode */
-        body.simple-mode .pro-feature {
-            display: none !important;
-        }
-
-        body.simple-mode .left-sidebar {
-            display: none;
-        }
-
-        body.simple-mode .right-sidebar {
-            display: none;
-        }
-
-        body.simple-mode .app-container {
-            grid-template-columns: 1fr;
-        }
-
-        body.simple-mode .center-main {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════════════════
            🎯 EASY PRESET SELECTION CARDS
            Platform & Genre presets with visual design
            ═══════════════════════════════════════════════════════════════════════════ */
@@ -2630,18 +2564,9 @@
 </head>
 <body>
     <!-- ═══════════════════════════════════════════════════════════════════════════
-         🎛️ SIMPLE MODE / PRO MODE TOGGLE BAR
-         Progressive disclosure for optimal UX
+         VERSION BADGE
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="mode-toggle-bar" id="modeToggleBar">
-        <span style="font-size: 0.6rem; color: rgba(255,255,255,0.3); margin-right: 8px;">v4.0</span>
-        <span class="mode-toggle-label" id="simpleModeBtn" onclick="setSimpleMode()">
-            ⚡ Simple
-        </span>
-        <span class="mode-toggle-label active" id="proModeBtn" onclick="setProMode()">
-            🎛️ Pro Studio
-        </span>
-    </div>
+    <div style="position: fixed; top: 8px; right: 15px; z-index: 9999; font-size: 0.6rem; color: rgba(255,255,255,0.3);">v4.0 Pro</div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
          🚀 FLOATING AI COMMAND BAR - 2027 Futuristic Interface
@@ -17251,45 +17176,12 @@
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // 🎛️ SIMPLE MODE / PRO MODE SYSTEM
-        // Progressive disclosure for optimal UX
+        // 🎛️ PRO MODE - Always enabled
         // ═══════════════════════════════════════════════════════════════════════════
-
-        window.currentMode = 'simple'; // Default to simple mode
-
-        window.setSimpleMode = function() {
-            document.body.classList.add('simple-mode');
-            document.body.classList.remove('pro-mode');
-            window.currentMode = 'simple';
-
-            // Update toggle buttons
-            const simpleBtn = document.getElementById('simpleModeBtn');
-            const proBtn = document.getElementById('proModeBtn');
-            if (simpleBtn) simpleBtn.classList.add('active');
-            if (proBtn) proBtn.classList.remove('active');
-
-            console.log('⚡ Simple Mode activated - Clean 3-step flow');
-        };
-
-        window.setProMode = function() {
-            document.body.classList.remove('simple-mode');
-            document.body.classList.add('pro-mode');
-            window.currentMode = 'pro';
-
-            // Update toggle buttons
-            const simpleBtn = document.getElementById('simpleModeBtn');
-            const proBtn = document.getElementById('proModeBtn');
-            if (simpleBtn) simpleBtn.classList.remove('active');
-            if (proBtn) proBtn.classList.add('active');
-
-            console.log('🎛️ Pro Studio Mode activated - Full 24-feature access');
-        };
-
-        // Initialize mode on page load
+        window.currentMode = 'pro';
         document.addEventListener('DOMContentLoaded', function() {
-            // Default to Pro mode (show everything) for now
-            // setSimpleMode(); // Uncomment to default to simple mode
-            setProMode();
+            document.body.classList.add('pro-mode');
+            console.log('🎛️ Pro Studio Mode - Full 24-feature access');
         });
 
         // A/B Compare toggle - UNIFIED IMPLEMENTATION
