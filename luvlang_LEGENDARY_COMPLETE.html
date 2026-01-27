@@ -6657,228 +6657,64 @@
 
                 console.log('🔗 Building Professional Mastering Chain...');
 
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 1: INPUT CLEANUP (Fix problems first)
-                // ────────────────────────────────────────────────────────────────────────────
-                // 1. DC Offset Filter - Remove DC bias
-                sourceNode.connect(dcOffsetFilter);
-                console.log('   1. DC Offset Filter (5Hz HP)');
+                // ════════════════════════════════════════════════════════════════════════════
+                // CLEAN MASTERING CHAIN - Simple, Phase-Coherent, Professional
+                // ════════════════════════════════════════════════════════════════════════════
 
-                // 2. Subsonic Filter - Remove inaudible rumble
-                dcOffsetFilter.connect(subsonicFilter);
-                console.log('   2. Subsonic Filter (25Hz HP)');
-
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 2: TONAL SHAPING (EQ)
-                // ────────────────────────────────────────────────────────────────────────────
-                // 3. 7-Band Parametric EQ
-                subsonicFilter.connect(eqSubFilter);
+                // STAGE 1: INPUT → 7-Band EQ (no parallel processing)
+                sourceNode.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
                 eqLowMidFilter.connect(eqMidFilter);
                 eqMidFilter.connect(eqHighMidFilter);
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
-                eqAirFilter.connect(eqCompensationGain);
-                console.log('   3. 7-Band Parametric EQ (Sub → Bass → Low-Mid → Mid → High-Mid → High → Air)');
+                console.log('   1. 7-Band Parametric EQ');
 
-                // 4. De-Esser - Control sibilance after EQ
-                eqCompensationGain.connect(deEsserFilter);
-                console.log('   4. De-Esser (6kHz sibilance control)');
+                // STAGE 2: EQ → Compressor (single glue compressor)
+                eqAirFilter.connect(compressor);
+                console.log('   2. Glue Compressor');
 
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 3: DYNAMICS PROCESSING
-                // ────────────────────────────────────────────────────────────────────────────
-                // 5. Dynamic EQ - Frequency-dependent compression
-                deEsserFilter.connect(dynEqInput);
-                console.log('   5. Dynamic EQ (3-band frequency-dependent compression)');
+                // STAGE 3: Compressor → Makeup Gain (LUFS targeting)
+                compressor.connect(makeupGain);
+                console.log('   3. Makeup Gain (LUFS targeting)');
 
-                // 6. Multiband Compression - Split into low/mid/high
-                const mbInput = audioContext.createGain();
-                const mbOutput = audioContext.createGain();
-                mbInput.gain.value = 1.0;
-                mbOutput.gain.value = 1.0;
+                // STAGE 4: Makeup Gain → Limiter (brick wall protection)
+                makeupGain.connect(limiter);
+                console.log('   4. Limiter (peak protection)');
 
-                // Connect multiband crossover
-                dynEqOutput.connect(mbInput);
-                mbInput.connect(mbLowPass);
-                mbInput.connect(mbHighPass);
-                mbHighPass.connect(mbMidLowPass);  // Mid band
-                mbHighPass.connect(mbMidHighPass); // High band
-
-                // Band processing
-                mbLowPass.connect(mbLowGain);
-                mbMidLowPass.connect(mbMidGain);
-                mbMidHighPass.connect(mbHighGain);
-
-                // Sum bands
-                mbLowGain.connect(mbOutput);
-                mbMidGain.connect(mbOutput);
-                mbHighGain.connect(mbOutput);
-                console.log('   6. Multiband Compression (3-band: <200Hz, 200-4kHz, >4kHz)');
-
-                // 7. Single-Band Compressor - Glue compression
-                mbOutput.connect(compressor);
-                console.log('   7. Glue Compressor (transparent bus compression)');
-
-                // 🏆 8. NY Parallel Compression (Chris Athens punch technique)
-                compressor.connect(nyCompInput);
-                nyCompInput.connect(nyCompDry);  // Dry path (original dynamics)
-                nyCompInput.connect(nyHighPass);  // HP filter before crush
-                nyHighPass.connect(nyCompressor);  // The "crush" compressor
-                nyCompressor.connect(nyMakeupGain);
-                nyMakeupGain.connect(nyCompWet);
-                nyCompDry.connect(nyCompOutput);
-                nyCompWet.connect(nyCompOutput);
-                console.log('   8. 🏆 NY Parallel Compression (Chris Athens punch technique)');
-
-                // 9. Transient Shaper - Attack/sustain control
-                nyCompOutput.connect(transientInput);
-                console.log('   9. Transient Shaper (attack/sustain parallel compression)');
-
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 4: HARMONIC COLORATION (🏆 LEGENDARY)
-                // ────────────────────────────────────────────────────────────────────────────
-                // 9. Harmonic Exciter - Add presence/brightness
-                transientOutput.connect(exciterDry);
-                transientOutput.connect(harmonicExciter);
-                harmonicExciter.connect(exciterWet);
-                exciterDry.connect(exciterOutput);
-                exciterWet.connect(exciterOutput);
-                console.log('   9. Harmonic Exciter (subtle saturation for presence)');
-
-                // 10. Analog Warmth - Tube-style saturation
-                const warmthOutput = audioContext.createGain();
-                warmthOutput.gain.value = 1.0;
-                exciterOutput.connect(warmthDry);
-                exciterOutput.connect(analogWarmth);
-                analogWarmth.connect(warmthWet);
-                warmthDry.connect(warmthOutput);
-                warmthWet.connect(warmthOutput);
-                console.log('   10. Analog Warmth (tube-style harmonic saturation)');
-
-                // 🏆 11. Console Emulation (SSL Bus Compressor character)
-                warmthOutput.connect(consoleDry);
-                warmthOutput.connect(sslSaturator); // Default to SSL
-                sslSaturator.connect(consoleWet);
-                consoleDry.connect(consoleOutput);
-                consoleWet.connect(consoleOutput);
-                console.log('   11. 🏆 Console Emulation (SSL/Neve/API/Tape character)');
-
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 5: STEREO PROCESSING
-                // ────────────────────────────────────────────────────────────────────────────
-                // Direct pass-through (M/S EQ bypassed to prevent phase issues)
-                consoleOutput.connect(stereoSplitter);
-                console.log('   12. Stereo Processing (clean pass-through)');
-
-                // Direct stereo pass-through (bass mono bypassed to prevent phase issues)
-                stereoSplitter.connect(stereoMerger, 0, 0);  // Left → Left
-                stereoSplitter.connect(stereoMerger, 1, 1);  // Right → Right
-                console.log('   13. Stereo Merge (clean pass-through)');
-
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 6: LOUDNESS & LIMITING
-                // ────────────────────────────────────────────────────────────────────────────
-
-                // 13. Makeup Gain - Loudness targeting
-                stereoMerger.connect(makeupGain);
-                console.log('   13. Makeup Gain (LUFS loudness targeting)');
-
-                // 14. Soft Clipper - Warm saturation before limiter
-                makeupGain.connect(softClipDry);
-                makeupGain.connect(softClipper);
-                softClipper.connect(softClipWet);
-                softClipDry.connect(softClipOutput);
-                softClipWet.connect(softClipOutput);
-                console.log('   14. Soft Clipper (warm pre-limiting saturation)');
-
-                // 🏆 15. HF Limiter (Colin Leonard de-harsh technique)
-                // Parallel HF limiting to tame harsh highs
-                softClipOutput.connect(hfLimiterLP);  // Low-pass (pass through unchanged)
-                softClipOutput.connect(hfLimiterHP);  // High-pass (process HF)
-                hfLimiterHP.connect(hfLimiterComp);
-                hfLimiterComp.connect(hfLimiterGain);
-                hfLimiterLP.connect(hfLimiterMix);
-                hfLimiterGain.connect(hfLimiterMix);
-                console.log('   15. 🏆 HF Limiter (Colin Leonard de-harsh technique)');
-
-                // 🏆 16. Look-Ahead Limiter - True professional transparent limiting
-                hfLimiterMix.connect(lookAheadDelay);  // Audio path (delayed)
-                lookAheadDelay.connect(lookAheadLimiter);
-                console.log('   16. 🏆 Look-Ahead Limiter (5ms look-ahead for transparent limiting)');
-
-                // 17. Master Gain - Final output level
-                lookAheadLimiter.connect(masterGain);
-                console.log('   17. Master Output Gain');
-
-                // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 7: OUTPUT PROCESSING
-                // ────────────────────────────────────────────────────────────────────────────
-                // 18. Dither - For bit-depth reduction
-                masterGain.connect(ditherProcessor);
-                console.log('   18. Output Dither (TPDF for 16-bit export)');
-
-                // 19. True Peak Detection - ISP monitoring
-                ditherProcessor.connect(truePeakAnalyser);
-                console.log('   19. True Peak Detector (ISP monitoring)');
-
-                // 🏆 20. Stereo Correlation Metering (mono compatibility)
-                // Tap final output for correlation analysis
-                truePeakAnalyser.connect(correlationSplitter);
-                correlationSplitter.connect(correlationAnalyserL, 0);
-                correlationSplitter.connect(correlationAnalyserR, 1);
-                console.log('   20. 🏆 Stereo Correlation Meter (mono compatibility)');
-
-                // Store multiband nodes globally
-                window.multibandNodes = {
-                    input: mbInput,
-                    output: mbOutput,
-                    lowPass: mbLowPass,
-                    highPass: mbHighPass,
-                    midLowPass: mbMidLowPass,
-                    midHighPass: mbMidHighPass
-                };
-
-                // Store warmth output globally
-                window.warmthOutput = warmthOutput;
+                // STAGE 5: Limiter → Master Gain → Output
+                limiter.connect(masterGain);
+                console.log('   5. Master Output');
 
                 console.log('');
-                console.log('═══════════════════════════════════════════════════════════════════');
-                console.log('✅ 🏆 LEGENDARY 20-STAGE MASTERING CHAIN BUILT');
-                console.log('═══════════════════════════════════════════════════════════════════');
-                console.log('   Randy Merrill • Bob Ludwig • Colin Leonard • Chris Athens');
-                console.log('   Level processing now available in your browser!');
-                console.log('═══════════════════════════════════════════════════════════════════');
+                console.log('════════════════════════════════════════════════════════════════');
+                console.log('✅ CLEAN 5-STAGE MASTERING CHAIN READY');
+                console.log('   Input → EQ → Compressor → Makeup → Limiter → Output');
+                console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
-                // L/R PEAK ANALYZERS (for metering)
-                // ═══════════════════════════════════════════════════════════════════════════
-                stereoSplitter.connect(leftAnalyser, 0);
-                stereoSplitter.connect(rightAnalyser, 1);
-
-                // ═══════════════════════════════════════════════════════════════════════════
-                // DRY/WET OUTPUT MIXING
-                // DRY path: Source → dryGain → output (raw audio, no processing)
-                // WET path: Source → [18-stage chain] → wetGain → output
+                // OUTPUT ROUTING
                 // ═══════════════════════════════════════════════════════════════════════════
 
                 // DRY PATH - direct from source (bypass all processing)
                 sourceNode.connect(dryGain);
                 dryGain.connect(outputMixer);
 
-                // WET PATH - through all processing (mastered)
-                // Final output from dither/true peak detector
-                truePeakAnalyser.connect(wetGain);
+                // WET PATH - through mastering chain
+                masterGain.connect(wetGain);
                 wetGain.connect(outputMixer);
 
-                // Final output to speakers
+                // Final output to speakers + analyser for metering
                 outputMixer.connect(analyser);
                 analyser.connect(audioContext.destination);
 
-                console.log('🔊 BYPASS SYSTEM ACTIVE:');
-                console.log('   DRY (raw): ON - Hearing original track');
-                console.log('   WET (mastered): OFF - Will engage after mastering');
+                // Connect analyser for metering (stereo split)
+                outputMixer.connect(stereoSplitter);
+                stereoSplitter.connect(leftAnalyser, 0);
+                stereoSplitter.connect(rightAnalyser, 1);
+
+                console.log('🔊 Audio routing complete');
 
                 // K-weighted parallel path (for LUFS measurement) - taps from makeup gain
                 makeupGain.connect(kWeightingHPF1);
