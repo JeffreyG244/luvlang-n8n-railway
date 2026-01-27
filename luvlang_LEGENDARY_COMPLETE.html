@@ -4877,11 +4877,13 @@
                 // ⚡ COMPRESSOR - Industry-Standard Mastering Bus (SSL-style)
                 // Settings matched to professional hardware: SSL G-Bus, API 2500, Shadow Hills
                 compressor = audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -18;   // Higher threshold = more transparent
-                compressor.knee.value = 8;          // Softer knee for gentler compression
-                compressor.ratio.value = 1.5;       // Very gentle 1.5:1 for glue (preserves dynamics)
-                compressor.attack.value = 0.020;    // 20ms attack - lets transients through
-                compressor.release.value = 0.300;   // 300ms release (smooth, no pumping)
+                // WORLD-CLASS COMPRESSOR SETTINGS (Bob Ludwig / SSL G-Bus style)
+                // Goal: 2-3dB gain reduction MAXIMUM - "compression should be invisible"
+                compressor.threshold.value = -16;   // Higher threshold = less compression = transparent
+                compressor.knee.value = 10;         // Very soft knee for gradual, musical compression
+                compressor.ratio.value = 1.5;       // Gentle 1.5:1 for glue (preserves dynamics)
+                compressor.attack.value = 0.030;    // 30ms attack - lets transients through completely
+                compressor.release.value = 0.150;   // 150ms release - musical, returns before next beat
 
                 // EQ Compensation Gain (automatic makeup gain for EQ boosts)
                 eqCompensationGain = audioContext.createGain();
@@ -4922,11 +4924,12 @@
                 const transientSustainGain = audioContext.createGain();
                 const transientDryGain = audioContext.createGain();
 
-                // Bob Ludwig approach: preserve transients, mostly dry
-                // Increased attack to preserve snare punch, reduced sustain to avoid "pop"
-                transientAttackGain.gain.value = 0.25;   // 25% attack (preserve snare punch)
-                transientSustainGain.gain.value = 0.03;  // 3% sustain (minimal - avoids pop/muddiness)
-                transientDryGain.gain.value = 0.72;      // 72% dry (mostly original character)
+                // TRANSIENT SHAPER DISABLED BY DEFAULT
+                // Parallel processing causes phase issues - use compression attack/release instead
+                // Can be enabled via window.transientControls.enable() if needed
+                transientAttackGain.gain.value = 0.0;    // 0% attack (disabled)
+                transientSustainGain.gain.value = 0.0;   // 0% sustain (disabled)
+                transientDryGain.gain.value = 1.0;       // 100% dry (pass-through only)
 
                 // Connect transient shaper (parallel paths)
                 transientInput.connect(transientAttackComp);
@@ -4961,10 +4964,11 @@
                         console.log(`🎸 Sustain: ${Math.round(amount * 100)}%`);
                     },
                     enable: () => {
-                        transientAttackGain.gain.value = 0.25;
-                        transientSustainGain.gain.value = 0.03;
-                        transientDryGain.gain.value = 0.72;
-                        console.log('✅ Transient Shaper enabled (25% attack, 3% sustain)');
+                        // Professional settings if user chooses to enable
+                        transientAttackGain.gain.value = 0.15;   // 15% attack (subtle)
+                        transientSustainGain.gain.value = 0.05;  // 5% sustain (very subtle)
+                        transientDryGain.gain.value = 0.80;      // 80% dry
+                        console.log('✅ Transient Shaper enabled (15% attack, 5% sustain - subtle)');
                     },
                     disable: () => {
                         transientAttackGain.gain.value = 0;
@@ -4974,16 +4978,19 @@
                     }
                 };
 
-                console.log('✅ Transient Shaper created (Bob Ludwig style - 25% attack, 3% sustain)');
+                console.log('✅ Transient Shaper created (BYPASSED by default - enable via transientControls.enable())');
 
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
                 // Brick-wall limiting - prevents clipping with hard knee
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard
-                limiter.knee.value = 3.0;           // Softer knee for more transparency
-                limiter.ratio.value = 20;           // Brick-wall limiting ratio
-                limiter.attack.value = 0.003;       // 3ms attack (lets transients through)
-                limiter.release.value = 0.200;      // 200ms release (musical, no pumping)
+                // WORLD-CLASS LIMITER SETTINGS (FabFilter Pro-L / Waves L2 style)
+                // Goal: 3-4dB gain reduction MAXIMUM - beyond this, artifacts become audible
+                // Threshold at -1dBTP for streaming platform compliance
+                limiter.threshold.value = -1.0;     // -1.0 dBTP (Apple Music / Spotify standard)
+                limiter.knee.value = 6;             // Medium-soft knee for musical limiting
+                limiter.ratio.value = 20;           // Brick-wall ratio (true limiting)
+                limiter.attack.value = 0.005;       // 5ms attack - simulates lookahead, preserves transients
+                limiter.release.value = 0.100;      // 100ms release - fast enough for punch, no pumping
 
                 // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
@@ -5056,9 +5063,11 @@
                 const exciterWet = audioContext.createGain();
                 const exciterOutput = audioContext.createGain();
                 exciterInput.gain.value = 1.0;
-                exciterDry.gain.value = 0.92;  // 92% dry (cleaner sound)
-                exciterWet.gain.value = 0.08;  // 8% wet (minimal sparkle, no artifacts)
-                exciterOutput.gain.value = 1.0;  // Unity gain for transparency
+                // EXCITER DISABLED BY DEFAULT - One saturation stage only (warmth)
+                // Can be enabled via window.exciterControls.enable() if needed
+                exciterDry.gain.value = 1.0;   // 100% dry (bypassed)
+                exciterWet.gain.value = 0.0;   // 0% wet (disabled - prevents color stacking)
+                exciterOutput.gain.value = 1.0;  // Unity gain
 
                 // Internal exciter routing (parallel dry/wet)
                 exciterInput.connect(exciterDry);             // Dry path
@@ -5083,8 +5092,9 @@
                         console.log(`✨ Exciter: ${Math.round(wetAmount * 100)}% sparkle`);
                     },
                     enable: () => {
-                        exciterWet.gain.value = 0.08;
-                        exciterDry.gain.value = 0.92;
+                        // If user enables, use subtle settings
+                        exciterWet.gain.value = 0.05;   // 5% wet (very subtle)
+                        exciterDry.gain.value = 0.95;
                         console.log('✅ Harmonic Exciter enabled');
                     },
                     disable: () => {
@@ -5093,7 +5103,7 @@
                         console.log('⏸️ Harmonic Exciter disabled');
                     }
                 };
-                console.log('✅ Harmonic Exciter created with internal routing');
+                console.log('✅ Harmonic Exciter created (BYPASSED by default - one saturation stage only)');
 
                 // 4. MULTIBAND CROSSOVER - Split into low/mid/high
                 const mbLowPass = audioContext.createBiquadFilter();
@@ -5160,11 +5170,12 @@
                 analogWarmth.curve = warmthCurve;
                 analogWarmth.oversample = '4x'; // Higher oversampling for cleaner harmonics
 
-                // Warmth mix
+                // Warmth mix - SINGLE SATURATION STAGE (professional standard)
+                // 15% wet maximum - "saturation should enhance, not dominate"
                 const warmthDry = audioContext.createGain();
                 const warmthWet = audioContext.createGain();
-                warmthDry.gain.value = 0.90; // 90% dry (cleaner, less artifacts)
-                warmthWet.gain.value = 0.10; // 10% wet - subtle tape warmth
+                warmthDry.gain.value = 0.85; // 85% dry (transparent)
+                warmthWet.gain.value = 0.15; // 15% wet - tape cohesion (professional max)
                 window.warmthControls = {
                     dry: warmthDry,
                     wet: warmthWet,
@@ -5290,9 +5301,11 @@
                 const softClipDry = audioContext.createGain();
                 const softClipWet = audioContext.createGain();
                 const softClipOutput = audioContext.createGain();
+                // SOFT CLIPPER DISABLED BY DEFAULT - One saturation stage only (warmth)
+                // Can be enabled via window.softClipperControls.enable() if needed
                 softClipInput.gain.value = 1.0;
-                softClipDry.gain.value = 0.90;  // 90% dry (cleaner sound)
-                softClipWet.gain.value = 0.10;  // 10% soft clipped (minimal - avoids pop artifacts)
+                softClipDry.gain.value = 1.0;   // 100% dry (bypassed)
+                softClipWet.gain.value = 0.0;   // 0% wet (disabled - prevents color stacking)
                 softClipOutput.gain.value = 1.0;
 
                 // Internal soft clipper routing (parallel dry/wet)
@@ -5318,9 +5331,10 @@
                         console.log(`🔥 Soft Clipper: ${Math.round(wetAmount * 100)}% drive`);
                     },
                     enable: () => {
-                        softClipWet.gain.value = 0.10;
-                        softClipDry.gain.value = 0.90;
-                        console.log('✅ Soft Clipper enabled (10% saturation)');
+                        // If user enables, use subtle settings
+                        softClipWet.gain.value = 0.05;   // 5% wet (very subtle)
+                        softClipDry.gain.value = 0.95;
+                        console.log('✅ Soft Clipper enabled (5% saturation - subtle)');
                     },
                     disable: () => {
                         softClipWet.gain.value = 0;
@@ -5328,7 +5342,7 @@
                         console.log('⏸️ Soft Clipper disabled');
                     }
                 };
-                console.log('✅ Soft Clipper created with internal routing');
+                console.log('✅ Soft Clipper created (BYPASSED by default - one saturation stage only)');
 
                 // 10. OUTPUT DITHER - Essential for bit-depth reduction (24→16 bit)
                 // TPDF (Triangular Probability Density Function) dither
@@ -6687,21 +6701,27 @@
                 console.log('═══════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
+                // ═══════════════════════════════════════════════════════════════════════════
                 // ⚡ PROFESSIONAL MASTERING SIGNAL CHAIN (WET PATH)
-                // Industry-standard order: Input → Clean → Shape → Dynamics → Color → Stereo → Limit → Output
+                // Based on Bob Ludwig, Bernie Grundman, Randy Merrill techniques
+                // Signal flow: Cleanup → EQ → Compression → Saturation → Gain → Limiting
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                console.log('🔗 Building Professional Mastering Chain...');
+                console.log('🔗 Building Professional Mastering Chain (Bob Ludwig/Bernie Grundman style)...');
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // PROFESSIONAL MASTERING CHAIN - Phase-Coherent, All Series Processing
+                // WORLD-CLASS 6-STAGE MASTERING CHAIN
+                // "Less is more" - minimal processing for transparent results
                 // ════════════════════════════════════════════════════════════════════════════
 
                 // STAGE 1: INPUT CLEANUP - Subsonic Filter (removes rumble < 25Hz)
+                // Critical for headroom and preventing limiter issues
                 sourceNode.connect(subsonicFilter);
-                console.log('   1. Subsonic Filter (25Hz highpass - removes rumble)');
+                console.log('   1. Subsonic Filter (25Hz HP - removes inaudible rumble)');
 
                 // STAGE 2: TONAL SHAPING - 7-Band Parametric EQ
+                // Use primarily for CUTS (subtractive EQ) - fixes problems
+                // Boosts should be subtle (< 2dB) - "if it needs more, fix the mix"
                 subsonicFilter.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
@@ -6709,77 +6729,39 @@
                 eqMidFilter.connect(eqHighMidFilter);
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
-                console.log('   2. 7-Band Parametric EQ');
+                console.log('   2. 7-Band Parametric EQ (tonal shaping)');
 
-                // STAGE 3: HARMONIC EXCITER - Subtle sparkle/air
-                // Adds high-frequency presence and clarity
-                if (window.exciterInput && window.exciterOutput) {
-                    eqAirFilter.connect(window.exciterInput);
-                    window.exciterOutput.connect(compressor);
-                    console.log('   3. Harmonic Exciter (8% sparkle for air/presence)');
-                } else {
-                    eqAirFilter.connect(compressor);
-                    console.log('   3. [Exciter bypassed - direct to compressor]');
-                }
+                // STAGE 3: DYNAMICS - Glue Compressor (SSL-style bus compression)
+                // Settings: 1.5:1 ratio, 30ms attack, 150ms release, 2-3dB GR max
+                // "Compression should be invisible" - subtle glue only
+                eqAirFilter.connect(compressor);
+                console.log('   3. Glue Compressor (1.5:1, 30ms attack, 2-3dB GR max)');
 
-                // STAGE 4: DYNAMICS - Glue Compressor
-                console.log('   4. Glue Compressor (bus compression)');
+                // STAGE 4: COLORATION - Single Analog Warmth Stage
+                // ONE saturation stage only (not 3!) - tape-style cohesion
+                // 15% wet maximum - "saturation should enhance, not dominate"
+                compressor.connect(analogWarmth);
+                console.log('   4. Analog Warmth (15% tape saturation - cohesion)');
 
-                // STAGE 5: TRANSIENT SHAPER - Bob Ludwig style punch and depth
-                // Parallel compression for attack (punch) and sustain (body/depth)
-                if (window.transientInput && window.transientOutput) {
-                    compressor.connect(window.transientInput);
-                    window.transientOutput.connect(analogWarmth);
-                    console.log('   5. Transient Shaper (Bob Ludwig: 25% punch, 3% sustain)');
-                } else {
-                    compressor.connect(analogWarmth);
-                    console.log('   5. [Transient Shaper bypassed]');
-                }
-
-                // STAGE 6: WARMTH - Analog Saturation (series, not parallel - no phase issues)
-                // Using the analogWarmth waveshaper directly in series
-                console.log('   6. Analog Warmth (tube-style saturation)');
-
-                // STAGE 7: LOUDNESS - Makeup Gain (LUFS targeting)
+                // STAGE 5: LOUDNESS - Makeup Gain (LUFS targeting)
                 analogWarmth.connect(makeupGain);
-                console.log('   7. Makeup Gain (LUFS targeting)');
+                console.log('   5. Makeup Gain (LUFS targeting)');
 
-                // STAGE 8: SOFT CLIPPER - Warm saturation before limiter
-                // Reduces limiter workload and adds subtle harmonic warmth
-                if (window.softClipInput && window.softClipOutput) {
-                    makeupGain.connect(window.softClipInput);
-                    window.softClipOutput.connect(limiter);
-                    console.log('   8. Soft Clipper (10% saturation, reduces limiter stress)');
-                } else {
-                    makeupGain.connect(limiter);
-                    console.log('   8. [Soft Clipper bypassed - direct to limiter]');
-                }
+                // STAGE 6: LIMITING - True Peak Limiter with Lookahead
+                // 3-4dB gain reduction maximum for transparency
+                // -1.0 dBTP ceiling for streaming platforms
+                makeupGain.connect(limiter);
+                console.log('   6. True Peak Limiter (-1dBTP, 3-4dB GR max)');
 
-                // STAGE 9: LIMITING - Professional True Peak Limiter (Industry Standard)
-                // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
-                limiter.threshold.value = -1.0;      // -1dBTP industry standard
-                limiter.knee.value = 2.0;            // Soft knee for musical transparency
-                limiter.ratio.value = 20;            // Brick-wall ratio
-                limiter.attack.value = 0.001;        // 1ms attack (fast but musical)
-                limiter.release.value = 0.150;       // 150ms release (Bob Ludwig style)
-                console.log('   9. Pro Limiter (-1dBTP, soft knee)');
-
-                // STAGE 10: SAFETY CLIPPER (catches any peaks that escape limiter)
-                if (window.safetyClipper) {
-                    limiter.connect(window.safetyClipper);
-                    window.safetyClipper.connect(masterGain);
-                    console.log('  10. Safety Clipper (soft clip at -0.04dBFS)');
-                } else {
-                    limiter.connect(masterGain);
-                }
-
-                // STAGE 11: OUTPUT - Master Gain
-                console.log('  11. Master Output');
+                // OUTPUT - Master Gain
+                limiter.connect(masterGain);
+                console.log('   7. Master Output');
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 11-STAGE WORLD-CLASS MASTERING CHAIN READY');
-                console.log('   Subsonic → EQ → Exciter → Comp → Transient → Warmth → Makeup → SoftClip → Limiter → SafetyClip → Out');
+                console.log('✅ 6-STAGE WORLD-CLASS MASTERING CHAIN READY');
+                console.log('   Subsonic → EQ → Compressor → Warmth → Makeup → Limiter → Out');
+                console.log('   Based on: Bob Ludwig, Bernie Grundman, Randy Merrill');
                 console.log('════════════════════════════════════════════════════════════════');
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -6840,33 +6822,45 @@
                 window.dynamicEQ.enable();
                 console.log('✅ Dynamic EQ enabled (gentle frequency-dependent compression)');
 
-                // Enable Transient Shaper with subtle settings
-                window.transientControls.dry.gain.value = 0.7;
-                window.transientControls.attack.gain.value = 0.15;
-                window.transientControls.sustain.gain.value = 0.15;
-                console.log('✅ Transient Shaper enabled (subtle punch enhancement)');
+                // ═══════════════════════════════════════════════════════════════════════
+                // PROFESSIONAL MASTERING: "LESS IS MORE"
+                // Only ONE saturation stage (Analog Warmth) is active by default
+                // Extra processors DISABLED to prevent amateur-sounding over-processing
+                // ═══════════════════════════════════════════════════════════════════════
 
-                // De-Esser starts with gentle reduction
+                // Transient Shaper DISABLED - causes phase issues, use compressor attack instead
+                window.transientControls.dry.gain.value = 1.0;
+                window.transientControls.attack.gain.value = 0.0;
+                window.transientControls.sustain.gain.value = 0.0;
+                console.log('⏸️ Transient Shaper BYPASSED (use compressor attack/release for punch)');
+
+                // De-Esser starts with gentle reduction (OK to keep)
                 deEsserFilter.gain.value = -2; // Subtle 2dB reduction at 6kHz
                 console.log('✅ De-Esser enabled (gentle -2dB at 6kHz)');
 
-                // Exciter and Warmth already have good defaults (15% wet, 10% wet)
-                console.log('✅ Harmonic Exciter enabled (8% saturation)');
-                console.log('✅ Analog Warmth enabled (10% tube saturation)');
+                // Harmonic Exciter DISABLED - one saturation stage only (warmth)
+                console.log('⏸️ Harmonic Exciter BYPASSED (one saturation stage only)');
 
-                // Soft Clipper with subtle settings
-                softClipWet.gain.value = 0.2;
-                softClipDry.gain.value = 0.8;
-                console.log('✅ Soft Clipper enabled (10% warm saturation)');
+                // Analog Warmth ENABLED - single saturation stage for tape cohesion
+                console.log('✅ Analog Warmth enabled (15% tape saturation - single color stage)');
 
-                // Bass Mono enabled by default
+                // Soft Clipper DISABLED - redundant saturation
+                softClipWet.gain.value = 0.0;
+                softClipDry.gain.value = 1.0;
+                console.log('⏸️ Soft Clipper BYPASSED (one saturation stage only)');
+
+                // Bass Mono enabled by default (professional standard for club/vinyl)
                 console.log('✅ Bass Mono enabled (<150Hz summed to mono)');
 
                 // Dither enabled for 16-bit export
                 console.log('✅ Output Dither enabled (TPDF for 16-bit)');
 
                 console.log('');
-                console.log('🎛️ ALL 18 PROCESSORS ACTIVE - Professional mastering chain ready!');
+                console.log('════════════════════════════════════════════════════════════════');
+                console.log('🎛️ WORLD-CLASS 6-STAGE CHAIN ACTIVE');
+                console.log('   Subsonic → EQ → Compressor → Warmth → Gain → Limiter');
+                console.log('   Philosophy: "Less is more" - transparent, professional results');
+                console.log('════════════════════════════════════════════════════════════════');
 
                 // Start visualization
                 startVisualization();
