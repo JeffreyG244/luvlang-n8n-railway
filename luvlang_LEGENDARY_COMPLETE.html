@@ -17383,8 +17383,14 @@
         // ═══════════════════════════════════════════════════════════════════
         // AUDIO TOGGLE SWITCH HANDLER - Simple MASTERED / UNMASTERED toggle
         // ═══════════════════════════════════════════════════════════════════
+        // Store saved gains for toggle restoration
+        window.toggleSavedMakeupGain = null;
+        window.toggleSavedMasterGain = null;
+
         window.handleAudioToggle = function(isMastered) {
             const ac = window.audioContext;
+            const makeupGain = window.makeupGain;
+            const masterGain = window.masterGain;
 
             // Update toggle visual labels
             const labelUnmastered = document.getElementById('toggleLabelUnmastered');
@@ -17398,6 +17404,16 @@
                     window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
                     window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
                 }
+
+                // RESTORE saved makeup gain when switching back to mastered
+                if (makeupGain && window.toggleSavedMakeupGain !== null) {
+                    makeupGain.gain.setTargetAtTime(window.toggleSavedMakeupGain, ac.currentTime, 0.02);
+                    console.log('🔊 Restored makeup gain:', window.toggleSavedMakeupGain.toFixed(3));
+                }
+                if (masterGain && window.toggleSavedMasterGain !== null) {
+                    masterGain.gain.setTargetAtTime(window.toggleSavedMasterGain, ac.currentTime, 0.02);
+                }
+
                 window.abCompareMode = false;
 
                 // Update visuals
@@ -17413,6 +17429,15 @@
                 if (typeof showToast === 'function') showToast('▶ Playing Mastered Track', 'success');
             } else {
                 // UNMASTERED - play original audio
+                // SAVE makeup gain BEFORE switching so we can restore it later
+                if (makeupGain) {
+                    window.toggleSavedMakeupGain = makeupGain.gain.value;
+                    console.log('💾 Saved makeup gain:', window.toggleSavedMakeupGain.toFixed(3));
+                }
+                if (masterGain) {
+                    window.toggleSavedMasterGain = masterGain.gain.value;
+                }
+
                 if (window.dryGain && window.wetGain && ac) {
                     window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
                     window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
