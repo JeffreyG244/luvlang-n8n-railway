@@ -5005,13 +5005,14 @@
 
                 console.log('✅ Dynamic EQ created (3-band frequency-dependent compression)');
 
-                // ⚡ COMPRESSOR - Ultra-Transparent (minimal coloration)
+                // ⚡ COMPRESSOR - Industry-Standard Mastering Bus (SSL-style)
+                // Settings matched to professional hardware: SSL G-Bus, API 2500, Shadow Hills
                 compressor = audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -18;   // Higher threshold = less compression
-                compressor.knee.value = 10;         // Soft knee for transparency
-                compressor.ratio.value = 2;         // Gentle ratio (was 3)
-                compressor.attack.value = 0.010;    // Slower attack (10ms) preserves transients
-                compressor.release.value = 0.3;     // Musical release (300ms)
+                compressor.threshold.value = -24;   // Industry standard mastering threshold
+                compressor.knee.value = 6;          // SSL-style soft knee
+                compressor.ratio.value = 2;         // Gentle 2:1 for glue (not squash)
+                compressor.attack.value = 0.030;    // 30ms attack - preserves ALL transients
+                compressor.release.value = 0.250;   // 250ms auto-release style (musical)
 
                 // EQ Compensation Gain (automatic makeup gain for EQ boosts)
                 eqCompensationGain = audioContext.createGain();
