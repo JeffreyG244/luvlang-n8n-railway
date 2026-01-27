@@ -15441,8 +15441,14 @@
                 analysisPanel.style.marginBottom = '15px';
 
                 // Get genre and intensity for display (check both local and window variable)
-                const activeGenre = window.selectedPreMasterGenre || selectedPreMasterGenre || 'pop';
-                const genreName = (genrePresets && genrePresets[activeGenre]?.name) || 'Pop';
+                const activeGenre = window.selectedPreMasterGenre || 'pop';
+                // Genre name lookup with safe fallback
+                const genreNameMap = {
+                    pop: 'Pop', rock: 'Rock', hiphop: 'Hip-Hop', electronic: 'Electronic',
+                    jazz: 'Jazz', classical: 'Classical', rnb: 'R&B', country: 'Country',
+                    metal: 'Metal', folk: 'Folk', indie: 'Indie', balanced: 'Balanced'
+                };
+                const genreName = genreNameMap[activeGenre] || 'Pop';
                 const intensityLabels = { 1: 'Light', 2: 'Medium', 3: 'Heavy' };
                 const intensityName = intensityLabels[window.selectedIntensity || 2];
 
