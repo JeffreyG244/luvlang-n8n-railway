@@ -4877,11 +4877,11 @@
                 // ⚡ COMPRESSOR - Industry-Standard Mastering Bus (SSL-style)
                 // Settings matched to professional hardware: SSL G-Bus, API 2500, Shadow Hills
                 compressor = audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -24;   // Industry standard mastering threshold
-                compressor.knee.value = 6;          // SSL-style soft knee
-                compressor.ratio.value = 2;         // Gentle 2:1 for glue (not squash)
-                compressor.attack.value = 0.015;    // 15ms attack - SSL G-Bus standard (tighter control)
-                compressor.release.value = 0.250;   // 250ms auto-release style (musical)
+                compressor.threshold.value = -18;   // Higher threshold = more transparent
+                compressor.knee.value = 8;          // Softer knee for gentler compression
+                compressor.ratio.value = 1.5;       // Very gentle 1.5:1 for glue (preserves dynamics)
+                compressor.attack.value = 0.020;    // 20ms attack - lets transients through
+                compressor.release.value = 0.300;   // 300ms release (smooth, no pumping)
 
                 // EQ Compensation Gain (automatic makeup gain for EQ boosts)
                 eqCompensationGain = audioContext.createGain();
@@ -4896,7 +4896,7 @@
                 transientInput = audioContext.createGain();
                 transientOutput = audioContext.createGain();
                 transientInput.gain.value = 1.0;
-                transientOutput.gain.value = 1.2;   // +1.6dB boost to compensate for parallel compression loss
+                transientOutput.gain.value = 1.0;   // Unity gain (cleaner mix with new settings)
 
                 // Fast attack path (for transient punch)
                 // FIX: Attack was 0.1ms causing robotic/clicking artifacts!
@@ -4922,10 +4922,11 @@
                 const transientSustainGain = audioContext.createGain();
                 const transientDryGain = audioContext.createGain();
 
-                // Bob Ludwig approach: subtle enhancement, mostly dry
-                transientAttackGain.gain.value = 0.15;   // 15% attack (subtle punch)
-                transientSustainGain.gain.value = 0.10;  // 10% sustain (subtle depth/body)
-                transientDryGain.gain.value = 0.75;      // 75% dry (preserve original character)
+                // Bob Ludwig approach: preserve transients, mostly dry
+                // Increased attack to preserve snare punch, reduced sustain to avoid "pop"
+                transientAttackGain.gain.value = 0.25;   // 25% attack (preserve snare punch)
+                transientSustainGain.gain.value = 0.03;  // 3% sustain (minimal - avoids pop/muddiness)
+                transientDryGain.gain.value = 0.72;      // 72% dry (mostly original character)
 
                 // Connect transient shaper (parallel paths)
                 transientInput.connect(transientAttackComp);
@@ -4960,10 +4961,10 @@
                         console.log(`🎸 Sustain: ${Math.round(amount * 100)}%`);
                     },
                     enable: () => {
-                        transientAttackGain.gain.value = 0.15;
-                        transientSustainGain.gain.value = 0.10;
-                        transientDryGain.gain.value = 0.75;
-                        console.log('✅ Transient Shaper enabled (Bob Ludwig style)');
+                        transientAttackGain.gain.value = 0.25;
+                        transientSustainGain.gain.value = 0.03;
+                        transientDryGain.gain.value = 0.72;
+                        console.log('✅ Transient Shaper enabled (25% attack, 3% sustain)');
                     },
                     disable: () => {
                         transientAttackGain.gain.value = 0;
@@ -4973,16 +4974,16 @@
                     }
                 };
 
-                console.log('✅ Transient Shaper created (Bob Ludwig style - 15% attack, 10% sustain)');
+                console.log('✅ Transient Shaper created (Bob Ludwig style - 25% attack, 3% sustain)');
 
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
                 // Brick-wall limiting - prevents clipping with hard knee
                 limiter = audioContext.createDynamicsCompressor();
                 limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard
-                limiter.knee.value = 2.0;           // Soft knee for musical transparency
+                limiter.knee.value = 3.0;           // Softer knee for more transparency
                 limiter.ratio.value = 20;           // Brick-wall limiting ratio
-                limiter.attack.value = 0.001;       // 1ms attack (fast but musical)
-                limiter.release.value = 0.150;      // 150ms release (Bob Ludwig style)
+                limiter.attack.value = 0.003;       // 3ms attack (lets transients through)
+                limiter.release.value = 0.200;      // 200ms release (musical, no pumping)
 
                 // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
@@ -5055,9 +5056,9 @@
                 const exciterWet = audioContext.createGain();
                 const exciterOutput = audioContext.createGain();
                 exciterInput.gain.value = 1.0;
-                exciterDry.gain.value = 0.88;  // 88% dry
-                exciterWet.gain.value = 0.12;  // 12% wet (very subtle sparkle)
-                exciterOutput.gain.value = 1.05;  // +0.4dB to compensate for saturation loss
+                exciterDry.gain.value = 0.92;  // 92% dry (cleaner sound)
+                exciterWet.gain.value = 0.08;  // 8% wet (minimal sparkle, no artifacts)
+                exciterOutput.gain.value = 1.0;  // Unity gain for transparency
 
                 // Internal exciter routing (parallel dry/wet)
                 exciterInput.connect(exciterDry);             // Dry path
@@ -5082,8 +5083,8 @@
                         console.log(`✨ Exciter: ${Math.round(wetAmount * 100)}% sparkle`);
                     },
                     enable: () => {
-                        exciterWet.gain.value = 0.12;
-                        exciterDry.gain.value = 0.88;
+                        exciterWet.gain.value = 0.08;
+                        exciterDry.gain.value = 0.92;
                         console.log('✅ Harmonic Exciter enabled');
                     },
                     disable: () => {
@@ -5162,8 +5163,8 @@
                 // Warmth mix
                 const warmthDry = audioContext.createGain();
                 const warmthWet = audioContext.createGain();
-                warmthDry.gain.value = 0.82; // 82% dry (more audible warmth)
-                warmthWet.gain.value = 0.18; // 18% wet - tape saturation more present
+                warmthDry.gain.value = 0.90; // 90% dry (cleaner, less artifacts)
+                warmthWet.gain.value = 0.10; // 10% wet - subtle tape warmth
                 window.warmthControls = {
                     dry: warmthDry,
                     wet: warmthWet,
@@ -5290,8 +5291,8 @@
                 const softClipWet = audioContext.createGain();
                 const softClipOutput = audioContext.createGain();
                 softClipInput.gain.value = 1.0;
-                softClipDry.gain.value = 0.75;  // 75% dry
-                softClipWet.gain.value = 0.25;  // 25% soft clipped (subtle warmth)
+                softClipDry.gain.value = 0.90;  // 90% dry (cleaner sound)
+                softClipWet.gain.value = 0.10;  // 10% soft clipped (minimal - avoids pop artifacts)
                 softClipOutput.gain.value = 1.0;
 
                 // Internal soft clipper routing (parallel dry/wet)
@@ -5317,9 +5318,9 @@
                         console.log(`🔥 Soft Clipper: ${Math.round(wetAmount * 100)}% drive`);
                     },
                     enable: () => {
-                        softClipWet.gain.value = 0.25;
-                        softClipDry.gain.value = 0.75;
-                        console.log('✅ Soft Clipper enabled');
+                        softClipWet.gain.value = 0.10;
+                        softClipDry.gain.value = 0.90;
+                        console.log('✅ Soft Clipper enabled (10% saturation)');
                     },
                     disable: () => {
                         softClipWet.gain.value = 0;
@@ -6715,7 +6716,7 @@
                 if (window.exciterInput && window.exciterOutput) {
                     eqAirFilter.connect(window.exciterInput);
                     window.exciterOutput.connect(compressor);
-                    console.log('   3. Harmonic Exciter (12% sparkle for air/presence)');
+                    console.log('   3. Harmonic Exciter (8% sparkle for air/presence)');
                 } else {
                     eqAirFilter.connect(compressor);
                     console.log('   3. [Exciter bypassed - direct to compressor]');
@@ -6729,7 +6730,7 @@
                 if (window.transientInput && window.transientOutput) {
                     compressor.connect(window.transientInput);
                     window.transientOutput.connect(analogWarmth);
-                    console.log('   5. Transient Shaper (Bob Ludwig: 15% punch, 10% depth)');
+                    console.log('   5. Transient Shaper (Bob Ludwig: 25% punch, 3% sustain)');
                 } else {
                     compressor.connect(analogWarmth);
                     console.log('   5. [Transient Shaper bypassed]');
@@ -6748,7 +6749,7 @@
                 if (window.softClipInput && window.softClipOutput) {
                     makeupGain.connect(window.softClipInput);
                     window.softClipOutput.connect(limiter);
-                    console.log('   8. Soft Clipper (25% saturation, reduces limiter stress)');
+                    console.log('   8. Soft Clipper (10% saturation, reduces limiter stress)');
                 } else {
                     makeupGain.connect(limiter);
                     console.log('   8. [Soft Clipper bypassed - direct to limiter]');
@@ -6850,13 +6851,13 @@
                 console.log('✅ De-Esser enabled (gentle -2dB at 6kHz)');
 
                 // Exciter and Warmth already have good defaults (15% wet, 10% wet)
-                console.log('✅ Harmonic Exciter enabled (15% saturation)');
+                console.log('✅ Harmonic Exciter enabled (8% saturation)');
                 console.log('✅ Analog Warmth enabled (10% tube saturation)');
 
                 // Soft Clipper with subtle settings
                 softClipWet.gain.value = 0.2;
                 softClipDry.gain.value = 0.8;
-                console.log('✅ Soft Clipper enabled (20% warm saturation)');
+                console.log('✅ Soft Clipper enabled (10% warm saturation)');
 
                 // Bass Mono enabled by default
                 console.log('✅ Bass Mono enabled (<150Hz summed to mono)');
@@ -16154,12 +16155,9 @@
                 const currentLUFS = window.originalInputLUFS || integratedLUFS || -18;
                 console.log('📊 Input LUFS for gain calc:', currentLUFS);
 
-                // Get platform target
-                const platformBtn = document.querySelector('.selector-btn[data-platform].active');
-                const platform = platformBtn ? platformBtn.dataset.platform.toLowerCase() : 'streaming';
-                let targetLUFS = -14.0;
-                if (platform === 'apple' || platform === 'podcast') targetLUFS = -16.0;
-                else targetLUFS = -14.0;
+                // Get platform target (use already-declared targetLUFS from line 15874)
+                // Note: 'platform' was already declared at line 15873, so we reuse targetLUFS
+                // targetLUFS is already set based on platform at line 15874
 
                 // ════════════════════════════════════════════════════════════════════════════
                 // GAIN ADJUSTMENT FOR LUFS TARGETING
