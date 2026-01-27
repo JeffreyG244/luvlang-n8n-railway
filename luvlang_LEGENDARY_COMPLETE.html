@@ -5036,19 +5036,26 @@
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
                 // Brick-wall limiting - prevents clipping with hard knee
                 limiter = audioContext.createDynamicsCompressor();
-                limiter.threshold.value = -1.5;     // -1.5 dBTP for safety headroom
-                limiter.knee.value = 0;             // HARD KNEE - true brick-wall limiting
-                limiter.ratio.value = 20;           // Maximum limiting ratio
-                limiter.attack.value = 0.0003;      // 0.3ms attack (catches fast transients)
-                limiter.release.value = 0.100;      // 100ms release (fast recovery, less pumping)
+                limiter.threshold.value = -1.0;     // -1.0 dBTP industry standard
+                limiter.knee.value = 2.0;           // Soft knee for musical transparency
+                limiter.ratio.value = 20;           // Brick-wall limiting ratio
+                limiter.attack.value = 0.001;       // 1ms attack (fast but musical)
+                limiter.release.value = 0.150;      // 150ms release (Bob Ludwig style)
 
-                // SAFETY CLIPPER - catches any peaks that escape the limiter (ISP protection)
+                // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
                 const safetyClipCurve = new Float32Array(65536);
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1; // -1 to +1
-                    // Hard clip at 0.98 (-0.17 dBFS) to prevent any digital clipping
-                    safetyClipCurve[i] = Math.max(-0.98, Math.min(0.98, x));
+                    // Soft clip at 0.995 (-0.04 dBFS) - very gentle, only catches true clips
+                    if (Math.abs(x) < 0.99) {
+                        safetyClipCurve[i] = x; // Pass through unchanged
+                    } else {
+                        // Soft saturation above 0.99
+                        const sign = x > 0 ? 1 : -1;
+                        const excess = Math.abs(x) - 0.99;
+                        safetyClipCurve[i] = sign * (0.99 + Math.tanh(excess * 10) * 0.009);
+                    }
                 }
                 safetyClipper.curve = safetyClipCurve;
                 safetyClipper.oversample = '4x';
@@ -6737,20 +6744,18 @@
                 // STAGE 6: LIMITING - Professional True Peak Limiter (Industry Standard)
                 // -1.0 dBTP = broadcast/streaming standard (AES, SMPTE, Spotify, Apple)
                 limiter.threshold.value = -1.0;      // -1dBTP industry standard
-                // STAGE 6: BRICK-WALL LIMITER (prevents clipping)
-                limiter.threshold.value = -1.5;      // -1.5 dBTP with safety headroom
-                limiter.knee.value = 0;              // HARD KNEE - true brick-wall
-                limiter.ratio.value = 20;            // Maximum limiting
-                limiter.attack.value = 0.0003;       // 0.3ms attack (catches transients)
-                limiter.release.value = 0.100;       // 100ms release
+                limiter.knee.value = 2.0;            // Soft knee for musical transparency
+                limiter.ratio.value = 20;            // Brick-wall ratio
+                limiter.attack.value = 0.001;        // 1ms attack (fast but musical)
+                limiter.release.value = 0.150;       // 150ms release (Bob Ludwig style)
                 makeupGain.connect(limiter);
-                console.log('   6. Brick-Wall Limiter (-1.5dBTP, hard knee)');
+                console.log('   6. Pro Limiter (-1dBTP, soft knee)');
 
                 // STAGE 7: SAFETY CLIPPER (catches any peaks that escape limiter)
                 if (window.safetyClipper) {
                     limiter.connect(window.safetyClipper);
                     window.safetyClipper.connect(masterGain);
-                    console.log('   7. Safety Clipper (-0.17dBFS hard clip)');
+                    console.log('   7. Safety Clipper (soft clip at -0.04dBFS)');
                 } else {
                     limiter.connect(masterGain);
                 }
@@ -6760,7 +6765,7 @@
 
                 console.log('');
                 console.log('════════════════════════════════════════════════════════════════');
-                console.log('✅ 8-STAGE MASTERING CHAIN READY (NO CLIPPING)');
+                console.log('✅ 8-STAGE MASTERING CHAIN READY');
                 console.log('   Subsonic → EQ → Comp → Warmth → Makeup → Limiter → Clipper → Out');
                 console.log('════════════════════════════════════════════════════════════════');
 
@@ -13677,25 +13682,32 @@
                 offlineMakeupGain.gain.value = typeof makeupGain !== 'undefined' && makeupGain ? makeupGain.gain.value : 1.0;
                 console.log('   5. Makeup Gain: ' + (20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1) + 'dB');
 
-                // STAGE 6: BRICK-WALL LIMITER (prevents clipping)
+                // STAGE 6: PRO LIMITER (musical peak protection)
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
-                offlineLimiter.threshold.value = typeof limiter !== 'undefined' && limiter ? limiter.threshold.value : -1.5;
+                offlineLimiter.threshold.value = typeof limiter !== 'undefined' && limiter ? limiter.threshold.value : -1.0;
                 offlineLimiter.ratio.value = 20;
-                offlineLimiter.attack.value = typeof limiter !== 'undefined' && limiter ? limiter.attack.value : 0.0003;
-                offlineLimiter.release.value = typeof limiter !== 'undefined' && limiter ? limiter.release.value : 0.1;
-                offlineLimiter.knee.value = 0; // HARD KNEE for export - no clipping
-                console.log('   6. Brick-Wall Limiter: ' + offlineLimiter.threshold.value.toFixed(1) + 'dB (hard knee)');
+                offlineLimiter.attack.value = typeof limiter !== 'undefined' && limiter ? limiter.attack.value : 0.001;
+                offlineLimiter.release.value = typeof limiter !== 'undefined' && limiter ? limiter.release.value : 0.15;
+                offlineLimiter.knee.value = 2.0; // Soft knee for musical transparency
+                console.log('   6. Pro Limiter: ' + offlineLimiter.threshold.value.toFixed(1) + 'dB (soft knee)');
 
-                // STAGE 7: SAFETY CLIPPER (catches any remaining peaks)
+                // STAGE 7: SAFETY CLIPPER (gentle soft clip for any remaining peaks)
                 const offlineSafetyClipper = offlineContext.createWaveShaper();
                 const offlineSafetyClipCurve = new Float32Array(65536);
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1;
-                    offlineSafetyClipCurve[i] = Math.max(-0.98, Math.min(0.98, x)); // Hard clip at -0.17 dBFS
+                    // Soft clip above 0.99 (-0.087 dBFS) - very gentle
+                    if (Math.abs(x) < 0.99) {
+                        offlineSafetyClipCurve[i] = x;
+                    } else {
+                        const sign = x > 0 ? 1 : -1;
+                        const excess = Math.abs(x) - 0.99;
+                        offlineSafetyClipCurve[i] = sign * (0.99 + Math.tanh(excess * 10) * 0.009);
+                    }
                 }
                 offlineSafetyClipper.curve = offlineSafetyClipCurve;
                 offlineSafetyClipper.oversample = '4x';
-                console.log('   7. Safety Clipper: -0.17 dBFS hard limit');
+                console.log('   7. Safety Clipper: soft clip at -0.04 dBFS');
 
                 // STAGE 8: MASTER OUTPUT
                 const offlineMasterGain = offlineContext.createGain();
