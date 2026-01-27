@@ -11652,10 +11652,8 @@
                 let platformTarget = -14;
                 if (selectedPlatform) {
                     const platform = selectedPlatform.getAttribute('data-platform');
-                    if (platform === 'youtube') platformTarget = -14;
-                    else if (platform === 'apple') platformTarget = -16;
-                    else if (platform === 'tidal') platformTarget = -14;
-                    else platformTarget = -14;
+                    if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
+                    else platformTarget = -14; // youtube, tidal, spotify, etc.
                 }
 
                 const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
@@ -11755,10 +11753,8 @@
                     let platformTarget = -14; // Default Spotify
                     if (selectedPlatform) {
                         const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'youtube') platformTarget = -14;
-                        else if (platform === 'apple') platformTarget = -16;
-                        else if (platform === 'tidal') platformTarget = -14;
-                        else platformTarget = -14; // Spotify
+                        if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
+                        else platformTarget = -14; // youtube, tidal, spotify
                     }
 
                     // Update LIVE LUFS indicator (real-time fluctuating)
@@ -11924,10 +11920,8 @@
                     let platformTarget = -14; // Default Spotify
                     if (selectedPlatform) {
                         const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'youtube') platformTarget = -14;
-                        else if (platform === 'apple') platformTarget = -16;
-                        else if (platform === 'tidal') platformTarget = -14;
-                        else platformTarget = -14; // Spotify
+                        if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
+                        else platformTarget = -14; // youtube, tidal, spotify
                     }
 
                     // Calculate LUFS deviation from target (use smoothed LUFS for stability)
