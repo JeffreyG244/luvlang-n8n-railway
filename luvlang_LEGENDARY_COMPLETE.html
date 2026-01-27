@@ -4896,7 +4896,7 @@
                 transientInput = audioContext.createGain();
                 transientOutput = audioContext.createGain();
                 transientInput.gain.value = 1.0;
-                transientOutput.gain.value = 1.0;
+                transientOutput.gain.value = 1.2;   // +1.6dB boost to compensate for parallel compression loss
 
                 // Fast attack path (for transient punch)
                 // FIX: Attack was 0.1ms causing robotic/clicking artifacts!
@@ -5057,7 +5057,7 @@
                 exciterInput.gain.value = 1.0;
                 exciterDry.gain.value = 0.88;  // 88% dry
                 exciterWet.gain.value = 0.12;  // 12% wet (very subtle sparkle)
-                exciterOutput.gain.value = 1.0;
+                exciterOutput.gain.value = 1.05;  // +0.4dB to compensate for saturation loss
 
                 // Internal exciter routing (parallel dry/wet)
                 exciterInput.connect(exciterDry);             // Dry path
@@ -16082,18 +16082,9 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 console.log('\n📍 STAGE 7: LOUDNESS OPTIMIZATION');
 
-                // 19. LUFS Targeting - Calculate makeup gain needed
-                const currentLUFS = window.currentIntegratedLUFS || window.smoothedLUFS || -18;
-                const gainNeeded = targetLUFS - currentLUFS;
-                const safeGain = Math.max(-6, Math.min(12, gainNeeded)); // Clamp to safe range
-
-                if (window.makeupGain && Math.abs(safeGain) > 0.5) {
-                    const linearGain = Math.pow(10, safeGain / 20);
-                    window.makeupGain.gain.setTargetAtTime(linearGain, ac.currentTime, 0.1);
-                    console.log(`  ✓ 19. LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (${safeGain > 0 ? '+' : ''}${safeGain.toFixed(1)}dB)`);
-                } else {
-                    console.log(`  ✓ 19. LUFS Targeting: Already near target (${currentLUFS.toFixed(1)} LUFS)`);
-                }
+                // 19. LUFS Targeting - Handled later with originalInputLUFS for accuracy
+                // (Moved to avoid duplicate gain application)
+                console.log(`  ✓ 19. LUFS Targeting: Will be applied with original input measurement`);
 
                 // 20. True Peak Limiter - Bob Ludwig Style
                 if (window.limiter) {
@@ -16176,15 +16167,16 @@
                 // ════════════════════════════════════════════════════════════════════════════
                 // GAIN ADJUSTMENT FOR LUFS TARGETING
                 // Calculate makeup gain to reach target LUFS
-                // The limiter will handle any peaks - no need to over-compensate
+                // Add compensation for processing chain losses (exciter, transient, saturation)
                 // ════════════════════════════════════════════════════════════════════════════
 
-                // Direct LUFS targeting - let the limiter do its job
-                const gainAdjustmentDB = targetLUFS - currentLUFS;
+                // Account for processing chain losses (~1.5 dB from parallel compression + saturation)
+                const chainCompensationDB = 1.5;
+                const gainAdjustmentDB = targetLUFS - currentLUFS + chainCompensationDB;
 
-                console.log(`📊 Direct LUFS targeting (no over-compensation)`);
-                // Clamp to reasonable range (-10 to +8 dB for mastering)
-                const clampedGainDB = Math.max(-10, Math.min(8, gainAdjustmentDB));
+                console.log(`📊 LUFS targeting with +${chainCompensationDB}dB chain compensation`);
+                // Clamp to reasonable range (-10 to +12 dB for mastering)
+                const clampedGainDB = Math.max(-10, Math.min(12, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
