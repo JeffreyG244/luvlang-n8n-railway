@@ -6766,71 +6766,20 @@
                 console.log('   11. 🏆 Console Emulation (SSL/Neve/API/Tape character)');
 
                 // ────────────────────────────────────────────────────────────────────────────
-                // STAGE 5: STEREO PROCESSING (🏆 LEGENDARY M/S EQ)
+                // STAGE 5: STEREO PROCESSING
                 // ────────────────────────────────────────────────────────────────────────────
-                // 12. Mid/Side EQ - Randy Merrill technique
-                // M/S Encode
-                consoleOutput.connect(msEQ_Splitter);
-                msEQ_Splitter.connect(msEQ_MidL, 0);
-                msEQ_Splitter.connect(msEQ_MidR, 1);
-                msEQ_Splitter.connect(msEQ_SideL, 0);
-                msEQ_Splitter.connect(msEQ_SideR, 1);
+                // Direct pass-through (M/S EQ bypassed to prevent phase issues)
+                consoleOutput.connect(stereoSplitter);
+                console.log('   12. Stereo Processing (clean pass-through)');
 
-                // Sum to Mid/Side channels
-                msEQ_MidL.connect(midEQ_Low);  // Mid → Mid EQ chain
-                msEQ_MidR.connect(midEQ_Low);
-                msEQ_SideL.connect(sideEQ_Low);  // Side → Side EQ chain
-                msEQ_SideR.connect(sideEQ_Low);
-
-                // M/S Decode
-                msEQ_MidChannel.connect(msEQ_DecodeLMid);
-                msEQ_MidChannel.connect(msEQ_DecodeRMid);
-                msEQ_SideChannel.connect(msEQ_DecodeLSide);
-                msEQ_SideChannel.connect(msEQ_DecodeRSide);
-
-                // Sum to L/R
-                msEQ_DecodeLMid.connect(msEQ_OutL);
-                msEQ_DecodeLSide.connect(msEQ_OutL);
-                msEQ_DecodeRMid.connect(msEQ_OutR);
-                msEQ_DecodeRSide.connect(msEQ_OutR);
-
-                // Merge M/S EQ output
-                msEQ_OutL.connect(msEQ_Merger, 0, 0);
-                msEQ_OutR.connect(msEQ_Merger, 0, 1);
-                msEQ_Merger.connect(msEQ_Output);
-                console.log('   12. 🏆 Mid/Side EQ (Randy Merrill separate mid/side processing)');
-
-                // 13. Standard stereo width control
-                msEQ_Output.connect(stereoSplitter);
-                console.log('   11. M/S Stereo Processing (Mid/Side width control)');
-
-                // 12. Bass Mono - Make sub-bass mono for club systems
-                // Split stereo signal
-                stereoSplitter.connect(bassMonoLPF_L, 0);  // Left low
-                stereoSplitter.connect(bassMonoLPF_R, 1);  // Right low
-                stereoSplitter.connect(bassMonoHPF_L, 0);  // Left high (keep stereo)
-                stereoSplitter.connect(bassMonoHPF_R, 1);  // Right high (keep stereo)
-
-                // Sum bass to mono
-                bassMonoLPF_L.connect(bassMonoSum);
-                bassMonoLPF_R.connect(bassMonoSum);
-
-                // Reconstruct stereo with mono bass
-                // Left = mono bass + stereo highs left
-                bassMonoSum.connect(leftChannel);
-                bassMonoHPF_L.connect(leftChannel);
-
-                // Right = mono bass + stereo highs right
-                bassMonoSum.connect(rightChannel);
-                bassMonoHPF_R.connect(rightChannel);
-                console.log('   12. Bass Mono (sub-bass <150Hz summed to mono)');
+                // Direct stereo pass-through (bass mono bypassed to prevent phase issues)
+                stereoSplitter.connect(stereoMerger, 0, 0);  // Left → Left
+                stereoSplitter.connect(stereoMerger, 1, 1);  // Right → Right
+                console.log('   13. Stereo Merge (clean pass-through)');
 
                 // ────────────────────────────────────────────────────────────────────────────
                 // STAGE 6: LOUDNESS & LIMITING
                 // ────────────────────────────────────────────────────────────────────────────
-                // Merge stereo channels
-                leftChannel.connect(stereoMerger, 0, 0);
-                rightChannel.connect(stereoMerger, 0, 1);
 
                 // 13. Makeup Gain - Loudness targeting
                 stereoMerger.connect(makeupGain);
