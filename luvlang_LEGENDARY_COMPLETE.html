@@ -13736,10 +13736,19 @@
                 const source = offlineContext.createBufferSource();
                 source.buffer = audioBuffer;
 
-                // Recreate the ENTIRE processing chain in offline context
-                // This ensures identical processing to what the user heard
+                // ════════════════════════════════════════════════════════════════════════════
+                // EXPORT CHAIN - IDENTICAL TO LIVE PREVIEW (7-Stage Professional Mastering)
+                // ════════════════════════════════════════════════════════════════════════════
+                console.log('🎛️ Building export chain (matches live preview exactly)...');
 
-                // EQ Chain
+                // STAGE 1: SUBSONIC FILTER (25Hz HP - removes rumble)
+                const offlineSubsonic = offlineContext.createBiquadFilter();
+                offlineSubsonic.type = 'highpass';
+                offlineSubsonic.frequency.value = subsonicFilter ? subsonicFilter.frequency.value : 25;
+                offlineSubsonic.Q.value = 0.7071;
+                console.log('   1. Subsonic Filter: ' + offlineSubsonic.frequency.value + 'Hz HP');
+
+                // STAGE 2: 7-BAND PARAMETRIC EQ
                 const offlineEQSub = offlineContext.createBiquadFilter();
                 const offlineEQBass = offlineContext.createBiquadFilter();
                 const offlineEQLowMid = offlineContext.createBiquadFilter();
@@ -13747,56 +13756,103 @@
                 const offlineEQHighMid = offlineContext.createBiquadFilter();
                 const offlineEQHigh = offlineContext.createBiquadFilter();
                 const offlineEQAir = offlineContext.createBiquadFilter();
-                const offlineEQCompGain = offlineContext.createGain();
 
-                // Copy EQ settings from live context
-                offlineEQSub.type = 'lowshelf'; offlineEQSub.frequency.value = 60; offlineEQSub.gain.value = eqSubFilter.gain.value;
-                offlineEQBass.type = 'peaking'; offlineEQBass.frequency.value = 120; offlineEQBass.Q.value = 0.7; offlineEQBass.gain.value = eqBassFilter.gain.value;
-                offlineEQLowMid.type = 'peaking'; offlineEQLowMid.frequency.value = 500; offlineEQLowMid.Q.value = 0.7; offlineEQLowMid.gain.value = eqLowMidFilter.gain.value;
-                offlineEQMid.type = 'peaking'; offlineEQMid.frequency.value = 1500; offlineEQMid.Q.value = 0.7; offlineEQMid.gain.value = eqMidFilter.gain.value;
-                offlineEQHighMid.type = 'peaking'; offlineEQHighMid.frequency.value = 4000; offlineEQHighMid.Q.value = 0.7; offlineEQHighMid.gain.value = eqHighMidFilter.gain.value;
-                offlineEQHigh.type = 'peaking'; offlineEQHigh.frequency.value = 8000; offlineEQHigh.Q.value = 0.7; offlineEQHigh.gain.value = eqHighFilter.gain.value;
-                offlineEQAir.type = 'highshelf'; offlineEQAir.frequency.value = 12000; offlineEQAir.gain.value = eqAirFilter.gain.value;
-                offlineEQCompGain.gain.value = eqCompensationGain.gain.value;
+                // Copy exact EQ settings from live context
+                offlineEQSub.type = 'lowshelf';
+                offlineEQSub.frequency.value = eqSubFilter ? eqSubFilter.frequency.value : 60;
+                offlineEQSub.gain.value = eqSubFilter ? eqSubFilter.gain.value : 0;
 
-                // Dynamics (Compressor)
+                offlineEQBass.type = 'peaking';
+                offlineEQBass.frequency.value = eqBassFilter ? eqBassFilter.frequency.value : 120;
+                offlineEQBass.Q.value = eqBassFilter ? eqBassFilter.Q.value : 0.7;
+                offlineEQBass.gain.value = eqBassFilter ? eqBassFilter.gain.value : 0;
+
+                offlineEQLowMid.type = 'peaking';
+                offlineEQLowMid.frequency.value = eqLowMidFilter ? eqLowMidFilter.frequency.value : 500;
+                offlineEQLowMid.Q.value = eqLowMidFilter ? eqLowMidFilter.Q.value : 0.7;
+                offlineEQLowMid.gain.value = eqLowMidFilter ? eqLowMidFilter.gain.value : 0;
+
+                offlineEQMid.type = 'peaking';
+                offlineEQMid.frequency.value = eqMidFilter ? eqMidFilter.frequency.value : 1500;
+                offlineEQMid.Q.value = eqMidFilter ? eqMidFilter.Q.value : 0.7;
+                offlineEQMid.gain.value = eqMidFilter ? eqMidFilter.gain.value : 0;
+
+                offlineEQHighMid.type = 'peaking';
+                offlineEQHighMid.frequency.value = eqHighMidFilter ? eqHighMidFilter.frequency.value : 4000;
+                offlineEQHighMid.Q.value = eqHighMidFilter ? eqHighMidFilter.Q.value : 0.7;
+                offlineEQHighMid.gain.value = eqHighMidFilter ? eqHighMidFilter.gain.value : 0;
+
+                offlineEQHigh.type = 'peaking';
+                offlineEQHigh.frequency.value = eqHighFilter ? eqHighFilter.frequency.value : 8000;
+                offlineEQHigh.Q.value = eqHighFilter ? eqHighFilter.Q.value : 0.7;
+                offlineEQHigh.gain.value = eqHighFilter ? eqHighFilter.gain.value : 0;
+
+                offlineEQAir.type = 'highshelf';
+                offlineEQAir.frequency.value = eqAirFilter ? eqAirFilter.frequency.value : 12000;
+                offlineEQAir.gain.value = eqAirFilter ? eqAirFilter.gain.value : 0;
+
+                console.log('   2. 7-Band EQ: Sub(' + offlineEQSub.gain.value.toFixed(1) + ') Bass(' + offlineEQBass.gain.value.toFixed(1) + ') LM(' + offlineEQLowMid.gain.value.toFixed(1) + ') Mid(' + offlineEQMid.gain.value.toFixed(1) + ') HM(' + offlineEQHighMid.gain.value.toFixed(1) + ') Hi(' + offlineEQHigh.gain.value.toFixed(1) + ') Air(' + offlineEQAir.gain.value.toFixed(1) + ')');
+
+                // STAGE 3: GLUE COMPRESSOR (SSL-style bus compression)
                 const offlineCompressor = offlineContext.createDynamicsCompressor();
-                offlineCompressor.threshold.value = compressor.threshold.value;
-                offlineCompressor.ratio.value = compressor.ratio.value;
-                offlineCompressor.attack.value = compressor.attack.value;
-                offlineCompressor.release.value = compressor.release.value;
-                offlineCompressor.knee.value = compressor.knee.value;
+                offlineCompressor.threshold.value = compressor ? compressor.threshold.value : -24;
+                offlineCompressor.ratio.value = compressor ? compressor.ratio.value : 2;
+                offlineCompressor.attack.value = compressor ? compressor.attack.value : 0.030;
+                offlineCompressor.release.value = compressor ? compressor.release.value : 0.250;
+                offlineCompressor.knee.value = compressor ? compressor.knee.value : 6;
+                console.log('   3. Compressor: ' + offlineCompressor.threshold.value.toFixed(1) + 'dB, ' + offlineCompressor.ratio.value + ':1');
 
-                // Makeup Gain
+                // STAGE 4: ANALOG WARMTH (gentle tape saturation)
+                const offlineWarmth = offlineContext.createWaveShaper();
+                const offlineWarmthCurve = new Float32Array(65536);
+                for (let i = 0; i < 65536; i++) {
+                    const x = (i / 32768) - 1;
+                    const amount = 0.15; // 15% saturation (matches live)
+                    offlineWarmthCurve[i] = x * (1 - amount) + Math.tanh(x * 1.5) * amount;
+                }
+                offlineWarmth.curve = offlineWarmthCurve;
+                offlineWarmth.oversample = '4x';
+                console.log('   4. Analog Warmth: 15% tape saturation, 4x oversampling');
+
+                // STAGE 5: MAKEUP GAIN (LUFS targeting)
                 const offlineMakeupGain = offlineContext.createGain();
-                offlineMakeupGain.gain.value = makeupGain.gain.value;
+                offlineMakeupGain.gain.value = makeupGain ? makeupGain.gain.value : 1.0;
+                console.log('   5. Makeup Gain: ' + (20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1) + 'dB');
 
-                // Limiter
+                // STAGE 6: TRANSPARENT LIMITER (brick-wall peak protection)
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
-                offlineLimiter.threshold.value = limiter.threshold.value;
-                offlineLimiter.ratio.value = 20; // Brick-wall
-                offlineLimiter.attack.value = 0.001;
-                offlineLimiter.release.value = 0.1;
-                offlineLimiter.knee.value = 0;
+                offlineLimiter.threshold.value = limiter ? limiter.threshold.value : -2.0;
+                offlineLimiter.ratio.value = 20;
+                offlineLimiter.attack.value = limiter ? limiter.attack.value : 0.003;
+                offlineLimiter.release.value = limiter ? limiter.release.value : 0.15;
+                offlineLimiter.knee.value = limiter ? limiter.knee.value : 3.0;
+                console.log('   6. Limiter: ' + offlineLimiter.threshold.value.toFixed(1) + 'dB ceiling');
 
-                // Master Gain
+                // STAGE 7: MASTER OUTPUT
                 const offlineMasterGain = offlineContext.createGain();
-                offlineMasterGain.gain.value = masterGain.gain.value;
+                offlineMasterGain.gain.value = masterGain ? masterGain.gain.value : 1.0;
+                console.log('   7. Master: ' + (20 * Math.log10(offlineMasterGain.gain.value)).toFixed(1) + 'dB');
 
-                // Connect processing chain (same as live audio)
-                source.connect(offlineEQSub);
+                // ════════════════════════════════════════════════════════════════════════════
+                // CONNECT CHAIN (identical to live audio path)
+                // Source → Subsonic → EQ(7) → Compressor → Warmth → Makeup → Limiter → Master
+                // ════════════════════════════════════════════════════════════════════════════
+                source.connect(offlineSubsonic);
+                offlineSubsonic.connect(offlineEQSub);
                 offlineEQSub.connect(offlineEQBass);
                 offlineEQBass.connect(offlineEQLowMid);
                 offlineEQLowMid.connect(offlineEQMid);
                 offlineEQMid.connect(offlineEQHighMid);
                 offlineEQHighMid.connect(offlineEQHigh);
                 offlineEQHigh.connect(offlineEQAir);
-                offlineEQAir.connect(offlineEQCompGain);
-                offlineEQCompGain.connect(offlineCompressor);
-                offlineCompressor.connect(offlineMakeupGain);
+                offlineEQAir.connect(offlineCompressor);
+                offlineCompressor.connect(offlineWarmth);
+                offlineWarmth.connect(offlineMakeupGain);
                 offlineMakeupGain.connect(offlineLimiter);
                 offlineLimiter.connect(offlineMasterGain);
                 offlineMasterGain.connect(offlineContext.destination);
+
+                console.log('✅ Export chain connected (7 stages, matches live preview)');
 
                 // Start rendering
                 source.start(0);
