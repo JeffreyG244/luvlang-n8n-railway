@@ -8711,34 +8711,54 @@
                 fixedProblems.push('clipping');
             }
 
-            // 2. FIX OVER-COMPRESSED (LRA < 4)
+            // 2. FIX OVER-COMPRESSED (LRA < 4) - ENHANCE instead of squash!
             if (results.problems.some(p => p.type === 'over_compressed')) {
                 if (compressor) {
-                    // Use VERY gentle compression to preserve what dynamics remain
-                    compressor.threshold.value = -30; // Very high threshold
-                    compressor.ratio.value = 1.5;     // Very low ratio
-                    compressor.attack.value = 0.01;   // Slow attack
-                    compressor.release.value = 0.3;   // Long release
-                    compressor.knee.value = 10;       // Soft knee
-                    console.log('✅ FIXED: Over-compressed - Using gentle processing (1.5:1 ratio)');
+                    // BYPASS compression entirely for already-mastered tracks
+                    compressor.threshold.value = 0;   // Effectively bypassed
+                    compressor.ratio.value = 1;       // No compression
+                    compressor.attack.value = 0.1;    // Doesn't matter
+                    compressor.release.value = 0.3;   // Doesn't matter
+                    compressor.knee.value = 40;       // Maximum soft knee
+                    console.log('✅ FIXED: Over-compressed - BYPASSING compression (track already mastered)');
 
                     // Update UI
-                    document.getElementById('compValue').textContent = '15%';
-                    document.getElementById('compSlider').value = 15;
+                    document.getElementById('compValue').textContent = '0%';
+                    document.getElementById('compSlider').value = 0;
                 }
 
                 if (limiter) {
-                    // Very conservative limiting
-                    limiter.threshold.value = -3.0;   // Don't squash further
-                    limiter.ratio.value = 10;         // Gentle limiting
-                    console.log('✅ FIXED: Over-compressed - Conservative limiter (-3dB threshold)');
+                    // Transparent limiting - just catch any overs
+                    limiter.threshold.value = -0.5;   // Only catch true peaks
+                    limiter.ratio.value = 20;         // Brick wall if needed
+                    limiter.knee.value = 3;           // Soft knee
+                    console.log('✅ FIXED: Over-compressed - Transparent limiter (-0.5dB ceiling)');
 
                     // Update UI
-                    document.getElementById('limiterValue').textContent = '-3.0 dB';
-                    document.getElementById('limiterSlider').value = -3.0;
+                    document.getElementById('limiterValue').textContent = '-0.5 dB';
+                    document.getElementById('limiterSlider').value = -0.5;
+                }
+
+                // ADD SPARKLE - High frequency enhancement for already-mastered tracks
+                if (eqHighFilter) {
+                    eqHighFilter.gain.value = 1.5;  // +1.5dB presence at 8kHz
+                    document.getElementById('eqHighValue').textContent = '+1.5 dB';
+                    console.log('✅ ENHANCED: Added +1.5dB presence at 8kHz (sparkle)');
+                }
+                if (eqAirFilter) {
+                    eqAirFilter.gain.value = 2.0;   // +2dB air at 14kHz
+                    document.getElementById('eqAirValue').textContent = '+2.0 dB';
+                    console.log('✅ ENHANCED: Added +2.0dB air at 14kHz (shimmer)');
+                }
+
+                // Add subtle stereo width enhancement
+                if (window.sideChannel) {
+                    window.sideChannel.gain.value = 1.15;  // +15% stereo width
+                    console.log('✅ ENHANCED: Added +15% stereo width');
                 }
 
                 fixedProblems.push('over_compressed');
+                console.log('🎵 ENHANCEMENT MODE: Track already mastered - adding polish without squashing');
             }
 
             // 3. FIX MUDDY LOW END
@@ -8945,6 +8965,27 @@
 
                 window.multibandCompressor.loadPreset(preset);
                 console.log('✅ Activated Multiband Compression with', preset, 'preset');
+            }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // ALWAYS ADD SPARKLE - Professional high-frequency polish
+            // Bob Ludwig, Bernie Grundman signature "air" - makes everything shine
+            // ═══════════════════════════════════════════════════════════════════
+            if (!results.problems.some(p => p.type === 'over_compressed')) {
+                // For non-mastered tracks, add subtle sparkle
+                if (eqHighFilter && eqHighFilter.gain.value === 0) {
+                    eqHighFilter.gain.value = 1.0;  // +1dB presence at 8kHz
+                    const highEl = document.getElementById('eqHighValue');
+                    if (highEl) highEl.textContent = '+1.0 dB';
+                    console.log('✨ SPARKLE: Added +1dB presence at 8kHz');
+                }
+                if (eqAirFilter && eqAirFilter.gain.value === 0) {
+                    eqAirFilter.gain.value = 1.5;   // +1.5dB air at 14kHz
+                    const airEl = document.getElementById('eqAirValue');
+                    if (airEl) airEl.textContent = '+1.5 dB';
+                    console.log('✨ SPARKLE: Added +1.5dB air at 14kHz');
+                }
+                console.log('✨ Bob Ludwig signature "air" applied - professional sparkle');
             }
 
             // Apply EQ compensation after all EQ adjustments
