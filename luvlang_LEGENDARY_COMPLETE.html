@@ -3385,17 +3385,28 @@
                 </div>
             </div>
 
-            <!-- QUICK ACTIONS -->
+            <!-- QUICK ACTIONS - MASTERED/UNMASTERED TOGGLE -->
             <div class="section-title">Quick Actions</div>
-            <button class="action-btn action-btn-secondary" id="abCompareBtn" disabled style="background: linear-gradient(135deg, #ff9a56, #ff5733);">
-                MASTERED
-            </button>
-            <div id="abStatusText" style="text-align: center; font-size: 0.75rem; margin-top: 5px; padding: 4px 8px; border-radius: 4px; background: rgba(255,136,0,0.2); color: #ff9a56; display: none;">
-                ▶ Playing Mastered Track
+            <div id="sidebarToggleContainer" style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; margin-bottom: 10px;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                    <span id="sidebarLabelUnmastered" style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.5); transition: all 0.3s;">UNMASTERED</span>
+                    <label style="position: relative; display: inline-block; width: 56px; height: 28px; cursor: pointer;">
+                        <input type="checkbox" id="sidebarAudioToggle" checked onchange="handleSidebarToggle(this.checked)" disabled style="opacity: 0; width: 0; height: 0;">
+                        <span id="sidebarToggleTrack" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #ff9a56, #ff5733); transition: 0.3s; border-radius: 28px; opacity: 0.5;">
+                            <span id="sidebarToggleThumb" style="position: absolute; content: ''; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(28px);"></span>
+                        </span>
+                    </label>
+                    <span id="sidebarLabelMastered" style="font-size: 0.75rem; font-weight: 700; color: #ff9a56; transition: all 0.3s;">MASTERED</span>
+                </div>
+                <div id="sidebarStatusText" style="text-align: center; font-size: 0.7rem; margin-top: 8px; color: #ff9a56; opacity: 0.8;">
+                    ▶ Playing Mastered Track
+                </div>
             </div>
             <button class="action-btn action-btn-secondary" id="resetBtn" disabled>
                 🔄 Reset All
             </button>
+            <!-- Hidden button for legacy code compatibility -->
+            <button id="abCompareBtn" style="display: none;"></button>
 
             <!-- REFERENCE TRACK MATCHING -->
             <div class="section-title" style="margin-top: 25px;">📂 Reference Track</div>
@@ -6813,12 +6824,15 @@
             audioElement.load();
 
             // Enable controls
-            // document.getElementById('autoMasterBtn').disabled = false; // REMOVED: Old AI button removed
-            document.getElementById('abCompareBtn').disabled = false;
             document.getElementById('resetBtn').disabled = false;
             document.getElementById('exportBtn').disabled = false;
             document.getElementById('savePresetBtn').disabled = false;
             document.getElementById('loadPresetBtn').disabled = false;
+
+            // Enable sidebar toggle
+            if (typeof enableSidebarToggle === 'function') {
+                enableSidebarToggle();
+            }
 
             audioElement.addEventListener('loadedmetadata', async () => {
                 const duration = audioElement.duration || 0;
@@ -16495,6 +16509,38 @@
                 toggleStatusText.style.color = '#ff9a56';
             }
 
+            // Set the sidebar toggle to MASTERED
+            const sidebarToggle = document.getElementById('sidebarAudioToggle');
+            if (sidebarToggle) {
+                sidebarToggle.checked = true; // MASTERED
+                sidebarToggle.disabled = false; // Enable it
+                const sidebarTrack = document.getElementById('sidebarToggleTrack');
+                if (sidebarTrack) sidebarTrack.style.opacity = '1';
+            }
+            const sidebarLabelUnmastered = document.getElementById('sidebarLabelUnmastered');
+            const sidebarLabelMastered = document.getElementById('sidebarLabelMastered');
+            const sidebarStatusText = document.getElementById('sidebarStatusText');
+            const sidebarToggleThumb = document.getElementById('sidebarToggleThumb');
+            const sidebarToggleTrack = document.getElementById('sidebarToggleTrack');
+            if (sidebarLabelUnmastered) {
+                sidebarLabelUnmastered.style.color = 'rgba(255,255,255,0.5)';
+                sidebarLabelUnmastered.style.fontWeight = '600';
+            }
+            if (sidebarLabelMastered) {
+                sidebarLabelMastered.style.color = '#ff9a56';
+                sidebarLabelMastered.style.fontWeight = '700';
+            }
+            if (sidebarStatusText) {
+                sidebarStatusText.textContent = '▶ Playing Mastered Track';
+                sidebarStatusText.style.color = '#ff9a56';
+            }
+            if (sidebarToggleThumb) {
+                sidebarToggleThumb.style.transform = 'translateX(28px)';
+            }
+            if (sidebarToggleTrack) {
+                sidebarToggleTrack.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+            }
+
             // A/B Modal removed per user request - go straight to results
             showMasteringResults();
 
@@ -16808,6 +16854,35 @@
                 }
             }
 
+            // Sync the sidebar toggle switch
+            const sidebarToggle = document.getElementById('sidebarAudioToggle');
+            if (sidebarToggle) {
+                sidebarToggle.checked = !isActive; // checked = MASTERED
+                const sidebarLabelUnmastered = document.getElementById('sidebarLabelUnmastered');
+                const sidebarLabelMastered = document.getElementById('sidebarLabelMastered');
+                const sidebarStatusText = document.getElementById('sidebarStatusText');
+                const sidebarToggleThumb = document.getElementById('sidebarToggleThumb');
+                const sidebarToggleTrack = document.getElementById('sidebarToggleTrack');
+                if (sidebarLabelUnmastered) {
+                    sidebarLabelUnmastered.style.color = isActive ? '#ffffff' : 'rgba(255,255,255,0.5)';
+                    sidebarLabelUnmastered.style.fontWeight = isActive ? '700' : '600';
+                }
+                if (sidebarLabelMastered) {
+                    sidebarLabelMastered.style.color = isActive ? 'rgba(255,255,255,0.5)' : '#ff9a56';
+                    sidebarLabelMastered.style.fontWeight = isActive ? '600' : '700';
+                }
+                if (sidebarStatusText) {
+                    sidebarStatusText.textContent = isActive ? '▶ Playing Unmastered Track' : '▶ Playing Mastered Track';
+                    sidebarStatusText.style.color = isActive ? '#ffffff' : '#ff9a56';
+                }
+                if (sidebarToggleThumb) {
+                    sidebarToggleThumb.style.transform = isActive ? 'translateX(0)' : 'translateX(28px)';
+                }
+                if (sidebarToggleTrack) {
+                    sidebarToggleTrack.style.background = isActive ? 'rgba(255,255,255,0.3)' : 'linear-gradient(135deg, #ff9a56, #ff5733)';
+                }
+            }
+
             // Show notification to user
             if (typeof showToast === 'function') {
                 if (isActive) {
@@ -16950,6 +17025,96 @@
                 if (labelPreview) labelPreview.style.fontWeight = '600';
 
                 if (typeof previewOriginal === 'function') previewOriginal();
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════
+        // SIDEBAR TOGGLE HANDLER - Main MASTERED/UNMASTERED toggle in sidebar
+        // ═══════════════════════════════════════════════════════════════════
+        window.handleSidebarToggle = function(isMastered) {
+            const ac = window.audioContext;
+
+            // Update sidebar toggle visuals
+            const labelUnmastered = document.getElementById('sidebarLabelUnmastered');
+            const labelMastered = document.getElementById('sidebarLabelMastered');
+            const statusText = document.getElementById('sidebarStatusText');
+            const toggleThumb = document.getElementById('sidebarToggleThumb');
+            const toggleTrack = document.getElementById('sidebarToggleTrack');
+
+            if (isMastered) {
+                // MASTERED - play processed audio at target LUFS
+                if (window.dryGain && window.wetGain && ac) {
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                }
+                window.abCompareMode = false;
+
+                // Update visuals
+                if (labelUnmastered) {
+                    labelUnmastered.style.color = 'rgba(255,255,255,0.5)';
+                    labelUnmastered.style.fontWeight = '600';
+                }
+                if (labelMastered) {
+                    labelMastered.style.color = '#ff9a56';
+                    labelMastered.style.fontWeight = '700';
+                }
+                if (statusText) {
+                    statusText.textContent = '▶ Playing Mastered Track';
+                    statusText.style.color = '#ff9a56';
+                }
+                if (toggleThumb) toggleThumb.style.transform = 'translateX(28px)';
+                if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #ff9a56, #ff5733)';
+
+                console.log('🎧 SIDEBAR TOGGLE: Playing MASTERED');
+                if (typeof showToast === 'function') showToast('▶ Playing Mastered Track', 'success');
+            } else {
+                // UNMASTERED - play original audio
+                if (window.dryGain && window.wetGain && ac) {
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                }
+                window.abCompareMode = true;
+
+                // Update visuals
+                if (labelUnmastered) {
+                    labelUnmastered.style.color = '#ffffff';
+                    labelUnmastered.style.fontWeight = '700';
+                }
+                if (labelMastered) {
+                    labelMastered.style.color = 'rgba(255,255,255,0.5)';
+                    labelMastered.style.fontWeight = '600';
+                }
+                if (statusText) {
+                    statusText.textContent = '▶ Playing Unmastered Track';
+                    statusText.style.color = '#ffffff';
+                }
+                if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+                if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.3)';
+
+                console.log('🎧 SIDEBAR TOGGLE: Playing UNMASTERED');
+                if (typeof showToast === 'function') showToast('▶ Playing Unmastered Track', 'info');
+            }
+
+            // Sync overlay toggle if visible
+            const overlayToggle = document.getElementById('audioToggleSwitch');
+            if (overlayToggle) {
+                overlayToggle.checked = isMastered;
+            }
+
+            // Start playback if not playing
+            if (window.audioElement && window.audioElement.paused) {
+                window.audioElement.play().catch(err => console.warn('Playback:', err.message));
+            }
+        };
+
+        // Enable sidebar toggle when audio is loaded
+        window.enableSidebarToggle = function() {
+            const toggle = document.getElementById('sidebarAudioToggle');
+            const track = document.getElementById('sidebarToggleTrack');
+            if (toggle) {
+                toggle.disabled = false;
+                if (track) track.style.opacity = '1';
+                console.log('✅ Sidebar toggle enabled');
             }
         };
 
