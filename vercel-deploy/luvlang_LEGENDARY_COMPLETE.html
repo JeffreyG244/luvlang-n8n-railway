@@ -4792,6 +4792,22 @@
                     <span style="font-size: 0.6rem; padding: 2px 8px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 10px; color: #000; font-weight: 700;">PRO</span>
                 </div>
 
+                <!-- Dynamic EQ Toggle (3-Band Frequency-Dependent Compression) -->
+                <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff; margin-bottom: 2px;">Dynamic EQ</div>
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Auto-tames mud, harshness & sibilance</div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                            <input type="checkbox" id="dynamicEQToggle" onchange="toggleDynamicEQ(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); transition: 0.3s; border-radius: 24px;">
+                                <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- IRC Limiter Mode Selector -->
                 <div id="limiterModeContainer"></div>
 
@@ -5567,11 +5583,12 @@
                 dynEqLowFilter.frequency.value = 150;
                 dynEqLowFilter.Q.value = 1.5;
                 dynEqLowFilter.gain.value = 0;
-                dynEqLowComp.threshold.value = -24;  // Higher threshold = less aggressive
-                dynEqLowComp.ratio.value = 2;       // Gentler ratio
-                dynEqLowComp.attack.value = 0.02;   // Slower attack for musicality
-                dynEqLowComp.release.value = 0.2;   // Smoother release
-                dynEqLowGain.gain.value = 0;        // DISABLED by default - was causing robotic sound
+                dynEqLowComp.threshold.value = -18;  // Very high threshold = only catches peaks
+                dynEqLowComp.ratio.value = 1.5;     // Ultra-gentle ratio
+                dynEqLowComp.attack.value = 0.030;  // 30ms attack = very musical, no artifacts
+                dynEqLowComp.release.value = 0.25;  // 250ms release = smooth, no pumping
+                dynEqLowComp.knee.value = 10;       // Soft knee for transparency
+                dynEqLowGain.gain.value = 0;        // Starts disabled - enable via toggle
 
                 // Mid band (800Hz-3kHz) - Controls harshness/honk
                 const dynEqMidFilter = audioContext.createBiquadFilter();
@@ -5581,11 +5598,12 @@
                 dynEqMidFilter.frequency.value = 2000;
                 dynEqMidFilter.Q.value = 2.0;
                 dynEqMidFilter.gain.value = 0;
-                dynEqMidComp.threshold.value = -20;  // Higher threshold = less aggressive
-                dynEqMidComp.ratio.value = 2;       // Gentler ratio
-                dynEqMidComp.attack.value = 0.015;  // Slower attack (was 5ms - too fast!)
-                dynEqMidComp.release.value = 0.15;  // Smoother release
-                dynEqMidGain.gain.value = 0;        // DISABLED by default - was causing robotic sound
+                dynEqMidComp.threshold.value = -15;  // Very high threshold = only harsh peaks
+                dynEqMidComp.ratio.value = 1.5;     // Ultra-gentle ratio
+                dynEqMidComp.attack.value = 0.025;  // 25ms attack = catches harshness without artifacts
+                dynEqMidComp.release.value = 0.20;  // 200ms release = smooth
+                dynEqMidComp.knee.value = 10;       // Soft knee for transparency
+                dynEqMidGain.gain.value = 0;        // Starts disabled - enable via toggle
 
                 // High band (5kHz-12kHz) - Controls sibilance/brightness
                 const dynEqHighFilter = audioContext.createBiquadFilter();
@@ -5595,11 +5613,12 @@
                 dynEqHighFilter.frequency.value = 8000;
                 dynEqHighFilter.Q.value = 1.5;
                 dynEqHighFilter.gain.value = 0;
-                dynEqHighComp.threshold.value = -22;  // Higher threshold = less aggressive
-                dynEqHighComp.ratio.value = 2.5;    // Gentler ratio (was 4:1 - too harsh!)
-                dynEqHighComp.attack.value = 0.008; // Slower attack (was 2ms - causing artifacts!)
-                dynEqHighComp.release.value = 0.12; // Smoother release
-                dynEqHighGain.gain.value = 0;       // DISABLED by default - was causing robotic sound
+                dynEqHighComp.threshold.value = -18;  // High threshold = only sibilance peaks
+                dynEqHighComp.ratio.value = 2.0;    // Gentle ratio for de-essing
+                dynEqHighComp.attack.value = 0.015; // 15ms attack = catches sibilance smoothly
+                dynEqHighComp.release.value = 0.15; // 150ms release = fast enough for consonants
+                dynEqHighComp.knee.value = 8;       // Medium-soft knee
+                dynEqHighGain.gain.value = 0;       // Starts disabled - enable via toggle
 
                 // Dynamic EQ input/output
                 const dynEqInput = audioContext.createGain();
@@ -5658,13 +5677,14 @@
                         }
                     },
                     enable: () => {
-                        // Proper gain staging: 0.6 + 0.15 + 0.12 + 0.13 = 1.0
-                        dynEqDry.gain.value = 0.6;
-                        dynEqLowGain.gain.value = 0.15;
-                        dynEqMidGain.gain.value = 0.12;
-                        dynEqHighGain.gain.value = 0.13;
+                        // Very subtle mix: 75% dry + 25% wet for maximum transparency
+                        // Gain staging: 0.75 + 0.10 + 0.08 + 0.07 = 1.0
+                        dynEqDry.gain.value = 0.75;   // 75% original signal
+                        dynEqLowGain.gain.value = 0.10;  // Subtle bass control
+                        dynEqMidGain.gain.value = 0.08;  // Very subtle mid control
+                        dynEqHighGain.gain.value = 0.07; // Light de-essing
                         window.dynamicEQ.enabled = true;
-                        console.log('✅ Dynamic EQ enabled (transparent mode)');
+                        console.log('✅ Dynamic EQ enabled (ultra-transparent mode: 75% dry / 25% wet)');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
@@ -5677,6 +5697,24 @@
                 };
 
                 console.log('✅ Dynamic EQ created (3-band frequency-dependent compression)');
+
+                // Global toggle function for UI
+                window.toggleDynamicEQ = function(enabled) {
+                    const toggle = document.getElementById('dynamicEQToggle');
+                    const toggleLabel = toggle ? toggle.parentElement : null;
+                    const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
+                    const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
+
+                    if (enabled) {
+                        window.dynamicEQ.enable();
+                        if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
+                        if (toggleThumb) toggleThumb.style.transform = 'translateX(20px)';
+                    } else {
+                        window.dynamicEQ.disable();
+                        if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.15)';
+                        if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+                    }
+                };
 
                 // ⚡ COMPRESSOR - Industry-Standard Mastering Bus (SSL-style)
                 // Settings matched to professional hardware: SSL G-Bus, API 2500, Shadow Hills
