@@ -19515,6 +19515,21 @@
                 window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Unmastered OFF
                 window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Mastered ON
                 console.log('🎨 GENRE PREVIEW: Switching to MASTERED audio to preview ' + genre);
+
+                // SYNC THE TOGGLE VISUAL to match audio state (now playing PREVIEW/MASTERED)
+                const toggle = document.getElementById('genrePreviewToggle');
+                const labelOrig = document.getElementById('genreToggleLabelOrig');
+                const labelPreview = document.getElementById('genreToggleLabelPreview');
+                if (toggle) {
+                    toggle.checked = true; // Set toggle to PREVIEW position
+                    const toggleLabel = toggle.parentElement;
+                    const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
+                    const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
+                    if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
+                    if (toggleThumb) toggleThumb.style.transform = 'translateX(30px)';
+                }
+                if (labelOrig) { labelOrig.style.color = 'rgba(255,255,255,0.5)'; labelOrig.style.fontWeight = '600'; }
+                if (labelPreview) { labelPreview.style.color = '#00d4ff'; labelPreview.style.fontWeight = '700'; }
             }
 
             // Apply EQ preset in real-time
