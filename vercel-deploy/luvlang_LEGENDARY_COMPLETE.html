@@ -567,6 +567,212 @@
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PROFESSIONAL PLAYBACK CONTROLS (Reference, Loop, Mono, Loudness Match)
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+        /* Extended Transport Bar */
+        .transport-extended {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .transport-btn {
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .transport-btn:hover {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: rgba(0, 212, 255, 0.5);
+        }
+
+        .transport-btn.active {
+            background: rgba(0, 212, 255, 0.25);
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
+        .transport-btn.mono-active {
+            background: rgba(255, 165, 0, 0.25);
+            border-color: #ffa500;
+            color: #ffa500;
+        }
+
+        .transport-btn.loop-active {
+            background: rgba(0, 255, 136, 0.25);
+            border-color: #00ff88;
+            color: #00ff88;
+        }
+
+        .transport-btn.reference-active {
+            background: rgba(184, 79, 255, 0.25);
+            border-color: #b84fff;
+            color: #b84fff;
+        }
+
+        /* Loop Region Markers */
+        .loop-region {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: rgba(0, 255, 136, 0.15);
+            border-left: 2px solid #00ff88;
+            border-right: 2px solid #00ff88;
+            pointer-events: none;
+            display: none;
+        }
+
+        .loop-marker {
+            position: absolute;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            cursor: ew-resize;
+            z-index: 10;
+        }
+
+        .loop-marker.loop-in {
+            background: linear-gradient(to right, #00ff88, transparent);
+        }
+
+        .loop-marker.loop-out {
+            background: linear-gradient(to left, #00ff88, transparent);
+        }
+
+        /* Reference Track Section */
+        .reference-section {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: rgba(184, 79, 255, 0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(184, 79, 255, 0.2);
+        }
+
+        .reference-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .reference-file-input {
+            display: none;
+        }
+
+        .reference-load-btn {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(184, 79, 255, 0.3), rgba(184, 79, 255, 0.1));
+            border: 1px solid rgba(184, 79, 255, 0.5);
+            border-radius: 6px;
+            color: #b84fff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reference-load-btn:hover {
+            background: linear-gradient(135deg, rgba(184, 79, 255, 0.5), rgba(184, 79, 255, 0.2));
+        }
+
+        .reference-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .reference-gain-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reference-gain-slider {
+            width: 80px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: rgba(184, 79, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .reference-gain-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #b84fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Loudness Match Indicator */
+        .loudness-match-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: rgba(0, 255, 136, 0.15);
+            border-radius: 4px;
+            font-size: 0.6rem;
+            color: #00ff88;
+        }
+
+        .loudness-match-indicator.inactive {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Mono Check Visual Feedback */
+        .mono-indicator {
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            background: rgba(255, 165, 0, 0.9);
+            border-radius: 20px;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.8rem;
+            z-index: 9999;
+            display: none;
+            animation: monoFlash 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes monoFlash {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+
+        /* Loop Time Display */
+        .loop-time-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: #00ff88;
+            padding: 2px 6px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 4px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL 7-BAND EQ WITH VERTICAL DRAGGABLE FADERS
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .eq-section {
@@ -3217,7 +3423,8 @@
             <div class="header-logo">
                 <div class="logo-text">LuvLang LEGENDARY</div>
                 <div class="logo-subtitle">Professional Mastering Suite</div>
-                <button onclick="showWizard()" style="margin-top: 10px; padding: 6px 12px; font-size: 0.7rem; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 6px; color: #00d4ff; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,212,255,0.2)'" onmouseout="this.style.background='rgba(0,212,255,0.1)'">
+                <!-- Wizard button hidden - users prefer direct interface -->
+                <button onclick="showWizard()" style="display: none; margin-top: 10px; padding: 6px 12px; font-size: 0.7rem; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); border-radius: 6px; color: #00d4ff; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0,212,255,0.2)'" onmouseout="this.style.background='rgba(0,212,255,0.1)'">
                     🧙 Restart Wizard
                 </button>
             </div>
@@ -3696,9 +3903,72 @@
                 <button class="play-btn" id="playBtn">▶</button>
                 <div class="progress-bar" id="progressBar">
                     <div class="progress-fill" id="progressFill"></div>
+                    <!-- Loop Region Overlay -->
+                    <div class="loop-region" id="loopRegion"></div>
                 </div>
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
             </div>
+
+            <!-- EXTENDED TRANSPORT CONTROLS (Professional Playback Features) -->
+            <div class="transport-extended">
+                <!-- Loop Controls -->
+                <button class="transport-btn" id="loopToggleBtn" onclick="toggleLoop()" title="Toggle Loop (L)">
+                    🔁 Loop
+                </button>
+                <button class="transport-btn" id="setLoopInBtn" onclick="setLoopIn()" title="Set Loop In Point (I)">
+                    ⏮ In
+                </button>
+                <button class="transport-btn" id="setLoopOutBtn" onclick="setLoopOut()" title="Set Loop Out Point (O)">
+                    Out ⏭
+                </button>
+                <span class="loop-time-display" id="loopTimeDisplay" style="display: none;">
+                    Loop: --:-- → --:--
+                </span>
+
+                <!-- Separator -->
+                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
+
+                <!-- Mono Check -->
+                <button class="transport-btn" id="monoCheckBtn" onclick="toggleMonoCheck()" title="Check Mono Compatibility (M)">
+                    🔊 Mono
+                </button>
+
+                <!-- Loudness Match A/B -->
+                <button class="transport-btn" id="loudnessMatchBtn" onclick="toggleLoudnessMatch()" title="Match Loudness for A/B Comparison">
+                    📊 Match LUFS
+                </button>
+                <span class="loudness-match-indicator inactive" id="loudnessMatchIndicator">
+                    LUFS Match: OFF
+                </span>
+            </div>
+
+            <!-- REFERENCE TRACK SECTION -->
+            <div class="reference-section" id="referenceSection">
+                <div class="reference-header">
+                    <span style="font-size: 0.8rem; font-weight: 600;">🎵 Reference Track</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="file" id="referenceFileInput" class="reference-file-input" accept="audio/*" onchange="loadReferenceTrack(event)">
+                        <button class="reference-load-btn" onclick="document.getElementById('referenceFileInput').click()">
+                            + Load Reference
+                        </button>
+                        <button class="transport-btn reference-active" id="referenceToggleBtn" onclick="toggleReferenceTrack()" style="display: none;">
+                            🎧 Listen
+                        </button>
+                    </div>
+                </div>
+                <div class="reference-info" id="referenceInfo" style="display: none;">
+                    <span id="referenceFileName">No file loaded</span>
+                    <div class="reference-gain-control">
+                        <span style="font-size: 0.6rem; opacity: 0.6;">Gain:</span>
+                        <input type="range" class="reference-gain-slider" id="referenceGainSlider" min="-12" max="12" step="0.5" value="0" oninput="setReferenceGain(this.value)">
+                        <span id="referenceGainValue" style="font-size: 0.6rem; min-width: 35px;">0 dB</span>
+                    </div>
+                    <span id="referenceLUFSDisplay" style="font-size: 0.6rem; color: #b84fff;">-- LUFS</span>
+                </div>
+            </div>
+
+            <!-- Mono Indicator (floating) -->
+            <div class="mono-indicator" id="monoIndicator">🔊 MONO CHECK ACTIVE</div>
 
             <!-- SPECTRAL DE-NOISER (COMPACT AUTO MODE) -->
             <div class="eq-section" style="margin-top: 15px;">
@@ -6700,9 +6970,10 @@
                 wetGain.gain.value = 0.0;  // Processed path OFF
                 outputMixer.gain.value = 1.0;
 
-                // Expose globally for A/B control
+                // Expose globally for A/B control and professional playback features
                 window.dryGain = dryGain;
                 window.wetGain = wetGain;
+                window.outputMixer = outputMixer;
                 window.isMasteringApplied = false;
 
                 console.log('═══════════════════════════════════════════════════════════════');
@@ -17479,6 +17750,511 @@
                 window.audioElement.play().catch(err => console.warn('Playback:', err.message));
             }
         };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PROFESSIONAL PLAYBACK FEATURES
+        // 1. Loop Region Playback
+        // 2. Reference Track Loading
+        // 3. Loudness-Matched A/B Comparison
+        // 4. Mono Compatibility Check
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // === LOOP REGION STATE ===
+        window.loopEnabled = false;
+        window.loopInTime = 0;
+        window.loopOutTime = 0;
+        window.loopRegionSet = false;
+
+        // Toggle loop on/off
+        window.toggleLoop = function() {
+            if (!window.audioElement) {
+                if (typeof showToast === 'function') showToast('Load a track first', 'warning');
+                return;
+            }
+
+            window.loopEnabled = !window.loopEnabled;
+            const btn = document.getElementById('loopToggleBtn');
+            const loopDisplay = document.getElementById('loopTimeDisplay');
+
+            if (window.loopEnabled) {
+                // If no loop region set, use full track
+                if (!window.loopRegionSet) {
+                    window.loopInTime = 0;
+                    window.loopOutTime = window.audioElement.duration;
+                }
+                btn.classList.add('loop-active');
+                if (loopDisplay && window.loopRegionSet) {
+                    loopDisplay.style.display = 'inline-block';
+                }
+                console.log(`🔁 Loop ENABLED: ${formatTime(window.loopInTime)} → ${formatTime(window.loopOutTime)}`);
+                if (typeof showToast === 'function') showToast('Loop enabled', 'success');
+            } else {
+                btn.classList.remove('loop-active');
+                console.log('🔁 Loop DISABLED');
+                if (typeof showToast === 'function') showToast('Loop disabled', 'info');
+            }
+
+            updateLoopRegionDisplay();
+        };
+
+        // Set loop in point
+        window.setLoopIn = function() {
+            if (!window.audioElement) {
+                if (typeof showToast === 'function') showToast('Load a track first', 'warning');
+                return;
+            }
+
+            window.loopInTime = window.audioElement.currentTime;
+            window.loopRegionSet = true;
+            document.getElementById('setLoopInBtn').classList.add('loop-active');
+
+            // Auto-enable loop if both points set
+            if (window.loopOutTime > window.loopInTime) {
+                window.loopEnabled = true;
+                document.getElementById('loopToggleBtn').classList.add('loop-active');
+            }
+
+            updateLoopDisplay();
+            updateLoopRegionDisplay();
+            console.log(`⏮ Loop IN set: ${formatTime(window.loopInTime)}`);
+            if (typeof showToast === 'function') showToast(`Loop IN: ${formatTime(window.loopInTime)}`, 'info');
+        };
+
+        // Set loop out point
+        window.setLoopOut = function() {
+            if (!window.audioElement) {
+                if (typeof showToast === 'function') showToast('Load a track first', 'warning');
+                return;
+            }
+
+            window.loopOutTime = window.audioElement.currentTime;
+            window.loopRegionSet = true;
+            document.getElementById('setLoopOutBtn').classList.add('loop-active');
+
+            // Auto-enable loop if both points set
+            if (window.loopOutTime > window.loopInTime) {
+                window.loopEnabled = true;
+                document.getElementById('loopToggleBtn').classList.add('loop-active');
+            }
+
+            updateLoopDisplay();
+            updateLoopRegionDisplay();
+            console.log(`⏭ Loop OUT set: ${formatTime(window.loopOutTime)}`);
+            if (typeof showToast === 'function') showToast(`Loop OUT: ${formatTime(window.loopOutTime)}`, 'info');
+        };
+
+        // Update loop time display
+        function updateLoopDisplay() {
+            const loopDisplay = document.getElementById('loopTimeDisplay');
+            if (loopDisplay && window.loopRegionSet) {
+                loopDisplay.textContent = `Loop: ${formatTime(window.loopInTime)} → ${formatTime(window.loopOutTime)}`;
+                loopDisplay.style.display = 'inline-block';
+            }
+        }
+
+        // Update loop region visual on progress bar
+        function updateLoopRegionDisplay() {
+            const loopRegion = document.getElementById('loopRegion');
+            if (!loopRegion || !window.audioElement) return;
+
+            if (window.loopEnabled && window.loopRegionSet) {
+                const duration = window.audioElement.duration;
+                const leftPercent = (window.loopInTime / duration) * 100;
+                const widthPercent = ((window.loopOutTime - window.loopInTime) / duration) * 100;
+
+                loopRegion.style.left = leftPercent + '%';
+                loopRegion.style.width = widthPercent + '%';
+                loopRegion.style.display = 'block';
+            } else {
+                loopRegion.style.display = 'none';
+            }
+        }
+
+        // Loop check during playback (called from timeupdate)
+        window.checkLoopPlayback = function() {
+            if (!window.loopEnabled || !window.audioElement) return;
+
+            if (window.audioElement.currentTime >= window.loopOutTime) {
+                window.audioElement.currentTime = window.loopInTime;
+                console.log('🔁 Loop: jumped back to start');
+            }
+        };
+
+        // === MONO COMPATIBILITY CHECK ===
+        window.monoCheckEnabled = false;
+        window.monoGainNode = null;
+        window.monoMerger = null;
+
+        window.toggleMonoCheck = function() {
+            if (!window.audioContext || !window.outputMixer) {
+                if (typeof showToast === 'function') showToast('Load a track first', 'warning');
+                return;
+            }
+
+            window.monoCheckEnabled = !window.monoCheckEnabled;
+            const btn = document.getElementById('monoCheckBtn');
+            const indicator = document.getElementById('monoIndicator');
+
+            if (window.monoCheckEnabled) {
+                // Create mono summing if not exists
+                if (!window.monoMerger) {
+                    setupMonoCheck();
+                }
+                enableMonoOutput();
+                btn.classList.add('mono-active');
+                if (indicator) indicator.style.display = 'block';
+                console.log('🔊 MONO CHECK: Enabled - checking for phase issues');
+                if (typeof showToast === 'function') showToast('Mono check enabled - listen for phase cancellation', 'warning');
+            } else {
+                disableMonoOutput();
+                btn.classList.remove('mono-active');
+                if (indicator) indicator.style.display = 'none';
+                console.log('🔊 MONO CHECK: Disabled - back to stereo');
+                if (typeof showToast === 'function') showToast('Back to stereo', 'info');
+            }
+        };
+
+        function setupMonoCheck() {
+            const ac = window.audioContext;
+
+            // Create a channel merger to sum L+R to mono
+            window.monoSplitter = ac.createChannelSplitter(2);
+            window.monoMerger = ac.createChannelMerger(2);
+            window.monoGainL = ac.createGain();
+            window.monoGainR = ac.createGain();
+
+            // Each channel gets 0.5 gain to prevent clipping when summed
+            window.monoGainL.gain.value = 0.5;
+            window.monoGainR.gain.value = 0.5;
+
+            console.log('🔧 Mono check nodes created');
+        }
+
+        function enableMonoOutput() {
+            // Disconnect normal output, connect through mono summing
+            const ac = window.audioContext;
+            const outputMixer = window.outputMixer;
+
+            if (!outputMixer || !window.monoMerger) return;
+
+            try {
+                // We'll use a simpler approach: just set channel count to 1 on output
+                // This causes the browser to sum to mono automatically
+                if (window.analyser) {
+                    window.analyser.channelCount = 1;
+                    window.analyser.channelCountMode = 'explicit';
+                }
+
+                // Force mono output
+                ac.destination.channelCount = 1;
+                ac.destination.channelCountMode = 'explicit';
+
+                console.log('🔊 Audio output set to MONO');
+            } catch (e) {
+                console.warn('Mono check setup error:', e);
+            }
+        }
+
+        function disableMonoOutput() {
+            const ac = window.audioContext;
+
+            try {
+                // Restore stereo
+                if (window.analyser) {
+                    window.analyser.channelCount = 2;
+                    window.analyser.channelCountMode = 'max';
+                }
+
+                ac.destination.channelCount = 2;
+                ac.destination.channelCountMode = 'max';
+
+                console.log('🔊 Audio output restored to STEREO');
+            } catch (e) {
+                console.warn('Stereo restore error:', e);
+            }
+        }
+
+        // === LOUDNESS-MATCHED A/B COMPARISON ===
+        window.loudnessMatchEnabled = false;
+        window.originalLUFS = null;
+        window.masteredLUFS = null;
+        window.loudnessMatchGain = 0; // dB offset to apply
+
+        window.toggleLoudnessMatch = function() {
+            window.loudnessMatchEnabled = !window.loudnessMatchEnabled;
+            const btn = document.getElementById('loudnessMatchBtn');
+            const indicator = document.getElementById('loudnessMatchIndicator');
+
+            if (window.loudnessMatchEnabled) {
+                btn.classList.add('active');
+                if (indicator) {
+                    indicator.classList.remove('inactive');
+                    indicator.textContent = 'LUFS Match: ON';
+                }
+
+                // Calculate LUFS difference and apply compensation
+                calculateLoudnessMatch();
+
+                console.log('📊 Loudness matching ENABLED');
+                if (typeof showToast === 'function') showToast('Loudness matching enabled - fair A/B comparison', 'success');
+            } else {
+                btn.classList.remove('active');
+                if (indicator) {
+                    indicator.classList.add('inactive');
+                    indicator.textContent = 'LUFS Match: OFF';
+                }
+
+                // Remove compensation
+                resetLoudnessMatch();
+
+                console.log('📊 Loudness matching DISABLED');
+                if (typeof showToast === 'function') showToast('Loudness matching disabled', 'info');
+            }
+        };
+
+        function calculateLoudnessMatch() {
+            // Get current integrated LUFS readings
+            // Original LUFS is measured when playing unmastered
+            // Mastered LUFS is measured when playing mastered
+
+            // Use stored values if available
+            const origLUFS = window.originalInputLUFS || window.currentIntegratedLUFS || -18;
+            const mastLUFS = window.lockedLUFS || window.currentIntegratedLUFS || -14;
+
+            // Calculate the gain difference
+            const lufsDiff = origLUFS - mastLUFS; // If mastered is louder, this is negative
+
+            // When playing UNMASTERED and loudness match is ON:
+            // We need to boost the unmastered by the difference to match mastered loudness
+            window.loudnessMatchGain = -lufsDiff; // Invert: if mastered is +4dB louder, boost unmastered by +4dB
+
+            console.log(`📊 Loudness Match: Original=${origLUFS.toFixed(1)} LUFS, Mastered=${mastLUFS.toFixed(1)} LUFS`);
+            console.log(`📊 Compensation: ${window.loudnessMatchGain > 0 ? '+' : ''}${window.loudnessMatchGain.toFixed(1)} dB to unmastered`);
+
+            // Apply compensation to dry (unmastered) path
+            if (window.dryGain && window.audioContext) {
+                const linearGain = Math.pow(10, window.loudnessMatchGain / 20);
+                // Store original dry gain
+                window.originalDryGainValue = 1.0;
+                // Only apply when in unmastered mode
+                if (window.abCompareMode) {
+                    window.dryGain.gain.setTargetAtTime(linearGain, window.audioContext.currentTime, 0.05);
+                }
+            }
+
+            // Update indicator
+            const indicator = document.getElementById('loudnessMatchIndicator');
+            if (indicator) {
+                indicator.textContent = `LUFS Match: ${window.loudnessMatchGain > 0 ? '+' : ''}${window.loudnessMatchGain.toFixed(1)} dB`;
+            }
+        }
+
+        function resetLoudnessMatch() {
+            window.loudnessMatchGain = 0;
+
+            // Reset dry gain to normal
+            if (window.dryGain && window.audioContext) {
+                const targetGain = window.abCompareMode ? 1.0 : 0.0;
+                window.dryGain.gain.setTargetAtTime(targetGain, window.audioContext.currentTime, 0.05);
+            }
+        }
+
+        // Hook into A/B toggle to apply loudness matching
+        const originalToggleABCompare = window.toggleABCompare;
+        window.toggleABCompare = function() {
+            // Call original toggle
+            if (originalToggleABCompare) originalToggleABCompare();
+
+            // Apply loudness matching if enabled
+            if (window.loudnessMatchEnabled && window.dryGain && window.audioContext) {
+                const isUnmastered = window.abCompareMode;
+                if (isUnmastered) {
+                    // Boost unmastered to match mastered loudness
+                    const linearGain = Math.pow(10, window.loudnessMatchGain / 20);
+                    window.dryGain.gain.setTargetAtTime(linearGain, window.audioContext.currentTime, 0.02);
+                } else {
+                    // Mastered plays at normal level
+                    window.dryGain.gain.setTargetAtTime(0.0, window.audioContext.currentTime, 0.02);
+                }
+            }
+        };
+
+        // === REFERENCE TRACK LOADING ===
+        window.referenceAudioElement = null;
+        window.referenceSourceNode = null;
+        window.referenceGainNode = null;
+        window.referenceLoaded = false;
+        window.referenceActive = false;
+        window.referenceLUFS = null;
+
+        window.loadReferenceTrack = async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('🎵 Loading reference track:', file.name);
+
+            try {
+                // Create audio element for reference
+                if (!window.referenceAudioElement) {
+                    window.referenceAudioElement = new Audio();
+                    window.referenceAudioElement.crossOrigin = 'anonymous';
+                }
+
+                // Load the file
+                const url = URL.createObjectURL(file);
+                window.referenceAudioElement.src = url;
+
+                // Wait for load
+                await new Promise((resolve, reject) => {
+                    window.referenceAudioElement.onloadedmetadata = resolve;
+                    window.referenceAudioElement.onerror = reject;
+                });
+
+                // Create audio nodes if needed
+                if (!window.referenceSourceNode && window.audioContext) {
+                    window.referenceSourceNode = window.audioContext.createMediaElementSource(window.referenceAudioElement);
+                    window.referenceGainNode = window.audioContext.createGain();
+                    window.referenceGainNode.gain.value = 0; // Start muted
+
+                    // Connect: reference -> gain -> destination (bypasses mastering chain)
+                    window.referenceSourceNode.connect(window.referenceGainNode);
+                    window.referenceGainNode.connect(window.audioContext.destination);
+
+                    // Also connect to analyser for metering
+                    if (window.analyser) {
+                        window.referenceGainNode.connect(window.analyser);
+                    }
+                }
+
+                window.referenceLoaded = true;
+
+                // Update UI
+                document.getElementById('referenceToggleBtn').style.display = 'inline-flex';
+                document.getElementById('referenceInfo').style.display = 'flex';
+                document.getElementById('referenceFileName').textContent = file.name.substring(0, 30) + (file.name.length > 30 ? '...' : '');
+
+                console.log('✅ Reference track loaded:', file.name);
+                if (typeof showToast === 'function') showToast('Reference track loaded: ' + file.name, 'success');
+
+            } catch (error) {
+                console.error('❌ Failed to load reference track:', error);
+                if (typeof showToast === 'function') showToast('Failed to load reference track', 'error');
+            }
+        };
+
+        window.toggleReferenceTrack = function() {
+            if (!window.referenceLoaded || !window.referenceAudioElement) {
+                if (typeof showToast === 'function') showToast('Load a reference track first', 'warning');
+                return;
+            }
+
+            window.referenceActive = !window.referenceActive;
+            const btn = document.getElementById('referenceToggleBtn');
+            const ac = window.audioContext;
+
+            if (window.referenceActive) {
+                // Mute main track, unmute reference
+                if (window.outputMixer) {
+                    window.outputMixer.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                }
+                window.referenceGainNode.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+
+                // Sync playback position
+                if (window.audioElement) {
+                    window.referenceAudioElement.currentTime = window.audioElement.currentTime;
+                }
+                window.referenceAudioElement.play().catch(e => console.warn('Reference play error:', e));
+
+                btn.classList.add('reference-active');
+                btn.textContent = '🎧 Reference';
+                console.log('🎵 Playing REFERENCE track');
+                if (typeof showToast === 'function') showToast('Playing reference track', 'info');
+            } else {
+                // Unmute main track, mute reference
+                if (window.outputMixer) {
+                    window.outputMixer.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                }
+                window.referenceGainNode.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                window.referenceAudioElement.pause();
+
+                btn.classList.remove('reference-active');
+                btn.textContent = '🎧 Listen';
+                console.log('🎵 Playing MAIN track');
+                if (typeof showToast === 'function') showToast('Playing main track', 'info');
+            }
+        };
+
+        window.setReferenceGain = function(dB) {
+            if (!window.referenceGainNode) return;
+
+            const linearGain = Math.pow(10, dB / 20);
+            window.referenceGainNode.gain.value = window.referenceActive ? linearGain : 0;
+
+            document.getElementById('referenceGainValue').textContent = dB + ' dB';
+            console.log(`🎵 Reference gain: ${dB} dB`);
+        };
+
+        // === KEYBOARD SHORTCUTS FOR NEW FEATURES ===
+        document.addEventListener('keydown', function(e) {
+            // Don't trigger if typing in input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch(e.key.toLowerCase()) {
+                case 'l':
+                    // L = Toggle loop
+                    e.preventDefault();
+                    window.toggleLoop();
+                    break;
+                case 'i':
+                    // I = Set loop in
+                    e.preventDefault();
+                    window.setLoopIn();
+                    break;
+                case 'o':
+                    // O = Set loop out
+                    e.preventDefault();
+                    window.setLoopOut();
+                    break;
+                case 'm':
+                    // M = Toggle mono check
+                    e.preventDefault();
+                    window.toggleMonoCheck();
+                    break;
+            }
+        });
+
+        // Hook loop check into audio timeupdate
+        if (window.audioElement) {
+            window.audioElement.addEventListener('timeupdate', function() {
+                window.checkLoopPlayback();
+            });
+        }
+
+        // Initialize loop check listener after audio loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up observer for when audioElement is created
+            const checkAudioElement = setInterval(() => {
+                if (window.audioElement && !window.audioElement._loopListenerAdded) {
+                    window.audioElement.addEventListener('timeupdate', function() {
+                        window.checkLoopPlayback();
+                    });
+                    window.audioElement._loopListenerAdded = true;
+                    console.log('✅ Loop playback listener attached');
+                    clearInterval(checkAudioElement);
+                }
+            }, 500);
+
+            // Clear after 30 seconds to prevent memory leak
+            setTimeout(() => clearInterval(checkAudioElement), 30000);
+        });
+
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log('✅ PROFESSIONAL PLAYBACK FEATURES LOADED');
+        console.log('   🔁 Loop Region: L (toggle), I (in), O (out)');
+        console.log('   🔊 Mono Check: M (toggle)');
+        console.log('   📊 Loudness Match: Click button for fair A/B');
+        console.log('   🎵 Reference Track: Load external track for comparison');
+        console.log('═══════════════════════════════════════════════════════════════');
 
         // Genre preview toggle handler (for genre selection overlay)
         window.handleGenrePreviewToggle = function(isPreview) {
