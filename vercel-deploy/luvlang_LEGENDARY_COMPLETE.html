@@ -13467,6 +13467,10 @@
                         // Smooth ramp to new value over 50ms (prevents clicks and volume cuts)
                         makeupGain.gain.linearRampToValueAtTime(linearGain, currentTime + 0.05);
 
+                        // CRITICAL: Store the gain for export function (gain.value doesn't work with ramps)
+                        window.appliedMakeupGainLinear = linearGain;
+                        window.appliedMakeupGainDB = safeGain;
+
                         console.log('   ✅ makeupGain smoothly ramping to ' + linearGain.toFixed(3) + ' (' + safeGain.toFixed(1) + ' dB)');
                         console.log('   🎵 Using smooth 50ms ramp to prevent audio clicks');
 
@@ -18025,10 +18029,25 @@
             offlineCompressor.release.value = window.compressor ? window.compressor.release.value : 0.150;
             console.log(`   ✓ Compressor: ${offlineCompressor.threshold.value.toFixed(1)}dB, ${offlineCompressor.ratio.value.toFixed(1)}:1`);
 
-            // STAGE 4: Makeup Gain
+            // STAGE 4: Makeup Gain (LUFS targeting)
+            // CRITICAL: Use stored gain value because gain.value doesn't work correctly after ramps
             const offlineMakeupGain = offlineContext.createGain();
-            offlineMakeupGain.gain.value = window.makeupGain ? window.makeupGain.gain.value : 1.0;
-            console.log(`   ✓ Makeup Gain: ${(20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1)}dB`);
+            if (window.appliedMakeupGainLinear && window.appliedMakeupGainLinear > 0) {
+                // Use the stored gain from AI Master (most reliable)
+                offlineMakeupGain.gain.value = window.appliedMakeupGainLinear;
+                console.log(`   ✓ Makeup Gain (from AI Master): +${window.appliedMakeupGainDB?.toFixed(1) || '?'}dB (LUFS targeting)`);
+            } else if (window.toggleSavedMakeupGain && window.toggleSavedMakeupGain > 0) {
+                // Fallback to toggle saved value
+                offlineMakeupGain.gain.value = window.toggleSavedMakeupGain;
+                console.log(`   ✓ Makeup Gain (from toggle): ${(20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1)}dB`);
+            } else if (window.makeupGain) {
+                // Last resort: try to read from node
+                offlineMakeupGain.gain.value = window.makeupGain.gain.value;
+                console.log(`   ✓ Makeup Gain (from node): ${(20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1)}dB`);
+            } else {
+                offlineMakeupGain.gain.value = 1.0;
+                console.log(`   ⚠️ Makeup Gain: 0dB (no gain applied)`);
+            }
 
             // STAGE 5: Limiter - Copy current real-time values
             const offlineLimiter = offlineContext.createDynamicsCompressor();
