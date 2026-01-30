@@ -3024,14 +3024,14 @@
             <!-- Genre Preview Toggle -->
             <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <span id="genreToggleLabelOrig" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5);">ORIGINAL</span>
+                    <span id="genreToggleLabelOrig" style="font-size: 0.85rem; font-weight: 700; color: #ffffff;">ORIGINAL</span>
                     <label style="position: relative; display: inline-block; width: 60px; height: 30px;">
-                        <input type="checkbox" id="genrePreviewToggle" checked onchange="handleGenrePreviewToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #00d4ff, #b84fff); transition: 0.3s; border-radius: 30px;">
-                            <span style="position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(30px);"></span>
+                        <input type="checkbox" id="genrePreviewToggle" onchange="handleGenrePreviewToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.3); transition: 0.3s; border-radius: 30px;">
+                            <span style="position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(0);"></span>
                         </span>
                     </label>
-                    <span id="genreToggleLabelPreview" style="font-size: 0.85rem; font-weight: 700; color: #00d4ff;">PREVIEW</span>
+                    <span id="genreToggleLabelPreview" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5);">PREVIEW</span>
                 </div>
                 <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="padding: 12px 32px; background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-weight: 700; opacity: 0.5;" disabled>
                     ⚡ Start Mastering
@@ -18257,27 +18257,55 @@
         window.handleGenrePreviewToggle = function(isPreview) {
             const labelOrig = document.getElementById('genreToggleLabelOrig');
             const labelPreview = document.getElementById('genreToggleLabelPreview');
+            const toggle = document.getElementById('genrePreviewToggle');
+            const ac = window.audioContext;
+
+            // Get the toggle track and thumb for animation
+            const toggleLabel = toggle ? toggle.parentElement : null;
+            const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
+            const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
 
             if (isPreview) {
-                // Play with genre preset applied
+                // Play with genre preset applied (MASTERED path)
                 if (labelOrig) labelOrig.style.color = 'rgba(255,255,255,0.5)';
+                if (labelOrig) labelOrig.style.fontWeight = '600';
                 if (labelPreview) labelPreview.style.color = '#00d4ff';
                 if (labelPreview) labelPreview.style.fontWeight = '700';
+
+                // Animate toggle
+                if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
+                if (toggleThumb) toggleThumb.style.transform = 'translateX(30px)';
 
                 // Apply the currently selected genre preview
                 const selectedGenre = document.querySelector('.genre-btn.selected');
                 if (selectedGenre) {
                     const genre = selectedGenre.dataset.genre;
                     if (typeof previewGenre === 'function') previewGenre(genre);
+                } else {
+                    // No genre selected - still switch to mastered path
+                    if (window.dryGain && window.wetGain && ac) {
+                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                        console.log('🎨 PREVIEW: Switching to MASTERED path (no genre selected)');
+                    }
                 }
             } else {
-                // Play original
+                // Play original (UNMASTERED path)
                 if (labelOrig) labelOrig.style.color = '#ffffff';
                 if (labelOrig) labelOrig.style.fontWeight = '700';
                 if (labelPreview) labelPreview.style.color = 'rgba(255,255,255,0.5)';
                 if (labelPreview) labelPreview.style.fontWeight = '600';
 
-                if (typeof previewOriginal === 'function') previewOriginal();
+                // Animate toggle
+                if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.3)';
+                if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+
+                // Switch to unmastered path
+                if (window.dryGain && window.wetGain && ac) {
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+                    console.log('🔀 ORIGINAL: Switching to UNMASTERED path');
+                }
             }
         };
 
