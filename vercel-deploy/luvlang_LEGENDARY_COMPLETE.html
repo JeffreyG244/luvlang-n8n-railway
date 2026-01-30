@@ -2673,6 +2673,111 @@
             <span>MASTER</span>
         </button>
         <div class="ai-status-pill" id="aiStatusPill">MASTERING CHAIN</div>
+        <button class="tour-btn" id="tourBtn" onclick="startFeatureTour()" style="background: linear-gradient(135deg, #b84fff, #00d4ff); border: none; padding: 8px 16px; border-radius: 20px; color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-left: 10px;">
+            🎯 Tour
+        </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         STATE-OF-THE-ART INTERACTIVE FEATURE TOUR
+         Professional onboarding experience with animations and smart guidance
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <style>
+        /* Tour Animations */
+        @keyframes tourPulse {
+            0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.85), 0 0 30px rgba(0,212,255,0.3); }
+            50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.85), 0 0 50px rgba(0,212,255,0.6); }
+        }
+        @keyframes tourCardSlide {
+            from { transform: translateX(-50%) translateY(30px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes tourWelcomeFade {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes tourSparkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        .tour-kbd {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #00d4ff;
+        }
+        .tour-tip {
+            background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,212,255,0.1));
+            border-left: 3px solid #00ff88;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.8);
+        }
+    </style>
+
+    <div id="featureTourOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 100000; transition: opacity 0.3s ease;">
+        <!-- Tour Spotlight -->
+        <div id="tourSpotlight" style="position: absolute; border: 3px solid #00d4ff; border-radius: 12px; animation: tourPulse 2s ease infinite; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; opacity: 0;"></div>
+
+        <!-- Welcome Screen (shown first) -->
+        <div id="tourWelcome" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; animation: tourWelcomeFade 0.5s ease;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🎛️</div>
+            <h2 style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #00d4ff, #b84fff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px;">Welcome to LuvLang</h2>
+            <p style="color: rgba(255,255,255,0.6); font-size: 1.1rem; margin-bottom: 30px; max-width: 400px;">Professional Audio Mastering<br>Let's take a quick tour of the features</p>
+            <button onclick="startTourSteps()" style="background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; padding: 16px 40px; border-radius: 30px; color: #fff; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 10px 40px rgba(0,212,255,0.3); transition: all 0.3s ease;">
+                Start Tour →
+            </button>
+            <div style="margin-top: 20px;">
+                <button onclick="endFeatureTour()" style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 0.9rem;">Skip for now</button>
+            </div>
+        </div>
+
+        <!-- Tour Card -->
+        <div id="tourCard" style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, rgba(15,20,35,0.98), rgba(25,30,45,0.98)); border: 1px solid rgba(0,212,255,0.3); border-radius: 20px; padding: 28px 32px; max-width: 520px; width: 90%; box-shadow: 0 25px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,212,255,0.15); z-index: 100001; animation: tourCardSlide 0.4s ease;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="tourStepBadge" style="background: linear-gradient(135deg, #00d4ff, #b84fff); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;">1/8</span>
+                    <span id="tourCategory" style="font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">CORE FEATURE</span>
+                </div>
+                <button onclick="endFeatureTour()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 32px; height: 32px; border-radius: 50%; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 1rem; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">✕</button>
+            </div>
+
+            <!-- Title -->
+            <h3 id="tourTitle" style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <span id="tourIcon">🎛️</span>
+                <span id="tourTitleText">Master Button</span>
+            </h3>
+
+            <!-- Description -->
+            <p id="tourDescription" style="color: rgba(255,255,255,0.7); font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px;">Click this button to start the AI-powered 24-stage mastering process.</p>
+
+            <!-- Pro Tip -->
+            <div id="tourTip" class="tour-tip" style="display: none;">
+                💡 <strong>Pro tip:</strong> <span id="tourTipText"></span>
+            </div>
+
+            <!-- Navigation -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.3);">
+                    <span class="tour-kbd">←</span> <span class="tour-kbd">→</span> to navigate • <span class="tour-kbd">Esc</span> to exit
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="tourPrevBtn" onclick="prevTourStep()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 12px 20px; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 600; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">← Back</button>
+                    <button id="tourNextBtn" onclick="nextTourStep()" style="background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; padding: 12px 28px; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 4px 20px rgba(0,212,255,0.3);">Next →</button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="margin-top: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; height: 4px; overflow: hidden;">
+                <div id="tourProgressBar" style="height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88); width: 12.5%; transition: width 0.4s ease;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
@@ -5652,7 +5757,9 @@
                 // CRITICAL: Decode audioBuffer for AI Auto Master
                 try {
                     const arrayBuffer = await uploadedFile.arrayBuffer();
-                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100 * 10, 44100);
+                    // Use native sample rate for proper handling of all sample rates (44.1/48/96kHz)
+                    const decodeSampleRate = window.audioContext?.sampleRate || 48000;
+                    const tempContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, decodeSampleRate * 10, decodeSampleRate);
                     audioBuffer = await tempContext.decodeAudioData(arrayBuffer);
 
                     // Make audioBuffer globally accessible for ULTIMATE_VISUALS
@@ -14250,18 +14357,33 @@
 
         // Full AI Master - Run All Features (SIMPLIFIED - just works!)
         async function runFullAIMaster() {
+            console.log('🎛️ MASTER button clicked - starting mastering process...');
+
             if (!window.audioBuffer) {
+                console.error('❌ No audioBuffer found. Please upload a file first.');
                 alert('Please upload an audio file first.');
                 return;
             }
 
+            console.log('✅ audioBuffer found:', window.audioBuffer.duration.toFixed(1) + 's',
+                        window.audioBuffer.sampleRate + 'Hz',
+                        window.audioBuffer.numberOfChannels + ' channels');
+
             // Use selected genre from main interface or default to pop
             if (!window.selectedPreMasterGenre) {
                 window.selectedPreMasterGenre = 'pop';
+                console.log('📌 No genre selected, defaulting to: pop');
+            } else {
+                console.log('📌 Selected genre:', window.selectedPreMasterGenre);
             }
 
             // Run mastering directly
-            runActualMastering();
+            try {
+                await runActualMastering();
+            } catch (error) {
+                console.error('❌ Mastering failed:', error);
+                alert('Mastering failed: ' + error.message);
+            }
         }
 
         // Expose to global scope for onclick handler
@@ -14901,12 +15023,12 @@
         window.addEventListener('DOMContentLoaded', async () => {
             // Give the main audio context time to initialize
             setTimeout(async () => {
-                if (typeof audioContext !== 'undefined' && audioContext) {
+                if (window.audioContext) {
                     console.log('✅ Audio Context ready - initializing AI Suite...');
 
                     try {
                         // Initialize AI Suite
-                        window.aiSuite = new LuvlangAIMasteringSuite(audioContext);
+                        window.aiSuite = new LuvlangAIMasteringSuite(window.audioContext);
 
                         // Load all AI modules
                         console.log('📦 Loading all AI modules...');
@@ -16819,6 +16941,358 @@
                 console.warn('Advanced Engine init deferred:', e);
             }
         });
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         STATE-OF-THE-ART INTERACTIVE FEATURE TOUR - JavaScript
+         Professional onboarding with keyboard shortcuts, animations, and smart guidance
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <script>
+        // Tour state and configuration
+        window.tourState = {
+            active: false,
+            currentStep: -1, // -1 = welcome screen
+            steps: [
+                {
+                    icon: '🎛️',
+                    title: 'Master Button',
+                    category: 'CORE FEATURE',
+                    description: 'Your one-click solution to professional mastering. This button triggers our AI-powered 24-stage processing chain that analyzes your audio and applies intelligent enhancements.',
+                    tip: 'For best results, upload a high-quality source file (WAV or FLAC). The AI adapts to your audio automatically.',
+                    element: '#aiMasterBtnFloating',
+                    fallback: '.ai-command-bar'
+                },
+                {
+                    icon: '🎚️',
+                    title: 'Genre Presets',
+                    category: 'STYLE',
+                    description: 'Choose from 6 professionally-crafted genre presets. Each preset is designed by mastering engineers to optimize EQ curves, compression ratios, and stereo imaging for that specific genre.',
+                    tip: 'Click a genre to preview it in real-time before committing. Use the intensity slider for subtle or aggressive processing.',
+                    element: '.genre-selector, .genres-container',
+                    fallback: '.sidebar'
+                },
+                {
+                    icon: '📊',
+                    title: 'Professional Metering',
+                    category: 'ANALYSIS',
+                    description: 'Industry-standard LUFS metering with True Peak detection. Integrated loudness shows overall level, while True Peak prevents digital clipping. Essential for streaming platform compliance.',
+                    tip: 'Target -14 LUFS for Spotify/YouTube, -16 LUFS for Apple Music. Keep True Peak below -1 dBTP.',
+                    element: '.lufs-container, #lufsDisplay',
+                    fallback: '.meters-section'
+                },
+                {
+                    icon: '🌊',
+                    title: 'Waveform Display',
+                    category: 'VISUALIZATION',
+                    description: 'Interactive waveform with ghost overlay showing your original audio (white) behind the mastered version (colored). Click anywhere to navigate through your track instantly.',
+                    tip: 'The transient markers show peak moments in your track. Use them to check if compression is affecting your punch.',
+                    element: '#waveformCanvas',
+                    fallback: '.waveform-container'
+                },
+                {
+                    icon: '🎨',
+                    title: 'Spectrum Analyzer',
+                    category: 'VISUALIZATION',
+                    description: 'Real-time FFT spectrum analyzer with professional persistence (ghosting). Visualize the frequency balance of your mix from sub-bass (20Hz) to air (20kHz) with studio-grade accuracy.',
+                    tip: 'Look for a balanced curve that slopes gently downward. Avoid sharp peaks which indicate resonances.',
+                    element: '#spectrumCanvas',
+                    fallback: '.spectrum-container'
+                },
+                {
+                    icon: '⚡',
+                    title: '24-Feature Processing Chain',
+                    category: 'PROCESSING',
+                    description: 'Our flagship mastering engine includes: 7-Band Parametric EQ, Dynamic EQ, Linear Phase EQ, Multiband Compression, Transient Shaper, Stereo Width, M/S Processing, Harmonic Exciter, and more.',
+                    tip: 'Each processor in the chain is automatically calibrated based on AI analysis of your specific audio.',
+                    element: '.processing-chain, #processingChain',
+                    fallback: '.processing-section'
+                },
+                {
+                    icon: '🔄',
+                    title: 'A/B Comparison',
+                    category: 'QUALITY CONTROL',
+                    description: 'Toggle instantly between Original and Mastered versions. Our level-matched comparison ensures you hear the actual processing difference, not just volume increases.',
+                    tip: 'Use keyboard shortcut "A" to toggle A/B. Train your ears by switching frequently during critical listening.',
+                    element: '.ab-toggle-container, #abToggle',
+                    fallback: '.playback-controls'
+                },
+                {
+                    icon: '💾',
+                    title: 'Export Your Master',
+                    category: 'OUTPUT',
+                    description: 'Export in multiple professional formats: WAV (16/24/32-bit), MP3 (320kbps), or FLAC. Includes intelligent dithering for bit-depth reduction and metadata embedding.',
+                    tip: 'Export WAV 24-bit for maximum quality, MP3 320kbps for streaming, and keep both for your archives.',
+                    element: '#exportBtn, .export-button',
+                    fallback: '.export-section'
+                }
+            ]
+        };
+
+        // Start the feature tour (shows welcome first)
+        function startFeatureTour() {
+            console.log('🎯 Starting feature tour...');
+            window.tourState.active = true;
+            window.tourState.currentStep = -1;
+
+            // Show overlay with fade
+            const overlay = document.getElementById('featureTourOverlay');
+            if (overlay) {
+                overlay.style.display = 'block';
+                overlay.style.opacity = '0';
+                requestAnimationFrame(() => {
+                    overlay.style.opacity = '1';
+                });
+            }
+
+            // Show welcome screen, hide tour card
+            const welcome = document.getElementById('tourWelcome');
+            const card = document.getElementById('tourCard');
+            if (welcome) welcome.style.display = 'block';
+            if (card) card.style.display = 'none';
+
+            // Add keyboard listeners
+            document.addEventListener('keydown', handleTourKeyboard);
+        }
+
+        // Start the actual tour steps (called from welcome screen)
+        function startTourSteps() {
+            // Hide welcome, show card
+            const welcome = document.getElementById('tourWelcome');
+            const card = document.getElementById('tourCard');
+            if (welcome) welcome.style.display = 'none';
+            if (card) card.style.display = 'block';
+
+            // Show first step
+            showTourStep(0);
+        }
+
+        // End the tour
+        function endFeatureTour() {
+            console.log('🎯 Ending feature tour');
+            window.tourState.active = false;
+
+            const overlay = document.getElementById('featureTourOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    overlay.style.opacity = '1';
+                }, 300);
+            }
+
+            // Remove keyboard listeners
+            document.removeEventListener('keydown', handleTourKeyboard);
+
+            // Mark tour as completed
+            localStorage.setItem('luvlang_tour_completed', 'true');
+        }
+
+        // Handle keyboard navigation
+        function handleTourKeyboard(e) {
+            if (!window.tourState.active) return;
+
+            switch(e.key) {
+                case 'ArrowRight':
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    if (window.tourState.currentStep === -1) {
+                        startTourSteps();
+                    } else {
+                        nextTourStep();
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevTourStep();
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    endFeatureTour();
+                    break;
+            }
+        }
+
+        // Show specific tour step
+        function showTourStep(stepIndex) {
+            const steps = window.tourState.steps;
+            if (stepIndex < 0 || stepIndex >= steps.length) {
+                endFeatureTour();
+                return;
+            }
+
+            window.tourState.currentStep = stepIndex;
+            const step = steps[stepIndex];
+
+            // Update step badge
+            const badge = document.getElementById('tourStepBadge');
+            if (badge) badge.textContent = `${stepIndex + 1}/${steps.length}`;
+
+            // Update category
+            const category = document.getElementById('tourCategory');
+            if (category) category.textContent = step.category;
+
+            // Update icon and title
+            const icon = document.getElementById('tourIcon');
+            const titleText = document.getElementById('tourTitleText');
+            if (icon) icon.textContent = step.icon;
+            if (titleText) titleText.textContent = step.title;
+
+            // Update description
+            const desc = document.getElementById('tourDescription');
+            if (desc) desc.textContent = step.description;
+
+            // Update tip
+            const tipContainer = document.getElementById('tourTip');
+            const tipText = document.getElementById('tourTipText');
+            if (tipContainer && tipText && step.tip) {
+                tipContainer.style.display = 'block';
+                tipText.textContent = step.tip;
+            } else if (tipContainer) {
+                tipContainer.style.display = 'none';
+            }
+
+            // Update navigation buttons
+            const prevBtn = document.getElementById('tourPrevBtn');
+            const nextBtn = document.getElementById('tourNextBtn');
+            if (prevBtn) {
+                prevBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+            }
+            if (nextBtn) {
+                nextBtn.textContent = stepIndex === steps.length - 1 ? 'Finish ✓' : 'Next →';
+            }
+
+            // Update progress bar
+            const progressBar = document.getElementById('tourProgressBar');
+            if (progressBar) {
+                const progress = ((stepIndex + 1) / steps.length) * 100;
+                progressBar.style.width = progress + '%';
+            }
+
+            // Highlight element with animation
+            highlightTourElement(step);
+        }
+
+        // Highlight the target element
+        function highlightTourElement(step) {
+            const spotlight = document.getElementById('tourSpotlight');
+            if (!spotlight) return;
+
+            // Try to find the element
+            let element = null;
+            const selectors = step.element.split(', ');
+
+            for (const selector of selectors) {
+                try {
+                    element = document.querySelector(selector);
+                    if (element && element.offsetParent !== null) break;
+                } catch (e) {
+                    console.warn('Invalid selector:', selector);
+                }
+            }
+
+            // Try fallback if not found
+            if ((!element || element.offsetParent === null) && step.fallback) {
+                try {
+                    element = document.querySelector(step.fallback);
+                } catch (e) {
+                    console.warn('Invalid fallback selector:', step.fallback);
+                }
+            }
+
+            if (element && element.offsetParent !== null) {
+                // Get element position
+                const rect = element.getBoundingClientRect();
+                const padding = 12;
+
+                // Animate spotlight to new position
+                spotlight.style.top = (rect.top - padding + window.scrollY) + 'px';
+                spotlight.style.left = (rect.left - padding) + 'px';
+                spotlight.style.width = (rect.width + padding * 2) + 'px';
+                spotlight.style.height = (rect.height + padding * 2) + 'px';
+                spotlight.style.opacity = '1';
+
+                // Scroll element into view smoothly
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else {
+                // Element not found - hide spotlight but continue tour
+                spotlight.style.opacity = '0.3';
+                console.warn('Tour element not found:', step.element, '- continuing tour');
+            }
+        }
+
+        // Next tour step
+        function nextTourStep() {
+            const nextIndex = window.tourState.currentStep + 1;
+            if (nextIndex >= window.tourState.steps.length) {
+                endFeatureTour();
+                console.log('✅ Feature tour completed!');
+                // Show completion toast
+                showTourComplete();
+            } else {
+                showTourStep(nextIndex);
+            }
+        }
+
+        // Previous tour step
+        function prevTourStep() {
+            const prevIndex = window.tourState.currentStep - 1;
+            if (prevIndex >= 0) {
+                showTourStep(prevIndex);
+            }
+        }
+
+        // Show tour completion message
+        function showTourComplete() {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+                background: linear-gradient(135deg, #00ff88, #00d4ff);
+                padding: 16px 32px; border-radius: 30px;
+                color: #000; font-weight: 700; font-size: 1rem;
+                box-shadow: 0 10px 40px rgba(0,255,136,0.3);
+                z-index: 100002; animation: tourCardSlide 0.4s ease;
+            `;
+            toast.innerHTML = '🎉 Tour Complete! You\'re ready to master like a pro.';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Auto-show tour for first-time users
+        function checkFirstTimeUser() {
+            if (!localStorage.getItem('luvlang_tour_completed')) {
+                // Wait for page to fully load, then offer tour
+                setTimeout(() => {
+                    if (confirm('Welcome to LuvLang! Would you like a quick tour of the features?')) {
+                        startFeatureTour();
+                    } else {
+                        localStorage.setItem('luvlang_tour_completed', 'true');
+                    }
+                }, 2000);
+            }
+        }
+
+        // Expose tour functions globally
+        window.startFeatureTour = startFeatureTour;
+        window.startTourSteps = startTourSteps;
+        window.endFeatureTour = endFeatureTour;
+        window.nextTourStep = nextTourStep;
+        window.prevTourStep = prevTourStep;
+
+        // Initialize
+        console.log('🎯 Feature Tour initialized');
+        console.log('   • Click "Tour" button or call startFeatureTour()');
+        console.log('   • Keyboard: ← → to navigate, Esc to exit');
+
+        // Check for first-time user after page loads
+        // document.addEventListener('DOMContentLoaded', checkFirstTimeUser);
     </script>
 
 </body>
