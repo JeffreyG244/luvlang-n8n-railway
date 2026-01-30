@@ -4131,6 +4131,25 @@
                 <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
                 <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
                 <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
+                <!-- Frequency hover tooltip -->
+                <div id="spectrumTooltip" style="
+                    position: absolute;
+                    display: none;
+                    background: rgba(0, 0, 0, 0.9);
+                    border: 1px solid rgba(0, 212, 255, 0.5);
+                    border-radius: 6px;
+                    padding: 6px 10px;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.75rem;
+                    color: #00d4ff;
+                    pointer-events: none;
+                    z-index: 100;
+                    white-space: nowrap;
+                    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+                ">
+                    <div id="tooltipFreq" style="font-weight: 700;">1000 Hz</div>
+                    <div id="tooltipDb" style="color: #b84fff; font-size: 0.65rem; margin-top: 2px;">-24.5 dB</div>
+                </div>
             </div>
 
             <!-- PANEL 2: STEREO METERS + PHASE SCOPE -->
@@ -5352,6 +5371,63 @@
 
         // OLD (keep for compatibility)
         const eqGraphCanvas = document.getElementById('eqGraphCanvas');
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SPECTRUM ANALYZER HOVER TOOLTIP - Shows frequency and dB at cursor position
+        // ═══════════════════════════════════════════════════════════════════════════
+        const spectrumOverlay = document.getElementById('spectrumOverlayCanvas');
+        const spectrumTooltip = document.getElementById('spectrumTooltip');
+        const tooltipFreq = document.getElementById('tooltipFreq');
+        const tooltipDb = document.getElementById('tooltipDb');
+
+        if (spectrumOverlay && spectrumTooltip) {
+            spectrumOverlay.addEventListener('mousemove', function(e) {
+                const rect = spectrumOverlay.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const width = rect.width;
+                const height = rect.height;
+
+                // Convert X position to frequency (logarithmic scale)
+                const normalizedX = x / width;
+                const logMin = Math.log10(20);
+                const logMax = Math.log10(20000);
+                const logFreq = logMin + normalizedX * (logMax - logMin);
+                const freq = Math.pow(10, logFreq);
+
+                // Convert Y position to dB (linear scale, 0dB at top, -60dB at bottom)
+                const normalizedY = y / height;
+                const db = -normalizedY * 60;
+
+                // Format frequency nicely
+                let freqStr;
+                if (freq >= 1000) {
+                    freqStr = (freq / 1000).toFixed(1) + ' kHz';
+                } else {
+                    freqStr = Math.round(freq) + ' Hz';
+                }
+
+                // Update tooltip content
+                if (tooltipFreq) tooltipFreq.textContent = freqStr;
+                if (tooltipDb) tooltipDb.textContent = db.toFixed(1) + ' dB';
+
+                // Position tooltip (offset from cursor)
+                spectrumTooltip.style.display = 'block';
+                spectrumTooltip.style.left = (x + 15) + 'px';
+                spectrumTooltip.style.top = (y - 10) + 'px';
+
+                // Flip tooltip to left side if near right edge
+                if (x > width - 100) {
+                    spectrumTooltip.style.left = (x - 85) + 'px';
+                }
+            });
+
+            spectrumOverlay.addEventListener('mouseleave', function() {
+                spectrumTooltip.style.display = 'none';
+            });
+
+            console.log('✅ Spectrum hover tooltip initialized');
+        }
 
         const progressOverlay = document.getElementById('progressOverlay');
         const progressText = document.getElementById('progressText');
@@ -11672,24 +11748,61 @@
                                 const height = overlayCanvas.height;
                                 ctx.clearRect(0, 0, width, height);
 
-                                // Frequency labels at bottom
-                                const freqLabels = [20, 50, 100, 200, 500, '1k', '2k', '5k', '10k', '20k'];
+                                // ═══════════════════════════════════════════════════════════
+                                // FREQUENCY LABELS + GRID LINES - Enhanced visibility
+                                // ═══════════════════════════════════════════════════════════
+                                const freqLabels = ['20', '50', '100', '200', '500', '1k', '2k', '5k', '10k', '20k'];
                                 const freqValues = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-                                ctx.font = '10px "JetBrains Mono", monospace';
+
+                                // Draw vertical grid lines at each frequency
+                                ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                                ctx.lineWidth = 1;
+                                freqValues.forEach((freq) => {
+                                    const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+                                    ctx.beginPath();
+                                    ctx.moveTo(x, 0);
+                                    ctx.lineTo(x, height - 25);
+                                    ctx.stroke();
+                                });
+
+                                // Draw frequency labels - LARGER and more visible
+                                ctx.font = 'bold 12px "JetBrains Mono", monospace';
                                 ctx.textAlign = 'center';
-                                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                                ctx.fillStyle = 'rgba(0, 212, 255, 0.8)';  // Cyan color for visibility
 
                                 freqValues.forEach((freq, idx) => {
                                     const x = width * (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
-                                    ctx.fillText(freqLabels[idx], x, height - 5);
+                                    // Background pill for label
+                                    const labelWidth = ctx.measureText(freqLabels[idx]).width + 8;
+                                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                                    ctx.fillRect(x - labelWidth/2, height - 22, labelWidth, 18);
+                                    // Label text
+                                    ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+                                    ctx.fillText(freqLabels[idx], x, height - 8);
                                 });
 
-                                // dB labels on left
+                                // ═══════════════════════════════════════════════════════════
+                                // dB LABELS + HORIZONTAL GRID LINES
+                                // ═══════════════════════════════════════════════════════════
                                 ctx.textAlign = 'left';
-                                const dbLabels = ['0', '-20', '-40', '-60'];
+                                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                                const dbLabels = ['0', '-12', '-24', '-36', '-48', '-60'];
+
                                 dbLabels.forEach((label, idx) => {
-                                    const y = 15 + (idx * (height - 30) / 3);
-                                    ctx.fillText(label + 'dB', 5, y);
+                                    const y = 15 + (idx * (height - 40) / 5);
+
+                                    // Horizontal grid line
+                                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+                                    ctx.beginPath();
+                                    ctx.moveTo(45, y);
+                                    ctx.lineTo(width, y);
+                                    ctx.stroke();
+
+                                    // dB label with background
+                                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                                    ctx.fillRect(2, y - 8, 40, 14);
+                                    ctx.fillStyle = 'rgba(184, 79, 255, 0.9)';  // Purple for dB
+                                    ctx.fillText(label + 'dB', 5, y + 4);
                                 });
                             }
                         }
