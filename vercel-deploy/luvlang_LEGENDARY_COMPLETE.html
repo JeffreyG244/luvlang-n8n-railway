@@ -17933,6 +17933,212 @@
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
+        // 🎯 EXPORT MASTERED AUDIO - Renders audio through full mastering chain
+        // This ensures the exported file sounds EXACTLY like the preview
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.exportMasteredWAV = async function() {
+            console.log('🎛️ EXPORT MASTERED WAV - Rendering through full mastering chain...');
+
+            if (!audioBuffer) {
+                throw new Error('No audio loaded to export');
+            }
+
+            const sampleRate = audioBuffer.sampleRate;
+            const duration = audioBuffer.duration;
+            const channels = audioBuffer.numberOfChannels;
+
+            console.log(`   Source: ${duration.toFixed(2)}s, ${sampleRate}Hz, ${channels}ch`);
+
+            // Create offline context for rendering
+            const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+                channels,
+                Math.ceil(duration * sampleRate),
+                sampleRate
+            );
+
+            // Create source from original buffer
+            const source = offlineContext.createBufferSource();
+            source.buffer = audioBuffer;
+
+            // ══════════════════════════════════════════════════════════════════
+            // REBUILD THE EXACT SAME MASTERING CHAIN AS REAL-TIME PLAYBACK
+            // ══════════════════════════════════════════════════════════════════
+
+            // STAGE 1: Subsonic Filter (25Hz HP)
+            const offlineSubsonic = offlineContext.createBiquadFilter();
+            offlineSubsonic.type = 'highpass';
+            offlineSubsonic.frequency.value = 25;
+            offlineSubsonic.Q.value = 0.5;
+
+            // STAGE 2: 7-Band Parametric EQ - Copy current real-time values
+            const offlineEqSub = offlineContext.createBiquadFilter();
+            offlineEqSub.type = 'lowshelf';
+            offlineEqSub.frequency.value = 40;
+            offlineEqSub.Q.value = 0.707;
+            offlineEqSub.gain.value = window.eqSubFilter ? window.eqSubFilter.gain.value : 0;
+
+            const offlineEqBass = offlineContext.createBiquadFilter();
+            offlineEqBass.type = 'peaking';
+            offlineEqBass.frequency.value = 120;
+            offlineEqBass.Q.value = 1.0;
+            offlineEqBass.gain.value = window.eqBassFilter ? window.eqBassFilter.gain.value : 0;
+
+            const offlineEqLowMid = offlineContext.createBiquadFilter();
+            offlineEqLowMid.type = 'peaking';
+            offlineEqLowMid.frequency.value = 350;
+            offlineEqLowMid.Q.value = 1.4;
+            offlineEqLowMid.gain.value = window.eqLowMidFilter ? window.eqLowMidFilter.gain.value : 0;
+
+            const offlineEqMid = offlineContext.createBiquadFilter();
+            offlineEqMid.type = 'peaking';
+            offlineEqMid.frequency.value = 1000;
+            offlineEqMid.Q.value = 1.0;
+            offlineEqMid.gain.value = window.eqMidFilter ? window.eqMidFilter.gain.value : 0;
+
+            const offlineEqHighMid = offlineContext.createBiquadFilter();
+            offlineEqHighMid.type = 'peaking';
+            offlineEqHighMid.frequency.value = 3500;
+            offlineEqHighMid.Q.value = 1.4;
+            offlineEqHighMid.gain.value = window.eqHighMidFilter ? window.eqHighMidFilter.gain.value : 0;
+
+            const offlineEqHigh = offlineContext.createBiquadFilter();
+            offlineEqHigh.type = 'peaking';
+            offlineEqHigh.frequency.value = 8000;
+            offlineEqHigh.Q.value = 0.8;
+            offlineEqHigh.gain.value = window.eqHighFilter ? window.eqHighFilter.gain.value : 0;
+
+            const offlineEqAir = offlineContext.createBiquadFilter();
+            offlineEqAir.type = 'highshelf';
+            offlineEqAir.frequency.value = 14000;
+            offlineEqAir.Q.value = 0.707;
+            offlineEqAir.gain.value = window.eqAirFilter ? window.eqAirFilter.gain.value : 0;
+
+            console.log('   ✓ 7-Band EQ configured from real-time chain');
+
+            // STAGE 3: Compressor - Copy current real-time values
+            const offlineCompressor = offlineContext.createDynamicsCompressor();
+            offlineCompressor.threshold.value = window.compressor ? window.compressor.threshold.value : -16;
+            offlineCompressor.knee.value = window.compressor ? window.compressor.knee.value : 10;
+            offlineCompressor.ratio.value = window.compressor ? window.compressor.ratio.value : 1.5;
+            offlineCompressor.attack.value = window.compressor ? window.compressor.attack.value : 0.030;
+            offlineCompressor.release.value = window.compressor ? window.compressor.release.value : 0.150;
+            console.log(`   ✓ Compressor: ${offlineCompressor.threshold.value.toFixed(1)}dB, ${offlineCompressor.ratio.value.toFixed(1)}:1`);
+
+            // STAGE 4: Makeup Gain
+            const offlineMakeupGain = offlineContext.createGain();
+            offlineMakeupGain.gain.value = window.makeupGain ? window.makeupGain.gain.value : 1.0;
+            console.log(`   ✓ Makeup Gain: ${(20 * Math.log10(offlineMakeupGain.gain.value)).toFixed(1)}dB`);
+
+            // STAGE 5: Limiter - Copy current real-time values
+            const offlineLimiter = offlineContext.createDynamicsCompressor();
+            offlineLimiter.threshold.value = window.limiter ? window.limiter.threshold.value : -1.0;
+            offlineLimiter.knee.value = window.limiter ? window.limiter.knee.value : 6;
+            offlineLimiter.ratio.value = 20; // Brick-wall
+            offlineLimiter.attack.value = window.limiter ? window.limiter.attack.value : 0.005;
+            offlineLimiter.release.value = window.limiter ? window.limiter.release.value : 0.100;
+            console.log(`   ✓ Limiter: ${offlineLimiter.threshold.value.toFixed(1)}dBTP ceiling`);
+
+            // STAGE 6: Master Output Gain
+            const offlineMasterGain = offlineContext.createGain();
+            offlineMasterGain.gain.value = window.masterGain ? window.masterGain.gain.value : 1.0;
+            console.log(`   ✓ Master Gain: ${(20 * Math.log10(offlineMasterGain.gain.value)).toFixed(1)}dB`);
+
+            // ══════════════════════════════════════════════════════════════════
+            // CONNECT THE CHAIN
+            // ══════════════════════════════════════════════════════════════════
+            source.connect(offlineSubsonic);
+            offlineSubsonic.connect(offlineEqSub);
+            offlineEqSub.connect(offlineEqBass);
+            offlineEqBass.connect(offlineEqLowMid);
+            offlineEqLowMid.connect(offlineEqMid);
+            offlineEqMid.connect(offlineEqHighMid);
+            offlineEqHighMid.connect(offlineEqHigh);
+            offlineEqHigh.connect(offlineEqAir);
+            offlineEqAir.connect(offlineCompressor);
+            offlineCompressor.connect(offlineMakeupGain);
+            offlineMakeupGain.connect(offlineLimiter);
+            offlineLimiter.connect(offlineMasterGain);
+            offlineMasterGain.connect(offlineContext.destination);
+
+            // Start source and render
+            source.start(0);
+            console.log('   ⏳ Rendering mastered audio...');
+
+            const masteredBuffer = await offlineContext.startRendering();
+            console.log(`   ✅ Rendered: ${masteredBuffer.duration.toFixed(2)}s mastered audio`);
+
+            // Convert to WAV blob
+            const wavBlob = audioBufferToWavExport(masteredBuffer);
+            console.log(`   📦 WAV file size: ${(wavBlob.size / 1024 / 1024).toFixed(2)} MB`);
+
+            return wavBlob;
+        };
+
+        // Helper function to convert AudioBuffer to WAV Blob (24-bit)
+        function audioBufferToWavExport(buffer) {
+            const numberOfChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const bitDepth = 24;
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numberOfChannels * bytesPerSample;
+
+            const samples = buffer.length;
+            const dataLength = samples * numberOfChannels * bytesPerSample;
+            const bufferLength = 44 + dataLength;
+
+            const arrayBuffer = new ArrayBuffer(bufferLength);
+            const view = new DataView(arrayBuffer);
+
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + dataLength, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, 1, true);  // PCM format
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, dataLength, true);
+
+            // Get channel data
+            const channelData = [];
+            for (let ch = 0; ch < numberOfChannels; ch++) {
+                channelData.push(buffer.getChannelData(ch));
+            }
+
+            // Write interleaved 24-bit samples
+            let offset = 44;
+            for (let i = 0; i < samples; i++) {
+                for (let ch = 0; ch < numberOfChannels; ch++) {
+                    // Clamp and convert to 24-bit integer
+                    const sample = Math.max(-1, Math.min(1, channelData[ch][i]));
+                    const intSample = Math.round(sample * 0x7FFFFF);
+
+                    // Write 24-bit little-endian
+                    view.setUint8(offset, intSample & 0xFF);
+                    view.setUint8(offset + 1, (intSample >> 8) & 0xFF);
+                    view.setUint8(offset + 2, (intSample >> 16) & 0xFF);
+                    offset += 3;
+                }
+            }
+
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        console.log('✅ exportMasteredWAV function ready');
+
+        // ═══════════════════════════════════════════════════════════════════════════
         // 🔥 EXPLOSIVE "HEAR THE DIFFERENCE" A/B MODAL SYSTEM
         // World-class audio comparison experience
         // ═══════════════════════════════════════════════════════════════════════════
