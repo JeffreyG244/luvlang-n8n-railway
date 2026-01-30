@@ -2898,7 +2898,7 @@
                 <div id="toggleStatusText" style="margin-top: 8px; font-size: 0.8rem; color: #ff9a56; font-weight: 600;">▶ Playing Mastered Track</div>
             </div>
 
-            <button class="complete-btn primary export-cta" onclick="closeMasteringComplete()" style="width: 100%; padding: 14px; font-size: 1rem;">
+            <button class="complete-btn primary export-cta" onclick="goToExport()" style="width: 100%; padding: 14px; font-size: 1rem;">
                 <span class="btn-icon">⬇</span>
                 <span>Export Your Master</span>
             </button>
@@ -17319,6 +17319,182 @@
             }
 
             console.log('✅ Switched to persistent export bar');
+        };
+
+        // Go to export - shows format selection then payment
+        window.goToExport = function() {
+            console.log('📥 Going to export flow...');
+
+            // Close the mastering complete overlay
+            const masteringOverlay = document.getElementById('masteringCompleteOverlay');
+            if (masteringOverlay) masteringOverlay.style.display = 'none';
+
+            // Hide the genre selection overlay if visible (prevent loop)
+            const genreOverlay = document.getElementById('preMasteringGenreSelect');
+            if (genreOverlay) genreOverlay.style.display = 'none';
+
+            // Show export format selection overlay
+            showExportFormatOverlay();
+        };
+
+        // Export format selection overlay
+        window.showExportFormatOverlay = function() {
+            // Check if overlay exists, if not create it
+            let overlay = document.getElementById('exportFormatOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'exportFormatOverlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.9);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 60000;
+                    backdrop-filter: blur(10px);
+                `;
+                overlay.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 20px; padding: 30px; max-width: 500px; width: 90%; border: 1px solid rgba(0, 212, 255, 0.3); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+                        <h2 style="text-align: center; margin-bottom: 8px; font-size: 1.4rem;">📥 Export Your Master</h2>
+                        <p style="text-align: center; color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 25px;">Choose your preferred format</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                            <button class="format-option-btn" data-format="wav" onclick="selectExportFormat('wav')" style="padding: 20px; background: rgba(0, 212, 255, 0.1); border: 2px solid rgba(0, 212, 255, 0.3); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 8px;">💎</div>
+                                <div style="font-weight: 700; color: #fff; font-size: 1rem;">WAV</div>
+                                <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">48kHz / 24-bit Lossless</div>
+                                <div style="font-size: 0.75rem; color: #00d4ff; margin-top: 8px; font-weight: 600;">$4.99</div>
+                            </button>
+                            <button class="format-option-btn" data-format="mp3" onclick="selectExportFormat('mp3')" style="padding: 20px; background: rgba(0, 255, 136, 0.1); border: 2px solid rgba(0, 255, 136, 0.3); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 8px;">🎵</div>
+                                <div style="font-weight: 700; color: #fff; font-size: 1rem;">MP3</div>
+                                <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">320kbps High Quality</div>
+                                <div style="font-size: 0.75rem; color: #00ff88; margin-top: 8px; font-weight: 600;">$2.99</div>
+                            </button>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <button class="format-option-btn" data-format="both" onclick="selectExportFormat('both')" style="width: 100%; padding: 20px; background: linear-gradient(135deg, rgba(184, 79, 255, 0.15), rgba(0, 212, 255, 0.15)); border: 2px solid rgba(184, 79, 255, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                                <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
+                                <div style="font-weight: 700; color: #fff; font-size: 1rem;">BUNDLE (WAV + MP3)</div>
+                                <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">Best value - Both formats included</div>
+                                <div style="font-size: 0.75rem; color: #b84fff; margin-top: 8px; font-weight: 600;">$5.99 <span style="text-decoration: line-through; opacity: 0.5;">$7.98</span></div>
+                            </button>
+                        </div>
+
+                        <div id="selectedFormatInfo" style="text-align: center; margin-bottom: 20px; min-height: 30px; color: #00d4ff; font-size: 0.85rem;"></div>
+
+                        <button id="proceedToPaymentBtn" onclick="proceedToPayment()" disabled style="width: 100%; padding: 14px; background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; border-radius: 10px; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+                            💳 Proceed to Payment
+                        </button>
+
+                        <button onclick="closeExportFormatOverlay()" style="width: 100%; padding: 10px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 0.8rem; cursor: pointer; margin-top: 12px;">
+                            ← Back to editor
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            }
+
+            overlay.style.display = 'flex';
+            window.selectedExportFormat = null;
+
+            // Reset button states
+            document.querySelectorAll('.format-option-btn').forEach(btn => {
+                btn.style.borderColor = btn.dataset.format === 'wav' ? 'rgba(0, 212, 255, 0.3)' :
+                                        btn.dataset.format === 'mp3' ? 'rgba(0, 255, 136, 0.3)' :
+                                        'rgba(184, 79, 255, 0.4)';
+                btn.style.boxShadow = 'none';
+            });
+
+            const proceedBtn = document.getElementById('proceedToPaymentBtn');
+            if (proceedBtn) {
+                proceedBtn.disabled = true;
+                proceedBtn.style.opacity = '0.5';
+            }
+
+            document.getElementById('selectedFormatInfo').textContent = '👆 Select a format above';
+
+            console.log('📥 Export format overlay shown');
+        };
+
+        window.closeExportFormatOverlay = function() {
+            const overlay = document.getElementById('exportFormatOverlay');
+            if (overlay) overlay.style.display = 'none';
+        };
+
+        window.selectExportFormat = function(format) {
+            window.selectedExportFormat = format;
+
+            // Update button styles
+            document.querySelectorAll('.format-option-btn').forEach(btn => {
+                if (btn.dataset.format === format) {
+                    btn.style.borderColor = '#00d4ff';
+                    btn.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.4)';
+                } else {
+                    btn.style.borderColor = btn.dataset.format === 'wav' ? 'rgba(0, 212, 255, 0.3)' :
+                                            btn.dataset.format === 'mp3' ? 'rgba(0, 255, 136, 0.3)' :
+                                            'rgba(184, 79, 255, 0.4)';
+                    btn.style.boxShadow = 'none';
+                }
+            });
+
+            // Update info text
+            const infoEl = document.getElementById('selectedFormatInfo');
+            const prices = { wav: '$4.99', mp3: '$2.99', both: '$5.99' };
+            const names = { wav: 'WAV (48kHz/24-bit)', mp3: 'MP3 (320kbps)', both: 'Bundle (WAV + MP3)' };
+            if (infoEl) {
+                infoEl.innerHTML = `✓ Selected: <strong>${names[format]}</strong> - ${prices[format]}`;
+            }
+
+            // Enable proceed button
+            const proceedBtn = document.getElementById('proceedToPaymentBtn');
+            if (proceedBtn) {
+                proceedBtn.disabled = false;
+                proceedBtn.style.opacity = '1';
+            }
+
+            console.log(`📥 Selected export format: ${format}`);
+        };
+
+        window.proceedToPayment = function() {
+            if (!window.selectedExportFormat) {
+                alert('Please select a format first');
+                return;
+            }
+
+            console.log(`💳 Proceeding to payment for format: ${window.selectedExportFormat}`);
+
+            // Store selected format globally for payment system
+            window.exportFormat = window.selectedExportFormat;
+
+            // Close format overlay
+            closeExportFormatOverlay();
+
+            // Use existing Stripe payment system (downloadMaster from STRIPE_PAYMENT_INTEGRATION.js)
+            if (typeof downloadMaster === 'function') {
+                downloadMaster();
+            } else if (typeof window.downloadMaster === 'function') {
+                window.downloadMaster();
+            } else {
+                // Stripe not loaded yet - show message
+                console.warn('⚠️ Payment system loading...');
+                if (typeof showToast === 'function') {
+                    showToast('Connecting to payment system...', 'info');
+                }
+                // Retry after a moment
+                setTimeout(() => {
+                    if (typeof downloadMaster === 'function') {
+                        downloadMaster();
+                    } else {
+                        alert('Payment system is loading. Please try again.');
+                    }
+                }, 1000);
+            }
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
