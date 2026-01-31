@@ -1,0 +1,1104 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   LUXURY DARK CHROME THEME - Premium Hardware Plugin Look
+   Designed to match $10,000+ mastering hardware
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. THE CHASSIS - Brushed Aluminum with Milled Edges
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body {
+    background: #0d0d0f;
+    /* Brushed aluminum noise texture */
+    background-image:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.02) 2px,
+            rgba(255, 255, 255, 0.02) 4px
+        ),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(%23noise)" opacity="0.05"/></svg>');
+}
+
+.main-container {
+    border: 1px solid #2a2a2f; /* Milled metal edge */
+    box-shadow:
+        inset 0 1px 1px rgba(255, 255, 255, 0.05), /* Top highlight */
+        0 8px 32px rgba(0, 0, 0, 0.6); /* Depth shadow */
+}
+
+/* All major panels get the chassis treatment */
+.left-sidebar,
+.center-main,
+.right-sidebar {
+    background: #0d0d0f;
+    border: 1px solid #2a2a2f;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. THE DISPLAY SCREENS - OLED Glass with Technical Grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.eq-graph-container,
+.waveform-container,
+.meters-panel {
+    background: #0a0a0c;
+    border: 1px solid #1a1a1f;
+    border-radius: 8px;
+    padding: 15px;
+    position: relative;
+
+    /* Glass effect overlay */
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+
+    /* OLED screen depth */
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.8),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05),
+        0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Glass reflection on screens */
+.eq-graph-container::before,
+.waveform-container::before,
+.meters-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+    border-radius: 8px 8px 0 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* OLED Glow on all active meters and curves */
+.meter-value,
+.eq-graph-canvas,
+.waveform-canvas {
+    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6));
+}
+
+/* Technical oscilloscope grid pattern */
+.eq-graph-container {
+    background-image:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
+        repeating-linear-gradient(0deg, transparent, transparent 19px, #151515 19px, #151515 20px),
+        repeating-linear-gradient(90deg, transparent, transparent 19px, #151515 19px, #151515 20px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. CONTROLS & SLIDERS - Machined Chrome with LED Reflection
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Chrome knobs/faders */
+input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+    height: 6px;
+}
+
+input[type="range"]::-webkit-slider-track {
+    background: linear-gradient(180deg, #1a1a1f 0%, #0d0d0f 100%);
+    height: 6px;
+    border-radius: 3px;
+    border: 1px solid #2a2a2f;
+    box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.6),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+
+    /* Machined chrome gradient */
+    background: radial-gradient(circle at 35% 35%, #4a4a4f 0%, #111113 100%);
+
+    border: 1px solid #555;
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.8),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+/* Active state - LED glow reflection */
+input[type="range"]:active::-webkit-slider-thumb,
+input[type="range"]:hover::-webkit-slider-thumb {
+    background: radial-gradient(circle at 35% 35%, #5a5a6f 0%, #1a1a2f 100%);
+    box-shadow:
+        0 2px 8px rgba(0, 229, 255, 0.6),
+        0 0 12px rgba(0, 229, 255, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Fader track glow when active */
+input[type="range"]:active::-webkit-slider-track {
+    box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.6),
+        0 0 8px rgba(0, 229, 255, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. HIGH-END TYPOGRAPHY - Technical Precision
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+.section-title,
+.meter-label {
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ffffff !important;
+    opacity: 1.0 !important;
+    transition: color 0.3s ease;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+/* Labels light up when module is active */
+.section-title.active,
+.meter-label.active {
+    color: #ffffff !important;
+    text-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+}
+
+.meter-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #00d4ff !important;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+    font-size: 1.1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. BUTTON INTERACTION - Mechanical Skeuomorphism
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Base button mechanics (all buttons get 3D depth) */
+.action-btn,
+.action-btn-primary,
+.action-btn-secondary,
+.selector-btn {
+    position: relative;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: all 0.1s ease;
+    transform: translateY(0);
+
+    /* All buttons get inset highlight */
+    box-shadow:
+        0 4px 0 rgba(0, 0, 0, 0.4),
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+/* ALL ACTION BUTTONS - Unified Cyan/Blue Hardware Style */
+.action-btn-primary,
+.action-btn-secondary {
+    /* Backlit lucite cyan - matches hardware theme */
+    background: linear-gradient(180deg, #1a4a5a 0%, #0d2a3a 100%);
+    border: 1px solid #2a5a6a;
+
+    /* Cyan LED depth bar */
+    box-shadow:
+        0 4px 0 #006f7b,
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.action-btn-primary:hover:not(:disabled),
+.action-btn-secondary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2a5a6a 0%, #1a4a5a 100%);
+    box-shadow:
+        0 4px 0 #007f8b,
+        0 6px 16px rgba(0, 229, 255, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.action-btn-primary:active:not(:disabled),
+.action-btn-secondary:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow:
+        0 0px 0 #006f7b,
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* SELECTOR BUTTONS - Genre/Platform (Subtle glass style) */
+.selector-btn {
+    /* Dark glass with metal edge */
+    background: linear-gradient(135deg, rgba(42, 42, 47, 0.4) 0%, rgba(13, 13, 15, 0.6) 100%);
+    border: 1px solid #2a2a2f;
+
+    /* Subtle depth (no press effect, just selection) */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+
+    transition: all 0.2s ease;
+}
+
+.selector-btn:hover {
+    border-color: #00d4ff;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 150, 200, 0.1) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.selector-btn.active {
+    border-color: #00d4ff;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 150, 200, 0.15) 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 15px rgba(0, 212, 255, 0.5);
+}
+
+/* GENERIC ACTION BUTTON (fallback) */
+.action-btn {
+    /* Backlit lucite style */
+    background: linear-gradient(180deg, #1a3a4a 0%, #0d1f2a 100%);
+    border: 1px solid #2a4a5a;
+
+    /* Mechanical depth */
+    box-shadow:
+        0 4px 0 #005f6b,
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.action-btn:hover {
+    background: linear-gradient(180deg, #2a4a5a 0%, #1a3a4a 100%);
+    box-shadow:
+        0 4px 0 #006f7b,
+        0 6px 16px rgba(0, 229, 255, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+/* Mechanical press effect */
+.action-btn:active {
+    transform: translateY(4px);
+    box-shadow:
+        0 0px 0 #005f6b,
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* A/B COMPARE BUTTON - Same cyan hardware style */
+#abCompareBtn {
+    /* Backlit lucite cyan - unified with other buttons */
+    background: linear-gradient(180deg, #1a4a5a 0%, #0d2a3a 100%) !important;
+    border: 1px solid #2a5a6a !important;
+
+    /* Cyan LED depth bar */
+    box-shadow:
+        0 4px 0 #006f7b,
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+#abCompareBtn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2a5a6a 0%, #1a4a5a 100%) !important;
+    box-shadow:
+        0 4px 0 #007f8b,
+        0 6px 16px rgba(0, 229, 255, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+#abCompareBtn:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow:
+        0 0px 0 #006f7b,
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Master buttons - Extra premium (AI AUTO MASTER, EXPORT) */
+#autoMasterBtn,
+#exportBtn {
+    background: linear-gradient(180deg, #2a4a6a 0%, #1a2a3a 100%);
+    border: 2px solid #3a5a7a;
+    font-size: 0.95rem;
+    padding: 14px 28px;
+
+    box-shadow:
+        0 6px 0 #004a5a,
+        0 8px 20px rgba(0, 0, 0, 0.7),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15),
+        0 0 0 1px rgba(0, 229, 255, 0.2);
+}
+
+#autoMasterBtn:hover,
+#exportBtn:hover {
+    box-shadow:
+        0 6px 0 #005a6a,
+        0 8px 24px rgba(0, 229, 255, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        0 0 0 2px rgba(0, 229, 255, 0.4);
+}
+
+#autoMasterBtn:active,
+#exportBtn:active {
+    transform: translateY(6px);
+    box-shadow:
+        0 0px 0 #004a5a,
+        0 2px 12px rgba(0, 0, 0, 0.9),
+        inset 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* All Utility Buttons - Same cyan hardware style (override inline styles) */
+#loadReferenceBtn,
+#applyReferenceBtn,
+#resetBtn,
+#loudnessMatchBtn,
+#savePresetBtn,
+#loadPresetBtn {
+    /* Backlit lucite cyan - unified with other buttons */
+    background: linear-gradient(180deg, #1a4a5a 0%, #0d2a3a 100%) !important;
+    border: 1px solid #2a5a6a !important;
+
+    box-shadow:
+        0 4px 0 #006f7b,
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+#loadReferenceBtn:hover:not(:disabled),
+#applyReferenceBtn:hover:not(:disabled),
+#resetBtn:hover:not(:disabled),
+#loudnessMatchBtn:hover:not(:disabled),
+#savePresetBtn:hover:not(:disabled),
+#loadPresetBtn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #2a5a6a 0%, #1a4a5a 100%) !important;
+    box-shadow:
+        0 4px 0 #007f8b,
+        0 6px 16px rgba(0, 229, 255, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+#loadReferenceBtn:active:not(:disabled),
+#applyReferenceBtn:active:not(:disabled),
+#resetBtn:active:not(:disabled),
+#loudnessMatchBtn:active:not(:disabled),
+#savePresetBtn:active:not(:disabled),
+#loadPresetBtn:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow:
+        0 0px 0 #006f7b,
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. KNURLED METAL STUDS - EQ Handles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.eq-handle,
+.eq-control-point {
+    background: radial-gradient(circle at 35% 35%, #5a5a6f 0%, #1a1a2f 100%);
+    border: 2px solid #3a3a4f;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.8),
+        0 0 12px rgba(0, 229, 255, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* LED indicator ring */
+.eq-handle::after,
+.eq-control-point::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 1px solid rgba(0, 229, 255, 0.4);
+    border-radius: 50%;
+    box-shadow:
+        0 0 8px rgba(0, 229, 255, 0.6),
+        inset 0 0 4px rgba(0, 229, 255, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. SPECULAR HIGHLIGHTS - Titanium Edges
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.control-group,
+.selector-group,
+.meter-section {
+    border: 1px solid #2a2a2f;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(42, 42, 47, 0.3) 0%, rgba(13, 13, 15, 0.5) 100%);
+
+    /* Specular edge highlight */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 1px 0 0 rgba(255, 255, 255, 0.05),
+        0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. POWER INDICATORS - LED Pilot Lights
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.power-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #00ff88 0%, #00aa55 100%);
+    box-shadow:
+        0 0 8px rgba(0, 255, 136, 0.8),
+        0 0 16px rgba(0, 255, 136, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    animation: powerPulse 2s ease-in-out infinite;
+}
+
+@keyframes powerPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 8px rgba(0, 255, 136, 0.8),
+            0 0 16px rgba(0, 255, 136, 0.4),
+            inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    }
+    50% {
+        box-shadow:
+            0 0 12px rgba(0, 255, 136, 1),
+            0 0 24px rgba(0, 255, 136, 0.6),
+            inset 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. TARGET HIT ANIMATIONS - OLED Screen Feedback
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* LUFS meter value pulse when target is hit */
+@keyframes targetPulse {
+    0%, 100% {
+        text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        text-shadow:
+            0 0 16px rgba(0, 229, 255, 1),
+            0 0 32px rgba(0, 229, 255, 0.6),
+            0 0 48px rgba(0, 229, 255, 0.3);
+        transform: scale(1.05);
+    }
+}
+
+/* OLED screen brightens when LUFS hits target (simulates backlight illuminating chassis) */
+@keyframes screenBrighten {
+    0%, 100% {
+        box-shadow:
+            inset 0 0 20px rgba(0, 0, 0, 0.8),
+            inset 0 1px 1px rgba(255, 255, 255, 0.05),
+            0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+    50% {
+        box-shadow:
+            inset 0 0 20px rgba(0, 0, 0, 0.6),
+            inset 0 1px 1px rgba(255, 255, 255, 0.1),
+            0 4px 24px rgba(0, 229, 255, 0.4),
+            0 0 40px rgba(0, 229, 255, 0.2);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. VU METER NEEDLES - Analog Movement
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.meter-bar,
+.vu-needle {
+    /* Smooth analog movement with slight overshoot */
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. LUXURY SCROLLBARS - Chrome Track
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, #1a1a1f 0%, #0d0d0f 100%);
+    border: 1px solid #2a2a2f;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+    background: radial-gradient(circle at 35% 35%, #4a4a4f 0%, #1a1a2f 100%);
+    border: 1px solid #3a3a4f;
+    border-radius: 5px;
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: radial-gradient(circle at 35% 35%, #5a5a6f 0%, #2a2a4f 100%);
+    box-shadow:
+        0 0 8px rgba(0, 229, 255, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. TIER SYSTEM - 3-Tier Commercial Hardware States
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.1 ROTARY TIER SELECTOR - Physical Rotary Switch                     │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+.tier-selector-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: linear-gradient(180deg, #1a1a1f 0%, #0d0d0f 100%);
+    border: 2px solid #2a2a2f;
+    border-radius: 16px;
+    padding: 20px 30px;
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.1),
+        0 8px 32px rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.tier-selector-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+}
+
+.tier-selector-switch {
+    display: flex;
+    gap: 4px;
+    background: #0a0a0c;
+    border: 1px solid #1a1a1f;
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.tier-option {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: rgba(255, 255, 255, 0.4);
+    position: relative;
+}
+
+.tier-option:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Basic Tier - Dimmed Grey */
+.tier-option[data-tier="basic"].active {
+    background: radial-gradient(circle at 35% 35%, #3a3a3f 0%, #1a1a1f 100%);
+    color: #888888;
+    box-shadow:
+        0 0 12px rgba(136, 136, 136, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Advanced Tier - Cyan Glow */
+.tier-option[data-tier="advanced"].active {
+    background: radial-gradient(circle at 35% 35%, #1a4a5a 0%, #0d2a3a 100%);
+    color: #00d4ff;
+    box-shadow:
+        0 0 16px rgba(0, 212, 255, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Premium Tier - Legendary Gold */
+.tier-option[data-tier="premium"].active {
+    background: radial-gradient(circle at 35% 35%, #4a3a1a 0%, #2a1a0a 100%);
+    color: #FFD700;
+    box-shadow:
+        0 0 20px rgba(255, 215, 0, 0.6),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.tier-price {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 3px;
+    display: block;
+}
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.2 MODULE HARDWARE STATES - Power Down/Cyan/Gold                     │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+/* Powered Down State - Basic Tier Locked Modules */
+.module-locked {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(0.8);
+    position: relative;
+}
+
+.module-locked::before {
+    content: '🔒';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    opacity: 0.4;
+    z-index: 10;
+}
+
+.module-locked .section-title,
+.module-locked .control-name,
+.module-locked .control-value {
+    color: #444444 !important;
+    text-shadow: none !important;
+}
+
+.module-locked input[type="range"]::-webkit-slider-thumb {
+    background: radial-gradient(circle at 35% 35%, #2a2a2f 0%, #0d0d0f 100%);
+    box-shadow: none;
+}
+
+/* Cyan Active State - Advanced Tier */
+.module-cyan .section-title {
+    color: #00d4ff !important;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+}
+
+.module-cyan .control-value,
+.module-cyan .meter-value {
+    color: #00d4ff !important;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+}
+
+.module-cyan input[type="range"]::-webkit-slider-track {
+    background: linear-gradient(to right, #0a0a0c 0%, #00d4ff 100%);
+}
+
+/* Gold Legendary State - Premium Tier */
+.module-gold .section-title {
+    color: #FFD700 !important;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+}
+
+.module-gold .control-value,
+.module-gold .meter-value {
+    color: #FFD700 !important;
+    text-shadow: 0 0 16px rgba(255, 215, 0, 1.0);
+}
+
+.module-gold input[type="range"]::-webkit-slider-track {
+    background: linear-gradient(to right, #0a0a0c 0%, #FFD700 100%);
+}
+
+.module-gold input[type="range"]::-webkit-slider-thumb {
+    background: radial-gradient(circle at 35% 35%, #FFD700 0%, #8B6914 100%);
+    box-shadow:
+        0 2px 8px rgba(255, 215, 0, 0.6),
+        inset 0 1px 3px rgba(255, 255, 255, 0.4);
+}
+
+/* Gold vacuum tube glow behind chassis */
+.tier-premium .app-container::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 140, 0, 0.03) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.3 POWER-ON FLICKER ANIMATION - Hardware Warming Up                  │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+@keyframes powerOnFlicker {
+    0% {
+        opacity: 0;
+        filter: brightness(0.3);
+    }
+    10% {
+        opacity: 0.3;
+        filter: brightness(0.5);
+    }
+    15% {
+        opacity: 0.1;
+        filter: brightness(0.2);
+    }
+    30% {
+        opacity: 0.7;
+        filter: brightness(0.9);
+    }
+    40% {
+        opacity: 0.4;
+        filter: brightness(0.6);
+    }
+    55% {
+        opacity: 0.9;
+        filter: brightness(1.1);
+    }
+    70% {
+        opacity: 0.6;
+        filter: brightness(0.8);
+    }
+    100% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+}
+
+.module-powering-on {
+    animation: powerOnFlicker 0.8s ease-out;
+}
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.4 FEATURE LOCK TOOLTIP - "Premium Hardware Required"                │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+.feature-lock-tooltip {
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid #FFD700;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: #FFD700;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10000;
+    box-shadow:
+        0 0 20px rgba(255, 215, 0, 0.4),
+        inset 0 1px 1px rgba(255, 215, 0, 0.2);
+}
+
+.feature-lock-tooltip::before {
+    content: '🔒';
+    margin-right: 8px;
+}
+
+.feature-lock-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #FFD700;
+}
+
+.module-locked:hover .feature-lock-tooltip {
+    opacity: 1;
+}
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.5 LASER-ETCHED SPEC SHEET PRICING - Technical Plate                 │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+.spec-sheet-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(180deg, #1a1a1f 0%, #0d0d0f 100%);
+    border: 2px solid #2a2a2f;
+    border-radius: 12px;
+    padding: 20px 25px;
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.1),
+        0 8px 32px rgba(0, 0, 0, 0.8);
+    z-index: 9998;
+}
+
+.spec-sheet-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(0, 255, 136, 0.7);
+    margin-bottom: 15px;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+    border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+    padding-bottom: 8px;
+}
+
+.spec-sheet-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.spec-row {
+    display: grid;
+    grid-template-columns: 80px 120px 80px;
+    align-items: center;
+    gap: 15px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.spec-row:hover {
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 12px rgba(0, 255, 136, 0.1);
+}
+
+.spec-tier {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 700;
+}
+
+.spec-features {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.65rem;
+    line-height: 1.4;
+}
+
+.spec-price {
+    color: #00ff88;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    text-align: right;
+}
+
+.spec-note {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 12px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* ┌─────────────────────────────────────────────────────────────────────────┐
+   │ 11.6 SLIDE-OUT CHECKOUT TRAY - Metal Drawer                            │
+   └─────────────────────────────────────────────────────────────────────────┘ */
+
+.checkout-tray {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 0;
+    background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+    border-top: 2px solid #2a2a2f;
+    box-shadow:
+        0 -8px 32px rgba(0, 0, 0, 0.9),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10000;
+}
+
+.checkout-tray.open {
+    height: 500px;
+}
+
+.checkout-tray-content {
+    padding: 40px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.checkout-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.checkout-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d4ff 0%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+.checkout-subtitle {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 1px;
+}
+
+.checkout-tier-info {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.checkout-tier-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #FFD700;
+    margin-bottom: 10px;
+}
+
+.checkout-tier-price {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #00ff88;
+    text-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+}
+
+.checkout-tier-features {
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.8;
+}
+
+.checkout-tier-features li {
+    margin-bottom: 5px;
+}
+
+.checkout-tier-features li::before {
+    content: '✓ ';
+    color: #00ff88;
+    font-weight: 700;
+    margin-right: 8px;
+}
+
+.stripe-form-container {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.stripe-element {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.stripe-element:hover {
+    border-color: #00d4ff;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+}
+
+.checkout-submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #00d4ff 0%, #FFD700 100%);
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000000;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 212, 255, 0.4);
+}
+
+.checkout-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.6);
+}
+
+.checkout-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.checkout-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.checkout-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #00d4ff;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+/* Dim background when checkout is open */
+.checkout-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0);
+    pointer-events: none;
+    transition: background 0.5s ease;
+    z-index: 9999;
+}
+
+.checkout-backdrop.active {
+    background: rgba(0, 0, 0, 0.7);
+    pointer-events: auto;
+}
