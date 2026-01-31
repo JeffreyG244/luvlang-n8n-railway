@@ -4892,64 +4892,9 @@
                  🎛️ UNIFIED MASTER CONTROL BAR - Vertical Layout: Master button + A/B Toggle
                  Professional, clean design - Button on top, toggle below
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div id="masterControlBar" class="master-control-bar" style="display: none; margin: 16px auto; padding: 20px 24px; background: linear-gradient(135deg, rgba(10,10,20,0.95), rgba(20,20,35,0.95)); border: 1px solid rgba(0,212,255,0.3); border-radius: 16px; flex-direction: column; align-items: center; gap: 16px; max-width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
-
-                <!-- MASTER IT NOW Button - Prominent at top -->
-                <button id="masterItNowBtn" onclick="runFullAIMaster()" style="
-                    background: linear-gradient(135deg, #00d4ff, #b84fff);
-                    border: none;
-                    padding: 14px 40px;
-                    border-radius: 30px;
-                    font-size: 1.1rem;
-                    font-weight: 800;
-                    color: #000;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                    box-shadow: 0 4px 24px rgba(0, 212, 255, 0.5);
-                    transition: all 0.3s ease;
-                    text-transform: uppercase;
-                    letter-spacing: 1.5px;
-                    width: 100%;
-                ">
-                    <span style="font-size: 1.3rem;">⚡</span>
-                    <span>Master It Now</span>
-                </button>
-
-            </div>
-
-            <style>
-                #masterItNowBtn:hover {
-                    transform: scale(1.03);
-                    box-shadow: 0 6px 36px rgba(0, 212, 255, 0.6);
-                }
-                #masterItNowBtn:active {
-                    transform: scale(0.98);
-                }
-                .master-control-bar.mastered #masterItNowBtn {
-                    background: linear-gradient(135deg, #00ff88, #00d4ff);
-                }
-                .master-control-bar.mastered #masterItNowBtn span:last-child::before {
-                    content: 'Re-';
-                }
-            </style>
-
             <script>
-            // Show master control bar when audio loads
-            function showMasterControlBar() {
-                const bar = document.getElementById('masterControlBar');
-                if (bar) {
-                    bar.style.display = 'flex';
-                }
-            }
-
-            // Enable A/B toggle after mastering completes (now just updates master button style)
+            // Enable A/B toggle after mastering completes
             function enableABToggle() {
-                const bar = document.getElementById('masterControlBar');
-                if (bar) bar.classList.add('mastered');
-
                 // Ensure floating toggle is set to mastered
                 const floatingSwitch = document.getElementById('floatingABSwitch');
                 if (floatingSwitch) floatingSwitch.checked = true;
@@ -4959,18 +4904,6 @@
                     window.showFloatingABCompare();
                 }
             }
-
-            // Hook into existing audio load event
-            window.addEventListener('load', function() {
-                // Watch for audioElement changes
-                const checkAudio = setInterval(() => {
-                    const audioEl = document.getElementById('audioElement');
-                    if (audioEl && audioEl.src && audioEl.duration > 0) {
-                        showMasterControlBar();
-                        clearInterval(checkAudio);
-                    }
-                }, 500);
-            });
             </script>
 
             <!-- EXTENDED TRANSPORT CONTROLS (Professional Playback Features) -->
@@ -8959,11 +8892,7 @@
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
 
-                // Show the unified Master Control Bar
-                if (typeof showMasterControlBar === 'function') {
-                    showMasterControlBar();
-                    console.log('✅ Master Control Bar displayed');
-                }
+                // Master button is already visible from the main MASTER button in the interface
 
                 // AUTO-PLAY: Start playback automatically when file is loaded
                 setTimeout(() => {
