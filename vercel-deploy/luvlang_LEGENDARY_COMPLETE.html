@@ -4114,6 +4114,62 @@
                         <span id="genrePresetsTitle" style="color: #7cb8ff; font-weight: 600;">Hip-Hop Presets</span>
                         <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
                     </div>
+
+                    <!-- LIVE EQ VISUALIZATION - Shows preset curve in real-time -->
+                    <div id="presetEQViz" style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px 8px; margin-bottom: 12px; border: 1px solid rgba(124,184,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 60px; gap: 4px;">
+                            <div class="eq-viz-bar" data-band="sub" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizSub" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #ff6b6b, #ff9f43); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">SUB</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="bass" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizBass" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #ff9f43, #feca57); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">BASS</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="lowmid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizLowmid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #feca57, #00ff88); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">LOW</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="mid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizMid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #00ff88, #00d4ff); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">MID</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="highmid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizHighmid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #00d4ff, #7cb8ff); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">HIGH</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="high" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizHigh" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #7cb8ff, #b84fff); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">PRES</div>
+                            </div>
+                            <div class="eq-viz-bar" data-band="air" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
+                                    <div id="eqVizAir" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #b84fff, #ff6b9d); border-radius: 2px; transition: all 0.3s ease;"></div>
+                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
+                                </div>
+                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">AIR</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="genrePresetsGrid" style="display: grid; grid-template-columns: 1fr; gap: 6px;">
                         <!-- Preset buttons will be populated here -->
                     </div>
@@ -10048,6 +10104,39 @@
 
                 // Update fader position
                 updateEQFaderPosition(band, value);
+            });
+
+            // Update visual EQ bars in genre preset section
+            updateEQVisualization(eqValues);
+        }
+
+        // Update the visual EQ bar graph in the genre presets section
+        function updateEQVisualization(eqValues) {
+            const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const vizIds = ['eqVizSub', 'eqVizBass', 'eqVizLowmid', 'eqVizMid', 'eqVizHighmid', 'eqVizHigh', 'eqVizAir'];
+
+            bands.forEach((band, i) => {
+                const value = eqValues[band] || 0;
+                const vizEl = document.getElementById(vizIds[i]);
+                if (vizEl) {
+                    // Convert dB value to percentage height (±12dB range)
+                    // Positive values go up from center, negative go down
+                    const maxDB = 6; // Visual range ±6dB for better visibility
+                    const clampedValue = Math.max(-maxDB, Math.min(maxDB, value));
+                    const heightPercent = (Math.abs(clampedValue) / maxDB) * 50; // 50% = half the bar
+
+                    if (value >= 0) {
+                        // Boost - bar goes UP from center
+                        vizEl.style.bottom = '50%';
+                        vizEl.style.top = 'auto';
+                        vizEl.style.height = heightPercent + '%';
+                    } else {
+                        // Cut - bar goes DOWN from center
+                        vizEl.style.top = '50%';
+                        vizEl.style.bottom = 'auto';
+                        vizEl.style.height = heightPercent + '%';
+                    }
+                }
             });
         }
 
