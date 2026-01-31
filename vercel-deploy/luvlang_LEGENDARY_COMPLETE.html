@@ -18349,48 +18349,10 @@
             `;
             document.body.appendChild(tooltip);
 
-            // Voice prompt to guide user to pick a genre - duck music volume while speaking
+            // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
             setTimeout(() => {
-                const audio = window.audioElement;
-                const originalVolume = audio ? audio.volume : 1;
-
-                // Duck the music volume so voice can be heard
-                if (audio) {
-                    audio.volume = 0.15;
-                }
-
-                const message = "Wow, your track just went through 24 mastering processors and came out sounding incredible. I mean, I've heard a lot of music, but yours? Chef's kiss. Now pick a genre over on the left, and let's make your neighbors jealous.";
-
-                const synth = window.speechSynthesis;
-                if (synth) {
-                    synth.cancel();
-                    const utterance = new SpeechSynthesisUtterance(message);
-
-                    // Find the preferred female voice (Google UK English Female)
-                    const voices = synth.getVoices();
-                    const femaleVoice = voices.find(v => v.name.includes('Google UK English Female')) ||
-                                        voices.find(v => v.name.includes('Female') && v.lang.startsWith('en')) ||
-                                        voices.find(v => v.name.includes('Samantha')) ||
-                                        voices.find(v => v.lang.startsWith('en'));
-
-                    if (femaleVoice) utterance.voice = femaleVoice;
-                    utterance.rate = 0.95;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 1.0;
-
-                    // Restore volume when speech ends
-                    utterance.onend = () => {
-                        if (audio) {
-                            audio.volume = originalVolume;
-                        }
-                    };
-                    utterance.onerror = () => {
-                        if (audio) {
-                            audio.volume = originalVolume;
-                        }
-                    };
-
-                    synth.speak(utterance);
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Wow, your track just went through 24 mastering processors and came out sounding incredible. I mean, I've heard a lot of music, but yours? Chef's kiss. Now pick a genre over on the left, and let's make your neighbors jealous.");
                 }
             }, 500);
 
@@ -20407,48 +20369,10 @@
 
             console.log('✅ Genre overlay displayed');
 
-            // Voice prompt for genre selection - duck music volume while speaking
+            // Voice prompt for genre selection - use the global speakWithDucking function
             setTimeout(() => {
-                const audio = window.audioElement;
-                const originalVolume = audio ? audio.volume : 1;
-
-                // Duck the music volume so voice can be heard
-                if (audio) {
-                    audio.volume = 0.15;
-                }
-
-                const message = "Welcome to the Sound Profile selector. This is where you tell our Mastering Engine what style you're going for. Pick your genre, and we'll optimize the entire processing chain just for you. Don't worry, you can always come back and tweak this later. Go ahead, tap one and hear the difference!";
-
-                const synth = window.speechSynthesis;
-                if (synth) {
-                    synth.cancel(); // Cancel any ongoing speech
-                    const utterance = new SpeechSynthesisUtterance(message);
-
-                    // Find the preferred female voice (Google UK English Female)
-                    const voices = synth.getVoices();
-                    const femaleVoice = voices.find(v => v.name.includes('Google UK English Female')) ||
-                                        voices.find(v => v.name.includes('Female') && v.lang.startsWith('en')) ||
-                                        voices.find(v => v.name.includes('Samantha')) ||
-                                        voices.find(v => v.lang.startsWith('en'));
-
-                    if (femaleVoice) utterance.voice = femaleVoice;
-                    utterance.rate = 0.95;
-                    utterance.pitch = 1.0;
-                    utterance.volume = 1.0;
-
-                    // Restore volume when speech ends
-                    utterance.onend = () => {
-                        if (audio) {
-                            audio.volume = originalVolume;
-                        }
-                    };
-                    utterance.onerror = () => {
-                        if (audio) {
-                            audio.volume = originalVolume;
-                        }
-                    };
-
-                    synth.speak(utterance);
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Welcome to the Sound Profile selector. This is where you tell our Mastering Engine what style you're going for. Pick your genre, and we'll optimize the entire processing chain just for you. Don't worry, you can always come back and tweak this later. Go ahead, tap one and hear the difference!");
                 }
             }, 500);
 
@@ -21061,6 +20985,41 @@
         }
         // Make speak globally accessible
         window.speak = speak;
+
+        // Speak with audio ducking - ducks music, speaks, then restores volume
+        window.speakWithDucking = function(text) {
+            if (!voiceSynth || !text) return;
+
+            const audio = window.audioElement;
+            const originalVolume = audio ? audio.volume : 1;
+
+            // Duck the music volume so voice can be heard
+            if (audio) {
+                audio.volume = 0.15;
+            }
+
+            voiceSynth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = preferredVoice; // Use the same voice as tour
+            utterance.rate = 0.92;
+            utterance.pitch = 0.9;
+            utterance.volume = 1.0;
+
+            // Restore volume when speech ends
+            utterance.onend = () => {
+                if (audio) {
+                    audio.volume = originalVolume;
+                }
+            };
+            utterance.onerror = () => {
+                if (audio) {
+                    audio.volume = originalVolume;
+                }
+            };
+
+            voiceSynth.speak(utterance);
+        };
 
         function stopSpeaking() {
             if (voiceSynth) voiceSynth.cancel();
