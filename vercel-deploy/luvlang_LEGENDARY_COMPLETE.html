@@ -19603,25 +19603,16 @@
                 // ════════════════════════════════════════════════════════════════════════════
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // CONSERVATIVE LUFS TARGETING - Never exceed platform target
-                // Chain compensation varies by intensity (more limiting = more compensation)
-                // Safety margin ensures compliance with streaming platform specs
+                // STABLE LUFS TARGETING - Consistent loudness regardless of intensity
+                // Intensity affects CHARACTER (compression, EQ), NOT final loudness
+                // Fixed chain compensation ensures stable LUFS across all presets
                 // ════════════════════════════════════════════════════════════════════════════
-                const chainCompensationByIntensity = {
-                    1: 1.0,  // Subtle - minimal limiting
-                    2: 1.5,  // Light
-                    3: 2.0,  // Balanced
-                    4: 2.5,  // Aggressive
-                    5: 3.0   // Maximum - heavy limiting
-                };
-                const chainCompensationDB = chainCompensationByIntensity[intensity] || 2.0;
-
-                // Safety margin: aim 0.5 dB BELOW target to prevent exceeding
-                const safetyMarginDB = 0.5;
+                const chainCompensationDB = 1.5; // Fixed compensation for processing chain losses
+                const safetyMarginDB = 0.5;      // Aim slightly below target for safety
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
-                console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
-                console.log(`   Chain compensation: +${chainCompensationDB}dB | Safety: -${safetyMarginDB}dB`);
+                console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (stable across all intensities)`);
+                console.log(`   Chain compensation: +${chainCompensationDB}dB (fixed) | Safety: -${safetyMarginDB}dB`);
                 console.log(`   LUFS gain needed: ${lufsGainNeededDB >= 0 ? '+' : ''}${lufsGainNeededDB.toFixed(1)} dB`);
 
                 // ════════════════════════════════════════════════════════════════════════════
