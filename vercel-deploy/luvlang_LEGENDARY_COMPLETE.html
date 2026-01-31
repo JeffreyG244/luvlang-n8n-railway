@@ -890,6 +890,25 @@
             padding: 18px;
             margin-bottom: 15px;
             border: 1px solid rgba(0, 212, 255, 0.2);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Highlight effect when preset is applied */
+        .eq-section.preset-highlight {
+            border-color: rgba(0, 255, 136, 0.6);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 212, 255, 0.2);
+            animation: eqSectionPulse 0.8s ease-out;
+        }
+
+        @keyframes eqSectionPulse {
+            0% {
+                border-color: rgba(0, 255, 136, 0.8);
+                box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 212, 255, 0.3);
+            }
+            100% {
+                border-color: rgba(0, 255, 136, 0.6);
+                box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 212, 255, 0.2);
+            }
         }
 
         .eq-header {
@@ -4360,7 +4379,7 @@
             </div>
 
             <!-- PROFESSIONAL 7-BAND EQ -->
-            <div class="eq-section">
+            <div class="eq-section" id="eqSection">
                 <div class="eq-header">
                     <div class="section-title" style="margin-bottom: 0;">7-Band Parametric EQ</div>
                     <button class="eq-bypass-btn" id="eqBypassBtn">EQ Active</button>
@@ -10421,21 +10440,42 @@
          * Update EQ UI elements (faders and value displays)
          */
         function updateEQUI(eqValues) {
+            // Map band names to their correct element IDs (handles camelCase)
+            const bandToId = {
+                sub: 'eqSubValue',
+                bass: 'eqBassValue',
+                lowmid: 'eqLowMidValue',
+                mid: 'eqMidValue',
+                highmid: 'eqHighMidValue',
+                high: 'eqHighValue',
+                air: 'eqAirValue'
+            };
+
             const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             bands.forEach(band => {
                 const value = eqValues[band] || 0;
                 const displayValue = (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
 
-                // Update fader value display
-                const valueEl = document.getElementById(`eq${band.charAt(0).toUpperCase() + band.slice(1)}Value`);
+                // Update fader value display using correct ID mapping
+                const valueEl = document.getElementById(bandToId[band]);
                 if (valueEl) valueEl.textContent = displayValue;
 
-                // Update fader position
-                updateEQFaderPosition(band, value);
+                // Update fader position with smooth animation
+                updateEQFaderPosition(band, value, true);
             });
 
-            // Update visual EQ bars in genre preset section
+            // Update visual EQ curve in genre preset section
             updateEQVisualization(eqValues);
+
+            // Highlight the EQ section to show it's being updated
+            const eqSection = document.getElementById('eqSection');
+            if (eqSection) {
+                eqSection.classList.add('preset-highlight');
+                // Remove highlight after animation completes
+                setTimeout(() => {
+                    eqSection.classList.remove('preset-highlight');
+                }, 800);
+            }
         }
 
         // Professional EQ curve visualization - FabFilter/Ozone style
@@ -19299,7 +19339,7 @@
             // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
             setTimeout(() => {
                 if (typeof window.speakWithDucking === 'function') {
-                    window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 5 different presets tuned by pro engineers. Try a few, see what vibes with your sound.");
+                    window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 10 different presets tuned by pro engineers. Try a few and watch the EQ faders move in real-time - see what vibes with your sound.");
                 }
             }, 500);
 
