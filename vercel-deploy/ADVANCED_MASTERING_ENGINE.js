@@ -1056,15 +1056,16 @@ class AdvancedMasteringEngine {
 // GLOBAL INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-window.AdvancedMasteringEngine = AdvancedMasteringEngine;
-window.AdvancedLimiter = AdvancedLimiter;
-window.UpwardCompressor = UpwardCompressor;
-window.Unlimiter = Unlimiter;
-window.SoftClipper = SoftClipper;
-window.ABComparison = ABComparison;
-window.LoudnessHistory = LoudnessHistory;
-window.Spectrogram = Spectrogram;
-window.LinearPhaseEQ = LinearPhaseEQ;
+// Safe global exports (check if defined before assigning)
+if (typeof AdvancedMasteringEngine !== 'undefined') window.AdvancedMasteringEngine = AdvancedMasteringEngine;
+if (typeof AdvancedLimiter !== 'undefined') window.AdvancedLimiter = AdvancedLimiter;
+if (typeof UpwardCompressor !== 'undefined') window.UpwardCompressor = UpwardCompressor;
+if (typeof Unlimiter !== 'undefined') window.Unlimiter = Unlimiter;
+if (typeof SoftClipper !== 'undefined') window.SoftClipper = SoftClipper;
+if (typeof ABComparison !== 'undefined') window.ABComparison = ABComparison;
+if (typeof LoudnessHistory !== 'undefined') window.LoudnessHistory = LoudnessHistory;
+if (typeof Spectrogram !== 'undefined') window.Spectrogram = Spectrogram;
+if (typeof LinearPhaseEQ !== 'undefined') window.LinearPhaseEQ = LinearPhaseEQ;
 
 console.log('🎚️ ADVANCED_MASTERING_ENGINE.js loaded');
 console.log('   Features: IRC Limiter, Upward Compression, Unlimiter, Soft Clipper');

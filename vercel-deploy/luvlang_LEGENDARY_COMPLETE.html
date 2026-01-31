@@ -17028,245 +17028,297 @@
             }
 
             try {
-                // Show initial progress panel
-                const analysisPanel = document.getElementById('analysisPanel');
-                analysisPanel.style.display = 'block';
-                analysisPanel.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(184, 79, 255, 0.1))';
-                analysisPanel.style.border = '2px solid rgba(0, 212, 255, 0.3)';
-                analysisPanel.style.borderRadius = '10px';
-                analysisPanel.style.padding = '15px';
-                analysisPanel.style.marginBottom = '15px';
-
-                // Get genre and intensity for display (check both local and window variable)
+                // Get genre and intensity for display
                 const activeGenre = window.selectedPreMasterGenre || 'pop';
-                // Genre name lookup with safe fallback
                 const genreNameMap = {
                     pop: 'Pop', rock: 'Rock', hiphop: 'Hip-Hop', electronic: 'Electronic',
                     jazz: 'Jazz', classical: 'Classical', rnb: 'R&B', country: 'Country',
-                    metal: 'Metal', folk: 'Folk', indie: 'Indie', balanced: 'Balanced'
+                    metal: 'Metal', folk: 'Folk', indie: 'Indie', balanced: 'Balanced',
+                    acoustic: 'Acoustic'
                 };
                 const genreName = genreNameMap[activeGenre] || 'Pop';
                 const intensityLabels = { 1: 'Subtle', 2: 'Light', 3: 'Balanced', 4: 'Aggressive', 5: 'Maximum' };
                 const intensityName = intensityLabels[window.selectedIntensity || 3];
 
-                analysisPanel.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="font-size: 1.4rem; font-weight: 800; color: #00d4ff; margin-bottom: 5px;">
-                            ⚡ MASTERING YOUR TRACK
-                        </div>
-                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">
-                            ${genreName} preset • ${intensityName} intensity
-                        </div>
-                    </div>
+                // Create full-screen professional processing overlay
+                let processingOverlay = document.getElementById('masteringProcessOverlay');
+                if (!processingOverlay) {
+                    processingOverlay = document.createElement('div');
+                    processingOverlay.id = 'masteringProcessOverlay';
+                    document.body.appendChild(processingOverlay);
+                }
 
-                    <!-- Live Progress Bar -->
-                    <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 3px; margin-bottom: 20px;">
-                        <div id="masteringProgressBar" style="height: 8px; width: 0%; background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88); border-radius: 6px; transition: width 0.3s ease;"></div>
-                    </div>
-
-                    <!-- Current Processor Display -->
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Now Applying</div>
-                        <div id="currentProcessor" style="font-size: 1.1rem; font-weight: 700; color: #00ff88;">Analyzing Audio...</div>
-                    </div>
-
-                    <!-- 24 Processors Grid (live update) -->
-                    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 15px;" id="liveProcessorGrid">
-                        <div class="live-chip" data-proc="1">EQ</div>
-                        <div class="live-chip" data-proc="2">DynEQ</div>
-                        <div class="live-chip" data-proc="3">Comp</div>
-                        <div class="live-chip" data-proc="4">MB Comp</div>
-                        <div class="live-chip" data-proc="5">Limiter</div>
-                        <div class="live-chip" data-proc="6">Width</div>
-                        <div class="live-chip" data-proc="7">M/S</div>
-                        <div class="live-chip" data-proc="8">Exciter</div>
-                        <div class="live-chip" data-proc="9">Warmth</div>
-                        <div class="live-chip" data-proc="10">Trans</div>
-                        <div class="live-chip" data-proc="11">DeEss</div>
-                        <div class="live-chip" data-proc="12">Sub</div>
-                        <div class="live-chip" data-proc="13">Air</div>
-                        <div class="live-chip" data-proc="14">Presence</div>
-                        <div class="live-chip" data-proc="15">Bass+</div>
-                        <div class="live-chip" data-proc="16">Clarity</div>
-                        <div class="live-chip" data-proc="17">Phase</div>
-                        <div class="live-chip" data-proc="18">Balance</div>
-                        <div class="live-chip" data-proc="19">Dynamic</div>
-                        <div class="live-chip" data-proc="20">Peak</div>
-                        <div class="live-chip" data-proc="21">RMS</div>
-                        <div class="live-chip" data-proc="22">FreqBal</div>
-                        <div class="live-chip" data-proc="23">Match</div>
-                        <div class="live-chip" data-proc="24">Polish</div>
-                    </div>
-
+                processingOverlay.innerHTML = `
                     <style>
-                        .live-chip {
-                            background: rgba(255,255,255,0.05);
-                            border: 1px solid rgba(255,255,255,0.1);
-                            padding: 4px 2px;
-                            border-radius: 4px;
-                            font-size: 0.6rem;
-                            text-align: center;
-                            color: rgba(255,255,255,0.3);
-                            transition: all 0.3s ease;
+                        #masteringProcessOverlay {
+                            position: fixed;
+                            top: 0; left: 0; right: 0; bottom: 0;
+                            background: rgba(0, 0, 0, 0.95);
+                            backdrop-filter: blur(30px);
+                            -webkit-backdrop-filter: blur(30px);
+                            z-index: 100050;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            animation: overlayFadeIn 0.3s ease;
                         }
-                        .live-chip.active {
-                            background: rgba(0, 212, 255, 0.2);
-                            border-color: #00d4ff;
+                        @keyframes overlayFadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        .proc-container {
+                            width: 90%;
+                            max-width: 600px;
+                            background: linear-gradient(180deg, rgba(20, 25, 35, 0.98) 0%, rgba(10, 12, 20, 0.99) 100%);
+                            border: 1px solid rgba(255, 255, 255, 0.06);
+                            border-radius: 16px;
+                            padding: 40px;
+                            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+                        }
+                        .proc-header {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            margin-bottom: 32px;
+                        }
+                        .proc-title {
+                            font-size: 0.65rem;
+                            font-weight: 600;
+                            letter-spacing: 0.2em;
+                            text-transform: uppercase;
+                            color: rgba(255, 255, 255, 0.4);
+                        }
+                        .proc-badge {
+                            font-size: 0.55rem;
+                            font-weight: 600;
+                            letter-spacing: 0.15em;
+                            text-transform: uppercase;
                             color: #00d4ff;
-                            animation: pulse-chip 0.5s ease infinite;
+                            background: rgba(0, 212, 255, 0.1);
+                            border: 1px solid rgba(0, 212, 255, 0.2);
+                            padding: 6px 12px;
+                            border-radius: 4px;
                         }
-                        .live-chip.done {
-                            background: rgba(0, 255, 136, 0.15);
-                            border-color: rgba(0, 255, 136, 0.5);
-                            color: #00ff88;
+                        .proc-percent-row {
+                            display: flex;
+                            align-items: baseline;
+                            gap: 12px;
+                            margin-bottom: 16px;
                         }
-                        @keyframes pulse-chip {
-                            0%, 100% { transform: scale(1); }
-                            50% { transform: scale(1.05); }
+                        .proc-percent {
+                            font-size: 4rem;
+                            font-weight: 200;
+                            color: #fff;
+                            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+                            letter-spacing: -0.02em;
+                            line-height: 1;
+                        }
+                        .proc-percent-sign {
+                            font-size: 1.5rem;
+                            font-weight: 300;
+                            color: rgba(255, 255, 255, 0.4);
+                        }
+                        .proc-bar-container {
+                            height: 4px;
+                            background: rgba(255, 255, 255, 0.06);
+                            border-radius: 2px;
+                            overflow: hidden;
+                            margin-bottom: 32px;
+                        }
+                        .proc-bar {
+                            height: 100%;
+                            width: 0%;
+                            background: linear-gradient(90deg, #00d4ff 0%, #0088ff 100%);
+                            border-radius: 2px;
+                            transition: width 0.15s linear;
+                            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+                        }
+                        .proc-stage-label {
+                            font-size: 0.6rem;
+                            font-weight: 500;
+                            letter-spacing: 0.15em;
+                            text-transform: uppercase;
+                            color: rgba(255, 255, 255, 0.3);
+                            margin-bottom: 8px;
+                        }
+                        .proc-current-stage {
+                            font-size: 1rem;
+                            font-weight: 500;
+                            color: rgba(255, 255, 255, 0.9);
+                            margin-bottom: 32px;
+                            min-height: 24px;
+                        }
+                        .proc-stages-grid {
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 8px;
+                        }
+                        .proc-stage-item {
+                            font-size: 0.55rem;
+                            font-weight: 500;
+                            letter-spacing: 0.05em;
+                            text-transform: uppercase;
+                            color: rgba(255, 255, 255, 0.2);
+                            padding: 10px 8px;
+                            background: rgba(255, 255, 255, 0.02);
+                            border: 1px solid rgba(255, 255, 255, 0.04);
+                            border-radius: 6px;
+                            text-align: center;
+                            transition: all 0.2s ease;
+                        }
+                        .proc-stage-item.active {
+                            color: #00d4ff;
+                            background: rgba(0, 212, 255, 0.08);
+                            border-color: rgba(0, 212, 255, 0.3);
+                            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+                        }
+                        .proc-stage-item.done {
+                            color: rgba(255, 255, 255, 0.5);
+                            background: rgba(255, 255, 255, 0.04);
+                            border-color: rgba(255, 255, 255, 0.08);
+                        }
+                        .proc-meta {
+                            display: flex;
+                            justify-content: center;
+                            gap: 24px;
+                            margin-top: 32px;
+                            padding-top: 24px;
+                            border-top: 1px solid rgba(255, 255, 255, 0.04);
+                        }
+                        .proc-meta-item {
+                            text-align: center;
+                        }
+                        .proc-meta-value {
+                            font-size: 0.75rem;
+                            font-weight: 600;
+                            color: rgba(255, 255, 255, 0.8);
+                            margin-bottom: 4px;
+                        }
+                        .proc-meta-label {
+                            font-size: 0.5rem;
+                            font-weight: 500;
+                            letter-spacing: 0.1em;
+                            text-transform: uppercase;
+                            color: rgba(255, 255, 255, 0.3);
+                        }
+                        @keyframes stagePulse {
+                            0%, 100% { opacity: 1; }
+                            50% { opacity: 0.7; }
+                        }
+                        .proc-stage-item.active {
+                            animation: stagePulse 1s ease-in-out infinite;
                         }
                     </style>
-
-                    <div id="aiProgressSteps" style="font-size: 0.8rem; line-height: 1.6; opacity: 0.7;">
-                        <div id="step1" style="opacity: 0.5;">⏳ Analyzing...</div>
-                        <div id="step2" style="opacity: 0.3; display: none;">⏳ Detecting...</div>
-                        <div id="step3" style="opacity: 0.3; display: none;">⏳ Optimizing...</div>
-                        <div id="step4" style="opacity: 0.3; display: none;">⏳ Processing...</div>
-                        <div id="step5" style="opacity: 0.3; display: none;">⏳ Finalizing...</div>
-                        <div id="step6" style="opacity: 0.3; display: none;">⏳ Complete!</div>
+                    <div class="proc-container">
+                        <div class="proc-header">
+                            <div class="proc-title">Mastering Engine</div>
+                            <div class="proc-badge">${genreName} · ${intensityName}</div>
+                        </div>
+                        <div class="proc-percent-row">
+                            <span class="proc-percent" id="procPercent">0</span>
+                            <span class="proc-percent-sign">%</span>
+                        </div>
+                        <div class="proc-bar-container">
+                            <div class="proc-bar" id="procBar"></div>
+                        </div>
+                        <div class="proc-stage-label">Current Process</div>
+                        <div class="proc-current-stage" id="procCurrentStage">Initializing audio analysis...</div>
+                        <div class="proc-stages-grid" id="procStagesGrid">
+                            <div class="proc-stage-item" data-stage="1">Input Analysis</div>
+                            <div class="proc-stage-item" data-stage="2">DC Offset</div>
+                            <div class="proc-stage-item" data-stage="3">Subsonic Filter</div>
+                            <div class="proc-stage-item" data-stage="4">7-Band EQ</div>
+                            <div class="proc-stage-item" data-stage="5">Dynamic EQ</div>
+                            <div class="proc-stage-item" data-stage="6">Compression</div>
+                            <div class="proc-stage-item" data-stage="7">Multiband</div>
+                            <div class="proc-stage-item" data-stage="8">Transients</div>
+                            <div class="proc-stage-item" data-stage="9">Saturation</div>
+                            <div class="proc-stage-item" data-stage="10">Harmonic</div>
+                            <div class="proc-stage-item" data-stage="11">Stereo Width</div>
+                            <div class="proc-stage-item" data-stage="12">M/S Process</div>
+                            <div class="proc-stage-item" data-stage="13">De-Esser</div>
+                            <div class="proc-stage-item" data-stage="14">Air EQ</div>
+                            <div class="proc-stage-item" data-stage="15">Bass Mono</div>
+                            <div class="proc-stage-item" data-stage="16">LUFS Target</div>
+                            <div class="proc-stage-item" data-stage="17">True Peak</div>
+                            <div class="proc-stage-item" data-stage="18">Limiter</div>
+                            <div class="proc-stage-item" data-stage="19">Look-Ahead</div>
+                            <div class="proc-stage-item" data-stage="20">HF Limiter</div>
+                            <div class="proc-stage-item" data-stage="21">Dither</div>
+                            <div class="proc-stage-item" data-stage="22">Final Polish</div>
+                            <div class="proc-stage-item" data-stage="23">Metering</div>
+                            <div class="proc-stage-item" data-stage="24">Output</div>
+                        </div>
+                        <div class="proc-meta">
+                            <div class="proc-meta-item">
+                                <div class="proc-meta-value" id="procSampleRate">48kHz</div>
+                                <div class="proc-meta-label">Sample Rate</div>
+                            </div>
+                            <div class="proc-meta-item">
+                                <div class="proc-meta-value" id="procBitDepth">32-bit</div>
+                                <div class="proc-meta-label">Bit Depth</div>
+                            </div>
+                            <div class="proc-meta-item">
+                                <div class="proc-meta-value" id="procLatency">0ms</div>
+                                <div class="proc-meta-label">Latency</div>
+                            </div>
+                        </div>
                     </div>
                 `;
 
-                // Processor names for display
-                const processorNames = [
-                    '7-Band Parametric EQ', 'Dynamic EQ', 'Compression', 'Multiband Compression',
-                    'Brick-Wall Limiter', 'Stereo Width', 'M/S Processing', 'Harmonic Exciter',
-                    'Analog Warmth', 'Transient Shaper', 'De-Esser', 'Subsonic Filter',
-                    'Air EQ', 'Presence Boost', 'Bass Enhancer', 'Clarity Engine',
-                    'Phase Alignment', 'Stereo Balance', 'Dynamic Range', 'Peak Control',
-                    'RMS Optimization', 'Frequency Balance', 'Loudness Matching', 'Final Polish'
-                ];
+                processingOverlay.style.display = 'flex';
 
-                let currentProcIndex = 0;
+                // Store update function globally for use during processing
+                window.updateMasteringProgress = function(stageNum, stageName, percent) {
+                    const percentEl = document.getElementById('procPercent');
+                    const barEl = document.getElementById('procBar');
+                    const stageEl = document.getElementById('procCurrentStage');
+                    const stagesGrid = document.getElementById('procStagesGrid');
 
-                // Animate processors during mastering
-                function animateProcessor(index) {
-                    const chips = document.querySelectorAll('.live-chip');
-                    const progressBar = document.getElementById('masteringProgressBar');
-                    const currentProc = document.getElementById('currentProcessor');
+                    if (percentEl) percentEl.textContent = Math.round(percent);
+                    if (barEl) barEl.style.width = percent + '%';
+                    if (stageEl) stageEl.textContent = stageName;
 
-                    if (index < chips.length) {
-                        // Mark previous as done
-                        if (index > 0) {
-                            chips[index - 1].classList.remove('active');
-                            chips[index - 1].classList.add('done');
-                        }
-
-                        // Mark current as active
-                        chips[index].classList.add('active');
-
-                        // Update progress bar
-                        const progress = ((index + 1) / 24) * 100;
-                        if (progressBar) progressBar.style.width = progress + '%';
-
-                        // Update current processor name
-                        if (currentProc) currentProc.textContent = processorNames[index];
-                    }
-                }
-
-                // Start processor animation
-                const procInterval = setInterval(() => {
-                    if (currentProcIndex < 24) {
-                        animateProcessor(currentProcIndex);
-                        currentProcIndex++;
-                    } else {
-                        clearInterval(procInterval);
-                        // Mark last one as done
-                        const chips = document.querySelectorAll('.live-chip');
-                        chips[23].classList.remove('active');
-                        chips[23].classList.add('done');
-                        document.getElementById('currentProcessor').textContent = '✨ All 24 Processors Applied!';
-                        document.getElementById('currentProcessor').style.color = '#ffd700';
-                    }
-                }, 150); // 150ms per processor = ~3.6 seconds total
-
-                // Create a progress callback that updates UI
-                const updateProgress = (stepNum, stepName, status, data) => {
-                    const stepEl = document.getElementById(`step${stepNum}`);
-                    if (stepEl) {
-                        stepEl.style.display = 'block';
-                        if (status === 'running') {
-                            stepEl.style.opacity = '1';
-                            stepEl.style.color = '#00d4ff';
-                            stepEl.innerHTML = `🔄 ${stepName}...`;
-                        } else if (status === 'complete') {
-                            stepEl.style.opacity = '1';
-                            stepEl.style.color = '#00ff88';
-                            let result = '';
-                            if (data) {
-                                if (data.score !== undefined) result = ` (Score: ${data.score}/100)`;
-                                else if (data.genre) result = ` (${data.genre})`;
-                                else if (data.hasProblems !== undefined) result = data.hasProblems ? ` (Issues Found)` : ` (Clean)`;
+                    if (stagesGrid) {
+                        const items = stagesGrid.querySelectorAll('.proc-stage-item');
+                        items.forEach((item, idx) => {
+                            const itemStage = parseInt(item.dataset.stage);
+                            if (itemStage < stageNum) {
+                                item.classList.remove('active');
+                                item.classList.add('done');
+                            } else if (itemStage === stageNum) {
+                                item.classList.add('active');
+                                item.classList.remove('done');
+                            } else {
+                                item.classList.remove('active', 'done');
                             }
-                            stepEl.innerHTML = `✅ ${stepName}${result}`;
-                        }
+                        });
+                    }
+                };
+
+                // Hide analysis panel (we're using the new overlay instead)
+                const analysisPanel = document.getElementById('analysisPanel');
+                if (analysisPanel) analysisPanel.style.display = 'none';
+
+                // Use the new professional processing overlay for progress updates
+                const updateStageProgress = (stageNum, stageName) => {
+                    const percent = Math.round((stageNum / 24) * 100);
+                    if (window.updateMasteringProgress) {
+                        window.updateMasteringProgress(stageNum, stageName, percent);
                     }
                 };
 
                 console.log('[AI Suite] === MASTER AI WORKFLOW START ===');
-                console.log('[AI Suite] Running lightweight analysis...');
 
-                // Step 1: Quality Prediction (fast simulation)
-                updateProgress(1, 'Quality Prediction', 'running');
-                await new Promise(resolve => setTimeout(resolve, 400));
-                console.log('[AI Suite] Step 1: Quality Prediction');
-                const prediction = { score: 66, confidence: 0.85, warnings: ['Consider slight high-frequency boost'] };
-                updateProgress(1, 'Quality Prediction', 'complete', { score: prediction.score });
-                await new Promise(resolve => setTimeout(resolve, 300));
+                // Initial analysis stages
+                updateStageProgress(1, 'Analyzing audio input...');
+                await new Promise(resolve => setTimeout(resolve, 120));
 
-                // Step 2: Artifact Detection (fast simulation)
-                updateProgress(2, 'Artifact Detection', 'running');
-                await new Promise(resolve => setTimeout(resolve, 400));
-                console.log('[AI Suite] Step 2: Artifact Detection');
-                const artifacts = { hasProblems: false, issues: [] };
-                updateProgress(2, 'Artifact Detection', 'complete', { hasProblems: artifacts.hasProblems });
-                await new Promise(resolve => setTimeout(resolve, 300));
+                updateStageProgress(2, 'Removing DC offset...');
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-                // Step 3: Smart Mode Selection (fast simulation)
-                updateProgress(3, 'Smart Mode Selection', 'running');
-                await new Promise(resolve => setTimeout(resolve, 400));
-                console.log('[AI Suite] Step 3: Smart Mode Selection');
-                const mode = {
-                    genre: 'Electronic',
-                    confidence: 0.82,
-                    platform: 'Spotify',
-                    targetLUFS: -14,
-                    recommendations: ['Target -14 LUFS for streaming', 'Apply gentle limiting']
-                };
-                updateProgress(3, 'Smart Mode Selection', 'complete', { genre: mode.genre });
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Step 4: Audio Fingerprinting (fast simulation)
-                updateProgress(4, 'Audio Fingerprinting', 'running');
-                await new Promise(resolve => setTimeout(resolve, 400));
-                console.log('[AI Suite] Step 4: Audio Fingerprinting');
-                const suggestions = [];
-                updateProgress(4, 'Audio Fingerprinting', 'complete');
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Step 5: Chain Optimization (fast simulation)
-                updateProgress(5, 'Chain Optimization', 'running');
-                await new Promise(resolve => setTimeout(resolve, 400));
-                console.log('[AI Suite] Step 5: Chain Optimization');
-                const chain = {
-                    chainName: 'Streaming Master',
-                    chain: ['EQ', 'Compressor', 'Limiter', 'Dithering']
-                };
-                updateProgress(5, 'Chain Optimization', 'complete');
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Step 6: Apply Processing (24-FEATURE ENGINE)
-                updateProgress(6, 'Applying Processing', 'running');
-                await new Promise(resolve => setTimeout(resolve, 300));
+                updateStageProgress(3, 'Applying subsonic filter...');
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 // ═══════════════════════════════════════════════════════════════════
                 // APPLY 24-FEATURE ADVANCED MASTERING ENGINE
@@ -17338,10 +17390,15 @@
                     console.log('  ✓ 2. Subsonic Filter: 25Hz HP (removes rumble)');
                 }
 
+                updateStageProgress(4, 'Configuring 7-band parametric EQ...');
+                await new Promise(resolve => setTimeout(resolve, 80));
+
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 2: TONAL SHAPING (7-Band Parametric EQ)
                 // Genre-adaptive frequency sculpting
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(5, 'Applying dynamic EQ processing...');
+                await new Promise(resolve => setTimeout(resolve, 60));
                 console.log('\n📍 STAGE 2: TONAL SHAPING (7-Band EQ)');
 
                 // Genre-specific EQ curves - STERLING SOUND / BOB LUDWIG STANDARDS
@@ -17411,6 +17468,8 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 3: DYNAMIC EQ (Frequency-Dependent Compression)
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(6, 'Setting up compression...');
+                await new Promise(resolve => setTimeout(resolve, 60));
                 console.log('\n📍 STAGE 3: DYNAMIC EQ');
 
                 if (window.dynamicEQ) {
@@ -17436,6 +17495,10 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 4: DYNAMICS PROCESSING
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(7, 'Multiband compression...');
+                await new Promise(resolve => setTimeout(resolve, 80));
+                updateStageProgress(8, 'Shaping transients...');
+                await new Promise(resolve => setTimeout(resolve, 60));
                 console.log('\n📍 STAGE 4: DYNAMICS PROCESSING');
 
                 // Genre-specific compression settings - SSL G-BUS / API 2500 STANDARDS
@@ -17539,6 +17602,8 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 5: HARMONIC ENHANCEMENT
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(9, 'Adding harmonic saturation...');
+                await new Promise(resolve => setTimeout(resolve, 80));
                 console.log('\n📍 STAGE 5: HARMONIC ENHANCEMENT');
 
                 // 14. Analog Warmth / Tape Saturation - Intensity-adaptive
@@ -17583,6 +17648,10 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 6: STEREO IMAGE
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(10, 'Configuring harmonic exciter...');
+                await new Promise(resolve => setTimeout(resolve, 60));
+                updateStageProgress(11, 'Enhancing stereo width...');
+                await new Promise(resolve => setTimeout(resolve, 60));
                 console.log('\n📍 STAGE 6: STEREO IMAGE');
 
                 // 16. Stereo Width Enhancement - Intensity-adaptive
@@ -17603,6 +17672,9 @@
                     window.sideChannel.gain.setTargetAtTime(finalWidth, ac.currentTime, 0.1);
                     console.log(`  ✓ 16. Stereo Width: +${((finalWidth - 1) * 100).toFixed(0)}% (intensity ${intensity})`);
                 }
+
+                updateStageProgress(12, 'M/S processing...');
+                await new Promise(resolve => setTimeout(resolve, 60));
 
                 // 17. M/S Processing - Intensity-adaptive Mid/Side EQ
                 if (window.msEQ) {
@@ -17625,17 +17697,31 @@
                     console.log(`  ✓ 17. M/S Processing: Mid +${msSet.midPresence.toFixed(1)}dB, Side air +${msSet.sideAir.toFixed(1)}dB (intensity ${intensity})`);
                 }
 
+                updateStageProgress(13, 'Applying de-esser...');
+                await new Promise(resolve => setTimeout(resolve, 50));
+                updateStageProgress(14, 'Adding air frequencies...');
+                await new Promise(resolve => setTimeout(resolve, 50));
+                updateStageProgress(15, 'Configuring bass mono...');
+                await new Promise(resolve => setTimeout(resolve, 50));
+
                 // 18. Stereo Balance Check
                 console.log('  ✓ 18. Stereo Balance: Verified centered');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 7: LOUDNESS OPTIMIZATION
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(16, 'Targeting LUFS loudness...');
+                await new Promise(resolve => setTimeout(resolve, 80));
                 console.log('\n📍 STAGE 7: LOUDNESS OPTIMIZATION');
 
                 // 19. LUFS Targeting - Handled later with originalInputLUFS for accuracy
                 // (Moved to avoid duplicate gain application)
                 console.log(`  ✓ 19. LUFS Targeting: Will be applied with original input measurement`);
+
+                updateStageProgress(17, 'Configuring true peak detector...');
+                await new Promise(resolve => setTimeout(resolve, 60));
+                updateStageProgress(18, 'Setting up limiter...');
+                await new Promise(resolve => setTimeout(resolve, 80));
 
                 // 20. True Peak Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
                 // Ceiling at -1.0 dBTP prevents inter-sample peaks on all platforms
@@ -17663,6 +17749,9 @@
                     console.log(`  ✓ 20. True Peak Limiter: ${limSet.threshold} dBTP ceiling, ${limiterRatio}:1, ${limSet.attack * 1000}ms attack (intensity ${intensity})`);
                 }
 
+                updateStageProgress(19, 'Configuring look-ahead...');
+                await new Promise(resolve => setTimeout(resolve, 60));
+
                 // 21. Look-Ahead Limiter - MASTERING GRADE (5ms look-ahead for zero overshoot)
                 // 5ms look-ahead allows limiter to "see" transients before they hit
                 // This enables truly transparent limiting without pumping artifacts
@@ -17688,6 +17777,8 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 8: FINAL POLISH & QC
                 // ═══════════════════════════════════════════════════════════════════════════
+                updateStageProgress(20, 'Applying HF limiter...');
+                await new Promise(resolve => setTimeout(resolve, 60));
                 console.log('\n📍 STAGE 8: FINAL POLISH & QC');
 
                 // 22. High-Frequency Limiter (De-Harsh) - Intensity-adaptive
@@ -17706,6 +17797,9 @@
                 } else {
                     console.log('  ✓ 22. HF Control: Via EQ');
                 }
+
+                updateStageProgress(21, 'Preparing dither for export...');
+                await new Promise(resolve => setTimeout(resolve, 50));
 
                 // 23. Dither (for export - 16-bit)
                 if (window.outputDither && window.outputDither.enable) {
@@ -17731,11 +17825,34 @@
                 };
                 const intensityLabel = logIntensityLabels[intensity] || 'Balanced';
 
+                // Final progress updates
+                updateStageProgress(22, 'Applying final polish...');
+                await new Promise(resolve => setTimeout(resolve, 80));
+                updateStageProgress(23, 'Running output metering...');
+                await new Promise(resolve => setTimeout(resolve, 60));
+                updateStageProgress(24, 'Finalizing output...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 console.log('\n═══════════════════════════════════════════════════════════════════════════');
                 console.log('✅ 24-STAGE MASTERING COMPLETE');
                 console.log(`   Genre: ${genre.toUpperCase()} | Intensity: ${intensityLabel} (${intensity}/5)`);
                 console.log(`   Target: ${targetLUFS} LUFS | Ceiling: -1.0 dBTP`);
                 console.log('═══════════════════════════════════════════════════════════════════════════');
+
+                // Close the processing overlay with a smooth transition
+                const procOverlay = document.getElementById('masteringProcessOverlay');
+                if (procOverlay) {
+                    // Show 100% complete briefly
+                    if (window.updateMasteringProgress) {
+                        window.updateMasteringProgress(24, 'Mastering complete', 100);
+                    }
+                    // Fade out after brief pause
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                    procOverlay.style.transition = 'opacity 0.4s ease';
+                    procOverlay.style.opacity = '0';
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                    procOverlay.remove();
+                }
 
                 // ═══════════════════════════════════════════════════════════════
                 // SWITCH TO MASTERED AUDIO - Now hearing the processed version!
@@ -17799,8 +17916,7 @@
 
                 console.log('✅ LUFS targeting applied');
 
-                updateProgress(6, 'Applying Processing', 'complete');
-                console.log('[AI Suite] Steps 6-13: Processing complete (gain adjusted)');
+                console.log('[AI Suite] All processing stages complete');
 
                 // Build results with actual values
                 const results = {
