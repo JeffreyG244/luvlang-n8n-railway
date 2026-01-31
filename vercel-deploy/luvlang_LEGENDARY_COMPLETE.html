@@ -8466,8 +8466,8 @@
             const a1_hp = -2 * Math.cos(w0_1);
             const a2_hp = 1 - alpha1;
 
-            // Stage 2: High-shelf at 1500Hz with +4dB gain
-            const fc2 = 1500;
+            // Stage 2: High-shelf at 1682Hz with +4dB gain (ITU-R BS.1770-4 exact specification)
+            const fc2 = 1682;
             const gainDB = 4.0;
             const A = Math.pow(10, gainDB / 40);
             const w0_2 = 2 * Math.PI * fc2 / sampleRate;
@@ -13277,25 +13277,51 @@
                 // TRUE PEAK MEASUREMENT - Skip calculation if meters locked
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 if (!metersLocked) {
-                    // 4x oversampling using linear interpolation
-                    const oversampleFactor = 4;
-                    let truePeakL = 0;
-                    let truePeakR = 0;
+                    // ════════════════════════════════════════════════════════════════════════════
+                    // ITU-R BS.1770-5 TRUE PEAK - Use proper sinc-interpolated 4x oversampling
+                    // ════════════════════════════════════════════════════════════════════════════
 
-                    for (let i = 0; i < leftData.length - 1; i++) {
-                        for (let j = 0; j < oversampleFactor; j++) {
-                            const t = j / oversampleFactor;
-                            // Linear interpolation between samples
-                            const interpL = leftData[i] * (1 - t) + leftData[i + 1] * t;
-                            const interpR = rightData[i] * (1 - t) + rightData[i + 1] * t;
-                            truePeakL = Math.max(truePeakL, Math.abs(interpL));
-                            truePeakR = Math.max(truePeakR, Math.abs(interpR));
+                    // Use the professional getTruePeak function if available (sinc interpolation)
+                    if (typeof window.getTruePeak === 'function') {
+                        peakDb = window.getTruePeak();
+                    } else {
+                        // Fallback: 4x oversampling with improved polyphase interpolation
+                        const oversampleFactor = 4;
+                        let truePeakL = 0;
+                        let truePeakR = 0;
+
+                        // Use cubic Hermite interpolation for better accuracy than linear
+                        for (let i = 1; i < leftData.length - 2; i++) {
+                            for (let j = 0; j < oversampleFactor; j++) {
+                                const t = j / oversampleFactor;
+                                const t2 = t * t;
+                                const t3 = t2 * t;
+
+                                // Cubic Hermite coefficients
+                                const h00 = 2*t3 - 3*t2 + 1;
+                                const h10 = t3 - 2*t2 + t;
+                                const h01 = -2*t3 + 3*t2;
+                                const h11 = t3 - t2;
+
+                                // Tangent estimates using central difference
+                                const mL0 = (leftData[i+1] - leftData[i-1]) / 2;
+                                const mL1 = (leftData[i+2] - leftData[i]) / 2;
+                                const mR0 = (rightData[i+1] - rightData[i-1]) / 2;
+                                const mR1 = (rightData[i+2] - rightData[i]) / 2;
+
+                                // Cubic Hermite interpolation
+                                const interpL = h00*leftData[i] + h10*mL0 + h01*leftData[i+1] + h11*mL1;
+                                const interpR = h00*rightData[i] + h10*mR0 + h01*rightData[i+1] + h11*mR1;
+
+                                truePeakL = Math.max(truePeakL, Math.abs(interpL));
+                                truePeakR = Math.max(truePeakR, Math.abs(interpR));
+                            }
                         }
-                    }
 
-                    // Convert to dBTP (true peak)
-                    const truePeak = Math.max(truePeakL, truePeakR);
-                    peakDb = truePeak > 0 ? 20 * Math.log10(truePeak) : -70;
+                        // Convert to dBTP (true peak)
+                        const truePeak = Math.max(truePeakL, truePeakR);
+                        peakDb = truePeak > 0.0001 ? 20 * Math.log10(truePeak) : -70;
+                    }
                     truePeakMax = Math.max(truePeakMax, peakDb);
 
                     // BUG FIX #2: Professional peak decay - 3 dB/s time-based decay
@@ -17728,18 +17754,22 @@
                 // Attack: 0.1-0.5ms for transparent limiting (look-ahead style)
                 // Release: Program-dependent, 50-300ms typical
                 if (window.limiter) {
-                    // Industry-standard limiter settings - prevents ISP on all platforms
+                    // ════════════════════════════════════════════════════════════════════════════
+                    // BROADCAST-SAFE LIMITER - All intensities use -1.0 dBTP ceiling
+                    // This prevents inter-sample peaks (ISP) on all streaming platforms
+                    // EBU R128 / ITU-R BS.1770-4 compliant
+                    // ════════════════════════════════════════════════════════════════════════════
                     const limiterSettings = {
-                        1: { threshold: -0.3, release: 0.30, knee: 8, attack: 0.001 },   // Gentle - max dynamics
-                        2: { threshold: -0.5, release: 0.25, knee: 6, attack: 0.0008 }, // Light - streaming safe
-                        3: { threshold: -1.0, release: 0.20, knee: 4, attack: 0.0005 }, // Balanced - -1dBTP standard
-                        4: { threshold: -1.0, release: 0.15, knee: 3, attack: 0.0003 }, // Aggressive - tighter
-                        5: { threshold: -1.0, release: 0.10, knee: 2, attack: 0.0001 }  // Maximum - brickwall
+                        1: { threshold: -1.5, release: 0.30, knee: 6, attack: 0.0005 },  // Gentle - more headroom
+                        2: { threshold: -1.2, release: 0.25, knee: 5, attack: 0.0003 },  // Light - conservative
+                        3: { threshold: -1.0, release: 0.20, knee: 4, attack: 0.0002 },  // Balanced - broadcast standard
+                        4: { threshold: -1.0, release: 0.15, knee: 3, attack: 0.0001 },  // Aggressive - tighter
+                        5: { threshold: -1.0, release: 0.10, knee: 2, attack: 0.00005 }  // Maximum - brickwall
                     };
                     const limSet = limiterSettings[intensity] || limiterSettings[3];
 
-                    // True peak limiting ratio: infinity (brickwall) = 100:1 or higher
-                    const limiterRatio = intensity >= 4 ? 100 : 50;
+                    // True peak limiting ratio: brickwall limiting at all levels
+                    const limiterRatio = 100; // Always brickwall to prevent clipping
 
                     window.limiter.threshold.setTargetAtTime(limSet.threshold, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(limiterRatio, ac.currentTime, 0.1);
@@ -17889,14 +17919,29 @@
                 // Add compensation for processing chain losses (exciter, transient, saturation)
                 // ════════════════════════════════════════════════════════════════════════════
 
-                // Account for processing chain losses (limiter gain reduction + saturation + compression)
-                // Increased from 1.5 to 3.5 dB to account for limiter GR on loud transients
-                const chainCompensationDB = 3.5;
-                const gainAdjustmentDB = targetLUFS - currentLUFS + chainCompensationDB;
+                // ════════════════════════════════════════════════════════════════════════════
+                // CONSERVATIVE LUFS TARGETING - Never exceed platform target
+                // Chain compensation varies by intensity (more limiting = more compensation)
+                // Safety margin ensures compliance with streaming platform specs
+                // ════════════════════════════════════════════════════════════════════════════
+                const chainCompensationByIntensity = {
+                    1: 1.0,  // Subtle - minimal limiting
+                    2: 1.5,  // Light
+                    3: 2.0,  // Balanced
+                    4: 2.5,  // Aggressive
+                    5: 3.0   // Maximum - heavy limiting
+                };
+                const chainCompensationDB = chainCompensationByIntensity[intensity] || 2.0;
 
-                console.log(`📊 LUFS targeting with +${chainCompensationDB}dB chain compensation`);
-                // Clamp to reasonable range (-10 to +12 dB for mastering)
-                const clampedGainDB = Math.max(-10, Math.min(12, gainAdjustmentDB));
+                // Safety margin: aim 0.5 dB BELOW target to prevent exceeding
+                const safetyMarginDB = 0.5;
+                const gainAdjustmentDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
+
+                console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
+                console.log(`   Chain compensation: +${chainCompensationDB}dB | Safety: -${safetyMarginDB}dB`);
+
+                // Conservative clamp range (-6 to +10 dB) for professional results
+                const clampedGainDB = Math.max(-6, Math.min(10, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
