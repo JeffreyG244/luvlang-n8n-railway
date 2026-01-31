@@ -18369,6 +18369,17 @@
             `;
             document.body.appendChild(tooltip);
 
+            // Hide the voice tour tooltip if it's still visible
+            const voiceTourTooltip = document.getElementById('voiceTourTooltip');
+            if (voiceTourTooltip) {
+                voiceTourTooltip.style.display = 'none';
+            }
+            // Also hide the spotlight
+            const voiceTourSpotlight = document.getElementById('voiceTourSpotlight');
+            if (voiceTourSpotlight) {
+                voiceTourSpotlight.style.display = 'none';
+            }
+
             // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
             setTimeout(() => {
                 if (typeof window.speakWithDucking === 'function') {
@@ -18386,6 +18397,16 @@
             const genreSection = document.getElementById('genreSection');
 
             if (tooltip) tooltip.remove();
+
+            // End the voice tour completely to hide any remaining tooltips
+            if (typeof window.endVoiceTour === 'function') {
+                window.endVoiceTour();
+            }
+            // Also directly hide voice tour elements in case endVoiceTour isn't available
+            const voiceTourTooltip = document.getElementById('voiceTourTooltip');
+            const voiceTourSpotlight = document.getElementById('voiceTourSpotlight');
+            if (voiceTourTooltip) voiceTourTooltip.style.display = 'none';
+            if (voiceTourSpotlight) voiceTourSpotlight.style.display = 'none';
 
             // Scroll page to top to show the main interface
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -21556,6 +21577,7 @@
         window.nextTourStep = nextTourStep;
         window.repeatVoiceInstruction = repeatVoiceInstruction;
         window.endTour = endVoiceTour;
+        window.endVoiceTour = endVoiceTour;
         window.toggleVoiceTour = toggleVoice;
         window.advanceTourOnAction = advanceVoiceTour;
         window.closeVoiceTourExplore = closeVoiceTourExplore;
