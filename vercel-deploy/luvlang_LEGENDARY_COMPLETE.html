@@ -14352,8 +14352,8 @@
                         // Recalculate gain based on stored input level and new target
                         const inputLUFS = window.autoLUFSInputLevel;
 
-                        // Add compensation for processing chain losses (+1.5 dB)
-                        const chainCompensation = 1.5;
+                        // Add compensation for processing chain losses (limiter GR + saturation)
+                        const chainCompensation = 3.5;
 
                         // Calculate gain with compensation
                         const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
@@ -17119,8 +17119,9 @@
                 // Add compensation for processing chain losses (exciter, transient, saturation)
                 // ════════════════════════════════════════════════════════════════════════════
 
-                // Account for processing chain losses (~1.5 dB from parallel compression + saturation)
-                const chainCompensationDB = 1.5;
+                // Account for processing chain losses (limiter gain reduction + saturation + compression)
+                // Increased from 1.5 to 3.5 dB to account for limiter GR on loud transients
+                const chainCompensationDB = 3.5;
                 const gainAdjustmentDB = targetLUFS - currentLUFS + chainCompensationDB;
 
                 console.log(`📊 LUFS targeting with +${chainCompensationDB}dB chain compensation`);
