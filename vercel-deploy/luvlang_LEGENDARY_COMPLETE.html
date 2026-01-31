@@ -18360,7 +18360,7 @@
             genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
         };
 
-        // Close genre preset guide
+        // Close genre preset guide and scroll to main interface
         window.closeGenrePresetGuide = function() {
             const tooltip = document.getElementById('genrePresetGuideTooltip');
             const genreSection = document.getElementById('genreSection');
@@ -18368,8 +18368,29 @@
             if (tooltip) tooltip.remove();
 
             if (genreSection) {
-                genreSection.style.boxShadow = 'none';
+                // Keep highlight visible for a moment so user can find it
+                setTimeout(() => {
+                    genreSection.style.boxShadow = 'none';
+                }, 3000);
+
+                // Scroll the genre section into view so user can see it
+                genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Also scroll the left sidebar to show genre buttons
+                const leftSidebar = document.querySelector('.left-sidebar');
+                if (leftSidebar) {
+                    const genreTop = genreSection.offsetTop;
+                    leftSidebar.scrollTo({ top: genreTop - 100, behavior: 'smooth' });
+                }
             }
+
+            // Scroll center panel to top so user sees the main interface
+            const centerMain = document.querySelector('.center-main');
+            if (centerMain) {
+                centerMain.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            console.log('✅ Genre preset guide closed - scrolled to main interface');
         };
 
         // Go to export - shows format selection then payment
