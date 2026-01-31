@@ -3,7 +3,17 @@
   "devCommand": null,
   "installCommand": "npm install",
   "outputDirectory": ".",
+  "toolbar": false,
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "x-vercel-skip-toolbar",
+          "value": "1"
+        }
+      ]
+    },
     {
       "source": "/(.*).js",
       "headers": [
