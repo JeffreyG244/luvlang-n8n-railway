@@ -1044,12 +1044,13 @@ class PresetManager {
 // GLOBAL EXPORTS
 // ============================================================================
 
-window.AdvancedLimiter = AdvancedLimiter;
-window.MonoBassCrossover = MonoBassCrossover;
-window.StereoImager = StereoImager;
-window.HarmonicExciter = HarmonicExciter;
-window.EnhancedEQ = EnhancedEQ;
-window.ReferenceTrackMatcher = ReferenceTrackMatcher;
-window.PresetManager = PresetManager;
+// Only export if classes exist (may have been defined elsewhere)
+if (typeof AdvancedLimiter !== 'undefined') window.AdvancedLimiter = AdvancedLimiter;
+if (typeof MonoBassCrossover !== 'undefined') window.MonoBassCrossover = MonoBassCrossover;
+if (typeof StereoImager !== 'undefined') window.StereoImager = StereoImager;
+if (typeof HarmonicExciter !== 'undefined') window.HarmonicExciter = HarmonicExciter;
+if (typeof EnhancedEQ !== 'undefined') window.EnhancedEQ = EnhancedEQ;
+if (typeof ReferenceTrackMatcher !== 'undefined') window.ReferenceTrackMatcher = ReferenceTrackMatcher;
+if (typeof PresetManager !== 'undefined') window.PresetManager = PresetManager;
 
 console.log('✅ Advanced Processing Features loaded successfully');

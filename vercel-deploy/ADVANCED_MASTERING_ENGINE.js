@@ -18,6 +18,8 @@
 // 1. MULTI-MODE IRC-STYLE LIMITER
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Only declare if not already defined
+if (typeof AdvancedLimiter === 'undefined') {
 class AdvancedLimiter {
     constructor(audioContext) {
         this.ctx = audioContext;
@@ -199,6 +201,7 @@ class AdvancedLimiter {
         return this.input;
     }
 }
+} // End AdvancedLimiter conditional
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 2. UPWARD COMPRESSION
@@ -884,6 +887,8 @@ class Spectrogram {
 // 8. LINEAR PHASE EQ
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Only declare if not already defined
+if (typeof LinearPhaseEQ === 'undefined') {
 class LinearPhaseEQ {
     constructor(audioContext) {
         this.ctx = audioContext;
@@ -953,6 +958,7 @@ class LinearPhaseEQ {
         return this.input;
     }
 }
+} // End LinearPhaseEQ conditional
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 9. MASTER ENGINE INTEGRATION
