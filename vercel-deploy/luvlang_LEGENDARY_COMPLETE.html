@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 4.0.0 | Build: 2026-01-26-v2 | EXPLOSIVE A/B MODAL + MODE TOGGLE -->
+<!-- VERSION 4.1.0 | Build: 2026-01-31 | WIZARD REMOVED - Tour-based UI only -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1844,7 +1844,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 45000; /* Above wizard, below auth modals */
+            z-index: 45000; /* Above overlays, below auth modals */
             animation: fadeIn 0.3s ease;
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -8333,7 +8333,7 @@
                 handleFile(e.target.files[0]);
             });
 
-            // Expose handleFile globally so wizard can call it directly
+            // Expose handleFile globally for external calls
             window.handleFile = handleFile;
 
             console.log('✅ File upload event listeners attached successfully');
@@ -19787,7 +19787,7 @@
             }
         };
 
-        // Hide export bar (for when wizard is shown, etc)
+        // Hide export bar
         window.hideExportBar = function() {
             const exportBar = document.getElementById('persistentExportBar');
             if (exportBar) exportBar.style.display = 'none';
