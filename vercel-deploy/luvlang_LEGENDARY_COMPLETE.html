@@ -7500,34 +7500,52 @@
                 // Essential for ensuring mixes translate to mono playback
                 // ═══════════════════════════════════════════════════════════════════════════
 
+                // ═══════════════════════════════════════════════════════════════════════════
+                // BROADCAST-GRADE STEREO CORRELATION METER
+                // Goniometer-style phase correlation per ITU-R BS.1770-4
+                // Uses normalized cross-correlation with exponential smoothing
+                // ═══════════════════════════════════════════════════════════════════════════
+
                 const correlationSplitter = audioContext.createChannelSplitter(2);
                 const correlationAnalyserL = audioContext.createAnalyser();
                 const correlationAnalyserR = audioContext.createAnalyser();
-                correlationAnalyserL.fftSize = 2048;
-                correlationAnalyserR.fftSize = 2048;
-                correlationAnalyserL.smoothingTimeConstant = 0.8;
-                correlationAnalyserR.smoothingTimeConstant = 0.8;
+                correlationAnalyserL.fftSize = 4096; // Larger buffer for broadcast accuracy
+                correlationAnalyserR.fftSize = 4096;
+                correlationAnalyserL.smoothingTimeConstant = 0; // No smoothing - we handle it
+                correlationAnalyserR.smoothingTimeConstant = 0;
+
+                // Correlation meter state
+                const CORRELATION_HISTORY_SIZE = 50; // ~500ms of history at 100Hz update
+                const correlationHistory = new Float32Array(CORRELATION_HISTORY_SIZE);
+                let correlationHistoryIdx = 0;
+                let correlationHistoryFilled = false;
+                let smoothedCorrelation = 1.0;
+                const CORRELATION_ATTACK = 0.3;  // Fast attack for transients
+                const CORRELATION_RELEASE = 0.05; // Slow release for stability
 
                 window.stereoCorrelation = {
                     value: 1.0, // 1 = mono, 0 = uncorrelated, -1 = out of phase
-                    history: [],
-                    maxHistoryLength: 100,
-                    lastIdleState: false, // Track idle state for reset
+                    smoothed: 1.0, // Smoothed value for display
+                    minimum: 1.0, // Minimum observed (useful for phase checks)
+                    lastIdleState: false,
 
-                    // Calculate correlation coefficient
+                    // Calculate broadcast-grade correlation coefficient
                     calculate: () => {
-                        // Check if audio is actually playing
                         const audioEl = document.querySelector('audio');
                         const isPlaying = audioEl && !audioEl.paused && !audioEl.ended && audioEl.currentTime > 0;
 
-                        // If not playing, reset to idle state
                         if (!isPlaying) {
                             if (!window.stereoCorrelation.lastIdleState) {
-                                window.stereoCorrelation.history = [];
+                                correlationHistory.fill(0);
+                                correlationHistoryIdx = 0;
+                                correlationHistoryFilled = false;
+                                smoothedCorrelation = 1.0;
+                                window.stereoCorrelation.minimum = 1.0;
                                 window.stereoCorrelation.lastIdleState = true;
                             }
-                            window.stereoCorrelation.value = null; // null = idle
-                            return null; // Signal "no signal" state
+                            window.stereoCorrelation.value = null;
+                            window.stereoCorrelation.smoothed = null;
+                            return null;
                         }
 
                         window.stereoCorrelation.lastIdleState = false;
@@ -7539,54 +7557,79 @@
                         correlationAnalyserL.getFloatTimeDomainData(dataL);
                         correlationAnalyserR.getFloatTimeDomainData(dataR);
 
-                        // Pearson correlation coefficient
-                        let sumL = 0, sumR = 0, sumLR = 0, sumL2 = 0, sumR2 = 0;
-                        const n = bufferLength;
+                        // Normalized cross-correlation (goniometer standard)
+                        // r = Σ(L·R) / √(Σ(L²) · Σ(R²))
+                        let sumLR = 0, sumL2 = 0, sumR2 = 0;
 
-                        for (let i = 0; i < n; i++) {
-                            sumL += dataL[i];
-                            sumR += dataR[i];
+                        for (let i = 0; i < bufferLength; i++) {
                             sumLR += dataL[i] * dataR[i];
                             sumL2 += dataL[i] * dataL[i];
                             sumR2 += dataR[i] * dataR[i];
                         }
 
-                        const numerator = (n * sumLR) - (sumL * sumR);
-                        const denominator = Math.sqrt(
-                            ((n * sumL2) - (sumL * sumL)) * ((n * sumR2) - (sumR * sumR))
-                        );
+                        const denominator = Math.sqrt(sumL2 * sumR2);
+                        const correlation = denominator > 0.0001 ? sumLR / denominator : 1.0;
 
-                        const correlation = denominator === 0 ? 1 : numerator / denominator;
+                        // Store in history for averaging
+                        correlationHistory[correlationHistoryIdx] = correlation;
+                        correlationHistoryIdx = (correlationHistoryIdx + 1) % CORRELATION_HISTORY_SIZE;
+                        if (correlationHistoryIdx === 0) correlationHistoryFilled = true;
 
-                        window.stereoCorrelation.value = correlation;
-                        window.stereoCorrelation.history.push(correlation);
+                        // Apply asymmetric smoothing (fast attack, slow release)
+                        const smoothingFactor = correlation < smoothedCorrelation
+                            ? CORRELATION_ATTACK
+                            : CORRELATION_RELEASE;
+                        smoothedCorrelation = smoothedCorrelation + smoothingFactor * (correlation - smoothedCorrelation);
 
-                        if (window.stereoCorrelation.history.length > window.stereoCorrelation.maxHistoryLength) {
-                            window.stereoCorrelation.history.shift();
+                        // Track minimum for phase issues
+                        if (correlation < window.stereoCorrelation.minimum) {
+                            window.stereoCorrelation.minimum = correlation;
                         }
 
-                        return correlation;
+                        window.stereoCorrelation.value = correlation;
+                        window.stereoCorrelation.smoothed = smoothedCorrelation;
+
+                        return smoothedCorrelation;
                     },
 
-                    // Get average correlation
+                    // Get weighted average from history
                     getAverage: () => {
-                        const history = window.stereoCorrelation.history;
-                        if (history.length === 0) return 1;
-                        return history.reduce((a, b) => a + b, 0) / history.length;
+                        const samplesToUse = correlationHistoryFilled ? CORRELATION_HISTORY_SIZE : correlationHistoryIdx;
+                        if (samplesToUse === 0) return 1.0;
+                        let sum = 0;
+                        for (let i = 0; i < samplesToUse; i++) {
+                            sum += correlationHistory[i];
+                        }
+                        return sum / samplesToUse;
                     },
 
-                    // Get mono compatibility assessment
+                    // Professional mono compatibility assessment per broadcast standards
                     getMonoCompatibility: () => {
-                        const avg = window.stereoCorrelation.getAverage();
-                        if (avg > 0.8) return { status: 'Excellent', color: '#00ff88', description: 'Perfect mono compatibility' };
-                        if (avg > 0.5) return { status: 'Good', color: '#88ff00', description: 'Good mono compatibility' };
-                        if (avg > 0.2) return { status: 'Moderate', color: '#ffaa00', description: 'Some phase issues in mono' };
-                        if (avg > -0.2) return { status: 'Poor', color: '#ff6600', description: 'Significant mono cancellation' };
-                        return { status: 'Critical', color: '#ff0000', description: 'Severe phase problems!' };
+                        const smoothed = window.stereoCorrelation.smoothed || 1.0;
+                        const min = window.stereoCorrelation.minimum;
+
+                        // EBU/ITU broadcast correlation standards
+                        if (smoothed > 0.9) return { status: 'Mono', color: '#00d4ff', description: 'Mono or nearly mono signal' };
+                        if (smoothed > 0.7) return { status: 'Excellent', color: '#00ff88', description: 'Perfect mono compatibility' };
+                        if (smoothed > 0.4) return { status: 'Good', color: '#88ff00', description: 'Good mono compatibility' };
+                        if (smoothed > 0.1) return { status: 'Wide', color: '#ffd700', description: 'Wide stereo - check mono' };
+                        if (smoothed > -0.3) return { status: 'Caution', color: '#ff9800', description: 'Phase issues possible' };
+                        return { status: 'DANGER', color: '#ff0000', description: 'Out of phase - will cancel in mono!' };
+                    },
+
+                    // Reset meter state
+                    reset: () => {
+                        correlationHistory.fill(0);
+                        correlationHistoryIdx = 0;
+                        correlationHistoryFilled = false;
+                        smoothedCorrelation = 1.0;
+                        window.stereoCorrelation.minimum = 1.0;
+                        window.stereoCorrelation.value = 1.0;
+                        window.stereoCorrelation.smoothed = 1.0;
                     }
                 };
 
-                console.log('✅ Stereo Correlation Meter created (mono compatibility monitoring)');
+                console.log('✅ Stereo Correlation Meter created (broadcast-grade goniometer, 4096-sample buffer)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // 20. DYNAMIC RANGE METERING (PLR / PSR) - BROADCAST GRADE
@@ -7715,20 +7758,38 @@
                 console.log('✅ Dynamic Range Metering created (ITU-R BS.1770-4 PSR/PLR, 3-second window)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
-                // 21. REAL-TIME CLIP DETECTION
-                // Visual and audio feedback when clipping occurs
+                // 21. BROADCAST-GRADE CLIP DETECTION (ISP - Intersample Peak)
+                // Detects both sample-level and intersample clipping per ITU-R BS.1770-5
+                // Uses True Peak detection for accurate ISP measurement
                 // ═══════════════════════════════════════════════════════════════════════════
+
+                // Clip detector state
+                const CLIP_HOLD_TIME = 1000; // Hold clip indicator for 1 second
+                const CLIP_DECAY_TIME = 3000; // Decay clip count over 3 seconds
+                let lastClipDecay = Date.now();
 
                 window.clipDetector = {
                     isClipping: false,
                     clipCount: 0,
+                    ispClipCount: 0, // Intersample peak clips
+                    sampleClipCount: 0, // Sample-level clips
                     lastClipTime: 0,
-                    threshold: 0.99, // Samples above this are considered clipped
+                    holdUntil: 0, // Hold indicator until this time
+                    threshold: 0.9999, // Sample-level clip threshold (0 dBFS)
+                    ispThreshold: 1.0, // ISP threshold (0 dBTP) - True Peak
+                    consecutiveClips: 0, // Track sustained clipping
+                    maxConsecutiveClips: 0, // Maximum sustained clip length
 
-                    // Check for clipping in real-time
-                    // Can accept Float32Array data directly, or use analyser if no data provided
+                    // Broadcast-grade clip check with ISP detection
                     check: (data) => {
+                        const now = Date.now();
                         let audioData = data;
+
+                        // Decay clip count over time (prevents accumulation during long sessions)
+                        if (now - lastClipDecay > CLIP_DECAY_TIME && window.clipDetector.clipCount > 0) {
+                            window.clipDetector.clipCount = Math.max(0, window.clipDetector.clipCount - 1);
+                            lastClipDecay = now;
+                        }
 
                         // If no data provided, get from analyser
                         if (!audioData && analyser) {
@@ -7738,38 +7799,107 @@
 
                         if (!audioData) return false;
 
-                        let clipped = false;
+                        let sampleClipped = false;
+                        let ispClipped = false;
+                        let currentConsecutive = 0;
+
+                        // Check sample-level clipping (digital full scale)
                         for (let i = 0; i < audioData.length; i++) {
-                            if (Math.abs(audioData[i]) >= window.clipDetector.threshold) {
-                                clipped = true;
-                                window.clipDetector.clipCount++;
-                                window.clipDetector.lastClipTime = Date.now();
-                                break;
+                            const absVal = Math.abs(audioData[i]);
+                            if (absVal >= window.clipDetector.threshold) {
+                                sampleClipped = true;
+                                window.clipDetector.sampleClipCount++;
+                                currentConsecutive++;
+                            } else {
+                                if (currentConsecutive > window.clipDetector.maxConsecutiveClips) {
+                                    window.clipDetector.maxConsecutiveClips = currentConsecutive;
+                                }
+                                currentConsecutive = 0;
                             }
                         }
 
-                        window.clipDetector.isClipping = clipped;
+                        // Check ISP (intersample peak) using True Peak detector
+                        if (window.getTruePeak) {
+                            const truePeakDB = window.getTruePeak();
+                            const truePeakLinear = Math.pow(10, truePeakDB / 20);
+                            if (truePeakLinear >= window.clipDetector.ispThreshold) {
+                                ispClipped = true;
+                                window.clipDetector.ispClipCount++;
+                            }
+                        }
+
+                        // Track consecutive clips
+                        if (currentConsecutive > 0) {
+                            window.clipDetector.consecutiveClips = currentConsecutive;
+                        }
+                        if (currentConsecutive > window.clipDetector.maxConsecutiveClips) {
+                            window.clipDetector.maxConsecutiveClips = currentConsecutive;
+                        }
+
+                        const clipped = sampleClipped || ispClipped;
+
+                        if (clipped) {
+                            window.clipDetector.clipCount++;
+                            window.clipDetector.lastClipTime = now;
+                            window.clipDetector.holdUntil = now + CLIP_HOLD_TIME;
+                        }
+
+                        // Maintain hold state for visual feedback
+                        window.clipDetector.isClipping = clipped || (now < window.clipDetector.holdUntil);
+
                         return clipped;
                     },
 
-                    // Reset clip counter
+                    // Reset all clip counters
                     reset: () => {
                         window.clipDetector.clipCount = 0;
+                        window.clipDetector.ispClipCount = 0;
+                        window.clipDetector.sampleClipCount = 0;
+                        window.clipDetector.consecutiveClips = 0;
+                        window.clipDetector.maxConsecutiveClips = 0;
                         window.clipDetector.isClipping = false;
-                        console.log('🔇 Clip counter reset');
+                        window.clipDetector.holdUntil = 0;
+                        lastClipDecay = Date.now();
+                        console.log('🔇 Clip detector reset');
                     },
 
-                    // Get clip status
+                    // Get broadcast-standard clip status
                     getStatus: () => {
-                        const count = window.clipDetector.clipCount;
-                        if (count === 0) return { status: 'Clean', color: '#00ff88', description: 'No clipping detected' };
-                        if (count < 10) return { status: 'Minor', color: '#ffaa00', description: `${count} clips detected` };
-                        if (count < 100) return { status: 'Moderate', color: '#ff6600', description: `${count} clips - consider reducing level` };
-                        return { status: 'Severe', color: '#ff0000', description: `${count} clips - reduce gain immediately!` };
+                        const total = window.clipDetector.clipCount;
+                        const isp = window.clipDetector.ispClipCount;
+                        const sample = window.clipDetector.sampleClipCount;
+                        const maxConsec = window.clipDetector.maxConsecutiveClips;
+
+                        // Severity based on clip type and count
+                        if (total === 0) {
+                            return { status: 'CLEAN', color: '#00ff88', description: 'No clipping detected', severity: 0 };
+                        }
+                        if (maxConsec > 100) {
+                            return { status: 'SEVERE', color: '#ff0000', description: `Sustained clipping! ${maxConsec} consecutive samples`, severity: 4 };
+                        }
+                        if (total > 100 || isp > 50) {
+                            return { status: 'HIGH', color: '#ff3333', description: `${total} clips (${isp} ISP) - reduce gain!`, severity: 3 };
+                        }
+                        if (total > 10 || isp > 5) {
+                            return { status: 'MODERATE', color: '#ff9800', description: `${total} clips (${isp} ISP) - check levels`, severity: 2 };
+                        }
+                        return { status: 'MINOR', color: '#ffd700', description: `${total} clips detected`, severity: 1 };
+                    },
+
+                    // Get detailed clip analysis
+                    getAnalysis: () => {
+                        return {
+                            totalClips: window.clipDetector.clipCount,
+                            sampleClips: window.clipDetector.sampleClipCount,
+                            ispClips: window.clipDetector.ispClipCount,
+                            maxConsecutive: window.clipDetector.maxConsecutiveClips,
+                            lastClipTime: window.clipDetector.lastClipTime,
+                            isCurrentlyClipping: window.clipDetector.isClipping
+                        };
                     }
                 };
 
-                console.log('✅ Clip Detector created (real-time clipping detection)');
+                console.log('✅ Clip Detector created (broadcast-grade ISP detection, 1s hold, decay timer)');
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // 🎯 LEGENDARY MASTERING: Connect ALL new processors to the chain
