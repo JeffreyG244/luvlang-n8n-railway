@@ -20503,6 +20503,18 @@
                 genreOverlay.style.display = 'none';
             }
 
+            // IMPORTANT: Hide the voice tour completely when mastering starts
+            const voiceTourTooltip = document.getElementById('voiceTourTooltip');
+            const voiceTourSpotlight = document.getElementById('voiceTourSpotlight');
+            const voiceTourOverlay = document.getElementById('voiceTourOverlay');
+            if (voiceTourTooltip) voiceTourTooltip.style.display = 'none';
+            if (voiceTourSpotlight) voiceTourSpotlight.style.display = 'none';
+            if (voiceTourOverlay) voiceTourOverlay.style.display = 'none';
+            // End the voice tour
+            if (typeof window.endVoiceTour === 'function') {
+                window.endVoiceTour();
+            }
+
             // Set mastering in progress flag
             masteringInProgress = true;
 
