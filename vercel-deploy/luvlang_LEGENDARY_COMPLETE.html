@@ -1833,77 +1833,6 @@
             font-family: 'Courier New', monospace;
         }
 
-        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           MASTERING WIZARD OVERLAY
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-        .wizard-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 15, 0.98);
-            z-index: 40000; /* Above content, below auth modals */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-        }
-        .wizard-overlay.hidden { opacity: 0; pointer-events: none; }
-        .wizard-container {
-            width: 90%; max-width: 550px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 20px;
-            padding: 35px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 100px rgba(0,212,255,0.1);
-        }
-        .wizard-logo {
-            font-size: 1.8rem; font-weight: 800;
-            background: linear-gradient(135deg, #00d4ff, #b84fff);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
-        .wizard-subtitle { font-size: 0.85rem; opacity: 0.6; margin-bottom: 25px; }
-        .wizard-step { display: none; }
-        .wizard-step.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .wizard-step-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; color: #fff; }
-        .wizard-step-desc { font-size: 0.85rem; opacity: 0.7; margin-bottom: 20px; line-height: 1.5; }
-        .wizard-progress { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
-        .wizard-progress-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: all 0.3s ease; }
-        .wizard-progress-dot.active { background: #00d4ff; box-shadow: 0 0 10px rgba(0,212,255,0.5); }
-        .wizard-progress-dot.completed { background: #00ff88; }
-        .wizard-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
-        .wizard-option {
-            padding: 18px 12px;
-            background: rgba(255,255,255,0.03);
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .wizard-option:hover { border-color: rgba(0,212,255,0.5); background: rgba(0,212,255,0.05); transform: translateY(-2px); }
-        .wizard-option.selected { border-color: #00d4ff; background: rgba(0,212,255,0.1); box-shadow: 0 0 20px rgba(0,212,255,0.2); }
-        .wizard-option-icon { font-size: 1.8rem; margin-bottom: 6px; }
-        .wizard-option-label { font-weight: 600; font-size: 0.85rem; }
-        .wizard-option-desc { font-size: 0.65rem; opacity: 0.5; margin-top: 4px; }
-        .wizard-btn {
-            padding: 14px 35px; border: none; border-radius: 10px;
-            font-size: 0.95rem; font-weight: 700; cursor: pointer;
-            transition: all 0.3s ease; margin: 5px;
-        }
-        .wizard-btn-primary { background: linear-gradient(135deg, #00d4ff, #b84fff); color: #fff; }
-        .wizard-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 25px rgba(0,212,255,0.4); }
-        .wizard-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-        .wizard-btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-        .wizard-upload-zone {
-            border: 2px dashed rgba(0,212,255,0.4); border-radius: 15px;
-            padding: 35px; margin: 18px 0; cursor: pointer; transition: all 0.3s ease;
-        }
-        .wizard-upload-zone:hover { border-color: #00d4ff; background: rgba(0,212,255,0.05); }
-        .wizard-skip { display: block; margin-top: 18px; font-size: 0.75rem; opacity: 0.4; cursor: pointer; }
-        .wizard-skip:hover { opacity: 0.7; }
-
         /* ═══════════════════════════════════════════════════════════════════════════
            MASTERING COMPLETE OVERLAY
            ═══════════════════════════════════════════════════════════════════════════ */
@@ -3672,151 +3601,342 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
-         MASTERING WIZARD - Simplified 3-Step Flow
-         1. Upload (audio plays immediately)
-         2. Platform/LUFS (hear real-time difference)
-         3. Format selection → AI processes → Interface
+         INLINE GUIDED TOUR - Stays on main UI, highlights elements
+         Guides users through: Upload → Master → Genre Presets → EQ → Export
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="wizard-overlay" id="masteringWizard" style="display: none;">
-        <div class="wizard-container">
-            <div class="wizard-logo">LuvLang Mastering</div>
-            <div class="wizard-subtitle">Professional Audio Mastering</div>
 
-            <!-- UPLOAD SECTION (Before numbered steps) -->
-            <div id="wizardUploadSection">
-                <div class="wizard-upload-zone" id="wizardUploadZone" onclick="document.getElementById('wizardFileInput').click()">
-                    <div style="font-size: 2.5rem; margin-bottom: 12px;">📁</div>
-                    <div style="font-weight: 600;" id="wizardUploadText">Drop your track here or click to browse</div>
-                    <div style="font-size: 0.7rem; opacity: 0.4; margin-top: 8px;">WAV, MP3, FLAC, M4A, AAC</div>
-                </div>
-                <input type="file" id="wizardFileInput" accept="audio/*" style="display: none;">
-            </div>
+    <!-- Tour Spotlight Overlay -->
+    <div id="tourOverlay" class="tour-overlay" style="display: none;">
+        <div id="tourSpotlight" class="tour-spotlight"></div>
+    </div>
 
-            <!-- Progress dots (3 steps) -->
-            <div class="wizard-progress" id="wizardProgress" style="display: none;">
-                <div class="wizard-progress-dot active" data-step="1"></div>
-                <div class="wizard-progress-dot" data-step="2"></div>
-                <div class="wizard-progress-dot" data-step="3"></div>
-            </div>
-
-            <!-- STEP 1: LUFS/Loudness Target -->
-            <div class="wizard-step" id="wizardStep1">
-                <div class="wizard-step-title">1. Loudness Target</div>
-                <div class="wizard-step-desc">Select your target platform. Click each to <strong>hear</strong> the difference!</div>
-
-                <div class="wizard-options" id="wizardPlatformOptions">
-                    <div class="wizard-option" data-platform="streaming" onclick="selectWizardPlatform(this)">
-                        <div class="wizard-option-icon">🎧</div>
-                        <div class="wizard-option-label">Streaming</div>
-                        <div class="wizard-option-desc">Spotify, YouTube, Tidal</div>
-                        <div style="font-size: 1.2rem; color: #00d4ff; font-weight: 700; margin-top: 8px;">-14 LUFS</div>
-                    </div>
-                    <div class="wizard-option" data-platform="apple" onclick="selectWizardPlatform(this)">
-                        <div class="wizard-option-icon">🍎</div>
-                        <div class="wizard-option-label">Apple Music</div>
-                        <div class="wizard-option-desc">Apple's standard</div>
-                        <div style="font-size: 1.2rem; color: #b84fff; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
-                    </div>
-                    <div class="wizard-option" data-platform="podcast" onclick="selectWizardPlatform(this)">
-                        <div class="wizard-option-icon">🎙️</div>
-                        <div class="wizard-option-label">Podcast</div>
-                        <div class="wizard-option-desc">Voice optimized</div>
-                        <div style="font-size: 1.2rem; color: #ff6b9d; font-weight: 700; margin-top: 8px;">-16 LUFS</div>
-                    </div>
-                </div>
-                <button class="wizard-btn wizard-btn-primary" id="wizardStep1Next" disabled>Continue</button>
-                <div class="wizard-skip" onclick="closeWizard()">Skip wizard →</div>
-            </div>
-
-            <!-- STEP 2: Export Format -->
-            <div class="wizard-step" id="wizardStep2">
-                <div class="wizard-step-title">2. Export Format</div>
-                <div class="wizard-step-desc">Choose your delivery format. You can always re-export later.</div>
-                <div class="wizard-options" style="grid-template-columns: repeat(3, 1fr);">
-                    <div class="wizard-option" data-format="wav" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">💎</div>
-                        <div class="wizard-option-label">WAV</div>
-                        <div class="wizard-option-desc">Lossless • Studio quality</div>
-                    </div>
-                    <div class="wizard-option" data-format="mp3" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">🎵</div>
-                        <div class="wizard-option-label">MP3</div>
-                        <div class="wizard-option-desc">320kbps • Universal</div>
-                    </div>
-                    <div class="wizard-option" data-format="both" onclick="selectWizardFormat(this)">
-                        <div class="wizard-option-icon">📦</div>
-                        <div class="wizard-option-label">Both</div>
-                        <div class="wizard-option-desc">WAV + MP3 bundle</div>
-                    </div>
-                </div>
-                <button class="wizard-btn wizard-btn-secondary" onclick="goToWizardStep(1)">Back</button>
-                <button class="wizard-btn wizard-btn-primary" id="wizardStep2Next" disabled>Continue</button>
-            </div>
-
-            <!-- STEP 3: Master Processing - Complete 24-Feature Engine -->
-            <div class="wizard-step" id="wizardStep3">
-                <div class="wizard-step-title">3. Master Processing</div>
-                <div class="wizard-step-desc">Your track will be enhanced with our complete <strong style="color: #00d4ff;">24-feature</strong> professional mastering engine.</div>
-
-                <div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 10px; padding: 12px; margin: 12px 0; font-size: 0.65rem; line-height: 1.4; max-height: 200px; overflow-y: auto;">
-                    <div style="color: #00d4ff; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🔬 Analysis & Detection:</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 8px;">
-                        <div style="opacity: 0.8;">📊 Quality Prediction</div>
-                        <div style="opacity: 0.8;">🔍 Artifact Detection</div>
-                        <div style="opacity: 0.8;">🎯 Smart Mode Selection</div>
-                        <div style="opacity: 0.8;">🎵 Audio Fingerprinting</div>
-                        <div style="opacity: 0.8;">⚙️ Chain Optimization</div>
-                        <div style="opacity: 0.8;">📐 Phase Correction</div>
-                    </div>
-                    <div style="color: #b84fff; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🎛️ Processing & Enhancement:</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 8px;">
-                        <div style="opacity: 0.8;">🔀 Mid/Side Processing</div>
-                        <div style="opacity: 0.8;">↔️ Stereo Width</div>
-                        <div style="opacity: 0.8;">🔥 Harmonic Exciter</div>
-                        <div style="opacity: 0.8;">📊 Multiband Compression</div>
-                        <div style="opacity: 0.8;">⚡ Transient Shaper</div>
-                        <div style="opacity: 0.8;">🎚️ Dynamic EQ</div>
-                        <div style="opacity: 0.8;">🎤 De-Esser</div>
-                        <div style="opacity: 0.8;">📈 Spectral Balance</div>
-                        <div style="opacity: 0.8;">🔇 Subsonic Filter</div>
-                        <div style="opacity: 0.8;">🎨 Analog Warmth</div>
-                    </div>
-                    <div style="color: #00ff88; font-weight: 600; margin-bottom: 8px; font-size: 0.7rem;">🎯 Mastering & Output:</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3px;">
-                        <div style="opacity: 0.8;">🧠 Neural Models</div>
-                        <div style="opacity: 0.8;">📈 Adaptive Learning</div>
-                        <div style="opacity: 0.8;">🔊 Room Compensation</div>
-                        <div style="opacity: 0.8;">📏 LUFS Optimization</div>
-                        <div style="opacity: 0.8;">🛡️ True Peak Limiting</div>
-                        <div style="opacity: 0.8;">✨ Intelligent Dithering</div>
-                        <div style="opacity: 0.8;">🎼 Reference Matching</div>
-                        <div style="opacity: 0.8;">🎛️ Final Master</div>
-                    </div>
-                </div>
-
-                <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.3); border-radius: 10px; padding: 10px; margin-bottom: 15px; font-size: 0.7rem; text-align: center;">
-                    💡 After processing, fine-tune with <strong>Genre Presets</strong> and adjust <strong>EQ</strong> manually
-                </div>
-
-                <button class="wizard-btn wizard-btn-secondary" onclick="goToWizardStep(2)">Back</button>
-                <button class="wizard-btn wizard-btn-primary" id="wizardStep3Next" style="background: linear-gradient(135deg, #00ff88, #00d4ff);">
-                    🎛️ Begin Mastering (24 Features)
-                </button>
-            </div>
-
-            <!-- Processing overlay (shows during mastering) -->
-            <div class="wizard-step" id="wizardStepProcessing" style="display: none;">
-                <div class="wizard-step-title">🎛️ Professional Mastering Engine</div>
-                <div class="wizard-step-desc" style="margin-bottom: 10px;">Applying 24 features to your track...</div>
-                <div id="wizardProcessingStatus" style="margin: 15px 0; font-size: 0.85rem; line-height: 1.6; min-height: 100px;">
-                    <div>🔄 Initializing mastering engine...</div>
-                </div>
-                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 15px 0;">
-                    <div id="wizardProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88); transition: width 0.2s ease;"></div>
-                </div>
-            </div>
+    <!-- Tour Tooltip -->
+    <div id="tourTooltip" class="tour-tooltip" style="display: none;">
+        <div class="tour-tooltip-arrow"></div>
+        <div class="tour-step-indicator">
+            <span id="tourCurrentStep">1</span> of <span id="tourTotalSteps">5</span>
+        </div>
+        <h3 id="tourTitle" class="tour-title">Welcome!</h3>
+        <p id="tourDescription" class="tour-description">Let's get your track mastered.</p>
+        <div class="tour-buttons">
+            <button id="tourSkipBtn" class="tour-btn tour-btn-skip" onclick="endTour()">Skip Tour</button>
+            <button id="tourNextBtn" class="tour-btn tour-btn-next" onclick="nextTourStep()">Next →</button>
         </div>
     </div>
+
+    <style>
+        /* Tour Overlay - Darkens everything except spotlight */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 99998;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.75);
+            transition: opacity 0.3s ease;
+        }
+        .tour-overlay.active {
+            pointer-events: auto;
+        }
+
+        /* Spotlight hole - reveals the target element */
+        .tour-spotlight {
+            position: absolute;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+            transition: all 0.4s ease;
+            pointer-events: none;
+        }
+
+        /* Tour Tooltip */
+        .tour-tooltip {
+            position: fixed;
+            z-index: 99999;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 16px;
+            padding: 20px 24px;
+            max-width: 340px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 212, 255, 0.2);
+            animation: tooltipAppear 0.3s ease;
+        }
+        @keyframes tooltipAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tour-tooltip-arrow {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #1a1a2e;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-right: none;
+            border-bottom: none;
+            transform: rotate(45deg);
+        }
+        .tour-tooltip-arrow.top { top: -10px; left: 30px; }
+        .tour-tooltip-arrow.bottom { bottom: -10px; left: 30px; transform: rotate(225deg); }
+        .tour-tooltip-arrow.left { left: -10px; top: 30px; transform: rotate(-45deg); }
+        .tour-tooltip-arrow.right { right: -10px; top: 30px; transform: rotate(135deg); }
+
+        .tour-step-indicator {
+            font-size: 0.7rem;
+            color: rgba(0, 212, 255, 0.7);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .tour-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 8px 0;
+        }
+        .tour-description {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin: 0 0 16px 0;
+        }
+        .tour-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .tour-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        .tour-btn-skip {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .tour-btn-skip:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .tour-btn-next {
+            background: linear-gradient(135deg, #00d4ff, #b84fff);
+            color: #000;
+            font-weight: 700;
+        }
+        .tour-btn-next:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        }
+        .tour-btn-finish {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+        }
+
+        /* Help button to restart tour */
+        .tour-help-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #b84fff);
+            border: none;
+            color: #000;
+            font-size: 1.4rem;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+        .tour-help-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+        }
+    </style>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════════════════════
+    // INLINE GUIDED TOUR SYSTEM
+    // Keeps users on main UI while guiding them through the mastering workflow
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const tourSteps = [
+        {
+            target: '#uploadArea, .upload-zone, [class*="upload"]',
+            title: '📁 Upload Your Track',
+            description: 'Drag & drop your audio file here, or click to browse. We support WAV, MP3, FLAC, M4A, and AAC.',
+            position: 'bottom',
+            waitFor: null
+        },
+        {
+            target: '#masterControlBar, #masterItNowBtn',
+            title: '⚡ Master It Now',
+            description: 'Once your track loads, click this button to run our 24-feature AI mastering engine. It takes just seconds!',
+            position: 'bottom',
+            waitFor: 'audioLoaded'
+        },
+        {
+            target: '#abToggleControl, #abToggleSwitch',
+            title: '🔀 Compare Original vs Mastered',
+            description: 'Use this toggle to instantly A/B compare your original track with the mastered version. Hear the difference!',
+            position: 'bottom',
+            waitFor: 'masteringComplete'
+        },
+        {
+            target: '.genre-btn, #genreSection, [class*="genre"]',
+            title: '🎨 Fine-Tune with Genre Presets',
+            description: 'Select a genre preset to optimize EQ and compression for your style. Pop, Hip-Hop, Rock, Electronic, and more!',
+            position: 'top',
+            waitFor: 'masteringComplete'
+        },
+        {
+            target: '.eq-section, #eqControls, [class*="eq-graph"]',
+            title: '🎛️ Manual EQ Adjustments',
+            description: 'For precise control, adjust the 7-band parametric EQ manually. Double-click any fader to reset it.',
+            position: 'top',
+            waitFor: 'masteringComplete'
+        },
+        {
+            target: '#exportBtn, .export-btn, [class*="export"]',
+            title: '💾 Export Your Master',
+            description: "When you're happy with the sound, click Export to download your professionally mastered track. You're all set!",
+            position: 'top',
+            waitFor: null,
+            isLast: true
+        }
+    ];
+
+    let currentTourStep = 0;
+    let tourActive = false;
+
+    function startTour() {
+        currentTourStep = 0;
+        tourActive = true;
+        showTourStep(0);
+        document.getElementById('tourOverlay').style.display = 'block';
+        document.getElementById('tourOverlay').classList.add('active');
+        console.log('🎯 Guided Tour Started');
+    }
+
+    function showTourStep(stepIndex) {
+        if (stepIndex >= tourSteps.length) {
+            endTour();
+            return;
+        }
+
+        const step = tourSteps[stepIndex];
+        const target = document.querySelector(step.target);
+
+        // Update step indicator
+        document.getElementById('tourCurrentStep').textContent = stepIndex + 1;
+        document.getElementById('tourTotalSteps').textContent = tourSteps.length;
+
+        // Update content
+        document.getElementById('tourTitle').textContent = step.title;
+        document.getElementById('tourDescription').textContent = step.description;
+
+        // Update button text for last step
+        const nextBtn = document.getElementById('tourNextBtn');
+        if (step.isLast) {
+            nextBtn.textContent = '✓ Got It!';
+            nextBtn.classList.add('tour-btn-finish');
+        } else {
+            nextBtn.textContent = 'Next →';
+            nextBtn.classList.remove('tour-btn-finish');
+        }
+
+        // Position spotlight and tooltip
+        if (target) {
+            const rect = target.getBoundingClientRect();
+            const spotlight = document.getElementById('tourSpotlight');
+            const tooltip = document.getElementById('tourTooltip');
+            const arrow = tooltip.querySelector('.tour-tooltip-arrow');
+
+            // Position spotlight with padding
+            const padding = 12;
+            spotlight.style.left = (rect.left - padding) + 'px';
+            spotlight.style.top = (rect.top - padding) + 'px';
+            spotlight.style.width = (rect.width + padding * 2) + 'px';
+            spotlight.style.height = (rect.height + padding * 2) + 'px';
+
+            // Position tooltip based on specified position
+            tooltip.style.display = 'block';
+            arrow.className = 'tour-tooltip-arrow';
+
+            const tooltipRect = tooltip.getBoundingClientRect();
+
+            if (step.position === 'bottom') {
+                tooltip.style.top = (rect.bottom + 20) + 'px';
+                tooltip.style.left = Math.max(20, rect.left) + 'px';
+                arrow.classList.add('top');
+            } else if (step.position === 'top') {
+                tooltip.style.top = (rect.top - tooltipRect.height - 20) + 'px';
+                tooltip.style.left = Math.max(20, rect.left) + 'px';
+                arrow.classList.add('bottom');
+            } else if (step.position === 'right') {
+                tooltip.style.top = rect.top + 'px';
+                tooltip.style.left = (rect.right + 20) + 'px';
+                arrow.classList.add('left');
+            } else {
+                tooltip.style.top = rect.top + 'px';
+                tooltip.style.left = (rect.left - tooltipRect.width - 20) + 'px';
+                arrow.classList.add('right');
+            }
+
+            // Scroll element into view if needed
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // If target not found, skip to next step
+            console.log('Tour target not found:', step.target);
+            nextTourStep();
+        }
+    }
+
+    function nextTourStep() {
+        currentTourStep++;
+        if (currentTourStep >= tourSteps.length) {
+            endTour();
+        } else {
+            showTourStep(currentTourStep);
+        }
+    }
+
+    function endTour() {
+        tourActive = false;
+        document.getElementById('tourOverlay').style.display = 'none';
+        document.getElementById('tourOverlay').classList.remove('active');
+        document.getElementById('tourTooltip').style.display = 'none';
+        localStorage.setItem('tourCompleted', 'true');
+        console.log('🎯 Guided Tour Completed');
+
+        // Show success toast
+        if (typeof showToast === 'function') {
+            showToast("🎉 You're ready to master! Upload a track to begin.", 'success');
+        }
+    }
+
+    // Auto-start tour for first-time users
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            if (!localStorage.getItem('tourCompleted')) {
+                startTour();
+            }
+        }, 1500);
+    });
+
+    // Export for manual trigger
+    window.startTour = startTour;
+    window.endTour = endTour;
+    </script>
+
+    <!-- Help Button to Restart Tour -->
+    <button class="tour-help-btn" onclick="startTour()" title="Take a guided tour">?</button>
 
     <!-- HIDDEN AUDIO ELEMENT -->
     <audio id="audioElement" style="display: none;"></audio>
@@ -4451,57 +4571,62 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════
-                 🎛️ UNIFIED MASTER CONTROL BAR - Master button + A/B Toggle together
+                 🎛️ UNIFIED MASTER CONTROL BAR - Vertical Layout: Master button + A/B Toggle
+                 Professional, clean design - Button on top, toggle below
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div id="masterControlBar" class="master-control-bar" style="display: none; margin: 12px 0; padding: 12px 16px; background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(20,20,30,0.8)); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; align-items: center; justify-content: center; gap: 20px;">
+            <div id="masterControlBar" class="master-control-bar" style="display: none; margin: 16px auto; padding: 20px 24px; background: linear-gradient(135deg, rgba(10,10,20,0.95), rgba(20,20,35,0.95)); border: 1px solid rgba(0,212,255,0.3); border-radius: 16px; flex-direction: column; align-items: center; gap: 16px; max-width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
 
-                <!-- MASTER IT NOW Button -->
+                <!-- MASTER IT NOW Button - Prominent at top -->
                 <button id="masterItNowBtn" onclick="runFullAIMaster()" style="
                     background: linear-gradient(135deg, #00d4ff, #b84fff);
                     border: none;
-                    padding: 12px 28px;
-                    border-radius: 25px;
-                    font-size: 1rem;
+                    padding: 14px 40px;
+                    border-radius: 30px;
+                    font-size: 1.1rem;
                     font-weight: 800;
                     color: #000;
                     cursor: pointer;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+                    justify-content: center;
+                    gap: 10px;
+                    box-shadow: 0 4px 24px rgba(0, 212, 255, 0.5);
                     transition: all 0.3s ease;
                     text-transform: uppercase;
-                    letter-spacing: 1px;
+                    letter-spacing: 1.5px;
+                    width: 100%;
                 ">
-                    <span style="font-size: 1.2rem;">⚡</span>
+                    <span style="font-size: 1.3rem;">⚡</span>
                     <span>Master It Now</span>
                 </button>
 
-                <!-- Separator -->
-                <div style="width: 2px; height: 36px; background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.5), transparent);"></div>
+                <!-- Divider Line -->
+                <div style="width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent);"></div>
 
-                <!-- A/B Toggle Control -->
-                <div id="abToggleControl" style="display: flex; align-items: center; gap: 12px; opacity: 0.4; pointer-events: none;" title="Master your track first to enable A/B comparison">
-                    <span id="abLabelOriginal" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5); transition: all 0.3s;">ORIGINAL</span>
-                    <label style="position: relative; display: inline-block; width: 60px; height: 30px; cursor: pointer;">
-                        <input type="checkbox" id="abToggleSwitch" checked onchange="handleUnifiedABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                        <span id="abToggleTrack" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.2); transition: 0.3s; border-radius: 30px; border: 2px solid rgba(255,255,255,0.3);">
-                            <span id="abToggleThumb" style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(28px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></span>
-                        </span>
-                    </label>
-                    <span id="abLabelMastered" style="font-size: 0.85rem; font-weight: 700; color: #00ff88; transition: all 0.3s;">MASTERED</span>
-                </div>
-
-                <!-- Status Indicator -->
-                <div id="abStatusIndicator" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); padding: 4px 10px; background: rgba(0,0,0,0.3); border-radius: 12px;">
-                    ⏳ Not mastered yet
+                <!-- A/B Toggle Control - Below button -->
+                <div id="abToggleControl" style="display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.35; pointer-events: none; transition: opacity 0.3s;" title="Master your track first to enable A/B comparison">
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px;">Compare Audio</div>
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span id="abLabelOriginal" style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.4); transition: all 0.3s; min-width: 70px; text-align: right;">ORIGINAL</span>
+                        <label style="position: relative; display: inline-block; width: 56px; height: 28px; cursor: pointer;">
+                            <input type="checkbox" id="abToggleSwitch" checked onchange="handleUnifiedABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                            <span id="abToggleTrack" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); transition: 0.3s; border-radius: 28px; border: 2px solid rgba(255,255,255,0.2);">
+                                <span id="abToggleThumb" style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(26px); box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></span>
+                            </span>
+                        </label>
+                        <span id="abLabelMastered" style="font-size: 0.8rem; font-weight: 700; color: #00ff88; transition: all 0.3s; min-width: 70px;">MASTERED</span>
+                    </div>
+                    <!-- Status Indicator -->
+                    <div id="abStatusIndicator" style="font-size: 0.7rem; color: rgba(255,255,255,0.4); padding: 4px 12px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-top: 4px;">
+                        ⏳ Upload a track to begin
+                    </div>
                 </div>
             </div>
 
             <style>
                 #masterItNowBtn:hover {
-                    transform: scale(1.05);
-                    box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+                    transform: scale(1.03);
+                    box-shadow: 0 6px 36px rgba(0, 212, 255, 0.6);
                 }
                 #masterItNowBtn:active {
                     transform: scale(0.98);
@@ -4511,7 +4636,7 @@
                     border-color: #00ff88;
                 }
                 #abToggleSwitch:not(:checked) + #abToggleTrack {
-                    background: rgba(255,154,86,0.3);
+                    background: rgba(255,154,86,0.4);
                     border-color: #ff9a56;
                 }
                 #abToggleSwitch:not(:checked) + #abToggleTrack #abToggleThumb {
@@ -4524,11 +4649,8 @@
                 .master-control-bar.mastered #masterItNowBtn {
                     background: linear-gradient(135deg, #00ff88, #00d4ff);
                 }
-                .master-control-bar.mastered #masterItNowBtn span:last-child {
-                    display: none;
-                }
-                .master-control-bar.mastered #masterItNowBtn::after {
-                    content: 'Re-Master';
+                .master-control-bar.mastered #masterItNowBtn span:last-child::before {
+                    content: 'Re-';
                 }
             </style>
 
