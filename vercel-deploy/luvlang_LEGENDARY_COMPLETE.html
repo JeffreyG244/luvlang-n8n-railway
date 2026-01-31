@@ -4419,6 +4419,194 @@
         <div class="center-main">
 
             <!-- ═══════════════════════════════════════════════════════════════
+                 REAL-TIME GENRE + EQ VIEW - See EQ change as you select genres
+                 ═══════════════════════════════════════════════════════════════ -->
+            <div id="genreEqCombinedView" style="
+                display: flex;
+                gap: 15px;
+                margin-bottom: 15px;
+                background: linear-gradient(135deg, rgba(0,20,40,0.6) 0%, rgba(15,15,30,0.8) 100%);
+                border: 1px solid rgba(0, 212, 255, 0.2);
+                border-radius: 15px;
+                padding: 15px;
+            ">
+                <!-- LEFT: Genre Selection with EQ Curve -->
+                <div style="flex: 0 0 280px; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #00d4ff;">◆</span> GENRE EQ PRESETS
+                        <span style="color: rgba(0,255,136,0.7); font-size: 0.55rem; margin-left: auto;">REAL-TIME</span>
+                    </div>
+
+                    <!-- Genre Buttons (synced with sidebar) -->
+                    <div id="centerGenreGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px;">
+                        <div class="center-genre-btn active" data-genre="neutral" style="
+                            padding: 8px 6px;
+                            background: rgba(0, 212, 255, 0.15);
+                            border: 1px solid rgba(0, 212, 255, 0.4);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: #fff;
+                            transition: all 0.2s ease;
+                        ">Neutral</div>
+                        <div class="center-genre-btn" data-genre="hip-hop" style="
+                            padding: 8px 6px;
+                            background: rgba(255,255,255,0.03);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: rgba(255,255,255,0.7);
+                            transition: all 0.2s ease;
+                        ">Hip-Hop</div>
+                        <div class="center-genre-btn" data-genre="pop" style="
+                            padding: 8px 6px;
+                            background: rgba(255,255,255,0.03);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: rgba(255,255,255,0.7);
+                            transition: all 0.2s ease;
+                        ">Pop</div>
+                        <div class="center-genre-btn" data-genre="edm" style="
+                            padding: 8px 6px;
+                            background: rgba(255,255,255,0.03);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: rgba(255,255,255,0.7);
+                            transition: all 0.2s ease;
+                        ">EDM</div>
+                        <div class="center-genre-btn" data-genre="rock" style="
+                            padding: 8px 6px;
+                            background: rgba(255,255,255,0.03);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: rgba(255,255,255,0.7);
+                            transition: all 0.2s ease;
+                        ">Rock</div>
+                        <div class="center-genre-btn" data-genre="jazz" style="
+                            padding: 8px 6px;
+                            background: rgba(255,255,255,0.03);
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 6px;
+                            text-align: center;
+                            cursor: pointer;
+                            font-size: 0.7rem;
+                            color: rgba(255,255,255,0.7);
+                            transition: all 0.2s ease;
+                        ">Jazz</div>
+                    </div>
+
+                    <!-- Preset Styles (shows when genre selected) -->
+                    <div id="centerPresetGrid" style="display: none; flex: 1; overflow-y: auto; max-height: 160px;">
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-bottom: 6px;">Select a non-neutral genre to see style presets</div>
+                    </div>
+
+                    <!-- Current EQ Curve Preview -->
+                    <div style="margin-top: auto; padding-top: 10px;">
+                        <canvas id="centerEqCurvePreview" width="280" height="60" style="width: 100%; height: 60px; background: rgba(0,0,0,0.3); border-radius: 6px; border: 1px solid rgba(0,212,255,0.15);"></canvas>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 4px; padding: 0 4px;">
+                            <span>40Hz</span><span>1kHz</span><span>14kHz</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: 7-Band EQ Mini Faders (synced with main EQ) -->
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #b84fff;">◆</span> 7-BAND PARAMETRIC EQ
+                        <div style="margin-left: auto; display: flex; align-items: center; gap: 6px;">
+                            <span id="centerEqStatus" style="font-size: 0.55rem; color: #00ff88;">● ACTIVE</span>
+                        </div>
+                    </div>
+
+                    <!-- Mini EQ Faders Row -->
+                    <div id="centerEqFaders" style="display: flex; gap: 8px; justify-content: space-between; flex: 1; min-height: 180px;">
+                        <!-- SUB -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #00d4ff; font-weight: 600;">SUB</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">40Hz</div>
+                            <div class="center-eq-track" data-eq="sub" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #00d4ff, #00ff88); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,212,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="sub" style="font-size: 0.6rem; color: #00ff88; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- BASS -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #00d4ff; font-weight: 600;">BASS</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">120Hz</div>
+                            <div class="center-eq-track" data-eq="bass" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #00d4ff, #00ff88); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,212,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="bass" style="font-size: 0.6rem; color: #00ff88; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- LOW MID -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #00d4ff; font-weight: 600;">L-MID</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">350Hz</div>
+                            <div class="center-eq-track" data-eq="lowmid" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #00d4ff, #00ff88); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,212,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="lowmid" style="font-size: 0.6rem; color: #00ff88; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- MID -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #b84fff; font-weight: 600;">MID</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">1kHz</div>
+                            <div class="center-eq-track" data-eq="mid" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #b84fff, #00d4ff); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(184,79,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="mid" style="font-size: 0.6rem; color: #b84fff; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- HIGH MID -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #00d4ff; font-weight: 600;">H-MID</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">3.5kHz</div>
+                            <div class="center-eq-track" data-eq="highmid" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #00d4ff, #00ff88); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,212,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="highmid" style="font-size: 0.6rem; color: #00ff88; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- HIGH -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #00d4ff; font-weight: 600;">HIGH</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">8kHz</div>
+                            <div class="center-eq-track" data-eq="high" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #00d4ff, #00ff88); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,212,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="high" style="font-size: 0.6rem; color: #00ff88; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                        <!-- AIR -->
+                        <div class="center-eq-fader" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.6rem; color: #b84fff; font-weight: 600;">AIR</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">14kHz</div>
+                            <div class="center-eq-track" data-eq="air" style="flex: 1; width: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 8px 0; position: relative; cursor: pointer;">
+                                <div class="center-eq-fill" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0%; background: linear-gradient(to top, #b84fff, #ff79c6); border-radius: 3px; transition: height 0.2s, bottom 0.2s;"></div>
+                                <div class="center-eq-thumb" style="position: absolute; left: 50%; bottom: 50%; transform: translate(-50%, 50%); width: 14px; height: 14px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(184,79,255,0.6); transition: bottom 0.2s;"></div>
+                            </div>
+                            <div class="center-eq-value" data-eq="air" style="font-size: 0.6rem; color: #b84fff; font-weight: 600; font-family: 'JetBrains Mono', monospace;">0.0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════
                  PROFESSIONAL VISUALIZATION SYSTEM - 3 PANELS
                  ═══════════════════════════════════════════════════════════════ -->
 
@@ -8833,7 +9021,10 @@
             lockedLUFS = null;
             lockedPeak = null;
             originalInputLUFS = null; // Reset original LUFS for new file
+            window.masteringComplete = false; // Reset mastering flag for new file
+            window.autoLUFSGainApplied = 0; // Reset LUFS gain tracking
             console.log('🔓 Meters unlocked - ready for new analysis');
+            console.log('🔄 Mastering state reset for new file');
 
             console.log('📁 File selected:', file.name);
 
@@ -16008,6 +16199,10 @@
 
                 console.log('✅ AI Master applied successfully using INTERNAL engine.');
 
+                // 🏆 SET MASTERING COMPLETE FLAG - Critical for LUFS preset switching
+                window.masteringComplete = true;
+                console.log('🎯 Mastering complete flag set - LUFS presets will now use differential adjustment');
+
                 // Reset Master Output to 0.0 dB (unity gain) - Professional standard
                 // All loudness targeting is handled by makeup gain in the mastering chain
                 const masterGainSlider = document.getElementById('masterGainSlider');
@@ -16400,7 +16595,7 @@
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
 
-                    // 🏆 AUTO-LUFS RECALCULATION: Adjust gain for new target
+                    // 🏆 PLATFORM LUFS TARGETING - Smart gain adjustment
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
 
                     // Use window.makeupGain for LUFS targeting (before limiter in chain)
@@ -16408,18 +16603,48 @@
                     const ac = window.audioContext || audioContext;
 
                     if (mu && ac && window.autoLUFSInputLevel !== undefined) {
-                        // Recalculate gain based on stored input level and new target
-                        const inputLUFS = window.autoLUFSInputLevel;
+                        // Check if mastering has already been completed
+                        const previousTarget = window.autoLUFSTargetLevel || -14;
+                        const masteringComplete = window.masteringComplete === true;
 
-                        // Add compensation for processing chain losses (limiter GR + saturation)
-                        const chainCompensation = 3.5;
+                        let safeGain;
+                        let linearGain;
 
-                        // Calculate gain with compensation
-                        const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
+                        if (masteringComplete) {
+                            // AFTER MASTERING: Only apply the DIFFERENCE between old and new target
+                            // Audio is already at the previous target LUFS, so just adjust by the difference
+                            const targetDifference = targetLUFS - previousTarget;
 
-                        // Safety limits: max +12dB boost, max -10dB cut
-                        const safeGain = Math.max(-10, Math.min(12, gainNeeded));
-                        const linearGain = Math.pow(10, safeGain / 20);
+                            // Get current gain and adjust by difference
+                            const currentGainDB = window.autoLUFSGainApplied || 0;
+                            safeGain = currentGainDB + targetDifference;
+
+                            // Safety limits
+                            safeGain = Math.max(-15, Math.min(15, safeGain));
+                            linearGain = Math.pow(10, safeGain / 20);
+
+                            console.log(`🔄 POST-MASTERING ADJUSTMENT:`);
+                            console.log(`   Previous target: ${previousTarget} LUFS → New target: ${targetLUFS} LUFS`);
+                            console.log(`   Difference: ${targetDifference >= 0 ? '+' : ''}${targetDifference.toFixed(1)} dB`);
+                            console.log(`   New makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
+                        } else {
+                            // BEFORE MASTERING: Full recalculation based on input level
+                            const inputLUFS = window.autoLUFSInputLevel;
+
+                            // Add compensation for processing chain losses (limiter GR + saturation)
+                            const chainCompensation = 3.5;
+
+                            // Calculate gain with compensation
+                            const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
+
+                            // Safety limits: max +12dB boost, max -10dB cut
+                            safeGain = Math.max(-10, Math.min(12, gainNeeded));
+                            linearGain = Math.pow(10, safeGain / 20);
+
+                            console.log(`🎯 LUFS CALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
+                            console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
+                            console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
+                        }
 
                         // Smooth ramp to new gain
                         mu.gain.cancelScheduledValues(ac.currentTime);
@@ -16429,23 +16654,21 @@
                         window.autoLUFSGainApplied = safeGain;
                         window.autoLUFSTargetLevel = targetLUFS;
 
-                        console.log(`🎯 LUFS RECALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
-                        console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
-                        console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
-
                         // Show toast notification
                         const msg = `${platformName}: ${targetLUFS} LUFS`;
                         if (typeof showToast === 'function') {
                             showToast(msg, 'success');
                         }
                     } else if (mu && ac) {
-                        // No audio loaded yet - just show toast
+                        // No audio loaded yet - just show toast and store target
+                        window.autoLUFSTargetLevel = targetLUFS;
                         if (typeof showToast === 'function') {
                             showToast(`${platformName} selected (${targetLUFS} LUFS)`, 'info');
                         }
                         console.log('⚠️ No audio loaded - LUFS targeting will apply when file is loaded');
                     } else {
                         // Show toast anyway to confirm selection
+                        window.autoLUFSTargetLevel = targetLUFS;
                         if (typeof showToast === 'function') {
                             showToast(`${platformName} selected (${targetLUFS} LUFS)`, 'info');
                         }
@@ -16478,9 +16701,280 @@
                         const displayName = genreNames[genre.toLowerCase()] || genre;
                         showToast(`🎵 ${displayName}`, 'success');
                     }
+
+                    // SYNC: Update center genre buttons to match
+                    syncCenterGenreButtons(genre);
                 }
             });
         });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // CENTER GENRE + EQ REAL-TIME SYNC SYSTEM
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        /**
+         * Sync center genre buttons with sidebar selection
+         */
+        function syncCenterGenreButtons(selectedGenre) {
+            const centerButtons = document.querySelectorAll('#centerGenreGrid .center-genre-btn');
+            centerButtons.forEach(btn => {
+                const genre = btn.getAttribute('data-genre');
+                if (genre === selectedGenre) {
+                    btn.style.background = 'rgba(0, 212, 255, 0.15)';
+                    btn.style.borderColor = 'rgba(0, 212, 255, 0.4)';
+                    btn.style.color = '#fff';
+                    btn.classList.add('active');
+                } else {
+                    btn.style.background = 'rgba(255,255,255,0.03)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                    btn.style.color = 'rgba(255,255,255,0.7)';
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update center preset grid if non-neutral genre
+            updateCenterPresetGrid(selectedGenre);
+        }
+
+        /**
+         * Update center preset grid with genre presets
+         */
+        function updateCenterPresetGrid(genreName) {
+            const grid = document.getElementById('centerPresetGrid');
+            if (!grid) return;
+
+            if (genreName === 'neutral') {
+                grid.style.display = 'block';
+                grid.innerHTML = '<div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); padding: 10px; text-align: center;">Flat EQ - Select a genre for presets</div>';
+                return;
+            }
+
+            const presets = genreEQPresets[genreName.toLowerCase()];
+            if (!presets || presets.length === 0) {
+                grid.style.display = 'none';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            grid.style.gap = '4px';
+            grid.innerHTML = '';
+
+            presets.slice(0, 6).forEach((preset, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'center-preset-btn';
+                btn.setAttribute('data-preset-index', index);
+                btn.style.cssText = `
+                    padding: 6px 8px;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 4px;
+                    font-size: 0.6rem;
+                    color: rgba(255,255,255,0.7);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    text-align: center;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                `;
+                btn.textContent = preset.name || `Preset ${index + 1}`;
+                btn.onclick = () => {
+                    // Apply this preset
+                    if (typeof applyGenrePresetByIndex === 'function') {
+                        applyGenrePresetByIndex(genreName, index);
+                    } else if (genreEQPresets[genreName.toLowerCase()] && genreEQPresets[genreName.toLowerCase()][index]) {
+                        applyEQFromPreset(genreEQPresets[genreName.toLowerCase()][index]);
+                    }
+                    // Highlight selected
+                    grid.querySelectorAll('.center-preset-btn').forEach(b => {
+                        b.style.background = 'rgba(255,255,255,0.03)';
+                        b.style.borderColor = 'rgba(255,255,255,0.08)';
+                    });
+                    btn.style.background = 'rgba(0, 255, 136, 0.15)';
+                    btn.style.borderColor = 'rgba(0, 255, 136, 0.4)';
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        /**
+         * Apply EQ from preset object
+         */
+        function applyEQFromPreset(preset) {
+            if (!preset || !preset.eq) return;
+            const eq = preset.eq;
+
+            // Apply to actual EQ filters
+            if (eqSubFilter && eq.sub !== undefined) eqSubFilter.gain.setTargetAtTime(eq.sub, audioContext.currentTime, 0.05);
+            if (eqBassFilter && eq.bass !== undefined) eqBassFilter.gain.setTargetAtTime(eq.bass, audioContext.currentTime, 0.05);
+            if (eqLowMidFilter && eq.lowMid !== undefined) eqLowMidFilter.gain.setTargetAtTime(eq.lowMid, audioContext.currentTime, 0.05);
+            if (eqMidFilter && eq.mid !== undefined) eqMidFilter.gain.setTargetAtTime(eq.mid, audioContext.currentTime, 0.05);
+            if (eqHighMidFilter && eq.highMid !== undefined) eqHighMidFilter.gain.setTargetAtTime(eq.highMid, audioContext.currentTime, 0.05);
+            if (eqHighFilter && eq.high !== undefined) eqHighFilter.gain.setTargetAtTime(eq.high, audioContext.currentTime, 0.05);
+            if (eqAirFilter && eq.air !== undefined) eqAirFilter.gain.setTargetAtTime(eq.air, audioContext.currentTime, 0.05);
+
+            // Update UI
+            updateCenterEQFaders();
+            if (typeof updateEQFaderPositions === 'function') updateEQFaderPositions();
+            if (typeof drawEQCurve === 'function') drawEQCurve();
+        }
+
+        /**
+         * Update center EQ faders to match current EQ values
+         */
+        function updateCenterEQFaders() {
+            const eqValues = {
+                sub: eqSubFilter ? eqSubFilter.gain.value : 0,
+                bass: eqBassFilter ? eqBassFilter.gain.value : 0,
+                lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
+                mid: eqMidFilter ? eqMidFilter.gain.value : 0,
+                highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
+                high: eqHighFilter ? eqHighFilter.gain.value : 0,
+                air: eqAirFilter ? eqAirFilter.gain.value : 0
+            };
+
+            // Update each fader in the center view
+            Object.keys(eqValues).forEach(band => {
+                const value = eqValues[band];
+                const valueEl = document.querySelector(`#centerEqFaders .center-eq-value[data-eq="${band}"]`);
+                const trackEl = document.querySelector(`#centerEqFaders .center-eq-track[data-eq="${band}"]`);
+
+                if (valueEl) {
+                    valueEl.textContent = value.toFixed(1);
+                    valueEl.style.color = value > 0 ? '#00ff88' : value < 0 ? '#ff6b6b' : 'rgba(255,255,255,0.5)';
+                }
+
+                if (trackEl) {
+                    // Position thumb and fill based on value (-12 to +12 dB range)
+                    const percent = ((value + 12) / 24) * 100; // 0-100%
+                    const thumb = trackEl.querySelector('.center-eq-thumb');
+                    const fill = trackEl.querySelector('.center-eq-fill');
+
+                    if (thumb) {
+                        thumb.style.bottom = `${percent}%`;
+                    }
+                    if (fill) {
+                        if (value >= 0) {
+                            fill.style.bottom = '50%';
+                            fill.style.height = `${(value / 12) * 50}%`;
+                        } else {
+                            fill.style.bottom = `${percent}%`;
+                            fill.style.height = `${(Math.abs(value) / 12) * 50}%`;
+                        }
+                    }
+                }
+            });
+
+            // Draw EQ curve preview in center canvas
+            drawCenterEQCurve(eqValues);
+        }
+
+        /**
+         * Draw EQ curve in center preview canvas
+         */
+        function drawCenterEQCurve(eqValues) {
+            const canvas = document.getElementById('centerEqCurvePreview');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Background
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(0, 0, w, h);
+
+            // Zero line
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            ctx.moveTo(0, h/2);
+            ctx.lineTo(w, h/2);
+            ctx.stroke();
+
+            // EQ curve
+            const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const xPositions = [0.05, 0.15, 0.3, 0.45, 0.6, 0.75, 0.95];
+
+            ctx.beginPath();
+            ctx.moveTo(0, h/2);
+
+            bands.forEach((band, i) => {
+                const x = w * xPositions[i];
+                const val = eqValues[band] || 0;
+                const y = h/2 - (val / 12) * (h/2 - 4);
+                if (i === 0) {
+                    ctx.lineTo(x, y);
+                } else {
+                    // Smooth curve
+                    const prevX = w * xPositions[i-1];
+                    const cpX = (prevX + x) / 2;
+                    ctx.quadraticCurveTo(cpX, ctx.lastY || h/2, x, y);
+                }
+                ctx.lastY = y;
+            });
+
+            ctx.lineTo(w, h/2);
+
+            // Gradient fill
+            const gradient = ctx.createLinearGradient(0, 0, w, 0);
+            gradient.addColorStop(0, 'rgba(0, 212, 255, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(184, 79, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 121, 198, 0.3)');
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Stroke
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            delete ctx.lastY;
+        }
+
+        // Initialize center genre button click handlers
+        document.querySelectorAll('#centerGenreGrid .center-genre-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const genre = this.getAttribute('data-genre');
+                if (!genre) return;
+
+                // Sync with sidebar
+                const sidebarBtn = document.querySelector(`#genreSection .selector-btn[data-genre="${genre}"]`);
+                if (sidebarBtn) {
+                    sidebarBtn.click(); // This will trigger the full genre change flow
+                }
+            });
+
+            // Hover effects
+            btn.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('active')) {
+                    this.style.background = 'rgba(0, 212, 255, 0.08)';
+                    this.style.borderColor = 'rgba(0, 212, 255, 0.2)';
+                }
+            });
+            btn.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('active')) {
+                    this.style.background = 'rgba(255,255,255,0.03)';
+                    this.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+            });
+        });
+
+        // Listen for EQ changes to update center faders
+        window.addEventListener('eqChanged', updateCenterEQFaders);
+
+        // Update center EQ faders periodically during playback
+        setInterval(() => {
+            if (audioContext && audioContext.state === 'running') {
+                updateCenterEQFaders();
+            }
+        }, 200);
+
+        // Make functions globally available
+        window.syncCenterGenreButtons = syncCenterGenreButtons;
+        window.updateCenterEQFaders = updateCenterEQFaders;
 
         // Format button selection (only for format buttons, not bit depth)
         document.querySelectorAll('.export-format-btn[data-format]').forEach(btn => {
@@ -19707,7 +20201,7 @@
                     console.log(`   Final peak estimate: ${(originalPeakDB + clampedGainDB).toFixed(1)} dBTP (safe < -1.0 dBTP)`);
                 }
 
-                // Store for debugging
+                // Store for LUFS preset switching and debugging
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
                     targetLUFS: targetLUFS,
@@ -19717,7 +20211,14 @@
                     makeupGainDB: clampedGainDB
                 };
 
+                // CRITICAL: Store values for platform preset switching
+                window.autoLUFSInputLevel = currentLUFS;
+                window.autoLUFSGainApplied = clampedGainDB;
+                window.autoLUFSTargetLevel = targetLUFS;
+                window.originalInputPeakDB = originalPeakDB;
+
                 console.log('✅ LUFS targeting applied');
+                console.log('   Stored for preset switching: Input LUFS =', currentLUFS.toFixed(1), ', Gain =', clampedGainDB.toFixed(1), 'dB');
 
                 console.log('[AI Suite] All processing stages complete');
 
