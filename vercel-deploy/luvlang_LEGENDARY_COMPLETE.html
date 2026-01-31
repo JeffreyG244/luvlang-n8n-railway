@@ -20326,6 +20326,13 @@
 
             console.log('✅ Genre overlay displayed');
 
+            // Voice prompt for genre selection
+            setTimeout(() => {
+                if (typeof speak === 'function') {
+                    speak("Now pick your genre to customize your sound. Don't worry, you can always come back and tweak this later. Go ahead, give one a tap and hear the difference!");
+                }
+            }, 300);
+
             // Capture BEFORE spectrum for comparison
             try {
                 captureBeforeSpectrum();
