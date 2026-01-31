@@ -18396,30 +18396,52 @@
 
             if (tooltip) tooltip.remove();
 
-            if (genreSection) {
-                // Keep highlight visible for a moment so user can find it
-                setTimeout(() => {
-                    genreSection.style.boxShadow = 'none';
-                }, 3000);
+            // Scroll page to top to show the main interface
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                // Scroll the genre section into view so user can see it
-                genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                // Also scroll the left sidebar to show genre buttons
-                const leftSidebar = document.querySelector('.left-sidebar');
-                if (leftSidebar) {
-                    const genreTop = genreSection.offsetTop;
-                    leftSidebar.scrollTo({ top: genreTop - 100, behavior: 'smooth' });
-                }
-            }
-
-            // Scroll center panel to top so user sees the main interface
+            // Scroll all panels to top
             const centerMain = document.querySelector('.center-main');
+            const leftSidebar = document.querySelector('.left-sidebar');
+            const rightSidebar = document.querySelector('.right-sidebar');
+
             if (centerMain) {
                 centerMain.scrollTo({ top: 0, behavior: 'smooth' });
             }
+            if (leftSidebar) {
+                // Scroll to show genre section
+                if (genreSection) {
+                    const genreTop = genreSection.offsetTop;
+                    leftSidebar.scrollTo({ top: Math.max(0, genreTop - 150), behavior: 'smooth' });
+                }
+            }
+            if (rightSidebar) {
+                rightSidebar.scrollTo({ top: 0, behavior: 'smooth' });
+            }
 
-            console.log('✅ Genre preset guide closed - scrolled to main interface');
+            // Highlight the spectrum/EQ panel to draw user attention
+            const spectrumPanel = document.querySelector('.spectrum-panel');
+            if (spectrumPanel) {
+                spectrumPanel.style.transition = 'all 0.3s ease';
+                spectrumPanel.style.boxShadow = '0 0 0 2px rgba(0, 212, 255, 0.6), 0 0 30px rgba(0, 212, 255, 0.3)';
+
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    spectrumPanel.style.boxShadow = '';
+                }, 3000);
+            }
+
+            // Highlight the genre section in sidebar
+            if (genreSection) {
+                genreSection.style.transition = 'all 0.3s ease';
+                genreSection.style.boxShadow = '0 0 0 2px rgba(124, 184, 255, 0.5), 0 0 20px rgba(124, 184, 255, 0.2)';
+
+                // Remove highlight after 3 seconds
+                setTimeout(() => {
+                    genreSection.style.boxShadow = 'none';
+                }, 3000);
+            }
+
+            console.log('✅ Genre preset guide closed - showing main interface with EQ and visuals');
         };
 
         // Go to export - shows format selection then payment
