@@ -18351,8 +18351,8 @@
 
             // Voice prompt to guide user to pick a genre
             setTimeout(() => {
-                if (typeof speak === 'function') {
-                    speak("Wow, your track just went through 24 mastering processors and came out sounding incredible. I mean, I've heard a lot of music, but yours? Chef's kiss. Now pick a genre, and let's make your neighbors jealous.");
+                if (typeof window.speak === 'function') {
+                    window.speak("Wow, your track just went through 24 mastering processors and came out sounding incredible. I mean, I've heard a lot of music, but yours? Chef's kiss. Now pick a genre over on the left, and let's make your neighbors jealous.");
                 }
             }, 500);
 
@@ -20349,10 +20349,19 @@
 
             // Voice prompt for genre selection
             setTimeout(() => {
-                if (typeof speak === 'function') {
-                    speak("Welcome to the Sound Profile selector. This is where you tell our Mastering Engine what style you're going for. Pick your genre, and we'll optimize the entire processing chain just for you. Don't worry, you can always come back and tweak this later. Go ahead, tap one and hear the difference!");
+                if (typeof window.speak === 'function') {
+                    window.speak("Welcome to the Sound Profile selector. This is where you tell our Mastering Engine what style you're going for. Pick your genre, and we'll optimize the entire processing chain just for you. Don't worry, you can always come back and tweak this later. Go ahead, tap one and hear the difference!");
+                } else {
+                    // Fallback: use speechSynthesis directly
+                    const synth = window.speechSynthesis;
+                    if (synth) {
+                        const utterance = new SpeechSynthesisUtterance("Welcome to the Sound Profile selector. This is where you tell our Mastering Engine what style you're going for. Pick your genre, and we'll optimize the entire processing chain just for you. Don't worry, you can always come back and tweak this later. Go ahead, tap one and hear the difference!");
+                        utterance.rate = 0.92;
+                        utterance.pitch = 0.9;
+                        synth.speak(utterance);
+                    }
                 }
-            }, 300);
+            }, 500);
 
             // Capture BEFORE spectrum for comparison
             try {
@@ -20948,7 +20957,7 @@
             console.log('🌍 Language changed to:', lang);
         }
 
-        // Speak text with strong male voice
+        // Speak text with strong male voice - GLOBAL so it can be called from anywhere
         function speak(text) {
             if (!voiceEnabled || !voiceSynth || !text) return;
             voiceSynth.cancel();
@@ -20961,6 +20970,8 @@
 
             voiceSynth.speak(utterance);
         }
+        // Make speak globally accessible
+        window.speak = speak;
 
         function stopSpeaking() {
             if (voiceSynth) voiceSynth.cancel();
