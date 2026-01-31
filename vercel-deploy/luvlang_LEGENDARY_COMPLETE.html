@@ -4450,6 +4450,182 @@
                 <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
             </div>
 
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 🎛️ UNIFIED MASTER CONTROL BAR - Master button + A/B Toggle together
+                 ═══════════════════════════════════════════════════════════════════════════ -->
+            <div id="masterControlBar" class="master-control-bar" style="display: none; margin: 12px 0; padding: 12px 16px; background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(20,20,30,0.8)); border: 1px solid rgba(0,212,255,0.3); border-radius: 12px; align-items: center; justify-content: center; gap: 20px;">
+
+                <!-- MASTER IT NOW Button -->
+                <button id="masterItNowBtn" onclick="runFullAIMaster()" style="
+                    background: linear-gradient(135deg, #00d4ff, #b84fff);
+                    border: none;
+                    padding: 12px 28px;
+                    border-radius: 25px;
+                    font-size: 1rem;
+                    font-weight: 800;
+                    color: #000;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+                    transition: all 0.3s ease;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                ">
+                    <span style="font-size: 1.2rem;">⚡</span>
+                    <span>Master It Now</span>
+                </button>
+
+                <!-- Separator -->
+                <div style="width: 2px; height: 36px; background: linear-gradient(to bottom, transparent, rgba(0,212,255,0.5), transparent);"></div>
+
+                <!-- A/B Toggle Control -->
+                <div id="abToggleControl" style="display: flex; align-items: center; gap: 12px; opacity: 0.4; pointer-events: none;" title="Master your track first to enable A/B comparison">
+                    <span id="abLabelOriginal" style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.5); transition: all 0.3s;">ORIGINAL</span>
+                    <label style="position: relative; display: inline-block; width: 60px; height: 30px; cursor: pointer;">
+                        <input type="checkbox" id="abToggleSwitch" checked onchange="handleUnifiedABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                        <span id="abToggleTrack" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.2); transition: 0.3s; border-radius: 30px; border: 2px solid rgba(255,255,255,0.3);">
+                            <span id="abToggleThumb" style="position: absolute; content: ''; height: 22px; width: 22px; left: 4px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(28px); box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></span>
+                        </span>
+                    </label>
+                    <span id="abLabelMastered" style="font-size: 0.85rem; font-weight: 700; color: #00ff88; transition: all 0.3s;">MASTERED</span>
+                </div>
+
+                <!-- Status Indicator -->
+                <div id="abStatusIndicator" style="font-size: 0.75rem; color: rgba(255,255,255,0.5); padding: 4px 10px; background: rgba(0,0,0,0.3); border-radius: 12px;">
+                    ⏳ Not mastered yet
+                </div>
+            </div>
+
+            <style>
+                #masterItNowBtn:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+                }
+                #masterItNowBtn:active {
+                    transform: scale(0.98);
+                }
+                #abToggleSwitch:checked + #abToggleTrack {
+                    background: linear-gradient(135deg, #00ff88, #00d4ff);
+                    border-color: #00ff88;
+                }
+                #abToggleSwitch:not(:checked) + #abToggleTrack {
+                    background: rgba(255,154,86,0.3);
+                    border-color: #ff9a56;
+                }
+                #abToggleSwitch:not(:checked) + #abToggleTrack #abToggleThumb {
+                    transform: translateX(0);
+                }
+                .master-control-bar.mastered #abToggleControl {
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+                }
+                .master-control-bar.mastered #masterItNowBtn {
+                    background: linear-gradient(135deg, #00ff88, #00d4ff);
+                }
+                .master-control-bar.mastered #masterItNowBtn span:last-child {
+                    display: none;
+                }
+                .master-control-bar.mastered #masterItNowBtn::after {
+                    content: 'Re-Master';
+                }
+            </style>
+
+            <script>
+            // Unified A/B Toggle Handler
+            function handleUnifiedABToggle(isMastered) {
+                if (!window.isMasteringApplied) {
+                    // Reset toggle if not mastered
+                    document.getElementById('abToggleSwitch').checked = true;
+                    return;
+                }
+
+                const ac = window.audioContext || window.ac;
+                const dryGain = window.dryGain;
+                const wetGain = window.wetGain;
+
+                if (!ac || !dryGain || !wetGain) {
+                    console.warn('Audio nodes not ready');
+                    return;
+                }
+
+                const currentTime = ac.currentTime;
+
+                if (isMastered) {
+                    // Play MASTERED
+                    dryGain.gain.cancelScheduledValues(currentTime);
+                    wetGain.gain.cancelScheduledValues(currentTime);
+                    dryGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
+                    wetGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
+
+                    document.getElementById('abLabelOriginal').style.color = 'rgba(255,255,255,0.5)';
+                    document.getElementById('abLabelOriginal').style.fontWeight = '600';
+                    document.getElementById('abLabelMastered').style.color = '#00ff88';
+                    document.getElementById('abLabelMastered').style.fontWeight = '700';
+                    document.getElementById('abStatusIndicator').innerHTML = '🎧 Playing <strong style="color:#00ff88">MASTERED</strong>';
+                    console.log('🎧 A/B Toggle: Playing MASTERED');
+                } else {
+                    // Play ORIGINAL
+                    dryGain.gain.cancelScheduledValues(currentTime);
+                    wetGain.gain.cancelScheduledValues(currentTime);
+                    dryGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
+                    wetGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
+
+                    document.getElementById('abLabelOriginal').style.color = '#ff9a56';
+                    document.getElementById('abLabelOriginal').style.fontWeight = '700';
+                    document.getElementById('abLabelMastered').style.color = 'rgba(255,255,255,0.5)';
+                    document.getElementById('abLabelMastered').style.fontWeight = '600';
+                    document.getElementById('abStatusIndicator').innerHTML = '🎧 Playing <strong style="color:#ff9a56">ORIGINAL</strong>';
+                    console.log('🎧 A/B Toggle: Playing ORIGINAL');
+                }
+            }
+
+            // Show master control bar when audio loads
+            function showMasterControlBar() {
+                const bar = document.getElementById('masterControlBar');
+                if (bar) {
+                    bar.style.display = 'flex';
+                }
+            }
+
+            // Enable A/B toggle after mastering completes
+            function enableABToggle() {
+                const bar = document.getElementById('masterControlBar');
+                const toggle = document.getElementById('abToggleControl');
+                const status = document.getElementById('abStatusIndicator');
+
+                if (bar) bar.classList.add('mastered');
+                if (toggle) {
+                    toggle.style.opacity = '1';
+                    toggle.style.pointerEvents = 'auto';
+                    toggle.title = 'Toggle between Original and Mastered audio';
+                }
+                if (status) {
+                    status.innerHTML = '🎧 Playing <strong style="color:#00ff88">MASTERED</strong>';
+                }
+
+                // Ensure toggle is set to mastered
+                const abSwitch = document.getElementById('abToggleSwitch');
+                if (abSwitch) abSwitch.checked = true;
+
+                // Trigger the toggle to ensure audio is routed correctly
+                handleUnifiedABToggle(true);
+            }
+
+            // Hook into existing audio load event
+            window.addEventListener('load', function() {
+                // Watch for audioElement changes
+                const checkAudio = setInterval(() => {
+                    const audioEl = document.getElementById('audioElement');
+                    if (audioEl && audioEl.src && audioEl.duration > 0) {
+                        showMasterControlBar();
+                        clearInterval(checkAudio);
+                    }
+                }, 500);
+            });
+            </script>
+
             <!-- EXTENDED TRANSPORT CONTROLS (Professional Playback Features) -->
             <div class="transport-extended">
                 <!-- Loop Controls -->
@@ -7852,6 +8028,12 @@
                 playBtn.disabled = false;
                 playBtn.title = 'Click to play audio (or press Space)';
                 console.log('✅ Play button enabled');
+
+                // Show the unified Master Control Bar
+                if (typeof showMasterControlBar === 'function') {
+                    showMasterControlBar();
+                    console.log('✅ Master Control Bar displayed');
+                }
 
                 // AUTO-PLAY: Start playback automatically when file is loaded
                 setTimeout(() => {
@@ -17101,8 +17283,13 @@
                     console.log('🔊 MASTERING COMPLETE - SWITCHED TO PROCESSED AUDIO');
                     console.log('   Processing path = ON  (dryGain: 1) → Mastered audio ACTIVE');
                     console.log('   Original path = OFF (wetGain: 0) → Original audio MUTED');
-                    console.log('   Use A/B button to compare with original');
+                    console.log('   Use A/B toggle to compare with original');
                     console.log('═══════════════════════════════════════════════════════════════');
+
+                    // Enable the unified A/B toggle control
+                    if (typeof enableABToggle === 'function') {
+                        enableABToggle();
+                    }
                 }
 
                 // Get input LUFS from stored measurement (measured when file was loaded)
