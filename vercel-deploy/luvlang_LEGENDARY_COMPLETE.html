@@ -17235,22 +17235,45 @@
 
         // Clear reference track
         window.clearReference = function() {
-            if (window.referenceTrackMatcher) {
-                window.referenceTrackMatcher.clearReference();
+            try {
+                if (window.referenceTrackMatcher) {
+                    window.referenceTrackMatcher.clearReference();
+                }
+                const infoEl = document.getElementById('referenceInfo');
+                const dropZone = document.getElementById('referenceDropZone');
+                const applyBtn = document.getElementById('applyReferenceBtn');
+                const lufsEl = document.getElementById('referenceLUFS');
+                const drEl = document.getElementById('referenceDR');
+
+                if (infoEl) infoEl.style.display = 'none';
+                if (dropZone) dropZone.style.display = 'block';
+                if (applyBtn) applyBtn.disabled = true;
+                if (lufsEl) lufsEl.textContent = '--';
+                if (drEl) drEl.textContent = '--';
+
+                // Also clear playback reference
+                window.referenceLoaded = false;
+                if (window.referenceAudioElement) {
+                    window.referenceAudioElement.pause();
+                    window.referenceAudioElement.src = '';
+                }
+
+                console.log('🗑️ Reference track cleared');
+            } catch (e) {
+                console.warn('Error clearing reference:', e);
             }
-            document.getElementById('referenceInfo').style.display = 'none';
-            document.getElementById('referenceDropZone').style.display = 'block';
-            document.getElementById('applyReferenceBtn').disabled = true;
-            document.getElementById('referenceLUFS').textContent = '--';
-            document.getElementById('referenceDR').textContent = '--';
-            console.log('🗑️ Reference track cleared');
         };
 
         // Process reference file (used by both file input and drag/drop)
         async function processReferenceFile(file) {
+            if (!file) {
+                console.warn('⚠️ No file provided');
+                return;
+            }
+
             console.log('📂 Loading reference track:', file.name);
 
-            // Show loading state
+            // Show loading state (with null checks)
             const dropZone = document.getElementById('referenceDropZone');
             const loadingEl = document.getElementById('referenceLoading');
             const infoEl = document.getElementById('referenceInfo');
@@ -17258,6 +17281,27 @@
             if (dropZone) dropZone.style.display = 'none';
             if (loadingEl) loadingEl.style.display = 'block';
             if (infoEl) infoEl.style.display = 'none';
+
+            // Check if audio context is ready
+            if (!window.audioContext) {
+                console.warn('⚠️ Audio context not ready - initializing...');
+                try {
+                    window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error('❌ Failed to create audio context');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    if (dropZone) dropZone.style.display = 'block';
+                    if (typeof showToast === 'function') {
+                        showToast('Please load a main track first', 'warning');
+                    }
+                    return;
+                }
+            }
+
+            // Initialize reference matcher if needed
+            if (!window.referenceTrackMatcher && typeof ReferenceTrackMatcher !== 'undefined') {
+                window.referenceTrackMatcher = new ReferenceTrackMatcher(window.audioContext);
+            }
 
             if (window.referenceTrackMatcher) {
                 try {
@@ -17268,23 +17312,31 @@
                     if (loadingEl) loadingEl.style.display = 'none';
                     if (infoEl) infoEl.style.display = 'block';
 
-                    // Update UI with analysis results
-                    document.getElementById('referenceName').textContent = file.name;
+                    // Update UI with analysis results (all with null checks)
+                    const nameEl = document.getElementById('referenceName');
+                    const lufsEl = document.getElementById('referenceLUFS');
+                    const drEl = document.getElementById('referenceDR');
+                    const applyBtn = document.getElementById('applyReferenceBtn');
 
-                    if (analysis && analysis.integratedLUFS !== undefined) {
-                        document.getElementById('referenceLUFS').textContent = analysis.integratedLUFS.toFixed(1);
+                    if (nameEl) nameEl.textContent = file.name.substring(0, 25) + (file.name.length > 25 ? '...' : '');
+
+                    if (analysis && analysis.integratedLUFS !== undefined && isFinite(analysis.integratedLUFS)) {
+                        if (lufsEl) lufsEl.textContent = analysis.integratedLUFS.toFixed(1);
                         const dynamicRange = analysis.dynamicRange || analysis.lra || 10;
-                        document.getElementById('referenceDR').textContent = dynamicRange.toFixed(1);
+                        if (drEl) drEl.textContent = isFinite(dynamicRange) ? dynamicRange.toFixed(1) : '--';
 
                         // Enable apply button
-                        const applyBtn = document.getElementById('applyReferenceBtn');
                         if (applyBtn) {
                             applyBtn.disabled = false;
                             applyBtn.style.opacity = '1';
                         }
 
-                        // Draw mini spectrum preview
-                        drawReferenceSpectrum(analysis);
+                        // Draw mini spectrum preview (with error handling)
+                        try {
+                            drawReferenceSpectrum(analysis);
+                        } catch (e) {
+                            console.warn('Could not draw reference spectrum:', e);
+                        }
 
                         // Show success toast
                         if (typeof showToast === 'function') {
@@ -17293,26 +17345,32 @@
 
                         console.log('✅ Reference track analyzed:', {
                             lufs: analysis.integratedLUFS.toFixed(1),
-                            dynamicRange: dynamicRange.toFixed(1),
-                            brightness: analysis.spectralCentroid?.toFixed(0) + 'Hz'
+                            dynamicRange: isFinite(dynamicRange) ? dynamicRange.toFixed(1) : 'N/A',
+                            brightness: analysis.spectralCentroid ? analysis.spectralCentroid.toFixed(0) + 'Hz' : 'N/A'
                         });
                     } else {
-                        document.getElementById('referenceLUFS').textContent = '--';
-                        document.getElementById('referenceDR').textContent = '--';
-                        console.warn('⚠️ Analysis incomplete');
+                        if (lufsEl) lufsEl.textContent = '--';
+                        if (drEl) drEl.textContent = '--';
+                        console.warn('⚠️ Analysis incomplete or invalid');
+                        if (typeof showToast === 'function') {
+                            showToast('Reference loaded but analysis incomplete', 'warning');
+                        }
                     }
                 } catch (error) {
                     console.error('❌ Error loading reference:', error);
                     if (loadingEl) loadingEl.style.display = 'none';
                     if (dropZone) dropZone.style.display = 'block';
                     if (typeof showToast === 'function') {
-                        showToast('❌ Failed to load reference track', 'error');
+                        showToast('❌ Failed to load reference: ' + (error.message || 'Unknown error'), 'error');
                     }
                 }
             } else {
-                console.error('❌ ReferenceTrackMatcher not initialized');
+                console.error('❌ ReferenceTrackMatcher not available');
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (dropZone) dropZone.style.display = 'block';
+                if (typeof showToast === 'function') {
+                    showToast('Reference matching not available - load main track first', 'warning');
+                }
             }
         }
 
@@ -21466,24 +21524,38 @@
             console.log('🎵 Loading reference track:', file.name);
 
             try {
-                // Create audio element for reference
+                // Check if audioContext exists
+                if (!window.audioContext) {
+                    console.warn('⚠️ Audio context not ready - load a main track first');
+                    if (typeof showToast === 'function') showToast('Please load a main track first', 'warning');
+                    return;
+                }
+
+                // Revoke previous URL to prevent memory leaks
+                if (window.referenceObjectURL) {
+                    URL.revokeObjectURL(window.referenceObjectURL);
+                }
+
+                // Create audio element for reference (only once)
                 if (!window.referenceAudioElement) {
                     window.referenceAudioElement = new Audio();
                     window.referenceAudioElement.crossOrigin = 'anonymous';
                 }
 
-                // Load the file
-                const url = URL.createObjectURL(file);
-                window.referenceAudioElement.src = url;
+                // Load the new file
+                window.referenceObjectURL = URL.createObjectURL(file);
+                window.referenceAudioElement.src = window.referenceObjectURL;
 
                 // Wait for load
                 await new Promise((resolve, reject) => {
                     window.referenceAudioElement.onloadedmetadata = resolve;
-                    window.referenceAudioElement.onerror = reject;
+                    window.referenceAudioElement.onerror = (e) => reject(new Error('Failed to load audio file'));
+                    // Timeout after 10 seconds
+                    setTimeout(() => reject(new Error('Load timeout')), 10000);
                 });
 
-                // Create audio nodes if needed
-                if (!window.referenceSourceNode && window.audioContext) {
+                // Create audio nodes ONLY ONCE (MediaElementSource can only be created once per element)
+                if (!window.referenceSourceNode) {
                     window.referenceSourceNode = window.audioContext.createMediaElementSource(window.referenceAudioElement);
                     window.referenceGainNode = window.audioContext.createGain();
                     window.referenceGainNode.gain.value = 0; // Start muted
@@ -21496,21 +21568,26 @@
                     if (window.analyser) {
                         window.referenceGainNode.connect(window.analyser);
                     }
+                    console.log('✅ Reference audio nodes created');
                 }
 
                 window.referenceLoaded = true;
 
-                // Update UI
-                document.getElementById('referenceToggleBtn').style.display = 'inline-flex';
-                document.getElementById('referenceInfo').style.display = 'flex';
-                document.getElementById('referenceFileName').textContent = file.name.substring(0, 30) + (file.name.length > 30 ? '...' : '');
+                // Update UI (with null checks)
+                const toggleBtn = document.getElementById('referenceToggleBtn');
+                const infoEl = document.getElementById('referenceInfo');
+                const fileNameEl = document.getElementById('referenceFileName');
+
+                if (toggleBtn) toggleBtn.style.display = 'inline-flex';
+                if (infoEl) infoEl.style.display = 'flex';
+                if (fileNameEl) fileNameEl.textContent = file.name.substring(0, 30) + (file.name.length > 30 ? '...' : '');
 
                 console.log('✅ Reference track loaded:', file.name);
                 if (typeof showToast === 'function') showToast('Reference track loaded: ' + file.name, 'success');
 
             } catch (error) {
                 console.error('❌ Failed to load reference track:', error);
-                if (typeof showToast === 'function') showToast('Failed to load reference track', 'error');
+                if (typeof showToast === 'function') showToast('Failed to load reference: ' + error.message, 'error');
             }
         };
 
