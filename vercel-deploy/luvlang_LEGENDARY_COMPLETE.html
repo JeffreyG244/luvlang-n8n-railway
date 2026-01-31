@@ -9911,22 +9911,51 @@
         }
 
         // Helper function for EQ gain compensation to prevent clipping
+        // Uses K-weighted approximation to estimate LUFS impact of EQ changes
         function applyEQGainCompensation(eqPreset) {
             const ac = window.audioContext;
             if (!ac || !window.makeupGain || window.originalMakeupGainValue === undefined) return;
 
-            const eqValues = [
-                eqPreset.sub || 0, eqPreset.bass || 0, eqPreset.lowmid || eqPreset.lowMid || 0,
-                eqPreset.mid || 0, eqPreset.highmid || eqPreset.highMid || 0,
-                eqPreset.high || 0, eqPreset.air || 0
-            ];
-            const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
-            const avgBoost = totalBoost / 3; // Weighted average
-            const compensationDB = Math.min(avgBoost * 0.7, 4); // Cap at 4dB, apply 70%
+            // K-weighting factors: how much each band contributes to LUFS
+            // Based on ITU-R BS.1770 K-weighting curve
+            const kWeights = {
+                sub: 0.1,     // 45Hz - minimal LUFS impact
+                bass: 0.3,    // 100Hz - low LUFS impact
+                lowmid: 0.5,  // 400Hz - moderate LUFS impact
+                mid: 1.0,     // 1kHz - full LUFS impact (K-weighting center)
+                highmid: 1.2, // 3.5kHz - high LUFS impact (+4dB K-weighting boost)
+                high: 0.8,    // 8kHz - moderate-high LUFS impact
+                air: 0.5      // 12kHz - moderate LUFS impact
+            };
+
+            const eqValues = {
+                sub: eqPreset.sub || 0,
+                bass: eqPreset.bass || 0,
+                lowmid: eqPreset.lowmid || eqPreset.lowMid || 0,
+                mid: eqPreset.mid || 0,
+                highmid: eqPreset.highmid || eqPreset.highMid || 0,
+                high: eqPreset.high || 0,
+                air: eqPreset.air || 0
+            };
+
+            // Calculate K-weighted total boost (only positive values contribute to loudness increase)
+            let kWeightedBoost = 0;
+            for (const band in eqValues) {
+                if (eqValues[band] > 0) {
+                    kWeightedBoost += eqValues[band] * kWeights[band];
+                }
+            }
+
+            // Compensation: reduce gain to maintain target LUFS
+            // More aggressive compensation for higher boosts
+            const compensationDB = Math.min(kWeightedBoost * 0.85, 8); // Cap at 8dB, apply 85%
             const compensationLinear = Math.pow(10, -compensationDB / 20);
             const compensatedGain = window.originalMakeupGainValue * compensationLinear;
+
             window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
-            console.log(`🎚️ EQ Compensation: -${compensationDB.toFixed(1)}dB (total boost: +${totalBoost.toFixed(1)}dB)`);
+
+            console.log(`🎚️ EQ Compensation (K-weighted): -${compensationDB.toFixed(1)}dB`);
+            console.log(`   K-weighted boost: +${kWeightedBoost.toFixed(1)}dB | Original gain: ${(20*Math.log10(window.originalMakeupGainValue)).toFixed(1)}dB | New gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
         }
 
         /**
@@ -13283,8 +13312,9 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // TRUE K-WEIGHTED LUFS WITH PROPER GATING (ITU-R BS.1770-5 COMPLIANT)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // SKIP real-time LUFS calculation if meters are locked (show stable mastered value)
-            if (kWeightedAnalyser && !metersLocked) {
+            // ALWAYS calculate real-time LUFS for Live meter (monitors actual output)
+            // Measured/Monitoring meter respects metersLocked for stable display
+            if (kWeightedAnalyser) {
                 // Get K-weighted time domain data
                 const kData = new Float32Array(kWeightedAnalyser.fftSize);
                 kWeightedAnalyser.getFloatTimeDomainData(kData);
@@ -13379,12 +13409,14 @@
                     }
 
                     // Update MEASURED LUFS (integrated average - more stable)
+                    // When metersLocked, show the locked value (stable after mastering)
+                    // Otherwise show real-time integrated LUFS
                     const measuredLufsDisplay = document.getElementById('measuredLufsValue');
                     if (measuredLufsDisplay) {
-                        // Use integrated LUFS (more stable than smoothed)
-                        measuredLufsDisplay.textContent = integratedLUFS.toFixed(1);
+                        const displayValue = (metersLocked && lockedLUFS !== null) ? lockedLUFS : integratedLUFS;
+                        measuredLufsDisplay.textContent = displayValue.toFixed(1);
                         // Color based on proximity to target
-                        const diff = Math.abs(integratedLUFS - platformTarget);
+                        const diff = Math.abs(displayValue - platformTarget);
                         if (diff <= 1) {
                             measuredLufsDisplay.style.color = '#00ff88';
                             measuredLufsDisplay.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
