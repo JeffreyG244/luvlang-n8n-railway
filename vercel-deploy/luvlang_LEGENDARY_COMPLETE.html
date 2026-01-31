@@ -9373,27 +9373,27 @@
             'jazz': [
                 {
                     name: 'Traditional',
-                    description: 'Blue Note style - Warm, vintage',
+                    description: 'Blue Note style - Bass +0.5dB, Air +0.8dB',
                     eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.3, highmid: +0.3, high: +0.5, air: +0.8 }
                 },
                 {
                     name: 'Modern Jazz',
-                    description: 'Contemporary - Clean, detailed',
+                    description: 'Contemporary - High +0.8dB, Air +1.2dB',
                     eq: { sub: 0, bass: +0.3, lowmid: 0, mid: +0.3, highmid: +0.5, high: +0.8, air: +1.2 }
                 },
                 {
                     name: 'Smooth Jazz',
-                    description: 'Easy listening - Relaxed, polished',
+                    description: 'Easy listening - Bass +0.8dB, Air +1.2dB',
                     eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.3, highmid: +0.3, high: +0.5, air: +1.2 }
                 },
                 {
                     name: 'Big Band',
-                    description: 'Full orchestra - Dynamic, powerful',
+                    description: 'Full orchestra - HighMid +0.8dB, Air +1dB',
                     eq: { sub: +0.3, bass: +0.5, lowmid: +0.5, mid: +0.5, highmid: +0.8, high: +0.8, air: +1.0 }
                 },
                 {
                     name: 'Vocal Jazz',
-                    description: 'Diana Krall style - Intimate, clear',
+                    description: 'Diana Krall style - Mid +0.8dB, HighMid +1.2dB, Air +1.5dB',
                     eq: { sub: +0.3, bass: +0.5, lowmid: 0, mid: +0.8, highmid: +1.2, high: +1.0, air: +1.5 }
                 }
             ],
@@ -9535,27 +9535,27 @@
             'neutral': [
                 {
                     name: 'Flat Reference',
-                    description: 'Zero coloration - Pure transparency',
+                    description: 'All bands 0dB - Pure transparency',
                     eq: { sub: 0, bass: 0, lowmid: 0, mid: 0, highmid: 0, high: 0, air: 0 }
                 },
                 {
                     name: 'Gentle Polish',
-                    description: 'Subtle enhancement - 0.5dB touches',
+                    description: 'Sub/Bass/High +0.5dB, Air +1dB',
                     eq: { sub: +0.5, bass: +0.5, lowmid: 0, mid: 0, highmid: +0.5, high: +0.5, air: +1.0 }
                 },
                 {
                     name: 'Broadcast Standard',
-                    description: 'EBU R128 / -23 LUFS - Broadcast-safe',
+                    description: 'EBU R128 - Sub/Bass +0.8dB, Air +1.2dB',
                     eq: { sub: +0.8, bass: +0.8, lowmid: -0.3, mid: 0, highmid: +0.8, high: +0.8, air: +1.2 }
                 },
                 {
                     name: 'Streaming Optimized',
-                    description: 'Spotify/Apple/YouTube - -14 LUFS',
+                    description: 'Spotify/Apple - Sub/Bass +1.2dB, Air +1.8dB',
                     eq: { sub: +1.2, bass: +1.2, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.2, air: +1.8 }
                 },
                 {
                     name: 'Vinyl Pre-Master',
-                    description: 'Analog cutting - Controlled dynamics',
+                    description: 'Analog ready - Sub -0.5dB, Bass +0.5dB',
                     eq: { sub: -0.5, bass: +0.5, lowmid: 0, mid: +0.3, highmid: +0.5, high: +0.3, air: +0.5 }
                 }
             ]
@@ -9854,7 +9854,7 @@
                         },
                         monoBass: 80 // Minimal mono bass
                     };
-                    console.log('  - Natural EQ, minimal processing');
+                    console.log('  - Flat EQ (0dB), High +0.5dB, Air +1dB - Natural transparency');
                     console.log('  - Light 1.5:1 compression to preserve dynamics');
                     break;
 
@@ -9865,6 +9865,8 @@
                         compression: { threshold: -24, ratio: 2.5, attack: 0.003, release: 0.15 },
                         monoBass: 100
                     };
+                    console.log('  - Flat EQ (0dB across all bands) - Zero coloration');
+                    console.log('  - Balanced 2.5:1 compression for clean limiting');
             }
 
             // Apply EQ settings with animation
