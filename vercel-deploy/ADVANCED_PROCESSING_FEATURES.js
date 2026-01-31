@@ -535,6 +535,8 @@ class EnhancedEQ {
 // 5. REFERENCE TRACK MATCHING SYSTEM
 // ============================================================================
 
+// Only declare if not already defined (reference-matching.js may define it first)
+if (typeof ReferenceTrackMatcher === 'undefined') {
 class ReferenceTrackMatcher {
     constructor(audioContext) {
         this.context = audioContext;
@@ -943,6 +945,7 @@ class ReferenceTrackMatcher {
         });
     }
 }
+} // End of ReferenceTrackMatcher conditional check
 
 // ============================================================================
 // 6. PRESET MANAGEMENT SYSTEM
