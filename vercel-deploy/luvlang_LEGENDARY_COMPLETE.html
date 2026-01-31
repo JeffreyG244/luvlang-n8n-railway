@@ -3197,6 +3197,183 @@
         <div class="ai-status-pill" id="aiStatusPill">MASTERING CHAIN</div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         🎧 FLOATING A/B COMPARE - Always visible after mastering
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div id="floatingABCompare" style="
+        display: none;
+        position: fixed;
+        top: 75px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 999;
+        background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 40, 0.98));
+        border: 1px solid rgba(0, 255, 136, 0.4);
+        border-radius: 30px;
+        padding: 8px 20px;
+        backdrop-filter: blur(20px);
+        box-shadow:
+            0 4px 20px rgba(0, 0, 0, 0.5),
+            0 0 40px rgba(0, 255, 136, 0.1);
+        transition: all 0.3s ease;
+    ">
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <span id="floatingABLabelOriginal" style="
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: rgba(255,255,255,0.5);
+                transition: all 0.3s;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            ">ORIGINAL</span>
+
+            <label style="position: relative; display: inline-block; width: 50px; height: 26px; cursor: pointer;">
+                <input type="checkbox" id="floatingABSwitch" checked onchange="handleFloatingABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                <span id="floatingABTrack" style="
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: linear-gradient(135deg, #00ff88, #00d4ff);
+                    transition: 0.3s;
+                    border-radius: 26px;
+                    border: 2px solid rgba(0, 255, 136, 0.5);
+                ">
+                    <span id="floatingABThumb" style="
+                        position: absolute;
+                        height: 18px;
+                        width: 18px;
+                        left: 3px;
+                        bottom: 2px;
+                        background-color: white;
+                        transition: 0.3s;
+                        border-radius: 50%;
+                        transform: translateX(22px);
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                    "></span>
+                </span>
+            </label>
+
+            <span id="floatingABLabelMastered" style="
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #00ff88;
+                transition: all 0.3s;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            ">MASTERED</span>
+
+            <div id="floatingABStatus" style="
+                font-size: 0.65rem;
+                color: #00ff88;
+                padding: 3px 10px;
+                background: rgba(0, 255, 136, 0.15);
+                border-radius: 12px;
+                margin-left: 6px;
+            ">Playing Mastered</div>
+        </div>
+    </div>
+
+    <style>
+        #floatingABCompare:hover {
+            border-color: rgba(0, 255, 136, 0.6);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.6),
+                0 0 50px rgba(0, 255, 136, 0.2);
+        }
+
+        #floatingABSwitch:checked + #floatingABTrack {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            border-color: rgba(0, 255, 136, 0.6);
+        }
+
+        #floatingABSwitch:not(:checked) + #floatingABTrack {
+            background: linear-gradient(135deg, #ff9a56, #ff6b35);
+            border-color: rgba(255, 154, 86, 0.6);
+        }
+
+        #floatingABSwitch:not(:checked) + #floatingABTrack #floatingABThumb {
+            transform: translateX(0);
+        }
+    </style>
+
+    <script>
+    // Floating A/B Toggle Handler - Primary A/B control
+    function handleFloatingABToggle(isMastered) {
+        if (!window.isMasteringApplied) {
+            document.getElementById('floatingABSwitch').checked = true;
+            return;
+        }
+
+        const ac = window.audioContext || window.ac;
+        const dryGain = window.dryGain;
+        const wetGain = window.wetGain;
+
+        if (!ac || !dryGain || !wetGain) {
+            console.warn('Audio nodes not ready');
+            return;
+        }
+
+        const currentTime = ac.currentTime;
+
+        if (isMastered) {
+            // Play MASTERED
+            dryGain.gain.cancelScheduledValues(currentTime);
+            wetGain.gain.cancelScheduledValues(currentTime);
+            dryGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
+            wetGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
+
+            document.getElementById('floatingABLabelOriginal').style.color = 'rgba(255,255,255,0.5)';
+            document.getElementById('floatingABLabelOriginal').style.fontWeight = '600';
+            document.getElementById('floatingABLabelMastered').style.color = '#00ff88';
+            document.getElementById('floatingABLabelMastered').style.fontWeight = '700';
+            document.getElementById('floatingABStatus').innerHTML = 'Playing Mastered';
+            document.getElementById('floatingABStatus').style.color = '#00ff88';
+            document.getElementById('floatingABStatus').style.background = 'rgba(0, 255, 136, 0.15)';
+            document.getElementById('floatingABCompare').style.borderColor = 'rgba(0, 255, 136, 0.4)';
+            console.log('🎧 A/B: Playing MASTERED');
+        } else {
+            // Play ORIGINAL
+            dryGain.gain.cancelScheduledValues(currentTime);
+            wetGain.gain.cancelScheduledValues(currentTime);
+            dryGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
+            wetGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
+
+            document.getElementById('floatingABLabelOriginal').style.color = '#ff9a56';
+            document.getElementById('floatingABLabelOriginal').style.fontWeight = '700';
+            document.getElementById('floatingABLabelMastered').style.color = 'rgba(255,255,255,0.5)';
+            document.getElementById('floatingABLabelMastered').style.fontWeight = '600';
+            document.getElementById('floatingABStatus').innerHTML = 'Playing Original';
+            document.getElementById('floatingABStatus').style.color = '#ff9a56';
+            document.getElementById('floatingABStatus').style.background = 'rgba(255, 154, 86, 0.15)';
+            document.getElementById('floatingABCompare').style.borderColor = 'rgba(255, 154, 86, 0.4)';
+            console.log('🎧 A/B: Playing ORIGINAL');
+        }
+    }
+
+    // Show floating A/B compare after mastering
+    window.showFloatingABCompare = function() {
+        const floatingAB = document.getElementById('floatingABCompare');
+        if (floatingAB) {
+            floatingAB.style.display = 'block';
+            floatingAB.style.animation = 'fadeInDown 0.4s ease';
+            console.log('✅ Floating A/B Compare now visible');
+        }
+    };
+    </script>
+
+    <style>
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+
     <!-- Tour Master Button Instruction - Appears below button during step 2 -->
     <div id="tourMasterInstruction" style="
         display: none;
@@ -3286,26 +3463,6 @@
                     <div style="text-align: center;">
                         <div style="font-size: 1.5rem; font-weight: 600; color: rgba(255,255,255,0.9); font-family: 'SF Mono', 'Monaco', monospace;" id="metricTruePeak">-1.0</div>
                         <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;">True Peak</div>
-                    </div>
-                </div>
-
-                <!-- A/B Compare Toggle -->
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 16px 20px; margin-bottom: 20px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div>
-                            <div style="font-size: 0.8rem; font-weight: 500; color: rgba(255,255,255,0.85); margin-bottom: 2px;">Compare Audio</div>
-                            <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4);">Toggle between original and mastered</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span id="toggleLabelUnmastered" style="font-size: 0.7rem; font-weight: 500; color: rgba(255,255,255,0.35); transition: all 0.2s;">A</span>
-                            <label style="position: relative; display: inline-block; width: 48px; height: 24px; cursor: pointer;">
-                                <input type="checkbox" id="audioToggleSwitch" checked onchange="handleAudioToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                                <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(92, 184, 92, 0.2); border: 1px solid rgba(92, 184, 92, 0.4); transition: 0.2s; border-radius: 4px;">
-                                    <span style="position: absolute; height: 18px; width: 18px; left: 26px; bottom: 2px; background: #5cb85c; transition: 0.2s; border-radius: 3px;"></span>
-                                </span>
-                            </label>
-                            <span id="toggleLabelMastered" style="font-size: 0.7rem; font-weight: 600; color: #5cb85c; transition: all 0.2s;">B</span>
-                        </div>
                     </div>
                 </div>
 
@@ -4061,21 +4218,6 @@
                 </div>
             </div>
 
-            <!-- PRESET MANAGER -->
-            <div class="section-title" style="margin-top: 25px;">💾 Presets</div>
-            <div style="background: rgba(184, 79, 255, 0.05); border: 1px solid rgba(184, 79, 255, 0.2); border-radius: 8px; padding: 15px;">
-                <button class="action-btn action-btn-secondary" id="savePresetBtn" disabled style="width: 100%; margin-bottom: 8px;">
-                    💾 Save Preset
-                </button>
-                <button class="action-btn action-btn-secondary" id="loadPresetBtn" disabled style="width: 100%;">
-                    📁 Load Preset
-                </button>
-
-                <div id="presetList" style="margin-top: 12px; max-height: 150px; overflow-y: auto;">
-                    <!-- Presets will be populated here -->
-                </div>
-            </div>
-
         </div>
 
         <!-- ═════════════════════════════════════════════════════════════════
@@ -4442,27 +4584,6 @@
                     <span>Master It Now</span>
                 </button>
 
-                <!-- Divider Line -->
-                <div style="width: 80%; height: 1px; background: linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent);"></div>
-
-                <!-- A/B Toggle Control - Below button -->
-                <div id="abToggleControl" style="display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0.35; pointer-events: none; transition: opacity 0.3s;" title="Master your track first to enable A/B comparison">
-                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px;">Compare Audio</div>
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <span id="abLabelOriginal" style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.4); transition: all 0.3s; min-width: 70px; text-align: right;">ORIGINAL</span>
-                        <label style="position: relative; display: inline-block; width: 56px; height: 28px; cursor: pointer;">
-                            <input type="checkbox" id="abToggleSwitch" checked onchange="handleUnifiedABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                            <span id="abToggleTrack" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); transition: 0.3s; border-radius: 28px; border: 2px solid rgba(255,255,255,0.2);">
-                                <span id="abToggleThumb" style="position: absolute; height: 20px; width: 20px; left: 4px; bottom: 2px; background-color: white; transition: 0.3s; border-radius: 50%; transform: translateX(26px); box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></span>
-                            </span>
-                        </label>
-                        <span id="abLabelMastered" style="font-size: 0.8rem; font-weight: 700; color: #00ff88; transition: all 0.3s; min-width: 70px;">MASTERED</span>
-                    </div>
-                    <!-- Status Indicator -->
-                    <div id="abStatusIndicator" style="font-size: 0.7rem; color: rgba(255,255,255,0.4); padding: 4px 12px; background: rgba(0,0,0,0.3); border-radius: 10px; margin-top: 4px;">
-                        ⏳ Upload a track to begin
-                    </div>
-                </div>
             </div>
 
             <style>
@@ -4473,21 +4594,6 @@
                 #masterItNowBtn:active {
                     transform: scale(0.98);
                 }
-                #abToggleSwitch:checked + #abToggleTrack {
-                    background: linear-gradient(135deg, #00ff88, #00d4ff);
-                    border-color: #00ff88;
-                }
-                #abToggleSwitch:not(:checked) + #abToggleTrack {
-                    background: rgba(255,154,86,0.4);
-                    border-color: #ff9a56;
-                }
-                #abToggleSwitch:not(:checked) + #abToggleTrack #abToggleThumb {
-                    transform: translateX(0);
-                }
-                .master-control-bar.mastered #abToggleControl {
-                    opacity: 1 !important;
-                    pointer-events: auto !important;
-                }
                 .master-control-bar.mastered #masterItNowBtn {
                     background: linear-gradient(135deg, #00ff88, #00d4ff);
                 }
@@ -4497,54 +4603,6 @@
             </style>
 
             <script>
-            // Unified A/B Toggle Handler
-            function handleUnifiedABToggle(isMastered) {
-                if (!window.isMasteringApplied) {
-                    // Reset toggle if not mastered
-                    document.getElementById('abToggleSwitch').checked = true;
-                    return;
-                }
-
-                const ac = window.audioContext || window.ac;
-                const dryGain = window.dryGain;
-                const wetGain = window.wetGain;
-
-                if (!ac || !dryGain || !wetGain) {
-                    console.warn('Audio nodes not ready');
-                    return;
-                }
-
-                const currentTime = ac.currentTime;
-
-                if (isMastered) {
-                    // Play MASTERED
-                    dryGain.gain.cancelScheduledValues(currentTime);
-                    wetGain.gain.cancelScheduledValues(currentTime);
-                    dryGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
-                    wetGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
-
-                    document.getElementById('abLabelOriginal').style.color = 'rgba(255,255,255,0.5)';
-                    document.getElementById('abLabelOriginal').style.fontWeight = '600';
-                    document.getElementById('abLabelMastered').style.color = '#00ff88';
-                    document.getElementById('abLabelMastered').style.fontWeight = '700';
-                    document.getElementById('abStatusIndicator').innerHTML = '🎧 Playing <strong style="color:#00ff88">MASTERED</strong>';
-                    console.log('🎧 A/B Toggle: Playing MASTERED');
-                } else {
-                    // Play ORIGINAL
-                    dryGain.gain.cancelScheduledValues(currentTime);
-                    wetGain.gain.cancelScheduledValues(currentTime);
-                    dryGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
-                    wetGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
-
-                    document.getElementById('abLabelOriginal').style.color = '#ff9a56';
-                    document.getElementById('abLabelOriginal').style.fontWeight = '700';
-                    document.getElementById('abLabelMastered').style.color = 'rgba(255,255,255,0.5)';
-                    document.getElementById('abLabelMastered').style.fontWeight = '600';
-                    document.getElementById('abStatusIndicator').innerHTML = '🎧 Playing <strong style="color:#ff9a56">ORIGINAL</strong>';
-                    console.log('🎧 A/B Toggle: Playing ORIGINAL');
-                }
-            }
-
             // Show master control bar when audio loads
             function showMasterControlBar() {
                 const bar = document.getElementById('masterControlBar');
@@ -4553,28 +4611,19 @@
                 }
             }
 
-            // Enable A/B toggle after mastering completes
+            // Enable A/B toggle after mastering completes (now just updates master button style)
             function enableABToggle() {
                 const bar = document.getElementById('masterControlBar');
-                const toggle = document.getElementById('abToggleControl');
-                const status = document.getElementById('abStatusIndicator');
-
                 if (bar) bar.classList.add('mastered');
-                if (toggle) {
-                    toggle.style.opacity = '1';
-                    toggle.style.pointerEvents = 'auto';
-                    toggle.title = 'Toggle between Original and Mastered audio';
-                }
-                if (status) {
-                    status.innerHTML = '🎧 Playing <strong style="color:#00ff88">MASTERED</strong>';
-                }
 
-                // Ensure toggle is set to mastered
-                const abSwitch = document.getElementById('abToggleSwitch');
-                if (abSwitch) abSwitch.checked = true;
+                // Ensure floating toggle is set to mastered
+                const floatingSwitch = document.getElementById('floatingABSwitch');
+                if (floatingSwitch) floatingSwitch.checked = true;
 
-                // Trigger the toggle to ensure audio is routed correctly
-                handleUnifiedABToggle(true);
+                // Show the floating A/B compare
+                if (typeof window.showFloatingABCompare === 'function') {
+                    window.showFloatingABCompare();
+                }
             }
 
             // Hook into existing audio load event
@@ -5828,50 +5877,59 @@
                 // Tames problem frequencies automatically without affecting the rest
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                // Low band (80-300Hz) - Controls bass mud
+                // ═══════════════════════════════════════════════════════════════════════════
+                // PROFESSIONAL DYNAMIC EQ - FabFilter Pro-Q / Ozone Style
+                // Uses frequency-targeted compression for surgical problem-solving
+                // Each band: Filter → Sidechain Detector → Compressor → Output
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // Low band (60-200Hz) - Bass mud/boom control
+                // Centered at 120Hz (common problem area for muddy mixes)
                 const dynEqLowFilter = audioContext.createBiquadFilter();
                 const dynEqLowComp = audioContext.createDynamicsCompressor();
                 const dynEqLowGain = audioContext.createGain();
-                dynEqLowFilter.type = 'peaking';
-                dynEqLowFilter.frequency.value = 150;
-                dynEqLowFilter.Q.value = 1.5;
+                dynEqLowFilter.type = 'lowshelf';   // Lowshelf catches all bass content
+                dynEqLowFilter.frequency.value = 120;
+                dynEqLowFilter.Q.value = 0.707;     // Butterworth for smooth rolloff
                 dynEqLowFilter.gain.value = 0;
-                dynEqLowComp.threshold.value = -18;  // Very high threshold = only catches peaks
-                dynEqLowComp.ratio.value = 1.5;     // Ultra-gentle ratio
-                dynEqLowComp.attack.value = 0.030;  // 30ms attack = very musical, no artifacts
-                dynEqLowComp.release.value = 0.25;  // 250ms release = smooth, no pumping
-                dynEqLowComp.knee.value = 10;       // Soft knee for transparency
-                dynEqLowGain.gain.value = 0;        // Starts disabled - enable via toggle
+                dynEqLowComp.threshold.value = -24;  // Pro threshold for bass control
+                dynEqLowComp.ratio.value = 2.0;      // Moderate ratio - controls boom without killing punch
+                dynEqLowComp.attack.value = 0.020;   // 20ms - preserves transient attack
+                dynEqLowComp.release.value = 0.200;  // 200ms - musical release, no pumping
+                dynEqLowComp.knee.value = 6;         // Medium knee for natural response
+                dynEqLowGain.gain.value = 0;
 
-                // Mid band (800Hz-3kHz) - Controls harshness/honk
+                // Mid band (1-4kHz) - Harshness/presence control
+                // Centered at 2.5kHz (Fletcher-Munson sensitive range, vocal presence)
                 const dynEqMidFilter = audioContext.createBiquadFilter();
                 const dynEqMidComp = audioContext.createDynamicsCompressor();
                 const dynEqMidGain = audioContext.createGain();
                 dynEqMidFilter.type = 'peaking';
-                dynEqMidFilter.frequency.value = 2000;
-                dynEqMidFilter.Q.value = 2.0;
+                dynEqMidFilter.frequency.value = 2500;  // Presence/harshness sweet spot
+                dynEqMidFilter.Q.value = 0.8;           // Wide Q covers 1-5kHz harshness range
                 dynEqMidFilter.gain.value = 0;
-                dynEqMidComp.threshold.value = -15;  // Very high threshold = only harsh peaks
-                dynEqMidComp.ratio.value = 1.5;     // Ultra-gentle ratio
-                dynEqMidComp.attack.value = 0.025;  // 25ms attack = catches harshness without artifacts
-                dynEqMidComp.release.value = 0.20;  // 200ms release = smooth
-                dynEqMidComp.knee.value = 10;       // Soft knee for transparency
-                dynEqMidGain.gain.value = 0;        // Starts disabled - enable via toggle
+                dynEqMidComp.threshold.value = -22;  // Catches harsh peaks effectively
+                dynEqMidComp.ratio.value = 2.5;      // Moderate-firm ratio for harshness taming
+                dynEqMidComp.attack.value = 0.010;   // 10ms - fast enough for transient harshness
+                dynEqMidComp.release.value = 0.150;  // 150ms - responsive but smooth
+                dynEqMidComp.knee.value = 4;         // Medium-hard knee for precise control
+                dynEqMidGain.gain.value = 0;
 
-                // High band (5kHz-12kHz) - Controls sibilance/brightness
+                // High band (6-12kHz) - De-esser / Sibilance control
+                // Centered at 7kHz (primary sibilance range for vocals)
                 const dynEqHighFilter = audioContext.createBiquadFilter();
                 const dynEqHighComp = audioContext.createDynamicsCompressor();
                 const dynEqHighGain = audioContext.createGain();
-                dynEqHighFilter.type = 'peaking';
-                dynEqHighFilter.frequency.value = 8000;
-                dynEqHighFilter.Q.value = 1.5;
+                dynEqHighFilter.type = 'highshelf';  // Highshelf catches all HF content
+                dynEqHighFilter.frequency.value = 7000;
+                dynEqHighFilter.Q.value = 0.707;     // Butterworth for smooth response
                 dynEqHighFilter.gain.value = 0;
-                dynEqHighComp.threshold.value = -18;  // High threshold = only sibilance peaks
-                dynEqHighComp.ratio.value = 2.0;    // Gentle ratio for de-essing
-                dynEqHighComp.attack.value = 0.015; // 15ms attack = catches sibilance smoothly
-                dynEqHighComp.release.value = 0.15; // 150ms release = fast enough for consonants
-                dynEqHighComp.knee.value = 8;       // Medium-soft knee
-                dynEqHighGain.gain.value = 0;       // Starts disabled - enable via toggle
+                dynEqHighComp.threshold.value = -26;  // Catches sibilance spikes
+                dynEqHighComp.ratio.value = 3.0;      // Firm ratio - sibilance needs control
+                dynEqHighComp.attack.value = 0.003;   // 3ms - FAST for catching sibilance "s" sounds
+                dynEqHighComp.release.value = 0.100;  // 100ms - fast release for consonants
+                dynEqHighComp.knee.value = 3;         // Harder knee for precise de-essing
+                dynEqHighGain.gain.value = 0;
 
                 // Dynamic EQ input/output
                 const dynEqInput = audioContext.createGain();
@@ -5930,14 +5988,15 @@
                         }
                     },
                     enable: () => {
-                        // Very subtle mix: 75% dry + 25% wet for maximum transparency
-                        // Gain staging: 0.75 + 0.10 + 0.08 + 0.07 = 1.0
-                        dynEqDry.gain.value = 0.75;   // 75% original signal
-                        dynEqLowGain.gain.value = 0.10;  // Subtle bass control
-                        dynEqMidGain.gain.value = 0.08;  // Very subtle mid control
-                        dynEqHighGain.gain.value = 0.07; // Light de-essing
+                        // Professional parallel compression mix
+                        // 60% dry + 40% wet for effective but transparent dynamic EQ
+                        // Gain staging: 0.60 + 0.15 + 0.13 + 0.12 = 1.0
+                        dynEqDry.gain.value = 0.60;      // 60% original signal
+                        dynEqLowGain.gain.value = 0.15;  // Bass control (loudest band)
+                        dynEqMidGain.gain.value = 0.13;  // Harshness control
+                        dynEqHighGain.gain.value = 0.12; // De-essing
                         window.dynamicEQ.enabled = true;
-                        console.log('✅ Dynamic EQ enabled (ultra-transparent mode: 75% dry / 25% wet)');
+                        console.log('✅ Dynamic EQ enabled (professional mode: 60% dry / 40% wet)');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
@@ -7387,9 +7446,26 @@
                     value: 1.0, // 1 = mono, 0 = uncorrelated, -1 = out of phase
                     history: [],
                     maxHistoryLength: 100,
+                    lastIdleState: false, // Track idle state for reset
 
                     // Calculate correlation coefficient
                     calculate: () => {
+                        // Check if audio is actually playing
+                        const audioEl = document.querySelector('audio');
+                        const isPlaying = audioEl && !audioEl.paused && !audioEl.ended && audioEl.currentTime > 0;
+
+                        // If not playing, reset to idle state
+                        if (!isPlaying) {
+                            if (!window.stereoCorrelation.lastIdleState) {
+                                window.stereoCorrelation.history = [];
+                                window.stereoCorrelation.lastIdleState = true;
+                            }
+                            window.stereoCorrelation.value = null; // null = idle
+                            return null; // Signal "no signal" state
+                        }
+
+                        window.stereoCorrelation.lastIdleState = false;
+
                         const bufferLength = correlationAnalyserL.fftSize;
                         const dataL = new Float32Array(bufferLength);
                         const dataR = new Float32Array(bufferLength);
@@ -8008,8 +8084,6 @@
             // Enable controls
             document.getElementById('resetBtn').disabled = false;
             document.getElementById('exportBtn').disabled = false;
-            document.getElementById('savePresetBtn').disabled = false;
-            document.getElementById('loadPresetBtn').disabled = false;
 
             // Enable sidebar toggle
             if (typeof enableSidebarToggle === 'function') {
@@ -12241,6 +12315,10 @@
 
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (!window.PERFORMANCE_MODE && window.drawStereoMeter && leftAnalyser && rightAnalyser) {
+                    // Check if audio is playing for stereo meter idle state
+                    const stereoAudioEl = document.querySelector('audio');
+                    const stereoIsPlaying = stereoAudioEl && !stereoAudioEl.paused && !stereoAudioEl.ended && stereoAudioEl.currentTime > 0;
+
                     // Get time domain data for peak metering (reuse pre-allocated arrays)
                     if (!drawLeftTimeDomain || drawLeftTimeDomain.length !== leftAnalyser.fftSize) {
                         drawLeftTimeDomain = new Float32Array(leftAnalyser.fftSize);
@@ -12251,14 +12329,21 @@
                     leftAnalyser.getFloatTimeDomainData(drawLeftTimeDomain);
                     rightAnalyser.getFloatTimeDomainData(drawRightTimeDomain);
 
-                    // Calculate RMS levels
-                    let leftSum = 0, rightSum = 0;
-                    for (let i = 0; i < drawLeftTimeDomain.length; i++) {
-                        leftSum += drawLeftTimeDomain[i] * drawLeftTimeDomain[i];
-                        rightSum += drawRightTimeDomain[i] * drawRightTimeDomain[i];
+                    // Calculate RMS levels (or use 0 if not playing)
+                    let leftLevel = 0, rightLevel = 0;
+                    if (stereoIsPlaying) {
+                        let leftSum = 0, rightSum = 0;
+                        for (let i = 0; i < drawLeftTimeDomain.length; i++) {
+                            leftSum += drawLeftTimeDomain[i] * drawLeftTimeDomain[i];
+                            rightSum += drawRightTimeDomain[i] * drawRightTimeDomain[i];
+                        }
+                        leftLevel = Math.sqrt(leftSum / drawLeftTimeDomain.length);
+                        rightLevel = Math.sqrt(rightSum / drawRightTimeDomain.length);
+                    } else {
+                        // Reset peak holds when audio stops
+                        window.leftPeakHoldObj = { level: -Infinity, time: 0 };
+                        window.rightPeakHoldObj = { level: -Infinity, time: 0 };
                     }
-                    const leftLevel = Math.sqrt(leftSum / drawLeftTimeDomain.length);
-                    const rightLevel = Math.sqrt(rightSum / drawRightTimeDomain.length);
 
                     // Initialize peak hold objects if needed
                     if (!window.leftPeakHoldObj) window.leftPeakHoldObj = { level: -Infinity, time: 0 };
@@ -12270,12 +12355,34 @@
 
                     // ═══ GONIOMETER (Phase Correlation Scope) ═══
                     if (window.drawGoniometer && goniometerCanvas) {
-                        window.drawGoniometer(goniometerCanvas, drawLeftTimeDomain, drawRightTimeDomain);
+                        // Pass empty arrays when audio is not playing for clean idle state
+                        if (stereoIsPlaying) {
+                            window.drawGoniometer(goniometerCanvas, drawLeftTimeDomain, drawRightTimeDomain);
+                        } else {
+                            // Clear goniometer when audio stops
+                            const gCtx = goniometerCanvas.getContext('2d');
+                            if (gCtx) {
+                                const gW = goniometerCanvas.width || goniometerCanvas.offsetWidth;
+                                const gH = goniometerCanvas.height || goniometerCanvas.offsetHeight;
+                                gCtx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+                                gCtx.fillRect(0, 0, gW, gH);
+                                // Draw idle crosshairs
+                                gCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                                gCtx.lineWidth = 1;
+                                gCtx.beginPath();
+                                gCtx.moveTo(gW/2, 0); gCtx.lineTo(gW/2, gH);
+                                gCtx.moveTo(0, gH/2); gCtx.lineTo(gW, gH/2);
+                                gCtx.stroke();
+                            }
+                        }
                     }
 
                     // ═══ CORRELATION HEATMAP (ELITE FEATURE - TOP 1%) ═══
                     if (window.drawCorrelationHeatmap && correlationHeatmapCanvas && audioContext) {
-                        window.drawCorrelationHeatmap(correlationHeatmapCanvas, leftAnalyser, rightAnalyser, audioContext);
+                        // Only draw heatmap when audio is playing
+                        if (stereoIsPlaying) {
+                            window.drawCorrelationHeatmap(correlationHeatmapCanvas, leftAnalyser, rightAnalyser, audioContext);
+                        }
                     }
                 }
 
@@ -13348,6 +13455,11 @@
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 // PEAK DISPLAY - Always update (uses locked value if meters locked)
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                // Check if audio is playing for peak meter idle state
+                const peakAudioEl = document.querySelector('audio');
+                const peakIsPlaying = peakAudioEl && !peakAudioEl.paused && !peakAudioEl.ended && peakAudioEl.currentTime > 0;
+
                 // Use locked peak if meters are locked, otherwise use smoothed real-time peak
                 const displayPeak = metersLocked && lockedPeak !== null ? lockedPeak : smoothedPeak;
 
@@ -13355,15 +13467,21 @@
                 const peakValueElement = document.getElementById('peakValue');
 
                 if (peakValueElement) {
-                    peakValueElement.textContent = displayPeak.toFixed(1);
-
-                    // Dynamic color coding based on peak level (matches compliance badge thresholds)
-                    if (displayPeak >= 0.0) {
-                        peakValueElement.style.color = '#ff3333'; // Red (clipping!)
-                    } else if (displayPeak >= -0.5) {
-                        peakValueElement.style.color = '#ffaa00'; // Orange (hot - approaching clip)
+                    // Show idle state when audio is not playing
+                    if (!peakIsPlaying && !metersLocked) {
+                        peakValueElement.textContent = '-∞';
+                        peakValueElement.style.color = 'rgba(255,255,255,0.4)';
                     } else {
-                        peakValueElement.style.color = '#00ff88'; // Green (broadcast safe)
+                        peakValueElement.textContent = displayPeak.toFixed(1);
+
+                        // Dynamic color coding based on peak level (matches compliance badge thresholds)
+                        if (displayPeak >= 0.0) {
+                            peakValueElement.style.color = '#ff3333'; // Red (clipping!)
+                        } else if (displayPeak >= -0.5) {
+                            peakValueElement.style.color = '#ffaa00'; // Orange (hot - approaching clip)
+                        } else {
+                            peakValueElement.style.color = '#00ff88'; // Green (broadcast safe)
+                        }
                     }
                 }
 
@@ -13614,6 +13732,22 @@
                 const correlationCardEl = document.getElementById('correlationMeterCard');
 
                 if (correlationValueEl) {
+                    // Handle idle state (no audio playing)
+                    if (correlation === null) {
+                        correlationValueEl.textContent = '--';
+                        correlationValueEl.style.color = 'rgba(255,255,255,0.4)';
+                        correlationValueEl.style.textShadow = 'none';
+                        if (correlationStatusEl) {
+                            correlationStatusEl.textContent = 'Idle';
+                            correlationStatusEl.style.color = 'rgba(255,255,255,0.4)';
+                        }
+                        if (correlationBarEl) {
+                            correlationBarEl.style.transform = 'translateX(0%)'; // Center position
+                        }
+                        if (correlationCardEl) {
+                            correlationCardEl.style.borderColor = 'rgba(255,255,255,0.15)';
+                        }
+                    } else {
                     // Format: +0.00 to +1.00 or -1.00 to -0.01
                     const sign = correlation >= 0 ? '+' : '';
                     correlationValueEl.textContent = sign + correlation.toFixed(2);
@@ -13665,6 +13799,7 @@
                     if (correlationCardEl) {
                         correlationCardEl.style.borderColor = borderColor;
                     }
+                    } // End else (audio playing)
                 }
             }
 
@@ -15726,65 +15861,7 @@
             }
         });
 
-        // PRESET MANAGER
-        document.getElementById('savePresetBtn').addEventListener('click', () => {
-            if (window.presetManager) {
-                const name = prompt('Enter preset name:');
-                if (name) {
-                    const state = {
-                        eq: {
-                            sub: eqSubFilter ? eqSubFilter.gain.value : 0,
-                            bass: eqBassFilter ? eqBassFilter.gain.value : 0,
-                            lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
-                            mid: eqMidFilter ? eqMidFilter.gain.value : 0,
-                            highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
-                            high: eqHighFilter ? eqHighFilter.gain.value : 0,
-                            air: eqAirFilter ? eqAirFilter.gain.value : 0
-                        },
-                        compression: parseInt(document.getElementById('compSlider').value),
-                        width: parseInt(document.getElementById('widthSlider').value),
-                        limiter: parseFloat(document.getElementById('limiterSlider').value),
-                        gain: parseFloat(document.getElementById('outputGainSlider').value)
-                    };
-                    window.presetManager.savePreset(name, state);
-                    console.log('💾 Preset saved:', name);
-                    alert('Preset "' + name + '" saved!');
-                    updatePresetList();
-                }
-            }
-        });
-
-        document.getElementById('loadPresetBtn').addEventListener('click', () => {
-            if (window.presetManager) {
-                const presets = window.presetManager.getPresets();
-                if (presets.length === 0) {
-                    alert('No presets saved yet. Save one first!');
-                    return;
-                }
-                const list = presets.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-                const choice = prompt('Enter preset number to load:\n\n' + list);
-                if (choice) {
-                    const index = parseInt(choice) - 1;
-                    if (index >= 0 && index < presets.length) {
-                        const state = window.presetManager.loadPreset(presets[index].name);
-                        applyPresetState(state);
-                        console.log('📁 Preset loaded:', presets[index].name);
-                        alert('Preset "' + presets[index].name + '" loaded!');
-                    }
-                }
-            }
-        });
-
-        function updatePresetList() {
-            if (window.presetManager) {
-                const list = document.getElementById('presetList');
-                const presets = window.presetManager.getPresets();
-                list.innerHTML = presets.length === 0 ?
-                    '<div style="font-size: 0.75rem; opacity: 0.5; padding: 8px;">No presets saved</div>' :
-                    presets.map(p => `<div style="font-size: 0.75rem; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">🎵 ${p.name}</div>`).join('');
-            }
-        }
-
+        // Apply preset state (used by genre EQ presets)
         function applyPresetState(state) {
             if (state.eq) {
                 if (eqSubFilter) eqSubFilter.gain.value = state.eq.sub;
@@ -17499,22 +17576,37 @@
                 console.log('\n📍 STAGE 3: DYNAMIC EQ');
 
                 if (window.dynamicEQ) {
-                    // 10. Dynamic EQ - Intensity-adaptive frequency-dependent compression
-                    // Lower thresholds at higher intensities for more dynamic control
+                    // 10. Dynamic EQ - Professional intensity-adaptive thresholds
+                    // Based on iZotope Ozone / FabFilter Pro-Q dynamic band standards
+                    // Lower thresholds = more compression, higher intensity catches more peaks
                     const dynEQThresholds = {
-                        1: { low: -16, mid: -14, high: -12 },  // Subtle - less compression
-                        2: { low: -18, mid: -16, high: -14 },  // Light
-                        3: { low: -20, mid: -18, high: -16 },  // Balanced - standard
-                        4: { low: -22, mid: -20, high: -18 },  // Aggressive
-                        5: { low: -24, mid: -22, high: -20 }   // Maximum - tight control
+                        1: { low: -20, mid: -18, high: -22 },  // Subtle - catches only extreme peaks
+                        2: { low: -22, mid: -20, high: -24 },  // Light - gentle problem-solving
+                        3: { low: -24, mid: -22, high: -26 },  // Balanced - standard mastering
+                        4: { low: -26, mid: -24, high: -28 },  // Aggressive - tight control
+                        5: { low: -28, mid: -26, high: -30 }   // Maximum - broadcast-style limiting
+                    };
+                    // Intensity-adaptive ratios for more effective compression at higher levels
+                    const dynEQRatios = {
+                        1: { low: 1.5, mid: 1.8, high: 2.0 },  // Subtle
+                        2: { low: 1.8, mid: 2.0, high: 2.5 },  // Light
+                        3: { low: 2.0, mid: 2.5, high: 3.0 },  // Balanced
+                        4: { low: 2.5, mid: 3.0, high: 3.5 },  // Aggressive
+                        5: { low: 3.0, mid: 3.5, high: 4.0 }   // Maximum
                     };
                     const dynThresh = dynEQThresholds[intensity] || dynEQThresholds[3];
+                    const dynRatios = dynEQRatios[intensity] || dynEQRatios[3];
 
                     if (window.dynamicEQ.bands) {
+                        // Set thresholds
                         window.dynamicEQ.bands.low.comp.threshold.value = dynThresh.low;
                         window.dynamicEQ.bands.mid.comp.threshold.value = dynThresh.mid;
                         window.dynamicEQ.bands.high.comp.threshold.value = dynThresh.high;
-                        console.log(`  ✓ 10. Dynamic EQ: Low(${dynThresh.low}dB), Mid(${dynThresh.mid}dB), High(${dynThresh.high}dB) thresholds (intensity ${intensity})`);
+                        // Set ratios
+                        window.dynamicEQ.bands.low.comp.ratio.value = dynRatios.low;
+                        window.dynamicEQ.bands.mid.comp.ratio.value = dynRatios.mid;
+                        window.dynamicEQ.bands.high.comp.ratio.value = dynRatios.high;
+                        console.log(`  ✓ 10. Dynamic EQ: Low(${dynThresh.low}dB/${dynRatios.low}:1), Mid(${dynThresh.mid}dB/${dynRatios.mid}:1), High(${dynThresh.high}dB/${dynRatios.high}:1) (intensity ${intensity})`);
                     }
                 }
 
@@ -18336,6 +18428,11 @@
                 exportBarAbBtn.classList.add('active');
             }
 
+            // Show floating A/B compare widget
+            if (typeof window.showFloatingABCompare === 'function') {
+                window.showFloatingABCompare();
+            }
+
             // Show status text
             const statusText = document.getElementById('abStatusText');
             if (statusText) {
@@ -18345,31 +18442,10 @@
                 statusText.style.display = 'block';
             }
 
-            // Set the overlay toggle switch to MASTERED
-            const audioToggle = document.getElementById('audioToggleSwitch');
-            if (audioToggle) {
-                audioToggle.checked = true; // MASTERED
-            }
-            const labelUnmastered = document.getElementById('toggleLabelUnmastered');
-            const labelMastered = document.getElementById('toggleLabelMastered');
-            const toggleStatusText = document.getElementById('toggleStatusText');
-            if (labelUnmastered) {
-                labelUnmastered.style.color = 'rgba(255,255,255,0.5)';
-                labelUnmastered.style.fontWeight = '600';
-            }
-            if (labelMastered) {
-                labelMastered.style.color = '#ff9a56';
-                labelMastered.style.fontWeight = '700';
-            }
-            if (toggleStatusText) {
-                toggleStatusText.textContent = '▶ Playing Mastered Track';
-                toggleStatusText.style.color = '#ff9a56';
-            }
-
-            // Set the sidebar toggle to MASTERED
-            const sidebarToggle = document.getElementById('sidebarAudioToggle');
-            if (sidebarToggle) {
-                sidebarToggle.checked = true; // MASTERED
+            // Set the floating A/B toggle to MASTERED
+            const floatingSwitch = document.getElementById('floatingABSwitch');
+            if (floatingSwitch) {
+                floatingSwitch.checked = true; // MASTERED
                 sidebarToggle.disabled = false; // Enable it
                 const sidebarTrack = document.getElementById('sidebarToggleTrack');
                 if (sidebarTrack) sidebarTrack.style.opacity = '1';
@@ -19100,30 +19176,51 @@
             applyABState();
         };
 
-        // Update the visual state of the A/B modal
+        // Update the visual state of the floating A/B toggle
         function updateABModalState() {
-            const megaSwitch = document.getElementById('abMegaSwitch');
-            const labelOriginal = document.getElementById('abLabelOriginal');
-            const labelMastered = document.getElementById('abLabelMastered');
-            const currentState = document.getElementById('abCurrentState');
+            const floatingSwitch = document.getElementById('floatingABSwitch');
+            const floatingLabelOriginal = document.getElementById('floatingABLabelOriginal');
+            const floatingLabelMastered = document.getElementById('floatingABLabelMastered');
+            const floatingStatus = document.getElementById('floatingABStatus');
+            const floatingContainer = document.getElementById('floatingABCompare');
 
             if (window.abCompareMode) {
                 // Original mode
-                if (megaSwitch) megaSwitch.classList.remove('mastered');
-                if (labelOriginal) labelOriginal.classList.add('active');
-                if (labelMastered) labelMastered.classList.remove('active');
-                if (currentState) {
-                    currentState.textContent = 'Playing: ORIGINAL';
-                    currentState.style.color = '#ffd700';
+                if (floatingSwitch) floatingSwitch.checked = false;
+                if (floatingLabelOriginal) {
+                    floatingLabelOriginal.style.color = '#ff9a56';
+                    floatingLabelOriginal.style.fontWeight = '700';
+                }
+                if (floatingLabelMastered) {
+                    floatingLabelMastered.style.color = 'rgba(255,255,255,0.5)';
+                    floatingLabelMastered.style.fontWeight = '600';
+                }
+                if (floatingStatus) {
+                    floatingStatus.innerHTML = 'Playing Original';
+                    floatingStatus.style.color = '#ff9a56';
+                    floatingStatus.style.background = 'rgba(255, 154, 86, 0.15)';
+                }
+                if (floatingContainer) {
+                    floatingContainer.style.borderColor = 'rgba(255, 154, 86, 0.4)';
                 }
             } else {
                 // Mastered mode
-                if (megaSwitch) megaSwitch.classList.add('mastered');
-                if (labelOriginal) labelOriginal.classList.remove('active');
-                if (labelMastered) labelMastered.classList.add('active');
-                if (currentState) {
-                    currentState.textContent = 'Playing: MASTERED';
-                    currentState.style.color = '#00ff88';
+                if (floatingSwitch) floatingSwitch.checked = true;
+                if (floatingLabelOriginal) {
+                    floatingLabelOriginal.style.color = 'rgba(255,255,255,0.5)';
+                    floatingLabelOriginal.style.fontWeight = '600';
+                }
+                if (floatingLabelMastered) {
+                    floatingLabelMastered.style.color = '#00ff88';
+                    floatingLabelMastered.style.fontWeight = '700';
+                }
+                if (floatingStatus) {
+                    floatingStatus.innerHTML = 'Playing Mastered';
+                    floatingStatus.style.color = '#00ff88';
+                    floatingStatus.style.background = 'rgba(0, 255, 136, 0.15)';
+                }
+                if (floatingContainer) {
+                    floatingContainer.style.borderColor = 'rgba(0, 255, 136, 0.4)';
                 }
             }
         }
@@ -19269,54 +19366,30 @@
                 statusText.style.display = 'block';
             }
 
-            // Sync the overlay toggle switch
-            const audioToggle = document.getElementById('audioToggleSwitch');
-            if (audioToggle) {
-                audioToggle.checked = !isActive; // checked = MASTERED
-                // Update toggle labels
-                const labelUnmastered = document.getElementById('toggleLabelUnmastered');
-                const labelMastered = document.getElementById('toggleLabelMastered');
-                const toggleStatusText = document.getElementById('toggleStatusText');
-                if (labelUnmastered) {
-                    labelUnmastered.style.color = isActive ? '#ffffff' : 'rgba(255,255,255,0.5)';
-                    labelUnmastered.style.fontWeight = isActive ? '700' : '600';
-                }
-                if (labelMastered) {
-                    labelMastered.style.color = isActive ? 'rgba(255,255,255,0.5)' : '#ff9a56';
-                    labelMastered.style.fontWeight = isActive ? '600' : '700';
-                }
-                if (toggleStatusText) {
-                    toggleStatusText.textContent = isActive ? '▶ Playing Unmastered Track' : '▶ Playing Mastered Track';
-                    toggleStatusText.style.color = isActive ? '#ffffff' : '#ff9a56';
-                }
+            // Sync the floating A/B toggle
+            const floatingSwitch = document.getElementById('floatingABSwitch');
+            if (floatingSwitch) {
+                floatingSwitch.checked = !isActive; // checked = MASTERED
             }
-
-            // Sync the sidebar toggle switch
-            const sidebarToggle = document.getElementById('sidebarAudioToggle');
-            if (sidebarToggle) {
-                sidebarToggle.checked = !isActive; // checked = MASTERED
-                const sidebarLabelUnmastered = document.getElementById('sidebarLabelUnmastered');
-                const sidebarLabelMastered = document.getElementById('sidebarLabelMastered');
-                const sidebarStatusText = document.getElementById('sidebarStatusText');
-                const sidebarToggleThumb = document.getElementById('sidebarToggleThumb');
-                const sidebarToggleTrack = document.getElementById('sidebarToggleTrack');
-                if (sidebarLabelUnmastered) {
-                    sidebarLabelUnmastered.style.color = isActive ? '#ffffff' : 'rgba(255,255,255,0.5)';
-                    sidebarLabelUnmastered.style.fontWeight = isActive ? '700' : '600';
-                }
-                if (sidebarLabelMastered) {
-                    sidebarLabelMastered.style.color = isActive ? 'rgba(255,255,255,0.5)' : '#ff9a56';
-                    sidebarLabelMastered.style.fontWeight = isActive ? '600' : '700';
-                }
-                if (sidebarStatusText) {
-                    sidebarStatusText.textContent = isActive ? '▶ Playing Unmastered Track' : '▶ Playing Mastered Track';
-                    sidebarStatusText.style.color = isActive ? '#ffffff' : '#ff9a56';
-                }
-                if (sidebarToggleThumb) {
-                    sidebarToggleThumb.style.transform = isActive ? 'translateX(0)' : 'translateX(28px)';
-                }
-                if (sidebarToggleTrack) {
-                    sidebarToggleTrack.style.background = isActive ? 'rgba(255,255,255,0.3)' : 'linear-gradient(135deg, #ff9a56, #ff5733)';
+            // Update floating toggle UI through handleFloatingABToggle visual updates
+            if (typeof handleFloatingABToggle === 'function') {
+                // Just update visuals, audio routing is handled below
+                const floatingLabelOriginal = document.getElementById('floatingABLabelOriginal');
+                const floatingLabelMastered = document.getElementById('floatingABLabelMastered');
+                const floatingStatus = document.getElementById('floatingABStatus');
+                const floatingContainer = document.getElementById('floatingABCompare');
+                if (isActive) {
+                    // Original mode
+                    if (floatingLabelOriginal) { floatingLabelOriginal.style.color = '#ff9a56'; floatingLabelOriginal.style.fontWeight = '700'; }
+                    if (floatingLabelMastered) { floatingLabelMastered.style.color = 'rgba(255,255,255,0.5)'; floatingLabelMastered.style.fontWeight = '600'; }
+                    if (floatingStatus) { floatingStatus.innerHTML = 'Playing Original'; floatingStatus.style.color = '#ff9a56'; floatingStatus.style.background = 'rgba(255, 154, 86, 0.15)'; }
+                    if (floatingContainer) { floatingContainer.style.borderColor = 'rgba(255, 154, 86, 0.4)'; }
+                } else {
+                    // Mastered mode
+                    if (floatingLabelOriginal) { floatingLabelOriginal.style.color = 'rgba(255,255,255,0.5)'; floatingLabelOriginal.style.fontWeight = '600'; }
+                    if (floatingLabelMastered) { floatingLabelMastered.style.color = '#00ff88'; floatingLabelMastered.style.fontWeight = '700'; }
+                    if (floatingStatus) { floatingStatus.innerHTML = 'Playing Mastered'; floatingStatus.style.color = '#00ff88'; floatingStatus.style.background = 'rgba(0, 255, 136, 0.15)'; }
+                    if (floatingContainer) { floatingContainer.style.borderColor = 'rgba(0, 255, 136, 0.4)'; }
                 }
             }
 
@@ -20090,10 +20163,10 @@
                 if (typeof showToast === 'function') showToast('▶ Playing Unmastered Track', 'info');
             }
 
-            // Sync overlay toggle if visible
-            const overlayToggle = document.getElementById('audioToggleSwitch');
-            if (overlayToggle) {
-                overlayToggle.checked = isMastered;
+            // Sync floating A/B toggle if visible
+            const floatingToggle = document.getElementById('floatingABSwitch');
+            if (floatingToggle) {
+                floatingToggle.checked = isMastered;
             }
 
             // Start playback if not playing
