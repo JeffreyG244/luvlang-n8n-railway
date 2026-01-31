@@ -498,6 +498,135 @@ class ReferenceTrackMatcher {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     /**
+     * Load and analyze reference track from File object
+     * @param {File} file - Audio file to load as reference
+     * @returns {Promise<Object>} Analysis results
+     */
+    async loadReferenceTrack(file) {
+        console.log('[Reference Matcher] Loading reference file:', file.name);
+
+        try {
+            // Read file as ArrayBuffer
+            const arrayBuffer = await file.arrayBuffer();
+
+            // Decode audio data
+            const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+            console.log('[Reference Matcher] Reference decoded:', {
+                duration: audioBuffer.duration.toFixed(2) + 's',
+                sampleRate: audioBuffer.sampleRate + 'Hz',
+                channels: audioBuffer.numberOfChannels
+            });
+
+            // Store the reference buffer for later use
+            this.referenceBuffer = audioBuffer;
+            this.referenceFileName = file.name;
+
+            // Analyze the reference track
+            const analysis = await this.analyzeReference(audioBuffer);
+
+            return analysis;
+        } catch (error) {
+            console.error('[Reference Matcher] Failed to load reference:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Apply reference matching to the current track
+     * @param {AudioBuffer} targetBuffer - Your track to match
+     * @param {number} strength - Match strength 0-1
+     */
+    async applyMatch(targetBuffer, strength = 0.7) {
+        if (!this.referenceAnalysis) {
+            console.error('[Reference Matcher] No reference loaded');
+            return null;
+        }
+
+        this.setMatchStrength(strength);
+
+        // Analyze target
+        await this.analyzeTarget(targetBuffer);
+
+        // Generate matching recommendations
+        const report = this.getMatchingReport();
+
+        // Apply EQ adjustments to the live processing chain
+        if (report.eqCurve && window.audioContext) {
+            this.applyEQToChain(report.eqCurve);
+        }
+
+        // Apply loudness recommendation
+        if (report.loudness && report.loudness.adjustment !== 0) {
+            this.applyLoudnessAdjustment(report.loudness.adjustment);
+        }
+
+        console.log('[Reference Matcher] Match applied at', (strength * 100).toFixed(0) + '% strength');
+        console.log('[Reference Matcher] Report:', report);
+
+        return report;
+    }
+
+    /**
+     * Apply EQ curve to the live processing chain
+     */
+    applyEQToChain(eqCurve) {
+        if (!eqCurve) return;
+
+        const ac = window.audioContext;
+        if (!ac) return;
+
+        // Map EQ curve bands to our 7-band EQ
+        const bandMapping = {
+            sub: { freq: 45, bands: eqCurve.filter(b => b.frequency <= 60) },
+            bass: { freq: 100, bands: eqCurve.filter(b => b.frequency > 60 && b.frequency <= 150) },
+            lowMid: { freq: 400, bands: eqCurve.filter(b => b.frequency > 150 && b.frequency <= 600) },
+            mid: { freq: 1000, bands: eqCurve.filter(b => b.frequency > 600 && b.frequency <= 1500) },
+            highMid: { freq: 3500, bands: eqCurve.filter(b => b.frequency > 1500 && b.frequency <= 5000) },
+            high: { freq: 8000, bands: eqCurve.filter(b => b.frequency > 5000 && b.frequency <= 12000) },
+            air: { freq: 14000, bands: eqCurve.filter(b => b.frequency > 12000) }
+        };
+
+        // Apply averaged gains to each band
+        for (const [band, data] of Object.entries(bandMapping)) {
+            if (data.bands.length > 0) {
+                const avgGain = data.bands.reduce((sum, b) => sum + b.gain, 0) / data.bands.length;
+                const clampedGain = Math.max(-6, Math.min(6, avgGain)); // Limit to ±6dB for safety
+
+                const filterName = `eq${band.charAt(0).toUpperCase() + band.slice(1)}Filter`;
+                const filter = window[filterName];
+
+                if (filter && filter.gain) {
+                    filter.gain.setTargetAtTime(clampedGain, ac.currentTime, 0.1);
+                    console.log(`[Reference Matcher] ${band}: ${clampedGain.toFixed(1)}dB`);
+                }
+            }
+        }
+
+        console.log('[Reference Matcher] EQ curve applied to processing chain');
+    }
+
+    /**
+     * Apply loudness adjustment
+     */
+    applyLoudnessAdjustment(adjustment) {
+        const ac = window.audioContext;
+        if (!ac || !window.makeupGain) return;
+
+        // Limit adjustment to reasonable range
+        const clampedAdj = Math.max(-6, Math.min(6, adjustment));
+        const linearGain = Math.pow(10, clampedAdj / 20);
+
+        // Get current gain and multiply
+        const currentGain = window.makeupGain.gain.value;
+        const newGain = currentGain * linearGain;
+
+        window.makeupGain.gain.setTargetAtTime(newGain, ac.currentTime, 0.1);
+
+        console.log('[Reference Matcher] Loudness adjusted by', clampedAdj.toFixed(1), 'dB');
+    }
+
+    /**
      * Set match strength (0-1)
      */
     setMatchStrength(strength) {

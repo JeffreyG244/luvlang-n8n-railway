@@ -4124,32 +4124,110 @@
             <button id="abCompareBtn" style="display: none;"></button>
             <button id="resetBtn" style="display: none;"></button>
 
-            <!-- REFERENCE TRACK MATCHING -->
-            <div class="section-title" style="margin-top: 25px;">📂 Reference Track</div>
-            <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 8px; padding: 15px;">
-                <input type="file" id="referenceFileInput" accept="audio/*" style="display: none;">
-                <button class="action-btn action-btn-secondary" id="loadReferenceBtn" style="width: 100%; margin-bottom: 10px;">
-                    📁 Load Reference Track
-                </button>
+            <!-- REFERENCE TRACK MATCHING - STATE OF THE ART -->
+            <div class="section-title" style="margin-top: 25px;">🎯 Reference Match</div>
+            <div id="referenceTrackSection" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(184, 79, 255, 0.05) 100%); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 12px; padding: 16px; position: relative; overflow: hidden;">
+                <!-- Subtle glow effect -->
+                <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, transparent 60%); pointer-events: none;"></div>
 
-                <div id="referenceInfo" style="display: none; margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">
-                    <div id="referenceName" style="margin-bottom: 5px; color: #00d4ff;"></div>
-                    <div>Target: <span id="referenceLUFS" style="color: #00ff88;">--</span></div>
-                    <div>DR: <span id="referenceDR" style="color: #00ff88;">--</span></div>
+                <!-- Drop zone / Load button -->
+                <input type="file" id="referenceFileInput" accept="audio/*" style="display: none;">
+                <div id="referenceDropZone" style="
+                    border: 2px dashed rgba(0, 212, 255, 0.3);
+                    border-radius: 10px;
+                    padding: 20px 15px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    background: rgba(0, 0, 0, 0.2);
+                    position: relative;
+                " onclick="document.getElementById('referenceFileInput').click();"
+                   ondragover="event.preventDefault(); this.style.borderColor='#00d4ff'; this.style.background='rgba(0, 212, 255, 0.1)';"
+                   ondragleave="this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.background='rgba(0, 0, 0, 0.2)';"
+                   ondrop="event.preventDefault(); this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.background='rgba(0, 0, 0, 0.2)'; handleReferenceDrop(event);">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">🎵</div>
+                    <div style="font-size: 0.8rem; font-weight: 600; color: #00d4ff; margin-bottom: 4px;">Drop Reference Track</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">or click to browse</div>
+                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35); margin-top: 8px;">Match your master to a commercial release</div>
                 </div>
 
-                <button class="action-btn action-btn-primary" id="applyReferenceBtn" disabled style="width: 100%; margin-top: 10px;">
-                    ✨ Apply Reference Match
-                </button>
-
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 0.75rem; opacity: 0.7;">Match Strength</label>
-                    <input type="range" id="matchStrengthSlider" min="0" max="100" value="80" style="width: 100%; margin-top: 5px;">
-                    <div style="text-align: center; font-size: 0.75rem; margin-top: 5px; color: #00d4ff;">
-                        <span id="matchStrengthValue">80%</span>
+                <!-- Reference Info (shown after loading) -->
+                <div id="referenceInfo" style="display: none; margin-top: 14px;">
+                    <!-- Track name with icon -->
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px; background: rgba(0, 212, 255, 0.1); border-radius: 8px;">
+                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">🎧</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div id="referenceName" style="font-size: 0.75rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Reference loaded</div>
+                        </div>
+                        <button onclick="clearReference()" style="background: rgba(255,100,100,0.2); border: none; color: #ff6b6b; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" title="Remove reference">×</button>
                     </div>
+
+                    <!-- Analysis Results -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+                        <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div id="referenceLUFS" style="font-size: 1.1rem; font-weight: 700; color: #00ff88; font-family: 'SF Mono', monospace;">--</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Target LUFS</div>
+                        </div>
+                        <div style="background: rgba(184, 79, 255, 0.1); border: 1px solid rgba(184, 79, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center;">
+                            <div id="referenceDR" style="font-size: 1.1rem; font-weight: 700; color: #b84fff; font-family: 'SF Mono', monospace;">--</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Dynamic Range</div>
+                        </div>
+                    </div>
+
+                    <!-- Mini spectrum comparison preview -->
+                    <div id="referenceSpectrumPreview" style="height: 40px; background: rgba(0,0,0,0.3); border-radius: 6px; margin-bottom: 14px; overflow: hidden; position: relative;">
+                        <canvas id="referenceSpectrumCanvas" width="300" height="40" style="width: 100%; height: 100%;"></canvas>
+                        <div style="position: absolute; bottom: 2px; right: 4px; font-size: 0.5rem; color: rgba(255,255,255,0.3);">SPECTRAL MATCH</div>
+                    </div>
+
+                    <!-- Match Strength Slider -->
+                    <div style="margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label style="font-size: 0.7rem; color: rgba(255,255,255,0.7);">Match Intensity</label>
+                            <span id="matchStrengthValue" style="font-size: 0.75rem; font-weight: 600; color: #00d4ff;">80%</span>
+                        </div>
+                        <input type="range" id="matchStrengthSlider" min="0" max="100" value="80" style="width: 100%; height: 6px; -webkit-appearance: none; background: linear-gradient(90deg, rgba(0,212,255,0.3), rgba(184,79,255,0.3)); border-radius: 3px; cursor: pointer;">
+                    </div>
+
+                    <!-- Apply Button -->
+                    <button class="action-btn action-btn-primary" id="applyReferenceBtn" disabled style="
+                        width: 100%;
+                        padding: 12px;
+                        background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
+                        border: none;
+                        border-radius: 8px;
+                        color: #fff;
+                        font-size: 0.8rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        opacity: 0.5;
+                    " onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 15px rgba(0,212,255,0.3)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                        ✨ Match to Reference
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="referenceLoading" style="display: none; text-align: center; padding: 20px;">
+                    <div style="width: 30px; height: 30px; border: 3px solid rgba(0,212,255,0.2); border-top-color: #00d4ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">Analyzing reference...</div>
                 </div>
             </div>
+            <style>
+                @keyframes spin { to { transform: rotate(360deg); } }
+                #matchStrengthSlider::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    background: linear-gradient(135deg, #00d4ff, #b84fff);
+                    border-radius: 50%;
+                    cursor: pointer;
+                    box-shadow: 0 2px 6px rgba(0,212,255,0.4);
+                }
+                #applyReferenceBtn:not(:disabled) { opacity: 1; }
+                #applyReferenceBtn:not(:disabled):hover { background: linear-gradient(135deg, #00e5ff 0%, #c96fff 100%); }
+            </style>
 
         </div>
 
@@ -15674,54 +15752,143 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         // REFERENCE TRACK MATCHING
-        document.getElementById('loadReferenceBtn').addEventListener('click', () => {
-            document.getElementById('referenceFileInput').click();
-        });
+        // ═══════════════════════════════════════════════════════════════════
+        // REFERENCE TRACK - STATE OF THE ART MATCHING SYSTEM
+        // ═══════════════════════════════════════════════════════════════════
 
-        document.getElementById('referenceFileInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        // Handle drag and drop for reference track
+        window.handleReferenceDrop = function(event) {
+            const files = event.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('audio/')) {
+                processReferenceFile(files[0]);
+            }
+        };
 
+        // Clear reference track
+        window.clearReference = function() {
+            if (window.referenceTrackMatcher) {
+                window.referenceTrackMatcher.clearReference();
+            }
+            document.getElementById('referenceInfo').style.display = 'none';
+            document.getElementById('referenceDropZone').style.display = 'block';
+            document.getElementById('applyReferenceBtn').disabled = true;
+            document.getElementById('referenceLUFS').textContent = '--';
+            document.getElementById('referenceDR').textContent = '--';
+            console.log('🗑️ Reference track cleared');
+        };
+
+        // Process reference file (used by both file input and drag/drop)
+        async function processReferenceFile(file) {
             console.log('📂 Loading reference track:', file.name);
-            document.getElementById('referenceName').textContent = '🎵 ' + file.name;
-            document.getElementById('referenceInfo').style.display = 'block';
+
+            // Show loading state
+            const dropZone = document.getElementById('referenceDropZone');
+            const loadingEl = document.getElementById('referenceLoading');
+            const infoEl = document.getElementById('referenceInfo');
+
+            if (dropZone) dropZone.style.display = 'none';
+            if (loadingEl) loadingEl.style.display = 'block';
+            if (infoEl) infoEl.style.display = 'none';
 
             if (window.referenceTrackMatcher) {
                 try {
-                    // FIXED: Use correct method name 'loadReferenceTrack' instead of 'loadReference'
                     await window.referenceTrackMatcher.loadReferenceTrack(file);
-
-                    // FIXED: Access referenceAnalysis property directly (it's not a method)
                     const analysis = window.referenceTrackMatcher.referenceAnalysis;
 
+                    // Hide loading, show info
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    if (infoEl) infoEl.style.display = 'block';
+
+                    // Update UI with analysis results
+                    document.getElementById('referenceName').textContent = file.name;
+
                     if (analysis && analysis.integratedLUFS !== undefined) {
-                        document.getElementById('referenceLUFS').textContent = analysis.integratedLUFS.toFixed(1) + ' LUFS';
+                        document.getElementById('referenceLUFS').textContent = analysis.integratedLUFS.toFixed(1);
+                        const dynamicRange = analysis.dynamicRange || analysis.lra || 10;
+                        document.getElementById('referenceDR').textContent = dynamicRange.toFixed(1);
 
-                        // Calculate dynamic range from LRA (Loudness Range)
-                        const dynamicRange = analysis.lra || analysis.dynamicRange || 10;
-                        document.getElementById('referenceDR').textContent = dynamicRange.toFixed(1) + ' dB';
+                        // Enable apply button
+                        const applyBtn = document.getElementById('applyReferenceBtn');
+                        if (applyBtn) {
+                            applyBtn.disabled = false;
+                            applyBtn.style.opacity = '1';
+                        }
 
-                        // Enable the apply button now that analysis is complete
-                        document.getElementById('applyReferenceBtn').disabled = false;
+                        // Draw mini spectrum preview
+                        drawReferenceSpectrum(analysis);
 
-                        console.log('✅ Reference track loaded and analyzed successfully');
-                        console.log('   LUFS:', analysis.integratedLUFS.toFixed(1));
-                        console.log('   Dynamic Range:', dynamicRange.toFixed(1), 'dB');
+                        // Show success toast
+                        if (typeof showToast === 'function') {
+                            showToast(`🎯 Reference loaded: ${analysis.integratedLUFS.toFixed(1)} LUFS`, 'success');
+                        }
+
+                        console.log('✅ Reference track analyzed:', {
+                            lufs: analysis.integratedLUFS.toFixed(1),
+                            dynamicRange: dynamicRange.toFixed(1),
+                            brightness: analysis.spectralCentroid?.toFixed(0) + 'Hz'
+                        });
                     } else {
-                        console.warn('⚠️ Analysis completed but no LUFS data available');
-                        document.getElementById('referenceLUFS').textContent = '-- LUFS';
-                        document.getElementById('referenceDR').textContent = '-- dB';
+                        document.getElementById('referenceLUFS').textContent = '--';
+                        document.getElementById('referenceDR').textContent = '--';
+                        console.warn('⚠️ Analysis incomplete');
                     }
                 } catch (error) {
-                    console.error('❌ Error loading reference track:', error);
-                    alert('Error loading reference track. Please try another file.');
-                    document.getElementById('referenceInfo').style.display = 'none';
-                    document.getElementById('applyReferenceBtn').disabled = true;
+                    console.error('❌ Error loading reference:', error);
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    if (dropZone) dropZone.style.display = 'block';
+                    if (typeof showToast === 'function') {
+                        showToast('❌ Failed to load reference track', 'error');
+                    }
                 }
             } else {
                 console.error('❌ ReferenceTrackMatcher not initialized');
-                alert('Reference track system not initialized. Please refresh the page.');
+                if (loadingEl) loadingEl.style.display = 'none';
+                if (dropZone) dropZone.style.display = 'block';
             }
+        }
+
+        // Draw mini spectrum preview for reference
+        function drawReferenceSpectrum(analysis) {
+            const canvas = document.getElementById('referenceSpectrumCanvas');
+            if (!canvas || !analysis || !analysis.bandLevels) return;
+
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw gradient background
+            const bgGrad = ctx.createLinearGradient(0, 0, width, 0);
+            bgGrad.addColorStop(0, 'rgba(0, 212, 255, 0.1)');
+            bgGrad.addColorStop(1, 'rgba(184, 79, 255, 0.1)');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw frequency bars
+            const bands = analysis.bandLevels;
+            const barWidth = width / bands.length;
+
+            const grad = ctx.createLinearGradient(0, 0, width, 0);
+            grad.addColorStop(0, '#00d4ff');
+            grad.addColorStop(0.5, '#00ff88');
+            grad.addColorStop(1, '#b84fff');
+
+            ctx.fillStyle = grad;
+
+            bands.forEach((band, i) => {
+                const normalizedLevel = Math.max(0, Math.min(1, (band.level + 60) / 60));
+                const barHeight = normalizedLevel * height * 0.8;
+                const x = i * barWidth;
+                const y = height - barHeight;
+                ctx.fillRect(x, y, barWidth - 1, barHeight);
+            });
+        }
+
+        // File input change handler
+        document.getElementById('referenceFileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) processReferenceFile(file);
         });
 
         document.getElementById('applyReferenceBtn').addEventListener('click', () => {
