@@ -5843,6 +5843,18 @@
                         console.log('✅ Professional Mastering Engine initialized');
                     }
 
+                    // ✨ LINEAR PHASE EQ: Initialize for transparent M/S processing
+                    if (typeof LinearPhaseEQ !== 'undefined') {
+                        window.linearPhaseEQ = new LinearPhaseEQ(audioContext);
+                        console.log('✅ Linear Phase EQ initialized (latency: ' + window.linearPhaseEQ.getLatencyMs().toFixed(0) + 'ms)');
+                    }
+
+                    // ✨ REFERENCE MATCHING: Initialize reference track analyzer
+                    if (typeof ReferenceTrackMatcher !== 'undefined') {
+                        window.referenceMatcher = new ReferenceTrackMatcher(audioContext);
+                        console.log('✅ Reference Track Matcher initialized');
+                    }
+
                     // ✨ ADVANCED: Initialize Advanced Processors
                     if (typeof AdvancedLimiter !== 'undefined') {
                         window.advancedLimiter = new AdvancedLimiter(audioContext);
@@ -16155,6 +16167,8 @@
     <!-- Advanced Processing Modules -->
     <script src="multiband-compression.js"></script>
     <script src="ms-processing.js"></script>
+    <script src="linear-phase-eq.js"></script>
+    <script src="reference-matching.js"></script>
     <script src="keyboard-shortcuts.js"></script>
     <script src="undo-redo-manager.js"></script>
     <!-- OLD INTEGRATION SCRIPTS - REPLACED BY INTEGRATION_SCRIPT_FIXED.js
