@@ -6053,6 +6053,7 @@
         let currentIntegratedLUFS = -70; // Current measured integrated LUFS
         let currentTruePeak = 0; // Current measured true peak in dBTP
         let originalInputLUFS = null; // Store original file's LUFS for accurate loudness matching
+        let originalInputPeakDB = -3; // Store original file's true peak in dBTP for peak protection
 
         // ═══════════════════════════════════════════════════════════════════════════
         // BROADCAST-GRADE SMOOTHING (Asymmetric attack/release for professional feel)
@@ -9125,9 +9126,13 @@
                 }
                 if (analysisResults.maxPeak && isFinite(analysisResults.maxPeak)) {
                     currentTruePeak = 20 * Math.log10(analysisResults.maxPeak);
+                    // Store original peak for peak protection during LUFS targeting
+                    originalInputPeakDB = currentTruePeak;
+                    window.originalInputPeakDB = currentTruePeak;
                 }
                 console.log('✅ Initial values: LUFS =', currentIntegratedLUFS.toFixed(1), ', Peak =', currentTruePeak.toFixed(1), 'dBTP');
                 console.log('📊 Original Input LUFS stored:', originalInputLUFS !== null ? originalInputLUFS.toFixed(1) : 'N/A', 'LUFS (for loudness matching)');
+                console.log('📊 Original Input Peak stored:', originalInputPeakDB.toFixed(1), 'dBTP (for peak protection)');
 
                 // Display results in UI (analysis only, no fixes)
                 displayAnalysisResults(analysisResults);
@@ -19613,10 +19618,38 @@
 
                 // Safety margin: aim 0.5 dB BELOW target to prevent exceeding
                 const safetyMarginDB = 0.5;
-                const gainAdjustmentDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
+                const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
                 console.log(`   Chain compensation: +${chainCompensationDB}dB | Safety: -${safetyMarginDB}dB`);
+                console.log(`   LUFS gain needed: ${lufsGainNeededDB >= 0 ? '+' : ''}${lufsGainNeededDB.toFixed(1)} dB`);
+
+                // ════════════════════════════════════════════════════════════════════════════
+                // PEAK PROTECTION - BOB LUDWIG APPROACH
+                // Never let peaks exceed limiter threshold, even when boosting for LUFS
+                // Use minimum of (LUFS-needed gain) and (peak-safe gain)
+                // ════════════════════════════════════════════════════════════════════════════
+                const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
+                const peakTargetBeforeLimiter = -1.5; // Trust limiter to catch peaks above this
+                const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
+
+                let gainAdjustmentDB = lufsGainNeededDB;
+                let peakProtectionApplied = false;
+
+                // Only limit gain when boosting (gain > 0) and peak would exceed target
+                if (lufsGainNeededDB > 0) {
+                    const expectedPeakAfterGain = originalPeakDB + lufsGainNeededDB;
+                    if (expectedPeakAfterGain > peakTargetBeforeLimiter) {
+                        // Peak protection needed
+                        gainAdjustmentDB = maxPeakSafeGainDB;
+                        peakProtectionApplied = true;
+                        console.log(`⚠️  PEAK PROTECTION ACTIVE:`);
+                        console.log(`   Original peak: ${originalPeakDB.toFixed(1)} dBTP`);
+                        console.log(`   Peak after LUFS gain: ${expectedPeakAfterGain.toFixed(1)} dBTP (would clip!)`);
+                        console.log(`   Max safe gain: ${maxPeakSafeGainDB >= 0 ? '+' : ''}${maxPeakSafeGainDB.toFixed(1)} dB`);
+                        console.log(`   Limiting gain from ${lufsGainNeededDB.toFixed(1)} dB to ${gainAdjustmentDB.toFixed(1)} dB`);
+                    }
+                }
 
                 // Conservative clamp range (-6 to +10 dB) for professional results
                 const clampedGainDB = Math.max(-6, Math.min(10, gainAdjustmentDB));
@@ -19627,13 +19660,17 @@
                 if (mkGain && ac) {
                     mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
                     console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
-                    console.log(`   Makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB`);
+                    console.log(`   Makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB${peakProtectionApplied ? ' (peak-limited)' : ''}`);
+                    console.log(`   Final peak estimate: ${(originalPeakDB + clampedGainDB).toFixed(1)} dBTP (safe < -1.0 dBTP)`);
                 }
 
                 // Store for debugging
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
                     targetLUFS: targetLUFS,
+                    originalPeakDB: originalPeakDB,
+                    lufsGainNeededDB: lufsGainNeededDB,
+                    peakProtectionApplied: peakProtectionApplied,
                     makeupGainDB: clampedGainDB
                 };
 
