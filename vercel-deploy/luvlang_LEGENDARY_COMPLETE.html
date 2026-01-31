@@ -1689,26 +1689,30 @@
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .left-sidebar::-webkit-scrollbar,
         .center-main::-webkit-scrollbar,
-        .right-sidebar::-webkit-scrollbar {
+        .right-sidebar::-webkit-scrollbar,
+        #genrePresetsGrid::-webkit-scrollbar {
             width: 8px;
         }
 
         .left-sidebar::-webkit-scrollbar-track,
         .center-main::-webkit-scrollbar-track,
-        .right-sidebar::-webkit-scrollbar-track {
+        .right-sidebar::-webkit-scrollbar-track,
+        #genrePresetsGrid::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.2);
         }
 
         .left-sidebar::-webkit-scrollbar-thumb,
         .center-main::-webkit-scrollbar-thumb,
-        .right-sidebar::-webkit-scrollbar-thumb {
+        .right-sidebar::-webkit-scrollbar-thumb,
+        #genrePresetsGrid::-webkit-scrollbar-thumb {
             background: rgba(0, 212, 255, 0.3);
             border-radius: 10px;
         }
 
         .left-sidebar::-webkit-scrollbar-thumb:hover,
         .center-main::-webkit-scrollbar-thumb:hover,
-        .right-sidebar::-webkit-scrollbar-thumb:hover {
+        .right-sidebar::-webkit-scrollbar-thumb:hover,
+        #genrePresetsGrid::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 212, 255, 0.5);
         }
 
@@ -4144,7 +4148,7 @@
                         </div>
                     </div>
 
-                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: 1fr; gap: 6px;">
+                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
                         <!-- Preset buttons will be populated here -->
                     </div>
                 </div>
