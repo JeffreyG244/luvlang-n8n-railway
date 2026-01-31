@@ -3487,130 +3487,18 @@
         }
     </style>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-         WORLD-CLASS MASTERING RESULTS DASHBOARD
-         Premium results presentation with visual proof of improvement
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="mastering-complete-overlay" id="masteringCompleteOverlay" style="display: none;">
-        <div class="mastering-complete-card">
-            <!-- Clean Header -->
-            <div style="background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #5cb85c; box-shadow: 0 0 8px rgba(92, 184, 92, 0.6);"></div>
-                    <span style="font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; color: rgba(255,255,255,0.7); text-transform: uppercase;">Ready</span>
-                </div>
-                <button onclick="closeMasteringComplete()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center;">&times;</button>
-            </div>
-
-            <!-- Main Content -->
-            <div style="padding: 32px 28px;">
-                <!-- Title Section -->
-                <div style="text-align: center; margin-bottom: 28px;">
-                    <h2 style="font-size: 1.4rem; font-weight: 500; letter-spacing: 0.02em; color: rgba(255,255,255,0.95); margin: 0 0 8px 0;">Your Master is Ready</h2>
-                    <p style="color: rgba(255,255,255,0.4); font-size: 0.8rem; margin: 0;">Compare, fine-tune, or export your track</p>
-                </div>
-
-                <!-- Key Stats - Clean Row -->
-                <div style="display: flex; justify-content: center; gap: 32px; margin-bottom: 28px; padding: 20px 0; border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06);">
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: #fff; font-family: 'SF Mono', 'Monaco', monospace;" id="metricFinalLUFS">-14.0</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;">LUFS</div>
-                    </div>
-                    <div style="width: 1px; background: rgba(255,255,255,0.08);"></div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: #5cb85c; font-family: 'SF Mono', 'Monaco', monospace;" id="metricLoudnessGain">+4.2 dB</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;">Gain</div>
-                    </div>
-                    <div style="width: 1px; background: rgba(255,255,255,0.08);"></div>
-                    <div style="text-align: center;">
-                        <div style="font-size: 1.5rem; font-weight: 600; color: rgba(255,255,255,0.9); font-family: 'SF Mono', 'Monaco', monospace;" id="metricTruePeak">-1.0</div>
-                        <div style="font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;">True Peak</div>
-                    </div>
-                </div>
-
-                <!-- Hidden elements for compatibility -->
-                <div id="toggleStatusText" style="display: none;">Playing Mastered Track</div>
-                <div id="metricClarity" style="display: none;">+18%</div>
-                <div id="metricWidth" style="display: none;">+12%</div>
-                <div id="qualityGradeBadge" style="display: none;">A+</div>
-                <div id="genreBadge" style="display: none;">POP</div>
-                <canvas id="beforeAfterSpectrum" width="1" height="1" style="display: none;"></canvas>
-                <div id="processorsGrid" style="display: none;"></div>
-
-                <!-- Action Buttons -->
-                <div style="display: flex; gap: 12px;">
-                    <button onclick="closeMasteringComplete()" style="
-                        flex: 1;
-                        padding: 14px 20px;
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.08);
-                        border-radius: 6px;
-                        color: rgba(255,255,255,0.7);
-                        font-size: 0.75rem;
-                        font-weight: 500;
-                        letter-spacing: 0.05em;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                    " onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
-                        Fine-Tune
-                    </button>
-                    <button onclick="goToExport()" style="
-                        flex: 1;
-                        padding: 14px 20px;
-                        background: #5cb85c;
-                        border: none;
-                        border-radius: 6px;
-                        color: #fff;
-                        font-size: 0.75rem;
-                        font-weight: 600;
-                        letter-spacing: 0.05em;
-                        cursor: pointer;
-                        transition: all 0.2s;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    " onmouseover="this.style.background='#4ca84c'" onmouseout="this.style.background='#5cb85c'">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Export
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        .processor-chip {
-            background: rgba(92, 184, 92, 0.08);
-            border: 1px solid rgba(92, 184, 92, 0.2);
-            padding: 4px 6px;
-            border-radius: 3px;
-            color: rgba(143, 217, 143, 0.8);
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 0.55rem;
-            letter-spacing: 0.02em;
-        }
-        /* Audio Toggle Switch Styles */
-        .audio-toggle-switch input:checked + .toggle-slider {
-            background: linear-gradient(135deg, #ff9a56, #ff5733);
-        }
-        .audio-toggle-switch input:not(:checked) + .toggle-slider {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        .audio-toggle-switch input:checked + .toggle-slider span {
-            transform: translateX(36px);
-        }
-        .audio-toggle-switch input:not(:checked) + .toggle-slider span {
-            transform: translateX(0);
-        }
-    </style>
+    <!-- Hidden elements for metrics compatibility -->
+    <div id="masteringCompleteOverlay" style="display: none;"></div>
+    <div id="toggleStatusText" style="display: none;">Playing Mastered Track</div>
+    <div id="metricClarity" style="display: none;">+18%</div>
+    <div id="metricWidth" style="display: none;">+12%</div>
+    <div id="metricFinalLUFS" style="display: none;">-14.0</div>
+    <div id="metricLoudnessGain" style="display: none;">+4.2 dB</div>
+    <div id="metricTruePeak" style="display: none;">-1.0</div>
+    <div id="qualityGradeBadge" style="display: none;">A+</div>
+    <div id="genreBadge" style="display: none;">POP</div>
+    <canvas id="beforeAfterSpectrum" width="1" height="1" style="display: none;"></canvas>
+    <div id="processorsGrid" style="display: none;"></div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
          PRE-MASTERING GENRE SELECTION - Real-time audio preview
@@ -20897,24 +20785,6 @@
                 drawSpectrumComparison();
             }, 100);
 
-            // Animate processor chips
-            const chips = document.querySelectorAll('.processor-chip');
-            chips.forEach((chip, index) => {
-                chip.style.opacity = '0';
-                chip.style.transform = 'scale(0.8)';
-                setTimeout(() => {
-                    chip.style.transition = 'all 0.3s ease';
-                    chip.style.opacity = '1';
-                    chip.style.transform = 'scale(1)';
-                }, index * 50);
-            });
-
-            // Show the overlay
-            const overlay = document.getElementById('masteringCompleteOverlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
-
             console.log('🏆 Mastering Results:', {
                 grade: grade.grade,
                 loudnessGain: `+${loudnessGain.toFixed(1)} dB`,
@@ -20922,6 +20792,15 @@
                 width: `+${widthPercent}%`,
                 finalLUFS: afterLUFS.toFixed(1)
             });
+
+            // Skip overlay - go straight to interface with export bar and genre presets
+            // Show toast notification instead
+            if (typeof showToast === 'function') {
+                showToast(`✨ Master complete! ${grade.grade} Grade • ${afterLUFS.toFixed(1)} LUFS`, 'success');
+            }
+
+            // Show the export bar
+            closeMasteringComplete();
         };
 
         // Show guide step
