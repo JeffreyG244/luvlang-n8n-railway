@@ -3199,35 +3199,38 @@
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
          🎧 FLOATING A/B COMPARE - Always visible after mastering
+         Premium styling to match master button
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <div id="floatingABCompare" style="
+    <div id="floatingABCompare" class="floating-ab-compare" style="
         display: none;
         position: fixed;
-        top: 75px;
+        top: 90px;
         left: 50%;
         transform: translateX(-50%);
         z-index: 999;
         background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 40, 0.98));
-        border: 1px solid rgba(0, 255, 136, 0.4);
-        border-radius: 30px;
-        padding: 8px 20px;
+        border: 2px solid rgba(0, 255, 136, 0.5);
+        border-radius: 50px;
+        padding: 12px 28px;
         backdrop-filter: blur(20px);
         box-shadow:
-            0 4px 20px rgba(0, 0, 0, 0.5),
-            0 0 40px rgba(0, 255, 136, 0.1);
+            0 8px 32px rgba(0, 0, 0, 0.6),
+            0 0 60px rgba(0, 255, 136, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
     ">
-        <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 18px;">
             <span id="floatingABLabelOriginal" style="
-                font-size: 0.75rem;
-                font-weight: 600;
+                font-size: 0.9rem;
+                font-weight: 700;
                 color: rgba(255,255,255,0.5);
                 transition: all 0.3s;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 1px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             ">ORIGINAL</span>
 
-            <label style="position: relative; display: inline-block; width: 50px; height: 26px; cursor: pointer;">
+            <label style="position: relative; display: inline-block; width: 60px; height: 32px; cursor: pointer;">
                 <input type="checkbox" id="floatingABSwitch" checked onchange="handleFloatingABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
                 <span id="floatingABTrack" style="
                     position: absolute;
@@ -3235,60 +3238,95 @@
                     top: 0; left: 0; right: 0; bottom: 0;
                     background: linear-gradient(135deg, #00ff88, #00d4ff);
                     transition: 0.3s;
-                    border-radius: 26px;
-                    border: 2px solid rgba(0, 255, 136, 0.5);
+                    border-radius: 32px;
+                    border: 2px solid rgba(0, 255, 136, 0.6);
+                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
                 ">
                     <span id="floatingABThumb" style="
                         position: absolute;
-                        height: 18px;
-                        width: 18px;
+                        height: 24px;
+                        width: 24px;
                         left: 3px;
                         bottom: 2px;
                         background-color: white;
                         transition: 0.3s;
                         border-radius: 50%;
-                        transform: translateX(22px);
-                        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                        transform: translateX(28px);
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.5);
                     "></span>
                 </span>
             </label>
 
             <span id="floatingABLabelMastered" style="
-                font-size: 0.75rem;
-                font-weight: 700;
+                font-size: 0.9rem;
+                font-weight: 800;
                 color: #00ff88;
                 transition: all 0.3s;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
+                letter-spacing: 1px;
+                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
             ">MASTERED</span>
 
             <div id="floatingABStatus" style="
-                font-size: 0.65rem;
+                font-size: 0.75rem;
+                font-weight: 600;
                 color: #00ff88;
-                padding: 3px 10px;
-                background: rgba(0, 255, 136, 0.15);
-                border-radius: 12px;
-                margin-left: 6px;
+                padding: 6px 14px;
+                background: rgba(0, 255, 136, 0.2);
+                border: 1px solid rgba(0, 255, 136, 0.4);
+                border-radius: 20px;
+                margin-left: 8px;
+                text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
             ">Playing Mastered</div>
         </div>
     </div>
 
     <style>
+        /* Floating A/B Compare - Premium styling like master button */
+        .floating-ab-compare {
+            animation: abCompareGlow 3s ease-in-out infinite;
+        }
+
+        .floating-ab-compare::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 52px;
+            background: linear-gradient(135deg, #00ff88, #00d4ff, #00ff88);
+            z-index: -1;
+            opacity: 0.4;
+            animation: abBorderGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes abCompareGlow {
+            0%, 100% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 255, 136, 0.2); }
+            50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 80px rgba(0, 255, 136, 0.35); }
+        }
+
+        @keyframes abBorderGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
         #floatingABCompare:hover {
-            border-color: rgba(0, 255, 136, 0.6);
+            transform: translateX(-50%) scale(1.03);
+            border-color: rgba(0, 255, 136, 0.8);
             box-shadow:
-                0 4px 24px rgba(0, 0, 0, 0.6),
-                0 0 50px rgba(0, 255, 136, 0.2);
+                0 8px 40px rgba(0, 0, 0, 0.7),
+                0 0 80px rgba(0, 255, 136, 0.4),
+                0 0 120px rgba(0, 212, 255, 0.2);
         }
 
         #floatingABSwitch:checked + #floatingABTrack {
             background: linear-gradient(135deg, #00ff88, #00d4ff);
-            border-color: rgba(0, 255, 136, 0.6);
+            border-color: rgba(0, 255, 136, 0.8);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
         }
 
         #floatingABSwitch:not(:checked) + #floatingABTrack {
             background: linear-gradient(135deg, #ff9a56, #ff6b35);
-            border-color: rgba(255, 154, 86, 0.6);
+            border-color: rgba(255, 154, 86, 0.8);
+            box-shadow: 0 0 25px rgba(255, 154, 86, 0.5);
         }
 
         #floatingABSwitch:not(:checked) + #floatingABTrack #floatingABThumb {
