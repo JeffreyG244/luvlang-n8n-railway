@@ -1,0 +1,44 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": null,
+  "installCommand": "npm install",
+  "outputDirectory": ".",
+  "headers": [
+    {
+      "source": "/(.*).js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
+    },
+    {
+      "source": "/success",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
+    },
+    {
+      "source": "/cancel",
+      "destination": "/luvlang_LEGENDARY_COMPLETE.html"
+    }
+  ]
+}
