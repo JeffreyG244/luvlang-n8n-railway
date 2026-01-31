@@ -4115,58 +4115,31 @@
                         <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
                     </div>
 
-                    <!-- LIVE EQ VISUALIZATION - Shows preset curve in real-time -->
-                    <div id="presetEQViz" style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px 8px; margin-bottom: 12px; border: 1px solid rgba(124,184,255,0.1);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; height: 60px; gap: 4px;">
-                            <div class="eq-viz-bar" data-band="sub" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizSub" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #ff6b6b, #ff9f43); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">SUB</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="bass" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizBass" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #ff9f43, #feca57); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">BASS</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="lowmid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizLowmid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #feca57, #00ff88); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">LOW</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="mid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizMid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #00ff88, #00d4ff); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">MID</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="highmid" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizHighmid" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #00d4ff, #7cb8ff); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">HIGH</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="high" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizHigh" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #7cb8ff, #b84fff); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">PRES</div>
-                            </div>
-                            <div class="eq-viz-bar" data-band="air" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                                <div style="width: 100%; height: 40px; background: rgba(255,255,255,0.05); border-radius: 3px; position: relative; overflow: hidden;">
-                                    <div id="eqVizAir" style="position: absolute; bottom: 50%; left: 0; right: 0; height: 0; background: linear-gradient(180deg, #b84fff, #ff6b9d); border-radius: 2px; transition: all 0.3s ease;"></div>
-                                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.2);"></div>
-                                </div>
-                                <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">AIR</div>
-                            </div>
+                    <!-- PROFESSIONAL MASTERING EQ CURVE - FabFilter/Ozone Style -->
+                    <div id="presetEQViz" style="position: relative; background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(15,20,35,0.95) 100%); border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(0,212,255,0.2); overflow: hidden; box-shadow: inset 0 2px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.05);">
+                        <!-- Professional grid overlay -->
+                        <div style="position: absolute; inset: 0; opacity: 0.06; pointer-events: none; background-image:
+                            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+                            background-size: 14.28% 33.33%;
+                        "></div>
+                        <!-- Zero line (0 dB reference) with glow -->
+                        <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.2); box-shadow: 0 0 4px rgba(255,255,255,0.1); z-index: 2;"></div>
+                        <!-- dB scale markers -->
+                        <div style="position: absolute; right: 6px; top: 8px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">+6dB</div>
+                        <div style="position: absolute; right: 6px; top: 47%; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">0dB</div>
+                        <div style="position: absolute; right: 6px; bottom: 22px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">-6dB</div>
+                        <!-- Canvas for smooth EQ curve with glow effect -->
+                        <canvas id="eqCurveCanvas" width="600" height="160" style="width: 100%; height: 80px; display: block;"></canvas>
+                        <!-- Frequency labels bar -->
+                        <div style="display: flex; justify-content: space-between; padding: 5px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); border-top: 1px solid rgba(255,255,255,0.05);">
+                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">40Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">120Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">400Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600;">1kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">3.5kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">8kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(184,79,255,0.7); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">12kHz</span>
                         </div>
                     </div>
 
@@ -10110,33 +10083,138 @@
             updateEQVisualization(eqValues);
         }
 
-        // Update the visual EQ bar graph in the genre presets section
+        // Professional EQ curve visualization - FabFilter/Ozone style
+        // Draws a smooth interpolated curve through the EQ band points
         function updateEQVisualization(eqValues) {
-            const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
-            const vizIds = ['eqVizSub', 'eqVizBass', 'eqVizLowmid', 'eqVizMid', 'eqVizHighmid', 'eqVizHigh', 'eqVizAir'];
+            const canvas = document.getElementById('eqCurveCanvas');
+            if (!canvas) return;
 
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerY = height / 2;
+            const maxDB = 8; // ±8dB visual range
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // EQ band positions (logarithmic frequency spacing)
+            const bands = [
+                { name: 'sub', freq: 40, x: width * 0.05 },
+                { name: 'bass', freq: 120, x: width * 0.18 },
+                { name: 'lowmid', freq: 400, x: width * 0.33 },
+                { name: 'mid', freq: 1000, x: width * 0.48 },
+                { name: 'highmid', freq: 3500, x: width * 0.63 },
+                { name: 'high', freq: 8000, x: width * 0.78 },
+                { name: 'air', freq: 12000, x: width * 0.93 }
+            ];
+
+            // Get Y position from dB value
+            const dbToY = (db) => centerY - (db / maxDB) * (centerY - 10);
+
+            // Build curve points
+            const points = bands.map(band => ({
+                x: band.x,
+                y: dbToY(eqValues[band.name] || 0)
+            }));
+
+            // Add edge points for smooth curve
+            points.unshift({ x: 0, y: dbToY(eqValues.sub * 0.5 || 0) });
+            points.push({ x: width, y: dbToY(eqValues.air * 0.5 || 0) });
+
+            // Draw filled area with gradient
+            const gradient = ctx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, 'rgba(255, 107, 107, 0.4)');      // Sub - warm red
+            gradient.addColorStop(0.15, 'rgba(255, 159, 67, 0.4)');    // Bass - orange
+            gradient.addColorStop(0.35, 'rgba(0, 255, 136, 0.4)');     // Low-mid - green
+            gradient.addColorStop(0.5, 'rgba(0, 212, 255, 0.5)');      // Mid - cyan
+            gradient.addColorStop(0.65, 'rgba(124, 184, 255, 0.4)');   // High-mid - blue
+            gradient.addColorStop(0.85, 'rgba(184, 79, 255, 0.4)');    // High - purple
+            gradient.addColorStop(1, 'rgba(255, 107, 157, 0.4)');      // Air - pink
+
+            // Draw smooth curve using bezier
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, centerY);
+            ctx.lineTo(points[0].x, points[0].y);
+
+            // Catmull-Rom to Bezier conversion for smooth curve
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[Math.max(0, i - 1)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(points.length - 1, i + 2)];
+
+                const cp1x = p1.x + (p2.x - p0.x) / 6;
+                const cp1y = p1.y + (p2.y - p0.y) / 6;
+                const cp2x = p2.x - (p3.x - p1.x) / 6;
+                const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+            }
+
+            ctx.lineTo(width, centerY);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Draw curve line with glow effect
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[Math.max(0, i - 1)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(points.length - 1, i + 2)];
+
+                const cp1x = p1.x + (p2.x - p0.x) / 6;
+                const cp1y = p1.y + (p2.y - p0.y) / 6;
+                const cp2x = p2.x - (p3.x - p1.x) / 6;
+                const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+            }
+
+            // Outer glow
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Inner glow
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Main curve line
+            const lineGradient = ctx.createLinearGradient(0, 0, width, 0);
+            lineGradient.addColorStop(0, '#ff6b6b');
+            lineGradient.addColorStop(0.3, '#00ff88');
+            lineGradient.addColorStop(0.5, '#00d4ff');
+            lineGradient.addColorStop(0.7, '#7cb8ff');
+            lineGradient.addColorStop(1, '#b84fff');
+            ctx.strokeStyle = lineGradient;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw band node points
             bands.forEach((band, i) => {
-                const value = eqValues[band] || 0;
-                const vizEl = document.getElementById(vizIds[i]);
-                if (vizEl) {
-                    // Convert dB value to percentage height (±12dB range)
-                    // Positive values go up from center, negative go down
-                    const maxDB = 6; // Visual range ±6dB for better visibility
-                    const clampedValue = Math.max(-maxDB, Math.min(maxDB, value));
-                    const heightPercent = (Math.abs(clampedValue) / maxDB) * 50; // 50% = half the bar
+                const value = eqValues[band.name] || 0;
+                const y = dbToY(value);
 
-                    if (value >= 0) {
-                        // Boost - bar goes UP from center
-                        vizEl.style.bottom = '50%';
-                        vizEl.style.top = 'auto';
-                        vizEl.style.height = heightPercent + '%';
-                    } else {
-                        // Cut - bar goes DOWN from center
-                        vizEl.style.top = '50%';
-                        vizEl.style.bottom = 'auto';
-                        vizEl.style.height = heightPercent + '%';
-                    }
-                }
+                // Outer glow
+                ctx.beginPath();
+                ctx.arc(band.x, y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.2)';
+                ctx.fill();
+
+                // Node circle
+                ctx.beginPath();
+                ctx.arc(band.x, y, 4, 0, Math.PI * 2);
+                const nodeColors = ['#ff6b6b', '#ff9f43', '#00ff88', '#00d4ff', '#7cb8ff', '#b84fff', '#ff6b9d'];
+                ctx.fillStyle = nodeColors[i];
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             });
         }
 
