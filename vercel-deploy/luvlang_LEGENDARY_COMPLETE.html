@@ -23332,6 +23332,11 @@
 
         // Auto-start for first-time users
         window.addEventListener('load', function() {
+            // ALWAYS initialize voice engine on page load
+            // This ensures the preferred voice is set even if user skips the wizard
+            initVoiceEngine();
+            console.log('🎤 Voice engine initialized on page load');
+
             setTimeout(() => {
                 if (!localStorage.getItem('voiceTourCompleted')) {
                     startVoiceTour();
