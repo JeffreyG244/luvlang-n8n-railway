@@ -482,23 +482,22 @@
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL EQ GRAPH (CRITICAL - User specifically wants this)
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           PROFESSIONAL VISUALIZATION PANELS - 3-Panel System
-           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        /* ═══════════════════════════════════════════════════════════════════════════
+           STATE-OF-THE-ART VISUALIZATION PANELS - Premium Broadcast Design
+           Glass morphism, LED indicators, professional aesthetics
+           ═══════════════════════════════════════════════════════════════════════════ */
         .viz-panel {
             background:
-                linear-gradient(135deg, rgba(5, 5, 10, 0.95), rgba(15, 15, 25, 0.95)),
-                linear-gradient(90deg, rgba(30, 30, 35, 0.3) 1px, transparent 1px),
-                linear-gradient(0deg, rgba(30, 30, 35, 0.3) 1px, transparent 1px);
-            background-size: 100% 100%, 20px 20px, 20px 20px;
-            border-radius: 12px;
-            padding: 15px;
+                linear-gradient(145deg, rgba(6, 6, 14, 0.98) 0%, rgba(12, 12, 24, 0.95) 50%, rgba(6, 6, 14, 0.98) 100%);
+            border-radius: 16px;
+            padding: 0;
             margin-bottom: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.15);
+            border: 1px solid rgba(0, 212, 255, 0.12);
             box-shadow:
-                0 4px 20px rgba(0, 0, 0, 0.6),
-                inset 0 1px 0 rgba(255, 255, 255, 0.03),
-                inset 0 0 30px rgba(0, 0, 0, 0.4);
+                0 8px 32px rgba(0, 0, 0, 0.7),
+                0 0 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.5);
             position: relative;
             overflow: hidden;
             z-index: 0;
@@ -510,57 +509,131 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 1px;
+            height: 2px;
             background: linear-gradient(90deg,
-                transparent,
-                rgba(0, 212, 255, 0.3) 30%,
-                rgba(184, 79, 255, 0.3) 70%,
-                transparent);
+                transparent 0%,
+                rgba(0, 212, 255, 0.5) 20%,
+                rgba(0, 255, 136, 0.4) 50%,
+                rgba(184, 79, 255, 0.5) 80%,
+                transparent 100%);
             pointer-events: none;
         }
 
+        .viz-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(90deg, rgba(30, 30, 40, 0.15) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(30, 30, 40, 0.15) 1px, transparent 1px);
+            background-size: 25px 25px;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
         .panel-title {
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 1.5px;
-            color: rgba(255, 255, 255, 0.5);
-            margin-bottom: 10px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.7);
             text-transform: uppercase;
-            padding-left: 5px;
+            padding: 12px 15px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.06), transparent 50%, rgba(184, 79, 255, 0.06));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 10;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00ff88 0%, #00cc66 100%);
+            box-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.4);
+            margin-right: 10px;
+            animation: ledPulse 2s ease-in-out infinite;
+        }
+
+        .spectrum-panel {
+            border-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .spectrum-panel .panel-title::before {
+            background: radial-gradient(circle, #00d4ff 0%, #0099cc 100%);
+            box-shadow: 0 0 10px #00d4ff, 0 0 20px rgba(0, 212, 255, 0.4);
         }
 
         .spectrum-panel canvas#spectrumCanvas {
             width: 100%;
             height: 400px;
-            background: linear-gradient(180deg, #000000 0%, #0a0a0f 50%, #000000 100%);
-            border-radius: 8px;
+            background: linear-gradient(180deg,
+                rgba(0, 0, 0, 1) 0%,
+                rgba(5, 5, 12, 1) 30%,
+                rgba(8, 8, 18, 1) 50%,
+                rgba(5, 5, 12, 1) 70%,
+                rgba(0, 0, 0, 1) 100%);
+            border-radius: 0 0 12px 12px;
             display: block;
+            position: relative;
+            z-index: 5;
         }
 
         /* Pro Overlay canvas for grid, labels, and peak hold envelope */
         .spectrum-panel canvas#spectrumOverlayCanvas {
             position: absolute;
-            top: 28px;
-            left: 15px;
-            width: calc(100% - 30px);
+            top: 42px;
+            left: 0;
+            width: 100%;
             height: 400px;
             pointer-events: none;
             background: transparent;
             z-index: 100;
-            border-radius: 8px;
+            border-radius: 0 0 12px 12px;
         }
 
         .viz-panel {
             box-shadow:
-                inset 0 0 25px rgba(0, 0, 0, 0.9),
-                inset 0 4px 8px rgba(0, 0, 0, 0.7),
-                0 2px 0 rgba(255, 255, 255, 0.01);
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 0 40px rgba(0, 0, 0, 0.8),
+                inset 0 2px 4px rgba(0, 0, 0, 0.5);
             position: relative;
             z-index: 1;
         }
 
         .meters-panel-viz {
-            background: linear-gradient(135deg, rgba(10, 10, 15, 0.95), rgba(20, 20, 30, 0.95));
+            background: linear-gradient(145deg, rgba(8, 8, 16, 0.98), rgba(15, 15, 28, 0.95));
+            border-color: rgba(156, 39, 176, 0.2);
+        }
+
+        .meters-panel-viz .panel-title::before {
+            background: radial-gradient(circle, #9c27b0 0%, #7b1fa2 100%);
+            box-shadow: 0 0 10px #9c27b0, 0 0 20px rgba(156, 39, 176, 0.4);
+        }
+
+        .correlation-panel {
+            border-color: rgba(255, 152, 0, 0.2);
+        }
+
+        .correlation-panel .panel-title::before {
+            background: radial-gradient(circle, #ff9800 0%, #f57c00 100%);
+            box-shadow: 0 0 10px #ff9800, 0 0 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .waveform-panel-viz {
+            border-color: rgba(0, 255, 136, 0.2);
+        }
+
+        .waveform-panel-viz .panel-title::before {
+            background: radial-gradient(circle, #00ff88 0%, #00cc66 100%);
+            box-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.4);
         }
 
         .waveform-panel-viz canvas {
@@ -4293,87 +4366,228 @@
                  PROFESSIONAL VISUALIZATION SYSTEM - 3 PANELS
                  ═══════════════════════════════════════════════════════════════ -->
 
-            <!-- PANEL 1: SPECTRUM ANALYZER + EQ CURVE -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 PANEL 1: SPECTRUM ANALYZER + EQ CURVE - State-of-the-Art Design
+                 ═══════════════════════════════════════════════════════════════════════════ -->
             <div class="viz-panel spectrum-panel" style="position: relative;">
-                <div class="panel-title">PRO SPECTRUM + EQ</div>
-                <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
-                <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
-                <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
-                <!-- Frequency hover tooltip -->
-                <div id="spectrumTooltip" style="
-                    position: absolute;
-                    display: none;
-                    background: rgba(0, 0, 0, 0.9);
-                    border: 1px solid rgba(0, 212, 255, 0.5);
-                    border-radius: 6px;
-                    padding: 6px 10px;
-                    font-family: 'JetBrains Mono', monospace;
-                    font-size: 0.75rem;
-                    color: #00d4ff;
-                    pointer-events: none;
-                    z-index: 100;
-                    white-space: nowrap;
-                    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
-                ">
-                    <div id="tooltipFreq" style="font-weight: 700;">1000 Hz</div>
-                    <div id="tooltipDb" style="color: #b84fff; font-size: 0.65rem; margin-top: 2px;">-24.5 dB</div>
+                <div class="panel-title">
+                    <span style="display: flex; align-items: center;">REAL-TIME SPECTRUM ANALYZER</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="spectrumFFTSize" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 212, 255, 0.15); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 6px; color: #00d4ff;">32K FFT</span>
+                        <span style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">20Hz-20kHz</span>
+                    </div>
+                </div>
+                <div style="position: relative;">
+                    <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
+                    <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
+                    <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
+                    <!-- Frequency hover tooltip - Premium Design -->
+                    <div id="spectrumTooltip" style="
+                        position: absolute;
+                        display: none;
+                        background: linear-gradient(145deg, rgba(10, 10, 20, 0.98), rgba(5, 5, 15, 0.95));
+                        border: 1px solid rgba(0, 212, 255, 0.4);
+                        border-top: 2px solid rgba(0, 212, 255, 0.6);
+                        border-radius: 8px;
+                        padding: 10px 14px;
+                        font-family: 'JetBrains Mono', 'SF Mono', monospace;
+                        pointer-events: none;
+                        z-index: 200;
+                        white-space: nowrap;
+                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 212, 255, 0.15);
+                    ">
+                        <div id="tooltipFreq" style="font-size: 1rem; font-weight: 800; color: #00d4ff; text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);">1000 Hz</div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                            <div id="tooltipDb" style="color: #b84fff; font-size: 0.8rem; font-weight: 700;">-24.5 dB</div>
+                            <div id="tooltipNote" style="color: rgba(255, 255, 255, 0.4); font-size: 0.6rem;">B5</div>
+                        </div>
+                    </div>
+                    <!-- Spectrum info bar -->
+                    <div style="
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        height: 28px;
+                        background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.8));
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 0 15px;
+                        border-radius: 0 0 12px 12px;
+                        z-index: 50;
+                    ">
+                        <div style="font-size: 0.5rem; color: rgba(255, 255, 255, 0.4); letter-spacing: 1px;">LOGARITHMIC SCALE</div>
+                        <div style="display: flex; gap: 12px;">
+                            <span style="font-size: 0.5rem; color: rgba(0, 212, 255, 0.6);">◆ SPECTRUM</span>
+                            <span style="font-size: 0.5rem; color: rgba(184, 79, 255, 0.6);">◆ EQ CURVE</span>
+                            <span style="font-size: 0.5rem; color: rgba(0, 255, 136, 0.6);">◆ PEAKS</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- PANEL 2: STEREO METERS + PHASE SCOPE -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 PANEL 2: STEREO METERS + PHASE SCOPE - Premium Goniometer Design
+                 ═══════════════════════════════════════════════════════════════════════════ -->
             <div class="viz-panel meters-panel-viz">
-                <div class="panel-title">STEREO METERS + PHASE CORRELATION</div>
-                <div style="display: flex; gap: 20px; height: 180px; padding: 10px 20px;">
+                <div class="panel-title">
+                    <span style="display: flex; align-items: center;">STEREO FIELD ANALYZER</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="stereoWidthBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(156, 39, 176, 0.15); border: 1px solid rgba(156, 39, 176, 0.3); border-radius: 6px; color: #ce93d8;">STEREO</span>
+                        <span id="phaseStatusBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">IN PHASE</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; height: 190px; padding: 15px 20px; position: relative; z-index: 5;">
 
-                    <!-- dB SCALE (LEFT) -->
-                    <div style="flex: 0 0 40px; display: flex; flex-direction: column; justify-content: space-between; padding: 0px 0;">
-                        <div style="font-size: 10px; color: #ff3333; font-weight: 600; text-align: left;">0</div>
-                        <div style="font-size: 9px; color: #ffaa00; text-align: left;">-6</div>
-                        <div style="font-size: 9px; color: #ffaa00; text-align: left;">-12</div>
-                        <div style="font-size: 9px; color: #00ff88; text-align: left;">-18</div>
-                        <div style="font-size: 9px; color: #00ff88; text-align: left;">-24</div>
-                        <div style="font-size: 9px; color: rgba(255,255,255,0.3); text-align: left;">-40</div>
-                        <div style="font-size: 9px; color: rgba(255,255,255,0.3); text-align: left;">-60</div>
+                    <!-- dB SCALE (LEFT) - Enhanced -->
+                    <div style="flex: 0 0 35px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px 0;">
+                        <div style="font-size: 0.55rem; color: #ff4444; font-weight: 700; text-align: left; text-shadow: 0 0 8px rgba(255, 68, 68, 0.5);">0</div>
+                        <div style="font-size: 0.5rem; color: #ffaa00; text-align: left;">-6</div>
+                        <div style="font-size: 0.5rem; color: #ffaa00; text-align: left;">-12</div>
+                        <div style="font-size: 0.5rem; color: #00ff88; text-align: left;">-18</div>
+                        <div style="font-size: 0.5rem; color: #00ff88; text-align: left;">-24</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.25); text-align: left;">-40</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.2); text-align: left;">-60</div>
                     </div>
 
-                    <!-- LEFT CHANNEL METER -->
-                    <div style="flex: 0 0 60px; display: flex; flex-direction: column; align-items: center;">
-                        <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px;">L</div>
-                        <canvas id="leftMeterCanvas" width="60" height="150"></canvas>
+                    <!-- LEFT CHANNEL METER - Enhanced -->
+                    <div style="flex: 0 0 55px; display: flex; flex-direction: column; align-items: center;">
+                        <div style="font-size: 0.6rem; color: #00d4ff; margin-bottom: 6px; font-weight: 700; letter-spacing: 1px;">L</div>
+                        <div style="position: relative; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 10px rgba(0, 212, 255, 0.1);">
+                            <canvas id="leftMeterCanvas" width="55" height="155"></canvas>
+                        </div>
                     </div>
 
-                    <!-- PHASE GONIOMETER (CENTER) -->
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                        <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px;">PHASE CORRELATION</div>
-                        <canvas id="goniometerCanvas" width="150" height="150"></canvas>
+                    <!-- PHASE GONIOMETER (CENTER) - Premium Design -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; position: relative;">
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.6); margin-bottom: 6px; letter-spacing: 1.5px; text-transform: uppercase;">Goniometer</div>
+                        <div style="position: relative;">
+                            <!-- Outer ring glow -->
+                            <div style="
+                                position: absolute;
+                                top: -5px; left: -5px; right: -5px; bottom: -5px;
+                                border-radius: 50%;
+                                background: radial-gradient(circle, rgba(156, 39, 176, 0.1) 0%, transparent 70%);
+                                pointer-events: none;
+                            "></div>
+                            <canvas id="goniometerCanvas" width="160" height="160" style="
+                                border-radius: 50%;
+                                box-shadow:
+                                    inset 0 0 30px rgba(0, 0, 0, 0.9),
+                                    inset 0 0 60px rgba(0, 0, 0, 0.5),
+                                    0 0 20px rgba(156, 39, 176, 0.15);
+                            "></canvas>
+                            <!-- Center LED -->
+                            <div style="
+                                position: absolute;
+                                top: 50%; left: 50%;
+                                transform: translate(-50%, -50%);
+                                width: 6px; height: 6px;
+                                border-radius: 50%;
+                                background: radial-gradient(circle, #00ff88 0%, #006633 100%);
+                                box-shadow: 0 0 8px #00ff88;
+                            "></div>
+                        </div>
+                        <!-- Axis labels -->
+                        <div style="display: flex; justify-content: space-between; width: 160px; margin-top: 6px;">
+                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.6);">L</span>
+                            <span style="font-size: 0.45rem; color: rgba(156, 39, 176, 0.8);">M</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6);">R</span>
+                        </div>
                     </div>
 
-                    <!-- RIGHT CHANNEL METER -->
-                    <div style="flex: 0 0 60px; display: flex; flex-direction: column; align-items: center;">
-                        <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 5px;">R</div>
-                        <canvas id="rightMeterCanvas" width="60" height="150"></canvas>
+                    <!-- RIGHT CHANNEL METER - Enhanced -->
+                    <div style="flex: 0 0 55px; display: flex; flex-direction: column; align-items: center;">
+                        <div style="font-size: 0.6rem; color: #ff9800; margin-bottom: 6px; font-weight: 700; letter-spacing: 1px;">R</div>
+                        <div style="position: relative; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 10px rgba(255, 152, 0, 0.1);">
+                            <canvas id="rightMeterCanvas" width="55" height="155"></canvas>
+                        </div>
                     </div>
 
-                    <!-- dB SCALE -->
-                    <div style="flex: 0 0 40px; display: flex; flex-direction: column; justify-content: space-between; padding: 0px 0;">
-                        <div style="font-size: 10px; color: #ff3333; font-weight: 600; text-align: right;">0</div>
-                        <div style="font-size: 9px; color: #ffaa00; text-align: right;">-6</div>
-                        <div style="font-size: 9px; color: #ffaa00; text-align: right;">-12</div>
-                        <div style="font-size: 9px; color: #00ff88; text-align: right;">-18</div>
-                        <div style="font-size: 9px; color: #00ff88; text-align: right;">-24</div>
-                        <div style="font-size: 9px; color: rgba(255,255,255,0.3); text-align: right;">-40</div>
-                        <div style="font-size: 9px; color: rgba(255,255,255,0.3); text-align: right;">-60</div>
+                    <!-- dB SCALE (RIGHT) - Enhanced -->
+                    <div style="flex: 0 0 35px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px 0;">
+                        <div style="font-size: 0.55rem; color: #ff4444; font-weight: 700; text-align: right; text-shadow: 0 0 8px rgba(255, 68, 68, 0.5);">0</div>
+                        <div style="font-size: 0.5rem; color: #ffaa00; text-align: right;">-6</div>
+                        <div style="font-size: 0.5rem; color: #ffaa00; text-align: right;">-12</div>
+                        <div style="font-size: 0.5rem; color: #00ff88; text-align: right;">-18</div>
+                        <div style="font-size: 0.5rem; color: #00ff88; text-align: right;">-24</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.25); text-align: right;">-40</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.2); text-align: right;">-60</div>
                     </div>
                 </div>
             </div>
 
-            <!-- PANEL 2.5: PHASE CORRELATION HEATMAP -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 PANEL 2.5: PHASE CORRELATION HEATMAP - Frequency-Dependent Analysis
+                 ═══════════════════════════════════════════════════════════════════════════ -->
             <div class="viz-panel correlation-panel">
-                <div class="panel-title">PHASE CORRELATION • FREQUENCY ANALYSIS</div>
-                <div style="padding: 10px 20px;">
-                    <canvas id="correlationHeatmapCanvas" width="800" height="200" style="width: 100%; height: 100px; display: block;"></canvas>
-                    <div style="margin-top: 10px; position: relative;">
-                        <canvas id="correlationLegendCanvas" width="400" height="15" style="width: 100%; height: 15px; display: block;"></canvas>
+                <div class="panel-title">
+                    <span style="display: flex; align-items: center;">PHASE CORRELATION • FREQUENCY ANALYSIS</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.5rem; padding: 3px 8px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 6px; color: #ffb74d;">REAL-TIME</span>
+                        <span id="correlationModeBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">MONO COMPATIBLE</span>
+                    </div>
+                </div>
+                <div style="padding: 15px 20px; position: relative; z-index: 5;">
+                    <!-- Heatmap Canvas with enhanced styling -->
+                    <div style="
+                        border-radius: 8px;
+                        overflow: hidden;
+                        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 152, 0, 0.08);
+                        position: relative;
+                    ">
+                        <canvas id="correlationHeatmapCanvas" width="800" height="200" style="width: 100%; height: 110px; display: block;"></canvas>
+                        <!-- Frequency axis labels overlay -->
+                        <div style="
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            height: 20px;
+                            background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.7));
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-end;
+                            padding: 0 10px 3px 10px;
+                        ">
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6);">20Hz</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">100Hz</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">500Hz</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">1kHz</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">5kHz</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6);">20kHz</span>
+                        </div>
+                    </div>
+
+                    <!-- Legend with enhanced styling -->
+                    <div style="margin-top: 12px; display: flex; align-items: center; gap: 15px;">
+                        <div style="flex: 1; position: relative; height: 18px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 8px rgba(0,0,0,0.5);">
+                            <canvas id="correlationLegendCanvas" width="400" height="18" style="width: 100%; height: 18px; display: block;"></canvas>
+                        </div>
+                        <div style="display: flex; gap: 12px; font-size: 0.5rem;">
+                            <span style="color: #ff4444;">-1 (Out)</span>
+                            <span style="color: #ffaa00;">0 (Wide)</span>
+                            <span style="color: #00ff88;">+1 (Mono)</span>
+                        </div>
+                    </div>
+
+                    <!-- Analysis info bar -->
+                    <div style="
+                        margin-top: 12px;
+                        padding: 8px 12px;
+                        background: rgba(255, 152, 0, 0.05);
+                        border: 1px solid rgba(255, 152, 0, 0.15);
+                        border-radius: 6px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
+                            <span style="font-size: 0.5rem; color: rgba(255, 255, 255, 0.5);">Bass frequencies centered (mono) = optimal club playback</span>
+                        </div>
+                        <span id="correlationOverallValue" style="font-size: 0.6rem; color: #00ff88; font-weight: 700; font-family: 'JetBrains Mono', monospace;">+0.95</span>
                     </div>
                 </div>
             </div>
@@ -7932,6 +8146,12 @@
                 const momentaryBuffer = new Float32Array(MOMENTARY_BUFFER_SIZE);
                 let momentaryBufferIdx = 0;
 
+                // PSR/PLR smoothing state for stable display
+                let smoothedPSR = 6;
+                let smoothedPLR = 8;
+                const PSR_SMOOTHING_ATTACK = 0.15;  // Fast attack when PSR increases
+                const PSR_SMOOTHING_RELEASE = 0.03; // Slow release when PSR decreases (3% per frame)
+
                 window.dynamicRangeMetering = {
                     shortTermLUFS: -18,
                     momentaryLUFS: -18,
@@ -7940,8 +8160,9 @@
                     PLR: 8, // Peak to Loudness Ratio (vs Integrated)
                     PSR: 6, // Peak to Short-term Ratio (EBU R128 s2)
                     LRA: 7, // Loudness Range
+                    rawPSR: 6, // Unsmoothed PSR for debugging
 
-                    // ITU-R BS.1770-4 compliant update
+                    // ITU-R BS.1770-4 compliant update with PSR smoothing
                     update: () => {
                         // Get current K-weighted mean square from analyser
                         if (kWeightedAnalyser) {
@@ -7998,14 +8219,33 @@
                         // PSR: Peak to Short-term Loudness Ratio (EBU R128 s2)
                         // This is the professional standard for dynamic range assessment
                         // PSR = TruePeak(dBTP) - ShortTermLUFS(LUFS)
-                        const psr = truePeakDB - window.dynamicRangeMetering.shortTermLUFS;
-                        window.dynamicRangeMetering.PSR = Math.max(0, psr);
+                        const rawPSR = truePeakDB - window.dynamicRangeMetering.shortTermLUFS;
+                        const clampedRawPSR = Math.max(0, Math.min(30, rawPSR)); // Clamp to reasonable range
+                        window.dynamicRangeMetering.rawPSR = clampedRawPSR;
+
+                        // Apply asymmetric smoothing (fast attack, slow release) for stable display
+                        if (clampedRawPSR > smoothedPSR) {
+                            // Fast attack when dynamics increase
+                            smoothedPSR = smoothedPSR + PSR_SMOOTHING_ATTACK * (clampedRawPSR - smoothedPSR);
+                        } else {
+                            // Slow release when dynamics decrease
+                            smoothedPSR = smoothedPSR + PSR_SMOOTHING_RELEASE * (clampedRawPSR - smoothedPSR);
+                        }
+                        window.dynamicRangeMetering.PSR = smoothedPSR;
 
                         // PLR: Peak to (Integrated) Loudness Ratio
                         // Uses the global integrated LUFS if available
                         const intLUFS = window.dynamicRangeMetering.integratedLUFS || -14;
-                        const plr = truePeakDB - intLUFS;
-                        window.dynamicRangeMetering.PLR = Math.max(0, plr);
+                        const rawPLR = truePeakDB - intLUFS;
+                        const clampedRawPLR = Math.max(0, Math.min(30, rawPLR));
+
+                        // Apply same smoothing to PLR
+                        if (clampedRawPLR > smoothedPLR) {
+                            smoothedPLR = smoothedPLR + PSR_SMOOTHING_ATTACK * (clampedRawPLR - smoothedPLR);
+                        } else {
+                            smoothedPLR = smoothedPLR + PSR_SMOOTHING_RELEASE * (clampedRawPLR - smoothedPLR);
+                        }
+                        window.dynamicRangeMetering.PLR = smoothedPLR;
 
                         return {
                             shortTermLUFS: window.dynamicRangeMetering.shortTermLUFS,
@@ -15171,44 +15411,51 @@
                     if (psr && !isNaN(psr) && psr > 0) {
                         psrEl.textContent = psr.toFixed(1);
 
-                        // PSR Quality Ranges per EBU R128 s2 guidelines:
-                        // > 14 dB = Highly Dynamic (classical/audiophile)
-                        // 11-14 dB = Very Good (acoustic/jazz)
-                        // 8-11 dB = Good (professional standard)
-                        // 5-8 dB = Moderate (streaming/pop optimized)
-                        // 3-5 dB = Compressed (heavy limiting)
-                        // < 3 dB = Crushed (loudness war)
+                        // ═══════════════════════════════════════════════════════════════
+                        // PSR Quality Ranges per EBU R128 s2 / AES guidelines:
+                        // Dynamic range assessment with professional descriptions
+                        // ═══════════════════════════════════════════════════════════════
 
-                        let status, color;
+                        let status, color, description;
                         if (psr >= 14) {
-                            status = 'Audiophile';
+                            status = 'AUDIOPHILE';
                             color = '#00ff88';
+                            description = 'Excellent dynamics';
                         } else if (psr >= 11) {
-                            status = 'Very Good';
+                            status = 'DYNAMIC';
                             color = '#44ff88';
+                            description = 'Great headroom';
                         } else if (psr >= 8) {
-                            status = 'Professional';
+                            status = 'BALANCED';
                             color = '#00d4ff';
+                            description = 'Professional standard';
                         } else if (psr >= 5) {
-                            status = 'Streaming';
+                            status = 'OPTIMIZED';
                             color = '#ffd700';
+                            description = 'Streaming-ready';
                         } else if (psr >= 3) {
-                            status = 'Compressed';
+                            status = 'LIMITED';
                             color = '#ff9800';
+                            description = 'Heavy compression';
                         } else {
-                            status = 'Crushed';
+                            status = 'CRUSHED';
                             color = '#ff3333';
+                            description = 'Over-limited';
                         }
 
                         psrEl.style.color = color;
-                        psrEl.style.textShadow = `0 0 10px ${color}40`;
+                        psrEl.style.textShadow = `0 0 15px ${color}50`;
                         if (psrStatusEl) {
-                            psrStatusEl.textContent = status;
+                            psrStatusEl.textContent = `${status} • ${description}`;
                             psrStatusEl.style.color = color;
                         }
                     } else {
                         psrEl.textContent = '--';
                         psrEl.style.color = 'rgba(255,255,255,0.4)';
+                        if (psrStatusEl) {
+                            psrStatusEl.textContent = 'Analyzing...';
+                            psrStatusEl.style.color = 'rgba(255,255,255,0.4)';
+                        }
                     }
                 }
             }
