@@ -20228,6 +20228,19 @@
                     // Reset mastering in progress flag on success
                     masteringInProgress = false;
                     console.log('✅ Mastering session complete - ready for new session');
+
+                    // 🏆 SET MASTERING COMPLETE FLAG - Critical for LUFS preset switching
+                    window.masteringComplete = true;
+                    console.log('🎯 Mastering complete flag set - LUFS presets will now be LOCKED');
+
+                    // 🔄 Transform MASTER button to RESET button
+                    const masterBtn = document.getElementById('aiMasterBtnFloating');
+                    if (masterBtn) {
+                        masterBtn.innerHTML = '<span class="ai-btn-icon">↺</span><span>RESET</span>';
+                        masterBtn.style.background = 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)';
+                        masterBtn.onclick = function() { window.resetMastering(); };
+                        console.log('🔄 Master button transformed to RESET');
+                    }
                 }, 500);
 
             } catch (error) {
