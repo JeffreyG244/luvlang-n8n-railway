@@ -2426,9 +2426,15 @@
             border-color: rgba(0, 212, 255, 0.2);
         }
         .genre-btn.selected {
-            background: rgba(0, 212, 255, 0.1);
-            border-color: rgba(0, 212, 255, 0.5);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(0, 180, 255, 0.2) 100%);
+            border-color: #00d4ff;
+            border-width: 2px;
+            box-shadow:
+                0 0 15px rgba(0, 212, 255, 0.7),
+                0 0 30px rgba(0, 212, 255, 0.5),
+                0 0 60px rgba(0, 212, 255, 0.3),
+                inset 0 0 15px rgba(0, 212, 255, 0.2);
+            transform: scale(1.05);
         }
 
         .genre-icon {
@@ -3314,11 +3320,9 @@
             transform: translateY(-2px);
         }
         .format-tour-btn.selected {
-            background: rgba(0, 212, 255, 0.25);
+            background: rgba(0, 212, 255, 0.15);
             border-color: #00d4ff;
-            border-width: 3px;
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.6), 0 0 60px rgba(0, 212, 255, 0.3), inset 0 0 20px rgba(0, 212, 255, 0.15);
-            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
         }
         .bitdepth-tour-btn {
             padding: 12px 16px;
@@ -3335,11 +3339,9 @@
             border-color: rgba(0, 255, 136, 0.4);
         }
         .bitdepth-tour-btn.selected {
-            background: rgba(0, 255, 136, 0.25);
+            background: rgba(0, 255, 136, 0.15);
             border-color: #00ff88;
-            border-width: 3px;
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.6), 0 0 50px rgba(0, 255, 136, 0.3), inset 0 0 15px rgba(0, 255, 136, 0.15);
-            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
         }
     </style>
 
@@ -3533,7 +3535,7 @@
             0 -20px 80px rgba(0, 0, 0, 0.5),
             0 0 60px rgba(0, 212, 255, 0.15),
             0 0 1px rgba(255, 255, 255, 0.1) inset;
-        animation: modalSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        animation: tooltipSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     ">
         <!-- Decorative top gradient line -->
         <div style="
@@ -3608,60 +3610,24 @@
 
         <!-- Control Row -->
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-            <!-- Left: Language & Voice -->
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <select id="voiceTourLang" onchange="changeVoiceTourLanguage(this.value)" style="
-                    background: rgba(255, 255, 255, 0.06);
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    border-radius: 10px;
-                    padding: 10px 14px;
-                    font-size: 0.85rem;
-                    color: rgba(255, 255, 255, 0.8);
-                    cursor: pointer;
-                    outline: none;
-                    transition: all 0.2s;
-                ">
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                    <option value="pt">Português</option>
-                    <option value="ja">日本語</option>
-                    <option value="ko">한국어</option>
-                    <option value="zh">中文</option>
-                </select>
-                <button id="voiceTourRepeatBtn" onclick="repeatVoiceInstruction()" title="Repeat Instructions" style="
-                    width: 44px;
-                    height: 44px;
-                    background: rgba(184, 79, 255, 0.1);
-                    border: 1px solid rgba(184, 79, 255, 0.3);
-                    border-radius: 12px;
-                    color: #b84fff;
-                    font-size: 1.1rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">🔄</button>
-                <button id="voiceTourSpeakBtn" onclick="toggleVoiceTour()" title="Voice On - Click to mute" style="
-                    width: 44px;
-                    height: 44px;
-                    background: rgba(0, 212, 255, 0.1);
-                    border: 1px solid rgba(0, 212, 255, 0.3);
-                    border-radius: 12px;
-                    color: #00d4ff;
-                    font-size: 1.1rem;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">🔊</button>
-            </div>
+            <!-- Left: Repeat Button -->
+            <button id="voiceTourRepeatBtn" onclick="repeatVoiceInstruction()" title="Repeat Instructions" style="
+                width: 44px;
+                height: 44px;
+                background: rgba(184, 79, 255, 0.1);
+                border: 1px solid rgba(184, 79, 255, 0.3);
+                border-radius: 12px;
+                color: #b84fff;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">🔄</button>
 
-            <!-- Right: Next & Skip Buttons -->
-            <div style="display: flex; gap: 12px; align-items: center;">
+            <!-- Right: Next, Reset & Skip Buttons -->
+            <div style="display: flex; gap: 10px; align-items: center;">
                 <button id="voiceTourNextBtn" onclick="nextTourStep()" style="
                     display: none;
                     padding: 12px 28px;
@@ -3675,17 +3641,28 @@
                     transition: all 0.2s;
                     box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
                 ">Next →</button>
-                <button onclick="skipVoiceTour()" style="
-                    padding: 12px 24px;
-                    background: transparent;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    border-radius: 12px;
-                    color: rgba(255, 255, 255, 0.5);
-                    font-size: 0.9rem;
-                    font-weight: 500;
+                <button onclick="restartTourFresh()" title="Restart Tour" style="
+                    padding: 10px 14px;
+                    background: rgba(0, 212, 255, 0.1);
+                    border: 1px solid rgba(0, 212, 255, 0.3);
+                    border-radius: 10px;
+                    color: #00d4ff;
+                    font-size: 0.85rem;
+                    font-weight: 600;
                     cursor: pointer;
                     transition: all 0.2s;
-                ">Skip Tour</button>
+                ">↺ Reset</button>
+                <button onclick="skipVoiceTour()" style="
+                    padding: 10px 14px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 10px;
+                    color: rgba(255, 255, 255, 0.7);
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">Skip</button>
             </div>
         </div>
     </div>
@@ -3697,8 +3674,12 @@
             to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
         @keyframes modalSlideUp {
-            from { opacity: 0; transform: translateX(-50%) translateY(40px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes tooltipSlideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
         }
         @keyframes ctaPulse {
             0%, 100% {
@@ -4442,24 +4423,62 @@
         </div>
     </div>
 
-    <!-- Help Button - Premium Style -->
-    <button id="voiceTourHelpBtn" onclick="startVoiceTour()" title="Guided Tour" style="
+    <!-- Restart Tour Button -->
+    <button id="restartTourBtn" onclick="restartTourFresh()" title="Restart Tour" style="
         position: fixed;
         bottom: 20px;
         right: 20px;
         width: 44px;
         height: 44px;
         border-radius: 8px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: rgba(255,255,255,0.5);
-        font-size: 1rem;
-        font-weight: 600;
+        background: linear-gradient(180deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: rgba(0, 212, 255, 0.8);
+        font-size: 1.1rem;
         cursor: pointer;
         z-index: 9999;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         transition: all 0.2s ease;
-    ">?</button>
+    " onmouseover="this.style.background='linear-gradient(180deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 212, 255, 0.15) 100%)';this.style.boxShadow='0 4px 25px rgba(0, 212, 255, 0.3)';"
+       onmouseout="this.style.background='linear-gradient(180deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%)';this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.3)';">↺</button>
+
+    <script>
+        // Restart tour fresh - clears all tour state and shows language selection
+        function restartTourFresh() {
+            // Clear all tour-related storage
+            localStorage.removeItem('voiceTourCompleted');
+            localStorage.removeItem('tourLanguage');
+            localStorage.removeItem('voiceTourLang');
+            sessionStorage.removeItem('voiceTourStarted');
+
+            // End any active tour
+            if (typeof window.endVoiceTour === 'function') {
+                window.endVoiceTour();
+            }
+
+            // Hide the main tour overlay if visible
+            const tourOverlay = document.getElementById('voiceTourOverlay');
+            if (tourOverlay) tourOverlay.style.display = 'none';
+
+            // Hide any tour zones
+            const uploadZone = document.getElementById('tourUploadZone');
+            if (uploadZone) uploadZone.style.display = 'none';
+            const formatZone = document.getElementById('tourFormatZone');
+            if (formatZone) formatZone.style.display = 'none';
+
+            // Directly show the language modal
+            const langModal = document.getElementById('tourLanguageModal');
+            if (langModal) {
+                langModal.style.display = 'flex';
+                console.log('🎤 Language selection modal shown');
+            } else {
+                console.error('🎤 Language modal not found!');
+            }
+
+            console.log('🎤 Tour restarted fresh');
+        }
+        window.restartTourFresh = restartTourFresh;
+    </script>
 
     <!-- HIDDEN AUDIO ELEMENT -->
     <audio id="audioElement" style="display: none;"></audio>
@@ -4575,7 +4594,7 @@
             <div class="header-logo">
                 <div class="logo-text">LuvLang LEGENDARY</div>
                 <div class="logo-subtitle">Professional Mastering Suite</div>
-                <button onclick="startTour()" style="
+                <button onclick="restartTourFresh()" style="
                     margin-top: 10px;
                     padding: 6px 12px;
                     font-size: 0.75rem;
@@ -5351,13 +5370,6 @@
                     🔊 Mono
                 </button>
 
-                <!-- Loudness Match A/B -->
-                <button class="transport-btn" id="loudnessMatchBtn" onclick="toggleLoudnessMatch()" title="Match Loudness for A/B Comparison">
-                    📊 Match LUFS
-                </button>
-                <span class="loudness-match-indicator inactive" id="loudnessMatchIndicator">
-                    LUFS Match: OFF
-                </span>
             </div>
 
             <!-- REFERENCE TRACK SECTION -->
@@ -19380,27 +19392,77 @@
                         #masteringProcessOverlay {
                             position: fixed;
                             top: 0; left: 0; right: 0; bottom: 0;
-                            background: rgba(0, 0, 0, 0.95);
-                            backdrop-filter: blur(30px);
-                            -webkit-backdrop-filter: blur(30px);
+                            background: radial-gradient(ellipse at center, rgba(0, 20, 40, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
+                            backdrop-filter: blur(40px);
+                            -webkit-backdrop-filter: blur(40px);
                             z-index: 100050;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            animation: overlayFadeIn 0.3s ease;
+                            animation: overlayFadeIn 0.5s ease;
+                            overflow: hidden;
                         }
                         @keyframes overlayFadeIn {
-                            from { opacity: 0; }
-                            to { opacity: 1; }
+                            from { opacity: 0; transform: scale(1.1); }
+                            to { opacity: 1; transform: scale(1); }
+                        }
+                        /* Animated background particles */
+                        .proc-particles {
+                            position: absolute;
+                            top: 0; left: 0; right: 0; bottom: 0;
+                            overflow: hidden;
+                            pointer-events: none;
+                        }
+                        .proc-particle {
+                            position: absolute;
+                            width: 2px;
+                            height: 2px;
+                            background: #00d4ff;
+                            border-radius: 50%;
+                            animation: particleFloat 8s infinite linear;
+                            opacity: 0.3;
+                        }
+                        @keyframes particleFloat {
+                            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+                            10% { opacity: 0.6; }
+                            90% { opacity: 0.6; }
+                            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+                        }
+                        /* Scanning line effect */
+                        .proc-scanline {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 3px;
+                            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.8), transparent);
+                            animation: scanMove 2s ease-in-out infinite;
+                            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5), 0 0 60px rgba(0, 212, 255, 0.3);
+                        }
+                        @keyframes scanMove {
+                            0%, 100% { top: 0%; opacity: 0; }
+                            10% { opacity: 1; }
+                            90% { opacity: 1; }
+                            100% { top: 100%; opacity: 0; }
                         }
                         .proc-container {
-                            width: 90%;
-                            max-width: 600px;
-                            background: linear-gradient(180deg, rgba(20, 25, 35, 0.98) 0%, rgba(10, 12, 20, 0.99) 100%);
-                            border: 1px solid rgba(255, 255, 255, 0.06);
-                            border-radius: 16px;
-                            padding: 40px;
-                            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+                            position: relative;
+                            width: 95%;
+                            max-width: 700px;
+                            background: linear-gradient(165deg, rgba(15, 25, 45, 0.95) 0%, rgba(5, 10, 25, 0.98) 100%);
+                            border: 1px solid rgba(0, 212, 255, 0.15);
+                            border-radius: 24px;
+                            padding: 48px;
+                            box-shadow:
+                                0 50px 150px rgba(0, 0, 0, 0.8),
+                                0 0 100px rgba(0, 212, 255, 0.1),
+                                inset 0 1px 0 rgba(255,255,255,0.05),
+                                inset 0 0 60px rgba(0, 212, 255, 0.03);
+                            animation: containerPulse 3s ease-in-out infinite;
+                        }
+                        @keyframes containerPulse {
+                            0%, 100% { box-shadow: 0 50px 150px rgba(0, 0, 0, 0.8), 0 0 100px rgba(0, 212, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 0 60px rgba(0, 212, 255, 0.03); }
+                            50% { box-shadow: 0 50px 150px rgba(0, 0, 0, 0.8), 0 0 120px rgba(0, 212, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 0 80px rgba(0, 212, 255, 0.05); }
                         }
                         .proc-header {
                             display: flex;
@@ -19409,181 +19471,314 @@
                             margin-bottom: 32px;
                         }
                         .proc-title {
-                            font-size: 0.65rem;
-                            font-weight: 600;
-                            letter-spacing: 0.2em;
+                            font-size: 0.7rem;
+                            font-weight: 700;
+                            letter-spacing: 0.25em;
                             text-transform: uppercase;
-                            color: rgba(255, 255, 255, 0.4);
+                            color: rgba(255, 255, 255, 0.5);
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                        }
+                        .proc-title::before {
+                            content: '';
+                            display: inline-block;
+                            width: 8px;
+                            height: 8px;
+                            background: #00d4ff;
+                            border-radius: 50%;
+                            animation: titlePulse 1s ease-in-out infinite;
+                            box-shadow: 0 0 10px #00d4ff;
+                        }
+                        @keyframes titlePulse {
+                            0%, 100% { transform: scale(1); opacity: 1; }
+                            50% { transform: scale(1.3); opacity: 0.7; }
                         }
                         .proc-badge {
-                            font-size: 0.55rem;
-                            font-weight: 600;
+                            font-size: 0.6rem;
+                            font-weight: 700;
                             letter-spacing: 0.15em;
                             text-transform: uppercase;
                             color: #00d4ff;
-                            background: rgba(0, 212, 255, 0.1);
-                            border: 1px solid rgba(0, 212, 255, 0.2);
-                            padding: 6px 12px;
-                            border-radius: 4px;
+                            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 150, 255, 0.1) 100%);
+                            border: 1px solid rgba(0, 212, 255, 0.3);
+                            padding: 8px 16px;
+                            border-radius: 6px;
+                            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
                         }
-                        .proc-percent-row {
+                        /* Circular progress ring */
+                        .proc-ring-container {
                             display: flex;
-                            align-items: baseline;
-                            gap: 12px;
-                            margin-bottom: 16px;
+                            justify-content: center;
+                            align-items: center;
+                            margin-bottom: 24px;
+                            position: relative;
+                        }
+                        .proc-ring-svg {
+                            width: 180px;
+                            height: 180px;
+                            transform: rotate(-90deg);
+                        }
+                        .proc-ring-bg {
+                            fill: none;
+                            stroke: rgba(255, 255, 255, 0.05);
+                            stroke-width: 8;
+                        }
+                        .proc-ring-progress {
+                            fill: none;
+                            stroke: url(#procGradient);
+                            stroke-width: 8;
+                            stroke-linecap: round;
+                            stroke-dasharray: 452;
+                            stroke-dashoffset: 452;
+                            transition: stroke-dashoffset 0.3s ease;
+                            filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+                        }
+                        .proc-ring-glow {
+                            fill: none;
+                            stroke: rgba(0, 212, 255, 0.3);
+                            stroke-width: 12;
+                            stroke-linecap: round;
+                            stroke-dasharray: 452;
+                            stroke-dashoffset: 452;
+                            transition: stroke-dashoffset 0.3s ease;
+                            filter: blur(8px);
+                        }
+                        .proc-percent-center {
+                            position: absolute;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
                         }
                         .proc-percent {
-                            font-size: 4rem;
+                            font-size: 3.5rem;
                             font-weight: 200;
                             color: #fff;
                             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
                             letter-spacing: -0.02em;
                             line-height: 1;
+                            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
                         }
                         .proc-percent-sign {
-                            font-size: 1.5rem;
+                            font-size: 1.2rem;
                             font-weight: 300;
-                            color: rgba(255, 255, 255, 0.4);
-                        }
-                        .proc-bar-container {
-                            height: 4px;
-                            background: rgba(255, 255, 255, 0.06);
-                            border-radius: 2px;
-                            overflow: hidden;
-                            margin-bottom: 32px;
-                        }
-                        .proc-bar {
-                            height: 100%;
-                            width: 0%;
-                            background: linear-gradient(90deg, #00d4ff 0%, #0088ff 100%);
-                            border-radius: 2px;
-                            transition: width 0.15s linear;
-                            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+                            color: rgba(0, 212, 255, 0.8);
                         }
                         .proc-stage-label {
-                            font-size: 0.6rem;
-                            font-weight: 500;
-                            letter-spacing: 0.15em;
+                            font-size: 0.55rem;
+                            font-weight: 600;
+                            letter-spacing: 0.2em;
                             text-transform: uppercase;
                             color: rgba(255, 255, 255, 0.3);
+                            text-align: center;
                             margin-bottom: 8px;
                         }
                         .proc-current-stage {
-                            font-size: 1rem;
-                            font-weight: 500;
-                            color: rgba(255, 255, 255, 0.9);
+                            font-size: 1.1rem;
+                            font-weight: 600;
+                            color: #fff;
+                            text-align: center;
                             margin-bottom: 32px;
-                            min-height: 24px;
+                            min-height: 28px;
+                            text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+                            animation: stageTextGlow 2s ease-in-out infinite;
+                        }
+                        @keyframes stageTextGlow {
+                            0%, 100% { text-shadow: 0 0 20px rgba(0, 212, 255, 0.4); }
+                            50% { text-shadow: 0 0 30px rgba(0, 212, 255, 0.6), 0 0 50px rgba(0, 212, 255, 0.3); }
                         }
                         .proc-stages-grid {
                             display: grid;
-                            grid-template-columns: repeat(4, 1fr);
-                            gap: 8px;
+                            grid-template-columns: repeat(6, 1fr);
+                            gap: 6px;
                         }
                         .proc-stage-item {
-                            font-size: 0.55rem;
-                            font-weight: 500;
-                            letter-spacing: 0.05em;
+                            font-size: 0.5rem;
+                            font-weight: 600;
+                            letter-spacing: 0.03em;
                             text-transform: uppercase;
-                            color: rgba(255, 255, 255, 0.2);
-                            padding: 10px 8px;
+                            color: rgba(255, 255, 255, 0.15);
+                            padding: 10px 4px;
                             background: rgba(255, 255, 255, 0.02);
-                            border: 1px solid rgba(255, 255, 255, 0.04);
-                            border-radius: 6px;
+                            border: 1px solid rgba(255, 255, 255, 0.03);
+                            border-radius: 8px;
                             text-align: center;
-                            transition: all 0.2s ease;
+                            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .proc-stage-item::before {
+                            content: '';
+                            position: absolute;
+                            top: 0; left: 0; right: 0; bottom: 0;
+                            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(0, 150, 255, 0.1) 100%);
+                            opacity: 0;
+                            transition: opacity 0.3s ease;
                         }
                         .proc-stage-item.active {
-                            color: #00d4ff;
-                            background: rgba(0, 212, 255, 0.08);
-                            border-color: rgba(0, 212, 255, 0.3);
-                            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+                            color: #fff;
+                            border-color: #00d4ff;
+                            transform: scale(1.08);
+                            z-index: 10;
+                            box-shadow:
+                                0 0 20px rgba(0, 212, 255, 0.6),
+                                0 0 40px rgba(0, 212, 255, 0.4),
+                                0 0 60px rgba(0, 212, 255, 0.2),
+                                inset 0 0 20px rgba(0, 212, 255, 0.2);
+                            animation: activeItemPulse 0.8s ease-in-out infinite;
+                        }
+                        .proc-stage-item.active::before {
+                            opacity: 1;
+                        }
+                        @keyframes activeItemPulse {
+                            0%, 100% {
+                                box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 0 40px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.2);
+                                transform: scale(1.08);
+                            }
+                            50% {
+                                box-shadow: 0 0 30px rgba(0, 212, 255, 0.8), 0 0 60px rgba(0, 212, 255, 0.5), 0 0 90px rgba(0, 212, 255, 0.3), inset 0 0 30px rgba(0, 212, 255, 0.3);
+                                transform: scale(1.12);
+                            }
                         }
                         .proc-stage-item.done {
-                            color: rgba(255, 255, 255, 0.5);
-                            background: rgba(255, 255, 255, 0.04);
-                            border-color: rgba(255, 255, 255, 0.08);
+                            color: #00ff88;
+                            background: rgba(0, 255, 136, 0.08);
+                            border-color: rgba(0, 255, 136, 0.3);
+                            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+                        }
+                        .proc-stage-item.done::after {
+                            content: '✓';
+                            position: absolute;
+                            top: 2px;
+                            right: 4px;
+                            font-size: 0.5rem;
+                            color: #00ff88;
                         }
                         .proc-meta {
                             display: flex;
                             justify-content: center;
-                            gap: 24px;
+                            gap: 32px;
                             margin-top: 32px;
                             padding-top: 24px;
                             border-top: 1px solid rgba(255, 255, 255, 0.04);
                         }
                         .proc-meta-item {
                             text-align: center;
+                            padding: 12px 20px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border-radius: 10px;
+                            border: 1px solid rgba(255, 255, 255, 0.05);
                         }
                         .proc-meta-value {
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            color: rgba(255, 255, 255, 0.8);
+                            font-size: 0.85rem;
+                            font-weight: 700;
+                            color: #00d4ff;
                             margin-bottom: 4px;
+                            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
                         }
                         .proc-meta-label {
                             font-size: 0.5rem;
-                            font-weight: 500;
-                            letter-spacing: 0.1em;
+                            font-weight: 600;
+                            letter-spacing: 0.12em;
                             text-transform: uppercase;
-                            color: rgba(255, 255, 255, 0.3);
+                            color: rgba(255, 255, 255, 0.35);
                         }
-                        @keyframes stagePulse {
-                            0%, 100% { opacity: 1; }
-                            50% { opacity: 0.7; }
+                        /* Waveform visualization */
+                        .proc-waveform {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 3px;
+                            height: 40px;
+                            margin-bottom: 24px;
                         }
-                        .proc-stage-item.active {
-                            animation: stagePulse 1s ease-in-out infinite;
+                        .proc-wave-bar {
+                            width: 4px;
+                            background: linear-gradient(180deg, #00d4ff 0%, #0066ff 100%);
+                            border-radius: 2px;
+                            animation: waveAnim 0.8s ease-in-out infinite;
+                            box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+                        }
+                        @keyframes waveAnim {
+                            0%, 100% { height: 10px; opacity: 0.5; }
+                            50% { height: 35px; opacity: 1; }
                         }
                     </style>
+                    <!-- Background effects -->
+                    <div class="proc-particles">
+                        ${Array.from({length: 30}, (_, i) => '<div class="proc-particle" style="left: ' + (Math.random() * 100) + '%; animation-delay: ' + (Math.random() * 8) + 's; animation-duration: ' + (6 + Math.random() * 4) + 's;"></div>').join('')}
+                    </div>
+                    <div class="proc-scanline"></div>
+
                     <div class="proc-container">
                         <div class="proc-header">
-                            <div class="proc-title">Mastering Engine</div>
+                            <div class="proc-title">AI Mastering Engine</div>
                             <div class="proc-badge">${genreName} · ${intensityName}</div>
                         </div>
-                        <div class="proc-percent-row">
-                            <span class="proc-percent" id="procPercent">0</span>
-                            <span class="proc-percent-sign">%</span>
+
+                        <!-- Circular Progress Ring -->
+                        <div class="proc-ring-container">
+                            <svg class="proc-ring-svg" viewBox="0 0 160 160">
+                                <defs>
+                                    <linearGradient id="procGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#00d4ff"/>
+                                        <stop offset="50%" style="stop-color:#00ff88"/>
+                                        <stop offset="100%" style="stop-color:#00d4ff"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="proc-ring-bg" cx="80" cy="80" r="72"/>
+                                <circle class="proc-ring-glow" id="procRingGlow" cx="80" cy="80" r="72"/>
+                                <circle class="proc-ring-progress" id="procRingProgress" cx="80" cy="80" r="72"/>
+                            </svg>
+                            <div class="proc-percent-center">
+                                <div><span class="proc-percent" id="procPercent">0</span><span class="proc-percent-sign">%</span></div>
+                            </div>
                         </div>
-                        <div class="proc-bar-container">
-                            <div class="proc-bar" id="procBar"></div>
+
+                        <!-- Waveform Animation -->
+                        <div class="proc-waveform">
+                            ${Array.from({length: 24}, (_, i) => '<div class="proc-wave-bar" style="animation-delay: ' + (i * 0.05) + 's;"></div>').join('')}
                         </div>
-                        <div class="proc-stage-label">Current Process</div>
-                        <div class="proc-current-stage" id="procCurrentStage">Initializing audio analysis...</div>
+
+                        <div class="proc-stage-label">Processing Stage</div>
+                        <div class="proc-current-stage" id="procCurrentStage">Initializing AI audio analysis...</div>
+
                         <div class="proc-stages-grid" id="procStagesGrid">
-                            <div class="proc-stage-item" data-stage="1">Input Analysis</div>
-                            <div class="proc-stage-item" data-stage="2">DC Offset</div>
-                            <div class="proc-stage-item" data-stage="3">Subsonic Filter</div>
+                            <div class="proc-stage-item" data-stage="1">Input</div>
+                            <div class="proc-stage-item" data-stage="2">DC Fix</div>
+                            <div class="proc-stage-item" data-stage="3">Sub Filter</div>
                             <div class="proc-stage-item" data-stage="4">7-Band EQ</div>
                             <div class="proc-stage-item" data-stage="5">Dynamic EQ</div>
-                            <div class="proc-stage-item" data-stage="6">Compression</div>
+                            <div class="proc-stage-item" data-stage="6">Compress</div>
                             <div class="proc-stage-item" data-stage="7">Multiband</div>
-                            <div class="proc-stage-item" data-stage="8">Transients</div>
-                            <div class="proc-stage-item" data-stage="9">Saturation</div>
+                            <div class="proc-stage-item" data-stage="8">Transient</div>
+                            <div class="proc-stage-item" data-stage="9">Saturate</div>
                             <div class="proc-stage-item" data-stage="10">Harmonic</div>
-                            <div class="proc-stage-item" data-stage="11">Stereo Width</div>
-                            <div class="proc-stage-item" data-stage="12">M/S Process</div>
-                            <div class="proc-stage-item" data-stage="13">De-Esser</div>
+                            <div class="proc-stage-item" data-stage="11">Stereo</div>
+                            <div class="proc-stage-item" data-stage="12">M/S</div>
+                            <div class="proc-stage-item" data-stage="13">De-Ess</div>
                             <div class="proc-stage-item" data-stage="14">Air EQ</div>
-                            <div class="proc-stage-item" data-stage="15">Bass Mono</div>
-                            <div class="proc-stage-item" data-stage="16">LUFS Target</div>
+                            <div class="proc-stage-item" data-stage="15">Bass</div>
+                            <div class="proc-stage-item" data-stage="16">LUFS</div>
                             <div class="proc-stage-item" data-stage="17">True Peak</div>
                             <div class="proc-stage-item" data-stage="18">Limiter</div>
-                            <div class="proc-stage-item" data-stage="19">Look-Ahead</div>
-                            <div class="proc-stage-item" data-stage="20">HF Limiter</div>
+                            <div class="proc-stage-item" data-stage="19">Look-Ahd</div>
+                            <div class="proc-stage-item" data-stage="20">HF Limit</div>
                             <div class="proc-stage-item" data-stage="21">Dither</div>
-                            <div class="proc-stage-item" data-stage="22">Final Polish</div>
-                            <div class="proc-stage-item" data-stage="23">Metering</div>
+                            <div class="proc-stage-item" data-stage="22">Polish</div>
+                            <div class="proc-stage-item" data-stage="23">Meter</div>
                             <div class="proc-stage-item" data-stage="24">Output</div>
                         </div>
+
                         <div class="proc-meta">
                             <div class="proc-meta-item">
                                 <div class="proc-meta-value" id="procSampleRate">48kHz</div>
                                 <div class="proc-meta-label">Sample Rate</div>
                             </div>
                             <div class="proc-meta-item">
-                                <div class="proc-meta-value" id="procBitDepth">32-bit</div>
-                                <div class="proc-meta-label">Bit Depth</div>
+                                <div class="proc-meta-value" id="procBitDepth">32-bit Float</div>
+                                <div class="proc-meta-label">Precision</div>
                             </div>
                             <div class="proc-meta-item">
                                 <div class="proc-meta-value" id="procLatency">0ms</div>
@@ -19598,13 +19793,25 @@
                 // Store update function globally for use during processing
                 window.updateMasteringProgress = function(stageNum, stageName, percent) {
                     const percentEl = document.getElementById('procPercent');
-                    const barEl = document.getElementById('procBar');
                     const stageEl = document.getElementById('procCurrentStage');
                     const stagesGrid = document.getElementById('procStagesGrid');
+                    const ringProgress = document.getElementById('procRingProgress');
+                    const ringGlow = document.getElementById('procRingGlow');
 
                     if (percentEl) percentEl.textContent = Math.round(percent);
-                    if (barEl) barEl.style.width = percent + '%';
                     if (stageEl) stageEl.textContent = stageName;
+
+                    // Update circular progress ring (circumference = 2 * PI * 72 ≈ 452)
+                    if (ringProgress) {
+                        const circumference = 452;
+                        const offset = circumference - (percent / 100) * circumference;
+                        ringProgress.style.strokeDashoffset = offset;
+                    }
+                    if (ringGlow) {
+                        const circumference = 452;
+                        const offset = circumference - (percent / 100) * circumference;
+                        ringGlow.style.strokeDashoffset = offset;
+                    }
 
                     if (stagesGrid) {
                         const items = stagesGrid.querySelectorAll('.proc-stage-item');
@@ -20240,8 +20447,8 @@
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
                 // Fixed chain compensation ensures stable LUFS across all presets
                 // ════════════════════════════════════════════════════════════════════════════
-                const chainCompensationDB = 1.5; // Fixed compensation for processing chain losses
-                const safetyMarginDB = 0.5;      // Aim slightly below target for safety
+                const chainCompensationDB = 4.0; // Compensation for compression + processing losses (3-5 dB typical)
+                const safetyMarginDB = 0.3;      // Small safety margin - let limiter do its job
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (stable across all intensities)`);
@@ -20249,12 +20456,13 @@
                 console.log(`   LUFS gain needed: ${lufsGainNeededDB >= 0 ? '+' : ''}${lufsGainNeededDB.toFixed(1)} dB`);
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // PEAK PROTECTION - BOB LUDWIG APPROACH
-                // Never let peaks exceed limiter threshold, even when boosting for LUFS
-                // Use minimum of (LUFS-needed gain) and (peak-safe gain)
+                // PEAK PROTECTION - PROFESSIONAL MASTERING APPROACH
+                // Allow limiter to work - that's what it's for!
+                // Target peaks at +3 dB before limiter = ~3-4 dB of limiting (standard practice)
+                // Limiters are designed for 3-6 dB of gain reduction on peaks
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = -1.5; // Trust limiter to catch peaks above this
+                const peakTargetBeforeLimiter = 3.0; // Allow up to 4dB of limiting (professional standard)
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
@@ -20762,88 +20970,170 @@
             const tooltip = document.createElement('div');
             tooltip.id = 'genrePresetGuideTooltip';
             tooltip.innerHTML = `
+                <style>
+                    @keyframes fineTuneSlideIn {
+                        from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+                        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    }
+                    @keyframes fineTuneGlow {
+                        0%, 100% { box-shadow: 0 0 60px rgba(0, 212, 255, 0.15), 0 50px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.05); }
+                        50% { box-shadow: 0 0 80px rgba(0, 212, 255, 0.25), 0 50px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.05); }
+                    }
+                    @keyframes stepPulse {
+                        0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+                        50% { transform: scale(1.1); box-shadow: 0 0 30px rgba(0, 212, 255, 0.8); }
+                    }
+                    @keyframes eqBarAnim {
+                        0%, 100% { height: 20%; }
+                        50% { height: 80%; }
+                    }
+                    .fine-tune-step {
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 16px;
+                        padding: 16px;
+                        background: rgba(0, 0, 0, 0.3);
+                        border-radius: 12px;
+                        border: 1px solid rgba(255, 255, 255, 0.05);
+                        transition: all 0.3s ease;
+                    }
+                    .fine-tune-step:hover {
+                        background: rgba(0, 212, 255, 0.08);
+                        border-color: rgba(0, 212, 255, 0.2);
+                        transform: translateX(5px);
+                    }
+                    .fine-tune-num {
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 100, 255, 0.1) 100%);
+                        border: 1px solid rgba(0, 212, 255, 0.4);
+                        border-radius: 8px;
+                        color: #00d4ff;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        flex-shrink: 0;
+                    }
+                </style>
+                <!-- Backdrop -->
+                <div style="
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: radial-gradient(ellipse at center, rgba(0, 15, 30, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    z-index: 100029;
+                " onclick="closeGenrePresetGuide()"></div>
+
+                <!-- Modal -->
                 <div style="
                     position: fixed;
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 12px;
-                    box-shadow: 0 25px 80px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.1) inset;
-                    max-width: 400px;
-                    width: 90%;
+                    background: linear-gradient(165deg, rgba(15, 25, 45, 0.98) 0%, rgba(5, 10, 25, 0.99) 100%);
+                    border: 1px solid rgba(0, 212, 255, 0.2);
+                    border-radius: 24px;
+                    box-shadow: 0 0 60px rgba(0, 212, 255, 0.15), 0 50px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+                    max-width: 480px;
+                    width: 95%;
                     z-index: 100030;
                     overflow: hidden;
-                    animation: slideUp 0.3s ease;
+                    animation: fineTuneSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), fineTuneGlow 3s ease-in-out infinite;
                 ">
-                    <!-- Header -->
+                    <!-- Header with EQ visualization -->
                     <div style="
-                        background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-                        border-bottom: 1px solid rgba(255,255,255,0.06);
-                        padding: 12px 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
+                        background: linear-gradient(180deg, rgba(0, 212, 255, 0.08) 0%, transparent 100%);
+                        padding: 32px 32px 24px;
+                        position: relative;
+                        overflow: hidden;
                     ">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%); border-radius: 50%; font-size: 0.7rem; font-weight: 700; color: #fff; box-shadow: 0 0 12px rgba(0, 212, 255, 0.5);">4</div>
-                            <div>
-                                <div style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 0.1em; text-transform: uppercase;">Step 4: Fine-Tune</div>
-                                <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;">Customize your sound</div>
-                            </div>
+                        <!-- Animated EQ bars in background -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: flex-end; justify-content: center; gap: 4px; opacity: 0.15; padding: 20px;">
+                            ${Array.from({length: 16}, (_, i) => '<div style="width: 8px; background: linear-gradient(180deg, #00d4ff 0%, #0066ff 100%); border-radius: 4px; animation: eqBarAnim ' + (0.5 + Math.random() * 0.5) + 's ease-in-out infinite; animation-delay: ' + (i * 0.1) + 's;"></div>').join('')}
                         </div>
-                        <button onclick="closeGenrePresetGuide()" style="background: none; border: none; color: rgba(255,255,255,0.4); font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+
+                        <div style="position: relative; z-index: 1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <div style="
+                                        width: 48px; height: 48px;
+                                        display: flex; align-items: center; justify-content: center;
+                                        background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+                                        border-radius: 14px;
+                                        font-size: 1.4rem; font-weight: 800; color: #000;
+                                        box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+                                        animation: stepPulse 2s ease-in-out infinite;
+                                    ">4</div>
+                                    <div>
+                                        <div style="font-size: 0.65rem; font-weight: 600; color: rgba(0, 212, 255, 0.8); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 4px;">Step 4</div>
+                                        <div style="font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: -0.02em;">Fine-Tune Your Sound</div>
+                                    </div>
+                                </div>
+                                <button onclick="closeGenrePresetGuide()" style="
+                                    width: 36px; height: 36px;
+                                    background: rgba(255,255,255,0.05);
+                                    border: 1px solid rgba(255,255,255,0.1);
+                                    border-radius: 10px;
+                                    color: rgba(255,255,255,0.5);
+                                    font-size: 1.2rem;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                " onmouseover="this.style.background='rgba(255,100,100,0.2)';this.style.borderColor='rgba(255,100,100,0.4)';this.style.color='#ff6666'"
+                                   onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='rgba(255,255,255,0.5)'">&times;</button>
+                            </div>
+                            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0;">
+                                Each genre unlocks <span style="color: #00ff88; font-weight: 600;">10 professional presets</span> crafted by mastering engineers.
+                            </p>
+                        </div>
                     </div>
 
-                    <!-- Body -->
-                    <div style="padding: 24px;">
-                        <h3 style="font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.9); margin: 0 0 12px 0; letter-spacing: 0.03em;">Genre EQ Presets</h3>
-                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin: 0 0 20px 0;">
-                            Select a <strong style="color: #7cb8ff;">genre</strong> in the sidebar to reveal specialized EQ presets.
-                            Each genre has 10 unique presets designed by professional mastering engineers to help you
-                            achieve your exact sonic vision.
-                        </p>
-
-                        <div style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 14px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.04);">
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">How it works</div>
-                            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.7rem; color: rgba(255,255,255,0.6);">
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="color: #7cb8ff; font-weight: 600;">1.</span> Click a genre button (Hip-Hop, Pop, EDM, etc.)
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="color: #7cb8ff; font-weight: 600;">2.</span> A dropdown appears with 10 style presets
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="color: #7cb8ff; font-weight: 600;">3.</span> Click a preset to apply - hear it instantly
-                                </div>
+                    <!-- Steps -->
+                    <div style="padding: 24px 32px 32px; display: flex; flex-direction: column; gap: 12px;">
+                        <div class="fine-tune-step">
+                            <div class="fine-tune-num">1</div>
+                            <div>
+                                <div style="font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 4px;">Select Your Genre</div>
+                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Hip-Hop, Pop, EDM, Rock, and more</div>
+                            </div>
+                        </div>
+                        <div class="fine-tune-step">
+                            <div class="fine-tune-num">2</div>
+                            <div>
+                                <div style="font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 4px;">Browse 10 Style Presets</div>
+                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Each optimized for different sonic goals</div>
+                            </div>
+                        </div>
+                        <div class="fine-tune-step">
+                            <div class="fine-tune-num">3</div>
+                            <div>
+                                <div style="font-size: 0.9rem; font-weight: 600; color: #fff; margin-bottom: 4px;">Hear Changes Instantly</div>
+                                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Watch the EQ respond in real-time</div>
                             </div>
                         </div>
 
                         <button onclick="closeGenrePresetGuide()" style="
                             width: 100%;
-                            padding: 14px 24px;
-                            background: linear-gradient(180deg, rgba(124, 184, 255, 0.15) 0%, rgba(124, 184, 255, 0.08) 100%);
-                            border: 1px solid rgba(124, 184, 255, 0.35);
-                            border-radius: 6px;
-                            color: #7cb8ff;
-                            font-size: 0.7rem;
-                            font-weight: 600;
-                            letter-spacing: 0.12em;
-                            text-transform: uppercase;
+                            margin-top: 12px;
+                            padding: 16px 24px;
+                            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+                            border: none;
+                            border-radius: 12px;
+                            color: #000;
+                            font-size: 0.85rem;
+                            font-weight: 700;
+                            letter-spacing: 0.05em;
                             cursor: pointer;
-                            transition: all 0.2s;
-                        ">
-                            Got It
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+                        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(0, 212, 255, 0.5)'"
+                           onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(0, 212, 255, 0.4)'">
+                            Start Fine-Tuning →
                         </button>
                     </div>
                 </div>
-                <div style="
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(0,0,0,0.7);
-                    z-index: 100029;
-                " onclick="closeGenrePresetGuide()"></div>
             `;
             document.body.appendChild(tooltip);
 
@@ -23509,41 +23799,20 @@
         // Make speak globally accessible
         window.speak = speak;
 
-        // Speak with audio ducking - ducks music, speaks, then restores volume
+        // Speak with audio ducking - DISABLED to prevent LUFS issues
+        // The mastering chain must remain stable during voice tour
         window.speakWithDucking = function(text) {
+            // Simply speak without ducking - mastering integrity is priority
             if (!window.speechSynthesis || !text) return;
 
-            const audio = window.audioElement;
-            const originalVolume = audio ? audio.volume : 1;
-
-            // Duck the music volume so voice can be heard
-            if (audio) {
-                audio.volume = 0.15;
-            }
-
-            // Force stop any current speech - Chrome bug workaround
             window.speechSynthesis.cancel();
 
-            // Small delay after cancel to ensure clean stop
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.voice = preferredVoice; // Use the same voice as tour
+                utterance.voice = preferredVoice;
                 utterance.rate = 0.92;
                 utterance.pitch = 0.9;
                 utterance.volume = 1.0;
-
-                // Restore volume when speech ends
-                utterance.onend = () => {
-                    if (audio) {
-                        audio.volume = originalVolume;
-                    }
-                };
-                utterance.onerror = () => {
-                    if (audio) {
-                        audio.volume = originalVolume;
-                    }
-                };
-
                 window.speechSynthesis.speak(utterance);
             }, 50);
         };
