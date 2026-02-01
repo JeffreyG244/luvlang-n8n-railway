@@ -3056,6 +3056,195 @@
         pointer-events: none;
     "></div>
 
+    <!-- LANGUAGE SELECTION MODAL - First step of tour -->
+    <div id="tourLanguageModal" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(ellipse at center, rgba(0,20,40,0.98) 0%, rgba(0,0,0,0.99) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        z-index: 100005;
+        align-items: center;
+        justify-content: center;
+    ">
+        <div style="
+            background: linear-gradient(145deg, rgba(15, 20, 40, 0.95) 0%, rgba(10, 15, 35, 0.98) 100%);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 24px;
+            padding: 40px 48px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(0, 212, 255, 0.15);
+            animation: modalSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        ">
+            <div style="font-size: 3rem; margin-bottom: 16px;">🌍</div>
+            <h2 style="
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #fff;
+                margin: 0 0 8px;
+                background: linear-gradient(135deg, #fff 0%, #00d4ff 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            ">Choose Your Language</h2>
+            <p style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin: 0 0 24px;">Select your preferred language for the guided tour</p>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px;">
+                <button onclick="selectTourLanguage('en')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 100%);
+                    border: 1px solid rgba(0, 212, 255, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 212, 255, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇺🇸 English
+                </button>
+                <button onclick="selectTourLanguage('es')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(255, 165, 0, 0.15) 0%, rgba(255, 165, 0, 0.05) 100%);
+                    border: 1px solid rgba(255, 165, 0, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 165, 0, 0.25) 0%, rgba(255, 165, 0, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 165, 0, 0.15) 0%, rgba(255, 165, 0, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇪🇸 Español
+                </button>
+                <button onclick="selectTourLanguage('fr')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(0, 100, 255, 0.15) 0%, rgba(0, 100, 255, 0.05) 100%);
+                    border: 1px solid rgba(0, 100, 255, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(0, 100, 255, 0.25) 0%, rgba(0, 100, 255, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(0, 100, 255, 0.15) 0%, rgba(0, 100, 255, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇫🇷 Français
+                </button>
+                <button onclick="selectTourLanguage('de')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(255, 200, 0, 0.15) 0%, rgba(255, 200, 0, 0.05) 100%);
+                    border: 1px solid rgba(255, 200, 0, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 200, 0, 0.25) 0%, rgba(255, 200, 0, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 200, 0, 0.15) 0%, rgba(255, 200, 0, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇩🇪 Deutsch
+                </button>
+                <button onclick="selectTourLanguage('pt')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(0, 180, 0, 0.15) 0%, rgba(0, 180, 0, 0.05) 100%);
+                    border: 1px solid rgba(0, 180, 0, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(0, 180, 0, 0.25) 0%, rgba(0, 180, 0, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(0, 180, 0, 0.15) 0%, rgba(0, 180, 0, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇧🇷 Português
+                </button>
+                <button onclick="selectTourLanguage('ja')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(255, 100, 100, 0.15) 0%, rgba(255, 100, 100, 0.05) 100%);
+                    border: 1px solid rgba(255, 100, 100, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 100, 100, 0.25) 0%, rgba(255, 100, 100, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 100, 100, 0.15) 0%, rgba(255, 100, 100, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇯🇵 日本語
+                </button>
+                <button onclick="selectTourLanguage('ko')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(100, 150, 255, 0.15) 0%, rgba(100, 150, 255, 0.05) 100%);
+                    border: 1px solid rgba(100, 150, 255, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(100, 150, 255, 0.25) 0%, rgba(100, 150, 255, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(100, 150, 255, 0.15) 0%, rgba(100, 150, 255, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇰🇷 한국어
+                </button>
+                <button onclick="selectTourLanguage('zh')" class="lang-btn" style="
+                    padding: 14px 16px;
+                    background: linear-gradient(135deg, rgba(255, 50, 50, 0.15) 0%, rgba(255, 50, 50, 0.05) 100%);
+                    border: 1px solid rgba(255, 50, 50, 0.3);
+                    border-radius: 10px;
+                    color: #fff;
+                    font-size: 0.9rem;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                " onmouseover="this.style.background='linear-gradient(135deg, rgba(255, 50, 50, 0.25) 0%, rgba(255, 50, 50, 0.15) 100%)';this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.background='linear-gradient(135deg, rgba(255, 50, 50, 0.15) 0%, rgba(255, 50, 50, 0.05) 100%)';this.style.transform='translateY(0)'">
+                    🇨🇳 中文
+                </button>
+            </div>
+
+            <button onclick="skipLanguageSelection()" style="
+                background: none;
+                border: none;
+                color: rgba(255,255,255,0.4);
+                font-size: 0.8rem;
+                cursor: pointer;
+                padding: 8px 16px;
+                transition: color 0.2s ease;
+            " onmouseover="this.style.color='rgba(255,255,255,0.7)'"
+               onmouseout="this.style.color='rgba(255,255,255,0.4)'">
+                Skip Tour →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Language selection for tour
+        function selectTourLanguage(lang) {
+            // Store the selected language
+            localStorage.setItem('tourLanguage', lang);
+
+            // Hide the language modal
+            const modal = document.getElementById('tourLanguageModal');
+            if (modal) modal.style.display = 'none';
+
+            // Set the tour language and start
+            if (typeof window.setTourLanguage === 'function') {
+                window.setTourLanguage(lang);
+            }
+
+            // Actually start the tour now
+            if (typeof window.startTourAfterLanguage === 'function') {
+                window.startTourAfterLanguage();
+            }
+        }
+
+        function skipLanguageSelection() {
+            // Hide the language modal
+            const modal = document.getElementById('tourLanguageModal');
+            if (modal) modal.style.display = 'none';
+
+            // Mark tour as completed so it doesn't show again
+            localStorage.setItem('voiceTourCompleted', 'true');
+            sessionStorage.setItem('voiceTourStarted', 'true');
+        }
+    </script>
+
     <!-- CENTERED UPLOAD ZONE - Large prominent upload area for tour step 1 -->
     <div id="tourUploadZone" onclick="document.getElementById('audioFileInput').click()" style="
         display: none;
@@ -23383,13 +23572,36 @@
             }
         }
 
-        // Start Tour
+        // Start Tour - Shows language selection first
         function startVoiceTour() {
             // Prevent restarting if already active
             if (tourActive) {
                 console.log('🎤 Tour already active, not restarting');
                 return;
             }
+
+            // Check if user has a saved language preference
+            const savedLang = localStorage.getItem('tourLanguage');
+            if (savedLang) {
+                // Use saved language and start directly
+                currentLang = savedLang;
+                initVoiceEngine();
+                startTourAfterLanguage();
+            } else {
+                // Show language selection modal first
+                const langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.display = 'flex';
+                    console.log('🎤 Showing language selection');
+                } else {
+                    // Fallback: start with English
+                    startTourAfterLanguage();
+                }
+            }
+        }
+
+        // Actually start the tour after language is selected
+        function startTourAfterLanguage() {
             currentStep = 0;
             tourActive = true;
             lastAdvanceAction = null;
@@ -23398,6 +23610,7 @@
             showStep(0);
             console.log('🎤 Voice Tour Started');
         }
+        window.startTourAfterLanguage = startTourAfterLanguage;
 
         // Show Tour Step - Centered modal design
         function showStep(stepIndex) {
@@ -23911,6 +24124,7 @@
         window.endTour = endVoiceTour;
         window.endVoiceTour = endVoiceTour;
         window.toggleVoiceTour = toggleVoice;
+        window.setTourLanguage = changeVoiceTourLanguage; // Used by language selection modal
         window.advanceTourOnAction = advanceVoiceTour;
         window.advanceVoiceTour = advanceVoiceTour; // Used by confirmTourFormat
         window.closeVoiceTourExplore = closeVoiceTourExplore;
