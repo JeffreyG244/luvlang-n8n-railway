@@ -3297,9 +3297,8 @@
             // Hide the format zone
             const formatZone = document.getElementById('tourFormatZone');
             if (formatZone) formatZone.style.display = 'none';
-            // Advance to next step
+            // Advance to next step - just trigger the action, tour handles the rest
             if (typeof advanceVoiceTour === 'function') {
-                window.currentStep = 1; // Move past format step
                 advanceVoiceTour('formatSelected');
             }
         }
@@ -23435,16 +23434,6 @@
                 if (masterBtn) masterBtn.classList.remove('master-btn-tour-highlight');
             }
 
-            // Show/hide tour tooltip based on step type (hide for centered zones)
-            if (tooltip) {
-                if (step.id === 'format' || step.useFormatZone) {
-                    // Hide tooltip during format step - using centered format zone
-                    tooltip.style.display = 'none';
-                } else if (step.id !== 'upload' && !step.isExploreStep) {
-                    tooltip.style.display = 'block';
-                }
-            }
-
             // Update progress bar
             for (let i = 1; i <= 5; i++) {
                 const dot = document.getElementById('tourProgress' + i);
@@ -23541,8 +23530,12 @@
                     nextBtn.style.display = step.showNext ? 'block' : 'none';
                 }
 
-                // Tooltip is always centered via CSS
-                tooltip.style.display = 'block';
+                // Tooltip visibility - hide for upload and format steps (they use centered zones)
+                if (step.id === 'upload' || step.id === 'format' || step.useFormatZone) {
+                    tooltip.style.display = 'none';
+                } else {
+                    tooltip.style.display = 'block';
+                }
             }
 
             // Speak the translated step
