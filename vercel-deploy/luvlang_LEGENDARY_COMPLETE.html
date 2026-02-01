@@ -4285,30 +4285,30 @@
             </button>
 
             <!-- Integrated A/B Toggle - Shows after mastering -->
-            <div id="integratedABToggle" style="display: none; align-items: center; gap: 12px;">
+            <div id="integratedABToggle" style="display: none; align-items: center; gap: 8px; margin-left: 15px;">
                 <span id="floatingABLabelOriginal" style="
-                    font-size: 0.8rem;
+                    font-size: 0.65rem;
                     font-weight: 600;
-                    color: rgba(255,255,255,0.4);
+                    color: rgba(255,255,255,0.5);
                     transition: all 0.3s;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
-                ">A</span>
+                ">ORIGINAL</span>
 
-                <label class="ab-toggle-premium" style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                <label class="ab-toggle-premium" style="position: relative; display: inline-block; width: 48px; height: 24px; cursor: pointer;">
                     <input type="checkbox" id="floatingABSwitch" checked onchange="handleFloatingABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
                     <span id="floatingABTrack" class="ab-track-mastered"></span>
                 </label>
 
                 <span id="floatingABLabelMastered" style="
-                    font-size: 0.8rem;
+                    font-size: 0.65rem;
                     font-weight: 700;
                     color: #00ff88;
                     transition: all 0.3s;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
                     text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
-                ">B</span>
+                ">MASTERED</span>
             </div>
         </div>
 
@@ -4369,14 +4369,14 @@
         .ab-track-mastered::after {
             content: '';
             position: absolute;
-            height: 20px;
-            width: 20px;
-            left: 4px;
+            height: 18px;
+            width: 18px;
+            left: 3px;
             bottom: 2px;
             background: linear-gradient(145deg, #ffffff, #e6e6e6);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 50%;
-            transform: translateX(22px);
+            transform: translateX(24px);
             box-shadow:
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
