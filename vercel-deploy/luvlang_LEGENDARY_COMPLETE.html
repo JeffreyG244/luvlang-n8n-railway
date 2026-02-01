@@ -73,7 +73,7 @@
         .right-sidebar {
             background: linear-gradient(180deg, #12121a 0%, #0a0a10 100%);
             overflow-y: auto;
-            padding: 20px 16px;
+            padding: 12px 10px;
         }
 
         /* Section styling */
@@ -6054,21 +6054,16 @@
                 position: sticky; top: 0; z-index: 100;
                 background: linear-gradient(145deg, rgba(8, 8, 18, 0.98) 0%, rgba(12, 12, 28, 0.95) 50%, rgba(8, 8, 18, 0.98) 100%);
                 border: 1px solid rgba(0, 212, 255, 0.3);
-                border-top: 2px solid rgba(0, 255, 136, 0.5);
-                border-radius: 16px;
+                border-radius: 12px;
                 padding: 0;
-                margin-bottom: 15px;
-                box-shadow:
-                    0 8px 32px rgba(0, 0, 0, 0.7),
-                    0 0 40px rgba(0, 212, 255, 0.08),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-                    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+                margin-bottom: 10px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
                 overflow: hidden;
             ">
                 <!-- Header Bar with LED Status -->
                 <div style="
                     display: flex; justify-content: space-between; align-items: center;
-                    padding: 10px 15px;
+                    padding: 6px 10px;
                     background: linear-gradient(90deg, rgba(0, 212, 255, 0.08), transparent, rgba(0, 255, 136, 0.08));
                     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                 ">
@@ -6091,8 +6086,8 @@
                 </div>
 
                 <!-- Main Meter Display -->
-                <div style="padding: 15px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="padding: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <!-- MOMENTARY Display -->
                         <div style="
                             background: linear-gradient(180deg, rgba(0, 255, 136, 0.03) 0%, rgba(0, 0, 0, 0.2) 100%);
@@ -6463,14 +6458,14 @@
             <div class="advanced-features-section" style="margin-bottom: 15px;">
                 <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer;" onclick="toggleAdvancedSection()">
                     <span style="display: flex; align-items: center; gap: 8px;">
-                        <span id="advancedToggleIcon" style="transition: transform 0.3s ease;">▼</span>
+                        <span id="advancedToggleIcon" style="transition: transform 0.3s ease;">▶</span>
                         🚀 Advanced Processing
                     </span>
                     <span style="font-size: 0.6rem; padding: 2px 8px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 10px; color: #000; font-weight: 700;">PRO</span>
                 </div>
 
-                <!-- Collapsible content wrapper -->
-                <div id="advancedProcessingContent" style="max-height: 2000px; opacity: 1; transition: max-height 0.3s ease, opacity 0.3s ease;">
+                <!-- Collapsible content wrapper - collapsed by default -->
+                <div id="advancedProcessingContent" style="max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease;">
 
                 <!-- Dynamic EQ Toggle (3-Band Frequency-Dependent Compression) -->
                 <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
@@ -10186,7 +10181,7 @@
                     } else {
                         startPlayback();
                     }
-                }, 300); // Small delay to ensure everything is ready
+                }, 100); // Small delay to ensure everything is ready
 
                 // Store blob URL for cleanup when new file is loaded
                 // DO NOT revoke immediately - audio element needs it for playback!
@@ -10248,21 +10243,9 @@
                     console.log('   💡 Click "AI Master" to hear the mastered version');
                     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                    // Draw waveform now that audioBuffer is ready - MULTIPLE ATTEMPTS
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📊 WAVEFORM: Drawing now that audioBuffer is ready...');
-
-                    // Try immediately
+                    // Draw waveform now that audioBuffer is ready
+                    console.log('📊 WAVEFORM: Drawing...');
                     drawWaveformFromBuffer(audioBuffer);
-
-                    // Try again after 100ms (canvas might need time to be ready)
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 100);
-
-                    // And once more after 500ms to be absolutely sure
-                    setTimeout(() => drawWaveformFromBuffer(audioBuffer), 500);
-
-                    console.log('   Waveform draw attempts scheduled (3 times)');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                     // Initialize WebGL spectrum analyzer (with persistence/ghosting)
                     if (window.WebGLSpectrum && spectrumCanvas && !window.WebGLSpectrum.isReady()) {
@@ -10281,14 +10264,6 @@
                         window.drawCorrelationLegend(correlationLegendCanvas);
                         console.log('   ✅ Elite frequency-domain phase analysis ready');
                     }
-
-                    // REMOVED: Old ultimateWaveformViz code
-                    setTimeout(() => {
-                        if (false && window.ultimateWaveformViz && window.audioBuffer) {
-                            // Disabled - we use the original waveform system
-                            console.log('🎨 Waveform auto-loaded');
-                        }
-                    }, 200);
 
                 } catch (error) {
                     console.error('⚠️ Error decoding audio buffer:', error);
