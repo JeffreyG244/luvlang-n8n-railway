@@ -3748,36 +3748,32 @@
         }
     </script>
 
-    <!-- CENTERED UPLOAD ZONE - Large prominent upload area for tour step 1 -->
+    <!-- CENTERED UPLOAD ZONE - Professional centered modal for tour step 1 -->
     <div id="tourUploadZone" onclick="document.getElementById('audioFileInput').click()" style="
         display: none;
         position: fixed;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -60%);
-        width: 500px;
-        max-width: 85vw;
-        height: 280px;
-        background: linear-gradient(165deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 10, 25, 0.98) 100%);
-        border: 3px solid #00d4ff;
-        border-radius: 24px;
+        transform: translate(-50%, -50%);
+        width: 380px;
+        max-width: 90vw;
+        background: linear-gradient(165deg, rgba(8, 12, 24, 0.98) 0%, rgba(4, 8, 16, 0.99) 100%);
+        border: 2px solid rgba(0, 212, 255, 0.4);
+        border-radius: 20px;
         z-index: 100000;
         cursor: pointer;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 20px;
-        animation: uploadZonePulse 2s ease-in-out infinite;
-        box-shadow:
-            0 0 60px rgba(0, 212, 255, 0.4),
-            0 0 120px rgba(0, 212, 255, 0.2),
-            inset 0 0 60px rgba(0, 212, 255, 0.05);
+        padding: 40px 30px;
+        gap: 16px;
+        animation: uploadZonePulse 2.5s ease-in-out infinite;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 212, 255, 0.2);
         backdrop-filter: blur(20px);
     ">
-        <div style="font-size: 4rem; animation: bounceIcon 1.5s ease-in-out infinite;">🎵</div>
-        <div style="font-size: 1.5rem; font-weight: 700; color: #ffffff; text-align: center;">Drop Your Track Here</div>
-        <div style="font-size: 1rem; color: #00d4ff; font-weight: 600;">or click to browse</div>
-        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 10px;">WAV, MP3, FLAC, M4A, AAC</div>
+        <div style="font-size: 3.5rem; margin-bottom: 8px;">🎵</div>
+        <div style="font-size: 1.3rem; font-weight: 700; color: #ffffff; text-align: center;">Click or Drag Audio File Here</div>
+        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.5); text-align: center;">WAV, MP3, FLAC, M4A, AAC</div>
+        <div style="margin-top: 16px; padding: 14px 28px; background: linear-gradient(135deg, #00d4ff, #0088cc); border-radius: 12px; color: #fff; font-weight: 700; font-size: 0.95rem;">Upload a file to continue</div>
     </div>
 
     <style>
@@ -4012,27 +4008,24 @@
         animation: spotlightBreath 2s ease-in-out infinite;
     "></div>
 
-    <!-- BOTTOM Premium Tour Modal - Positioned to not block target elements -->
+    <!-- BOTTOM Premium Tour Modal - Compact, centered at bottom -->
     <div id="voiceTourTooltip" style="
         display: none;
         position: fixed;
-        bottom: 30px;
+        bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
-        z-index: 99999;
+        z-index: 99998;
         background: linear-gradient(165deg, rgba(12, 17, 35, 0.98) 0%, rgba(8, 12, 28, 0.99) 100%);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border: 1px solid rgba(0, 212, 255, 0.25);
-        border-radius: 28px;
-        padding: 32px 40px;
-        width: 520px;
-        max-width: 94vw;
-        box-shadow:
-            0 -20px 80px rgba(0, 0, 0, 0.5),
-            0 0 60px rgba(0, 212, 255, 0.15),
-            0 0 1px rgba(255, 255, 255, 0.1) inset;
-        animation: tooltipSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 20px 28px;
+        width: 400px;
+        max-width: 90vw;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+        animation: tooltipSlideUp 0.4s ease-out;
     ">
         <!-- Decorative top gradient line -->
         <div style="
@@ -4043,66 +4036,30 @@
             border-radius: 0 0 3px 3px;
         "></div>
 
-        <!-- Progress Indicator -->
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 32px;">
-            <div id="tourProgress1" style="width: 40px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #00d4ff, #b84fff); box-shadow: 0 0 12px rgba(0, 212, 255, 0.5); transition: all 0.4s;"></div>
-            <div id="tourProgress2" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress3" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress4" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress5" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
+        <!-- Progress Indicator - Compact -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px;">
+            <div id="tourProgress1" style="width: 32px; height: 4px; border-radius: 2px; background: linear-gradient(90deg, #00d4ff, #b84fff); transition: all 0.3s;"></div>
+            <div id="tourProgress2" style="width: 32px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); transition: all 0.3s;"></div>
+            <div id="tourProgress3" style="width: 32px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); transition: all 0.3s;"></div>
+            <div id="tourProgress4" style="width: 32px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); transition: all 0.3s;"></div>
+            <div id="tourProgress5" style="width: 32px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); transition: all 0.3s;"></div>
         </div>
 
-        <!-- Step Counter Badge -->
-        <div style="text-align: center; margin-bottom: 24px;">
-            <span id="voiceTourStep" style="
-                display: inline-block;
-                padding: 8px 20px;
-                background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.1));
-                border: 1px solid rgba(0, 212, 255, 0.3);
-                border-radius: 30px;
-                font-size: 0.75rem;
-                color: #00d4ff;
-                text-transform: uppercase;
-                letter-spacing: 3px;
-                font-weight: 700;
-            ">STEP 1 OF 5</span>
+        <!-- Step Counter + Title Row -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px;">
+            <span id="voiceTourStep" style="font-size: 0.65rem; color: rgba(0,212,255,0.8); text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">STEP 1 OF 4</span>
         </div>
 
         <!-- Main Title -->
-        <h2 id="voiceTourTitle" style="
-            text-align: center;
-            font-size: 1.75rem;
-            font-weight: 800;
-            color: #ffffff;
-            margin: 0 0 16px 0;
-            line-height: 1.3;
-            letter-spacing: -0.5px;
-        ">Upload Your Track</h2>
+        <h2 id="voiceTourTitle" style="text-align: center; font-size: 1.2rem; font-weight: 700; color: #ffffff; margin: 0 0 8px 0;">Upload Your Track</h2>
 
         <!-- Description -->
-        <p id="voiceTourDesc" style="
-            text-align: center;
-            font-size: 1.05rem;
-            color: rgba(255, 255, 255, 0.7);
-            line-height: 1.7;
-            margin: 0 0 28px 0;
-        ">Drag and drop your audio file, or click the highlighted area to browse.</p>
+        <p id="voiceTourDesc" style="text-align: center; font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); line-height: 1.5; margin: 0 0 16px 0;">Drag and drop your audio file here, or click to browse.</p>
 
-        <!-- Action Call-to-Action -->
-        <div id="voiceTourAction" style="
-            padding: 18px 24px;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(184, 79, 255, 0.06) 100%);
-            border: 2px solid rgba(0, 212, 255, 0.4);
-            border-radius: 16px;
-            text-align: center;
-            color: #00d4ff;
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: 28px;
-            animation: ctaPulse 2.5s ease-in-out infinite;
-        ">
-            <span id="voiceTourArrow" style="margin-right: 10px;">←</span>
-            <span id="voiceTourActionText">Click the glowing upload area on the left</span>
+        <!-- Action CTA - Hidden for upload step since modal is self-explanatory -->
+        <div id="voiceTourAction" style="display: none; padding: 12px 16px; background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 10px; text-align: center; color: #00d4ff; font-weight: 600; font-size: 0.85rem; margin-bottom: 16px;">
+            <span id="voiceTourArrow" style="margin-right: 8px;">👆</span>
+            <span id="voiceTourActionText">Upload a file to continue</span>
         </div>
 
         <!-- Control Row -->
