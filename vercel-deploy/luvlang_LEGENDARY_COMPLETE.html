@@ -5972,55 +5972,116 @@
                 <div id="linearPhaseContainer"></div>
             </div>
 
-            <!-- MASTER SECTION -->
+            <!-- MASTER SECTION - State-of-the-Art Design -->
             <div class="master-section">
                 <div class="section-title">Master Output</div>
 
-                <!-- 🏆 TRAFFIC LIGHT COMPLIANCE BADGE - Professional Peak Monitoring -->
+                <!-- Professional Peak Monitor Card -->
                 <div id="complianceBadge" style="
-                    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
-                    border: 2px solid #4CAF50;
-                    border-radius: 20px;
-                    padding: 8px 16px;
+                    background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.85) 100%);
+                    border: 1px solid rgba(76, 175, 80, 0.3);
+                    border-radius: 12px;
+                    padding: 16px;
                     margin-bottom: 15px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.05);
                     transition: all 0.3s ease;
-                    flex-wrap: nowrap;
                 ">
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;">
-                        <div id="complianceLight" style="
-                            width: 12px;
-                            height: 12px;
-                            border-radius: 50%;
-                            background: #4CAF50;
-                            box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
-                            animation: pulse 2s infinite;
-                            flex-shrink: 0;
-                        "></div>
-                        <span id="complianceLabel" style="
-                            font-size: 0.75rem;
-                            font-weight: 600;
-                            letter-spacing: 0.5px;
-                            color: #4CAF50;
-                            white-space: nowrap;
-                        ">BROADCAST SAFE</span>
+                    <!-- Top Row: Status Badge -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div id="complianceLight" style="
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background: #4CAF50;
+                                box-shadow: 0 0 8px rgba(76, 175, 80, 0.8), 0 0 16px rgba(76, 175, 80, 0.4);
+                                animation: pulse 2s infinite;
+                            "></div>
+                            <span id="complianceLabel" style="
+                                font-size: 0.6rem;
+                                font-weight: 700;
+                                letter-spacing: 1px;
+                                color: #4CAF50;
+                                text-transform: uppercase;
+                            ">BROADCAST SAFE</span>
+                        </div>
+                        <div style="
+                            font-size: 0.5rem;
+                            color: rgba(255,255,255,0.4);
+                            background: rgba(255,255,255,0.05);
+                            padding: 3px 8px;
+                            border-radius: 4px;
+                        ">TRUE PEAK</div>
                     </div>
-                    <span id="complianceValue" style="
-                        font-size: 0.85rem;
-                        font-weight: 700;
-                        font-family: 'JetBrains Mono', monospace;
-                        color: #00ff88;
-                        white-space: nowrap;
-                    ">-∞ dBTP</span>
+
+                    <!-- Main dBTP Display -->
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <span id="complianceValue" style="
+                            font-size: 2rem;
+                            font-weight: 800;
+                            font-family: 'JetBrains Mono', 'SF Mono', monospace;
+                            color: #00ff88;
+                            text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+                            letter-spacing: -1px;
+                        ">-∞</span>
+                        <span style="
+                            font-size: 0.9rem;
+                            color: rgba(0, 255, 136, 0.7);
+                            margin-left: 4px;
+                            font-weight: 500;
+                        ">dBTP</span>
+                    </div>
+
+                    <!-- Peak Meter Bar -->
+                    <div style="
+                        height: 6px;
+                        background: rgba(0,0,0,0.4);
+                        border-radius: 3px;
+                        overflow: hidden;
+                        position: relative;
+                    ">
+                        <div id="peakMeterBar" style="
+                            width: 0%;
+                            height: 100%;
+                            background: linear-gradient(90deg, #10b981 0%, #22c55e 50%, #fbbf24 75%, #ef4444 95%);
+                            border-radius: 3px;
+                            transition: width 0.1s ease-out;
+                        "></div>
+                        <!-- -1dBTP Reference Line -->
+                        <div style="
+                            position: absolute;
+                            right: 10%;
+                            top: 0;
+                            height: 100%;
+                            width: 2px;
+                            background: rgba(255,255,255,0.3);
+                        "></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 0.5rem; color: rgba(255,255,255,0.35);">
+                        <span>-60</span>
+                        <span>-30</span>
+                        <span>-12</span>
+                        <span>-6</span>
+                        <span>-1</span>
+                        <span>0</span>
+                    </div>
                 </div>
 
-                <div class="control-item">
-                    <div class="control-header">
-                        <div class="control-name">Master Gain</div>
-                        <div class="control-value" id="masterGainValue">0.0 dB</div>
+                <!-- Master Gain Control -->
+                <div class="control-item" style="
+                    background: rgba(15, 23, 42, 0.6);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 10px;
+                    padding: 12px 14px;
+                ">
+                    <div class="control-header" style="margin-bottom: 8px;">
+                        <div class="control-name" style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.8);">Master Gain</div>
+                        <div class="control-value" id="masterGainValue" style="
+                            font-size: 0.9rem;
+                            font-weight: 700;
+                            font-family: 'JetBrains Mono', monospace;
+                            color: #00d4ff;
+                        ">0.0 dB</div>
                     </div>
                     <input type="range" class="slider" id="masterGainSlider" min="-12" max="12" step="0.1" value="0">
                 </div>
@@ -15483,7 +15544,14 @@
 
                 if (complianceBadge && complianceLight && complianceLabel && complianceValue) {
                     // Update dBTP value display (stable if locked, real-time if not)
-                    complianceValue.textContent = displayPeak.toFixed(1) + ' dBTP';
+                    complianceValue.textContent = displayPeak.toFixed(1);
+
+                    // Update peak meter bar (scale: -60 to 0 dBTP mapped to 0-100%)
+                    const peakMeterBar = document.getElementById('peakMeterBar');
+                    if (peakMeterBar) {
+                        const meterPercent = Math.max(0, Math.min(100, ((displayPeak + 60) / 60) * 100));
+                        peakMeterBar.style.width = meterPercent + '%';
+                    }
 
                     // Get platform target for LUFS validation
                     const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
@@ -15508,34 +15576,37 @@
 
                     if (displayPeak >= 0.0) {
                         // 🔴 CLIP - Blinking Red (Inter-sample clipping detected)
-                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.05))';
-                        complianceBadge.style.borderColor = '#F44336';
-                        complianceBadge.style.boxShadow = '0 0 20px rgba(244, 67, 54, 0.5)';
-                        complianceLight.style.background = '#F44336';
-                        complianceLight.style.boxShadow = '0 0 15px rgba(244, 67, 54, 1)';
-                        complianceLight.style.animation = 'flash 0.5s infinite';
-                        complianceLabel.textContent = 'CLIP';
-                        complianceLabel.style.color = '#F44336';
-                    } else if (displayPeak >= -1.4) {
-                        // 🟡 HOT - Amber (Exceeds broadcast safe limit: -1.4 to 0 dBTP)
-                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
-                        complianceBadge.style.borderColor = '#FFC107';
-                        complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
-                        complianceLight.style.background = '#FFC107';
-                        complianceLight.style.boxShadow = '0 0 12px rgba(255, 193, 7, 0.8)';
-                        complianceLight.style.animation = 'pulse 1s infinite';
+                        complianceBadge.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                        complianceBadge.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 30px rgba(239, 68, 68, 0.3)';
+                        complianceLight.style.background = '#ef4444';
+                        complianceLight.style.boxShadow = '0 0 12px rgba(239, 68, 68, 1), 0 0 24px rgba(239, 68, 68, 0.6)';
+                        complianceLight.style.animation = 'flash 0.3s infinite';
+                        complianceLabel.textContent = 'CLIPPING';
+                        complianceLabel.style.color = '#ef4444';
+                        complianceValue.style.color = '#ef4444';
+                        complianceValue.style.textShadow = '0 0 20px rgba(239, 68, 68, 0.6)';
+                    } else if (displayPeak >= -1.0) {
+                        // 🟡 HOT - Amber (Exceeds broadcast safe limit: -1.0 to 0 dBTP)
+                        complianceBadge.style.borderColor = 'rgba(251, 191, 36, 0.4)';
+                        complianceBadge.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(251, 191, 36, 0.2)';
+                        complianceLight.style.background = '#fbbf24';
+                        complianceLight.style.boxShadow = '0 0 10px rgba(251, 191, 36, 1), 0 0 20px rgba(251, 191, 36, 0.5)';
+                        complianceLight.style.animation = 'pulse 0.8s infinite';
                         complianceLabel.textContent = 'HOT';
-                        complianceLabel.style.color = '#FFC107';
+                        complianceLabel.style.color = '#fbbf24';
+                        complianceValue.style.color = '#fbbf24';
+                        complianceValue.style.textShadow = '0 0 20px rgba(251, 191, 36, 0.5)';
                     } else {
-                        // 🟢 Broadcast Safe - Green (Compliant: < -1.4 dBTP)
-                        complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
-                        complianceBadge.style.borderColor = '#4CAF50';
-                        complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
-                        complianceLight.style.background = '#4CAF50';
-                        complianceLight.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.8)';
+                        // 🟢 Broadcast Safe - Green (Compliant: < -1.0 dBTP)
+                        complianceBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                        complianceBadge.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.05)';
+                        complianceLight.style.background = '#10b981';
+                        complianceLight.style.boxShadow = '0 0 8px rgba(16, 185, 129, 0.8), 0 0 16px rgba(16, 185, 129, 0.4)';
                         complianceLight.style.animation = 'pulse 2s infinite';
-                        complianceLabel.textContent = 'Broadcast Safe';
-                        complianceLabel.style.color = '#4CAF50';
+                        complianceLabel.textContent = 'BROADCAST SAFE';
+                        complianceLabel.style.color = '#10b981';
+                        complianceValue.style.color = '#00ff88';
+                        complianceValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.4)';
                     }
                 }
 
