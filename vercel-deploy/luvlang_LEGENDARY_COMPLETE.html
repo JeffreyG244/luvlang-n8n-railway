@@ -16030,6 +16030,15 @@
                 window.masteringComplete = true;
                 console.log('🎯 Mastering complete flag set - LUFS presets will now use differential adjustment');
 
+                // 🔄 Transform MASTER button to RESET button
+                const masterBtn = document.getElementById('aiMasterBtnFloating');
+                if (masterBtn) {
+                    masterBtn.innerHTML = '<span class="ai-btn-icon">↺</span><span>RESET</span>';
+                    masterBtn.style.background = 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)';
+                    masterBtn.onclick = function() { window.resetMastering(); };
+                    console.log('🔄 Master button transformed to RESET');
+                }
+
                 // Reset Master Output to 0.0 dB (unity gain) - Professional standard
                 // All loudness targeting is handled by makeup gain in the mastering chain
                 const masterGainSlider = document.getElementById('masterGainSlider');
@@ -16059,6 +16068,73 @@
                 progressOverlay.style.display = 'none';
             }
         });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🔄 RESET MASTERING FUNCTION - Clears mastering and restores MASTER button
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        window.resetMastering = function() {
+            console.log('🔄 Resetting mastering...');
+
+            // Clear mastering complete flag
+            window.masteringComplete = false;
+
+            // Reset all audio processing to neutral
+            if (makeupGain && audioContext) {
+                makeupGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.05);
+            }
+            if (masterGain) masterGain.gain.value = 1.0;
+
+            // Reset EQ filters to flat
+            if (eqSubFilter) eqSubFilter.gain.value = 0;
+            if (eqBassFilter) eqBassFilter.gain.value = 0;
+            if (eqLowMidFilter) eqLowMidFilter.gain.value = 0;
+            if (eqMidFilter) eqMidFilter.gain.value = 0;
+            if (eqHighMidFilter) eqHighMidFilter.gain.value = 0;
+            if (eqHighFilter) eqHighFilter.gain.value = 0;
+            if (eqAirFilter) eqAirFilter.gain.value = 0;
+
+            // Update EQ sliders
+            document.querySelectorAll('.eq-fader').forEach(fader => {
+                fader.value = 0;
+                const label = fader.closest('.eq-band')?.querySelector('.eq-value');
+                if (label) label.textContent = '0.0 dB';
+            });
+
+            // Reset limiter
+            if (limiter) {
+                limiter.threshold.value = -2;
+                limiter.ratio.value = 20;
+            }
+
+            // Reset stored LUFS values
+            window.autoLUFSGainApplied = 0;
+            window.autoLUFSInputLevel = undefined;
+
+            // Restore MASTER button
+            const masterBtn = document.getElementById('aiMasterBtnFloating');
+            if (masterBtn) {
+                masterBtn.innerHTML = '<span class="ai-btn-icon">◉</span><span>MASTER</span>';
+                masterBtn.style.background = 'linear-gradient(135deg, #00d4ff 0%, #b84fff 100%)';
+                masterBtn.onclick = function() {
+                    if (typeof runFullAIMaster === 'function') {
+                        runFullAIMaster();
+                    }
+                };
+            }
+
+            // Hide A/B toggle
+            const abToggle = document.getElementById('integratedABToggle');
+            const divider = document.getElementById('commandBarDivider');
+            if (abToggle) abToggle.style.display = 'none';
+            if (divider) divider.style.display = 'none';
+
+            // Show toast
+            if (typeof showToast === 'function') {
+                showToast('Mastering reset - Ready to master again!', 'info');
+            }
+
+            console.log('✅ Mastering reset complete - Ready for new master');
+        };
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // RESET BUTTON
@@ -16419,9 +16495,6 @@
                         lufsTargetElement.textContent = `Target: ${targetLUFS} LUFS (${platformName})`;
                     }
 
-                    // Call setPlatformTarget to configure limiter
-                    setPlatformTarget(platform);
-
                     // 🏆 PLATFORM LUFS TARGETING
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
 
@@ -16429,15 +16502,12 @@
                     const masteringComplete = window.masteringComplete === true;
 
                     if (masteringComplete) {
-                        // AFTER MASTERING: Don't change gain - tell user to re-master
-                        console.log('⚠️ Mastering already complete - user must re-master for new LUFS target');
-
-                        // Store the new target for when they re-master
-                        window.autoLUFSTargetLevel = targetLUFS;
+                        // AFTER MASTERING: Don't change ANYTHING - no limiter, no gain
+                        console.log('⚠️ Mastering already complete - user must click RESET to change LUFS target');
 
                         // Show warning toast
                         if (typeof showToast === 'function') {
-                            showToast(`${platformName} selected - Click MASTER again to apply ${targetLUFS} LUFS`, 'warning');
+                            showToast(`Click RESET to re-master at ${targetLUFS} LUFS`, 'warning');
                         }
 
                         // Also show a more prominent notification
@@ -16461,7 +16531,7 @@
                         notification.innerHTML = `
                             <div style="font-size: 2rem; margin-bottom: 10px;">🔊</div>
                             <div style="margin-bottom: 8px;">${platformName} (${targetLUFS} LUFS) Selected</div>
-                            <div style="font-size: 0.85rem; opacity: 0.9;">Click the <strong>MASTER</strong> button again to re-master at this target</div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">Click the <strong>RESET</strong> button to re-master at this target</div>
                         `;
                         document.body.appendChild(notification);
 
@@ -16472,10 +16542,11 @@
                             setTimeout(() => notification.remove(), 300);
                         }, 4000);
 
-                        return; // Don't apply any gain changes
+                        return; // Don't apply ANY changes - no limiter, no gain
                     }
 
-                    // BEFORE MASTERING: Apply LUFS targeting
+                    // BEFORE MASTERING: Configure limiter and apply LUFS targeting
+                    setPlatformTarget(platform);
                     const mu = window.makeupGain || makeupGain;
                     const ac = window.audioContext || audioContext;
 
@@ -22825,8 +22896,9 @@
             en: {
                 steps: [
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We got you covered with WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey, welcome to LuvLang! Let\'s get your music sounding amazing. Go ahead and drop your track onto that glowing area, or click to browse your files. We support all the formats you need - WAV, MP3, FLAC, you name it.' },
-                    { title: 'Let\'s Master It', desc: 'Hit that MASTER button and watch the magic happen. 24 pro-grade processors working for your sound.', action: 'Hit the MASTER button', voice: 'Alright, your track is loaded and ready to go! Now hit that Master button up top. We\'ve got 24 professional processors that\'ll make your music shine. Let\'s hear what you\'ve got!' },
-                    { title: 'Sounding Good!', desc: 'Your track just got the professional treatment. Take a listen - hear the difference?', action: '', voice: 'Nice work. Your track just ran through the full mastering chain - EQ, compression, limiting, all of it. Hit play and check out the difference. Then pick a genre on the left and dial in your sound with the presets.' },
+                    { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth before mastering. WAV is studio quality, MP3 is great for streaming.', action: 'Check the format options on the right', voice: 'Before we master, let me explain your export options. For format, choose WAV for the highest studio quality - it\'s lossless and perfect for professional use. MP3 at 320 kilobits is great for streaming and sharing - smaller file size but still sounds excellent. For bit depth, 24-bit gives you maximum dynamic range and detail - that\'s what the pros use. 16-bit is CD quality and works great for streaming platforms. Most folks go with WAV 24-bit for the best results.' },
+                    { title: 'Let\'s Master It', desc: 'Hit that MASTER button and watch the magic happen. 24 pro-grade processors working for your sound.', action: 'Hit the MASTER button', voice: 'Now let\'s master your track! Hit that Master button up top. We\'ve got 24 professional processors that\'ll make your music shine - EQ, compression, limiting, the works. Let\'s hear what you\'ve got!' },
+                    { title: 'Sounding Good!', desc: 'Your track just got the professional treatment. Take a listen - hear the difference?', action: '', voice: 'Nice work. Your track just ran through the full mastering chain. Hit play and check out the difference. Then pick a genre on the left and dial in your sound with the presets.' },
                     { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth. WAV for studio quality, MP3 for sharing, 24-bit for pros, 16-bit for CD.', action: 'Select format and bit depth', voice: 'Before you export, let me explain your options. For format, choose WAV for the highest studio quality, MP3 at 320 kilobits for easy sharing, or FLAC for lossless compression. For bit depth, 24-bit is professional grade with maximum detail, while 16-bit is perfect for CDs and most streaming. Pick what works best for your needs!' },
                     { title: 'Make It Yours', desc: 'Dial in your perfect sound with genre presets, EQ tweaks, and more. This is where you shine.', action: '', voice: 'Alright, here\'s where you can really make it your own. Pick your genre - whether you\'re into Hip-Hop, Rock, Pop, EDM, Jazz, Country, or anything else. Then fine-tune with our presets or go manual with the EQ. Your music, your sound!' }
                 ],
@@ -22836,10 +22908,10 @@
             es: {
                 steps: [
                     { title: 'Sube Tu Pista', desc: 'Arrastra tu archivo de audio al área resaltada o haz clic para buscar.', action: 'Haz clic en el área de carga brillante', voice: 'Bienvenido a LuvLang Mastering Profesional. Primero, sube tu pista de audio haciendo clic en el área de carga o arrastrando un archivo. Soportamos WAV, MP3, FLAC y muchos más formatos.' },
-                    { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER para procesar tu audio con 24 procesadores profesionales.', action: 'Haz clic en el botón MASTER', voice: 'Excelente. Tu pista está cargada. Ahora haz clic en el botón Master brillante en la parte superior. Esto procesará tu audio con 24 procesadores de masterización profesionales.' },
-                    { title: 'Masterización Completa', desc: 'Tu pista está masterizada profesionalmente. ¡Escucha la diferencia!', action: '', voice: 'Extraordinario. Tu pista ahora está masterizada profesionalmente. Escucha la diferencia. Ahora puedes personalizar tu sonido.' },
-                    { title: 'Elige Tu Formato', desc: 'Selecciona formato y profundidad de bits. WAV para calidad estudio, MP3 para compartir.', action: 'Selecciona formato y profundidad', voice: 'Antes de exportar, déjame explicar las opciones. Para formato, elige WAV para la mejor calidad de estudio, MP3 a 320 kilobits para compartir fácilmente, o FLAC para compresión sin pérdida. Para profundidad de bits, 24 bits es calidad profesional con máximo detalle, mientras que 16 bits es perfecto para CDs y streaming.' },
-                    { title: 'Explora y Personaliza', desc: 'Afina tu master usando selección de género, presets y controles de EQ manual.', action: '', voice: 'Ahora tienes tres herramientas poderosas. Primero, Selección de Género para estilos como Hip-Hop, Pop, Rock. Segundo, Presets de Género con curvas EQ afinadas. Tercero, EQ Manual para control preciso de 7 bandas. ¡Encuentra tu sonido perfecto!' }
+                    { title: 'Elige Tu Formato', desc: 'Selecciona formato y profundidad de bits. WAV para calidad estudio, MP3 para compartir.', action: 'Revisa las opciones a la derecha', voice: 'Antes de masterizar, déjame explicar las opciones de exportación. Para formato, elige WAV para la mejor calidad de estudio sin pérdida. MP3 a 320 kilobits es perfecto para streaming y compartir. Para profundidad de bits, 24 bits te da máximo rango dinámico - es lo que usan los profesionales. 16 bits es calidad CD, excelente para plataformas de streaming. La mayoría elige WAV 24 bits para mejores resultados.' },
+                    { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER para procesar tu audio con 24 procesadores profesionales.', action: 'Haz clic en el botón MASTER', voice: 'Ahora masterizemos tu pista. Haz clic en el botón Master arriba. Tenemos 24 procesadores profesionales - EQ, compresión, limitación, todo lo necesario.' },
+                    { title: 'Masterización Completa', desc: 'Tu pista está masterizada profesionalmente. ¡Escucha la diferencia!', action: '', voice: 'Excelente trabajo. Tu pista pasó por toda la cadena de masterización. Dale play y escucha la diferencia. Luego elige un género a la izquierda.' },
+                    { title: 'Explora y Personaliza', desc: 'Afina tu master usando selección de género, presets y controles de EQ manual.', action: '', voice: 'Ahora tienes tres herramientas poderosas. Selección de Género, Presets de Género con curvas EQ, y EQ Manual para control de 7 bandas. ¡Encuentra tu sonido perfecto!' }
                 ],
                 explore: { title: '¡Estás Listo para Crear!', subtitle: 'Tu pista está masterizada. Personaliza con estas herramientas:', genre: 'Selección de Género', genreDesc: 'Hip-Hop, Pop, Rock, EDM y más', presets: 'Presets de Género', presetsDesc: 'Curvas EQ profesionales', eq: 'EQ Manual', eqDesc: 'Control paramétrico de 7 bandas', btn: 'Empezar a Explorar', tip: 'Haz clic en ? para escuchar esta guía de nuevo' },
                 skip: 'Saltar Tour'
@@ -22847,9 +22919,10 @@
             fr: {
                 steps: [
                     { title: 'Téléchargez Votre Piste', desc: 'Glissez votre fichier audio sur la zone en surbrillance ou cliquez pour parcourir.', action: 'Cliquez sur la zone de téléchargement', voice: 'Bienvenue sur LuvLang Mastering Professionnel. Premièrement, téléchargez votre piste audio en cliquant sur la zone ou en faisant glisser un fichier. Nous supportons WAV, MP3, FLAC et bien plus.' },
-                    { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER pour traiter votre audio avec 24 processeurs professionnels.', action: 'Cliquez sur le bouton MASTER', voice: 'Excellent. Votre piste est chargée. Maintenant cliquez sur le bouton Master lumineux en haut. Cela traitera votre audio avec 24 processeurs de mastering professionnels.' },
-                    { title: 'Mastering Terminé', desc: 'Votre piste est masterisée professionnellement. Écoutez la différence!', action: '', voice: 'Remarquable. Votre piste est maintenant masterisée professionnellement. Écoutez la différence. Vous pouvez maintenant personnaliser votre son.' },
-                    { title: 'Explorez et Personnalisez', desc: 'Affinez votre master avec la sélection de genre, les préréglages et les contrôles EQ.', action: '', voice: 'Vous avez maintenant trois outils puissants. Premièrement, la Sélection de Genre pour Hip-Hop, Pop, Rock. Deuxièmement, les Préréglages de Genre avec des courbes EQ affinées. Troisièmement, l EQ Manuel pour un contrôle précis sur 7 bandes. Trouvez votre son parfait!' }
+                    { title: 'Choisissez Votre Format', desc: 'Sélectionnez format et profondeur. WAV qualité studio, MP3 pour partager.', action: 'Vérifiez les options à droite', voice: 'Avant de masteriser, laissez-moi expliquer les options d\'exportation. Pour le format, choisissez WAV pour la meilleure qualité studio sans perte. MP3 à 320 kilobits est parfait pour le streaming. Pour la profondeur, 24 bits offre le maximum de dynamique - c\'est ce qu\'utilisent les pros. 16 bits est qualité CD, excellent pour le streaming. La plupart choisissent WAV 24 bits.' },
+                    { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER pour traiter votre audio avec 24 processeurs professionnels.', action: 'Cliquez sur le bouton MASTER', voice: 'Maintenant masterisons votre piste. Cliquez sur le bouton Master en haut. Nous avons 24 processeurs professionnels - EQ, compression, limitation, tout ce qu\'il faut.' },
+                    { title: 'Mastering Terminé', desc: 'Votre piste est masterisée professionnellement. Écoutez la différence!', action: '', voice: 'Excellent travail. Votre piste a traversé toute la chaîne de mastering. Appuyez sur play et écoutez la différence. Puis choisissez un genre à gauche.' },
+                    { title: 'Explorez et Personnalisez', desc: 'Affinez votre master avec la sélection de genre, les préréglages et les contrôles EQ.', action: '', voice: 'Vous avez trois outils puissants. Sélection de Genre, Préréglages de Genre avec courbes EQ, et EQ Manuel pour contrôle 7 bandes. Trouvez votre son parfait!' }
                 ],
                 explore: { title: 'Vous Êtes Prêt à Créer!', subtitle: 'Votre piste est masterisée. Personnalisez avec ces outils:', genre: 'Sélection de Genre', genreDesc: 'Hip-Hop, Pop, Rock, EDM et plus', presets: 'Préréglages de Genre', presetsDesc: 'Courbes EQ professionnelles', eq: 'EQ Manuel', eqDesc: 'Contrôle paramétrique 7 bandes', btn: 'Commencer à Explorer', tip: 'Cliquez sur ? pour réécouter ce guide' },
                 skip: 'Passer la Visite'
@@ -22857,9 +22930,10 @@
             de: {
                 steps: [
                     { title: 'Track Hochladen', desc: 'Ziehen Sie Ihre Audiodatei auf den markierten Bereich oder klicken Sie zum Durchsuchen.', action: 'Klicken Sie auf den Upload-Bereich', voice: 'Willkommen bei LuvLang Professional Mastering. Laden Sie zuerst Ihren Audio-Track hoch, indem Sie auf den Upload-Bereich klicken oder eine Datei hineinziehen. Wir unterstützen WAV, MP3, FLAC und viele weitere Formate.' },
-                    { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER um Ihr Audio mit 24 professionellen Prozessoren zu verarbeiten.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Ausgezeichnet. Ihr Track ist geladen. Klicken Sie jetzt auf den leuchtenden Master-Button oben. Dies verarbeitet Ihr Audio durch 24 professionelle Mastering-Prozessoren.' },
-                    { title: 'Mastering Abgeschlossen', desc: 'Ihr Track ist professionell gemastert. Hören Sie den Unterschied!', action: '', voice: 'Hervorragend. Ihr Track ist jetzt professionell gemastert. Hören Sie den Unterschied. Sie können jetzt Ihren Sound anpassen.' },
-                    { title: 'Erkunden & Anpassen', desc: 'Verfeinern Sie Ihren Master mit Genre-Auswahl, Presets und EQ-Kontrollen.', action: '', voice: 'Sie haben jetzt drei leistungsstarke Werkzeuge. Erstens, Genre-Auswahl für Hip-Hop, Pop, Rock. Zweitens, Genre-Presets mit fein abgestimmten EQ-Kurven. Drittens, Manueller EQ für präzise 7-Band-Kontrolle. Finden Sie Ihren perfekten Sound!' }
+                    { title: 'Format Wählen', desc: 'Wählen Sie Format und Bittiefe. WAV für Studioqualität, MP3 zum Teilen.', action: 'Überprüfen Sie die Optionen rechts', voice: 'Bevor wir mastern, erkläre ich die Export-Optionen. Für das Format wählen Sie WAV für höchste Studioqualität verlustfrei. MP3 mit 320 Kilobit ist perfekt für Streaming. Für die Bittiefe bietet 24 Bit maximale Dynamik - das nutzen die Profis. 16 Bit ist CD-Qualität, hervorragend für Streaming. Die meisten wählen WAV 24 Bit.' },
+                    { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER um Ihr Audio mit 24 professionellen Prozessoren zu verarbeiten.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Jetzt mastern wir Ihren Track. Klicken Sie auf den Master-Button oben. Wir haben 24 professionelle Prozessoren - EQ, Kompression, Limiting, alles dabei.' },
+                    { title: 'Mastering Abgeschlossen', desc: 'Ihr Track ist professionell gemastert. Hören Sie den Unterschied!', action: '', voice: 'Ausgezeichnete Arbeit. Ihr Track durchlief die komplette Mastering-Kette. Drücken Sie Play und hören Sie den Unterschied. Dann wählen Sie links ein Genre.' },
+                    { title: 'Erkunden & Anpassen', desc: 'Verfeinern Sie Ihren Master mit Genre-Auswahl, Presets und EQ-Kontrollen.', action: '', voice: 'Sie haben drei leistungsstarke Werkzeuge. Genre-Auswahl, Genre-Presets mit EQ-Kurven, und Manueller EQ für 7-Band-Kontrolle. Finden Sie Ihren perfekten Sound!' }
                 ],
                 explore: { title: 'Bereit zum Erstellen!', subtitle: 'Ihr Track ist gemastert. Anpassen mit diesen Tools:', genre: 'Genre-Auswahl', genreDesc: 'Hip-Hop, Pop, Rock, EDM & mehr', presets: 'Genre-Presets', presetsDesc: 'Professionelle EQ-Kurven', eq: 'Manueller EQ', eqDesc: '7-Band parametrische Kontrolle', btn: 'Erkunden Starten', tip: 'Klicken Sie ? um diese Anleitung erneut zu hören' },
                 skip: 'Tour Überspringen'
@@ -22867,9 +22941,10 @@
             pt: {
                 steps: [
                     { title: 'Envie Sua Faixa', desc: 'Arraste seu arquivo de áudio para a área destacada ou clique para procurar.', action: 'Clique na área de upload brilhante', voice: 'Bem-vindo ao LuvLang Mastering Profissional. Primeiro, envie sua faixa de áudio clicando na área de upload ou arrastando um arquivo. Suportamos WAV, MP3, FLAC e muitos outros formatos.' },
-                    { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER para processar seu áudio com 24 processadores profissionais.', action: 'Clique no botão MASTER', voice: 'Excelente. Sua faixa está carregada. Agora clique no botão Master brilhante no topo. Isso processará seu áudio através de 24 processadores de masterização profissionais.' },
-                    { title: 'Masterização Completa', desc: 'Sua faixa está masterizada profissionalmente. Ouça a diferença!', action: '', voice: 'Extraordinário. Sua faixa agora está masterizada profissionalmente. Ouça a diferença. Você pode agora personalizar seu som.' },
-                    { title: 'Explore e Personalize', desc: 'Refine seu master usando seleção de gênero, presets e controles de EQ.', action: '', voice: 'Você agora tem três ferramentas poderosas. Primeiro, Seleção de Gênero para Hip-Hop, Pop, Rock. Segundo, Presets de Gênero com curvas EQ afinadas. Terceiro, EQ Manual para controle preciso de 7 bandas. Encontre seu som perfeito!' }
+                    { title: 'Escolha Seu Formato', desc: 'Selecione formato e profundidade de bits. WAV para qualidade de estúdio, MP3 para compartilhar.', action: 'Verifique as opções à direita', voice: 'Antes de masterizar, deixe-me explicar as opções de exportação. Para formato, escolha WAV para a melhor qualidade de estúdio sem perdas. MP3 a 320 kilobits é perfeito para streaming. Para profundidade de bits, 24 bits oferece máxima dinâmica - é o que os profissionais usam. 16 bits é qualidade de CD, excelente para streaming. A maioria escolhe WAV 24 bits.' },
+                    { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER para processar seu áudio com 24 processadores profissionais.', action: 'Clique no botão MASTER', voice: 'Agora vamos masterizar sua faixa. Clique no botão Master acima. Temos 24 processadores profissionais - EQ, compressão, limitação, tudo que você precisa.' },
+                    { title: 'Masterização Completa', desc: 'Sua faixa está masterizada profissionalmente. Ouça a diferença!', action: '', voice: 'Excelente trabalho. Sua faixa passou por toda a cadeia de masterização. Aperte play e ouça a diferença. Depois escolha um gênero à esquerda.' },
+                    { title: 'Explore e Personalize', desc: 'Refine seu master usando seleção de gênero, presets e controles de EQ.', action: '', voice: 'Você tem três ferramentas poderosas. Seleção de Gênero, Presets de Gênero com curvas EQ, e EQ Manual para controle de 7 bandas. Encontre seu som perfeito!' }
                 ],
                 explore: { title: 'Pronto para Criar!', subtitle: 'Sua faixa está masterizada. Personalize com estas ferramentas:', genre: 'Seleção de Gênero', genreDesc: 'Hip-Hop, Pop, Rock, EDM e mais', presets: 'Presets de Gênero', presetsDesc: 'Curvas EQ profissionais', eq: 'EQ Manual', eqDesc: 'Controle paramétrico de 7 bandas', btn: 'Começar a Explorar', tip: 'Clique em ? para ouvir este guia novamente' },
                 skip: 'Pular Tour'
@@ -22877,9 +22952,10 @@
             ja: {
                 steps: [
                     { title: 'トラックをアップロード', desc: 'ハイライトされたエリアにオーディオファイルをドラッグするか、クリックして参照します。', action: '光っているアップロードエリアをクリック', voice: 'LuvLangプロフェッショナルマスタリングへようこそ。まず、アップロードエリアをクリックするか、ファイルをドラッグしてオーディオトラックをアップロードしてください。WAV、MP3、FLACなど多くのフォーマットをサポートしています。' },
-                    { title: 'トラックをマスター', desc: 'MASTERボタンをクリックして24のプロセッサでオーディオを処理します。', action: 'MASTERボタンをクリック', voice: '素晴らしい。トラックが読み込まれました。上部の光るマスターボタンをクリックしてください。24のプロフェッショナルマスタリングプロセッサでオーディオを処理します。' },
-                    { title: 'マスタリング完了', desc: 'トラックがプロフェッショナルにマスタリングされました。違いを聴いてください！', action: '', voice: '素晴らしい。あなたのトラックはプロフェッショナルにマスタリングされました。違いを聴いてください。サウンドをカスタマイズできます。' },
-                    { title: '探索とカスタマイズ', desc: 'ジャンル選択、プリセット、EQコントロールでマスターを調整します。', action: '', voice: '3つの強力なツールがあります。まず、ジャンル選択でHip-Hop、Pop、Rockを選べます。次に、ジャンルプリセットで調整されたEQカーブ。そして、マニュアルEQで7バンドの精密なコントロール。完璧なサウンドを見つけてください！' }
+                    { title: 'フォーマットを選択', desc: 'フォーマットとビット深度を選択。WAVはスタジオ品質、MP3は共有に最適。', action: '右側のオプションを確認', voice: 'マスタリングの前に、エクスポートオプションを説明します。フォーマットは、最高のスタジオ品質にはWAVを選んでください。ロスレスです。MP3は320キロビットでストリーミングに最適です。ビット深度は、24ビットが最大のダイナミックレンジを提供します。プロが使うのはこれです。16ビットはCD品質で、ストリーミングに最適です。多くの方がWAV 24ビットを選びます。' },
+                    { title: 'トラックをマスター', desc: 'MASTERボタンをクリックして24のプロセッサでオーディオを処理します。', action: 'MASTERボタンをクリック', voice: 'では、トラックをマスタリングしましょう。上部のマスターボタンをクリックしてください。24のプロフェッショナルプロセッサがあります。EQ、コンプレッション、リミッティング、すべて揃っています。' },
+                    { title: 'マスタリング完了', desc: 'トラックがプロフェッショナルにマスタリングされました。違いを聴いてください！', action: '', voice: '素晴らしい。トラックが完全なマスタリングチェーンを通過しました。再生して違いを聴いてください。左側でジャンルを選んでください。' },
+                    { title: '探索とカスタマイズ', desc: 'ジャンル選択、プリセット、EQコントロールでマスターを調整します。', action: '', voice: '3つの強力なツールがあります。ジャンル選択、EQカーブ付きジャンルプリセット、7バンドのマニュアルEQ。完璧なサウンドを見つけてください！' }
                 ],
                 explore: { title: '準備完了！', subtitle: 'トラックがマスタリングされました。これらのツールでカスタマイズ:', genre: 'ジャンル選択', genreDesc: 'Hip-Hop, Pop, Rock, EDM等', presets: 'ジャンルプリセット', presetsDesc: 'プロのEQカーブ', eq: 'マニュアルEQ', eqDesc: '7バンドパラメトリック', btn: '探索を開始', tip: '?をクリックしてガイドを再生' },
                 skip: 'ツアーをスキップ'
@@ -22887,9 +22963,10 @@
             ko: {
                 steps: [
                     { title: '트랙 업로드', desc: '강조 표시된 영역에 오디오 파일을 드래그하거나 클릭하여 찾아보세요.', action: '빛나는 업로드 영역을 클릭', voice: 'LuvLang 프로페셔널 마스터링에 오신 것을 환영합니다. 먼저 업로드 영역을 클릭하거나 파일을 드래그하여 오디오 트랙을 업로드하세요. WAV, MP3, FLAC 등 다양한 형식을 지원합니다.' },
-                    { title: '트랙 마스터링', desc: 'MASTER 버튼을 클릭하여 24개의 프로세서로 오디오를 처리합니다.', action: 'MASTER 버튼을 클릭', voice: '훌륭합니다. 트랙이 로드되었습니다. 상단의 빛나는 마스터 버튼을 클릭하세요. 24개의 전문 마스터링 프로세서로 오디오를 처리합니다.' },
-                    { title: '마스터링 완료', desc: '트랙이 전문적으로 마스터링되었습니다. 차이를 들어보세요!', action: '', voice: '훌륭합니다. 트랙이 전문적으로 마스터링되었습니다. 차이를 들어보세요. 이제 사운드를 커스터마이즈할 수 있습니다.' },
-                    { title: '탐색 및 커스터마이즈', desc: '장르 선택, 프리셋, EQ 컨트롤로 마스터를 조정하세요.', action: '', voice: '세 가지 강력한 도구가 있습니다. 첫째, 장르 선택으로 Hip-Hop, Pop, Rock을 선택하세요. 둘째, 장르 프리셋으로 조정된 EQ 커브. 셋째, 수동 EQ로 7밴드 정밀 제어. 완벽한 사운드를 찾아보세요!' }
+                    { title: '포맷 선택', desc: '포맷과 비트 심도를 선택하세요. WAV는 스튜디오 품질, MP3는 공유용입니다.', action: '오른쪽 옵션을 확인하세요', voice: '마스터링 전에 내보내기 옵션을 설명해 드리겠습니다. 포맷은 최고의 스튜디오 품질을 위해 WAV를 선택하세요. 무손실입니다. MP3 320킬로비트는 스트리밍에 완벽합니다. 비트 심도는 24비트가 최대 다이내믹 레인지를 제공합니다. 프로들이 사용하는 것입니다. 16비트는 CD 품질로 스트리밍에 좋습니다. 대부분 WAV 24비트를 선택합니다.' },
+                    { title: '트랙 마스터링', desc: 'MASTER 버튼을 클릭하여 24개의 프로세서로 오디오를 처리합니다.', action: 'MASTER 버튼을 클릭', voice: '이제 트랙을 마스터링해 봅시다. 상단의 마스터 버튼을 클릭하세요. 24개의 전문 프로세서가 있습니다. EQ, 컴프레션, 리미팅, 모두 갖추고 있습니다.' },
+                    { title: '마스터링 완료', desc: '트랙이 전문적으로 마스터링되었습니다. 차이를 들어보세요!', action: '', voice: '훌륭합니다. 트랙이 전체 마스터링 체인을 통과했습니다. 재생하여 차이를 들어보세요. 왼쪽에서 장르를 선택하세요.' },
+                    { title: '탐색 및 커스터마이즈', desc: '장르 선택, 프리셋, EQ 컨트롤로 마스터를 조정하세요.', action: '', voice: '세 가지 강력한 도구가 있습니다. 장르 선택, EQ 커브가 있는 장르 프리셋, 7밴드 수동 EQ. 완벽한 사운드를 찾아보세요!' }
                 ],
                 explore: { title: '준비 완료!', subtitle: '트랙이 마스터링되었습니다. 이 도구들로 커스터마이즈:', genre: '장르 선택', genreDesc: 'Hip-Hop, Pop, Rock, EDM 등', presets: '장르 프리셋', presetsDesc: '전문 EQ 커브', eq: '수동 EQ', eqDesc: '7밴드 파라메트릭', btn: '탐색 시작', tip: '?를 클릭하여 가이드 다시 듣기' },
                 skip: '투어 건너뛰기'
@@ -22897,9 +22974,10 @@
             zh: {
                 steps: [
                     { title: '上传您的曲目', desc: '将音频文件拖放到高亮区域或点击浏览。', action: '点击发光的上传区域', voice: '欢迎来到LuvLang专业母带处理。首先，点击上传区域或拖放文件来上传您的音频曲目。我们支持WAV、MP3、FLAC等多种格式。' },
-                    { title: '母带处理', desc: '点击MASTER按钮用24个专业处理器处理您的音频。', action: '点击MASTER按钮', voice: '太棒了。您的曲目已加载。现在点击顶部发光的Master按钮。这将通过24个专业母带处理器处理您的音频。' },
-                    { title: '母带处理完成', desc: '您的曲目已专业处理。听听区别！', action: '', voice: '出色。您的曲目现在已专业处理完成。听听区别。您现在可以自定义您的声音了。' },
-                    { title: '探索和自定义', desc: '使用流派选择、预设和EQ控制来调整您的母带。', action: '', voice: '您现在有三个强大的工具。第一，流派选择可选Hip-Hop、Pop、Rock。第二，流派预设有精调的EQ曲线。第三，手动EQ提供7段精确控制。找到您完美的声音！' }
+                    { title: '选择格式', desc: '选择格式和位深度。WAV是专业品质，MP3适合分享。', action: '查看右侧选项', voice: '在处理之前，让我解释导出选项。格式方面，选择WAV获得最佳的无损录音室品质。320千比特的MP3非常适合流媒体。位深度方面，24位提供最大动态范围，这是专业人士的选择。16位是CD品质，非常适合流媒体平台。大多数人选择WAV 24位。' },
+                    { title: '母带处理', desc: '点击MASTER按钮用24个专业处理器处理您的音频。', action: '点击MASTER按钮', voice: '现在让我们处理您的曲目。点击顶部的Master按钮。我们有24个专业处理器：均衡器、压缩、限制，应有尽有。' },
+                    { title: '母带处理完成', desc: '您的曲目已专业处理。听听区别！', action: '', voice: '做得好。您的曲目已通过完整的母带处理链。按播放键听听区别。然后在左侧选择一个流派。' },
+                    { title: '探索和自定义', desc: '使用流派选择、预设和EQ控制来调整您的母带。', action: '', voice: '您有三个强大的工具。流派选择、带EQ曲线的流派预设、以及7段手动EQ。找到您完美的声音！' }
                 ],
                 explore: { title: '准备就绪！', subtitle: '曲目已处理完成。使用这些工具自定义：', genre: '流派选择', genreDesc: 'Hip-Hop、Pop、Rock、EDM等', presets: '流派预设', presetsDesc: '专业EQ曲线', eq: '手动EQ', eqDesc: '7段参量控制', btn: '开始探索', tip: '点击?重新收听指南' },
                 skip: '跳过导览'
@@ -22911,9 +22989,9 @@
         // Tour Steps Configuration (will be updated based on language)
         const voiceTourSteps = [
             { id: 'upload', target: '#uploadArea', waitFor: 'fileUploaded', position: 'right' },
+            { id: 'format', target: '#exportSection', waitFor: null, position: 'left', showNext: true },
             { id: 'master', target: '#aiMasterBtnFloating', waitFor: 'masteringComplete', position: 'bottom' },
             { id: 'complete', target: '#genreSection', waitFor: null, position: 'right', showNext: true },
-            { id: 'export', target: '#exportSection', waitFor: null, position: 'left', showNext: true },
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
