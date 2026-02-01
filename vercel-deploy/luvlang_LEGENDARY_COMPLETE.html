@@ -23276,24 +23276,30 @@
         }
 
         // Speak text with strong male voice - GLOBAL so it can be called from anywhere
+        // Uses workaround for Chrome speechSynthesis.cancel() bug
         function speak(text) {
             if (!voiceEnabled || !voiceSynth || !text) return;
-            voiceSynth.cancel();
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.voice = preferredVoice;
-            utterance.rate = 0.92; // Slightly slower for clarity
-            utterance.pitch = 0.9; // Lower pitch for male voice
-            utterance.volume = 1.0;
+            // Force stop any current speech - Chrome bug workaround
+            window.speechSynthesis.cancel();
 
-            voiceSynth.speak(utterance);
+            // Small delay after cancel to ensure clean stop (Chrome bug)
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = preferredVoice;
+                utterance.rate = 0.92; // Slightly slower for clarity
+                utterance.pitch = 0.9; // Lower pitch for male voice
+                utterance.volume = 1.0;
+
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         }
         // Make speak globally accessible
         window.speak = speak;
 
         // Speak with audio ducking - ducks music, speaks, then restores volume
         window.speakWithDucking = function(text) {
-            if (!voiceSynth || !text) return;
+            if (!window.speechSynthesis || !text) return;
 
             const audio = window.audioElement;
             const originalVolume = audio ? audio.volume : 1;
@@ -23303,31 +23309,35 @@
                 audio.volume = 0.15;
             }
 
-            voiceSynth.cancel();
+            // Force stop any current speech - Chrome bug workaround
+            window.speechSynthesis.cancel();
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.voice = preferredVoice; // Use the same voice as tour
-            utterance.rate = 0.92;
-            utterance.pitch = 0.9;
-            utterance.volume = 1.0;
+            // Small delay after cancel to ensure clean stop
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = preferredVoice; // Use the same voice as tour
+                utterance.rate = 0.92;
+                utterance.pitch = 0.9;
+                utterance.volume = 1.0;
 
-            // Restore volume when speech ends
-            utterance.onend = () => {
-                if (audio) {
-                    audio.volume = originalVolume;
-                }
-            };
-            utterance.onerror = () => {
-                if (audio) {
-                    audio.volume = originalVolume;
-                }
-            };
+                // Restore volume when speech ends
+                utterance.onend = () => {
+                    if (audio) {
+                        audio.volume = originalVolume;
+                    }
+                };
+                utterance.onerror = () => {
+                    if (audio) {
+                        audio.volume = originalVolume;
+                    }
+                };
 
-            voiceSynth.speak(utterance);
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         };
 
         function stopSpeaking() {
-            if (voiceSynth) voiceSynth.cancel();
+            window.speechSynthesis.cancel();
         }
 
         function toggleVoice() {
@@ -23336,7 +23346,7 @@
 
             if (!voiceEnabled) {
                 // MUTE - immediately stop any speaking
-                if (voiceSynth) voiceSynth.cancel();
+                window.speechSynthesis.cancel();
                 console.log('🔇 Voice muted');
             } else {
                 // UNMUTE - just enable future audio, don't restart current instruction
@@ -23372,7 +23382,10 @@
 
         // Show Tour Step - Centered modal design
         function showStep(stepIndex) {
+            console.log('🎤 showStep called with stepIndex:', stepIndex);
+
             if (stepIndex >= voiceTourSteps.length) {
+                console.log('🎤 Step index exceeds tour length, ending tour');
                 endVoiceTour();
                 return;
             }
@@ -23382,6 +23395,9 @@
             const overlay = document.getElementById('voiceTourOverlay');
             const spotlight = document.getElementById('voiceTourSpotlight');
             const tooltip = document.getElementById('voiceTourTooltip');
+
+            console.log('🎤 Step details:', { id: step.id, target: step.target, waitFor: step.waitFor });
+            console.log('🎤 Elements found:', { overlay: !!overlay, spotlight: !!spotlight, tooltip: !!tooltip });
 
             // Handle explore modal (final step)
             if (step.isExploreStep) {
@@ -23423,7 +23439,9 @@
             // Show/hide Master button instruction and glow for step 3
             const masterInstruction = document.getElementById('tourMasterInstruction');
             const masterBtn = document.getElementById('aiMasterBtnFloating');
+            console.log('🎤 Master step elements:', { masterInstruction: !!masterInstruction, masterBtn: !!masterBtn, stepId: step.id });
             if (step.id === 'master') {
+                console.log('🎤 MASTER STEP - Showing instruction and glow');
                 // Show instruction below Master button
                 if (masterInstruction) masterInstruction.style.display = 'block';
                 // Add glow to Master button
@@ -23533,12 +23551,15 @@
                 // Tooltip visibility - hide for upload and format steps (they use centered zones)
                 if (step.id === 'upload' || step.id === 'format' || step.useFormatZone) {
                     tooltip.style.display = 'none';
+                    console.log('🎤 Tooltip HIDDEN for step:', step.id);
                 } else {
                     tooltip.style.display = 'block';
+                    console.log('🎤 Tooltip SHOWN for step:', step.id);
                 }
             }
 
             // Speak the translated step
+            console.log('🎤 Step complete, speaking voice for step:', step.id);
             speak(trans.voice);
         }
 
@@ -23760,7 +23781,7 @@
                 }
 
                 // Cancel any current speech before advancing to next step
-                if (voiceSynth) voiceSynth.cancel();
+                window.speechSynthesis.cancel();
 
                 setTimeout(() => {
                     currentStep++;
@@ -23781,7 +23802,7 @@
         function nextTourStep() {
             if (!tourActive) return;
             // Always cancel current speech before advancing to next step
-            if (voiceSynth) voiceSynth.cancel();
+            window.speechSynthesis.cancel();
             currentStep++;
             showStep(currentStep);
         }
@@ -23803,7 +23824,7 @@
             const trans = tourTranslations[currentLang]?.steps[currentStep] || tourTranslations['en'].steps[currentStep];
             if (trans && trans.voice) {
                 // Stop any current speech and replay
-                if (voiceSynth) voiceSynth.cancel();
+                window.speechSynthesis.cancel();
 
                 // Force voice enabled for repeat (user wants to hear it)
                 const wasEnabled = voiceEnabled;
