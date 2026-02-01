@@ -18,7 +18,9 @@
 // 1. MULTI-MODE IRC-STYLE LIMITER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class AdvancedLimiter {
+// Only declare if not already defined
+if (typeof window.AdvancedLimiter === 'undefined') {
+window.AdvancedLimiter = class AdvancedLimiter {
     constructor(audioContext) {
         this.ctx = audioContext;
         this.mode = 'balanced'; // transparent, punchy, aggressive, transient, balanced
@@ -199,6 +201,7 @@ class AdvancedLimiter {
         return this.input;
     }
 }
+} // End AdvancedLimiter conditional
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 2. UPWARD COMPRESSION
@@ -884,7 +887,9 @@ class Spectrogram {
 // 8. LINEAR PHASE EQ
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class LinearPhaseEQ {
+// Only declare if not already defined
+if (typeof window.LinearPhaseEQ === 'undefined') {
+window.LinearPhaseEQ = class LinearPhaseEQ {
     constructor(audioContext) {
         this.ctx = audioContext;
         this.enabled = false;
@@ -953,6 +958,7 @@ class LinearPhaseEQ {
         return this.input;
     }
 }
+} // End LinearPhaseEQ conditional
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 9. MASTER ENGINE INTEGRATION
@@ -966,8 +972,8 @@ class AdvancedMasteringEngine {
         this.softClipper = new SoftClipper(audioContext);
         this.upwardCompressor = new UpwardCompressor(audioContext);
         this.unlimiter = new Unlimiter(audioContext);
-        this.limiter = new AdvancedLimiter(audioContext);
-        this.linearPhaseEQ = new LinearPhaseEQ(audioContext);
+        this.limiter = new (window.AdvancedLimiter || AdvancedLimiter)(audioContext);
+        this.linearPhaseEQ = new (window.LinearPhaseEQ || LinearPhaseEQ)(audioContext);
 
         // Visualization
         this.abComparison = new ABComparison();
@@ -1050,15 +1056,16 @@ class AdvancedMasteringEngine {
 // GLOBAL INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-window.AdvancedMasteringEngine = AdvancedMasteringEngine;
-window.AdvancedLimiter = AdvancedLimiter;
-window.UpwardCompressor = UpwardCompressor;
-window.Unlimiter = Unlimiter;
-window.SoftClipper = SoftClipper;
-window.ABComparison = ABComparison;
-window.LoudnessHistory = LoudnessHistory;
-window.Spectrogram = Spectrogram;
-window.LinearPhaseEQ = LinearPhaseEQ;
+// Safe global exports (check if defined before assigning)
+if (typeof AdvancedMasteringEngine !== 'undefined') window.AdvancedMasteringEngine = AdvancedMasteringEngine;
+if (typeof AdvancedLimiter !== 'undefined') window.AdvancedLimiter = AdvancedLimiter;
+if (typeof UpwardCompressor !== 'undefined') window.UpwardCompressor = UpwardCompressor;
+if (typeof Unlimiter !== 'undefined') window.Unlimiter = Unlimiter;
+if (typeof SoftClipper !== 'undefined') window.SoftClipper = SoftClipper;
+if (typeof ABComparison !== 'undefined') window.ABComparison = ABComparison;
+if (typeof LoudnessHistory !== 'undefined') window.LoudnessHistory = LoudnessHistory;
+if (typeof Spectrogram !== 'undefined') window.Spectrogram = Spectrogram;
+if (typeof LinearPhaseEQ !== 'undefined') window.LinearPhaseEQ = LinearPhaseEQ;
 
 console.log('🎚️ ADVANCED_MASTERING_ENGINE.js loaded');
 console.log('   Features: IRC Limiter, Upward Compression, Unlimiter, Soft Clipper');

@@ -13724,7 +13724,8 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // EQ BYPASS - Properly disconnect/reconnect entire signal chain
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.getElementById('eqBypassBtn').addEventListener('click', async function() {
+        const eqBypassBtn = document.getElementById('eqBypassBtn');
+        if (eqBypassBtn) eqBypassBtn.addEventListener('click', async function() {
             if (!sourceNode || !compressor || !eqSubFilter || !bypassCompensationGain) {
                 console.warn('⚠️ Cannot bypass EQ - audio chain not initialized');
                 return;
@@ -13845,7 +13846,8 @@
         let originalAudioBuffer = null; // Store original for undo
         let denoiserActive = false;
 
-        document.getElementById('denoiserBypassBtn').addEventListener('click', async function() {
+        const denoiserBypassBtn = document.getElementById('denoiserBypassBtn');
+        if (denoiserBypassBtn) denoiserBypassBtn.addEventListener('click', async function() {
             if (!window.audioBuffer) {
                 alert('Please load an audio file first!');
                 return;
@@ -14085,9 +14087,11 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // DYNAMICS CONTROLS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.getElementById('compSlider').addEventListener('input', function() {
+        const compSlider = document.getElementById('compSlider');
+        if (compSlider) compSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
-            document.getElementById('compValue').textContent = value + '%';
+            const compVal = document.getElementById('compValue');
+            if (compVal) compVal.textContent = value + '%';
 
             if (compressor) {
                 const ratio = 1 + (value / 100) * 11;
@@ -14095,9 +14099,11 @@
             }
         });
 
-        document.getElementById('widthSlider').addEventListener('input', function() {
+        const widthSlider = document.getElementById('widthSlider');
+        if (widthSlider) widthSlider.addEventListener('input', function() {
             const value = parseInt(this.value);
-            document.getElementById('widthValue').textContent = value + '%';
+            const widthVal = document.getElementById('widthValue');
+            if (widthVal) widthVal.textContent = value + '%';
 
             // PROFESSIONAL M/S PROCESSING: Use proper Mid/Side matrix
             if (window.msControls) {
@@ -14112,19 +14118,22 @@
             }
         });
 
-        document.getElementById('limiterSlider').addEventListener('input', function() {
+        const limiterSlider = document.getElementById('limiterSlider');
+        if (limiterSlider) limiterSlider.addEventListener('input', function() {
             const value = parseFloat(this.value);
-            document.getElementById('limiterValue').textContent = value.toFixed(1) + ' dB';
+            const limiterVal = document.getElementById('limiterValue');
+            if (limiterVal) limiterVal.textContent = value.toFixed(1) + ' dB';
 
             if (limiter) {
                 limiter.threshold.value = value;
             }
         });
 
-        document.getElementById('outputGainSlider').addEventListener('input', function() {
+        const outputGainSlider = document.getElementById('outputGainSlider');
+        if (outputGainSlider) outputGainSlider.addEventListener('input', function() {
             const value = parseFloat(this.value);
-            document.getElementById('outputGainValue').textContent =
-                (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
+            const outputGainVal = document.getElementById('outputGainValue');
+            if (outputGainVal) outputGainVal.textContent = (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
 
             // CRITICAL FIX: Actually apply the gain to the audio chain!
             if (masterGain) {
@@ -14133,10 +14142,11 @@
             }
         });
 
-        document.getElementById('masterGainSlider').addEventListener('input', function() {
+        const masterGainSlider = document.getElementById('masterGainSlider');
+        if (masterGainSlider) masterGainSlider.addEventListener('input', function() {
             const value = parseFloat(this.value);
-            document.getElementById('masterGainValue').textContent =
-                (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
+            const masterGainVal = document.getElementById('masterGainValue');
+            if (masterGainVal) masterGainVal.textContent = (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
 
             if (masterGain) {
                 masterGain.gain.value = Math.pow(10, value / 20);
@@ -17090,7 +17100,8 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // RESET BUTTON
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        document.getElementById('resetBtn').addEventListener('click', () => {
+        const resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) resetBtn.addEventListener('click', () => {
             // Reset all EQ filters to 0 dB
             if (eqSubFilter) eqSubFilter.gain.value = 0;
             if (eqBassFilter) eqBassFilter.gain.value = 0;
@@ -17163,7 +17174,8 @@
         let abCompareSavedGain = null;  // Master gain saved on first A/B toggle
         let abCompareSavedMakeupGain = null;  // Makeup gain saved on first A/B toggle
 
-        document.getElementById('abCompareBtn').addEventListener('click', function() {
+        const abCompareBtn = document.getElementById('abCompareBtn');
+        if (abCompareBtn) abCompareBtn.addEventListener('click', function() {
             const btn = this;
 
             // Check if we have a valid source
@@ -17336,7 +17348,8 @@
         // Best of the Best: Don't remove features, just hide them until needed
         let advancedMetersVisible = false;
 
-        document.getElementById('advancedMetersToggle').addEventListener('click', function() {
+        const advancedMetersToggle = document.getElementById('advancedMetersToggle');
+        if (advancedMetersToggle) advancedMetersToggle.addEventListener('click', function() {
             advancedMetersVisible = !advancedMetersVisible;
             const advancedMeters = document.querySelectorAll('.advanced-meter');
             const btn = this;
@@ -18509,23 +18522,31 @@
             if (file) processReferenceFile(file);
         });
 
-        document.getElementById('applyReferenceBtn').addEventListener('click', () => {
-            if (window.referenceTrackMatcher && audioBuffer) {
-                const strength = parseInt(document.getElementById('matchStrengthSlider').value) / 100;
-                console.log('✨ Applying reference match at ' + (strength * 100) + '% strength');
-                window.referenceTrackMatcher.applyMatch(audioBuffer, strength);
-                alert('Reference matching applied! Listen to the difference.');
-            } else {
-                alert('Please upload both a track and a reference first.');
-            }
-        });
+        const applyRefBtn = document.getElementById('applyReferenceBtn');
+        if (applyRefBtn) {
+            applyRefBtn.addEventListener('click', () => {
+                if (window.referenceTrackMatcher && audioBuffer) {
+                    const strength = parseInt(document.getElementById('matchStrengthSlider').value) / 100;
+                    console.log('✨ Applying reference match at ' + (strength * 100) + '% strength');
+                    window.referenceTrackMatcher.applyMatch(audioBuffer, strength);
+                    alert('Reference matching applied! Listen to the difference.');
+                } else {
+                    alert('Please upload both a track and a reference first.');
+                }
+            });
+        }
 
-        document.getElementById('matchStrengthSlider').addEventListener('input', (e) => {
-            document.getElementById('matchStrengthValue').textContent = e.target.value + '%';
-        });
+        const matchStrengthSlider = document.getElementById('matchStrengthSlider');
+        if (matchStrengthSlider) {
+            matchStrengthSlider.addEventListener('input', (e) => {
+                const valueEl = document.getElementById('matchStrengthValue');
+                if (valueEl) valueEl.textContent = e.target.value + '%';
+            });
+        }
 
         // MULTIBAND COMPRESSION
-        document.getElementById('multibandToggleBtn').addEventListener('click', function() {
+        const multibandToggleBtn = document.getElementById('multibandToggleBtn');
+        if (multibandToggleBtn) multibandToggleBtn.addEventListener('click', function() {
             const section = document.getElementById('multibandSection');
             const isActive = section.style.display !== 'none';
 
@@ -18546,15 +18567,19 @@
             }
         });
 
-        document.getElementById('multibandPresetSelect').addEventListener('change', (e) => {
-            if (window.multibandCompressor) {
-                window.multibandCompressor.loadPreset(e.target.value);
-                console.log('🎛️ Multiband preset loaded:', e.target.value);
-            }
-        });
+        const multibandPresetSelect = document.getElementById('multibandPresetSelect');
+        if (multibandPresetSelect) {
+            multibandPresetSelect.addEventListener('change', (e) => {
+                if (window.multibandCompressor) {
+                    window.multibandCompressor.loadPreset(e.target.value);
+                    console.log('🎛️ Multiband preset loaded:', e.target.value);
+                }
+            });
+        }
 
         // M/S PROCESSING
-        document.getElementById('msToggleBtn').addEventListener('click', function() {
+        const msToggleBtn = document.getElementById('msToggleBtn');
+        if (msToggleBtn) msToggleBtn.addEventListener('click', function() {
             const section = document.getElementById('msSection');
             const isActive = section.style.display !== 'none';
 
@@ -18575,12 +18600,15 @@
             }
         });
 
-        document.getElementById('msPresetSelect').addEventListener('change', (e) => {
-            if (window.msProcessor) {
-                window.msProcessor.loadPreset(e.target.value);
-                console.log('🔊 M/S preset loaded:', e.target.value);
-            }
-        });
+        const msPresetSelect = document.getElementById('msPresetSelect');
+        if (msPresetSelect) {
+            msPresetSelect.addEventListener('change', (e) => {
+                if (window.msProcessor) {
+                    window.msProcessor.loadPreset(e.target.value);
+                    console.log('🔊 M/S preset loaded:', e.target.value);
+                }
+            });
+        }
 
         // M/S EQ sliders (with null check)
         ['msMidLow', 'msMidMid', 'msMidHigh', 'msSideLow', 'msSideMid', 'msSideHigh'].forEach(id => {

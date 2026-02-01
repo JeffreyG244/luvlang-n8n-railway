@@ -75,7 +75,11 @@ module.exports = async (req, res) => {
                 targetLUFS: sessionData?.targetLUFS?.toString() || '-14',
                 userId: sessionData?.userId || ''
             },
-            allow_promotion_codes: true
+            allow_promotion_codes: true,
+            // Disable Stripe Link (phone number collection for faster checkout)
+            phone_number_collection: {
+                enabled: false
+            }
         });
 
         res.json({
