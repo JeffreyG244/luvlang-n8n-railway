@@ -278,70 +278,77 @@ function createUnlimiterUI(containerId) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 5. LOUDNESS HISTORY PANEL
+// NOTE: Advanced implementation in LOUDNESS_SPECTROGRAM.js takes precedence
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function createLoudnessHistoryUI(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return null;
+// Only define if not already defined by LOUDNESS_SPECTROGRAM.js
+if (typeof window.createLoudnessHistoryUI !== 'function') {
+    window.createLoudnessHistoryUI = function(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
 
-    const html = `
-        <div class="loudness-history-panel">
-            <div class="panel-header">
-                <span class="panel-title">LOUDNESS HISTORY</span>
-                <button class="reset-btn" id="resetLoudnessHistory">RESET</button>
+        const html = `
+            <div class="loudness-history-panel">
+                <div class="panel-header">
+                    <span class="panel-title">LOUDNESS HISTORY</span>
+                    <button class="reset-btn" id="resetLoudnessHistory">RESET</button>
+                </div>
+                <canvas id="loudnessHistoryCanvas" width="400" height="120"></canvas>
+                <div class="loudness-legend">
+                    <span class="legend-item"><span class="legend-color short"></span> Short-term</span>
+                    <span class="legend-item"><span class="legend-color int"></span> Integrated</span>
+                    <span class="legend-item"><span class="legend-color target"></span> Target</span>
+                </div>
             </div>
-            <canvas id="loudnessHistoryCanvas" width="400" height="120"></canvas>
-            <div class="loudness-legend">
-                <span class="legend-item"><span class="legend-color short"></span> Short-term</span>
-                <span class="legend-item"><span class="legend-color int"></span> Integrated</span>
-                <span class="legend-item"><span class="legend-color target"></span> Target</span>
-            </div>
-        </div>
-    `;
+        `;
 
-    container.innerHTML = html;
+        container.innerHTML = html;
 
-    // Initialize loudness history
-    const canvas = document.getElementById('loudnessHistoryCanvas');
-    if (canvas && window.advancedEngine) {
-        window.loudnessHistory = window.advancedEngine.initLoudnessHistory(canvas);
-    }
-
-    document.getElementById('resetLoudnessHistory')?.addEventListener('click', () => {
-        if (window.loudnessHistory) {
-            window.loudnessHistory.reset();
+        const canvas = document.getElementById('loudnessHistoryCanvas');
+        if (canvas && window.advancedEngine) {
+            window.loudnessHistory = window.advancedEngine.initLoudnessHistory(canvas);
         }
-    });
 
-    return container;
+        document.getElementById('resetLoudnessHistory')?.addEventListener('click', () => {
+            if (window.loudnessHistory) {
+                window.loudnessHistory.reset();
+            }
+        });
+
+        return container;
+    };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 6. SPECTROGRAM PANEL
+// NOTE: Advanced implementation in LOUDNESS_SPECTROGRAM.js takes precedence
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function createSpectrogramUI(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return null;
+// Only define if not already defined by LOUDNESS_SPECTROGRAM.js
+if (typeof window.createSpectrogramUI !== 'function') {
+    window.createSpectrogramUI = function(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
 
-    const html = `
-        <div class="spectrogram-panel">
-            <div class="panel-header">
-                <span class="panel-title">SPECTROGRAM</span>
-                <span class="panel-desc">Time × Frequency</span>
+        const html = `
+            <div class="spectrogram-panel">
+                <div class="panel-header">
+                    <span class="panel-title">SPECTROGRAM</span>
+                    <span class="panel-desc">Time × Frequency</span>
+                </div>
+                <canvas id="spectrogramCanvas" width="400" height="200"></canvas>
             </div>
-            <canvas id="spectrogramCanvas" width="400" height="200"></canvas>
-        </div>
-    `;
+        `;
 
-    container.innerHTML = html;
+        container.innerHTML = html;
 
-    const canvas = document.getElementById('spectrogramCanvas');
-    if (canvas && window.advancedEngine) {
-        window.spectrogram = window.advancedEngine.initSpectrogram(canvas);
-    }
+        const canvas = document.getElementById('spectrogramCanvas');
+        if (canvas && window.advancedEngine) {
+            window.spectrogram = window.advancedEngine.initSpectrogram(canvas);
+        }
 
-    return container;
+        return container;
+    };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -785,14 +792,15 @@ if (document.readyState === 'loading') {
     initAdvancedMasteringUI();
 }
 
-// Export functions
+// Export functions (don't overwrite if already defined by other modules)
 window.createLimiterModeUI = createLimiterModeUI;
 window.createSoftClipperUI = createSoftClipperUI;
 window.createUpwardCompressorUI = createUpwardCompressorUI;
 window.createUnlimiterUI = createUnlimiterUI;
-window.createLoudnessHistoryUI = createLoudnessHistoryUI;
-window.createSpectrogramUI = createSpectrogramUI;
+// createLoudnessHistoryUI and createSpectrogramUI are handled above with checks
 window.createLinearPhaseToggle = createLinearPhaseToggle;
-window.showToast = showToast;
+if (typeof window.showToast !== 'function') {
+    window.showToast = showToast;
+}
 
 console.log('🎨 ADVANCED_MASTERING_UI.js loaded');
