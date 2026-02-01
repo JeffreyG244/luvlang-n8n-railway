@@ -13479,19 +13479,16 @@
                     // Enable de-noiser
                     spectralDenoiser.setActive(true);
 
-                    // Enable all checked noise types
-                    const hissEnabled = document.getElementById('denoiseHiss').checked;
-                    const humEnabled = document.getElementById('denoiseHum').checked;
-                    const clicksEnabled = document.getElementById('denoiseClicks').checked;
-                    const broadbandEnabled = document.getElementById('denoiseBroadband').checked;
+                    // Get noise type settings (default to enabled if checkboxes don't exist)
+                    const hissEl = document.getElementById('denoiseHiss');
+                    const humEl = document.getElementById('denoiseHum');
+                    const clicksEl = document.getElementById('denoiseClicks');
+                    const broadbandEl = document.getElementById('denoiseBroadband');
 
-                    if (!hissEnabled && !humEnabled && !clicksEnabled && !broadbandEnabled) {
-                        alert('Please enable at least one noise type (check the boxes)');
-                        denoiserActive = false;
-                        this.textContent = 'De-noiser Active';
-                        this.disabled = false;
-                        return;
-                    }
+                    const hissEnabled = hissEl ? hissEl.checked : true;
+                    const humEnabled = humEl ? humEl.checked : true;
+                    const clicksEnabled = clicksEl ? clicksEl.checked : true;
+                    const broadbandEnabled = broadbandEl ? broadbandEl.checked : true;
 
                     console.log('   Noise types enabled:', {
                         hiss: hissEnabled,
