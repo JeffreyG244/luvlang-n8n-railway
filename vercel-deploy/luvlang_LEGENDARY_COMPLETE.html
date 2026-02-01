@@ -23183,6 +23183,16 @@
                 if (typeof showToast === 'function') showToast('Loop enabled', 'success');
             } else {
                 btn.classList.remove('loop-active');
+                // Also clear In/Out button states
+                const inBtn = document.getElementById('setLoopInBtn');
+                const outBtn = document.getElementById('setLoopOutBtn');
+                if (inBtn) inBtn.classList.remove('loop-active');
+                if (outBtn) outBtn.classList.remove('loop-active');
+                // Reset loop region
+                window.loopRegionSet = false;
+                window.loopInTime = 0;
+                window.loopOutTime = 0;
+                if (loopDisplay) loopDisplay.style.display = 'none';
                 console.log('🔁 Loop DISABLED');
                 if (typeof showToast === 'function') showToast('Loop disabled', 'info');
             }
