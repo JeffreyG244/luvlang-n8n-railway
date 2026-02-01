@@ -23367,23 +23367,25 @@
             stopSpeaking();
             endVoiceTour();
 
-            // Scroll to show EQ section, waveform, and meters - the main working area
+            // Scroll to show EQ section aligned with NATURAL preset button
             setTimeout(() => {
                 const eqSection = document.getElementById('eqSection');
-                const centerMain = document.querySelector('.center-main');
 
-                if (eqSection && centerMain) {
-                    // Scroll the center panel so EQ aligns with NATURAL preset button level
-                    const eqOffsetInPanel = eqSection.offsetTop - centerMain.offsetTop;
-                    centerMain.scrollTo({
-                        top: Math.max(0, eqOffsetInPanel - 300), // Push down to align with genre presets
-                        behavior: 'smooth'
+                if (eqSection) {
+                    console.log('🎯 Scrolling to EQ section...');
+
+                    // Use scrollIntoView for reliable scrolling
+                    eqSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center' // Center the EQ in the viewport
                     });
 
                     // Highlight the EQ section
                     eqSection.style.transition = 'all 0.5s ease';
                     eqSection.style.boxShadow = '0 0 40px rgba(0,212,255,0.6), 0 0 80px rgba(0,212,255,0.3)';
                     setTimeout(() => { eqSection.style.boxShadow = ''; }, 3000);
+                } else {
+                    console.warn('⚠️ EQ section not found');
                 }
 
                 // Also highlight genre section on left
@@ -23393,7 +23395,7 @@
                     genreSection.style.boxShadow = '0 0 30px rgba(0,255,136,0.5)';
                     setTimeout(() => { genreSection.style.boxShadow = ''; }, 3000);
                 }
-            }, 300);
+            }, 500);
         }
 
         // Track last action to prevent duplicate advances
