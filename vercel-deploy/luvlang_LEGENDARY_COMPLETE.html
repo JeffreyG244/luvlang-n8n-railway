@@ -4988,12 +4988,15 @@
 
             <!-- PROFESSIONAL 7-BAND EQ -->
             <div class="eq-section" id="eqSection">
-                <div class="eq-header">
-                    <div class="section-title" style="margin-bottom: 0;">7-Band Parametric EQ</div>
-                    <button class="eq-bypass-btn" id="eqBypassBtn">EQ Active</button>
+                <div class="eq-header" style="cursor: pointer;" onclick="toggleEQSection(event)">
+                    <div class="section-title" style="margin-bottom: 0; display: flex; align-items: center; gap: 8px;">
+                        <span id="eqToggleIcon" style="transition: transform 0.3s ease; font-size: 0.7rem;">▼</span>
+                        7-Band Parametric EQ
+                    </div>
+                    <button class="eq-bypass-btn" id="eqBypassBtn" onclick="event.stopPropagation()">EQ Active</button>
                 </div>
 
-                <div class="eq-faders">
+                <div id="eqSectionContent" class="eq-faders" style="transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden;">
                     <!-- Sub Bass (40Hz) -->
                     <div class="eq-fader-container">
                         <div class="eq-fader-label">
@@ -5406,9 +5409,12 @@
 
             <!-- DYNAMICS SECTION (COMPACT) -->
             <div class="dynamics-section" style="padding: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span class="section-title" style="margin: 0; font-size: 0.85rem;">🎚️ Dynamics</span>
-                    <div style="display: flex; gap: 6px; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer;" onclick="toggleDynamicsSection(event)">
+                    <span class="section-title" style="margin: 0; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                        <span id="dynamicsToggleIcon" style="transition: transform 0.3s ease; font-size: 0.6rem;">▼</span>
+                        🎚️ Dynamics
+                    </span>
+                    <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
                         <select id="dynamicsPresetSelect" onchange="applyDynamicsPreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.65rem;">
                             <option value="off">Manual</option>
                             <option value="gentle">Gentle</option>
@@ -5419,7 +5425,7 @@
                         <span id="limiterGR" style="font-size: 0.6rem; color: #00ff88; min-width: 45px;">GR: 0dB</span>
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div id="dynamicsSectionContent" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden;">
                     <div style="text-align: center;">
                         <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px;">Comp</div>
                         <input type="range" class="slider" id="compSlider" min="0" max="100" value="0" style="width: 100%;">
@@ -7210,6 +7216,44 @@
                         const isCollapsed = content.style.maxHeight === '0px';
                         if (isCollapsed) {
                             content.style.maxHeight = '2000px';
+                            content.style.opacity = '1';
+                            icon.style.transform = 'rotate(0deg)';
+                        } else {
+                            content.style.maxHeight = '0px';
+                            content.style.opacity = '0';
+                            icon.style.transform = 'rotate(-90deg)';
+                        }
+                    }
+                };
+
+                // Toggle EQ Section (collapsible)
+                window.toggleEQSection = function(event) {
+                    // Don't toggle if clicking on bypass button
+                    if (event && event.target.closest('.eq-bypass-btn')) return;
+                    const content = document.getElementById('eqSectionContent');
+                    const icon = document.getElementById('eqToggleIcon');
+                    if (content && icon) {
+                        const isCollapsed = content.style.maxHeight === '0px';
+                        if (isCollapsed) {
+                            content.style.maxHeight = '500px';
+                            content.style.opacity = '1';
+                            icon.style.transform = 'rotate(0deg)';
+                        } else {
+                            content.style.maxHeight = '0px';
+                            content.style.opacity = '0';
+                            icon.style.transform = 'rotate(-90deg)';
+                        }
+                    }
+                };
+
+                // Toggle Dynamics Section (collapsible)
+                window.toggleDynamicsSection = function(event) {
+                    const content = document.getElementById('dynamicsSectionContent');
+                    const icon = document.getElementById('dynamicsToggleIcon');
+                    if (content && icon) {
+                        const isCollapsed = content.style.maxHeight === '0px';
+                        if (isCollapsed) {
+                            content.style.maxHeight = '200px';
                             content.style.opacity = '1';
                             icon.style.transform = 'rotate(0deg)';
                         } else {
