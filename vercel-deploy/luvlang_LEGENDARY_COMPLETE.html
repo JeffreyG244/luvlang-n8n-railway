@@ -20608,7 +20608,7 @@
                         <h3 style="font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.9); margin: 0 0 12px 0; letter-spacing: 0.03em;">Genre EQ Presets</h3>
                         <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin: 0 0 20px 0;">
                             Select a <strong style="color: #7cb8ff;">genre</strong> in the sidebar to reveal specialized EQ presets.
-                            Each genre has 5 unique presets designed by professional mastering engineers to help you
+                            Each genre has 10 unique presets designed by professional mastering engineers to help you
                             achieve your exact sonic vision.
                         </p>
 
@@ -20619,7 +20619,7 @@
                                     <span style="color: #7cb8ff; font-weight: 600;">1.</span> Click a genre button (Hip-Hop, Pop, EDM, etc.)
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="color: #7cb8ff; font-weight: 600;">2.</span> A dropdown appears with 5 style presets
+                                    <span style="color: #7cb8ff; font-weight: 600;">2.</span> A dropdown appears with 10 style presets
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span style="color: #7cb8ff; font-weight: 600;">3.</span> Click a preset to apply - hear it instantly
@@ -23926,7 +23926,12 @@
             console.log('🎤 Voice engine initialized on page load');
 
             setTimeout(() => {
-                if (!localStorage.getItem('voiceTourCompleted')) {
+                // Only auto-start tour for first-time users who haven't seen it this session
+                const tourCompleted = localStorage.getItem('voiceTourCompleted');
+                const tourStartedThisSession = sessionStorage.getItem('voiceTourStarted');
+
+                if (!tourCompleted && !tourStartedThisSession) {
+                    sessionStorage.setItem('voiceTourStarted', 'true');
                     startVoiceTour();
                 }
             }, 2000);
