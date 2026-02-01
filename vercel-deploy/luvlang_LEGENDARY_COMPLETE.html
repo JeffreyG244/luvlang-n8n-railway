@@ -4746,110 +4746,8 @@
             <button id="abCompareBtn" style="display: none;"></button>
             <button id="resetBtn" style="display: none;"></button>
 
-            <!-- REFERENCE TRACK MATCHING - STATE OF THE ART -->
-            <div class="section-title" style="margin-top: 25px;">🎯 Reference Match</div>
-            <div id="referenceTrackSection" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(184, 79, 255, 0.05) 100%); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 12px; padding: 16px; position: relative; overflow: hidden;">
-                <!-- Subtle glow effect -->
-                <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(0, 212, 255, 0.03) 0%, transparent 60%); pointer-events: none;"></div>
-
-                <!-- Drop zone / Load button -->
-                <input type="file" id="referenceFileInput" accept="audio/*" style="display: none;">
-                <div id="referenceDropZone" style="
-                    border: 2px dashed rgba(0, 212, 255, 0.3);
-                    border-radius: 10px;
-                    padding: 20px 15px;
-                    text-align: center;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    background: rgba(0, 0, 0, 0.2);
-                    position: relative;
-                " onclick="document.getElementById('referenceFileInput').click();"
-                   ondragover="event.preventDefault(); this.style.borderColor='#00d4ff'; this.style.background='rgba(0, 212, 255, 0.1)';"
-                   ondragleave="this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.background='rgba(0, 0, 0, 0.2)';"
-                   ondrop="event.preventDefault(); this.style.borderColor='rgba(0, 212, 255, 0.3)'; this.style.background='rgba(0, 0, 0, 0.2)'; handleReferenceDrop(event);">
-                    <div style="font-size: 1.8rem; margin-bottom: 8px;">🎵</div>
-                    <div style="font-size: 0.8rem; font-weight: 600; color: #00d4ff; margin-bottom: 4px;">Drop Reference Track</div>
-                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">or click to browse</div>
-                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35); margin-top: 8px;">Match your master to a commercial release</div>
-                </div>
-
-                <!-- Reference Info (shown after loading) -->
-                <div id="referenceInfo" style="display: none; margin-top: 14px;">
-                    <!-- Track name with icon -->
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px; background: rgba(0, 212, 255, 0.1); border-radius: 8px;">
-                        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">🎧</div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div id="referenceName" style="font-size: 0.75rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Reference loaded</div>
-                        </div>
-                        <button onclick="clearReference()" style="background: rgba(255,100,100,0.2); border: none; color: #ff6b6b; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;" title="Remove reference">×</button>
-                    </div>
-
-                    <!-- Analysis Results -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
-                        <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div id="referenceLUFS" style="font-size: 1.1rem; font-weight: 700; color: #00ff88; font-family: 'SF Mono', monospace;">--</div>
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Target LUFS</div>
-                        </div>
-                        <div style="background: rgba(184, 79, 255, 0.1); border: 1px solid rgba(184, 79, 255, 0.2); border-radius: 8px; padding: 10px; text-align: center;">
-                            <div id="referenceDR" style="font-size: 1.1rem; font-weight: 700; color: #b84fff; font-family: 'SF Mono', monospace;">--</div>
-                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px;">Dynamic Range</div>
-                        </div>
-                    </div>
-
-                    <!-- Mini spectrum comparison preview -->
-                    <div id="referenceSpectrumPreview" style="height: 40px; background: rgba(0,0,0,0.3); border-radius: 6px; margin-bottom: 14px; overflow: hidden; position: relative;">
-                        <canvas id="referenceSpectrumCanvas" width="300" height="40" style="width: 100%; height: 100%;"></canvas>
-                        <div style="position: absolute; bottom: 2px; right: 4px; font-size: 0.5rem; color: rgba(255,255,255,0.3);">SPECTRAL MATCH</div>
-                    </div>
-
-                    <!-- Match Strength Slider -->
-                    <div style="margin-bottom: 14px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <label style="font-size: 0.7rem; color: rgba(255,255,255,0.7);">Match Intensity</label>
-                            <span id="matchStrengthValue" style="font-size: 0.75rem; font-weight: 600; color: #00d4ff;">80%</span>
-                        </div>
-                        <input type="range" id="matchStrengthSlider" min="0" max="100" value="80" style="width: 100%; height: 6px; -webkit-appearance: none; background: linear-gradient(90deg, rgba(0,212,255,0.3), rgba(184,79,255,0.3)); border-radius: 3px; cursor: pointer;">
-                    </div>
-
-                    <!-- Apply Button -->
-                    <button class="action-btn action-btn-primary" id="applyReferenceBtn" disabled style="
-                        width: 100%;
-                        padding: 12px;
-                        background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
-                        border: none;
-                        border-radius: 8px;
-                        color: #fff;
-                        font-size: 0.8rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        opacity: 0.5;
-                    " onmouseover="if(!this.disabled) this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 15px rgba(0,212,255,0.3)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
-                        ✨ Match to Reference
-                    </button>
-                </div>
-
-                <!-- Loading State -->
-                <div id="referenceLoading" style="display: none; text-align: center; padding: 20px;">
-                    <div style="width: 30px; height: 30px; border: 3px solid rgba(0,212,255,0.2); border-top-color: #00d4ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">Analyzing reference...</div>
-                </div>
-            </div>
-            <style>
-                @keyframes spin { to { transform: rotate(360deg); } }
-                #matchStrengthSlider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    width: 16px;
-                    height: 16px;
-                    background: linear-gradient(135deg, #00d4ff, #b84fff);
-                    border-radius: 50%;
-                    cursor: pointer;
-                    box-shadow: 0 2px 6px rgba(0,212,255,0.4);
-                }
-                #applyReferenceBtn:not(:disabled) { opacity: 1; }
-                #applyReferenceBtn:not(:disabled):hover { background: linear-gradient(135deg, #00e5ff 0%, #c96fff 100%); }
-            </style>
+            <!-- Reference Match UI moved to ADVANCED_REFERENCE_MATCHING.js module -->
+            <div id="referenceMatchContainer"></div>
 
         </div>
 
@@ -5400,22 +5298,108 @@
             <!-- Mono Indicator (floating) -->
             <div class="mono-indicator" id="monoIndicator">🔊 MONO CHECK ACTIVE</div>
 
-            <!-- SPECTRAL DE-NOISER (COMPACT AUTO MODE) -->
+            <!-- SPECTRAL DE-NOISER - State-of-the-Art Design (iZotope RX Style) -->
             <div class="eq-section" style="margin-top: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(184, 79, 255, 0.08); border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 0.8rem;">🎤 De-noise</span>
-                        <select id="denoisePresetSelect" onchange="applyDenoisePreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 4px; font-size: 0.7rem;">
-                            <option value="off">Off</option>
-                            <option value="auto" selected>Auto</option>
-                            <option value="gentle">Gentle</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="aggressive">Aggressive</option>
-                        </select>
+                <div style="
+                    background: linear-gradient(145deg, rgba(139, 92, 246, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+                    border: 1px solid rgba(139, 92, 246, 0.25);
+                    border-radius: 12px;
+                    padding: 14px 16px;
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <!-- Subtle animated glow -->
+                    <div id="denoiseGlow" style="
+                        position: absolute;
+                        top: -50%;
+                        left: -50%;
+                        width: 200%;
+                        height: 200%;
+                        background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+                        pointer-events: none;
+                        transition: opacity 0.3s ease;
+                    "></div>
+
+                    <!-- Header Row -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 1;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="
+                                width: 28px;
+                                height: 28px;
+                                background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+                                border-radius: 6px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 0.9rem;
+                                box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+                            ">🔇</div>
+                            <div>
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #fff; letter-spacing: 0.02em;">SPECTRAL DE-NOISER</div>
+                                <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-top: 1px;">Intelligent Noise Reduction</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="denoiseStatus" style="
+                                font-size: 0.6rem;
+                                color: #10b981;
+                                background: rgba(16, 185, 129, 0.15);
+                                padding: 3px 8px;
+                                border-radius: 4px;
+                                font-weight: 500;
+                            ">ADAPTIVE</span>
+                            <button class="eq-bypass-btn" id="denoiserBypassBtn" style="
+                                padding: 5px 12px;
+                                font-size: 0.6rem;
+                                background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.2));
+                                border: 1px solid rgba(139, 92, 246, 0.4);
+                                border-radius: 6px;
+                                color: #fff;
+                                font-weight: 500;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            ">ACTIVE</button>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span id="denoiseStatus" style="font-size: 0.65rem; color: #00ff88;">✓ Auto</span>
-                        <button class="eq-bypass-btn" id="denoiserBypassBtn" style="padding: 4px 10px; font-size: 0.65rem;">Active</button>
+
+                    <!-- Control Row -->
+                    <div style="display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;">
+                        <select id="denoisePresetSelect" onchange="applyDenoisePreset(this.value)" style="
+                            flex: 1;
+                            padding: 8px 12px;
+                            background: rgba(0,0,0,0.4);
+                            border: 1px solid rgba(139, 92, 246, 0.3);
+                            color: white;
+                            border-radius: 8px;
+                            font-size: 0.7rem;
+                            cursor: pointer;
+                            transition: border-color 0.2s ease;
+                            appearance: none;
+                            background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%238b5cf6\" stroke-width=\"2\"><polyline points=\"6,9 12,15 18,9\"/></svg>');
+                            background-repeat: no-repeat;
+                            background-position: right 10px center;
+                            padding-right: 32px;
+                        ">
+                            <option value="off">Bypass</option>
+                            <option value="auto" selected>Auto-Adaptive</option>
+                            <option value="gentle">Gentle (-6dB NR)</option>
+                            <option value="moderate">Moderate (-12dB NR)</option>
+                            <option value="aggressive">Aggressive (-18dB NR)</option>
+                        </select>
+
+                        <!-- Mini Spectrum Indicator -->
+                        <div id="denoiseSpectrumMini" style="
+                            width: 60px;
+                            height: 28px;
+                            background: rgba(0,0,0,0.4);
+                            border-radius: 6px;
+                            overflow: hidden;
+                            border: 1px solid rgba(139, 92, 246, 0.2);
+                            position: relative;
+                        ">
+                            <canvas id="denoiseSpectrumCanvas" width="60" height="28" style="width: 100%; height: 100%;"></canvas>
+                            <div style="position: absolute; bottom: 1px; right: 2px; font-size: 0.4rem; color: rgba(139,92,246,0.6);">NR</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -18752,13 +18736,25 @@
         }
 
         // Dynamics Preset (Auto mode)
+        // State-of-the-art settings compliant with:
+        // - ITU-R BS.1770-5 loudness standards
+        // - AES streaming recommendations (-1 dBTP ceiling)
+        // - EBU R128 broadcast specifications
         function applyDynamicsPreset(preset) {
             const presets = {
-                off: { comp: 0, width: 100, ceiling: -1.5, output: 0 },
-                gentle: { comp: 20, width: 105, ceiling: -1.0, output: 0 },
-                balanced: { comp: 40, width: 110, ceiling: -1.0, output: 1 },
-                punchy: { comp: 60, width: 115, ceiling: -0.5, output: 2 },
-                loud: { comp: 80, width: 120, ceiling: -0.3, output: 3 }
+                // Off: Bypass dynamics processing
+                off: { comp: 0, width: 100, ceiling: -1.0, output: 0 },
+                // Gentle: Transparent mastering for acoustic/classical
+                gentle: { comp: 15, width: 102, ceiling: -1.0, output: 0 },
+                // Balanced: Professional standard for most genres
+                balanced: { comp: 35, width: 108, ceiling: -1.0, output: 0 },
+                // Punchy: Aggressive but clean - NO CLIPPING
+                // Key fix: ceiling at -1.5 dB gives headroom for inter-sample peaks
+                // Output stays at 0 dB to prevent post-limiter clipping
+                punchy: { comp: 55, width: 112, ceiling: -1.5, output: 0 },
+                // Loud: Maximum loudness while maintaining -1 dBTP true peak
+                // Heavy compression with safe ceiling for streaming compliance
+                loud: { comp: 75, width: 115, ceiling: -1.0, output: 0 }
             };
 
             const p = presets[preset] || presets.balanced;
