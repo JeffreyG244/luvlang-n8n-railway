@@ -3079,7 +3079,203 @@
             transform: translate(-50%, -60%) scale(1.02);
             border-color: #00ffcc;
         }
+        #tourFormatZone:hover {
+            transform: translate(-50%, -50%) scale(1.01);
+        }
+        .format-tour-btn {
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .format-tour-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        .format-tour-btn.selected {
+            background: rgba(0, 212, 255, 0.15);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        .bitdepth-tour-btn {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            text-align: center;
+        }
+        .bitdepth-tour-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.4);
+        }
+        .bitdepth-tour-btn.selected {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
     </style>
+
+    <!-- CENTERED FORMAT SELECTION ZONE - For tour step 2 -->
+    <div id="tourFormatZone" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 580px;
+        max-width: 90vw;
+        background: linear-gradient(165deg, rgba(10, 15, 30, 0.98) 0%, rgba(5, 10, 20, 0.99) 100%);
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 24px;
+        z-index: 100000;
+        padding: 30px;
+        box-shadow:
+            0 0 80px rgba(0, 212, 255, 0.2),
+            0 0 160px rgba(0, 0, 0, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(30px);
+    ">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📀</div>
+            <div style="font-size: 1.3rem; font-weight: 700; color: #fff;">Choose Your Export Settings</div>
+            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 6px;">Select format and bit depth for your master</div>
+        </div>
+
+        <!-- Format Selection -->
+        <div style="margin-bottom: 20px;">
+            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Format</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                <div class="format-tour-btn selected" data-format="wav" onclick="selectTourFormat(this, 'wav')">
+                    <div style="font-size: 1.5rem; margin-bottom: 4px;">💎</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">WAV</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Lossless</div>
+                </div>
+                <div class="format-tour-btn" data-format="flac" onclick="selectTourFormat(this, 'flac')">
+                    <div style="font-size: 1.5rem; margin-bottom: 4px;">📦</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">FLAC</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">Lossless Compressed</div>
+                </div>
+                <div class="format-tour-btn" data-format="mp3" onclick="selectTourFormat(this, 'mp3')">
+                    <div style="font-size: 1.5rem; margin-bottom: 4px;">🎵</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">MP3</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">320kbps</div>
+                </div>
+                <div class="format-tour-btn" data-format="aac" onclick="selectTourFormat(this, 'aac')">
+                    <div style="font-size: 1.5rem; margin-bottom: 4px;">🍎</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 0.9rem;">AAC</div>
+                    <div style="font-size: 0.65rem; color: rgba(255,255,255,0.5);">256kbps</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bit Depth Selection -->
+        <div style="margin-bottom: 24px;">
+            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Bit Depth</div>
+            <div style="display: flex; gap: 12px;">
+                <div class="bitdepth-tour-btn selected" data-depth="24" onclick="selectTourBitDepth(this, 24)">
+                    <div style="font-weight: 700; color: #fff; font-size: 1rem;">24-bit</div>
+                    <div style="font-size: 0.7rem; color: #00ff88;">Professional</div>
+                </div>
+                <div class="bitdepth-tour-btn" data-depth="16" onclick="selectTourBitDepth(this, 16)">
+                    <div style="font-weight: 700; color: #fff; font-size: 1rem;">16-bit</div>
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">CD Quality</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selection Summary -->
+        <div id="tourFormatSummary" style="
+            background: rgba(0, 212, 255, 0.08);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        ">
+            <span style="color: rgba(255,255,255,0.6);">Selected: </span>
+            <span id="tourFormatSelected" style="color: #00d4ff; font-weight: 700;">WAV 24-bit</span>
+            <span style="color: #00ff88; font-size: 0.8rem; margin-left: 8px;">✓ Best Quality</span>
+        </div>
+
+        <!-- Continue Button -->
+        <button onclick="confirmTourFormat()" style="
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 30px rgba(0,212,255,0.4)';"
+           onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(0,212,255,0.3)';">
+            Continue to Mastering →
+        </button>
+    </div>
+
+    <script>
+        // Tour format selection handlers
+        window.tourSelectedFormat = 'wav';
+        window.tourSelectedBitDepth = 24;
+
+        function selectTourFormat(btn, format) {
+            document.querySelectorAll('.format-tour-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            window.tourSelectedFormat = format;
+            updateTourFormatSummary();
+        }
+
+        function selectTourBitDepth(btn, depth) {
+            document.querySelectorAll('.bitdepth-tour-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            window.tourSelectedBitDepth = depth;
+            updateTourFormatSummary();
+        }
+
+        function updateTourFormatSummary() {
+            const formatNames = { wav: 'WAV', flac: 'FLAC', mp3: 'MP3', aac: 'AAC' };
+            const summary = document.getElementById('tourFormatSelected');
+            if (summary) {
+                summary.textContent = `${formatNames[window.tourSelectedFormat]} ${window.tourSelectedBitDepth}-bit`;
+            }
+            // Sync with actual export settings
+            const formatBtns = document.querySelectorAll('.export-format-btn[data-format]');
+            formatBtns.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.format === window.tourSelectedFormat) btn.classList.add('active');
+            });
+            if (window.tourSelectedBitDepth === 24) {
+                document.getElementById('bitDepth24Btn')?.classList.add('active');
+                document.getElementById('bitDepth16Btn')?.classList.remove('active');
+            } else {
+                document.getElementById('bitDepth16Btn')?.classList.add('active');
+                document.getElementById('bitDepth24Btn')?.classList.remove('active');
+            }
+            const bitDepthInput = document.getElementById('bitDepthSelector');
+            if (bitDepthInput) bitDepthInput.value = window.tourSelectedBitDepth;
+        }
+
+        function confirmTourFormat() {
+            // Hide the format zone
+            const formatZone = document.getElementById('tourFormatZone');
+            if (formatZone) formatZone.style.display = 'none';
+            // Advance to next step
+            if (typeof advanceVoiceTour === 'function') {
+                window.currentStep = 1; // Move past format step
+                advanceVoiceTour('formatSelected');
+            }
+        }
+    </script>
 
     <!-- Spotlight highlight for target element -->
     <div id="voiceTourSpotlight" style="
@@ -22988,7 +23184,7 @@
         // Tour Steps Configuration (will be updated based on language)
         const voiceTourSteps = [
             { id: 'upload', target: '#uploadArea', waitFor: 'fileUploaded', position: 'right' },
-            { id: 'format', target: '#exportSection', waitFor: null, position: 'left', showNext: true },
+            { id: 'format', target: null, waitFor: 'formatSelected', position: 'center', useFormatZone: true },
             { id: 'master', target: '#aiMasterBtnFloating', waitFor: 'masteringComplete', position: 'bottom' },
             { id: 'complete', target: '#genreSection', waitFor: null, position: 'right', showNext: true },
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
@@ -23185,7 +23381,19 @@
                 }
             }
 
-            // Show/hide Master button instruction and glow for step 2
+            // Show/hide centered format zone for step 2
+            const formatZone = document.getElementById('tourFormatZone');
+            if (formatZone) {
+                if (step.id === 'format' || step.useFormatZone) {
+                    formatZone.style.display = 'block';
+                    // Hide spotlight for format step
+                    if (spotlight) spotlight.style.display = 'none';
+                } else {
+                    formatZone.style.display = 'none';
+                }
+            }
+
+            // Show/hide Master button instruction and glow for step 3
             const masterInstruction = document.getElementById('tourMasterInstruction');
             const masterBtn = document.getElementById('aiMasterBtnFloating');
             if (step.id === 'master') {
@@ -23199,15 +23407,13 @@
                 if (masterBtn) masterBtn.classList.remove('master-btn-tour-highlight');
             }
 
-            // Hide Export button during format step (show after mastering is complete)
-            const exportBtn = document.getElementById('exportBtn');
-            if (exportBtn) {
-                if (step.id === 'format') {
-                    // During format step, hide the export button
-                    exportBtn.style.display = 'none';
-                } else if (step.id === 'complete' || step.id === 'explore') {
-                    // After mastering, show the export button
-                    exportBtn.style.display = 'block';
+            // Show/hide tour tooltip based on step type (hide for centered zones)
+            if (tooltip) {
+                if (step.id === 'format' || step.useFormatZone) {
+                    // Hide tooltip during format step - using centered format zone
+                    tooltip.style.display = 'none';
+                } else if (step.id !== 'upload' && !step.isExploreStep) {
+                    tooltip.style.display = 'block';
                 }
             }
 
@@ -23516,6 +23722,12 @@
                 if (actionType === 'fileUploaded') {
                     const uploadZone = document.getElementById('tourUploadZone');
                     if (uploadZone) uploadZone.style.display = 'none';
+                }
+
+                // Hide the format zone when format is selected
+                if (actionType === 'formatSelected') {
+                    const formatZone = document.getElementById('tourFormatZone');
+                    if (formatZone) formatZone.style.display = 'none';
                 }
 
                 // Hide master instruction when mastering completes
