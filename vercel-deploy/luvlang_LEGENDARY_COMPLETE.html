@@ -23759,6 +23759,9 @@
                     if (masterBtn) masterBtn.classList.remove('master-btn-tour-highlight');
                 }
 
+                // Cancel any current speech before advancing to next step
+                if (voiceSynth) voiceSynth.cancel();
+
                 setTimeout(() => {
                     currentStep++;
                     console.log('🎤 Now showing step:', currentStep);
@@ -23777,6 +23780,8 @@
 
         function nextTourStep() {
             if (!tourActive) return;
+            // Always cancel current speech before advancing to next step
+            if (voiceSynth) voiceSynth.cancel();
             currentStep++;
             showStep(currentStep);
         }
