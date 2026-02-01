@@ -11,6 +11,13 @@ const crypto = require('crypto');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'https://luvlangmastering.vercel.app',
+    'https://luvlang-mastering.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 /**
  * Generate a secure API key
  * Format: lm_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -58,10 +65,14 @@ async function verifyAuth(authHeader) {
 }
 
 module.exports = async (req, res) => {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS headers - restrict to allowed origins
+    const origin = req.headers.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
         return res.status(200).end();

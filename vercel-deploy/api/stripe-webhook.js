@@ -37,21 +37,23 @@ module.exports = async (req, res) => {
 
     let event;
 
+    // SECURITY: Always require webhook secret in production
+    if (!webhookSecret) {
+        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Webhook not configured' });
+    }
+
+    if (!sig) {
+        console.error('Missing stripe-signature header');
+        return res.status(400).json({ error: 'Missing signature' });
+    }
+
     // Verify webhook signature
-    if (webhookSecret) {
-        try {
-            event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
-        } catch (err) {
-            console.error('Webhook signature verification failed:', err.message);
-            return res.status(400).send(`Webhook Error: ${err.message}`);
-        }
-    } else {
-        // Development mode without signature verification
-        try {
-            event = JSON.parse(buf.toString());
-        } catch (err) {
-            return res.status(400).send('Invalid JSON');
-        }
+    try {
+        event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
+    } catch (err) {
+        console.error('Webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
     console.log('Webhook received:', event.type);

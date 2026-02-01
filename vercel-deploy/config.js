@@ -3,9 +3,9 @@
  * Centralized configuration for API keys and settings
  *
  * SECURITY NOTES:
- * - Publishable keys (pk_*) are safe for client-side use
- * - Secret keys (sk_*) should NEVER be in client-side code
- * - In production, use environment variables via your hosting platform
+ * - All sensitive keys are loaded from environment variables
+ * - Set environment variables in Vercel Dashboard -> Settings -> Environment Variables
+ * - Never commit actual keys to source control
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,52 +25,47 @@ const LUVLANG_CONFIG = (() => {
                           hostname.includes('192.168.');
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // STRIPE CONFIGURATION
+    // ENVIRONMENT VARIABLES (from window.__ENV__ set by env-config.js)
     // ═══════════════════════════════════════════════════════════════════════════
-    // Get your keys from: https://dashboard.stripe.com/apikeys
-    //
-    // PRODUCTION: Replace with your live publishable key (pk_live_...)
-    // The key below is a TEST key for development only
+    const ENV = (typeof window !== 'undefined' && window.__ENV__) || {};
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // PRE-LAUNCH MODE FLAG
+    // STRIPE CONFIGURATION
     // ═══════════════════════════════════════════════════════════════════════════
-    // Set to TRUE when you're ready to accept REAL payments
-    const USE_LIVE_STRIPE = false;  // ← CHANGE TO true WHEN READY FOR REAL PAYMENTS
+    // Set STRIPE_PUBLIC_KEY in Vercel Dashboard -> Settings -> Environment Variables
+
+    const USE_LIVE_STRIPE = isProduction && ENV.STRIPE_PUBLIC_KEY?.startsWith('pk_live_');
 
     const STRIPE_CONFIG = {
         // Current mode indicator
         isLiveMode: USE_LIVE_STRIPE,
 
-        // Publishable key - uses test key until USE_LIVE_STRIPE is true
-        publishableKey: USE_LIVE_STRIPE
-            ? 'pk_live_51RXBWQP1VAtK8qeD0mVFhKAXdmduYYboPjx3DTxRkCclCQDS22P6saJHIEy81WmJV13WhDBKtp6ASeE3ItWWpTpz00SqDRVYxJ'
-            : 'pk_test_51RXBWQP1VAtK8qeDRotSKHkuZF2UsKG18z4dDtoJM9MTtuR6Eh28ghQIGljfwQCyNN9fXHV8HwdvNJ8TmPizjagQ003L592cFz',
+        // Publishable key from environment variable
+        publishableKey: ENV.STRIPE_PUBLIC_KEY || '',
 
-        // Payment links - TEST links for now
-        // When USE_LIVE_STRIPE is true, replace these with live_ links
+        // Payment links - configure in Vercel environment variables
         paymentLinks: {
-            basic: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03',      // $29
-            advanced: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01',   // $79
-            premium: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02'     // $149
+            basic: ENV.STRIPE_LINK_BASIC || '',
+            advanced: ENV.STRIPE_LINK_ADVANCED || '',
+            premium: ENV.STRIPE_LINK_PREMIUM || ''
         },
 
-        // Price IDs from Stripe Dashboard
+        // Price IDs from environment variables
         priceIds: {
-            instant: USE_LIVE_STRIPE ? 'price_instant_live' : 'price_instant_999',
-            precision: USE_LIVE_STRIPE ? 'price_precision_live' : 'price_precision_1999',
-            legendary: USE_LIVE_STRIPE ? 'price_legendary_live' : 'price_legendary_2999'
+            instant: ENV.STRIPE_PRICE_INSTANT || '',
+            precision: ENV.STRIPE_PRICE_PRECISION || '',
+            legendary: ENV.STRIPE_PRICE_LEGENDARY || ''
         }
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
     // SUPABASE CONFIGURATION
     // ═══════════════════════════════════════════════════════════════════════════
-    // Get your keys from: https://app.supabase.com/project/_/settings/api
+    // Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel Dashboard
 
     const SUPABASE_CONFIG = {
-        url: 'https://jzclawsctaczhgvfpssx.supabase.co',
-        anonKey: 'sb_publishable_9Bf4Bt5Y91aGdpFfYs7Zrg_mozxhGDA'
+        url: ENV.SUPABASE_URL || '',
+        anonKey: ENV.SUPABASE_ANON_KEY || ''
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
