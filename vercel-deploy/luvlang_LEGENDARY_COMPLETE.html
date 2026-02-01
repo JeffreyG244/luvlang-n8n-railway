@@ -10761,6 +10761,20 @@
 
                     // Apply the EQ preset
                     applyGenreEQPreset(genreName, index);
+
+                    // SCROLL TO 7-BAND EQ so user can see the changes
+                    const eqSection = document.getElementById('eqSection');
+                    if (eqSection) {
+                        setTimeout(() => {
+                            eqSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Highlight effect
+                            eqSection.style.transition = 'box-shadow 0.3s ease';
+                            eqSection.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)';
+                            setTimeout(() => {
+                                eqSection.style.boxShadow = '';
+                            }, 1500);
+                        }, 150);
+                    }
                 });
 
                 // Set initial active styling for first preset
@@ -16512,6 +16526,21 @@
                         applyGenrePreset(genre, true); // true = animate
                         const displayName = genreNames[genre.toLowerCase()] || genre;
                         showToast(`🎵 ${displayName}`, 'success');
+                    }
+
+                    // SCROLL TO 7-BAND EQ so user can see changes in real-time
+                    const eqSection = document.getElementById('eqSection');
+                    if (eqSection) {
+                        // Smooth scroll to EQ section with offset
+                        setTimeout(() => {
+                            eqSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Add highlight effect
+                            eqSection.style.transition = 'box-shadow 0.3s ease';
+                            eqSection.style.boxShadow = '0 0 30px rgba(0, 212, 255, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)';
+                            setTimeout(() => {
+                                eqSection.style.boxShadow = '';
+                            }, 2000);
+                        }, 100);
                     }
                 }
             });
