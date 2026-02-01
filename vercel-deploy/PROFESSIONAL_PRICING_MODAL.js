@@ -34,7 +34,7 @@ const FEATURE_TOOLTIPS = {
 const PRICING_TIERS = {
     basic: {
         name: 'Basic',
-        price: 29,
+        price: 12.99,
         period: 'one-time',
         tagline: 'Essential Mastering',
         description: 'Everything you need to create release-ready masters',
@@ -54,7 +54,7 @@ const PRICING_TIERS = {
     },
     advanced: {
         name: 'Advanced',
-        price: 79,
+        price: 29.99,
         period: 'one-time',
         tagline: 'Professional Tools',
         description: 'For producers who need more control',
@@ -75,7 +75,7 @@ const PRICING_TIERS = {
     },
     premium: {
         name: 'Premium',
-        price: 149,
+        price: 59.99,
         period: 'one-time',
         tagline: 'Studio Master Suite',
         description: 'Unlimited power for serious professionals',

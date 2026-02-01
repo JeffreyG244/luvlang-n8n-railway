@@ -12,8 +12,8 @@ let wasmPrecisionMode = '32bit'; // '32bit', '64bit'
 
 const TIER_CONFIG = {
     basic: {
-        price: 29.00,
-        label: 'BASIC TIER',
+        price: 12.99,
+        label: 'BASIC',
         stripeLink: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03',
         features: [
             'Unlimited MP3 exports (320kbps)',
@@ -31,8 +31,8 @@ const TIER_CONFIG = {
         processing: '32bit'
     },
     advanced: {
-        price: 79.00,
-        label: 'ADVANCED TIER',
+        price: 29.99,
+        label: 'ADVANCED',
         stripeLink: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01',
         features: [
             'Unlimited 24-bit WAV exports',
@@ -51,8 +51,8 @@ const TIER_CONFIG = {
         processing: '32bit'
     },
     premium: {
-        price: 149.00,
-        label: 'PREMIUM TIER',
+        price: 59.99,
+        label: 'PREMIUM',
         stripeLink: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02',
         features: [
             '64-bit precision engine (4x oversampling)',

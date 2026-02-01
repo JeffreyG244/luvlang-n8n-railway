@@ -7,23 +7,23 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Tier pricing (in cents)
 const TIER_PRICES = {
-    instant: 999,
-    precision: 1999,
-    legendary: 2999
+    basic: 1299,
+    advanced: 2999,
+    premium: 5999
 };
 
 const TIER_INFO = {
-    instant: {
-        name: 'INSTANT',
-        description: 'AI-powered mastering with platform presets'
+    basic: {
+        name: 'BASIC',
+        description: 'Essential mastering with MP3 export'
     },
-    precision: {
-        name: 'PRECISION',
-        description: 'Advanced mastering with manual controls'
+    advanced: {
+        name: 'ADVANCED',
+        description: 'Professional mastering with WAV export'
     },
-    legendary: {
-        name: 'LEGENDARY',
-        description: 'Studio-grade mastering suite'
+    premium: {
+        name: 'PREMIUM',
+        description: 'Studio-grade mastering suite with all features'
     }
 };
 
