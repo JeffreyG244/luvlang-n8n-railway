@@ -19,8 +19,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Only declare if not already defined
-if (typeof AdvancedLimiter === 'undefined') {
-class AdvancedLimiter {
+if (typeof window.AdvancedLimiter === 'undefined') {
+window.AdvancedLimiter = class AdvancedLimiter {
     constructor(audioContext) {
         this.ctx = audioContext;
         this.mode = 'balanced'; // transparent, punchy, aggressive, transient, balanced
@@ -888,8 +888,8 @@ class Spectrogram {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Only declare if not already defined
-if (typeof LinearPhaseEQ === 'undefined') {
-class LinearPhaseEQ {
+if (typeof window.LinearPhaseEQ === 'undefined') {
+window.LinearPhaseEQ = class LinearPhaseEQ {
     constructor(audioContext) {
         this.ctx = audioContext;
         this.enabled = false;
@@ -972,8 +972,8 @@ class AdvancedMasteringEngine {
         this.softClipper = new SoftClipper(audioContext);
         this.upwardCompressor = new UpwardCompressor(audioContext);
         this.unlimiter = new Unlimiter(audioContext);
-        this.limiter = new AdvancedLimiter(audioContext);
-        this.linearPhaseEQ = new LinearPhaseEQ(audioContext);
+        this.limiter = new (window.AdvancedLimiter || AdvancedLimiter)(audioContext);
+        this.linearPhaseEQ = new (window.LinearPhaseEQ || LinearPhaseEQ)(audioContext);
 
         // Visualization
         this.abComparison = new ABComparison();

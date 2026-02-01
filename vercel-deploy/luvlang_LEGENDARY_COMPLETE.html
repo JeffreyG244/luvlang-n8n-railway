@@ -11489,6 +11489,10 @@
                 return;
             }
 
+            // Get the ACTUAL target LUFS from stored value or derive from platform
+            const targetLUFS = window.autoLUFSTargetLevel ||
+                ((window.selectedPlatform === 'apple' || window.selectedPlatform === 'podcast') ? -16 : -14);
+
             // Get the base makeup gain value (use stored value or current value)
             let baseMakeupGain = window.originalMakeupGainValue;
             if (baseMakeupGain === undefined || baseMakeupGain === null) {
@@ -11505,7 +11509,7 @@
             // K-weighting factors: how much each NARROW EQ BAND contributes to LUFS
             // IMPORTANT: These are for narrow parametric EQ bands (~1/3 octave), NOT broadband
             // Narrow bands have MUCH less LUFS impact than the full K-weighting curve suggests
-            // Values empirically calibrated to maintain -14 LUFS across all presets
+            // Values empirically calibrated to maintain target LUFS across all presets
             const kWeights = {
                 sub: 0.02,    // 45Hz - almost no LUFS impact (K-weighting -20dB + narrow)
                 bass: 0.06,   // 100Hz - minimal LUFS impact (K-weighting -6dB + narrow)
@@ -11549,19 +11553,19 @@
             const compensationDB = Math.max(0, Math.min(netBoost, 12)); // Cap at 12dB
             const compensationLinear = Math.pow(10, -compensationDB / 20);
             const compensatedGain = baseMakeupGain * compensationLinear;
+            const compensatedGainDB = 20 * Math.log10(compensatedGain);
 
             // Apply the compensated gain smoothly
             window.makeupGain.gain.cancelScheduledValues(ac.currentTime);
             window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
 
-            // Get current target for logging
-            const platform = window.selectedPlatform || 'spotify';
-            const targetLUFS = (platform === 'apple' || platform === 'podcast') ? -16 : -14;
+            // Store the current compensated gain for reference
+            window.currentCompensatedGainDB = compensatedGainDB;
 
             console.log(`🎚️ EQ Compensation for ${targetLUFS} LUFS target:`);
             console.log(`   EQ: Sub ${eqValues.sub.toFixed(1)}, Bass ${eqValues.bass.toFixed(1)}, Mid ${eqValues.mid.toFixed(1)}, High ${eqValues.high.toFixed(1)}, Air ${eqValues.air.toFixed(1)}`);
             console.log(`   K-weighted: Boost +${kWeightedBoost.toFixed(1)}dB, Cut -${kWeightedCut.toFixed(1)}dB, Net +${netBoost.toFixed(1)}dB`);
-            console.log(`   Compensation: -${compensationDB.toFixed(1)}dB → Gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
+            console.log(`   Compensation: -${compensationDB.toFixed(1)}dB → Gain: ${compensatedGainDB.toFixed(1)}dB`);
         }
 
         /**
@@ -17024,9 +17028,12 @@
                         mu.gain.cancelScheduledValues(ac.currentTime);
                         mu.gain.setTargetAtTime(linearGain, ac.currentTime, 0.1);
 
-                        // Update stored values
+                        // Update stored values - CRITICAL for EQ compensation
                         window.autoLUFSGainApplied = safeGain;
                         window.autoLUFSTargetLevel = targetLUFS;
+                        window.originalMakeupGainValue = linearGain; // Base for EQ compensation
+                        window.appliedMakeupGainDB = safeGain;
+                        console.log(`   ✅ Stored originalMakeupGainValue = ${linearGain.toFixed(4)} for EQ compensation`);
 
                         // Show toast notification
                         const msg = `${platformName}: ${targetLUFS} LUFS`;
