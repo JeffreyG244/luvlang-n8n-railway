@@ -6090,6 +6090,25 @@
                     </div>
                 </div>
 
+                <button class="compare-tiers-btn" id="compareTiersBtn" onclick="openTierComparison()" disabled style="
+                    width: 100%;
+                    padding: 14px 20px;
+                    margin-bottom: 12px;
+                    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.15));
+                    border: 2px solid rgba(0, 212, 255, 0.4);
+                    border-radius: 12px;
+                    color: #00d4ff;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                ">
+                    🎚️ Compare Tiers & Pricing
+                </button>
                 <button class="export-btn" id="exportBtn" disabled>
                     💾 Export Master
                 </button>
@@ -6242,6 +6261,9 @@
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="stripe-client.js"></script>
 
+    <!-- Tier Comparison Modal -->
+    <script src="TIER_COMPARISON_MODAL.js"></script>
+
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          MAIN JAVASCRIPT - PROFESSIONAL AUDIO ENGINE
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
@@ -6253,6 +6275,24 @@
         });
 
         console.log('🚀 LuvLang Mastering - Script starting...');
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // TIER COMPARISON INTEGRATION
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function openTierComparison() {
+            // Get the current audio buffer
+            if (typeof window.audioBuffer !== 'undefined' && window.audioBuffer) {
+                const trackName = window.currentFileName || 'Your Track';
+                window.TierComparison.open(window.audioBuffer, trackName);
+            } else if (typeof audioBuffer !== 'undefined' && audioBuffer) {
+                const trackName = window.currentFileName || 'Your Track';
+                window.TierComparison.open(audioBuffer, trackName);
+            } else {
+                alert('Please upload a track first to compare tiers.');
+            }
+        }
+        // Make it globally available
+        window.openTierComparison = openTierComparison;
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // GLOBAL VARIABLES - Web Audio API Components
@@ -9277,6 +9317,7 @@
             console.log('🔄 Mastering state reset for new file');
 
             console.log('📁 File selected:', file.name);
+            window.currentFileName = file.name; // Store for tier comparison
 
             const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/flac', 'audio/m4a', 'audio/aac'];
             const isAudioType = file.type.startsWith('audio/') || validTypes.includes(file.type);
@@ -9305,6 +9346,7 @@
             // Enable controls
             document.getElementById('resetBtn').disabled = false;
             document.getElementById('exportBtn').disabled = false;
+            document.getElementById('compareTiersBtn').disabled = false;
 
             audioElement.addEventListener('loadedmetadata', async () => {
                 const duration = audioElement.duration || 0;
