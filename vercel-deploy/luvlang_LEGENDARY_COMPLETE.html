@@ -3294,12 +3294,16 @@
         }
 
         function confirmTourFormat() {
+            console.log('🎤 confirmTourFormat called');
             // Hide the format zone
             const formatZone = document.getElementById('tourFormatZone');
             if (formatZone) formatZone.style.display = 'none';
-            // Advance to next step - just trigger the action, tour handles the rest
-            if (typeof advanceVoiceTour === 'function') {
-                advanceVoiceTour('formatSelected');
+            // Advance to next step - use window reference for global function
+            if (typeof window.advanceVoiceTour === 'function') {
+                console.log('🎤 Calling window.advanceVoiceTour(formatSelected)');
+                window.advanceVoiceTour('formatSelected');
+            } else {
+                console.error('🎤 ERROR: window.advanceVoiceTour not found!');
             }
         }
     </script>
@@ -23893,8 +23897,10 @@
         window.endVoiceTour = endVoiceTour;
         window.toggleVoiceTour = toggleVoice;
         window.advanceTourOnAction = advanceVoiceTour;
+        window.advanceVoiceTour = advanceVoiceTour; // Used by confirmTourFormat
         window.closeVoiceTourExplore = closeVoiceTourExplore;
         window.onAudioFileLoaded = function() { advanceVoiceTour('fileUploaded'); };
+        window.onFormatSelected = function() { advanceVoiceTour('formatSelected'); };
         window.onMasteringComplete = function() { advanceVoiceTour('masteringComplete'); };
 
         // Auto-start for first-time users
