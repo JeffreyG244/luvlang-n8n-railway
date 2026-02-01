@@ -372,13 +372,31 @@ function createLinearPhaseToggle(containerId) {
     container.innerHTML = html;
 
     document.getElementById('linearPhaseEnabled')?.addEventListener('change', function() {
+        const enabled = this.checked;
+
+        // Try multiple ways to enable/disable linear phase
         if (window.advancedEngine?.linearPhaseEQ) {
-            window.advancedEngine.linearPhaseEQ.enableLinearPhase(this.checked);
+            if (typeof window.advancedEngine.linearPhaseEQ.enableLinearPhase === 'function') {
+                window.advancedEngine.linearPhaseEQ.enableLinearPhase(enabled);
+            } else if (typeof window.advancedEngine.linearPhaseEQ.setEnabled === 'function') {
+                window.advancedEngine.linearPhaseEQ.setEnabled(enabled);
+            } else {
+                // Set a property directly as fallback
+                window.advancedEngine.linearPhaseEQ.enabled = enabled;
+            }
         }
+
+        // Also update global linear phase EQ if it exists
+        if (window.linearPhaseEQ) {
+            window.linearPhaseEQ.enabled = enabled;
+        }
+
         showToast(
-            this.checked ? 'Linear Phase EQ Enabled' : 'Minimum Phase EQ',
-            this.checked ? 'Zero phase distortion mode' : 'Standard EQ mode'
+            enabled ? 'Linear Phase EQ Enabled' : 'Minimum Phase EQ',
+            enabled ? 'Zero phase distortion mode' : 'Standard EQ mode'
         );
+
+        console.log('🎚️ Linear Phase EQ:', enabled ? 'ENABLED' : 'DISABLED');
     });
 
     return container;
