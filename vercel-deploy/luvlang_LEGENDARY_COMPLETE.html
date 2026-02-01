@@ -3126,10 +3126,11 @@
 
         <!-- Progress Indicator -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 32px;">
-            <div id="tourProgress1" style="width: 48px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #00d4ff, #b84fff); box-shadow: 0 0 12px rgba(0, 212, 255, 0.5); transition: all 0.4s;"></div>
-            <div id="tourProgress2" style="width: 48px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress3" style="width: 48px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress4" style="width: 48px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
+            <div id="tourProgress1" style="width: 40px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #00d4ff, #b84fff); box-shadow: 0 0 12px rgba(0, 212, 255, 0.5); transition: all 0.4s;"></div>
+            <div id="tourProgress2" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
+            <div id="tourProgress3" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
+            <div id="tourProgress4" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
+            <div id="tourProgress5" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
         </div>
 
         <!-- Step Counter Badge -->
@@ -3145,7 +3146,7 @@
                 text-transform: uppercase;
                 letter-spacing: 3px;
                 font-weight: 700;
-            ">STEP 1 OF 4</span>
+            ">STEP 1 OF 5</span>
         </div>
 
         <!-- Main Title -->
@@ -5610,7 +5611,7 @@
             </div>
 
             <!-- EXPORT SECTION -->
-            <div class="export-section">
+            <div class="export-section" id="exportSection">
                 <div class="section-title">Export</div>
 
                 <div style="margin-bottom: 15px;">
@@ -22826,6 +22827,7 @@
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We got you covered with WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey, welcome to LuvLang! Let\'s get your music sounding amazing. Go ahead and drop your track onto that glowing area, or click to browse your files. We support all the formats you need - WAV, MP3, FLAC, you name it.' },
                     { title: 'Let\'s Master It', desc: 'Hit that MASTER button and watch the magic happen. 24 pro-grade processors working for your sound.', action: 'Hit the MASTER button', voice: 'Alright, your track is loaded and ready to go! Now hit that Master button up top. We\'ve got 24 professional processors that\'ll make your music shine. Let\'s hear what you\'ve got!' },
                     { title: 'Sounding Good!', desc: 'Your track just got the professional treatment. Take a listen - hear the difference?', action: '', voice: 'Nice work. Your track just ran through the full mastering chain - EQ, compression, limiting, all of it. Hit play and check out the difference. Then pick a genre on the left and dial in your sound with the presets.' },
+                    { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth. WAV for studio quality, MP3 for sharing, 24-bit for pros, 16-bit for CD.', action: 'Select format and bit depth', voice: 'Before you export, let me explain your options. For format, choose WAV for the highest studio quality, MP3 at 320 kilobits for easy sharing, or FLAC for lossless compression. For bit depth, 24-bit is professional grade with maximum detail, while 16-bit is perfect for CDs and most streaming. Pick what works best for your needs!' },
                     { title: 'Make It Yours', desc: 'Dial in your perfect sound with genre presets, EQ tweaks, and more. This is where you shine.', action: '', voice: 'Alright, here\'s where you can really make it your own. Pick your genre - whether you\'re into Hip-Hop, Rock, Pop, EDM, Jazz, Country, or anything else. Then fine-tune with our presets or go manual with the EQ. Your music, your sound!' }
                 ],
                 explore: { title: "You're All Set!", subtitle: 'Your track sounds great. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
@@ -22836,6 +22838,7 @@
                     { title: 'Sube Tu Pista', desc: 'Arrastra tu archivo de audio al área resaltada o haz clic para buscar.', action: 'Haz clic en el área de carga brillante', voice: 'Bienvenido a LuvLang Mastering Profesional. Primero, sube tu pista de audio haciendo clic en el área de carga o arrastrando un archivo. Soportamos WAV, MP3, FLAC y muchos más formatos.' },
                     { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER para procesar tu audio con 24 procesadores profesionales.', action: 'Haz clic en el botón MASTER', voice: 'Excelente. Tu pista está cargada. Ahora haz clic en el botón Master brillante en la parte superior. Esto procesará tu audio con 24 procesadores de masterización profesionales.' },
                     { title: 'Masterización Completa', desc: 'Tu pista está masterizada profesionalmente. ¡Escucha la diferencia!', action: '', voice: 'Extraordinario. Tu pista ahora está masterizada profesionalmente. Escucha la diferencia. Ahora puedes personalizar tu sonido.' },
+                    { title: 'Elige Tu Formato', desc: 'Selecciona formato y profundidad de bits. WAV para calidad estudio, MP3 para compartir.', action: 'Selecciona formato y profundidad', voice: 'Antes de exportar, déjame explicar las opciones. Para formato, elige WAV para la mejor calidad de estudio, MP3 a 320 kilobits para compartir fácilmente, o FLAC para compresión sin pérdida. Para profundidad de bits, 24 bits es calidad profesional con máximo detalle, mientras que 16 bits es perfecto para CDs y streaming.' },
                     { title: 'Explora y Personaliza', desc: 'Afina tu master usando selección de género, presets y controles de EQ manual.', action: '', voice: 'Ahora tienes tres herramientas poderosas. Primero, Selección de Género para estilos como Hip-Hop, Pop, Rock. Segundo, Presets de Género con curvas EQ afinadas. Tercero, EQ Manual para control preciso de 7 bandas. ¡Encuentra tu sonido perfecto!' }
                 ],
                 explore: { title: '¡Estás Listo para Crear!', subtitle: 'Tu pista está masterizada. Personaliza con estas herramientas:', genre: 'Selección de Género', genreDesc: 'Hip-Hop, Pop, Rock, EDM y más', presets: 'Presets de Género', presetsDesc: 'Curvas EQ profesionales', eq: 'EQ Manual', eqDesc: 'Control paramétrico de 7 bandas', btn: 'Empezar a Explorar', tip: 'Haz clic en ? para escuchar esta guía de nuevo' },
@@ -22910,6 +22913,7 @@
             { id: 'upload', target: '#uploadArea', waitFor: 'fileUploaded', position: 'right' },
             { id: 'master', target: '#aiMasterBtnFloating', waitFor: 'masteringComplete', position: 'bottom' },
             { id: 'complete', target: '#genreSection', waitFor: null, position: 'right', showNext: true },
+            { id: 'export', target: '#exportSection', waitFor: null, position: 'left', showNext: true },
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
@@ -23119,7 +23123,7 @@
             }
 
             // Update progress bar
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= 5; i++) {
                 const dot = document.getElementById('tourProgress' + i);
                 if (dot) {
                     if (i <= stepIndex + 1) {
