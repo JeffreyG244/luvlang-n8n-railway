@@ -11484,21 +11484,35 @@
         // Target: -14 LUFS (Spotify/YouTube) or -16 LUFS (Apple/Podcast)
         function applyEQGainCompensation(eqPreset) {
             const ac = window.audioContext;
-            if (!ac || !window.makeupGain || window.originalMakeupGainValue === undefined) {
-                console.log('⚠️ EQ Compensation skipped - missing prerequisites');
+            if (!ac || !window.makeupGain) {
+                console.log('⚠️ EQ Compensation skipped - no audio context or makeup gain');
                 return;
             }
 
+            // Get the base makeup gain value (use stored value or current value)
+            let baseMakeupGain = window.originalMakeupGainValue;
+            if (baseMakeupGain === undefined || baseMakeupGain === null) {
+                // Fallback: calculate from stored dB value or use current
+                if (window.appliedMakeupGainDB !== undefined) {
+                    baseMakeupGain = Math.pow(10, window.appliedMakeupGainDB / 20);
+                } else {
+                    baseMakeupGain = window.makeupGain.gain.value || 1.0;
+                }
+                // Store it for next time
+                window.originalMakeupGainValue = baseMakeupGain;
+            }
+
             // K-weighting factors: how much each band contributes to LUFS
-            // Based on ITU-R BS.1770 K-weighting curve (calibrated for accuracy)
+            // CALIBRATED values based on ITU-R BS.1770 K-weighting curve
+            // These are empirically tuned for accurate LUFS compensation
             const kWeights = {
-                sub: 0.15,    // 45Hz - minimal LUFS impact (K-weighting rolls off below 100Hz)
-                bass: 0.4,    // 100Hz - low LUFS impact
-                lowmid: 0.7,  // 400Hz - moderate LUFS impact
-                mid: 1.0,     // 1kHz - full LUFS impact (K-weighting center)
-                highmid: 1.1, // 3.5kHz - high LUFS impact (+4dB K-weighting boost)
-                high: 0.9,    // 8kHz - moderate-high LUFS impact
-                air: 0.6      // 12kHz - moderate LUFS impact (rolls off above 10kHz)
+                sub: 0.08,    // 45Hz - very low LUFS impact (K-weighting -20dB at 50Hz)
+                bass: 0.25,   // 100Hz - low LUFS impact (K-weighting -6dB at 100Hz)
+                lowmid: 0.6,  // 400Hz - moderate LUFS impact
+                mid: 1.0,     // 1kHz - full LUFS impact (reference frequency)
+                highmid: 1.2, // 3.5kHz - high LUFS impact (+4dB K-weighting shelf)
+                high: 1.0,    // 8kHz - full LUFS impact (still in shelf region)
+                air: 0.7      // 12kHz - moderate LUFS impact (starts rolling off)
             };
 
             const eqValues = {
@@ -11511,7 +11525,7 @@
                 air: eqPreset.air || 0
             };
 
-            // Calculate K-weighted total boost (only positive values contribute to loudness increase)
+            // Calculate K-weighted total boost
             let kWeightedBoost = 0;
             for (const band in eqValues) {
                 if (eqValues[band] > 0) {
@@ -11519,7 +11533,7 @@
                 }
             }
 
-            // Also consider cuts (they reduce loudness, so we need less compensation)
+            // Calculate K-weighted total cut
             let kWeightedCut = 0;
             for (const band in eqValues) {
                 if (eqValues[band] < 0) {
@@ -11527,15 +11541,16 @@
                 }
             }
 
-            // Net effect: boosts increase loudness, cuts decrease it
-            const netBoost = kWeightedBoost - (kWeightedCut * 0.5); // Cuts have 50% effect on perceived loudness
+            // Net boost after accounting for cuts (cuts reduce loudness slightly)
+            const netBoost = kWeightedBoost - (kWeightedCut * 0.3);
 
-            // Compensation: reduce gain to maintain target LUFS
-            // Full 1:1 compensation for accurate LUFS targeting
-            const compensationDB = Math.max(0, Math.min(netBoost, 10)); // Cap at 10dB, no negative compensation
+            // Apply 1:1 compensation - reduce gain by the amount of boost
+            const compensationDB = Math.max(0, Math.min(netBoost, 12)); // Cap at 12dB
             const compensationLinear = Math.pow(10, -compensationDB / 20);
-            const compensatedGain = window.originalMakeupGainValue * compensationLinear;
+            const compensatedGain = baseMakeupGain * compensationLinear;
 
+            // Apply the compensated gain smoothly
+            window.makeupGain.gain.cancelScheduledValues(ac.currentTime);
             window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
 
             // Get current target for logging
@@ -11543,9 +11558,9 @@
             const targetLUFS = (platform === 'apple' || platform === 'podcast') ? -16 : -14;
 
             console.log(`🎚️ EQ Compensation for ${targetLUFS} LUFS target:`);
-            console.log(`   K-weighted boost: +${kWeightedBoost.toFixed(1)}dB | Cuts: -${kWeightedCut.toFixed(1)}dB | Net: +${netBoost.toFixed(1)}dB`);
-            console.log(`   Compensation: -${compensationDB.toFixed(1)}dB`);
-            console.log(`   Original gain: ${(20*Math.log10(window.originalMakeupGainValue)).toFixed(1)}dB → New gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
+            console.log(`   EQ: Sub ${eqValues.sub.toFixed(1)}, Bass ${eqValues.bass.toFixed(1)}, Mid ${eqValues.mid.toFixed(1)}, High ${eqValues.high.toFixed(1)}, Air ${eqValues.air.toFixed(1)}`);
+            console.log(`   K-weighted: Boost +${kWeightedBoost.toFixed(1)}dB, Cut -${kWeightedCut.toFixed(1)}dB, Net +${netBoost.toFixed(1)}dB`);
+            console.log(`   Compensation: -${compensationDB.toFixed(1)}dB → Gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
         }
 
         /**
