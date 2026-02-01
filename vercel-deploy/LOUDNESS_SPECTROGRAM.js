@@ -600,7 +600,7 @@
 
         // Check for existing analyzer
         const checkInterval = setInterval(() => {
-            const analyser = window.analyserNode || window.outputAnalyser;
+            const analyser = window.analyser || window.analyserNode || window.outputAnalyser;
             if (analyser) {
                 clearInterval(checkInterval);
                 startRealTimeAnalysis(analyser);
@@ -630,9 +630,18 @@
 
                 // Update loudness history every 30 frames (~0.5s at 60fps)
                 if (frameCount % 30 === 0) {
-                    // Get LUFS from global meters if available
-                    const shortTerm = window.currentShortTermLUFS ?? estimateLUFS(frequencyData);
-                    const integrated = window.currentIntegratedLUFS ?? shortTerm * 0.98;
+                    // Get LUFS from global meters - using window.dynamicRangeMetering
+                    let shortTerm, integrated;
+
+                    if (window.dynamicRangeMetering) {
+                        shortTerm = window.dynamicRangeMetering.shortTermLUFS;
+                        integrated = window.dynamicRangeMetering.integratedLUFS;
+                    } else {
+                        // Fallback to other global variables or estimation
+                        shortTerm = window.shortTermLUFS ?? window.currentShortTermLUFS ?? estimateLUFS(frequencyData);
+                        integrated = window.integratedLUFS ?? window.currentIntegratedLUFS ?? shortTerm * 0.98;
+                    }
+
                     window.updateLoudnessHistory(shortTerm, integrated);
                 }
 
