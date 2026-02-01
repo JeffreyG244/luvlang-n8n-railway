@@ -20430,7 +20430,13 @@
 
                 // Get input LUFS from stored measurement (measured when file was loaded)
                 const currentLUFS = window.originalInputLUFS || integratedLUFS || -18;
-                console.log('📊 Input LUFS for gain calc:', currentLUFS);
+                console.log('═══════════════════════════════════════════════════════════════');
+                console.log('🔍 LUFS TARGETING DEBUG:');
+                console.log('   window.originalInputLUFS:', window.originalInputLUFS);
+                console.log('   integratedLUFS variable:', typeof integratedLUFS !== 'undefined' ? integratedLUFS : 'undefined');
+                console.log('   Using currentLUFS:', currentLUFS);
+                console.log('   targetLUFS:', targetLUFS);
+                console.log('═══════════════════════════════════════════════════════════════');
 
                 // Get platform target (use already-declared targetLUFS from line 15874)
                 // Note: 'platform' was already declared at line 15873, so we reuse targetLUFS
@@ -20447,8 +20453,8 @@
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
                 // Fixed chain compensation ensures stable LUFS across all presets
                 // ════════════════════════════════════════════════════════════════════════════
-                const chainCompensationDB = 4.0; // Compensation for compression + processing losses (3-5 dB typical)
-                const safetyMarginDB = 0.3;      // Small safety margin - let limiter do its job
+                const chainCompensationDB = 0.0; // No extra compensation - let the algorithm work cleanly
+                const safetyMarginDB = 0.0;      // Target exactly -14 LUFS
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 console.log(`📊 LUFS targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS (stable across all intensities)`);
@@ -20491,9 +20497,17 @@
                 const mkGain = window.makeupGain || makeupGain;
                 if (mkGain && ac) {
                     mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
+
+                    // CRITICAL: Store original makeup gain value for EQ preset compensation
+                    // This allows the EQ compensation system to maintain consistent LUFS
+                    window.originalMakeupGainValue = newGainLinear;
+                    window.appliedMakeupGainLinear = newGainLinear;
+                    window.appliedMakeupGainDB = clampedGainDB;
+
                     console.log(`🎯 LUFS Targeting: ${currentLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
                     console.log(`   Makeup gain: ${clampedGainDB >= 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB${peakProtectionApplied ? ' (peak-limited)' : ''}`);
                     console.log(`   Final peak estimate: ${(originalPeakDB + clampedGainDB).toFixed(1)} dBTP (safe < -1.0 dBTP)`);
+                    console.log(`   ✅ Stored originalMakeupGainValue = ${newGainLinear.toFixed(4)} for EQ compensation`);
                 }
 
                 // Store for LUFS preset switching and debugging
