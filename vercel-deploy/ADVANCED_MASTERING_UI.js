@@ -403,7 +403,131 @@ function createLinearPhaseToggle(containerId) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 8. TOAST NOTIFICATIONS
+// 8. LOUDNESS HISTORY UI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function createLoudnessHistoryUI(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    const html = `
+        <div class="loudness-history-panel">
+            <div class="panel-header">
+                <span class="panel-title">LOUDNESS HISTORY</span>
+                <span class="panel-badge">ITU-R BS.1770-5</span>
+                <button class="reset-btn" onclick="resetLoudnessHistory()">Reset</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
+                <div style="text-align: center; padding: 8px; background: rgba(0,212,255,0.05); border-radius: 6px;">
+                    <div style="font-size: 0.5rem; color: rgba(0,212,255,0.6);">Short-term</div>
+                    <div id="historyShortLufs" style="font-size: 1rem; font-weight: 700; color: #00d4ff;">--.- LUFS</div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: rgba(184,79,255,0.05); border-radius: 6px;">
+                    <div style="font-size: 0.5rem; color: rgba(184,79,255,0.6);">Integrated</div>
+                    <div id="historyIntLufs" style="font-size: 1rem; font-weight: 700; color: #b84fff;">--.- LUFS</div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: rgba(255,215,0,0.05); border-radius: 6px;">
+                    <div style="font-size: 0.5rem; color: rgba(255,215,0,0.6);">Target</div>
+                    <div id="historyTargetLufs" style="font-size: 1rem; font-weight: 700; color: #ffd700;">-14.0 LUFS</div>
+                </div>
+            </div>
+            <canvas id="loudnessHistoryCanvas" width="600" height="120"></canvas>
+            <div class="loudness-legend">
+                <div class="legend-item"><span class="legend-color short"></span>Short-term (3s)</div>
+                <div class="legend-item"><span class="legend-color int"></span>Integrated</div>
+                <div class="legend-item"><span class="legend-color target"></span>Target</div>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Initialize canvas
+    const canvas = document.getElementById('loudnessHistoryCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw initial grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        // Horizontal lines for dB levels
+        const levels = [0, -14, -30, -60];
+        levels.forEach(db => {
+            const y = canvas.height * (1 - (db + 60) / 60);
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+            // Labels
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '9px monospace';
+            ctx.fillText(db.toString(), 4, y - 2);
+        });
+    }
+
+    // Store history data
+    window.loudnessHistory = {
+        shortTerm: [],
+        integrated: [],
+        maxSamples: 300
+    };
+
+    return container;
+}
+
+window.resetLoudnessHistory = function() {
+    window.loudnessHistory = { shortTerm: [], integrated: [], maxSamples: 300 };
+    const canvas = document.getElementById('loudnessHistoryCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    console.log('📊 Loudness history reset');
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 9. SPECTROGRAM UI
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function createSpectrogramUI(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    const html = `
+        <div class="spectrogram-panel">
+            <div class="panel-header">
+                <span class="panel-title">SPECTROGRAM</span>
+                <span class="panel-badge">Time × Frequency</span>
+            </div>
+            <canvas id="spectrogramCanvas" width="800" height="200"></canvas>
+            <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.45rem; color: rgba(255,255,255,0.4);">
+                <span>20 Hz</span>
+                <span>100 Hz</span>
+                <span>1 kHz</span>
+                <span>10 kHz</span>
+                <span>20 kHz</span>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+
+    // Initialize canvas with dark background
+    const canvas = document.getElementById('spectrogramCanvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0a0a0f';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    return container;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 10. TOAST NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function showToast(title, message, duration = 3000) {
@@ -815,7 +939,8 @@ window.createLimiterModeUI = createLimiterModeUI;
 window.createSoftClipperUI = createSoftClipperUI;
 window.createUpwardCompressorUI = createUpwardCompressorUI;
 window.createUnlimiterUI = createUnlimiterUI;
-// createLoudnessHistoryUI and createSpectrogramUI are handled above with checks
+window.createLoudnessHistoryUI = createLoudnessHistoryUI;
+window.createSpectrogramUI = createSpectrogramUI;
 window.createLinearPhaseToggle = createLinearPhaseToggle;
 if (typeof window.showToast !== 'function') {
     window.showToast = showToast;
