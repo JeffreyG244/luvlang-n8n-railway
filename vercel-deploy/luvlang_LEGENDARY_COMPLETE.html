@@ -16724,9 +16724,11 @@
 
                     // 🏆 PLATFORM LUFS TARGETING
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
+                    console.log('🔍 DEBUG: window.masteringComplete =', window.masteringComplete, '| typeof =', typeof window.masteringComplete);
 
                     // Check if mastering has already been completed
                     const masteringComplete = window.masteringComplete === true;
+                    console.log('🔍 DEBUG: masteringComplete check result =', masteringComplete);
 
                     if (masteringComplete) {
                         // AFTER MASTERING: Don't change ANYTHING - no limiter, no gain
