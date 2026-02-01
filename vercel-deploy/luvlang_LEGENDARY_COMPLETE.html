@@ -16959,71 +16959,28 @@
                     const masteringComplete = window.masteringComplete === true;
                     console.log('🔍 Platform change - masteringComplete:', masteringComplete);
 
-                    if (masteringComplete && window.originalInputLUFS !== undefined) {
+                    if (masteringComplete) {
                         // ═══════════════════════════════════════════════════════════════════════
-                        // STATE OF THE ART LUFS RETARGETING
-                        // Automatically adjust makeup gain to hit new target without full re-master
+                        // LUFS LOCKED AFTER MASTERING
+                        // User must click RESET to re-master at a different LUFS target
+                        // This ensures consistent, professional results
                         // ═══════════════════════════════════════════════════════════════════════
-                        console.log('🎯 AUTO LUFS RETARGETING: Adjusting to', targetLUFS, 'LUFS');
+                        console.log('🔒 LUFS LOCKED - Mastering complete, user must RESET to change target');
 
-                        const inputLUFS = window.originalInputLUFS;
-                        const ac = window.audioContext;
-                        const mkGain = window.makeupGain;
+                        // Revert the button selection to the current target
+                        this.classList.remove('active');
+                        const currentTarget = window.autoLUFSTargetLevel || -14;
+                        const currentPlatformMap = { '-14': 'streaming', '-16': 'apple' };
+                        const currentPlatformId = currentTarget === -16 ? 'apple' : 'streaming';
+                        const currentBtn = document.querySelector(`.selector-btn[data-platform="${currentPlatformId}"]`);
+                        if (currentBtn) currentBtn.classList.add('active');
 
-                        if (mkGain && ac) {
-                            // Calculate new gain to hit the target
-                            const gainNeededDB = targetLUFS - inputLUFS;
-
-                            // Apply peak protection
-                            const originalPeakDB = window.originalInputPeakDB || -3;
-                            const peakTargetBeforeLimiter = 3.0; // Allow 4dB of limiting
-                            const maxSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
-
-                            let finalGainDB = gainNeededDB;
-                            if (gainNeededDB > maxSafeGainDB) {
-                                finalGainDB = maxSafeGainDB;
-                                console.log(`   ⚠️ Peak protection: limited to +${maxSafeGainDB.toFixed(1)}dB`);
-                            }
-
-                            // Clamp to safe range
-                            finalGainDB = Math.max(-10, Math.min(12, finalGainDB));
-                            const newGainLinear = Math.pow(10, finalGainDB / 20);
-
-                            // Apply the new makeup gain
-                            mkGain.gain.cancelScheduledValues(ac.currentTime);
-                            mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.15);
-
-                            // Update stored values
-                            window.originalMakeupGainValue = newGainLinear;
-                            window.appliedMakeupGainLinear = newGainLinear;
-                            window.appliedMakeupGainDB = finalGainDB;
-                            window.autoLUFSGainApplied = finalGainDB;
-                            window.autoLUFSTargetLevel = targetLUFS;
-
-                            console.log(`   Input: ${inputLUFS.toFixed(1)} LUFS → Target: ${targetLUFS} LUFS`);
-                            console.log(`   New makeup gain: ${finalGainDB >= 0 ? '+' : ''}${finalGainDB.toFixed(1)} dB`);
-
-                            // Show success toast
-                            if (typeof showToast === 'function') {
-                                showToast(`${platformName}: ${targetLUFS} LUFS ✓`, 'success');
-                            }
-
-                            // Re-apply EQ compensation with the new base gain
-                            const currentEQ = {
-                                sub: window.eqSubFilter ? window.eqSubFilter.gain.value : 0,
-                                bass: window.eqBassFilter ? window.eqBassFilter.gain.value : 0,
-                                lowmid: window.eqLowMidFilter ? window.eqLowMidFilter.gain.value : 0,
-                                mid: window.eqMidFilter ? window.eqMidFilter.gain.value : 0,
-                                highmid: window.eqHighMidFilter ? window.eqHighMidFilter.gain.value : 0,
-                                high: window.eqHighFilter ? window.eqHighFilter.gain.value : 0,
-                                air: window.eqAirFilter ? window.eqAirFilter.gain.value : 0
-                            };
-                            if (typeof applyEQGainCompensation === 'function') {
-                                setTimeout(() => applyEQGainCompensation(currentEQ), 200);
-                            }
+                        // Show toast explaining what to do
+                        if (typeof showToast === 'function') {
+                            showToast(`Click RESET to master at ${targetLUFS} LUFS`, 'warning');
                         }
 
-                        return; // Platform LUFS adjusted successfully
+                        return; // Don't change anything - LUFS is locked after mastering
                     }
 
                     // BEFORE MASTERING: Configure limiter and apply LUFS targeting
