@@ -16983,13 +16983,15 @@
                         return; // Don't change anything - LUFS is locked after mastering
                     }
 
-                    // BEFORE MASTERING: Configure limiter and apply LUFS targeting
+                    // BEFORE MASTERING: Configure limiter and apply LUFS targeting in real-time
                     setPlatformTarget(platform);
                     const mu = window.makeupGain || makeupGain;
                     const ac = window.audioContext || audioContext;
 
-                    if (mu && ac && window.autoLUFSInputLevel !== undefined) {
-                        const inputLUFS = window.autoLUFSInputLevel;
+                    // Use originalInputLUFS (set when file loads) or autoLUFSInputLevel (set after mastering)
+                    const inputLUFS = window.originalInputLUFS || window.autoLUFSInputLevel;
+
+                    if (mu && ac && inputLUFS !== undefined && inputLUFS !== null) {
 
                         // Direct LUFS targeting - no compensation needed
                         // The mastering chain and limiter handle everything
