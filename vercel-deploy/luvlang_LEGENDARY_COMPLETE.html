@@ -3528,18 +3528,7 @@
             color: rgba(255,255,255,0.5);
         }
 
-        /* Processing Animation */
-        @keyframes processingPulse {
-            0%, 100% {
-                box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
-                border-color: rgba(0, 212, 255, 0.5);
-            }
-            50% {
-                box-shadow: 0 0 60px rgba(184, 79, 255, 0.4);
-                border-color: rgba(184, 79, 255, 0.6);
-            }
-        }
-
+        /* Processing Animation - uses keyframes from line 326 */
         .processing-active {
             animation: processingPulse 2s ease-in-out infinite;
         }
@@ -4256,7 +4245,7 @@
         <!-- LEFT: Logo + Upload -->
         <div class="transport-left">
             <div class="transport-logo">LuvLang</div>
-            <button class="transport-upload-btn" id="transportUploadBtn" title="Upload Audio" onclick="document.getElementById('audioFile')?.click()">
+            <button class="transport-upload-btn" id="transportUploadBtn" title="Upload Audio" onclick="document.getElementById('audioFileInput')?.click()">
                 📁
             </button>
             <!-- Quick selector dropdown -->
@@ -18850,7 +18839,8 @@
         }
 
         // File input change handler
-        document.getElementById('referenceFileInput').addEventListener('change', async (e) => {
+        const refFileInput = document.getElementById('referenceFileInput2');
+        if (refFileInput) refFileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) processReferenceFile(file);
         });
@@ -24596,6 +24586,20 @@
                     lufsEl.textContent = window.lastMasteredLUFS.toFixed(1) + ' LUFS';
                 }
             }
+        };
+
+        // Pricing modal stub - free version
+        window.openPricingModal = function() {
+            if (typeof showToast === 'function') {
+                showToast('LuvLang is free to use! Download your mastered track below.', 'success');
+            }
+            console.log('💰 Pricing modal requested - LuvLang is free!');
+        };
+
+        // Auth stub - not implemented
+        window.signIn = async function(email, password) {
+            console.log('🔐 Sign in not implemented - app is free to use');
+            return { error: null, user: { email: email } };
         };
 
         console.log('✅ Mastering Complete overlay system loaded');
