@@ -11502,17 +11502,18 @@
                 window.originalMakeupGainValue = baseMakeupGain;
             }
 
-            // K-weighting factors: how much each band contributes to LUFS
-            // CALIBRATED values based on ITU-R BS.1770 K-weighting curve
-            // These are empirically tuned for accurate LUFS compensation
+            // K-weighting factors: how much each NARROW EQ BAND contributes to LUFS
+            // IMPORTANT: These are for narrow parametric EQ bands (~1/3 octave), NOT broadband
+            // Narrow bands have MUCH less LUFS impact than the full K-weighting curve suggests
+            // Values empirically calibrated to maintain -14 LUFS across all presets
             const kWeights = {
-                sub: 0.08,    // 45Hz - very low LUFS impact (K-weighting -20dB at 50Hz)
-                bass: 0.25,   // 100Hz - low LUFS impact (K-weighting -6dB at 100Hz)
-                lowmid: 0.6,  // 400Hz - moderate LUFS impact
-                mid: 1.0,     // 1kHz - full LUFS impact (reference frequency)
-                highmid: 1.2, // 3.5kHz - high LUFS impact (+4dB K-weighting shelf)
-                high: 1.0,    // 8kHz - full LUFS impact (still in shelf region)
-                air: 0.7      // 12kHz - moderate LUFS impact (starts rolling off)
+                sub: 0.02,    // 45Hz - almost no LUFS impact (K-weighting -20dB + narrow)
+                bass: 0.06,   // 100Hz - minimal LUFS impact (K-weighting -6dB + narrow)
+                lowmid: 0.12, // 400Hz - low LUFS impact
+                mid: 0.20,    // 1kHz - moderate LUFS impact (reference but narrow)
+                highmid: 0.25,// 3.5kHz - moderate LUFS impact (K-boost but narrow)
+                high: 0.20,   // 8kHz - moderate LUFS impact
+                air: 0.12     // 12kHz - low LUFS impact (rolls off + narrow)
             };
 
             const eqValues = {
