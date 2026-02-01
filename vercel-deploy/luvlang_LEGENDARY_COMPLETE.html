@@ -46,8 +46,9 @@
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .app-container {
             display: grid;
-            grid-template-columns: 260px 1fr 280px;
-            height: 100vh;
+            grid-template-columns: 240px 1fr 260px;
+            height: calc(100vh - 70px);
+            margin-top: 70px;
             overflow: hidden;
             gap: 1px;
             background: #1a1a24;
@@ -101,37 +102,157 @@
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           🚀 2027 FUTURISTIC UI - FLOATING AI COMMAND BAR
+           🚀 DAW-STYLE TRANSPORT BAR - Full Width Professional Design
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .ai-command-bar {
             position: fixed;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000; /* Below modals (50000), above content */
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            z-index: 1000;
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 40, 0.98));
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 50px;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: linear-gradient(180deg, rgba(15, 15, 25, 0.98) 0%, rgba(10, 10, 18, 0.99) 100%);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
             backdrop-filter: blur(20px);
             box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.6),
-                0 0 60px rgba(0, 212, 255, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                0 4px 30px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(0, 212, 255, 0.08),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.5);
         }
 
         .ai-command-bar::before {
             content: '';
             position: absolute;
-            inset: -2px;
-            border-radius: 52px;
-            background: linear-gradient(135deg, #00d4ff, #b84fff, #00d4ff);
-            z-index: -1;
-            opacity: 0.5;
-            animation: borderGlow 3s ease-in-out infinite;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), rgba(184, 79, 255, 0.4), transparent);
+            z-index: 1;
+        }
+
+        /* Transport Bar Sections */
+        .transport-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 0 0 auto;
+        }
+
+        .transport-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .transport-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 0 0 auto;
+        }
+
+        /* Compact Logo in Transport Bar */
+        .transport-logo {
+            font-size: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        /* Upload Icon Button */
+        .transport-upload-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            color: #00d4ff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .transport-upload-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.1));
+            border-color: rgba(0, 212, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* Transport LUFS Display */
+        .transport-lufs-display {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transport-lufs-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .transport-lufs-label {
+            font-size: 0.5rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .transport-lufs-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        .transport-lufs-value.integrated {
+            color: #00d4ff;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+        }
+
+        /* True Peak Compact Display */
+        .transport-peak-display {
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .transport-peak-label {
+            font-size: 0.5rem;
+            color: rgba(255, 152, 0, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .transport-peak-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00ff88;
         }
 
         @keyframes borderGlow {
@@ -601,7 +722,7 @@
 
         .spectrum-panel canvas#spectrumCanvas {
             width: 100%;
-            height: 400px;
+            height: 480px;  /* ENLARGED - Hero element */
             background: linear-gradient(180deg,
                 rgba(0, 0, 0, 1) 0%,
                 rgba(5, 5, 12, 1) 30%,
@@ -620,7 +741,7 @@
             top: 42px;
             left: 0;
             width: 100%;
-            height: 400px;
+            height: 480px;  /* ENLARGED - Match main canvas */
             pointer-events: none;
             background: transparent;
             z-index: 100;
@@ -684,6 +805,64 @@
 
         .waveform-panel-viz canvas:active {
             transform: scale(0.998);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           SECONDARY VISUALS ROW - Waveform + Stereo Meters in horizontal layout
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .secondary-visuals-row {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .secondary-visuals-row .viz-panel {
+            margin-bottom: 0;
+        }
+
+        .secondary-visuals-row .waveform-panel-secondary {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .secondary-visuals-row .waveform-panel-secondary #waveformContainer {
+            flex: 1;
+            min-height: 140px;
+        }
+
+        .secondary-visuals-row .meters-panel-viz {
+            height: auto !important;
+        }
+
+        .secondary-visuals-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .secondary-visuals-toggle:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .secondary-visuals-toggle .toggle-icon {
+            font-size: 0.6rem;
+            transition: transform 0.3s ease;
+        }
+
+        .secondary-visuals-toggle .toggle-label {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* OLD CLASSES - Keep for compatibility */
@@ -984,14 +1163,20 @@
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL 7-BAND EQ WITH VERTICAL DRAGGABLE FADERS
+           STICKY BOTTOM STRIP - Always accessible
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .eq-section {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
-            border-radius: 15px;
-            padding: 18px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            background: linear-gradient(180deg, rgba(10, 10, 20, 0.98) 0%, rgba(5, 5, 12, 0.99) 100%);
+            border-radius: 15px 15px 0 0;
+            padding: 16px 24px 20px;
+            margin-bottom: 0;
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            border-bottom: none;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            position: sticky;
+            bottom: 0;
+            z-index: 50;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 212, 255, 0.08);
         }
 
         /* Highlight effect when preset is applied */
@@ -1126,59 +1311,61 @@
         .eq-faders {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 12px;
+            gap: 20px;  /* MORE SPACING between faders */
             align-items: end;
-            padding: 15px 8px;
-            background: linear-gradient(180deg, #0d0d0d 0%, #1a1a1a 50%, #141414 100%);
+            padding: 12px 16px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(10, 10, 20, 0.6) 100%);
             border-radius: 10px;
-            min-height: 280px;
+            min-height: 240px;  /* Slightly reduced for bottom strip */
         }
 
         .eq-fader-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .eq-fader-label {
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.8rem;  /* LARGER - More readable */
+            font-weight: 700;
             text-align: center;
             color: #00d4ff;
             min-height: 28px;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
         }
 
         .eq-fader-track {
             position: relative;
-            width: 32px;
-            height: 180px;
+            width: 44px;  /* LARGER - Easier to grab */
+            height: 160px;  /* Slightly shorter for bottom strip */
             background: linear-gradient(180deg,
-                rgba(0, 212, 255, 0.1) 0%,
-                rgba(255, 255, 255, 0.05) 50%,
-                rgba(184, 79, 255, 0.1) 100%
+                rgba(0, 212, 255, 0.12) 0%,
+                rgba(255, 255, 255, 0.06) 50%,
+                rgba(184, 79, 255, 0.12) 100%
             );
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
         }
 
         .eq-fader-thumb {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 20px;
+            width: 52px;  /* LARGER - Easier to grab */
+            height: 24px;  /* LARGER */
             background: linear-gradient(135deg, #00d4ff, #0088cc);
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: grab;
             /* Smooth animation for preset changes */
             transition: top 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.15s ease;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.5);
         }
 
         .eq-fader-thumb:hover {
@@ -1241,11 +1428,12 @@
 
         .eq-fader-value {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #00d4ff;
+            font-size: 0.85rem;  /* LARGER - More readable */
+            font-weight: 800;
+            color: #fff;
             text-align: center;
-            min-width: 55px;
+            min-width: 60px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.9), 0 0 20px rgba(0, 212, 255, 0.5);
         }
 
         .eq-fader-center {
@@ -1254,14 +1442,18 @@
             right: 0;
             top: 50%;
             height: 2px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             pointer-events: none;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
         }
 
         .eq-fader-freq {
-            font-size: 0.65rem;
-            opacity: 0.6;
+            font-size: 0.75rem;  /* LARGER - More readable */
+            opacity: 1;
+            color: #00d4ff;
+            text-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
             text-align: center;
+            font-weight: 600;
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1279,6 +1471,229 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           PREMIUM PROCESSING PANELS - IRC Limiter, Soft Clipper, etc.
+           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .limiter-mode-panel,
+        .soft-clipper-panel,
+        .upward-comp-panel,
+        .unlimiter-panel,
+        .linear-phase-panel {
+            background: linear-gradient(135deg, rgba(10, 10, 20, 0.95), rgba(20, 20, 40, 0.9));
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+
+        .limiter-mode-panel .panel-header,
+        .soft-clipper-panel .panel-header,
+        .upward-comp-panel .panel-header,
+        .unlimiter-panel .panel-header,
+        .linear-phase-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.08), transparent 50%, rgba(184, 79, 255, 0.08));
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .limiter-mode-panel .panel-title,
+        .soft-clipper-panel .panel-title,
+        .upward-comp-panel .panel-title,
+        .unlimiter-panel .panel-title,
+        .linear-phase-panel .panel-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .limiter-mode-panel .panel-badge,
+        .soft-clipper-panel .panel-badge {
+            font-size: 0.55rem;
+            padding: 3px 8px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(184, 79, 255, 0.2));
+            border-radius: 4px;
+            color: #00d4ff;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Limiter Mode Grid */
+        .limiter-mode-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 12px 16px;
+        }
+
+        .limiter-mode-btn {
+            padding: 10px 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .limiter-mode-btn:hover {
+            border-color: rgba(0, 212, 255, 0.5);
+            background: rgba(0, 212, 255, 0.1);
+            color: #fff;
+        }
+
+        .limiter-mode-btn.active {
+            border-color: #00d4ff;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1));
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3), inset 0 0 10px rgba(0, 212, 255, 0.1);
+        }
+
+        .limiter-mode-btn .mode-label {
+            display: block;
+        }
+
+        /* Limiter Controls */
+        .limiter-controls,
+        .soft-clipper-controls,
+        .upward-comp-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .limiter-control,
+        .soft-clipper-control,
+        .upward-comp-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .limiter-control label,
+        .soft-clipper-control label,
+        .upward-comp-control label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .limiter-control input[type="range"],
+        .soft-clipper-control input[type="range"],
+        .upward-comp-control input[type="range"] {
+            width: 100%;
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .limiter-control input[type="range"]::-webkit-slider-thumb,
+        .soft-clipper-control input[type="range"]::-webkit-slider-thumb,
+        .upward-comp-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+        }
+
+        .limiter-control span,
+        .soft-clipper-control span,
+        .upward-comp-control span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+        }
+
+        /* Soft Clipper specific */
+        .soft-clipper-panel {
+            border-color: rgba(255, 152, 0, 0.2);
+        }
+
+        .soft-clipper-panel .panel-badge {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 87, 34, 0.2));
+            color: #ff9800;
+        }
+
+        .soft-clipper-control input[type="range"]::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+        }
+
+        .soft-clipper-control span {
+            text-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
+        }
+
+        /* Upward Compressor specific */
+        .upward-comp-panel {
+            border-color: rgba(0, 255, 136, 0.2);
+        }
+
+        .upward-comp-control input[type="range"]::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        }
+
+        .upward-comp-control span {
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+
+        /* Unlimiter specific */
+        .unlimiter-panel {
+            border-color: rgba(184, 79, 255, 0.2);
+        }
+
+        /* Toggle Switch for panels */
+        .panel-toggle {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .panel-toggle.active {
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+        }
+
+        .panel-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .panel-toggle.active::after {
+            transform: translateX(20px);
         }
 
         .control-item {
@@ -3744,48 +4159,92 @@
          Always visible at top - instant access to AI mastering
          ═══════════════════════════════════════════════════════════════════════════ -->
     <!-- ═══════════════════════════════════════════════════════════════════════════
-         🎛️ UNIFIED FLOATING CONTROL CENTER - State of the Art 2027
-         Premium glass morphism with integrated master + A/B controls
+         🎛️ DAW-STYLE TRANSPORT BAR - Full Width Professional Layout
+         Logo | Upload | MASTER button | LUFS Meters | Peak | Account
          ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="ai-command-bar" id="aiCommandBar" style="display: none;">
-        <!-- Master Button -->
-        <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');alert('Please wait for the page to fully load.');}" style="cursor: pointer;">
-            <span class="ai-btn-icon">◉</span>
-            <span>MASTER</span>
-        </button>
-
-        <!-- Vertical Divider - Shows after mastering -->
-        <div id="commandBarDivider" style="display: none; width: 1px; height: 32px; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.3), transparent);"></div>
-
-        <!-- Integrated A/B Toggle - Shows after mastering -->
-        <div id="integratedABToggle" style="display: none; align-items: center; gap: 12px;">
-            <span id="floatingABLabelOriginal" style="
-                font-size: 0.8rem;
-                font-weight: 600;
-                color: rgba(255,255,255,0.4);
-                transition: all 0.3s;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            ">A</span>
-
-            <label class="ab-toggle-premium" style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
-                <input type="checkbox" id="floatingABSwitch" checked onchange="handleFloatingABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                <span id="floatingABTrack" class="ab-track-mastered"></span>
-            </label>
-
-            <span id="floatingABLabelMastered" style="
-                font-size: 0.8rem;
-                font-weight: 700;
-                color: #00ff88;
-                transition: all 0.3s;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
-            ">B</span>
+    <div class="ai-command-bar" id="aiCommandBar" style="display: flex;">
+        <!-- LEFT: Logo + Upload -->
+        <div class="transport-left">
+            <div class="transport-logo">LuvLang</div>
+            <button class="transport-upload-btn" id="transportUploadBtn" title="Upload Audio" onclick="document.getElementById('audioFile')?.click()">
+                📁
+            </button>
+            <!-- Quick selector dropdown -->
+            <select id="transportQuickSelector" style="
+                padding: 8px 12px;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(0, 212, 255, 0.2);
+                border-radius: 8px;
+                color: #fff;
+                font-size: 0.7rem;
+                cursor: pointer;
+            " onchange="if(this.value) applyQuickPreset(this.value)">
+                <option value="">Quick Preset...</option>
+                <option value="streaming">Streaming (-14 LUFS)</option>
+                <option value="apple">Apple Music (-16 LUFS)</option>
+                <option value="podcast">Podcast (-16 LUFS)</option>
+            </select>
         </div>
 
-        <!-- Status Pill - Updates based on state -->
-        <div class="ai-status-pill" id="aiStatusPill">MASTERING CHAIN</div>
+        <!-- CENTER: Master Button + A/B Toggle -->
+        <div class="transport-center">
+            <!-- Master Button -->
+            <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');alert('Please wait for the page to fully load.');}" style="cursor: pointer;">
+                <span class="ai-btn-icon">◉</span>
+                <span>MASTER</span>
+            </button>
+
+            <!-- Integrated A/B Toggle - Shows after mastering -->
+            <div id="integratedABToggle" style="display: none; align-items: center; gap: 12px;">
+                <span id="floatingABLabelOriginal" style="
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: rgba(255,255,255,0.4);
+                    transition: all 0.3s;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                ">A</span>
+
+                <label class="ab-toggle-premium" style="position: relative; display: inline-block; width: 52px; height: 28px; cursor: pointer;">
+                    <input type="checkbox" id="floatingABSwitch" checked onchange="handleFloatingABToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                    <span id="floatingABTrack" class="ab-track-mastered"></span>
+                </label>
+
+                <span id="floatingABLabelMastered" style="
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    color: #00ff88;
+                    transition: all 0.3s;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+                ">B</span>
+            </div>
+        </div>
+
+        <!-- RIGHT: LUFS Meters + Peak + Status -->
+        <div class="transport-right">
+            <!-- LUFS Display -->
+            <div class="transport-lufs-display">
+                <div class="transport-lufs-item">
+                    <span class="transport-lufs-label">Momentary</span>
+                    <span class="transport-lufs-value" id="transportLufsMomentary">-∞</span>
+                </div>
+                <div class="transport-lufs-item">
+                    <span class="transport-lufs-label">Integrated</span>
+                    <span class="transport-lufs-value integrated" id="transportLufsIntegrated">-∞</span>
+                </div>
+            </div>
+
+            <!-- True Peak Compact -->
+            <div class="transport-peak-display">
+                <span class="transport-peak-label">TP</span>
+                <span class="transport-peak-value" id="transportTruePeak">-∞</span>
+            </div>
+
+            <!-- Status Pill -->
+            <div class="ai-status-pill" id="aiStatusPill">READY</div>
+        </div>
     </div>
 
     <!-- Hidden floating compare for backwards compatibility -->
@@ -4586,35 +5045,32 @@
     <div class="app-container" id="appContainer">
 
         <!-- ═════════════════════════════════════════════════════════════════
-             LEFT SIDEBAR - Upload, Genre, Platform, Reference Track
+             LEFT SIDEBAR - Controls Panel (Compact DAW-Style)
              ═════════════════════════════════════════════════════════════════ -->
         <div class="left-sidebar">
 
-            <!-- HEADER LOGO -->
-            <div class="header-logo">
-                <div class="logo-text">LuvLang LEGENDARY</div>
-                <div class="logo-subtitle">Professional Mastering Suite</div>
-                <button onclick="restartTourFresh()" style="
-                    margin-top: 10px;
-                    padding: 6px 12px;
-                    font-size: 0.75rem;
-                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-                    border: 1px solid rgba(102, 126, 234, 0.4);
-                    border-radius: 20px;
-                    color: rgba(255,255,255,0.8);
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(118, 75, 162, 0.4) 100%)'; this.style.color='#fff';"
-                   onmouseout="this.style.background='linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)'; this.style.color='rgba(255,255,255,0.8)';">
-                    <span style="font-size: 1rem;">🎓</span> Take the Tour
-                </button>
+            <!-- COMPACT HEADER WITH TOUR BUTTON -->
+            <div class="header-logo" style="padding: 12px 0; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div class="logo-text" style="font-size: 1rem;">LuvLang</div>
+                        <div class="logo-subtitle" style="font-size: 0.5rem; margin-top: 2px;">Mastering Suite</div>
+                    </div>
+                    <button onclick="restartTourFresh()" style="
+                        padding: 4px 10px;
+                        font-size: 0.65rem;
+                        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+                        border: 1px solid rgba(102, 126, 234, 0.3);
+                        border-radius: 12px;
+                        color: rgba(255,255,255,0.7);
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    " title="Start Tour">🎓 Tour</button>
+                </div>
             </div>
 
-            <!-- AUTHENTICATION BUTTONS -->
-            <div id="authSection" style="padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+            <!-- AUTHENTICATION BUTTONS (Compact) -->
+            <div id="authSection" style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 16px;">
                 <div id="authButtons" style="display: flex; gap: 8px;">
                     <button id="signInBtn" class="btn-secondary" style="flex: 1; padding: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; cursor: pointer;">
                         Sign In
@@ -4637,65 +5093,53 @@
                 </div>
             </div>
 
-            <!-- UPLOAD AREA -->
-            <div class="section-title">Upload Audio</div>
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">🎵</div>
-                <div class="upload-text">Click or drag audio file here</div>
-                <div style="font-size: 0.7rem; opacity: 0.5; margin-top: 10px;">
-                    WAV, MP3, FLAC, M4A, AAC
-                </div>
+            <!-- COMPACT UPLOAD AREA (Main upload is in transport bar) -->
+            <div class="upload-area" id="uploadArea" style="padding: 16px 12px; margin-bottom: 16px;">
+                <div class="upload-icon" style="font-size: 1.5rem; margin-bottom: 6px;">🎵</div>
+                <div class="upload-text" style="font-size: 0.7rem;">Drop audio file here</div>
+                <div style="font-size: 0.6rem; opacity: 0.4; margin-top: 6px;">WAV, MP3, FLAC, M4A</div>
             </div>
 
-            <!-- PLATFORM SELECTOR -->
-            <div class="selector-group">
-                <div class="section-title">Platform Target</div>
-                <div class="selector-grid">
-                    <div class="selector-btn active" data-platform="streaming" style="position: relative;">
-                        <div>Streaming</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-14 LUFS</div>
-                        <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Spotify • YouTube • Tidal</div>
+            <!-- PLATFORM SELECTOR (Compact) -->
+            <div class="selector-group" style="margin-bottom: 14px;">
+                <div class="section-title">Platform</div>
+                <div class="selector-grid" style="gap: 6px;">
+                    <div class="selector-btn active" data-platform="streaming" style="position: relative; padding: 6px;">
+                        <div style="font-size: 0.75rem;">Streaming</div>
+                        <div style="font-size: 0.6rem; opacity: 0.6;">-14 LUFS</div>
                     </div>
-                    <div class="selector-btn" data-platform="apple" style="position: relative;">
-                        <div>Apple Music</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-16 LUFS</div>
-                        <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Higher Dynamic Range</div>
+                    <div class="selector-btn" data-platform="apple" style="position: relative; padding: 6px;">
+                        <div style="font-size: 0.75rem;">Apple</div>
+                        <div style="font-size: 0.6rem; opacity: 0.6;">-16 LUFS</div>
                     </div>
-                    <div class="selector-btn" data-platform="podcast" style="position: relative;">
-                        <div>Podcast</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-16 LUFS</div>
-                        <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Speech Optimized</div>
+                    <div class="selector-btn" data-platform="podcast" style="position: relative; padding: 6px;">
+                        <div style="font-size: 0.75rem;">Podcast</div>
+                        <div style="font-size: 0.6rem; opacity: 0.6;">-16 LUFS</div>
                     </div>
                 </div>
             </div>
 
-            <!-- GENRE SELECTOR with EQ Presets -->
-            <div class="selector-group" id="genreSection">
+            <!-- GENRE SELECTOR (Compact) -->
+            <div class="selector-group" id="genreSection" style="margin-bottom: 14px;">
                 <div class="section-title">Genre</div>
-                <div class="selector-grid">
-                    <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
-                        <div>Hip-Hop</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Sub + Presence</div>
+                <div class="selector-grid" style="grid-template-columns: repeat(3, 1fr); gap: 5px;">
+                    <div class="selector-btn" data-genre="hip-hop" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">Hip-Hop</div>
                     </div>
-                    <div class="selector-btn" data-genre="pop" style="position: relative;">
-                        <div>Pop</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Balanced + Air</div>
+                    <div class="selector-btn" data-genre="pop" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">Pop</div>
                     </div>
-                    <div class="selector-btn" data-genre="edm" style="position: relative;">
-                        <div>EDM</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Massive Bass</div>
+                    <div class="selector-btn" data-genre="edm" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">EDM</div>
                     </div>
-                    <div class="selector-btn" data-genre="rock" style="position: relative;">
-                        <div>Rock</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Body + Bite</div>
+                    <div class="selector-btn" data-genre="rock" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">Rock</div>
                     </div>
-                    <div class="selector-btn" data-genre="jazz" style="position: relative;">
-                        <div>Jazz</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Natural</div>
+                    <div class="selector-btn" data-genre="jazz" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">Jazz</div>
                     </div>
-                    <div class="selector-btn active" data-genre="neutral" style="position: relative;">
-                        <div>Neutral</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Flat EQ</div>
+                    <div class="selector-btn active" data-genre="neutral" style="position: relative; padding: 6px 4px;">
+                        <div style="font-size: 0.7rem;">Neutral</div>
                     </div>
                 </div>
             </div>
@@ -4772,9 +5216,9 @@
                     </div>
                 </div>
                 <div style="position: relative;">
-                    <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
+                    <canvas id="spectrumCanvas" width="2000" height="480"></canvas>
                     <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
-                    <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
+                    <canvas id="spectrumOverlayCanvas" width="2000" height="480"></canvas>
                     <!-- Frequency hover tooltip - Premium Design -->
                     <div id="spectrumTooltip" style="
                         position: absolute;
@@ -4822,12 +5266,46 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════════════════════════
-                 PANEL 2: STEREO METERS + PHASE SCOPE - Premium Goniometer Design
+                 SECONDARY VISUALS - Collapsible row: Stereo Meters + Waveform
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div class="viz-panel meters-panel-viz">
+            <div class="secondary-visuals-toggle" onclick="toggleSecondaryVisuals()">
+                <span class="toggle-icon" id="secondaryVisualsIcon">▼</span>
+                <span class="toggle-label">Secondary Visualizations</span>
+                <span style="font-size: 0.55rem; color: rgba(0, 212, 255, 0.6); margin-left: auto;">Stereo • Waveform</span>
+            </div>
+
+            <div id="secondaryVisualsContent" class="secondary-visuals-row">
+
+            <!-- WAVEFORM PANEL (60% width) - Uses original IDs for JS compatibility -->
+            <div class="viz-panel waveform-panel-secondary">
+                <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
+                <div id="waveformContainer" style="position: relative; width: 100%; height: 140px;">
+                    <canvas id="waveformCanvasStatic" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
+                    <canvas id="waveformCanvasPlayhead" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 20; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
+                        <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
+                        <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 PANEL 2: STEREO METERS + PHASE SCOPE - Premium Goniometer Design (40% width)
+                 ═══════════════════════════════════════════════════════════════════════════ -->
+            <div class="viz-panel meters-panel-viz" style="height: fit-content;">
                 <div class="panel-title">
                     <span style="display: flex; align-items: center;">STEREO FIELD ANALYZER</span>
                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <button id="showHeatmapBtn" onclick="toggleCorrelationHeatmap()" style="
+                            font-size: 0.5rem;
+                            padding: 3px 8px;
+                            background: rgba(255, 152, 0, 0.1);
+                            border: 1px solid rgba(255, 152, 0, 0.3);
+                            border-radius: 6px;
+                            color: #ffb74d;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                        " title="Show Phase Correlation Heatmap">📊 HEATMAP</button>
                         <span id="stereoWidthBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(156, 39, 176, 0.15); border: 1px solid rgba(156, 39, 176, 0.3); border-radius: 6px; color: #ce93d8;">STEREO</span>
                         <span id="phaseStatusBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">IN PHASE</span>
                     </div>
@@ -4911,13 +5389,18 @@
                     </div>
                 </div>
             </div>
+            </div><!-- END secondary-visuals-row -->
 
             <!-- ═══════════════════════════════════════════════════════════════════════════
                  PANEL 2.5: PHASE CORRELATION HEATMAP - Frequency-Dependent Analysis
+                 COLLAPSIBLE - Hidden by default to save space (secondary visualization)
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div class="viz-panel correlation-panel">
-                <div class="panel-title">
-                    <span style="display: flex; align-items: center;">PHASE CORRELATION • FREQUENCY ANALYSIS</span>
+            <div class="viz-panel correlation-panel" id="correlationHeatmapPanel" style="display: none;">
+                <div class="panel-title" style="cursor: pointer;" onclick="toggleCorrelationHeatmap()">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span id="correlationToggleIcon" style="transition: transform 0.3s ease; font-size: 0.6rem;">▼</span>
+                        PHASE CORRELATION • FREQUENCY ANALYSIS
+                    </span>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 0.5rem; padding: 3px 8px; background: rgba(255, 152, 0, 0.15); border: 1px solid rgba(255, 152, 0, 0.3); border-radius: 6px; color: #ffb74d;">REAL-TIME</span>
                         <span id="correlationModeBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">MONO COMPATIBLE</span>
@@ -4945,12 +5428,12 @@
                             align-items: flex-end;
                             padding: 0 10px 3px 10px;
                         ">
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6);">20Hz</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">100Hz</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">500Hz</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">1kHz</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5);">5kHz</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6);">20kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">20Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">100Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">500Hz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">1kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">5kHz</span>
+                            <span style="font-size: 0.55rem; color: rgba(255, 200, 100, 1); font-weight: 600; text-shadow: 0 0 6px rgba(255, 152, 0, 0.5);">20kHz</span>
                         </div>
                     </div>
 
@@ -5086,20 +5569,6 @@
                             <div class="eq-fader-thumb" data-eq="air"></div>
                         </div>
                         <div class="eq-fader-value" id="eqAirValue">0.0 dB</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PANEL 3: DYNAMIC WAVEFORM -->
-            <div class="viz-panel waveform-panel-viz">
-                <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
-                <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
-                    <canvas id="waveformCanvasStatic" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
-                    <canvas id="waveformCanvasPlayhead" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
-                    <!-- VISIBLE SCRUBBER HANDLE -->
-                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 20; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
-                        <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
-                        <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
                     </div>
                 </div>
             </div>
@@ -7261,6 +7730,36 @@
                             content.style.opacity = '0';
                             icon.style.transform = 'rotate(-90deg)';
                         }
+                    }
+                };
+
+                // Toggle Correlation Heatmap Section (collapsed by default)
+                window.toggleCorrelationHeatmap = function() {
+                    const panel = document.getElementById('correlationHeatmapPanel');
+                    const icon = document.getElementById('correlationToggleIcon');
+                    if (panel) {
+                        const isHidden = panel.style.display === 'none';
+                        panel.style.display = isHidden ? 'block' : 'none';
+                        if (icon) {
+                            icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+                        }
+                    }
+                };
+
+                // Show correlation heatmap toggle button
+                window.showCorrelationHeatmapToggle = function() {
+                    const panel = document.getElementById('correlationHeatmapPanel');
+                    if (panel) panel.style.display = 'block';
+                };
+
+                // Toggle Secondary Visuals (Stereo meters row)
+                window.toggleSecondaryVisuals = function() {
+                    const content = document.getElementById('secondaryVisualsContent');
+                    const icon = document.getElementById('secondaryVisualsIcon');
+                    if (content && icon) {
+                        const isHidden = content.style.display === 'none';
+                        content.style.display = isHidden ? 'grid' : 'none';
+                        icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
                     }
                 };
 
@@ -15510,6 +16009,12 @@
                         }
                     }
 
+                    // ═══ SYNC TRANSPORT BAR METERS ═══
+                    const transportMomentary = document.getElementById('transportLufsMomentary');
+                    if (transportMomentary) {
+                        transportMomentary.textContent = momentaryLUFS.toFixed(1);
+                    }
+
                     // Update MEASURED/MONITORING LUFS (integrated - stable)
                     const measuredLufsDisplay = document.getElementById('measuredLufsValue');
                     if (measuredLufsDisplay) {
@@ -15525,6 +16030,12 @@
                         } else {
                             measuredLufsDisplay.style.color = '#ffd700';
                             measuredLufsDisplay.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
+                        }
+
+                        // ═══ SYNC TRANSPORT BAR INTEGRATED METER ═══
+                        const transportIntegrated = document.getElementById('transportLufsIntegrated');
+                        if (transportIntegrated) {
+                            transportIntegrated.textContent = displayValue.toFixed(1);
                         }
                     }
 
@@ -15704,6 +16215,13 @@
                         } else {
                             peakValueElement.style.color = '#00ff88'; // Green (broadcast safe)
                         }
+                    }
+
+                    // ═══ SYNC TRANSPORT BAR TRUE PEAK ═══
+                    const transportPeak = document.getElementById('transportTruePeak');
+                    if (transportPeak) {
+                        transportPeak.textContent = (!peakIsPlaying && !metersLocked) ? '-∞' : displayPeak.toFixed(1);
+                        transportPeak.style.color = peakValueElement.style.color;
                     }
                 }
 
@@ -24053,7 +24571,48 @@
     <!-- Initialize Advanced Mastering Engine -->
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
-            // Wait for audio context
+            // Create UI Components IMMEDIATELY (no audio context needed for UI)
+            console.log('🎨 Creating Premium Processing UI...');
+
+            if (typeof createLimiterModeUI === 'function') {
+                createLimiterModeUI('limiterModeContainer');
+                console.log('   ✓ IRC Limiter Mode UI created');
+            }
+            if (typeof createSoftClipperUI === 'function') {
+                createSoftClipperUI('softClipperContainer');
+                console.log('   ✓ Soft Clipper UI created');
+            }
+            if (typeof createUpwardCompressorUI === 'function') {
+                createUpwardCompressorUI('upwardCompContainer');
+                console.log('   ✓ Upward Compressor UI created');
+            }
+            if (typeof createUnlimiterUI === 'function') {
+                createUnlimiterUI('unlimiterContainer');
+                console.log('   ✓ Unlimiter UI created');
+            }
+            if (typeof createLoudnessHistoryUI === 'function') {
+                createLoudnessHistoryUI('loudnessHistoryContainer');
+                console.log('   ✓ Loudness History UI created');
+            }
+            if (typeof createSpectrogramUI === 'function') {
+                createSpectrogramUI('spectrogramContainer');
+                console.log('   ✓ Spectrogram UI created');
+            }
+            if (typeof createLinearPhaseToggle === 'function') {
+                createLinearPhaseToggle('linearPhaseContainer');
+                console.log('   ✓ Linear Phase Toggle UI created');
+            }
+
+            console.log('✅ Premium Processing UI ready');
+            console.log('   - IRC Limiter (5 modes: Transparent, Balanced, Punchy, Aggressive, Transient)');
+            console.log('   - Upward Compression (boost quiet details)');
+            console.log('   - Unlimiter / Dynamics Restoration');
+            console.log('   - Soft Clipper (tube-style saturation)');
+            console.log('   - Loudness History Graph');
+            console.log('   - Spectrogram (time × frequency)');
+            console.log('   - Linear Phase EQ mode');
+
+            // Initialize Advanced Mastering Engine when audio context is ready
             const waitForAudioContext = () => {
                 return new Promise(resolve => {
                     const check = () => {
@@ -24071,40 +24630,11 @@
                 const ctx = await waitForAudioContext();
 
                 // Initialize Advanced Mastering Engine
-                window.advancedEngine = new AdvancedMasteringEngine(ctx);
-                await window.advancedEngine.init();
-
-                // Create UI Components
-                if (typeof createLimiterModeUI === 'function') {
-                    createLimiterModeUI('limiterModeContainer');
+                if (typeof AdvancedMasteringEngine === 'function') {
+                    window.advancedEngine = new AdvancedMasteringEngine(ctx);
+                    await window.advancedEngine.init();
+                    console.log('🚀 Advanced Mastering Engine initialized with audio context');
                 }
-                if (typeof createSoftClipperUI === 'function') {
-                    createSoftClipperUI('softClipperContainer');
-                }
-                if (typeof createUpwardCompressorUI === 'function') {
-                    createUpwardCompressorUI('upwardCompContainer');
-                }
-                if (typeof createUnlimiterUI === 'function') {
-                    createUnlimiterUI('unlimiterContainer');
-                }
-                if (typeof createLoudnessHistoryUI === 'function') {
-                    createLoudnessHistoryUI('loudnessHistoryContainer');
-                }
-                if (typeof createSpectrogramUI === 'function') {
-                    createSpectrogramUI('spectrogramContainer');
-                }
-                if (typeof createLinearPhaseToggle === 'function') {
-                    createLinearPhaseToggle('linearPhaseContainer');
-                }
-
-                console.log('🚀 Advanced Mastering Engine ready');
-                console.log('   - IRC Limiter (5 modes: Transparent, Balanced, Punchy, Aggressive, Transient)');
-                console.log('   - Upward Compression (boost quiet details)');
-                console.log('   - Unlimiter / Dynamics Restoration');
-                console.log('   - Soft Clipper (tube-style saturation)');
-                console.log('   - Loudness History Graph');
-                console.log('   - Spectrogram (time × frequency)');
-                console.log('   - Linear Phase EQ mode');
             } catch (e) {
                 console.warn('Advanced Engine init deferred:', e);
             }
