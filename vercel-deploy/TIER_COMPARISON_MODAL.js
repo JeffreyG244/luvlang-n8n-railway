@@ -91,6 +91,65 @@
     let originalBuffer = null;
     let processedBuffers = {};
 
+    // Crossfade configuration
+    const FADE_DURATION = 1.5; // seconds for fade in/out
+    let mainAudioElement = null;
+    let mainAudioOriginalVolume = 1;
+
+    // Fade out main audio when modal opens
+    function fadeOutMainAudio() {
+        mainAudioElement = document.querySelector('audio') || window.audioElement;
+        if (mainAudioElement && !mainAudioElement.paused) {
+            mainAudioOriginalVolume = mainAudioElement.volume;
+            const startVolume = mainAudioElement.volume;
+            const startTime = performance.now();
+            const duration = FADE_DURATION * 1000;
+
+            function fade() {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Use ease-out curve for smooth fade
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                mainAudioElement.volume = startVolume * (1 - easeOut);
+
+                if (progress < 1) {
+                    requestAnimationFrame(fade);
+                } else {
+                    mainAudioElement.pause();
+                    mainAudioElement.volume = 0;
+                }
+            }
+            requestAnimationFrame(fade);
+            console.log('🔊 Fading out main audio for tier comparison');
+        }
+    }
+
+    // Fade in main audio when modal closes
+    function fadeInMainAudio() {
+        if (mainAudioElement) {
+            const targetVolume = mainAudioOriginalVolume;
+            mainAudioElement.volume = 0;
+            mainAudioElement.play().catch(() => {});
+
+            const startTime = performance.now();
+            const duration = FADE_DURATION * 1000;
+
+            function fade() {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Use ease-in curve for smooth fade
+                const easeIn = Math.pow(progress, 2);
+                mainAudioElement.volume = targetVolume * easeIn;
+
+                if (progress < 1) {
+                    requestAnimationFrame(fade);
+                }
+            }
+            requestAnimationFrame(fade);
+            console.log('🔊 Fading in main audio');
+        }
+    }
+
     // Create and inject styles
     function injectStyles() {
         if (document.getElementById('tier-comparison-styles')) return;
@@ -962,32 +1021,119 @@
         const buffer = processedBuffers[tierId];
         if (!buffer) return;
 
-        // Stop any currently playing
-        if (currentlyPlaying && currentlyPlaying !== tierId) {
-            stopPlayback(currentlyPlaying);
+        // If clicking the same tier that's playing, pause it
+        if (audioContexts[tierId] && audioContexts[tierId].playing) {
+            fadeOutAndStop(tierId);
+            return;
         }
 
-        if (audioContexts[tierId] && audioContexts[tierId].playing) {
-            stopPlayback(tierId);
+        // Crossfade: fade out currently playing tier, fade in new tier
+        if (currentlyPlaying && currentlyPlaying !== tierId) {
+            crossfadeToTier(currentlyPlaying, tierId);
         } else {
             startPlayback(tierId);
         }
     }
 
-    // Start playback
+    // Crossfade between two tiers
+    function crossfadeToTier(fromTierId, toTierId) {
+        const fromCtx = audioContexts[fromTierId];
+
+        if (fromCtx && fromCtx.playing && fromCtx.gainNode) {
+            // Start fading out the current tier
+            const now = fromCtx.context.currentTime;
+            fromCtx.gainNode.gain.setValueAtTime(fromCtx.gainNode.gain.value, now);
+            fromCtx.gainNode.gain.linearRampToValueAtTime(0, now + FADE_DURATION);
+
+            // Start the new tier with fade in
+            startPlayback(toTierId);
+
+            // Stop the old tier after fade completes
+            setTimeout(() => {
+                if (audioContexts[fromTierId] && audioContexts[fromTierId] !== audioContexts[toTierId]) {
+                    try {
+                        audioContexts[fromTierId].source.stop();
+                        audioContexts[fromTierId].context.close();
+                    } catch (e) {}
+                    audioContexts[fromTierId].playing = false;
+
+                    // Reset old button
+                    const btn = document.getElementById(`tier-play-${fromTierId}`);
+                    if (btn) {
+                        btn.innerHTML = `
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            Play ${TIERS[fromTierId].name} Master
+                        `;
+                        btn.classList.remove('playing');
+                    }
+                }
+            }, FADE_DURATION * 1000);
+
+            console.log(`🔊 Crossfading from ${fromTierId} to ${toTierId}`);
+        } else {
+            // No current playback to crossfade from, just start new
+            startPlayback(toTierId);
+        }
+    }
+
+    // Fade out and stop a tier
+    function fadeOutAndStop(tierId) {
+        const ctx = audioContexts[tierId];
+        if (!ctx || !ctx.playing) return;
+
+        if (ctx.gainNode) {
+            const now = ctx.context.currentTime;
+            ctx.gainNode.gain.setValueAtTime(ctx.gainNode.gain.value, now);
+            ctx.gainNode.gain.linearRampToValueAtTime(0, now + FADE_DURATION);
+        }
+
+        // Stop after fade completes
+        setTimeout(() => {
+            stopPlayback(tierId);
+        }, FADE_DURATION * 1000);
+
+        // Update button immediately for responsiveness
+        const btn = document.getElementById(`tier-play-${tierId}`);
+        if (btn) {
+            btn.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                Play ${TIERS[tierId].name} Master
+            `;
+            btn.classList.remove('playing');
+        }
+
+        if (currentlyPlaying === tierId) {
+            currentlyPlaying = null;
+        }
+    }
+
+    // Start playback with fade in
     function startPlayback(tierId) {
         const buffer = processedBuffers[tierId];
         if (!buffer) return;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioCtx.createBufferSource();
+        const gainNode = audioCtx.createGain();
+
         source.buffer = buffer;
-        source.connect(audioCtx.destination);
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        // Start with volume at 0 and fade in
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + FADE_DURATION);
+
         source.start();
 
         audioContexts[tierId] = {
             context: audioCtx,
             source: source,
+            gainNode: gainNode,
             playing: true,
             startTime: audioCtx.currentTime
         };
@@ -1017,6 +1163,8 @@
         source.onended = () => {
             stopPlayback(tierId);
         };
+
+        console.log(`🔊 Playing ${TIERS[tierId].name} tier with fade in`);
     }
 
     // Stop playback
@@ -1115,6 +1263,9 @@
         injectStyles();
         createModal();
 
+        // Fade out main audio before showing modal
+        fadeOutMainAudio();
+
         originalBuffer = audioBuffer;
         processedBuffers = {};
 
@@ -1142,10 +1293,10 @@
 
     // Close modal
     function close() {
-        // Stop all playback
+        // Stop all tier playback with fade out
         Object.keys(TIERS).forEach(tierId => {
             if (audioContexts[tierId]?.playing) {
-                stopPlayback(tierId);
+                fadeOutAndStop(tierId);
             }
         });
 
@@ -1154,6 +1305,9 @@
             modal.classList.remove('active');
             isModalOpen = false;
         }
+
+        // Fade main audio back in after modal closes
+        setTimeout(() => fadeInMainAudio(), 500);
     }
 
     // Export API
