@@ -11479,22 +11479,26 @@
             updateEQUI(eqPreset);
         }
 
-        // Helper function for EQ gain compensation to prevent clipping
+        // Helper function for EQ gain compensation to maintain target LUFS
         // Uses K-weighted approximation to estimate LUFS impact of EQ changes
+        // Target: -14 LUFS (Spotify/YouTube) or -16 LUFS (Apple/Podcast)
         function applyEQGainCompensation(eqPreset) {
             const ac = window.audioContext;
-            if (!ac || !window.makeupGain || window.originalMakeupGainValue === undefined) return;
+            if (!ac || !window.makeupGain || window.originalMakeupGainValue === undefined) {
+                console.log('⚠️ EQ Compensation skipped - missing prerequisites');
+                return;
+            }
 
             // K-weighting factors: how much each band contributes to LUFS
-            // Based on ITU-R BS.1770 K-weighting curve
+            // Based on ITU-R BS.1770 K-weighting curve (calibrated for accuracy)
             const kWeights = {
-                sub: 0.1,     // 45Hz - minimal LUFS impact
-                bass: 0.3,    // 100Hz - low LUFS impact
-                lowmid: 0.5,  // 400Hz - moderate LUFS impact
+                sub: 0.15,    // 45Hz - minimal LUFS impact (K-weighting rolls off below 100Hz)
+                bass: 0.4,    // 100Hz - low LUFS impact
+                lowmid: 0.7,  // 400Hz - moderate LUFS impact
                 mid: 1.0,     // 1kHz - full LUFS impact (K-weighting center)
-                highmid: 1.2, // 3.5kHz - high LUFS impact (+4dB K-weighting boost)
-                high: 0.8,    // 8kHz - moderate-high LUFS impact
-                air: 0.5      // 12kHz - moderate LUFS impact
+                highmid: 1.1, // 3.5kHz - high LUFS impact (+4dB K-weighting boost)
+                high: 0.9,    // 8kHz - moderate-high LUFS impact
+                air: 0.6      // 12kHz - moderate LUFS impact (rolls off above 10kHz)
             };
 
             const eqValues = {
@@ -11515,16 +11519,33 @@
                 }
             }
 
+            // Also consider cuts (they reduce loudness, so we need less compensation)
+            let kWeightedCut = 0;
+            for (const band in eqValues) {
+                if (eqValues[band] < 0) {
+                    kWeightedCut += Math.abs(eqValues[band]) * kWeights[band];
+                }
+            }
+
+            // Net effect: boosts increase loudness, cuts decrease it
+            const netBoost = kWeightedBoost - (kWeightedCut * 0.5); // Cuts have 50% effect on perceived loudness
+
             // Compensation: reduce gain to maintain target LUFS
-            // More aggressive compensation for higher boosts
-            const compensationDB = Math.min(kWeightedBoost * 0.85, 8); // Cap at 8dB, apply 85%
+            // Full 1:1 compensation for accurate LUFS targeting
+            const compensationDB = Math.max(0, Math.min(netBoost, 10)); // Cap at 10dB, no negative compensation
             const compensationLinear = Math.pow(10, -compensationDB / 20);
             const compensatedGain = window.originalMakeupGainValue * compensationLinear;
 
             window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
 
-            console.log(`🎚️ EQ Compensation (K-weighted): -${compensationDB.toFixed(1)}dB`);
-            console.log(`   K-weighted boost: +${kWeightedBoost.toFixed(1)}dB | Original gain: ${(20*Math.log10(window.originalMakeupGainValue)).toFixed(1)}dB | New gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
+            // Get current target for logging
+            const platform = window.selectedPlatform || 'spotify';
+            const targetLUFS = (platform === 'apple' || platform === 'podcast') ? -16 : -14;
+
+            console.log(`🎚️ EQ Compensation for ${targetLUFS} LUFS target:`);
+            console.log(`   K-weighted boost: +${kWeightedBoost.toFixed(1)}dB | Cuts: -${kWeightedCut.toFixed(1)}dB | Net: +${netBoost.toFixed(1)}dB`);
+            console.log(`   Compensation: -${compensationDB.toFixed(1)}dB`);
+            console.log(`   Original gain: ${(20*Math.log10(window.originalMakeupGainValue)).toFixed(1)}dB → New gain: ${(20*Math.log10(compensatedGain)).toFixed(1)}dB`);
         }
 
         /**
@@ -16931,52 +16952,78 @@
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
                     console.log('🔍 DEBUG: window.masteringComplete =', window.masteringComplete, '| typeof =', typeof window.masteringComplete);
 
+                    // Store selected platform globally for EQ compensation
+                    window.selectedPlatform = platform;
+
                     // Check if mastering has already been completed
                     const masteringComplete = window.masteringComplete === true;
-                    console.log('🔍 DEBUG: masteringComplete check result =', masteringComplete);
+                    console.log('🔍 Platform change - masteringComplete:', masteringComplete);
 
-                    if (masteringComplete) {
-                        // AFTER MASTERING: Don't change ANYTHING - no limiter, no gain
-                        console.log('⚠️ Mastering already complete - user must click RESET to change LUFS target');
+                    if (masteringComplete && window.originalInputLUFS !== undefined) {
+                        // ═══════════════════════════════════════════════════════════════════════
+                        // STATE OF THE ART LUFS RETARGETING
+                        // Automatically adjust makeup gain to hit new target without full re-master
+                        // ═══════════════════════════════════════════════════════════════════════
+                        console.log('🎯 AUTO LUFS RETARGETING: Adjusting to', targetLUFS, 'LUFS');
 
-                        // Show warning toast
-                        if (typeof showToast === 'function') {
-                            showToast(`Click RESET to re-master at ${targetLUFS} LUFS`, 'warning');
+                        const inputLUFS = window.originalInputLUFS;
+                        const ac = window.audioContext;
+                        const mkGain = window.makeupGain;
+
+                        if (mkGain && ac) {
+                            // Calculate new gain to hit the target
+                            const gainNeededDB = targetLUFS - inputLUFS;
+
+                            // Apply peak protection
+                            const originalPeakDB = window.originalInputPeakDB || -3;
+                            const peakTargetBeforeLimiter = 3.0; // Allow 4dB of limiting
+                            const maxSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
+
+                            let finalGainDB = gainNeededDB;
+                            if (gainNeededDB > maxSafeGainDB) {
+                                finalGainDB = maxSafeGainDB;
+                                console.log(`   ⚠️ Peak protection: limited to +${maxSafeGainDB.toFixed(1)}dB`);
+                            }
+
+                            // Clamp to safe range
+                            finalGainDB = Math.max(-10, Math.min(12, finalGainDB));
+                            const newGainLinear = Math.pow(10, finalGainDB / 20);
+
+                            // Apply the new makeup gain
+                            mkGain.gain.cancelScheduledValues(ac.currentTime);
+                            mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.15);
+
+                            // Update stored values
+                            window.originalMakeupGainValue = newGainLinear;
+                            window.appliedMakeupGainLinear = newGainLinear;
+                            window.appliedMakeupGainDB = finalGainDB;
+                            window.autoLUFSGainApplied = finalGainDB;
+                            window.autoLUFSTargetLevel = targetLUFS;
+
+                            console.log(`   Input: ${inputLUFS.toFixed(1)} LUFS → Target: ${targetLUFS} LUFS`);
+                            console.log(`   New makeup gain: ${finalGainDB >= 0 ? '+' : ''}${finalGainDB.toFixed(1)} dB`);
+
+                            // Show success toast
+                            if (typeof showToast === 'function') {
+                                showToast(`${platformName}: ${targetLUFS} LUFS ✓`, 'success');
+                            }
+
+                            // Re-apply EQ compensation with the new base gain
+                            const currentEQ = {
+                                sub: window.eqSubFilter ? window.eqSubFilter.gain.value : 0,
+                                bass: window.eqBassFilter ? window.eqBassFilter.gain.value : 0,
+                                lowmid: window.eqLowMidFilter ? window.eqLowMidFilter.gain.value : 0,
+                                mid: window.eqMidFilter ? window.eqMidFilter.gain.value : 0,
+                                highmid: window.eqHighMidFilter ? window.eqHighMidFilter.gain.value : 0,
+                                high: window.eqHighFilter ? window.eqHighFilter.gain.value : 0,
+                                air: window.eqAirFilter ? window.eqAirFilter.gain.value : 0
+                            };
+                            if (typeof applyEQGainCompensation === 'function') {
+                                setTimeout(() => applyEQGainCompensation(currentEQ), 200);
+                            }
                         }
 
-                        // Also show a more prominent notification
-                        const notification = document.createElement('div');
-                        notification.style.cssText = `
-                            position: fixed;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            background: linear-gradient(135deg, rgba(255, 165, 0, 0.95) 0%, rgba(255, 100, 0, 0.95) 100%);
-                            color: #000;
-                            padding: 25px 35px;
-                            border-radius: 15px;
-                            font-size: 1rem;
-                            font-weight: 600;
-                            text-align: center;
-                            z-index: 10000;
-                            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-                            animation: fadeIn 0.3s ease;
-                        `;
-                        notification.innerHTML = `
-                            <div style="font-size: 2rem; margin-bottom: 10px;">🔊</div>
-                            <div style="margin-bottom: 8px;">${platformName} (${targetLUFS} LUFS) Selected</div>
-                            <div style="font-size: 0.85rem; opacity: 0.9;">Click the <strong>RESET</strong> button to re-master at this target</div>
-                        `;
-                        document.body.appendChild(notification);
-
-                        // Remove after 4 seconds
-                        setTimeout(() => {
-                            notification.style.opacity = '0';
-                            notification.style.transition = 'opacity 0.3s ease';
-                            setTimeout(() => notification.remove(), 300);
-                        }, 4000);
-
-                        return; // Don't apply ANY changes - no limiter, no gain
+                        return; // Platform LUFS adjusted successfully
                     }
 
                     // BEFORE MASTERING: Configure limiter and apply LUFS targeting
@@ -16987,19 +17034,16 @@
                     if (mu && ac && window.autoLUFSInputLevel !== undefined) {
                         const inputLUFS = window.autoLUFSInputLevel;
 
-                        // Add compensation for processing chain losses (limiter GR + saturation)
-                        const chainCompensation = 3.5;
-
-                        // Calculate gain with compensation
-                        const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
+                        // Direct LUFS targeting - no compensation needed
+                        // The mastering chain and limiter handle everything
+                        const gainNeeded = targetLUFS - inputLUFS;
 
                         // Safety limits: max +12dB boost, max -10dB cut
                         const safeGain = Math.max(-10, Math.min(12, gainNeeded));
                         const linearGain = Math.pow(10, safeGain / 20);
 
-                        console.log(`🎯 LUFS CALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
-                        console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
-                        console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
+                        console.log(`🎯 LUFS Targeting: ${inputLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
+                        console.log(`   Makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
 
                         // Smooth ramp to new gain
                         mu.gain.cancelScheduledValues(ac.currentTime);
