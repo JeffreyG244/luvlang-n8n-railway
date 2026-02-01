@@ -13978,55 +13978,30 @@
             air: { filter: () => eqAirFilter, valueEl: document.getElementById('eqAirValue') }
         };
 
+        // Shared EQ drag state (single listener optimization)
+        let activeDragBand = null;
+        let eqDragStartY = 0;
+        let eqDragStartTop = 0;
+        const eqBandElements = {};
+
+        // Initialize all EQ bands
         Object.keys(eqFaders).forEach(band => {
             const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
             const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
-            const config = eqFaders[band];
 
-            let isDragging = false;
-            let startY = 0;
-            let startTop = 0;
-
+            eqBandElements[band] = { thumb, track };
             thumb.style.top = '50%';
 
             thumb.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startY = e.clientY;
-                startTop = thumb.offsetTop;
+                activeDragBand = band;
+                eqDragStartY = e.clientY;
+                eqDragStartTop = thumb.offsetTop;
                 e.preventDefault();
             });
 
             thumb.addEventListener('dblclick', () => {
                 thumb.style.top = '50%';
                 updateEQFromFader(band, 0);
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-
-                // BUG FIX #4: Validate that audio is loaded before processing
-                if (!audioContext || !audioElement || !audioElement.src) {
-                    return;
-                }
-
-                const trackRect = track.getBoundingClientRect();
-                const trackHeight = trackRect.height;
-                const thumbHeight = thumb.offsetHeight;
-
-                const deltaY = e.clientY - startY;
-                let newTop = startTop + deltaY;
-
-                newTop = Math.max(0, Math.min(trackHeight - thumbHeight, newTop));
-                thumb.style.top = newTop + 'px';
-
-                const percent = newTop / (trackHeight - thumbHeight);
-                const db = 12 - (percent * 24);  // ±12dB range for POWERFUL Steely Dan-level EQ
-
-                updateEQFromFader(band, db);
-            });
-
-            document.addEventListener('mouseup', () => {
-                isDragging = false;
             });
 
             track.addEventListener('click', (e) => {
@@ -14047,6 +14022,37 @@
 
                 updateEQFromFader(band, db);
             });
+        });
+
+        // Single document mousemove listener for all EQ faders
+        document.addEventListener('mousemove', (e) => {
+            if (!activeDragBand) return;
+
+            // Validate that audio is loaded before processing
+            if (!audioContext || !audioElement || !audioElement.src) {
+                return;
+            }
+
+            const { thumb, track } = eqBandElements[activeDragBand];
+            const trackRect = track.getBoundingClientRect();
+            const trackHeight = trackRect.height;
+            const thumbHeight = thumb.offsetHeight;
+
+            const deltaY = e.clientY - eqDragStartY;
+            let newTop = eqDragStartTop + deltaY;
+
+            newTop = Math.max(0, Math.min(trackHeight - thumbHeight, newTop));
+            thumb.style.top = newTop + 'px';
+
+            const percent = newTop / (trackHeight - thumbHeight);
+            const db = 12 - (percent * 24);  // ±12dB range for POWERFUL Steely Dan-level EQ
+
+            updateEQFromFader(activeDragBand, db);
+        });
+
+        // Single document mouseup listener for all EQ faders
+        document.addEventListener('mouseup', () => {
+            activeDragBand = null;
         });
 
         function updateEQFromFader(band, db) {
@@ -16388,6 +16394,12 @@
                 // PLR (Peak to Loudness Ratio)
                 plr = truePeakMax - integratedLUFS;
                 document.getElementById('plrValue').textContent = plr.toFixed(1) + ' dB';
+                // Update PLR bar width (0-20 dB range mapped to 0-100%)
+                const plrBar = document.getElementById('plrBar');
+                if (plrBar) {
+                    const plrPercent = Math.min(100, Math.max(0, (plr / 20) * 100));
+                    plrBar.style.width = plrPercent + '%';
+                }
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -16952,7 +16964,6 @@
                 updateProgress(52, '🌊 Enhancing Stereo Image', 'Mid/Side processing for width and depth...');
                 await new Promise(r => setTimeout(r, 600));
 
-                console.log('🔊 PROGRESS DEBUG: targetLUFS =', targetLUFS, '| platformName =', platformName);
                 updateProgress(60, '🔊 Targeting Loudness', 'Optimizing for ' + targetLUFS + ' LUFS (' + platformName + ' standard)...');
                 await new Promise(r => setTimeout(r, 700));
 
@@ -17782,8 +17793,7 @@
                     }
 
                     // 🏆 PLATFORM LUFS TARGETING
-                    console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
-                    console.log('🔍 DEBUG: window.masteringComplete =', window.masteringComplete, '| typeof =', typeof window.masteringComplete);
+                    console.log('🎯 Platform preset:', platformName, '| Target:', targetLUFS, 'LUFS');
 
                     // Store selected platform globally for EQ compensation
                     window.selectedPlatform = platform;
@@ -21459,13 +21469,6 @@
 
                 // Get input LUFS from stored measurement (measured when file was loaded)
                 const currentLUFS = window.originalInputLUFS || integratedLUFS || -18;
-                console.log('═══════════════════════════════════════════════════════════════');
-                console.log('🔍 LUFS TARGETING DEBUG:');
-                console.log('   window.originalInputLUFS:', window.originalInputLUFS);
-                console.log('   integratedLUFS variable:', typeof integratedLUFS !== 'undefined' ? integratedLUFS : 'undefined');
-                console.log('   Using currentLUFS:', currentLUFS);
-                console.log('   targetLUFS:', targetLUFS);
-                console.log('═══════════════════════════════════════════════════════════════');
 
                 // Get platform target (use already-declared targetLUFS from line 15874)
                 // Note: 'platform' was already declared at line 15873, so we reuse targetLUFS
@@ -22863,10 +22866,10 @@
             ctx.fillText('Mastered', 10, height - 10);
         }
 
-        // Close A/B modal
+        // Close A/B modal (stub - modal overlay removed in UI redesign)
         window.closeABModal = function() {
-            const modal = document.getElementById('abModalOverlay');
-            if (modal) modal.classList.remove('active');
+            // A/B comparison now uses integrated toggle instead of modal
+            console.log('A/B modal closed (using integrated toggle)');
         };
 
         // Close A/B modal and proceed to export
