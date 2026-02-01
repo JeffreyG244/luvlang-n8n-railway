@@ -16421,56 +16421,79 @@
                     // Call setPlatformTarget to configure limiter
                     setPlatformTarget(platform);
 
-                    // 🏆 PLATFORM LUFS TARGETING - Smart gain adjustment
+                    // 🏆 PLATFORM LUFS TARGETING
                     console.log('🔍 Platform preset changed to:', platformName, '| Target:', targetLUFS, 'LUFS');
 
-                    // Use window.makeupGain for LUFS targeting (before limiter in chain)
+                    // Check if mastering has already been completed
+                    const masteringComplete = window.masteringComplete === true;
+
+                    if (masteringComplete) {
+                        // AFTER MASTERING: Don't change gain - tell user to re-master
+                        console.log('⚠️ Mastering already complete - user must re-master for new LUFS target');
+
+                        // Store the new target for when they re-master
+                        window.autoLUFSTargetLevel = targetLUFS;
+
+                        // Show warning toast
+                        if (typeof showToast === 'function') {
+                            showToast(`${platformName} selected - Click MASTER again to apply ${targetLUFS} LUFS`, 'warning');
+                        }
+
+                        // Also show a more prominent notification
+                        const notification = document.createElement('div');
+                        notification.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: linear-gradient(135deg, rgba(255, 165, 0, 0.95) 0%, rgba(255, 100, 0, 0.95) 100%);
+                            color: #000;
+                            padding: 25px 35px;
+                            border-radius: 15px;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            text-align: center;
+                            z-index: 10000;
+                            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                            animation: fadeIn 0.3s ease;
+                        `;
+                        notification.innerHTML = `
+                            <div style="font-size: 2rem; margin-bottom: 10px;">🔊</div>
+                            <div style="margin-bottom: 8px;">${platformName} (${targetLUFS} LUFS) Selected</div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">Click the <strong>MASTER</strong> button again to re-master at this target</div>
+                        `;
+                        document.body.appendChild(notification);
+
+                        // Remove after 4 seconds
+                        setTimeout(() => {
+                            notification.style.opacity = '0';
+                            notification.style.transition = 'opacity 0.3s ease';
+                            setTimeout(() => notification.remove(), 300);
+                        }, 4000);
+
+                        return; // Don't apply any gain changes
+                    }
+
+                    // BEFORE MASTERING: Apply LUFS targeting
                     const mu = window.makeupGain || makeupGain;
                     const ac = window.audioContext || audioContext;
 
                     if (mu && ac && window.autoLUFSInputLevel !== undefined) {
-                        // Check if mastering has already been completed
-                        const previousTarget = window.autoLUFSTargetLevel || -14;
-                        const masteringComplete = window.masteringComplete === true;
+                        const inputLUFS = window.autoLUFSInputLevel;
 
-                        let safeGain;
-                        let linearGain;
+                        // Add compensation for processing chain losses (limiter GR + saturation)
+                        const chainCompensation = 3.5;
 
-                        if (masteringComplete) {
-                            // AFTER MASTERING: Only apply the DIFFERENCE between old and new target
-                            // Audio is already at the previous target LUFS, so just adjust by the difference
-                            const targetDifference = targetLUFS - previousTarget;
+                        // Calculate gain with compensation
+                        const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
 
-                            // Get current gain and adjust by difference
-                            const currentGainDB = window.autoLUFSGainApplied || 0;
-                            safeGain = currentGainDB + targetDifference;
+                        // Safety limits: max +12dB boost, max -10dB cut
+                        const safeGain = Math.max(-10, Math.min(12, gainNeeded));
+                        const linearGain = Math.pow(10, safeGain / 20);
 
-                            // Safety limits
-                            safeGain = Math.max(-15, Math.min(15, safeGain));
-                            linearGain = Math.pow(10, safeGain / 20);
-
-                            console.log(`🔄 POST-MASTERING ADJUSTMENT:`);
-                            console.log(`   Previous target: ${previousTarget} LUFS → New target: ${targetLUFS} LUFS`);
-                            console.log(`   Difference: ${targetDifference >= 0 ? '+' : ''}${targetDifference.toFixed(1)} dB`);
-                            console.log(`   New makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
-                        } else {
-                            // BEFORE MASTERING: Full recalculation based on input level
-                            const inputLUFS = window.autoLUFSInputLevel;
-
-                            // Add compensation for processing chain losses (limiter GR + saturation)
-                            const chainCompensation = 3.5;
-
-                            // Calculate gain with compensation
-                            const gainNeeded = targetLUFS - inputLUFS + chainCompensation;
-
-                            // Safety limits: max +12dB boost, max -10dB cut
-                            safeGain = Math.max(-10, Math.min(12, gainNeeded));
-                            linearGain = Math.pow(10, safeGain / 20);
-
-                            console.log(`🎯 LUFS CALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
-                            console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
-                            console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
-                        }
+                        console.log(`🎯 LUFS CALCULATED: Input ${inputLUFS.toFixed(1)} → Target ${targetLUFS} LUFS`);
+                        console.log(`   Chain compensation: +${chainCompensation.toFixed(1)} dB`);
+                        console.log(`   Final makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
 
                         // Smooth ramp to new gain
                         mu.gain.cancelScheduledValues(ac.currentTime);
