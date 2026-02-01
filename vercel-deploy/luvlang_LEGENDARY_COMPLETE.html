@@ -23367,13 +23367,33 @@
             stopSpeaking();
             endVoiceTour();
 
-            // Highlight genre section
-            const genreSection = document.getElementById('genreSection');
-            if (genreSection) {
-                genreSection.style.transition = 'all 0.5s ease';
-                genreSection.style.boxShadow = '0 0 40px rgba(0,212,255,0.6)';
-                setTimeout(() => { genreSection.style.boxShadow = ''; }, 4000);
-            }
+            // Scroll to show EQ section, waveform, and meters - the main working area
+            setTimeout(() => {
+                const eqSection = document.getElementById('eqSection');
+                const centerMain = document.querySelector('.center-main');
+
+                if (eqSection && centerMain) {
+                    // Scroll the center panel so EQ is near the top
+                    const eqOffsetInPanel = eqSection.offsetTop - centerMain.offsetTop;
+                    centerMain.scrollTo({
+                        top: Math.max(0, eqOffsetInPanel - 100), // 100px padding from top
+                        behavior: 'smooth'
+                    });
+
+                    // Highlight the EQ section
+                    eqSection.style.transition = 'all 0.5s ease';
+                    eqSection.style.boxShadow = '0 0 40px rgba(0,212,255,0.6), 0 0 80px rgba(0,212,255,0.3)';
+                    setTimeout(() => { eqSection.style.boxShadow = ''; }, 3000);
+                }
+
+                // Also highlight genre section on left
+                const genreSection = document.getElementById('genreSection');
+                if (genreSection) {
+                    genreSection.style.transition = 'all 0.5s ease';
+                    genreSection.style.boxShadow = '0 0 30px rgba(0,255,136,0.5)';
+                    setTimeout(() => { genreSection.style.boxShadow = ''; }, 3000);
+                }
+            }, 300);
         }
 
         // Track last action to prevent duplicate advances
