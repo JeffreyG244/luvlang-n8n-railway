@@ -6013,410 +6013,119 @@
         <div class="right-sidebar">
 
             <!-- ═══════════════════════════════════════════════════════════════════════════
-                 🎯 STATE-OF-THE-ART LUFS METERING DISPLAY
-                 Premium broadcast-grade design with glass morphism and LED aesthetics
+                 🎯 COMPACT METERING PANEL - All essential meters in one place
                  ═══════════════════════════════════════════════════════════════════════════ -->
             <div id="liveLufsIndicator" style="
-                position: sticky; top: 0; z-index: 100;
-                background: linear-gradient(145deg, rgba(8, 8, 18, 0.98) 0%, rgba(12, 12, 28, 0.95) 50%, rgba(8, 8, 18, 0.98) 100%);
-                border: 1px solid rgba(0, 212, 255, 0.3);
-                border-radius: 12px;
-                padding: 0;
+                background: linear-gradient(145deg, rgba(8, 8, 18, 0.98) 0%, rgba(12, 12, 28, 0.95) 100%);
+                border: 1px solid rgba(0, 212, 255, 0.25);
+                border-radius: 10px;
+                padding: 10px;
                 margin-bottom: 10px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-                overflow: hidden;
             ">
-                <!-- Header Bar with LED Status -->
-                <div style="
-                    display: flex; justify-content: space-between; align-items: center;
-                    padding: 6px 10px;
-                    background: linear-gradient(90deg, rgba(0, 212, 255, 0.08), transparent, rgba(0, 255, 136, 0.08));
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                ">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <!-- Animated LED indicator -->
-                        <div id="meterActiveLED" style="
-                            width: 8px; height: 8px; border-radius: 50%;
-                            background: radial-gradient(circle, #00ff88 0%, #00cc66 100%);
-                            box-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.5);
-                            animation: ledPulse 2s ease-in-out infinite;
-                        "></div>
-                        <div style="font-size: 0.65rem; color: #00d4ff; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">LOUDNESS METER</div>
+                <!-- LUFS Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.15); border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.6); text-transform: uppercase; letter-spacing: 1px;">MOMENTARY</div>
+                        <div id="liveLufsValue" style="font-size: 1.6rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; line-height: 1.2;">-∞</div>
+                        <div style="font-size: 0.4rem; color: rgba(0, 255, 136, 0.4);">LUFS</div>
                     </div>
-                    <div id="liveLufsStatus" style="
-                        font-size: 0.55rem; padding: 4px 10px; border-radius: 12px;
-                        background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
-                        border: 1px solid rgba(0, 255, 136, 0.3);
-                        color: #00ff88; font-weight: 700; letter-spacing: 1px;
-                    ">● LIVE</div>
-                </div>
-
-                <!-- Main Meter Display -->
-                <div style="padding: 10px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <!-- MOMENTARY Display -->
-                        <div style="
-                            background: linear-gradient(180deg, rgba(0, 255, 136, 0.03) 0%, rgba(0, 0, 0, 0.2) 100%);
-                            border: 1px solid rgba(0, 255, 136, 0.15);
-                            border-radius: 12px;
-                            padding: 12px 8px;
-                            text-align: center;
-                            position: relative;
-                            overflow: hidden;
-                        ">
-                            <!-- Glow effect behind value -->
-                            <div style="
-                                position: absolute; top: 50%; left: 50%;
-                                transform: translate(-50%, -50%);
-                                width: 80px; height: 80px;
-                                background: radial-gradient(circle, rgba(0, 255, 136, 0.15) 0%, transparent 70%);
-                                pointer-events: none;
-                            "></div>
-                            <div style="font-size: 0.55rem; color: rgba(0, 255, 136, 0.7); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">MOMENTARY</div>
-                            <div id="liveLufsValue" style="
-                                font-size: 2.2rem; font-weight: 900; color: #00ff88;
-                                font-family: 'JetBrains Mono', 'SF Mono', monospace;
-                                text-shadow: 0 0 30px rgba(0, 255, 136, 0.6), 0 0 60px rgba(0, 255, 136, 0.3);
-                                line-height: 1;
-                                position: relative;
-                            ">-∞</div>
-                            <div style="font-size: 0.5rem; color: rgba(0, 255, 136, 0.5); margin-top: 4px; letter-spacing: 1px;">LUFS</div>
-                        </div>
-
-                        <!-- INTEGRATED Display -->
-                        <div style="
-                            background: linear-gradient(180deg, rgba(0, 212, 255, 0.03) 0%, rgba(0, 0, 0, 0.2) 100%);
-                            border: 1px solid rgba(0, 212, 255, 0.15);
-                            border-radius: 12px;
-                            padding: 12px 8px;
-                            text-align: center;
-                            position: relative;
-                            overflow: hidden;
-                        ">
-                            <!-- Glow effect behind value -->
-                            <div style="
-                                position: absolute; top: 50%; left: 50%;
-                                transform: translate(-50%, -50%);
-                                width: 80px; height: 80px;
-                                background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
-                                pointer-events: none;
-                            "></div>
-                            <div style="font-size: 0.55rem; color: rgba(0, 212, 255, 0.7); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">INTEGRATED</div>
-                            <div id="measuredLufsValue" style="
-                                font-size: 2.2rem; font-weight: 900; color: #00d4ff;
-                                font-family: 'JetBrains Mono', 'SF Mono', monospace;
-                                text-shadow: 0 0 30px rgba(0, 212, 255, 0.6), 0 0 60px rgba(0, 212, 255, 0.3);
-                                line-height: 1;
-                                position: relative;
-                            ">-∞</div>
-                            <div style="font-size: 0.5rem; color: rgba(0, 212, 255, 0.5); margin-top: 4px; letter-spacing: 1px;">LUFS</div>
-                        </div>
-                    </div>
-
-                    <!-- Horizontal LUFS Bar Meter -->
-                    <div style="margin-top: 12px; position: relative;">
-                        <div style="
-                            height: 6px;
-                            background: linear-gradient(90deg,
-                                rgba(255, 0, 0, 0.3) 0%,
-                                rgba(255, 100, 0, 0.3) 20%,
-                                rgba(255, 200, 0, 0.3) 40%,
-                                rgba(0, 255, 136, 0.3) 60%,
-                                rgba(0, 212, 255, 0.3) 80%,
-                                rgba(102, 126, 234, 0.3) 100%
-                            );
-                            border-radius: 3px;
-                            position: relative;
-                            overflow: hidden;
-                        ">
-                            <!-- Meter needle/indicator -->
-                            <div id="lufsBarIndicator" style="
-                                position: absolute;
-                                top: -2px; bottom: -2px;
-                                width: 3px;
-                                background: #fff;
-                                border-radius: 2px;
-                                left: 50%;
-                                box-shadow: 0 0 8px #fff, 0 0 15px rgba(255, 255, 255, 0.5);
-                                transition: left 0.1s ease-out;
-                            "></div>
-                        </div>
-                        <!-- Scale labels -->
-                        <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                            <span style="font-size: 0.45rem; color: rgba(255, 100, 100, 0.7);">-6</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 200, 100, 0.7);">-10</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-14</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-18</span>
-                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.7);">-24</span>
-                        </div>
+                    <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.6); text-transform: uppercase; letter-spacing: 1px;">INTEGRATED</div>
+                        <div id="measuredLufsValue" style="font-size: 1.6rem; font-weight: 800; color: #00d4ff; font-family: 'JetBrains Mono', monospace; line-height: 1.2;">-∞</div>
+                        <div style="font-size: 0.4rem; color: rgba(0, 212, 255, 0.4);">LUFS</div>
                     </div>
                 </div>
-
-                <!-- Target Footer -->
-                <div style="
-                    padding: 10px 15px;
-                    background: linear-gradient(90deg, rgba(255, 215, 0, 0.05), transparent, rgba(255, 215, 0, 0.05));
-                    border-top: 1px solid rgba(255, 255, 255, 0.05);
-                    display: flex; justify-content: space-between; align-items: center;
-                ">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <div style="width: 6px; height: 6px; border-radius: 50%; background: #ffd700; box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);"></div>
-                        <span style="font-size: 0.55rem; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.5px;">TARGET</span>
+                <!-- Peak + Phase Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div style="background: rgba(255, 152, 0, 0.05); border: 1px solid rgba(255, 152, 0, 0.15); border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.6); text-transform: uppercase; letter-spacing: 1px;">TRUE PEAK</div>
+                        <div id="peakValue" style="font-size: 1.4rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; line-height: 1.2;">-∞</div>
+                        <div style="font-size: 0.4rem; color: rgba(255, 152, 0, 0.4);">dBTP</div>
                     </div>
-                    <div id="liveLufsTarget" style="font-size: 0.75rem; font-weight: 700; color: #ffd700; font-family: 'JetBrains Mono', monospace;">-14 LUFS</div>
+                    <div style="background: rgba(156, 39, 176, 0.05); border: 1px solid rgba(156, 39, 176, 0.15); border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.45rem; color: rgba(156, 39, 176, 0.6); text-transform: uppercase; letter-spacing: 1px;">PHASE</div>
+                        <div id="phaseValue" style="font-size: 1.4rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; line-height: 1.2;">+1.0</div>
+                        <div id="phaseDescription" style="font-size: 0.4rem; color: rgba(0, 255, 136, 0.6);">PERFECT</div>
+                    </div>
+                </div>
+                <!-- Target + Status Bar -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: rgba(255, 215, 0, 0.03); border-radius: 6px;">
+                    <div style="display: flex; align-items: center; gap: 4px;">
+                        <div id="meterActiveLED" style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
+                        <span style="font-size: 0.45rem; color: rgba(255, 255, 255, 0.4);">TARGET</span>
+                    </div>
+                    <div id="liveLufsTarget" style="font-size: 0.6rem; font-weight: 700; color: #ffd700; font-family: 'JetBrains Mono', monospace;">-14 LUFS</div>
                 </div>
             </div>
 
-            <!-- LED Pulse Animation -->
-            <style>
-                @keyframes ledPulse {
-                    0%, 100% { opacity: 1; box-shadow: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.5); }
-                    50% { opacity: 0.7; box-shadow: 0 0 5px #00ff88, 0 0 10px rgba(0, 255, 136, 0.3); }
-                }
-                @keyframes meterGlow {
-                    0%, 100% { filter: brightness(1); }
-                    50% { filter: brightness(1.1); }
-                }
-            </style>
-
-            <!-- ═══════════════════════════════════════════════════════════════════════════
-                 📊 STATE-OF-THE-ART BROADCAST METERING SUITE
-                 Premium glass-morphism design with LED indicators and professional aesthetics
-                 ═══════════════════════════════════════════════════════════════════════════ -->
-            <div class="meters-container" style="
-                background: linear-gradient(145deg, rgba(8, 8, 18, 0.95) 0%, rgba(15, 15, 30, 0.9) 100%);
-                border: 1px solid rgba(102, 126, 234, 0.2);
-                border-radius: 16px;
-                padding: 0;
-                overflow: hidden;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-            ">
-                <!-- Header -->
-                <div style="
-                    display: flex; justify-content: space-between; align-items: center;
-                    padding: 12px 15px;
-                    background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                ">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="
-                            width: 24px; height: 24px;
-                            background: linear-gradient(135deg, #667eea, #764ba2);
-                            border-radius: 6px;
-                            display: flex; align-items: center; justify-content: center;
-                            font-size: 0.7rem;
-                        ">📡</div>
-                        <span style="font-size: 0.7rem; color: #fff; font-weight: 700; letter-spacing: 1px;">BROADCAST METERS</span>
-                    </div>
-                    <button id="advancedMetersToggle" style="
-                        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-                        color: #fff; border: 1px solid rgba(102, 126, 234, 0.4);
-                        padding: 5px 12px; border-radius: 8px;
-                        font-size: 0.6rem; cursor: pointer; font-weight: 600;
-                        transition: all 0.2s ease;
-                        text-transform: uppercase; letter-spacing: 0.5px;
-                    ">▼ PRO</button>
+            <!-- PRO METERS (Collapsible) -->
+            <div style="background: rgba(102, 126, 234, 0.03); border: 1px solid rgba(102, 126, 234, 0.15); border-radius: 10px; margin-bottom: 10px; overflow: hidden;">
+                <div id="advancedMetersToggle" onclick="toggleProMeters()" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; cursor: pointer; background: rgba(102, 126, 234, 0.05);">
+                    <span style="font-size: 0.55rem; color: #667eea; font-weight: 600; letter-spacing: 1px;">PRO METERS</span>
+                    <span id="proMetersIcon" style="font-size: 0.5rem; color: #667eea; transition: transform 0.2s;">▼</span>
                 </div>
-
-                <div style="padding: 15px;">
-                    <!-- PRIMARY METERS: Stereo & Peak -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
-                        <!-- Phase Correlation Meter -->
-                        <div style="
-                            background: linear-gradient(180deg, rgba(156, 39, 176, 0.08) 0%, rgba(0, 0, 0, 0.15) 100%);
-                            border: 1px solid rgba(156, 39, 176, 0.25);
-                            border-radius: 12px;
-                            padding: 14px 10px;
-                            text-align: center;
-                            position: relative;
-                        ">
-                            <!-- LED indicator -->
-                            <div style="position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88;"></div>
-                            <div style="font-size: 0.55rem; color: rgba(156, 39, 176, 0.8); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600;">PHASE</div>
-                            <div id="phaseValue" style="
-                                font-size: 1.9rem; font-weight: 800; color: #00ff88; line-height: 1;
-                                font-family: 'JetBrains Mono', 'SF Mono', monospace;
-                                text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-                            ">+1.0</div>
-                            <div id="phaseDescription" style="font-size: 0.55rem; color: rgba(0,255,136,0.8); margin-top: 6px; font-weight: 700; letter-spacing: 0.5px;">PERFECT</div>
-                            <!-- Mini phase bar -->
-                            <div style="margin-top: 8px; height: 3px; background: linear-gradient(90deg, #ff0044, #ffaa00 50%, #00ff88); border-radius: 2px; opacity: 0.6;"></div>
+                <div id="proMetersPanel" style="display: none; padding: 10px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                        <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.1); border-radius: 6px; padding: 6px; text-align: center;">
+                            <div style="font-size: 0.4rem; color: rgba(0, 212, 255, 0.5); text-transform: uppercase;">SHORT</div>
+                            <div id="shortLufsValue" style="font-size: 1.1rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', monospace;">-∞</div>
                         </div>
-
-                        <!-- True Peak Meter -->
-                        <div style="
-                            background: linear-gradient(180deg, rgba(255, 152, 0, 0.08) 0%, rgba(0, 0, 0, 0.15) 100%);
-                            border: 1px solid rgba(255, 152, 0, 0.25);
-                            border-radius: 12px;
-                            padding: 14px 10px;
-                            text-align: center;
-                            position: relative;
-                        ">
-                            <!-- LED indicator -->
-                            <div id="peakLED" style="position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88;"></div>
-                            <div style="font-size: 0.55rem; color: rgba(255, 152, 0, 0.8); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 600;">TRUE PEAK</div>
-                            <div id="peakValue" style="
-                                font-size: 1.9rem; font-weight: 800; color: #00ff88; line-height: 1;
-                                font-family: 'JetBrains Mono', 'SF Mono', monospace;
-                                text-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-                            ">-∞</div>
-                            <div style="font-size: 0.55rem; color: rgba(255, 152, 0, 0.7); margin-top: 6px; letter-spacing: 0.5px;">dBTP</div>
-                            <!-- Peak hold bar -->
-                            <div style="margin-top: 8px; height: 3px; background: rgba(255, 152, 0, 0.2); border-radius: 2px; overflow: hidden;">
-                                <div id="peakHoldBar" style="width: 50%; height: 100%; background: linear-gradient(90deg, #00ff88, #ffaa00, #ff4444); transition: width 0.05s;"></div>
-                            </div>
+                        <div style="background: rgba(255, 193, 7, 0.05); border: 1px solid rgba(255, 193, 7, 0.1); border-radius: 6px; padding: 6px; text-align: center;">
+                            <div style="font-size: 0.4rem; color: rgba(255, 193, 7, 0.5); text-transform: uppercase;">LRA</div>
+                            <div id="lraValue" style="font-size: 1.1rem; font-weight: 700; color: #ffc107; font-family: 'JetBrains Mono', monospace;">--</div>
                         </div>
                     </div>
-
-                    <!-- ═══════════════════════════════════════════════════════════════════
-                         PRO METERS PANEL - Hidden by default
-                         ═══════════════════════════════════════════════════════════════════ -->
-                    <div class="advanced-meter" id="proMetersPanel" style="
-                        display: none;
-                        background: linear-gradient(180deg, rgba(102, 126, 234, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
-                        border: 1px solid rgba(102, 126, 234, 0.2);
-                        border-radius: 12px;
-                        padding: 12px;
-                        margin-bottom: 12px;
-                    ">
-                        <div style="font-size: 0.5rem; color: rgba(102, 126, 234, 0.8); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-align: center; font-weight: 600;">EBU R128 ANALYSIS</div>
-
-                        <!-- Row 1: Short-term & LRA -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                            <div style="background: rgba(0, 212, 255, 0.06); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 10px; text-align: center;">
-                                <div style="font-size: 0.5rem; color: rgba(0, 212, 255, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">SHORT-TERM</div>
-                                <div id="shortLufsValue" style="font-size: 1.5rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(0, 212, 255, 0.3);">-∞</div>
-                                <div style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.5); margin-top: 2px;">LUFS (3s)</div>
-                            </div>
-                            <div style="background: rgba(255, 193, 7, 0.06); border: 1px solid rgba(255, 193, 7, 0.2); border-radius: 10px; padding: 10px; text-align: center;">
-                                <div style="font-size: 0.5rem; color: rgba(255, 193, 7, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">LRA</div>
-                                <div id="lraValue" style="font-size: 1.5rem; font-weight: 700; color: #ffc107; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(255, 193, 7, 0.3);">--</div>
-                                <div style="font-size: 0.45rem; color: rgba(255, 193, 7, 0.5); margin-top: 2px;">LU Range</div>
-                            </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                        <div style="background: rgba(233, 30, 99, 0.05); border: 1px solid rgba(233, 30, 99, 0.1); border-radius: 6px; padding: 6px; text-align: center;">
+                            <div style="font-size: 0.4rem; color: rgba(233, 30, 99, 0.5); text-transform: uppercase;">CREST</div>
+                            <div id="crestValue" style="font-size: 1rem; font-weight: 700; color: #e91e63; font-family: 'JetBrains Mono', monospace;">--</div>
                         </div>
-
-                        <!-- Row 2: Momentary & Crest -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                            <div style="background: rgba(0, 255, 136, 0.06); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 10px; padding: 10px; text-align: center;">
-                                <div style="font-size: 0.5rem; color: rgba(0, 255, 136, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">MOMENTARY</div>
-                                <div id="momentaryLufsValue" style="font-size: 1.5rem; font-weight: 700; color: #00ff88; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(0, 255, 136, 0.3);">-∞</div>
-                                <div style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.5); margin-top: 2px;">LUFS (400ms)</div>
-                            </div>
-                            <div style="background: rgba(233, 30, 99, 0.06); border: 1px solid rgba(233, 30, 99, 0.2); border-radius: 10px; padding: 10px; text-align: center;">
-                                <div style="font-size: 0.5rem; color: rgba(233, 30, 99, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CREST</div>
-                                <div id="crestValue" style="font-size: 1.5rem; font-weight: 700; color: #e91e63; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(233, 30, 99, 0.3);">--</div>
-                                <div style="font-size: 0.45rem; color: rgba(233, 30, 99, 0.5); margin-top: 2px;">dB Peak/RMS</div>
-                            </div>
+                        <div style="background: rgba(156, 39, 176, 0.05); border: 1px solid rgba(156, 39, 176, 0.1); border-radius: 6px; padding: 6px; text-align: center;">
+                            <div style="font-size: 0.4rem; color: rgba(156, 39, 176, 0.5); text-transform: uppercase;">PSR</div>
+                            <div id="psrValue" style="font-size: 1rem; font-weight: 700; color: #9c27b0; font-family: 'JetBrains Mono', monospace;">--</div>
                         </div>
-
-                        <!-- PLR Bar -->
-                        <div style="background: rgba(156, 39, 176, 0.06); border: 1px solid rgba(156, 39, 176, 0.2); border-radius: 10px; padding: 10px; text-align: center;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="font-size: 0.5rem; color: rgba(156, 39, 176, 0.7); text-transform: uppercase; letter-spacing: 1px;">PLR</div>
-                                <div id="plrValue" style="font-size: 1.2rem; font-weight: 700; color: #9c27b0; font-family: 'JetBrains Mono', monospace;">-- dB</div>
-                            </div>
-                            <div style="margin-top: 6px; height: 4px; background: rgba(156, 39, 176, 0.15); border-radius: 2px; overflow: hidden;">
-                                <div id="plrBar" style="width: 60%; height: 100%; background: linear-gradient(90deg, #9c27b0, #e040fb); transition: width 0.2s;"></div>
-                            </div>
+                        <div style="background: rgba(0, 255, 136, 0.05); border: 1px solid rgba(0, 255, 136, 0.1); border-radius: 6px; padding: 6px; text-align: center;">
+                            <div style="font-size: 0.4rem; color: rgba(0, 255, 136, 0.5); text-transform: uppercase;">CLIP</div>
+                            <div id="clipStatus" style="font-size: 0.8rem; font-weight: 700; color: #00ff88; font-family: 'JetBrains Mono', monospace;">OK</div>
                         </div>
                     </div>
-
-                    <!-- ═══════════════════════════════════════════════════════════════════
-                         LEGENDARY METERS - Premium Analysis Suite
-                         ═══════════════════════════════════════════════════════════════════ -->
-                    <div id="legendaryMetersPanel" style="
-                        background: linear-gradient(145deg, rgba(255, 215, 0, 0.04) 0%, rgba(255, 140, 0, 0.02) 50%, rgba(0, 0, 0, 0.1) 100%);
-                        border: 1px solid rgba(255, 215, 0, 0.25);
-                        border-top: 2px solid rgba(255, 215, 0, 0.5);
-                        border-radius: 12px;
-                        padding: 12px;
-                        position: relative;
-                    ">
-                        <!-- Premium badge -->
-                        <div style="position: absolute; top: -1px; right: 15px; background: linear-gradient(135deg, #ffd700, #ff8c00); padding: 3px 10px; border-radius: 0 0 6px 6px; font-size: 0.45rem; color: #000; font-weight: 800; letter-spacing: 1px;">STUDIO</div>
-
-                        <!-- Row 1: Correlation & Clip -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; margin-top: 5px;">
-                            <!-- Correlation -->
-                            <div id="correlationMeterCard" style="
-                                background: linear-gradient(180deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
-                                border: 1px solid rgba(0, 255, 136, 0.2);
-                                border-radius: 10px;
-                                padding: 10px;
-                                text-align: center;
-                            ">
-                                <div style="font-size: 0.5rem; color: rgba(0, 255, 136, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">CORRELATION</div>
-                                <div id="correlationValue" style="font-size: 1.4rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">+1.00</div>
-                                <div id="correlationStatus" style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.8); margin-top: 3px; font-weight: 700;">EXCELLENT</div>
-                                <!-- Visual bar -->
-                                <div style="margin-top: 6px; height: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 2px; overflow: hidden; position: relative;">
-                                    <div id="correlationBar" style="position: absolute; top: 0; bottom: 0; width: 3px; left: 100%; background: #fff; border-radius: 2px; box-shadow: 0 0 6px #fff; transition: left 0.1s;"></div>
-                                    <div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background: linear-gradient(90deg, #ff0044, #ffaa00 50%, #00ff88);"></div>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                                    <span style="font-size: 0.4rem; color: rgba(255, 0, 68, 0.6);">-1</span>
-                                    <span style="font-size: 0.4rem; color: rgba(255, 255, 255, 0.3);">0</span>
-                                    <span style="font-size: 0.4rem; color: rgba(0, 255, 136, 0.6);">+1</span>
-                                </div>
-                            </div>
-
-                            <!-- Clip Detector -->
-                            <div id="clipDetectorCard" style="
-                                background: linear-gradient(180deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
-                                border: 1px solid rgba(0, 255, 136, 0.2);
-                                border-radius: 10px;
-                                padding: 10px;
-                                text-align: center;
-                            ">
-                                <div style="font-size: 0.5rem; color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">ISP CLIP</div>
-                                <div id="clipStatus" style="font-size: 1.1rem; font-weight: 800; color: #00ff88; font-family: 'JetBrains Mono', monospace;">CLEAN</div>
-                                <div id="clipCount" style="font-size: 0.45rem; color: rgba(255, 255, 255, 0.4); margin-top: 3px;">0 clips detected</div>
-                                <!-- LED array -->
-                                <div style="margin-top: 8px; display: flex; justify-content: center; gap: 6px;">
-                                    <div id="clipLight1" style="width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #00ff88 0%, #006633 100%); box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);"></div>
-                                    <div id="clipLight2" style="width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #333 0%, #222 100%); box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);"></div>
-                                    <div id="clipLight3" style="width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle, #333 0%, #222 100%); box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Row 2: True Peak ISP & PSR -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <!-- True Peak ISP -->
-                            <div style="
-                                background: linear-gradient(180deg, rgba(255, 152, 0, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
-                                border: 1px solid rgba(255, 152, 0, 0.2);
-                                border-radius: 10px;
-                                padding: 10px;
-                                text-align: center;
-                            ">
-                                <div style="font-size: 0.5rem; color: rgba(255, 152, 0, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">TRUE PEAK ISP</div>
-                                <div id="truePeakValue" style="font-size: 1.4rem; font-weight: 800; color: #ff9800; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(255, 152, 0, 0.4);">-∞</div>
-                                <div style="font-size: 0.45rem; color: rgba(255, 152, 0, 0.5); margin-top: 3px;">dBTP • 4x Oversample</div>
-                            </div>
-
-                            <!-- PSR -->
-                            <div style="
-                                background: linear-gradient(180deg, rgba(156, 39, 176, 0.05) 0%, rgba(0, 0, 0, 0.1) 100%);
-                                border: 1px solid rgba(156, 39, 176, 0.2);
-                                border-radius: 10px;
-                                padding: 10px;
-                                text-align: center;
-                            ">
-                                <div style="font-size: 0.5rem; color: rgba(156, 39, 176, 0.7); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PSR</div>
-                                <div id="psrValue" style="font-size: 1.4rem; font-weight: 800; color: #9c27b0; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 15px rgba(156, 39, 176, 0.4);">--</div>
-                                <div id="psrStatus" style="font-size: 0.45rem; color: rgba(156, 39, 176, 0.6); margin-top: 3px;">Dynamic Range</div>
-                            </div>
-                        </div>
-
-                        <!-- Compliance Footer -->
-                        <div style="margin-top: 10px; padding: 6px 10px; background: rgba(255, 255, 255, 0.02); border-radius: 6px; display: flex; justify-content: center; align-items: center; gap: 8px;">
-                            <div style="width: 4px; height: 4px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
-                            <div style="font-size: 0.45rem; color: rgba(255, 255, 255, 0.4); letter-spacing: 1px; text-transform: uppercase;">ITU-R BS.1770-5 • EBU R128 • AES-17</div>
-                        </div>
+                    <!-- Hidden elements for JS compatibility -->
+                    <div style="display: none;">
+                        <div id="momentaryLufsValue"></div>
+                        <div id="plrValue"></div>
+                        <div id="plrBar"></div>
+                        <div id="correlationValue"></div>
+                        <div id="correlationStatus"></div>
+                        <div id="correlationBar"></div>
+                        <div id="truePeakValue"></div>
+                        <div id="psrStatus"></div>
+                        <div id="clipCount"></div>
+                        <div id="clipLight1"></div>
+                        <div id="clipLight2"></div>
+                        <div id="clipLight3"></div>
+                        <div id="peakLED"></div>
+                        <div id="peakHoldBar"></div>
+                        <div id="lufsBarIndicator"></div>
+                        <div id="liveLufsStatus"></div>
+                        <div id="correlationMeterCard"></div>
+                        <div id="clipDetectorCard"></div>
+                        <div id="legendaryMetersPanel"></div>
                     </div>
                 </div>
             </div>
+            <script>
+                function toggleProMeters() {
+                    const panel = document.getElementById('proMetersPanel');
+                    const icon = document.getElementById('proMetersIcon');
+                    if (panel.style.display === 'none') {
+                        panel.style.display = 'block';
+                        icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        panel.style.display = 'none';
+                        icon.style.transform = 'rotate(0deg)';
+                    }
+                }
+            </script>
 
             <!-- ═══════════════════════════════════════════════════════════════════
                  🚀 ADVANCED MASTERING FEATURES - World-Class Processing
