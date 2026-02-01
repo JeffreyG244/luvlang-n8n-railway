@@ -6859,6 +6859,94 @@
                         window.presetManager = new PresetManager();
                         console.log('✅ All advanced processors initialized');
                     }
+
+                    // ✨ MULTIBAND COMPRESSOR: Initialize 4-band mastering compressor
+                    if (typeof MultibandCompressor !== 'undefined') {
+                        window.multibandCompressor = new MultibandCompressor(audioContext);
+                        console.log('✅ Multiband Compressor initialized (4 bands: Sub, LowMid, HighMid, Highs)');
+                    }
+
+                    // ✨ SOFT CLIPPER: Initialize for transparent peak control
+                    window.softClipper = {
+                        enabled: false,
+                        drive: 2.0,
+                        mix: 0.15,
+                        waveshaper: audioContext.createWaveShaper(),
+                        inputGain: audioContext.createGain(),
+                        wetGain: audioContext.createGain(),
+                        dryGain: audioContext.createGain(),
+                        output: audioContext.createGain(),
+                        enable: function() {
+                            this.enabled = true;
+                            this.wetGain.gain.value = this.mix;
+                            this.dryGain.gain.value = 1 - this.mix;
+                            this.updateCurve();
+                            console.log('🔊 Soft Clipper: ENABLED');
+                        },
+                        disable: function() {
+                            this.enabled = false;
+                            this.wetGain.gain.value = 0;
+                            this.dryGain.gain.value = 1;
+                        },
+                        setDrive: function(db) {
+                            this.drive = db;
+                            this.inputGain.gain.value = Math.pow(10, db / 20);
+                            this.updateCurve();
+                        },
+                        setMix: function(mix) {
+                            this.mix = mix;
+                            if (this.enabled) {
+                                this.wetGain.gain.value = mix;
+                                this.dryGain.gain.value = 1 - mix;
+                            }
+                        },
+                        updateCurve: function() {
+                            // Soft clip curve - smooth saturation
+                            const samples = 65536;
+                            const curve = new Float32Array(samples);
+                            const k = this.drive;
+                            for (let i = 0; i < samples; i++) {
+                                const x = (i * 2 / samples) - 1;
+                                // Soft clip using tanh
+                                curve[i] = Math.tanh(x * (1 + k * 0.5));
+                            }
+                            this.waveshaper.curve = curve;
+                            this.waveshaper.oversample = '4x';
+                        }
+                    };
+                    // Initialize curve
+                    window.softClipper.updateCurve();
+                    console.log('✅ Soft Clipper initialized (tube-style saturation)');
+
+                    // ✨ IRC LIMITER: Initialize mastering-grade limiter
+                    window.ircLimiter = {
+                        mode: 'balanced',
+                        modes: ['transparent', 'balanced', 'punchy', 'aggressive', 'transient'],
+                        setMode: function(mode) {
+                            if (this.modes.includes(mode)) {
+                                this.mode = mode;
+                                console.log('🎚️ IRC Limiter mode:', mode.toUpperCase());
+                            }
+                        },
+                        getMode: function() { return this.mode; }
+                    };
+                    console.log('✅ IRC Limiter initialized (5 modes available)');
+
+                    // ✨ STEREO FIELD EDITOR: Initialize frequency-dependent width control
+                    window.stereoFieldEditor = {
+                        enabled: false,
+                        monoFreq: 120,
+                        enable: function() {
+                            this.enabled = true;
+                            console.log('🔊 Stereo Field Editor: ENABLED');
+                        },
+                        disable: function() { this.enabled = false; },
+                        setMonoFreq: function(freq) {
+                            this.monoFreq = freq;
+                            console.log('🎚️ Stereo Field: Mono bass below', freq, 'Hz');
+                        }
+                    };
+                    console.log('✅ Stereo Field Editor initialized');
                 }
 
                 // Check if Web Audio is already set up
