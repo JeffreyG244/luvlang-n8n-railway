@@ -5929,10 +5929,16 @@
                  🚀 ADVANCED MASTERING FEATURES - World-Class Processing
                  ═══════════════════════════════════════════════════════════════════ -->
             <div class="advanced-features-section" style="margin-bottom: 15px;">
-                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span>🚀 Advanced Processing</span>
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer;" onclick="toggleAdvancedSection()">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <span id="advancedToggleIcon" style="transition: transform 0.3s ease;">▼</span>
+                        🚀 Advanced Processing
+                    </span>
                     <span style="font-size: 0.6rem; padding: 2px 8px; background: linear-gradient(135deg, #00d4ff, #b84fff); border-radius: 10px; color: #000; font-weight: 700;">PRO</span>
                 </div>
+
+                <!-- Collapsible content wrapper -->
+                <div id="advancedProcessingContent" style="transition: max-height 0.3s ease, opacity 0.3s ease; overflow: hidden;">
 
                 <!-- Dynamic EQ Toggle (3-Band Frequency-Dependent Compression) -->
                 <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
@@ -5970,6 +5976,8 @@
 
                 <!-- Linear Phase EQ Toggle -->
                 <div id="linearPhaseContainer"></div>
+
+                </div><!-- End collapsible content wrapper -->
             </div>
 
             <!-- MASTER SECTION - State-of-the-Art Design -->
@@ -7191,6 +7199,24 @@
                         window.dynamicEQ.disable();
                         if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.15)';
                         if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+                    }
+                };
+
+                // Toggle Advanced Processing Section (collapsible)
+                window.toggleAdvancedSection = function() {
+                    const content = document.getElementById('advancedProcessingContent');
+                    const icon = document.getElementById('advancedToggleIcon');
+                    if (content && icon) {
+                        const isCollapsed = content.style.maxHeight === '0px';
+                        if (isCollapsed) {
+                            content.style.maxHeight = '2000px';
+                            content.style.opacity = '1';
+                            icon.style.transform = 'rotate(0deg)';
+                        } else {
+                            content.style.maxHeight = '0px';
+                            content.style.opacity = '0';
+                            icon.style.transform = 'rotate(-90deg)';
+                        }
                     }
                 };
 
