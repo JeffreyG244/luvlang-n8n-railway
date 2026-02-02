@@ -20843,8 +20843,8 @@
                     };
                     const limSet = limiterSettings[intensity] || limiterSettings[3];
 
-                    // True peak limiting ratio: brickwall limiting at all levels
-                    const limiterRatio = 100; // Always brickwall to prevent clipping
+                    // True peak limiting ratio: maximum Web Audio API supports (20:1)
+                    const limiterRatio = 20; // Max DynamicsCompressorNode ratio (brickwall)
 
                     window.limiter.threshold.setTargetAtTime(limSet.threshold, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(limiterRatio, ac.currentTime, 0.1);
