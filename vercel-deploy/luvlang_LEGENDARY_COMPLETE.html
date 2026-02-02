@@ -16481,8 +16481,10 @@
                 }
 
                 // CRITICAL: Calculate gain needed to reach target LUFS
-                // SIMPLIFIED: No pre-compensation - let limiter handle peaks naturally
-                const lufsGainNeeded = targetLUFS - beforeLUFS;
+                // Add limiter compensation: limiters typically reduce loudness by 1-2 dB
+                // when catching peaks - compensate for this to hit exact target
+                const LIMITER_COMPENSATION_DB = 1.5; // Compensate for limiter gain reduction
+                const lufsGainNeeded = (targetLUFS - beforeLUFS) + LIMITER_COMPENSATION_DB;
 
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 console.log('🎯 GAIN CALCULATION (DIRECT - NO PRE-COMPENSATION):');
