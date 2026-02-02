@@ -5569,10 +5569,10 @@
             <!-- WAVEFORM PANEL (60% width) - Professional design -->
             <div class="viz-panel waveform-panel-secondary" style="background: linear-gradient(180deg, #0a0a12 0%, #0f0f18 100%); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 10px; overflow: hidden;">
                 <div class="panel-title" style="padding: 6px 12px; background: rgba(0, 212, 255, 0.05); border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem;">WAVEFORM</div>
-                <div id="waveformContainer" style="position: relative; width: 100%; height: 140px; background: #000;">
-                    <canvas id="waveformCanvasStatic" width="1600" height="280" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #000;"></canvas>
-                    <canvas id="waveformCanvasPlayhead" width="1600" height="280" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
-                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 2px; height: 100%; background: #00ffff; z-index: 20; box-shadow: 0 0 8px rgba(0,255,255,0.8); cursor: ew-resize; display: none;">
+                <div id="waveformContainer" style="position: relative; width: 100%; height: 200px; background: #000;">
+                    <canvas id="waveformCanvasStatic" width="1600" height="400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #000;"></canvas>
+                    <canvas id="waveformCanvasPlayhead" width="1600" height="400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
+                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 35px; width: 2px; height: 100%; background: #00ffff; z-index: 20; box-shadow: 0 0 8px rgba(0,255,255,0.8); cursor: ew-resize; display: none;">
                         <div style="position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 6px #00ffff;"></div>
                         <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 6px #00ffff;"></div>
                     </div>
@@ -13695,16 +13695,22 @@
         const waveformContainer = document.getElementById('waveformContainer');
         let isDraggingScrubber = false;
 
+        // Waveform margins (must match drawWaveformFromBuffer)
+        const WAVEFORM_LEFT_MARGIN = 35;
+        const WAVEFORM_RIGHT_MARGIN = 10;
+
         function updateScrubberPosition() {
             if (!audioElement || !audioElement.duration || !waveformContainer) return;
             if (isDraggingScrubber) return; // Don't update while user is dragging
 
             const percent = audioElement.currentTime / audioElement.duration;
             const containerWidth = waveformContainer.offsetWidth;
-            const position = percent * containerWidth;
+            const waveformWidth = containerWidth - WAVEFORM_LEFT_MARGIN - WAVEFORM_RIGHT_MARGIN;
+            const position = WAVEFORM_LEFT_MARGIN + (percent * waveformWidth);
 
             if (waveformScrubber) {
                 waveformScrubber.style.left = position + 'px';
+                waveformScrubber.style.display = 'block'; // Ensure visible
             }
         }
 
@@ -13728,14 +13734,17 @@
             if (!audioElement || !audioElement.duration || !waveformContainer) return;
 
             const rect = waveformContainer.getBoundingClientRect();
-            const x = clientX - rect.left;
-            const percent = Math.max(0, Math.min(1, x / rect.width));
+            const containerWidth = waveformContainer.offsetWidth;
+            const waveformWidth = containerWidth - WAVEFORM_LEFT_MARGIN - WAVEFORM_RIGHT_MARGIN;
+
+            // Calculate position relative to waveform area (not full container)
+            const x = clientX - rect.left - WAVEFORM_LEFT_MARGIN;
+            const percent = Math.max(0, Math.min(1, x / waveformWidth));
 
             audioElement.currentTime = percent * audioElement.duration;
 
             // Update position immediately
-            const containerWidth = waveformContainer.offsetWidth;
-            const position = percent * containerWidth;
+            const position = WAVEFORM_LEFT_MARGIN + (percent * waveformWidth);
             if (waveformScrubber) {
                 waveformScrubber.style.left = position + 'px';
             }
@@ -14680,6 +14689,13 @@
             ctx.fillText('CORR', corrBarX - 3, corrBarY + 3);
 
             console.log('✅ State-of-the-art stereo waveform rendered');
+
+            // Show and position scrubber at start
+            const scrubber = document.getElementById('waveformScrubber');
+            if (scrubber) {
+                scrubber.style.display = 'block';
+                scrubber.style.left = leftMargin + 'px'; // Start at waveform beginning
+            }
         }
 
         // Legacy function name for compatibility
