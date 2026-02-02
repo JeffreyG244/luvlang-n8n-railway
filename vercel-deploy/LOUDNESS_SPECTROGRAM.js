@@ -130,8 +130,8 @@
                 </div>
 
                 <!-- Graph Canvas -->
-                <div style="position: relative; height: 140px; background: rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden;">
-                    <canvas id="loudnessHistoryCanvas" style="width: 100%; height: 100%;"></canvas>
+                <div id="loudnessHistoryCanvasContainer" style="position: relative; height: 140px; background: rgba(0,0,0,0.4); border-radius: 12px; overflow: hidden;">
+                    <canvas id="loudnessHistoryCanvas" width="600" height="140" style="width: 100%; height: 100%; display: block;"></canvas>
                     <!-- Y-axis scale -->
                     <div style="position: absolute; top: 0; left: 0; bottom: 0; width: 40px; display: flex; flex-direction: column; justify-content: space-between; padding: 4px 0; pointer-events: none;">
                         <span style="font-size: 0.55rem; color: rgba(255,255,255,0.3); font-family: 'JetBrains Mono', monospace; padding-left: 4px;">0</span>
@@ -184,41 +184,44 @@
         // Initialize canvas with multiple retries to ensure container is rendered
         const initCanvas = (retries = 0) => {
             loudnessCanvas = document.getElementById('loudnessHistoryCanvas');
+            console.log('📊 Loudness canvas init attempt', retries, 'canvas found:', !!loudnessCanvas);
+
             if (loudnessCanvas) {
                 loudnessCtx = loudnessCanvas.getContext('2d');
 
-                // Force canvas size based on parent
+                // Force canvas size based on parent or use defaults
                 const parent = loudnessCanvas.parentElement;
-                if (parent) {
-                    const rect = parent.getBoundingClientRect();
-                    if (rect.width > 0 && rect.height > 0) {
-                        const dpr = window.devicePixelRatio || 1;
-                        loudnessCanvas.width = rect.width * dpr;
-                        loudnessCanvas.height = rect.height * dpr;
-                        loudnessCanvas.style.width = rect.width + 'px';
-                        loudnessCanvas.style.height = rect.height + 'px';
-                        loudnessCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                        console.log('📊 Loudness canvas sized:', rect.width, 'x', rect.height);
-                    }
-                }
+                const rect = parent ? parent.getBoundingClientRect() : { width: 600, height: 140 };
+                const width = rect.width > 0 ? rect.width : 600;
+                const height = rect.height > 0 ? rect.height : 140;
+
+                const dpr = window.devicePixelRatio || 1;
+                loudnessCanvas.width = width * dpr;
+                loudnessCanvas.height = height * dpr;
+                loudnessCanvas.style.width = width + 'px';
+                loudnessCanvas.style.height = height + 'px';
+                loudnessCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                console.log('📊 Loudness canvas sized:', width, 'x', height, '(dpr:', dpr + ')');
 
                 window.addEventListener('resize', resizeLoudnessCanvas);
 
                 // Start drawing loop if not already running
                 if (!loudnessAnimationRunning) {
                     loudnessAnimationRunning = true;
+                    console.log('📊 Starting Loudness History draw loop');
                     requestAnimationFrame(drawLoudnessHistory);
                 }
                 console.log('📊 Loudness History canvas initialized');
-            } else if (retries < 10) {
+            } else if (retries < 15) {
                 // Retry with exponential backoff
-                setTimeout(() => initCanvas(retries + 1), 100 * (retries + 1));
+                setTimeout(() => initCanvas(retries + 1), 150 * (retries + 1));
             } else {
-                console.warn('📊 Loudness History canvas not found after retries');
+                console.error('📊 Loudness History canvas NOT FOUND after retries');
             }
         };
 
-        setTimeout(initCanvas, 200);
+        setTimeout(initCanvas, 300);
 
         // Reset button
         document.getElementById('loudnessResetBtn')?.addEventListener('click', () => {
@@ -480,8 +483,8 @@
                 </div>
 
                 <!-- Spectrogram Canvas -->
-                <div style="position: relative; height: 160px; background: #000; border-radius: 12px; overflow: hidden;">
-                    <canvas id="spectrogramCanvas" style="width: 100%; height: 100%;"></canvas>
+                <div id="spectrogramCanvasContainer" style="position: relative; height: 160px; background: #000; border-radius: 12px; overflow: hidden;">
+                    <canvas id="spectrogramCanvas" width="600" height="160" style="width: 100%; height: 100%; display: block;"></canvas>
                     <!-- Frequency scale (log) -->
                     <div style="
                         position: absolute;
@@ -534,40 +537,41 @@
         // Initialize canvas with multiple retries to ensure container is rendered
         const initCanvas = (retries = 0) => {
             spectrogramCanvas = document.getElementById('spectrogramCanvas');
+            console.log('📈 Spectrogram canvas init attempt', retries, 'canvas found:', !!spectrogramCanvas);
+
             if (spectrogramCanvas) {
                 spectrogramCtx = spectrogramCanvas.getContext('2d');
 
-                // Force canvas size based on parent
+                // Force canvas size based on parent or use defaults
                 const parent = spectrogramCanvas.parentElement;
-                if (parent) {
-                    const rect = parent.getBoundingClientRect();
-                    if (rect.width > 0 && rect.height > 0) {
-                        const dpr = window.devicePixelRatio || 1;
-                        spectrogramCanvas.width = rect.width * dpr;
-                        spectrogramCanvas.height = rect.height * dpr;
-                        spectrogramCanvas.style.width = rect.width + 'px';
-                        spectrogramCanvas.style.height = rect.height + 'px';
+                const rect = parent ? parent.getBoundingClientRect() : { width: 600, height: 160 };
+                const width = rect.width > 0 ? rect.width : 600;
+                const height = rect.height > 0 ? rect.height : 160;
 
-                        // Initialize image data for spectrogram scrolling
-                        spectrogramImageData = spectrogramCtx.createImageData(
-                            spectrogramCanvas.width,
-                            spectrogramCanvas.height
-                        );
-                        // Fill with black
-                        for (let i = 0; i < spectrogramImageData.data.length; i += 4) {
-                            spectrogramImageData.data[i] = 0;
-                            spectrogramImageData.data[i + 1] = 0;
-                            spectrogramImageData.data[i + 2] = 0;
-                            spectrogramImageData.data[i + 3] = 255;
-                        }
-                        console.log('📈 Spectrogram canvas sized:', rect.width, 'x', rect.height);
-                    }
+                const dpr = window.devicePixelRatio || 1;
+                spectrogramCanvas.width = width * dpr;
+                spectrogramCanvas.height = height * dpr;
+                spectrogramCanvas.style.width = width + 'px';
+                spectrogramCanvas.style.height = height + 'px';
+
+                // Initialize image data for spectrogram scrolling
+                spectrogramImageData = spectrogramCtx.createImageData(
+                    spectrogramCanvas.width,
+                    spectrogramCanvas.height
+                );
+                // Fill with black
+                for (let i = 0; i < spectrogramImageData.data.length; i += 4) {
+                    spectrogramImageData.data[i] = 0;
+                    spectrogramImageData.data[i + 1] = 0;
+                    spectrogramImageData.data[i + 2] = 0;
+                    spectrogramImageData.data[i + 3] = 255;
                 }
+                console.log('📈 Spectrogram canvas sized:', width, 'x', height, '(dpr:', dpr + ')');
 
                 window.addEventListener('resize', resizeSpectrogramCanvas);
                 console.log('📈 Spectrogram canvas initialized');
-            } else if (retries < 10) {
-                setTimeout(() => initCanvas(retries + 1), 100 * (retries + 1));
+            } else if (retries < 15) {
+                setTimeout(() => initCanvas(retries + 1), 150 * (retries + 1));
             } else {
                 console.warn('📈 Spectrogram canvas not found after retries');
             }
