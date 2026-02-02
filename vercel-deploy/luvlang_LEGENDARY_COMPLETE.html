@@ -5182,43 +5182,14 @@
             </div>
 
             <!-- GENRE EQ PRESETS (Auto-expand below genre selection) - Premium Style -->
-            <div id="genreEQPresetsContainer" style="display: none; margin-top: 12px;">
-                <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 14px;">
-                    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="genrePresetsTitle" style="color: #7cb8ff; font-weight: 600;">Hip-Hop Presets</span>
-                        <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
-                    </div>
-
-                    <!-- PROFESSIONAL MASTERING EQ CURVE - FabFilter/Ozone Style -->
-                    <div id="presetEQViz" style="position: relative; background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(15,20,35,0.95) 100%); border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(0,212,255,0.2); overflow: hidden; box-shadow: inset 0 2px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.05);">
-                        <!-- Professional grid overlay -->
-                        <div style="position: absolute; inset: 0; opacity: 0.06; pointer-events: none; background-image:
-                            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
-                            background-size: 14.28% 33.33%;
-                        "></div>
-                        <!-- Zero line (0 dB reference) with glow -->
-                        <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.2); box-shadow: 0 0 4px rgba(255,255,255,0.1); z-index: 2;"></div>
-                        <!-- dB scale markers -->
-                        <div style="position: absolute; right: 6px; top: 8px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">+6dB</div>
-                        <div style="position: absolute; right: 6px; top: 47%; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">0dB</div>
-                        <div style="position: absolute; right: 6px; bottom: 22px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">-6dB</div>
-                        <!-- Canvas for smooth EQ curve with glow effect -->
-                        <canvas id="eqCurveCanvas" width="600" height="160" style="width: 100%; height: 80px; display: block;"></canvas>
-                        <!-- Frequency labels bar -->
-                        <div style="display: flex; justify-content: space-between; padding: 5px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); border-top: 1px solid rgba(255,255,255,0.05);">
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">40Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">120Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">400Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600;">1kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">3.5kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">8kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(184,79,255,0.7); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">12kHz</span>
-                        </div>
-                    </div>
-
-                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
-                        <!-- Preset buttons will be populated here -->
+            <!-- GENRE EQ PRESETS - Clean Dropdown Style -->
+            <div id="genreEQPresetsContainer" style="display: none; margin-top: 10px;">
+                <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.05) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.12); border-radius: 8px; padding: 10px 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <span id="genrePresetsTitle" style="font-size: 0.65rem; color: #7cb8ff; font-weight: 600; white-space: nowrap;">Style</span>
+                        <select id="genrePresetSelect" style="flex: 1; padding: 8px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(124, 184, 255, 0.25); color: #fff; border-radius: 6px; font-size: 0.7rem; cursor: pointer;">
+                            <!-- Options populated by JS -->
+                        </select>
                     </div>
                 </div>
             </div>
@@ -11474,9 +11445,9 @@
         function showGenreEQPresets(genreName) {
             const container = document.getElementById('genreEQPresetsContainer');
             const titleElement = document.getElementById('genrePresetsTitle');
-            const gridElement = document.getElementById('genrePresetsGrid');
+            const selectElement = document.getElementById('genrePresetSelect');
 
-            if (!container || !titleElement || !gridElement) {
+            if (!container || !selectElement) {
                 console.warn('⚠️ Genre EQ presets UI elements not found');
                 return;
             }
@@ -11491,86 +11462,22 @@
 
             // Update title
             const genreDisplayName = genreName.charAt(0).toUpperCase() + genreName.slice(1).replace('-', ' ');
-            titleElement.textContent = `${genreDisplayName} Presets`;
+            if (titleElement) titleElement.textContent = `${genreDisplayName}`;
 
-            // Clear existing presets
-            gridElement.innerHTML = '';
+            // Populate dropdown
+            selectElement.innerHTML = presets.map((preset, index) =>
+                `<option value="${index}" title="${preset.description}">${preset.name}</option>`
+            ).join('');
 
-            // Create preset buttons - Premium Style
-            presets.forEach((preset, index) => {
-                const presetBtn = document.createElement('div');
-                presetBtn.className = 'genre-eq-preset-btn';
-                if (index === 0) presetBtn.classList.add('active'); // First preset active by default
+            // Add change listener
+            selectElement.onchange = function() {
+                const index = parseInt(this.value);
+                applyGenreEQPreset(genreName, index);
+                console.log(`🎵 Applied ${presets[index].name} preset`);
+            };
 
-                presetBtn.style.cssText = `
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.08);
-                    border-radius: 6px;
-                    padding: 8px 10px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    text-align: center;
-                `;
-                presetBtn.title = preset.description; // Tooltip on hover
-
-                presetBtn.innerHTML = `
-                    <div style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${preset.name}</div>
-                `;
-
-                // Hover effects
-                presetBtn.addEventListener('mouseenter', function() {
-                    if (!this.classList.contains('active')) {
-                        this.style.background = 'rgba(124, 184, 255, 0.08)';
-                        this.style.borderColor = 'rgba(124, 184, 255, 0.2)';
-                    }
-                });
-                presetBtn.addEventListener('mouseleave', function() {
-                    if (!this.classList.contains('active')) {
-                        this.style.background = 'rgba(255, 255, 255, 0.03)';
-                        this.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                    }
-                });
-
-                // Click handler
-                presetBtn.addEventListener('click', function() {
-                    // Remove active from all preset buttons
-                    gridElement.querySelectorAll('.genre-eq-preset-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.style.background = 'rgba(255, 255, 255, 0.03)';
-                        btn.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                    });
-
-                    // Mark this as active
-                    this.classList.add('active');
-                    this.style.background = 'rgba(124, 184, 255, 0.12)';
-                    this.style.borderColor = 'rgba(124, 184, 255, 0.35)';
-
-                    // Apply the EQ preset
-                    applyGenreEQPreset(genreName, index);
-
-                    // SCROLL TO 7-BAND EQ so user can see the changes
-                    const eqSection = document.getElementById('eqSection');
-                    if (eqSection) {
-                        setTimeout(() => {
-                            eqSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            // Highlight effect
-                            eqSection.style.transition = 'box-shadow 0.3s ease';
-                            eqSection.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)';
-                            setTimeout(() => {
-                                eqSection.style.boxShadow = '';
-                            }, 1500);
-                        }, 150);
-                    }
-                });
-
-                // Set initial active styling for first preset
-                if (index === 0) {
-                    presetBtn.style.background = 'rgba(124, 184, 255, 0.12)';
-                    presetBtn.style.borderColor = 'rgba(124, 184, 255, 0.35)';
-                }
-
-                gridElement.appendChild(presetBtn);
-            });
+            // Apply first preset by default
+            applyGenreEQPreset(genreName, 0);
 
             // Show container with smooth animation
             container.style.display = 'block';
