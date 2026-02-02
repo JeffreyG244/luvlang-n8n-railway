@@ -420,11 +420,11 @@ function createLoudnessHistoryUI(containerId) {
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
                 <div style="text-align: center; padding: 8px; background: rgba(0,212,255,0.05); border-radius: 6px;">
                     <div style="font-size: 0.5rem; color: rgba(0,212,255,0.6);">Short-term</div>
-                    <div id="historyShortLufs" style="font-size: 1rem; font-weight: 700; color: #00d4ff;">--.- LUFS</div>
+                    <div id="loudnessShortTerm" style="font-size: 1rem; font-weight: 700; color: #00d4ff;">--.- LUFS</div>
                 </div>
                 <div style="text-align: center; padding: 8px; background: rgba(184,79,255,0.05); border-radius: 6px;">
                     <div style="font-size: 0.5rem; color: rgba(184,79,255,0.6);">Integrated</div>
-                    <div id="historyIntLufs" style="font-size: 1rem; font-weight: 700; color: #b84fff;">--.- LUFS</div>
+                    <div id="loudnessIntegrated" style="font-size: 1rem; font-weight: 700; color: #b84fff;">--.- LUFS</div>
                 </div>
                 <div style="text-align: center; padding: 8px; background: rgba(255,215,0,0.05); border-radius: 6px;">
                     <div style="font-size: 0.5rem; color: rgba(255,215,0,0.6);">Target</div>

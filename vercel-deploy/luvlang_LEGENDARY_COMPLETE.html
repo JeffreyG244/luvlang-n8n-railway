@@ -1536,28 +1536,29 @@
             letter-spacing: 1px;
         }
 
-        /* Limiter Mode Grid - 3 top, 2 bottom centered */
+        /* Limiter Mode Grid - All 5 in one row */
         .limiter-mode-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px 12px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+            padding: 10px 8px;
         }
 
         .limiter-mode-btn {
-            flex: 0 0 calc(33% - 6px);
-            padding: 8px 4px;
+            padding: 8px 2px;
             border: 1px solid rgba(255,255,255,0.1);
             background: rgba(0, 0, 0, 0.3);
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s ease;
             color: rgba(255,255,255,0.7);
-            font-size: 0.5rem;
+            font-size: 0.45rem;
             font-weight: 600;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .limiter-mode-btn:hover {
@@ -5158,27 +5159,27 @@
                 </div>
             </div>
 
-            <!-- GENRE SELECTOR (Compact) -->
+            <!-- GENRE SELECTOR (Clean 2x3 Grid) -->
             <div class="selector-group" id="genreSection" style="margin-bottom: 14px;">
                 <div class="section-title">Genre</div>
-                <div class="selector-grid" style="grid-template-columns: repeat(3, 1fr); gap: 5px;">
-                    <div class="selector-btn" data-genre="hip-hop" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">Hip-Hop</div>
+                <div class="selector-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px;">
+                    <div class="selector-btn" data-genre="hip-hop" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">Hip-Hop</div>
                     </div>
-                    <div class="selector-btn" data-genre="pop" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">Pop</div>
+                    <div class="selector-btn" data-genre="pop" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">Pop</div>
                     </div>
-                    <div class="selector-btn" data-genre="edm" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">EDM</div>
+                    <div class="selector-btn" data-genre="edm" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">EDM</div>
                     </div>
-                    <div class="selector-btn" data-genre="rock" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">Rock</div>
+                    <div class="selector-btn" data-genre="rock" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">Rock</div>
                     </div>
-                    <div class="selector-btn" data-genre="jazz" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">Jazz</div>
+                    <div class="selector-btn" data-genre="jazz" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">Jazz</div>
                     </div>
-                    <div class="selector-btn active" data-genre="neutral" style="position: relative; padding: 6px 4px;">
-                        <div style="font-size: 0.7rem;">Neutral</div>
+                    <div class="selector-btn active" data-genre="neutral" style="padding: 10px 8px;">
+                        <div style="font-size: 0.8rem; font-weight: 600;">Neutral</div>
                     </div>
                 </div>
             </div>
