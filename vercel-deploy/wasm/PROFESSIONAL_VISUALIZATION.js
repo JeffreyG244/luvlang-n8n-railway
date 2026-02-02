@@ -139,7 +139,7 @@ window.drawProfessionalSpectrum = function(canvas, analyser, audioContext) {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEREO METER - VERTICAL single channel meter (called separately for L/R)
+// STEREO METER - Professional LED-style vertical meter (iZotope/FabFilter style)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
     if (!canvas) return peakHoldObj;
@@ -149,72 +149,102 @@ window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
     const height = canvas.height;
     const now = performance.now();
 
-    // Clear
-    ctx.fillStyle = '#0a0a0a';
+    // Dark background with subtle gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+    bgGrad.addColorStop(0, '#08080c');
+    bgGrad.addColorStop(0.5, '#0c0c12');
+    bgGrad.addColorStop(1, '#08080c');
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, width, height);
 
     // Convert linear level to dB
     const levelDB = level > 0 ? 20 * Math.log10(level) : -60;
-    const clampedDB = Math.max(-60, Math.min(0, levelDB));
+    const clampedDB = Math.max(-60, Math.min(3, levelDB));
 
-    // Update peak hold
+    // Update peak hold with smooth decay
     if (levelDB > peakHoldObj.level) {
         peakHoldObj.level = levelDB;
         peakHoldObj.time = now;
-    } else if (now - peakHoldObj.time > 1500) {
-        peakHoldObj.level = Math.max(levelDB, peakHoldObj.level - 0.5);
+    } else if (now - peakHoldObj.time > 2000) {
+        peakHoldObj.level = Math.max(levelDB, peakHoldObj.level - 0.3);
     }
 
-    // VERTICAL Meter dimensions
-    const meterX = 5;
-    const meterY = 5;
-    const meterW = width - 10;
-    const meterH = height - 10;
+    // Meter dimensions
+    const meterX = 2;
+    const meterY = 2;
+    const meterW = width - 4;
+    const meterH = height - 4;
 
-    // Background track
-    ctx.fillStyle = '#151515';
+    // Draw meter track with inner shadow effect
+    ctx.fillStyle = '#050508';
     ctx.fillRect(meterX, meterY, meterW, meterH);
 
-    // Level bar - VERTICAL segmented (bottom to top)
-    // Colors match dB scale: -60/-40=dim, -24/-18=green, -12/-6=orange, 0=red
-    const levelNorm = (clampedDB + 60) / 60;
-    const segments = 40;
-    const segH = meterH / segments;
+    // LED-style segments
+    const segments = 30;
+    const segH = (meterH - 2) / segments;
+    const gap = 1;
+    const levelNorm = (clampedDB + 60) / 63; // -60 to +3 dB range
 
-    for (let s = 0; s < segments * levelNorm; s++) {
-        const t = s / segments; // 0 = bottom (-60dB), 1 = top (0dB)
-        const dB = -60 + t * 60; // Convert to dB
+    for (let s = 0; s < segments; s++) {
+        const t = s / segments;
+        const dB = -60 + t * 63;
+        const segY = meterY + meterH - (s + 1) * segH;
+        const isLit = s < segments * levelNorm;
 
-        let color;
-        if (dB < -40) {
-            // -60 to -40: dim cyan/gray
-            color = 'rgba(100, 150, 180, 0.5)';
-        } else if (dB < -24) {
-            // -40 to -24: brighter cyan transitioning to green
-            const p = (dB + 40) / 16;
-            color = `rgb(0, ${Math.floor(150 + p * 105)}, ${Math.floor(180 - p * 50)})`;
+        // Color based on dB level
+        let color, glowColor;
+        if (dB < -24) {
+            color = isLit ? '#00d4ff' : 'rgba(0, 212, 255, 0.08)';
+            glowColor = 'rgba(0, 212, 255, 0.4)';
         } else if (dB < -12) {
-            // -24 to -12: green (#00ff88)
-            color = '#00ff88';
-        } else if (dB < -6) {
-            // -12 to -6: orange/yellow (#ffaa00)
-            color = '#ffaa00';
+            color = isLit ? '#00ff88' : 'rgba(0, 255, 136, 0.08)';
+            glowColor = 'rgba(0, 255, 136, 0.5)';
+        } else if (dB < -3) {
+            color = isLit ? '#ffcc00' : 'rgba(255, 204, 0, 0.08)';
+            glowColor = 'rgba(255, 204, 0, 0.5)';
         } else {
-            // -6 to 0: red (#ff3333)
-            color = '#ff3333';
+            color = isLit ? '#ff3355' : 'rgba(255, 51, 85, 0.1)';
+            glowColor = 'rgba(255, 51, 85, 0.6)';
         }
 
+        // Draw segment
         ctx.fillStyle = color;
-        // Draw from bottom up
-        const segY = meterY + meterH - (s + 1) * segH;
-        ctx.fillRect(meterX + 1, segY + 1, meterW - 2, segH - 2);
+        ctx.fillRect(meterX + 1, segY + gap, meterW - 2, segH - gap * 2);
+
+        // Add glow effect for lit segments
+        if (isLit && s > segments * levelNorm - 5) {
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 4;
+            ctx.fillRect(meterX + 1, segY + gap, meterW - 2, segH - gap * 2);
+            ctx.shadowBlur = 0;
+        }
     }
 
-    // Peak hold marker - horizontal line
-    const peakNorm = (Math.max(-60, peakHoldObj.level) + 60) / 60;
+    // Peak hold marker with glow
+    const peakNorm = (Math.max(-60, Math.min(3, peakHoldObj.level)) + 60) / 63;
     const peakY = meterY + meterH - peakNorm * meterH;
-    ctx.fillStyle = '#ffffff';
+    const peakDB = peakHoldObj.level;
+
+    // Peak color based on level
+    let peakColor = '#00ffff';
+    if (peakDB > -3) peakColor = '#ff3355';
+    else if (peakDB > -12) peakColor = '#ffcc00';
+    else if (peakDB > -24) peakColor = '#00ff88';
+
+    ctx.shadowColor = peakColor;
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = peakColor;
     ctx.fillRect(meterX, peakY - 1, meterW, 2);
+    ctx.shadowBlur = 0;
+
+    // Clip indicator at top
+    if (peakDB > -0.1) {
+        ctx.fillStyle = '#ff0033';
+        ctx.shadowColor = '#ff0033';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(meterX, meterY, meterW, 3);
+        ctx.shadowBlur = 0;
+    }
 
     return peakHoldObj;
 };
