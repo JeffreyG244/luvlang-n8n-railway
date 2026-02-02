@@ -71,33 +71,14 @@
             padding-bottom: 100px;
         }
 
-        /* Sticky visualizations - stay visible while scrolling */
+        /* Visualization wrapper - flows with single scroll */
         .sticky-viz-wrapper {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: linear-gradient(180deg, #0d0d14 0%, #080810 100%);
+            position: relative;
+            z-index: 10;
+            background: transparent;
             padding-bottom: 10px;
             margin-bottom: 15px;
-            /* CRITICAL: Limit height to ensure EQ section is visible below */
-            max-height: calc(100vh - 70px - 250px); /* Leave 250px for EQ section visibility */
-            overflow-y: auto;
-            overflow-x: hidden;
-            /* Visual indicator that content scrolls */
-            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
-        }
-
-        /* Scroll indicator for sticky wrapper */
-        .sticky-viz-wrapper::after {
-            content: '';
-            position: sticky;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: linear-gradient(transparent, rgba(8, 8, 16, 0.95));
-            pointer-events: none;
-            display: block;
+            /* No internal scrolling - everything scrolls together */
         }
 
         /* RIGHT SIDEBAR - Meters, Master Section, Export */
@@ -1194,33 +1175,6 @@
             padding: 2px 6px;
             background: rgba(0, 255, 136, 0.1);
             border-radius: 4px;
-        }
-
-        /* SCROLL INDICATOR - Shows user there's more content below visualizations */
-        .scroll-content-indicator {
-            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), rgba(184, 79, 255, 0.3), transparent);
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            border-radius: 10px;
-            animation: pulseGlow 2s ease-in-out infinite;
-        }
-
-        .scroll-content-indicator span {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-        }
-
-        @keyframes pulseGlow {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3091,9 +3045,6 @@
             .app-container {
                 grid-template-columns: 200px 1fr 200px;
             }
-            .sticky-viz-wrapper {
-                max-height: calc(100vh - 70px - 300px);
-            }
             .viz-panel { margin-bottom: 8px; }
             .meters-panel-viz { padding: 8px; }
         }
@@ -3112,10 +3063,6 @@
             }
             .center-main {
                 padding: 10px;
-            }
-            .sticky-viz-wrapper {
-                max-height: 50vh;
-                border-radius: 0;
             }
             .ai-command-bar {
                 padding: 0 10px;
@@ -3157,10 +3104,6 @@
                 padding: 8px;
                 padding-bottom: 80px;
             }
-            .sticky-viz-wrapper {
-                max-height: 45vh;
-                padding-bottom: 5px;
-            }
             .viz-panel {
                 border-radius: 8px;
                 margin-bottom: 6px;
@@ -3184,14 +3127,6 @@
             .dynamics-section {
                 padding: 10px;
             }
-            .scroll-content-indicator {
-                padding: 8px 12px;
-                margin-bottom: 12px;
-            }
-            .scroll-content-indicator span {
-                font-size: 0.6rem;
-                letter-spacing: 1px;
-            }
             /* Larger touch targets */
             input[type="range"] {
                 height: 24px;
@@ -3208,9 +3143,6 @@
 
         /* Small Phone Portrait (max-width: 480px) */
         @media (max-width: 480px) {
-            .sticky-viz-wrapper {
-                max-height: 40vh;
-            }
             .secondary-visuals-row {
                 flex-direction: column;
             }
@@ -3231,9 +3163,6 @@
 
         /* Landscape Mode on Phones */
         @media (max-height: 500px) and (orientation: landscape) {
-            .sticky-viz-wrapper {
-                max-height: 60vh;
-            }
             .app-container {
                 height: calc(100vh - 50px);
                 margin-top: 50px;
@@ -5655,13 +5584,6 @@
             </div>
 
             </div><!-- END sticky-viz-wrapper -->
-
-            <!-- SCROLL INDICATOR - Shows more controls below -->
-            <div class="scroll-content-indicator">
-                <span style="color: #00d4ff;">▼</span>
-                <span>PROCESSING CONTROLS BELOW</span>
-                <span style="color: #00d4ff;">▼</span>
-            </div>
 
             <!-- PROFESSIONAL 7-BAND EQ -->
             <div class="eq-section" id="eqSection">
