@@ -5753,108 +5753,22 @@
             <!-- Mono Indicator (floating) -->
             <div class="mono-indicator" id="monoIndicator">🔊 MONO CHECK ACTIVE</div>
 
-            <!-- SPECTRAL DE-NOISER - State-of-the-Art Design (iZotope RX Style) -->
-            <div class="eq-section" style="margin-top: 15px;">
-                <div style="
-                    background: linear-gradient(145deg, rgba(139, 92, 246, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
-                    border: 1px solid rgba(139, 92, 246, 0.25);
-                    border-radius: 12px;
-                    padding: 14px 16px;
-                    position: relative;
-                    overflow: hidden;
-                ">
-                    <!-- Subtle animated glow -->
-                    <div id="denoiseGlow" style="
-                        position: absolute;
-                        top: -50%;
-                        left: -50%;
-                        width: 200%;
-                        height: 200%;
-                        background: radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
-                        pointer-events: none;
-                        transition: opacity 0.3s ease;
-                    "></div>
-
-                    <!-- Header Row -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; position: relative; z-index: 1;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="
-                                width: 28px;
-                                height: 28px;
-                                background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
-                                border-radius: 6px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-size: 0.9rem;
-                                box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
-                            ">🔇</div>
-                            <div>
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #fff; letter-spacing: 0.02em;">SPECTRAL DE-NOISER</div>
-                                <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-top: 1px;">Intelligent Noise Reduction</div>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="denoiseStatus" style="
-                                font-size: 0.6rem;
-                                color: #10b981;
-                                background: rgba(16, 185, 129, 0.15);
-                                padding: 3px 8px;
-                                border-radius: 4px;
-                                font-weight: 500;
-                            ">ADAPTIVE</span>
-                            <button class="eq-bypass-btn" id="denoiserBypassBtn" style="
-                                padding: 5px 12px;
-                                font-size: 0.6rem;
-                                background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.2));
-                                border: 1px solid rgba(139, 92, 246, 0.4);
-                                border-radius: 6px;
-                                color: #fff;
-                                font-weight: 500;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                            ">ACTIVE</button>
-                        </div>
-                    </div>
-
-                    <!-- Control Row -->
-                    <div style="display: flex; align-items: center; gap: 12px; position: relative; z-index: 1;">
-                        <select id="denoisePresetSelect" onchange="applyDenoisePreset(this.value)" style="
-                            flex: 1;
-                            padding: 8px 12px;
-                            background: rgba(0,0,0,0.4);
-                            border: 1px solid rgba(139, 92, 246, 0.3);
-                            color: white;
-                            border-radius: 8px;
-                            font-size: 0.7rem;
-                            cursor: pointer;
-                            transition: border-color 0.2s ease;
-                            appearance: none;
-                            background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%238b5cf6\" stroke-width=\"2\"><polyline points=\"6,9 12,15 18,9\"/></svg>');
-                            background-repeat: no-repeat;
-                            background-position: right 10px center;
-                            padding-right: 32px;
-                        ">
-                            <option value="off">Bypass</option>
-                            <option value="auto" selected>Auto-Adaptive</option>
-                            <option value="gentle">Gentle (-6dB NR)</option>
-                            <option value="moderate">Moderate (-12dB NR)</option>
-                            <option value="aggressive">Aggressive (-18dB NR)</option>
+            <!-- SPECTRAL DE-NOISER - Compact Inline Design -->
+            <div id="denoiserModule" style="margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.8rem;">🔇 De-Noise</span>
+                        <select id="denoisePresetSelect" onchange="applyDenoisePreset(this.value)" style="padding: 4px 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(139, 92, 246, 0.3); color: white; border-radius: 4px; font-size: 0.65rem;">
+                            <option value="off">Off</option>
+                            <option value="auto" selected>Auto</option>
+                            <option value="gentle">Gentle</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="aggressive">Aggressive</option>
                         </select>
-
-                        <!-- Mini Spectrum Indicator -->
-                        <div id="denoiseSpectrumMini" style="
-                            width: 60px;
-                            height: 28px;
-                            background: rgba(0,0,0,0.4);
-                            border-radius: 6px;
-                            overflow: hidden;
-                            border: 1px solid rgba(139, 92, 246, 0.2);
-                            position: relative;
-                        ">
-                            <canvas id="denoiseSpectrumCanvas" width="60" height="28" style="width: 100%; height: 100%;"></canvas>
-                            <div style="position: absolute; bottom: 1px; right: 2px; font-size: 0.4rem; color: rgba(139,92,246,0.6);">NR</div>
-                        </div>
+                    </div>
+                    <div style="display: flex; gap: 6px; align-items: center;">
+                        <span id="denoiseStatus" style="font-size: 0.55rem; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 6px; border-radius: 3px;">AUTO</span>
+                        <button class="eq-bypass-btn" id="denoiserBypassBtn" style="padding: 4px 10px; font-size: 0.65rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(139, 92, 246, 0.4); border-radius: 4px; color: #fff; cursor: pointer;">ON</button>
                     </div>
                 </div>
             </div>
