@@ -5366,20 +5366,16 @@
                         </div>
                     </div>
                 </div>
-                <button id="showHeatmapBtn" onclick="toggleCorrelationHeatmap()" style="width: 100%; padding: 6px; background: rgba(255, 152, 0, 0.05); border: none; border-top: 1px solid rgba(255,255,255,0.05); color: #ffb74d; font-size: 0.5rem; cursor: pointer;">SHOW HEATMAP</button>
             </div>
             </div><!-- END secondary-visuals-row -->
 
-            </div><!-- END sticky-viz-wrapper -->
-
             <!-- ═══════════════════════════════════════════════════════════════════════════
                  PANEL 2.5: PHASE CORRELATION HEATMAP - Frequency-Dependent Analysis
-                 COLLAPSIBLE - Hidden by default to save space (secondary visualization)
+                 Always visible in sticky stack for real-time monitoring
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div class="viz-panel correlation-panel" id="correlationHeatmapPanel" style="display: none; position: relative; z-index: 1000;">
-                <div class="panel-title" style="cursor: pointer;" onclick="toggleCorrelationHeatmap()">
+            <div class="viz-panel correlation-panel" id="correlationHeatmapPanel" style="display: block; position: relative; z-index: 1000; margin-top: 8px;">
+                <div class="panel-title">
                     <span style="display: flex; align-items: center; gap: 8px;">
-                        <span id="correlationToggleIcon" style="transition: transform 0.3s ease; font-size: 0.6rem;">▼</span>
                         PHASE CORRELATION • FREQUENCY ANALYSIS
                     </span>
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -5387,15 +5383,15 @@
                         <span id="correlationModeBadge" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">MONO COMPATIBLE</span>
                     </div>
                 </div>
-                <div style="padding: 15px 20px; position: relative; z-index: 5;">
+                <div style="padding: 10px 15px; position: relative; z-index: 5;">
                     <!-- Heatmap Canvas with enhanced styling -->
                     <div style="
-                        border-radius: 8px;
+                        border-radius: 6px;
                         overflow: hidden;
-                        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 152, 0, 0.08);
+                        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 152, 0, 0.08);
                         position: relative;
                     ">
-                        <canvas id="correlationHeatmapCanvas" width="800" height="200" style="width: 100%; height: 110px; display: block;"></canvas>
+                        <canvas id="correlationHeatmapCanvas" width="800" height="180" style="width: 100%; height: 90px; display: block;"></canvas>
                         <!-- Frequency axis labels overlay -->
                         <div style="
                             position: absolute;
@@ -5432,23 +5428,25 @@
 
                     <!-- Analysis info bar -->
                     <div style="
-                        margin-top: 12px;
-                        padding: 8px 12px;
+                        margin-top: 8px;
+                        padding: 6px 10px;
                         background: rgba(255, 152, 0, 0.05);
                         border: 1px solid rgba(255, 152, 0, 0.15);
-                        border-radius: 6px;
+                        border-radius: 4px;
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
                     ">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 6px #00ff88;"></div>
-                            <span style="font-size: 0.5rem; color: rgba(255, 255, 255, 0.5);">Bass frequencies centered (mono) = optimal club playback</span>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 5px; height: 5px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 4px #00ff88;"></div>
+                            <span style="font-size: 0.45rem; color: rgba(255, 255, 255, 0.5);">Bass mono = optimal club playback</span>
                         </div>
-                        <span id="correlationOverallValue" style="font-size: 0.6rem; color: #00ff88; font-weight: 700; font-family: 'JetBrains Mono', monospace;">+0.95</span>
+                        <span id="correlationOverallValue" style="font-size: 0.55rem; color: #00ff88; font-weight: 700; font-family: 'JetBrains Mono', monospace;">+0.95</span>
                     </div>
                 </div>
             </div>
+
+            </div><!-- END sticky-viz-wrapper -->
 
             <!-- PROFESSIONAL 7-BAND EQ -->
             <div class="eq-section" id="eqSection">
