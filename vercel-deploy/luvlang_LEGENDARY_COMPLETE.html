@@ -6680,7 +6680,7 @@
     <script src="TIER_COMPARISON_MODAL.js"></script>
 
     <!-- Professional Loudness & Spectrogram Visualizations -->
-    <script src="LOUDNESS_SPECTROGRAM.js"></script>
+    <script src="LOUDNESS_SPECTROGRAM.js?v=2"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          MAIN JAVASCRIPT - PROFESSIONAL AUDIO ENGINE
@@ -24863,7 +24863,7 @@
          IRC Limiter, Upward Compression, Unlimiter, Soft Clipper
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="ADVANCED_MASTERING_ENGINE.js"></script>
-    <script src="ADVANCED_MASTERING_UI.js"></script>
+    <script src="ADVANCED_MASTERING_UI.js?v=2"></script>
 
     <!-- Initialize Advanced Mastering Engine -->
     <script>
@@ -24888,12 +24888,16 @@
                 console.log('   ✓ Unlimiter UI created');
             }
             if (typeof createLoudnessHistoryUI === 'function') {
+                console.log('📊 Calling createLoudnessHistoryUI from:', createLoudnessHistoryUI.toString().substring(0, 100));
                 createLoudnessHistoryUI('loudnessHistoryContainer');
-                console.log('   ✓ Loudness History UI created');
+                const container = document.getElementById('loudnessHistoryContainer');
+                console.log('   ✓ Loudness History UI created, container innerHTML length:', container?.innerHTML?.length || 0);
             }
             if (typeof createSpectrogramUI === 'function') {
+                console.log('📈 Calling createSpectrogramUI from:', createSpectrogramUI.toString().substring(0, 100));
                 createSpectrogramUI('spectrogramContainer');
-                console.log('   ✓ Spectrogram UI created');
+                const container = document.getElementById('spectrogramContainer');
+                console.log('   ✓ Spectrogram UI created, container innerHTML length:', container?.innerHTML?.length || 0);
             }
             // Linear Phase EQ toggle is now inline next to Dynamic EQ
             console.log('   ✓ Linear Phase EQ toggle ready (inline)');
