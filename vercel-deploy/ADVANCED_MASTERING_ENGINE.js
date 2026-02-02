@@ -130,7 +130,7 @@ window.AdvancedLimiter = class AdvancedLimiter {
                     return true;
                 }
             }
-            registerProcessor('irc-limiter', IRCLimiterProcessor);
+            try { registerProcessor('irc-limiter', IRCLimiterProcessor); } catch(e) {}
         `;
 
         try {
