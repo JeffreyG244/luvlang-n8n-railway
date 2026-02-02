@@ -14167,8 +14167,12 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // 🏆 STATE-OF-THE-ART WAVEFORM RENDERER - Neon Bars with Glow
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // ═══════════════════════════════════════════════════════════════════════════
+        // STATE-OF-THE-ART WAVEFORM - iZotope RX / FabFilter / Logic Pro Grade
+        // Dual-channel stereo display with RMS overlay, peak envelope, and dB scale
+        // ═══════════════════════════════════════════════════════════════════════════
         function drawWaveformFromBuffer(audioBuffer, showGhost = true) {
-            console.log('🎨 drawWaveformFromBuffer() CALLED');
+            console.log('🎨 Drawing STATE-OF-THE-ART waveform...');
 
             const canvas = document.getElementById('waveformCanvasStatic');
             if (!canvas) {
@@ -14187,239 +14191,337 @@
                 return;
             }
 
-            // ═══ CANVAS SETUP ═══
+            // ═══ HIGH-DPI CANVAS SETUP ═══
             const container = canvas.parentElement;
             const width = container ? container.offsetWidth : 800;
             const height = container ? container.offsetHeight : 140;
+            const dpr = window.devicePixelRatio || 1;
 
-            // Reset canvas completely (clears all content)
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
 
-            // Explicit clear to ensure no old content remains
-            ctx.clearRect(0, 0, width, height);
+            // Get stereo channels (or duplicate mono)
+            const leftData = audioBuffer.getChannelData(0);
+            const rightData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftData;
 
-            // ═══ PURE BLACK BACKGROUND (fully opaque) ═══
-            ctx.fillStyle = '#000000';
+            // ═══ PROFESSIONAL DARK BACKGROUND WITH SUBTLE GRADIENT ═══
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+            bgGrad.addColorStop(0, '#0a0a12');
+            bgGrad.addColorStop(0.5, '#06060c');
+            bgGrad.addColorStop(1, '#0a0a12');
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, width, height);
 
-            // Subtle dark gradient overlay
-            const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-            bgGradient.addColorStop(0, 'rgba(8, 8, 15, 0.9)');
-            bgGradient.addColorStop(0.5, 'rgba(5, 5, 10, 0.8)');
-            bgGradient.addColorStop(1, 'rgba(8, 8, 15, 0.9)');
-            ctx.fillStyle = bgGradient;
-            ctx.fillRect(0, 0, width, height);
+            // Layout constants
+            const leftMargin = 35; // Space for dB scale
+            const rightMargin = 10;
+            const topMargin = 8;
+            const bottomMargin = 8;
+            const waveWidth = width - leftMargin - rightMargin;
+            const waveHeight = height - topMargin - bottomMargin;
+            const channelHeight = waveHeight / 2 - 2;
+            const leftCenterY = topMargin + channelHeight / 2;
+            const rightCenterY = height - bottomMargin - channelHeight / 2;
 
-            // Subtle grid lines
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            // ═══ SUBTLE GRID LINES ═══
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
             ctx.lineWidth = 1;
-            for (let i = 0; i < width; i += 50) {
+            // Vertical time grid
+            const timeGridSpacing = waveWidth / 10;
+            for (let i = 0; i <= 10; i++) {
+                const x = leftMargin + i * timeGridSpacing;
                 ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, height);
+                ctx.moveTo(x, topMargin);
+                ctx.lineTo(x, height - bottomMargin);
                 ctx.stroke();
             }
+            // Horizontal amplitude grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            [0.25, 0.5, 0.75].forEach(ratio => {
+                // Left channel grid
+                ctx.beginPath();
+                ctx.moveTo(leftMargin, leftCenterY - channelHeight * ratio / 2);
+                ctx.lineTo(width - rightMargin, leftCenterY - channelHeight * ratio / 2);
+                ctx.moveTo(leftMargin, leftCenterY + channelHeight * ratio / 2);
+                ctx.lineTo(width - rightMargin, leftCenterY + channelHeight * ratio / 2);
+                ctx.stroke();
+                // Right channel grid
+                ctx.beginPath();
+                ctx.moveTo(leftMargin, rightCenterY - channelHeight * ratio / 2);
+                ctx.lineTo(width - rightMargin, rightCenterY - channelHeight * ratio / 2);
+                ctx.moveTo(leftMargin, rightCenterY + channelHeight * ratio / 2);
+                ctx.lineTo(width - rightMargin, rightCenterY + channelHeight * ratio / 2);
+                ctx.stroke();
+            });
 
-            // Get audio data
-            const data = audioBuffer.getChannelData(0);
-            const centerY = height / 2;
-            const padding = 15;
-            const maxAmp = (height / 2) - padding;
+            // ═══ dB SCALE (Left Side) ═══
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.font = '8px "JetBrains Mono", monospace';
+            ctx.textAlign = 'right';
+            const dbLabels = [{db: '0', y: 0}, {db: '-6', y: 0.5}, {db: '-12', y: 0.75}, {db: '-∞', y: 1}];
+            dbLabels.forEach(({db, y}) => {
+                const yPosL = leftCenterY - (1 - y) * (channelHeight / 2) + 3;
+                const yPosR = rightCenterY - (1 - y) * (channelHeight / 2) + 3;
+                if (y < 1) {
+                    ctx.fillText(db, leftMargin - 4, yPosL);
+                }
+            });
 
-            // ═══ FIND PEAK FOR NORMALIZATION ═══
+            // ═══ CHANNEL LABELS ═══
+            ctx.fillStyle = 'rgba(0, 200, 255, 0.6)';
+            ctx.font = 'bold 9px "Inter", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('L', leftMargin + 4, leftCenterY - channelHeight / 2 + 10);
+            ctx.fillStyle = 'rgba(255, 100, 180, 0.6)';
+            ctx.fillText('R', leftMargin + 4, rightCenterY - channelHeight / 2 + 10);
+
+            // ═══ COMPUTE WAVEFORM DATA ═══
+            const samplesPerPixel = Math.floor(leftData.length / waveWidth);
+            const peaks = { left: [], right: [], rmsLeft: [], rmsRight: [] };
+
+            for (let x = 0; x < waveWidth; x++) {
+                const startSample = Math.floor(x * leftData.length / waveWidth);
+                const endSample = Math.floor((x + 1) * leftData.length / waveWidth);
+
+                let maxL = 0, minL = 0, maxR = 0, minR = 0;
+                let sumL = 0, sumR = 0, count = 0;
+
+                for (let i = startSample; i < endSample && i < leftData.length; i++) {
+                    const sL = leftData[i];
+                    const sR = rightData[i];
+                    maxL = Math.max(maxL, sL);
+                    minL = Math.min(minL, sL);
+                    maxR = Math.max(maxR, sR);
+                    minR = Math.min(minR, sR);
+                    sumL += sL * sL;
+                    sumR += sR * sR;
+                    count++;
+                }
+
+                peaks.left.push({ max: maxL, min: minL });
+                peaks.right.push({ max: maxR, min: minR });
+                peaks.rmsLeft.push(Math.sqrt(sumL / Math.max(1, count)));
+                peaks.rmsRight.push(Math.sqrt(sumR / Math.max(1, count)));
+            }
+
+            // ═══ FIND GLOBAL PEAK FOR CLIP DETECTION ═══
             let globalPeak = 0;
-            for (let i = 0; i < data.length; i += 100) {
-                globalPeak = Math.max(globalPeak, Math.abs(data[i]));
+            for (let i = 0; i < peaks.left.length; i++) {
+                globalPeak = Math.max(globalPeak, peaks.left[i].max, -peaks.left[i].min, peaks.right[i].max, -peaks.right[i].min);
             }
-            globalPeak = Math.max(globalPeak, 0.001);
+            const hasClipping = globalPeak >= 0.99;
 
-            // ═══ BAR-STYLE WAVEFORM (Like SoundCloud/Spotify) ═══
-            const barWidth = 3;
-            const barGap = 1;
-            const totalBarWidth = barWidth + barGap;
-            const numBars = Math.floor(width / totalBarWidth);
+            // ═══ DRAW LEFT CHANNEL WAVEFORM ═══
+            // Peak envelope fill
+            const leftGrad = ctx.createLinearGradient(0, leftCenterY - channelHeight/2, 0, leftCenterY + channelHeight/2);
+            leftGrad.addColorStop(0, 'rgba(0, 220, 255, 0.4)');
+            leftGrad.addColorStop(0.5, 'rgba(0, 180, 255, 0.7)');
+            leftGrad.addColorStop(1, 'rgba(0, 220, 255, 0.4)');
 
-            // Precompute bar heights
-            const barHeights = [];
-            for (let i = 0; i < numBars; i++) {
-                let max = 0;
-                const startIdx = Math.floor(i * data.length / numBars);
-                const endIdx = Math.floor((i + 1) * data.length / numBars);
-                for (let j = startIdx; j < endIdx && j < data.length; j++) {
-                    max = Math.max(max, Math.abs(data[j]));
-                }
-                barHeights.push((max / globalPeak) * maxAmp * 0.9);
+            ctx.beginPath();
+            ctx.moveTo(leftMargin, leftCenterY);
+            // Top half (positive)
+            for (let x = 0; x < peaks.left.length; x++) {
+                const px = leftMargin + x;
+                const py = leftCenterY - peaks.left[x].max * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
             }
-
-            // ═══ TRANSIENT DETECTION ═══
-            // Transients = sudden amplitude increases (attacks, drums, etc.)
-            const transients = [];
-            const transientThreshold = 0.15; // Minimum jump to be a transient
-            const minTransientHeight = maxAmp * 0.3; // Must be reasonably loud
-
-            for (let i = 2; i < barHeights.length; i++) {
-                const prev = Math.max(barHeights[i-1], barHeights[i-2]);
-                const current = barHeights[i];
-                const jump = current - prev;
-
-                // Detect sudden jump in amplitude
-                if (jump > transientThreshold * maxAmp && current > minTransientHeight) {
-                    transients.push({
-                        index: i,
-                        strength: Math.min(1, jump / (maxAmp * 0.4)), // Normalize strength 0-1
-                        height: current
-                    });
-                }
+            // Bottom half (negative) - reverse direction
+            for (let x = peaks.left.length - 1; x >= 0; x--) {
+                const px = leftMargin + x;
+                const py = leftCenterY - peaks.left[x].min * (channelHeight / 2) * 0.95;
+                ctx.lineTo(px, py);
             }
-            console.log(`🥁 Detected ${transients.length} transients`);
+            ctx.closePath();
+            ctx.fillStyle = leftGrad;
+            ctx.fill();
 
-            // ═══ DRAW REFLECTION FIRST (faded) ═══
-            for (let i = 0; i < numBars; i++) {
-                const x = i * totalBarWidth;
-                const barH = barHeights[i];
-                const reflectionH = barH * 0.4;
-
-                // Reflection gradient (fades out)
-                const reflectGrad = ctx.createLinearGradient(0, centerY + 2, 0, centerY + reflectionH);
-                reflectGrad.addColorStop(0, 'rgba(0, 200, 255, 0.25)');
-                reflectGrad.addColorStop(1, 'rgba(0, 200, 255, 0)');
-
-                ctx.fillStyle = reflectGrad;
-                ctx.fillRect(x, centerY + 2, barWidth, reflectionH);
+            // RMS overlay (darker, showing average loudness)
+            ctx.beginPath();
+            ctx.moveTo(leftMargin, leftCenterY);
+            for (let x = 0; x < peaks.rmsLeft.length; x++) {
+                const px = leftMargin + x;
+                const py = leftCenterY - peaks.rmsLeft[x] * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
             }
-
-            // ═══ DRAW MAIN BARS WITH GLOW + TRANSIENT HIGHLIGHTS ═══
-            const transientIndices = new Set(transients.map(t => t.index));
-
-            for (let i = 0; i < numBars; i++) {
-                const x = i * totalBarWidth;
-                const barH = Math.max(2, barHeights[i]);
-                const intensity = barH / maxAmp;
-                const isTransient = transientIndices.has(i);
-                const transientData = transients.find(t => t.index === i);
-
-                // Dynamic color - transients get special orange/yellow treatment
-                let r, g, b;
-                if (isTransient) {
-                    // Transients: bright orange → yellow → white
-                    const tStrength = transientData ? transientData.strength : 0.5;
-                    r = 255;
-                    g = Math.floor(150 + tStrength * 105); // More yellow with strength
-                    b = Math.floor(50 + tStrength * 100);  // Hint of white
-                } else if (intensity < 0.5) {
-                    // Cyan to purple
-                    r = Math.floor(intensity * 2 * 180);
-                    g = Math.floor(200 - intensity * 100);
-                    b = 255;
-                } else {
-                    // Purple to hot pink/magenta
-                    r = Math.floor(180 + (intensity - 0.5) * 150);
-                    g = Math.floor(150 - (intensity - 0.5) * 100);
-                    b = Math.floor(255 - (intensity - 0.5) * 50);
-                }
-
-                // TRANSIENT GLOW - extra strong for attacks
-                if (isTransient) {
-                    ctx.shadowColor = `rgba(255, 200, 50, 1)`;
-                    ctx.shadowBlur = 15 + (transientData ? transientData.strength * 20 : 10);
-                } else if (intensity > 0.6) {
-                    ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
-                    ctx.shadowBlur = 8 + intensity * 12;
-                } else {
-                    ctx.shadowBlur = 0;
-                }
-
-                // Main bar gradient
-                const barGrad = ctx.createLinearGradient(0, centerY - barH, 0, centerY);
-                barGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
-                barGrad.addColorStop(0.5, `rgba(${Math.floor(r*0.8)}, ${Math.floor(g*0.9)}, ${b}, 0.9)`);
-                barGrad.addColorStop(1, `rgba(${Math.floor(r*0.6)}, ${Math.floor(g*0.7)}, ${Math.floor(b*0.9)}, 0.8)`);
-
-                ctx.fillStyle = barGrad;
-
-                // Draw bar (upward from center) - transients slightly wider
-                const actualBarWidth = isTransient ? barWidth + 1 : barWidth;
-                ctx.beginPath();
-                ctx.roundRect(x, centerY - barH, actualBarWidth, barH, 1);
-                ctx.fill();
-
-                // Mirror bar (downward, slightly shorter)
-                ctx.shadowBlur = 0;
-                const mirrorGrad = ctx.createLinearGradient(0, centerY, 0, centerY + barH * 0.7);
-                mirrorGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.7)`);
-                mirrorGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.2)`);
-                ctx.fillStyle = mirrorGrad;
-                ctx.beginPath();
-                ctx.roundRect(x, centerY + 1, actualBarWidth, barH * 0.7, 1);
-                ctx.fill();
-
-                // Bright top cap - EXTRA BRIGHT for transients
-                if (isTransient) {
-                    // Transient spike marker - bright white/yellow cap
-                    ctx.fillStyle = 'rgba(255, 255, 200, 1)';
-                    ctx.shadowColor = 'rgba(255, 255, 100, 1)';
-                    ctx.shadowBlur = 8;
-                    ctx.fillRect(x - 1, centerY - barH - 3, actualBarWidth + 2, 5);
-                    ctx.shadowBlur = 0;
-                } else if (intensity > 0.4) {
-                    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + intensity * 0.5})`;
-                    ctx.fillRect(x, centerY - barH, barWidth, 2);
-                }
+            for (let x = peaks.rmsLeft.length - 1; x >= 0; x--) {
+                const px = leftMargin + x;
+                const py = leftCenterY + peaks.rmsLeft[x] * (channelHeight / 2) * 0.95;
+                ctx.lineTo(px, py);
             }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(0, 255, 200, 0.35)';
+            ctx.fill();
 
-            // ═══ TRANSIENT SPIKE MARKERS (above waveform) ═══
-            for (const t of transients) {
-                const x = t.index * totalBarWidth + barWidth / 2;
-                const y = centerY - t.height - 10;
+            // ═══ DRAW RIGHT CHANNEL WAVEFORM ═══
+            const rightGrad = ctx.createLinearGradient(0, rightCenterY - channelHeight/2, 0, rightCenterY + channelHeight/2);
+            rightGrad.addColorStop(0, 'rgba(255, 80, 180, 0.4)');
+            rightGrad.addColorStop(0.5, 'rgba(255, 100, 150, 0.7)');
+            rightGrad.addColorStop(1, 'rgba(255, 80, 180, 0.4)');
 
-                // Draw spike/triangle marker
-                ctx.beginPath();
-                ctx.moveTo(x, y - 6);
-                ctx.lineTo(x - 4, y + 2);
-                ctx.lineTo(x + 4, y + 2);
-                ctx.closePath();
-
-                ctx.fillStyle = `rgba(255, 220, 50, ${0.6 + t.strength * 0.4})`;
-                ctx.shadowColor = 'rgba(255, 200, 0, 0.8)';
-                ctx.shadowBlur = 6;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+            ctx.beginPath();
+            for (let x = 0; x < peaks.right.length; x++) {
+                const px = leftMargin + x;
+                const py = rightCenterY - peaks.right[x].max * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
             }
+            for (let x = peaks.right.length - 1; x >= 0; x--) {
+                const px = leftMargin + x;
+                const py = rightCenterY - peaks.right[x].min * (channelHeight / 2) * 0.95;
+                ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = rightGrad;
+            ctx.fill();
 
-            // ═══ CENTER LINE WITH GLOW ═══
-            ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
-            ctx.shadowBlur = 4;
-            ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+            // RMS overlay for right
+            ctx.beginPath();
+            for (let x = 0; x < peaks.rmsRight.length; x++) {
+                const px = leftMargin + x;
+                const py = rightCenterY - peaks.rmsRight[x] * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            for (let x = peaks.rmsRight.length - 1; x >= 0; x--) {
+                const px = leftMargin + x;
+                const py = rightCenterY + peaks.rmsRight[x] * (channelHeight / 2) * 0.95;
+                ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 150, 200, 0.35)';
+            ctx.fill();
+
+            // ═══ PEAK ENVELOPE LINE (bright edge) ═══
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 0.75;
+            ctx.beginPath();
+            for (let x = 0; x < peaks.left.length; x++) {
+                const px = leftMargin + x;
+                const py = leftCenterY - peaks.left[x].max * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let x = 0; x < peaks.left.length; x++) {
+                const px = leftMargin + x;
+                const py = leftCenterY - peaks.left[x].min * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(255, 100, 200, 0.8)';
+            ctx.beginPath();
+            for (let x = 0; x < peaks.right.length; x++) {
+                const px = leftMargin + x;
+                const py = rightCenterY - peaks.right[x].max * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let x = 0; x < peaks.right.length; x++) {
+                const px = leftMargin + x;
+                const py = rightCenterY - peaks.right[x].min * (channelHeight / 2) * 0.95;
+                if (x === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // ═══ CENTER LINES WITH GLOW ═══
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(leftMargin, leftCenterY);
+            ctx.lineTo(width - rightMargin, leftCenterY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(leftMargin, rightCenterY);
+            ctx.lineTo(width - rightMargin, rightCenterY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // ═══ CHANNEL SEPARATOR LINE ═══
+            const separatorY = (leftCenterY + channelHeight/2 + rightCenterY - channelHeight/2) / 2;
+            ctx.strokeStyle = 'rgba(184, 79, 255, 0.3)';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(0, centerY);
-            ctx.lineTo(width, centerY);
+            ctx.moveTo(leftMargin, separatorY);
+            ctx.lineTo(width - rightMargin, separatorY);
             ctx.stroke();
-            ctx.shadowBlur = 0;
 
-            // ═══ PEAK MARKERS ═══
-            // Find and mark the loudest sections
-            let peakIdx = 0;
-            let peakVal = 0;
-            for (let i = 0; i < barHeights.length; i++) {
-                if (barHeights[i] > peakVal) {
-                    peakVal = barHeights[i];
-                    peakIdx = i;
+            // ═══ CLIP INDICATORS ═══
+            if (hasClipping) {
+                // Red clip indicator at top
+                ctx.fillStyle = 'rgba(255, 50, 50, 0.9)';
+                ctx.fillRect(width - rightMargin - 50, 2, 48, 12);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 8px "Inter", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('CLIP', width - rightMargin - 26, 11);
+
+                // Mark clipped sections
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                for (let x = 0; x < peaks.left.length; x++) {
+                    if (peaks.left[x].max >= 0.99 || peaks.left[x].min <= -0.99) {
+                        ctx.fillRect(leftMargin + x, topMargin, 1, channelHeight);
+                    }
+                    if (peaks.right[x].max >= 0.99 || peaks.right[x].min <= -0.99) {
+                        ctx.fillRect(leftMargin + x, rightCenterY - channelHeight/2, 1, channelHeight);
+                    }
                 }
             }
 
-            // Draw peak indicator
-            const peakX = peakIdx * totalBarWidth + barWidth / 2;
-            ctx.beginPath();
-            ctx.arc(peakX, centerY - peakVal - 6, 3, 0, Math.PI * 2);
-            ctx.fillStyle = '#ff00ff';
-            ctx.shadowColor = '#ff00ff';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            // ═══ TIME MARKERS ═══
+            const duration = audioBuffer.duration;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.font = '8px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 10; i++) {
+                const x = leftMargin + i * timeGridSpacing;
+                const time = (duration * i / 10).toFixed(1);
+                ctx.fillText(time + 's', x, height - 1);
+            }
 
-            console.log('✅ Neon bar waveform drawn:', width + 'x' + height, 'bars:', numBars);
+            // ═══ STEREO CORRELATION MINI-BAR ═══
+            // Calculate average stereo correlation
+            let corrSum = 0, corrCount = 0;
+            for (let i = 0; i < leftData.length; i += 1000) {
+                corrSum += leftData[i] * rightData[i];
+                corrCount++;
+            }
+            const correlation = corrSum / Math.max(1, corrCount);
+            const corrNorm = (correlation + 1) / 2; // Normalize to 0-1
+
+            const corrBarWidth = 60;
+            const corrBarHeight = 4;
+            const corrBarX = width - rightMargin - corrBarWidth;
+            const corrBarY = height - bottomMargin - 14;
+
+            // Background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(corrBarX, corrBarY, corrBarWidth, corrBarHeight);
+
+            // Fill based on correlation
+            const corrColor = corrNorm > 0.7 ? '#00ff88' : corrNorm > 0.4 ? '#ffcc00' : '#ff4444';
+            ctx.fillStyle = corrColor;
+            ctx.fillRect(corrBarX, corrBarY, corrBarWidth * corrNorm, corrBarHeight);
+
+            // Label
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.font = '7px "JetBrains Mono", monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText('CORR', corrBarX - 3, corrBarY + 3);
+
+            console.log('✅ State-of-the-art stereo waveform rendered');
         }
 
         // Legacy function name for compatibility
