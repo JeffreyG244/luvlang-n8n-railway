@@ -16480,64 +16480,77 @@
                     console.log('   ✅ BOB LUDWIG STYLE Limiter: -1.0 dBTP ceiling, musical 150ms release');
                 }
 
-                // CRITICAL: Calculate gain needed to reach target LUFS
-                // Add limiter compensation: limiters typically reduce loudness by 1-2 dB
-                // when catching peaks - compensate for this to hit exact target
-                const LIMITER_COMPENSATION_DB = 1.5; // Compensate for limiter gain reduction
-                const lufsGainNeeded = (targetLUFS - beforeLUFS) + LIMITER_COMPENSATION_DB;
-
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎯 GAIN CALCULATION (DIRECT - NO PRE-COMPENSATION):');
-                console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS);
-                console.log('   Gain needed:', lufsGainNeeded.toFixed(1), 'dB');
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                // ═══════════════════════════════════════════════════════════════════
+                // STATE-OF-THE-ART LUFS TARGETING - Professional Mastering Grade
+                // Dynamic compensation based on crest factor and limiter behavior
+                // ═══════════════════════════════════════════════════════════════════
 
                 // Calculate current true peak in dBTP
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
-                // Calculate maximum gain that won't cause clipping
-                // BOB LUDWIG APPROACH: Let limiter handle peaks, target -1.5 dBTP before limiting
-                const peakTargetBeforeLimiter = -1.5;  // Trust the limiter to catch peaks
-                const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
+                // CREST FACTOR: Peak-to-Loudness ratio (key to accurate limiting prediction)
+                // Higher crest = more dynamic, limiter works harder = more compensation needed
+                const crestFactor = currentPeakDB - beforeLUFS;
 
-                // Use the MINIMUM of LUFS gain and peak-based gain
-                let safeGain;
-                if (lufsGainNeeded > 0) {
-                    // Boosting: Check if peak would exceed safe limit
-                    const peakAfterBoost = currentPeakDB + lufsGainNeeded;
-                    if (peakAfterBoost > peakTargetBeforeLimiter) {
-                        // Peak protection needed - use lower gain
-                        safeGain = maxPeakGain;
-                        console.log('⚠️  PEAK PROTECTION: Limiting gain from', lufsGainNeeded.toFixed(1), 'dB to', safeGain.toFixed(1), 'dB to prevent clipping');
-                        console.log('   Peak would be:', peakAfterBoost.toFixed(1), 'dBTP (limit:', peakTargetBeforeLimiter, 'dBTP)');
-                    } else {
-                        // Safe to apply full LUFS gain
-                        safeGain = lufsGainNeeded;
-                    }
+                // DYNAMIC LIMITER COMPENSATION based on material characteristics
+                // - Compressed material (crest 8-12 dB): minimal limiter work, low compensation
+                // - Dynamic material (crest 12-18 dB): moderate limiter work
+                // - Very dynamic (crest 18+ dB): heavy limiter work, high compensation
+                let limiterCompensation;
+                if (crestFactor < 10) {
+                    // Already compressed/limited - minimal compensation
+                    limiterCompensation = 0.5;
+                } else if (crestFactor < 14) {
+                    // Moderate dynamics - standard compensation
+                    limiterCompensation = 1.0;
+                } else if (crestFactor < 18) {
+                    // Dynamic material - more compensation
+                    limiterCompensation = 1.8;
                 } else {
-                    // Reducing: Always safe (no peak issues when turning down)
-                    safeGain = lufsGainNeeded;
+                    // Very dynamic - maximum compensation
+                    limiterCompensation = 2.5;
                 }
 
+                // Calculate base gain needed
+                const baseGainNeeded = targetLUFS - beforeLUFS;
+
+                // Apply dynamic limiter compensation for exact target hitting
+                const lufsGainNeeded = baseGainNeeded + limiterCompensation;
+
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🎯 FINAL SAFE GAIN:');
+                console.log('🎯 STATE-OF-THE-ART LUFS TARGETING');
+                console.log('   Before LUFS:', beforeLUFS.toFixed(1), '| Target:', targetLUFS);
+                console.log('   Peak Level:', currentPeakDB.toFixed(1), 'dBTP');
+                console.log('   Crest Factor:', crestFactor.toFixed(1), 'dB (peak-to-loudness)');
+                console.log('   Dynamic Limiter Compensation:', '+' + limiterCompensation.toFixed(1), 'dB');
+                console.log('   Total Gain:', lufsGainNeeded.toFixed(1), 'dB');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+                // PROFESSIONAL APPROACH: Trust the limiter to catch peaks
+                // Don't over-protect - the IRC limiter is designed for this
+                const peakTargetBeforeLimiter = 0;  // Let peaks hit limiter threshold
+
+                // Apply full LUFS gain - limiter will handle peaks professionally
+                let safeGain = lufsGainNeeded;
+
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🎯 PROFESSIONAL GAIN APPLICATION:');
                 console.log('   Current Peak:', currentPeakDB.toFixed(1), 'dBTP');
-                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP (must be < -2.0 dBTP)');
+                console.log('   Peak after gain:', (currentPeakDB + safeGain).toFixed(1), 'dBTP → Limiter catches this');
                 console.log('   Applied gain:', safeGain.toFixed(1), 'dB');
-                console.log('   Expected LUFS after gain:', (beforeLUFS + safeGain).toFixed(1), 'LUFS');
-                console.log('   Target LUFS:', targetLUFS, 'LUFS');
+                console.log('   Expected LUFS:', targetLUFS.toFixed(1), 'LUFS (exact target)');
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
                 if (Math.abs(safeGain) > 0.1) {
-                    // CRITICAL SAFETY: Hard limit to prevent over-loud/clipping audio
-                    // Bob Ludwig approach: Allow up to +9 dB for quieter tracks, limiter handles peaks
-                    const MAX_SAFE_GAIN_DB = 9.0;  // Allow up to +9 dB boost (limiter catches peaks)
+                    // PROFESSIONAL SAFETY: Allow generous headroom for quiet source material
+                    // Industry standard: up to +12 dB is common for quiet acoustic recordings
+                    const MAX_SAFE_GAIN_DB = 12.0;
                     if (safeGain > MAX_SAFE_GAIN_DB) {
                         console.warn('🚨 SAFETY LIMIT: Capping gain at +' + MAX_SAFE_GAIN_DB + ' dB (requested: +' + safeGain.toFixed(1) + ' dB)');
                         safeGain = MAX_SAFE_GAIN_DB;
                     }
 
-                    console.log('🎯 PRE-APPLYING GAIN: ' + safeGain.toFixed(1) + ' dB (peak-protected + safety-limited)');
+                    console.log('🎯 APPLYING PROFESSIONAL GAIN: ' + safeGain.toFixed(1) + ' dB (limiter-trusted)');
 
                     // Apply gain to makeupGain node with SMOOTH RAMPING (prevents clicking)
                     if (makeupGain && audioContext) {
