@@ -5351,7 +5351,7 @@
                  PANEL 2.5: PHASE CORRELATION HEATMAP - Frequency-Dependent Analysis
                  COLLAPSIBLE - Hidden by default to save space (secondary visualization)
                  ═══════════════════════════════════════════════════════════════════════════ -->
-            <div class="viz-panel correlation-panel" id="correlationHeatmapPanel" style="display: none;">
+            <div class="viz-panel correlation-panel" id="correlationHeatmapPanel" style="display: none; position: relative; z-index: 1000;">
                 <div class="panel-title" style="cursor: pointer;" onclick="toggleCorrelationHeatmap()">
                     <span style="display: flex; align-items: center; gap: 8px;">
                         <span id="correlationToggleIcon" style="transition: transform 0.3s ease; font-size: 0.6rem;">▼</span>
@@ -7327,6 +7327,11 @@
                     if (panel) {
                         const isHidden = panel.style.display === 'none';
                         panel.style.display = isHidden ? 'block' : 'none';
+                        // Ensure high z-index when visible
+                        if (isHidden) {
+                            panel.style.position = 'relative';
+                            panel.style.zIndex = '1000';
+                        }
                         if (icon) {
                             icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
                         }
