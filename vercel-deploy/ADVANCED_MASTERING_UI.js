@@ -12,11 +12,11 @@ function createLimiterModeUI(containerId) {
     if (!container) return null;
 
     const modes = [
-        { id: 'transparent', label: 'TRANSPARENT', desc: 'Clean, invisible limiting' },
-        { id: 'balanced', label: 'BALANCED', desc: 'All-purpose mastering' },
-        { id: 'punchy', label: 'PUNCHY', desc: 'Adds impact and energy' },
-        { id: 'aggressive', label: 'AGGRESSIVE', desc: 'Maximum loudness' },
-        { id: 'transient', label: 'TRANSIENT', desc: 'Preserves attack' }
+        { id: 'transparent', label: 'CLEAN', desc: 'Clean, invisible limiting' },
+        { id: 'balanced', label: 'BAL', desc: 'All-purpose mastering' },
+        { id: 'punchy', label: 'PUNCH', desc: 'Adds impact and energy' },
+        { id: 'aggressive', label: 'LOUD', desc: 'Maximum loudness' },
+        { id: 'transient', label: 'TRANS', desc: 'Preserves attack' }
     ];
 
     const html = `
