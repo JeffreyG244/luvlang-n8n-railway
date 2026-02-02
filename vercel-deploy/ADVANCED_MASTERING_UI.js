@@ -378,8 +378,14 @@ function createLoudnessHistoryUI(containerId) {
     const html = `
         <div class="loudness-history-panel">
             <div class="panel-header">
-                <span class="panel-title">LOUDNESS HISTORY</span>
-                <span class="panel-badge">ITU-R BS.1770-5</span>
+                <span class="panel-title" style="
+                    background: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #b84fff 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                ">LOUDNESS HISTORY</span>
                 <button class="reset-btn" onclick="resetLoudnessHistory()">Reset</button>
             </div>
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
@@ -537,7 +543,9 @@ function injectAdvancedStyles() {
         .panel-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-bottom: 12px;
         }
 
@@ -899,13 +907,18 @@ if (document.readyState === 'loading') {
     initAdvancedMasteringUI();
 }
 
-// Export functions (don't overwrite if already defined by other modules)
+// Export functions (don't overwrite if already defined by LOUDNESS_SPECTROGRAM.js)
 window.createLimiterModeUI = createLimiterModeUI;
 window.createSoftClipperUI = createSoftClipperUI;
 window.createUpwardCompressorUI = createUpwardCompressorUI;
 window.createUnlimiterUI = createUnlimiterUI;
-window.createLoudnessHistoryUI = createLoudnessHistoryUI;
-window.createSpectrogramUI = createSpectrogramUI;
+// Only set these if not already defined by LOUDNESS_SPECTROGRAM.js (which has better implementations)
+if (typeof window.createLoudnessHistoryUI !== 'function') {
+    window.createLoudnessHistoryUI = createLoudnessHistoryUI;
+}
+if (typeof window.createSpectrogramUI !== 'function') {
+    window.createSpectrogramUI = createSpectrogramUI;
+}
 window.createLinearPhaseToggle = createLinearPhaseToggle;
 if (typeof window.showToast !== 'function') {
     window.showToast = showToast;
