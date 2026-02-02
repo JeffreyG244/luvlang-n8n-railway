@@ -11,43 +11,28 @@ function createLimiterModeUI(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return null;
 
-    const modes = [
-        { id: 'transparent', label: 'CLEAN', desc: 'Clean, invisible limiting' },
-        { id: 'balanced', label: 'BAL', desc: 'All-purpose mastering' },
-        { id: 'punchy', label: 'PUNCH', desc: 'Adds impact and energy' },
-        { id: 'aggressive', label: 'LOUD', desc: 'Maximum loudness' },
-        { id: 'transient', label: 'TRANS', desc: 'Preserves attack' }
-    ];
-
     const html = `
-        <div class="limiter-mode-panel">
-            <div class="panel-header">
-                <span class="panel-title">IRC LIMITER MODE</span>
+        <div class="limiter-mode-panel" style="background: linear-gradient(135deg, rgba(10,10,20,0.95), rgba(20,20,40,0.9)); border-radius: 10px; border: 1px solid rgba(0,212,255,0.15); margin-bottom: 12px; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: linear-gradient(90deg, rgba(0,212,255,0.08), transparent);">
+                <span style="font-size: 0.7rem; font-weight: 700; color: #fff; letter-spacing: 0.5px;">IRC LIMITER</span>
+                <select id="limiterModeSelect" style="padding: 6px 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,212,255,0.3); color: #fff; border-radius: 6px; font-size: 0.65rem; font-weight: 600; cursor: pointer;">
+                    <option value="transparent">Clean</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="punchy">Punchy</option>
+                    <option value="aggressive">Loud</option>
+                    <option value="transient">Transient</option>
+                </select>
             </div>
-            <div class="limiter-mode-grid">
-                ${modes.map(m => `
-                    <button class="limiter-mode-btn ${m.id === 'balanced' ? 'active' : ''}"
-                            data-mode="${m.id}"
-                            title="${m.desc}">
-                        <span class="mode-label">${m.label}</span>
-                    </button>
-                `).join('')}
-            </div>
-            <div class="limiter-controls">
-                <div class="limiter-control">
-                    <label>THRESHOLD</label>
-                    <input type="range" id="limiterThreshold" min="-12" max="0" step="0.1" value="-1">
-                    <span id="limiterThresholdValue">-1.0 dBTP</span>
+            <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: grid; grid-template-columns: 70px 1fr 55px; align-items: center; gap: 8px;">
+                    <label style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 600;">CEILING</label>
+                    <input type="range" id="limiterCeiling" min="-3" max="0" step="0.1" value="-1" style="width: 100%;">
+                    <span id="limiterCeilingValue" style="font-size: 0.6rem; color: #00d4ff; text-align: right;">-1.0 dB</span>
                 </div>
-                <div class="limiter-control">
-                    <label>CEILING</label>
-                    <input type="range" id="limiterCeiling" min="-3" max="0" step="0.1" value="-0.3">
-                    <span id="limiterCeilingValue">-0.3 dBTP</span>
-                </div>
-                <div class="limiter-control">
-                    <label>RELEASE</label>
-                    <input type="range" id="limiterRelease" min="10" max="500" step="1" value="100">
-                    <span id="limiterReleaseValue">100 ms</span>
+                <div style="display: grid; grid-template-columns: 70px 1fr 55px; align-items: center; gap: 8px;">
+                    <label style="font-size: 0.55rem; color: rgba(255,255,255,0.6); font-weight: 600;">RELEASE</label>
+                    <input type="range" id="limiterRelease" min="10" max="500" step="1" value="100" style="width: 100%;">
+                    <span id="limiterReleaseValue" style="font-size: 0.6rem; color: #00d4ff; text-align: right;">100 ms</span>
                 </div>
             </div>
         </div>
@@ -55,46 +40,26 @@ function createLimiterModeUI(containerId) {
 
     container.innerHTML = html;
 
-    // Event listeners
-    container.querySelectorAll('.limiter-mode-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            container.querySelectorAll('.limiter-mode-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            const mode = this.dataset.mode;
-
+    // Mode dropdown listener
+    const modeSelect = document.getElementById('limiterModeSelect');
+    if (modeSelect) {
+        modeSelect.addEventListener('change', function() {
+            const mode = this.value;
             if (window.advancedEngine) {
                 window.advancedEngine.setLimiterMode(mode);
             }
-
-            // Update display
-            const descMap = {
-                transparent: 'Clean, invisible limiting - preserves all dynamics',
-                balanced: 'All-purpose mastering - optimal for most material',
-                punchy: 'Adds impact and energy - great for EDM/Hip-Hop',
-                aggressive: 'Maximum loudness - streaming-optimized',
-                transient: 'Preserves attack - ideal for acoustic/live'
-            };
-            showToast(`Limiter: ${mode.toUpperCase()}`, descMap[mode]);
-        });
-    });
-
-    // Slider listeners
-    const thresholdSlider = document.getElementById('limiterThreshold');
-    const ceilingSlider = document.getElementById('limiterCeiling');
-    const releaseSlider = document.getElementById('limiterRelease');
-
-    if (thresholdSlider) {
-        thresholdSlider.addEventListener('input', function() {
-            document.getElementById('limiterThresholdValue').textContent = `${parseFloat(this.value).toFixed(1)} dBTP`;
-            if (window.advancedEngine) {
-                window.advancedEngine.setLimiterThreshold(parseFloat(this.value));
-            }
+            console.log(`🎚️ IRC Limiter mode: ${mode}`);
         });
     }
 
+    // Slider listeners
+    const ceilingSlider = document.getElementById('limiterCeiling');
+    const releaseSlider = document.getElementById('limiterRelease');
+
     if (ceilingSlider) {
         ceilingSlider.addEventListener('input', function() {
-            document.getElementById('limiterCeilingValue').textContent = `${parseFloat(this.value).toFixed(1)} dBTP`;
+            const val = document.getElementById('limiterCeilingValue');
+            if (val) val.textContent = `${parseFloat(this.value).toFixed(1)} dB`;
             if (window.advancedEngine) {
                 window.advancedEngine.setLimiterCeiling(parseFloat(this.value));
             }
@@ -103,7 +68,8 @@ function createLimiterModeUI(containerId) {
 
     if (releaseSlider) {
         releaseSlider.addEventListener('input', function() {
-            document.getElementById('limiterReleaseValue').textContent = `${this.value} ms`;
+            const val = document.getElementById('limiterReleaseValue');
+            if (val) val.textContent = `${this.value} ms`;
         });
     }
 

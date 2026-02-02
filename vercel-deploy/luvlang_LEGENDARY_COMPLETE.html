@@ -5217,7 +5217,7 @@
                         </div>
                     </div>
 
-                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
+                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
                         <!-- Preset buttons will be populated here -->
                     </div>
                 </div>
@@ -11504,16 +11504,17 @@
 
                 presetBtn.style.cssText = `
                     background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    border-radius: 4px;
-                    padding: 10px 12px;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 6px;
+                    padding: 8px 10px;
                     cursor: pointer;
                     transition: all 0.2s ease;
+                    text-align: center;
                 `;
+                presetBtn.title = preset.description; // Tooltip on hover
 
                 presetBtn.innerHTML = `
-                    <div style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 3px; letter-spacing: 0.02em;">${preset.name}</div>
-                    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); line-height: 1.3;">${preset.description}</div>
+                    <div style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${preset.name}</div>
                 `;
 
                 // Hover effects
