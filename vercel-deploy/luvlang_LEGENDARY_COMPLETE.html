@@ -14045,7 +14045,7 @@
             const data = audioBuffer.getChannelData(0);
             const step = Math.max(1, Math.floor(data.length / width));
             const centerY = height / 2;
-            const padding = 10;
+            const padding = 20; // Generous padding to keep waveform within bounds
 
             // ═══ FIND PEAK FOR NORMALIZATION ═══
             let globalPeak = 0;
@@ -14054,8 +14054,8 @@
             }
             globalPeak = Math.max(globalPeak, 0.001);
 
-            // Scale factor - professional 65% height for cleaner look
-            const maxAmp = ((height / 2) - padding) * 0.65;
+            // Scale factor - 55% of available height (keeps peaks well within canvas)
+            const maxAmp = ((height / 2) - padding) * 0.55;
             const scaleFactor = maxAmp / globalPeak;
 
             console.log(`🎚️ Waveform: peak=${globalPeak.toFixed(4)}, scale=${scaleFactor.toFixed(1)}x, maxAmp=${maxAmp}`);
