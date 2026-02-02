@@ -14823,8 +14823,6 @@
             let drawDataArray = null;
             let drawLeftTimeDomain = null;
             let drawRightTimeDomain = null;
-            let lastPlayheadCanvasWidth = 0;
-            let lastPlayheadCanvasHeight = 0;
 
             // PERFORMANCE MODE: Set to true to disable heavy visualizations for testing
             // Toggle in console: window.PERFORMANCE_MODE = true/false
@@ -15065,49 +15063,9 @@
                     }
                 }
 
-                // ═══ PANEL 3: WAVEFORM (STATIC + PLAYHEAD) ═══
+                // ═══ PANEL 3: WAVEFORM ═══
                 // Waveform is drawn once when audio loads (not every frame for performance)
-
-                // Draw playhead
-                if (waveformCanvasPlayhead && audioElement) {
-                    const ctx = waveformCanvasPlayhead.getContext('2d');
-                    const width = waveformCanvasPlayhead.offsetWidth;
-                    const height = waveformCanvasPlayhead.offsetHeight;
-
-                    // Only resize canvas if dimensions changed (prevents expensive recreate every frame)
-                    const targetWidth = width * window.devicePixelRatio;
-                    const targetHeight = height * window.devicePixelRatio;
-                    if (lastPlayheadCanvasWidth !== targetWidth || lastPlayheadCanvasHeight !== targetHeight) {
-                        waveformCanvasPlayhead.width = targetWidth;
-                        waveformCanvasPlayhead.height = targetHeight;
-                        lastPlayheadCanvasWidth = targetWidth;
-                        lastPlayheadCanvasHeight = targetHeight;
-                    }
-                    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-
-                    // Clear
-                    ctx.clearRect(0, 0, width, height);
-
-                    // Draw playhead ALWAYS (playing or paused)
-                    if (audioElement && audioElement.duration > 0) {
-                        const playheadX = (audioElement.currentTime / audioElement.duration) * width;
-                        // NOTE: Removed console.log - was causing 60 logs/second performance issue
-
-                        // Professional playhead line (subtle cyan)
-                        ctx.shadowBlur = 4;
-                        ctx.shadowColor = 'rgba(0, 212, 255, 0.6)';
-                        ctx.strokeStyle = '#00d4ff';
-                        ctx.lineWidth = 2;
-                        ctx.lineCap = 'round';
-                        ctx.beginPath();
-                        ctx.moveTo(playheadX, 0);
-                        ctx.lineTo(playheadX, height);
-                        ctx.stroke();
-
-                        // Reset shadow
-                        ctx.shadowBlur = 0;
-                    }
-                }
+                // Playhead/scrubber is handled by the waveformScrubber div element
 
                 // Continue broadcast metering
                 updateMeters(drawDataArray);
@@ -25081,16 +25039,42 @@
             const voices = voiceSynth.getVoices();
             const targetLang = langToVoiceLang[currentLang] || 'en';
 
-            // Find best male voice for the selected language
+            // Preferred female voice names by language (high-quality voices)
+            const femaleVoiceNames = {
+                en: ['Samantha', 'Victoria', 'Karen', 'Fiona', 'Moira', 'Siri', 'Susan', 'Zira'],
+                es: ['Paulina', 'Monica', 'Penélope', 'Helena', 'Laura'],
+                fr: ['Amélie', 'Marie', 'Virginie', 'Audrey', 'Aurelie'],
+                de: ['Anna', 'Petra', 'Marlene', 'Helena', 'Yannick'],
+                pt: ['Luciana', 'Raquel', 'Catarina', 'Joana', 'Francisca'],
+                ja: ['Kyoko', 'O-Ren', 'Haruka'],
+                ko: ['Yuna', 'Sora'],
+                zh: ['Ting-Ting', 'Mei-Jia', 'Sin-ji', 'Lili']
+            };
+
+            const preferredNames = femaleVoiceNames[targetLang] || femaleVoiceNames.en;
+
+            // Find best female voice for the selected language
             preferredVoice =
-                voices.find(v => v.lang.startsWith(targetLang) && v.name.toLowerCase().includes('male')) ||
-                voices.find(v => v.lang.startsWith(targetLang) && (v.name.includes('Daniel') || v.name.includes('Alex'))) ||
-                voices.find(v => v.lang.startsWith(targetLang) && !v.name.toLowerCase().includes('female')) ||
+                // First: Try to find a preferred female voice by name
+                voices.find(v => v.lang.startsWith(targetLang) && preferredNames.some(name => v.name.includes(name))) ||
+                // Second: Look for any voice with 'female' in the name
+                voices.find(v => v.lang.startsWith(targetLang) && v.name.toLowerCase().includes('female')) ||
+                // Third: Exclude male voices (often have 'male', 'Daniel', 'Alex', 'David', 'Tom' in name)
+                voices.find(v => v.lang.startsWith(targetLang) &&
+                    !v.name.toLowerCase().includes('male') &&
+                    !v.name.includes('Daniel') &&
+                    !v.name.includes('Alex') &&
+                    !v.name.includes('David') &&
+                    !v.name.includes('Tom') &&
+                    !v.name.includes('Fred')) ||
+                // Fourth: Any voice for that language
                 voices.find(v => v.lang.startsWith(targetLang)) ||
+                // Fifth: English female fallback
+                voices.find(v => v.lang.startsWith('en') && preferredNames.some(name => v.name.includes(name))) ||
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
-            console.log('🎤 Voice for', currentLang, ':', preferredVoice?.name || 'default');
+            console.log('🎤 Female voice for', currentLang, ':', preferredVoice?.name || 'default');
         }
 
         function changeVoiceTourLanguage(lang) {
@@ -25135,8 +25119,8 @@
 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                utterance.rate = 0.92; // Slightly slower for clarity
-                utterance.pitch = 0.9; // Lower pitch for male voice
+                utterance.rate = 0.95; // Natural speaking pace
+                utterance.pitch = 1.0; // Natural pitch for female voice
                 utterance.volume = 1.0;
 
                 // Restore volume when speech ends
@@ -25181,8 +25165,8 @@
 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                utterance.rate = 0.92;
-                utterance.pitch = 0.9;
+                utterance.rate = 0.95; // Natural speaking pace
+                utterance.pitch = 1.0; // Natural pitch for female voice
                 utterance.volume = 1.0;
 
                 // Restore volume when speech ends
