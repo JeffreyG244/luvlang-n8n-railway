@@ -6300,6 +6300,22 @@
                     </div>
                 </div>
 
+                <!-- Linear Phase EQ Toggle (Zero Phase Distortion) -->
+                <div style="background: rgba(184, 79, 255, 0.05); border: 1px solid rgba(184, 79, 255, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #b84fff; margin-bottom: 2px;">Linear Phase EQ</div>
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Zero phase distortion • ITU-R BS.1770-5</div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                            <input type="checkbox" id="linearPhaseEnabled" onchange="toggleLinearPhaseEQ(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); transition: 0.3s; border-radius: 24px;">
+                                <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%;"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- IRC Limiter Mode Selector -->
                 <div id="limiterModeContainer"></div>
 
@@ -6317,9 +6333,6 @@
 
                 <!-- Spectrogram -->
                 <div id="spectrogramContainer"></div>
-
-                <!-- Linear Phase EQ Toggle -->
-                <div id="linearPhaseContainer"></div>
 
                 </div><!-- End collapsible content wrapper -->
             </div>
@@ -7548,6 +7561,30 @@
                         window.dynamicEQ.disable();
                         if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.15)';
                         if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+                    }
+                };
+
+                // Global toggle function for Linear Phase EQ
+                window.toggleLinearPhaseEQ = function(enabled) {
+                    const toggle = document.getElementById('linearPhaseEnabled');
+                    const toggleLabel = toggle ? toggle.parentElement : null;
+                    const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
+                    const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
+
+                    if (enabled) {
+                        if (window.linearPhaseEQ && window.linearPhaseEQ.enable) {
+                            window.linearPhaseEQ.enable();
+                        }
+                        if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #b84fff, #ff6b9d)';
+                        if (toggleThumb) toggleThumb.style.transform = 'translateX(20px)';
+                        console.log('✅ Linear Phase EQ: ENABLED (zero phase distortion)');
+                    } else {
+                        if (window.linearPhaseEQ && window.linearPhaseEQ.disable) {
+                            window.linearPhaseEQ.disable();
+                        }
+                        if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.15)';
+                        if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+                        console.log('⏸️ Linear Phase EQ: DISABLED');
                     }
                 };
 
@@ -24858,10 +24895,8 @@
                 createSpectrogramUI('spectrogramContainer');
                 console.log('   ✓ Spectrogram UI created');
             }
-            if (typeof createLinearPhaseToggle === 'function') {
-                createLinearPhaseToggle('linearPhaseContainer');
-                console.log('   ✓ Linear Phase Toggle UI created');
-            }
+            // Linear Phase EQ toggle is now inline next to Dynamic EQ
+            console.log('   ✓ Linear Phase EQ toggle ready (inline)');
 
             console.log('✅ Premium Processing UI ready');
             console.log('   - IRC Limiter (5 modes: Transparent, Balanced, Punchy, Aggressive, Transient)');
