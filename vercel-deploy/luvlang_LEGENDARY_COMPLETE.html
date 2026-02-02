@@ -14221,6 +14221,17 @@
             const step = Math.max(1, Math.floor(data.length / (width * 2))); // Higher resolution
             const padding = 8; // Padding from top/bottom edges
             const centerY = height / 2;
+
+            // ═══ NORMALIZE WAVEFORM - Find peak and scale to fill canvas ═══
+            let globalPeak = 0;
+            for (let i = 0; i < data.length; i += step) {
+                globalPeak = Math.max(globalPeak, Math.abs(data[i]));
+            }
+            // Ensure minimum peak to avoid division issues, and scale to 95% of available height
+            globalPeak = Math.max(globalPeak, 0.001);
+            const normalizeScale = 0.95 / globalPeak;
+            console.log(`🎚️ Waveform normalization: peak=${globalPeak.toFixed(4)}, scale=${normalizeScale.toFixed(2)}x`);
+
             const amp = (height - padding * 2) / 2; // Ensure waveform fits within padded area
 
             // ═══ TRANSIENT GHOST LAYER (Pre-Limiting Peaks) ═══
@@ -14230,7 +14241,7 @@
                 ctx.beginPath();
                 ctx.moveTo(0, centerY);
 
-                // Draw original peaks (before limiting)
+                // Draw original peaks (before limiting) - use same scale for comparison
                 for (let i = 0; i < width; i++) {
                     let max = 0;
                     for (let j = 0; j < step; j++) {
@@ -14239,7 +14250,7 @@
                             max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
                         }
                     }
-                    ctx.lineTo(i, centerY - (max * amp));
+                    ctx.lineTo(i, centerY - (max * normalizeScale * amp));
                 }
                 for (let i = width - 1; i >= 0; i--) {
                     let max = 0;
@@ -14249,7 +14260,7 @@
                             max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
                         }
                     }
-                    ctx.lineTo(i, centerY + (max * amp));
+                    ctx.lineTo(i, centerY + (max * normalizeScale * amp));
                 }
                 ctx.closePath();
                 ctx.fill();
@@ -14275,7 +14286,7 @@
                         max = Math.max(max, Math.abs(data[idx]));
                     }
                 }
-                ctx.lineTo(i, centerY - (max * amp));
+                ctx.lineTo(i, centerY - (max * normalizeScale * amp));
             }
 
             // Bottom half (reverse)
@@ -14287,7 +14298,7 @@
                         max = Math.max(max, Math.abs(data[idx]));
                     }
                 }
-                ctx.lineTo(i, centerY + (max * amp));
+                ctx.lineTo(i, centerY + (max * normalizeScale * amp));
             }
 
             ctx.closePath();
@@ -14308,7 +14319,7 @@
                         max = Math.max(max, Math.abs(data[idx]));
                     }
                 }
-                const y = centerY - (max * amp);
+                const y = centerY - (max * normalizeScale * amp);
                 if (i === 0) ctx.moveTo(i, y);
                 else ctx.lineTo(i, y);
             }
