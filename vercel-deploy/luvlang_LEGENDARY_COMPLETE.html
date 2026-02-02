@@ -1178,37 +1178,68 @@
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           PROFESSIONAL 7-BAND EQ WITH VERTICAL DRAGGABLE FADERS
-           Always visible in scroll area
+           PROFESSIONAL 7-BAND PARAMETRIC EQ - FabFilter/iZotope Grade
+           High-end plugin aesthetic with real-time visual feedback
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .eq-section {
-            background: linear-gradient(180deg, rgba(10, 10, 20, 0.98) 0%, rgba(5, 5, 12, 0.99) 100%);
-            border-radius: 15px;
-            padding: 16px 24px 20px;
-            margin-bottom: 15px;
-            margin-top: 20px;
-            border: 2px solid rgba(0, 212, 255, 0.4);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: linear-gradient(180deg,
+                rgba(8, 8, 18, 0.99) 0%,
+                rgba(12, 12, 24, 0.98) 50%,
+                rgba(6, 6, 14, 0.99) 100%);
+            border-radius: 16px;
+            padding: 20px 28px 24px;
+            margin-bottom: 20px;
+            margin-top: 25px;
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            transition: all 0.3s ease;
             position: relative;
             z-index: 10;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.15);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                0 0 40px rgba(0, 212, 255, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Inner glow effect */
+        .eq-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
         }
 
         /* Highlight effect when preset is applied */
         .eq-section.preset-highlight {
-            border-color: rgba(0, 255, 136, 0.8) !important;
-            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 212, 255, 0.3), inset 0 0 30px rgba(0, 255, 136, 0.1) !important;
-            animation: eqSectionPulse 1s ease-out;
+            border-color: rgba(0, 255, 136, 0.6) !important;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(0, 255, 136, 0.4),
+                0 0 120px rgba(0, 212, 255, 0.2),
+                inset 0 0 40px rgba(0, 255, 136, 0.08) !important;
+            animation: eqSectionPulse 1.2s ease-out;
         }
 
         @keyframes eqSectionPulse {
             0% {
+                border-color: rgba(0, 255, 200, 1);
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.6),
+                    0 0 80px rgba(0, 255, 136, 0.6),
+                    0 0 150px rgba(0, 212, 255, 0.4);
+            }
+            50% {
                 border-color: rgba(0, 255, 136, 0.8);
-                box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 212, 255, 0.3);
             }
             100% {
-                border-color: rgba(0, 255, 136, 0.6);
-                box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 212, 255, 0.2);
+                border-color: rgba(0, 255, 136, 0.4);
+                box-shadow:
+                    0 8px 32px rgba(0, 0, 0, 0.6),
+                    0 0 40px rgba(0, 255, 136, 0.2);
             }
         }
 
@@ -1326,70 +1357,120 @@
         .eq-faders {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 20px;  /* MORE SPACING between faders */
+            gap: 18px;
             align-items: end;
-            padding: 12px 16px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(10, 10, 20, 0.6) 100%);
-            border-radius: 10px;
-            min-height: 240px;  /* Slightly reduced for bottom strip */
+            padding: 20px 20px 16px;
+            background: linear-gradient(180deg,
+                rgba(0, 0, 0, 0.5) 0%,
+                rgba(8, 8, 16, 0.7) 50%,
+                rgba(0, 0, 0, 0.4) 100%);
+            border-radius: 12px;
+            min-height: 260px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .eq-fader-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .eq-fader-container:hover {
+            transform: scale(1.02);
         }
 
         .eq-fader-label {
-            font-size: 0.8rem;  /* LARGER - More readable */
+            font-size: 0.75rem;
             font-weight: 700;
             text-align: center;
             color: #00d4ff;
-            min-height: 28px;
+            min-height: 32px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .eq-fader-freq {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            margin-top: 2px;
         }
 
         .eq-fader-track {
             position: relative;
-            width: 44px;  /* LARGER - Easier to grab */
-            height: 160px;  /* Slightly shorter for bottom strip */
+            width: 48px;
+            height: 170px;
             background: linear-gradient(180deg,
-                rgba(0, 212, 255, 0.12) 0%,
-                rgba(255, 255, 255, 0.06) 50%,
-                rgba(184, 79, 255, 0.12) 100%
+                rgba(0, 255, 136, 0.08) 0%,
+                rgba(255, 255, 255, 0.03) 25%,
+                rgba(255, 255, 255, 0.02) 50%,
+                rgba(255, 255, 255, 0.03) 75%,
+                rgba(184, 79, 255, 0.08) 100%
             );
-            border-radius: 22px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             cursor: pointer;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+            box-shadow:
+                inset 0 2px 10px rgba(0, 0, 0, 0.5),
+                inset 0 -2px 10px rgba(255, 255, 255, 0.02);
         }
 
         .eq-fader-thumb {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            width: 52px;  /* LARGER - Easier to grab */
-            height: 24px;  /* LARGER */
-            background: linear-gradient(135deg, #00d4ff, #0088cc);
-            border-radius: 12px;
+            width: 56px;
+            height: 26px;
+            background: linear-gradient(180deg,
+                #00e5ff 0%,
+                #00b8d4 40%,
+                #0088a3 100%);
+            border-radius: 13px;
             cursor: grab;
-            /* Smooth animation for preset changes */
-            transition: top 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.15s ease;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.5);
+            transition: top 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.15s ease, background 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            box-shadow:
+                0 4px 16px rgba(0, 212, 255, 0.5),
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* Center groove line on thumb */
+        .eq-fader-thumb::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 1px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .eq-fader-thumb:hover {
-            box-shadow: 0 6px 25px rgba(0, 212, 255, 0.6);
+            box-shadow:
+                0 6px 24px rgba(0, 212, 255, 0.7),
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transform: translateX(-50%) scale(1.05);
         }
 
         .eq-fader-thumb:active {
             cursor: grabbing;
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.8);
+            box-shadow:
+                0 8px 32px rgba(0, 212, 255, 0.8),
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transform: translateX(-50%) scale(1.08);
         }
 
         /* Animated glow when preset is applied - DRAMATIC EFFECT */
@@ -1479,12 +1560,22 @@
 
         .eq-fader-value {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;  /* LARGER - More readable */
-            font-weight: 800;
+            font-size: 0.8rem;
+            font-weight: 700;
             color: #fff;
             text-align: center;
-            min-width: 60px;
-            text-shadow: 0 0 10px rgba(0, 212, 255, 0.9), 0 0 20px rgba(0, 212, 255, 0.5);
+            min-width: 65px;
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.8);
+            transition: all 0.2s ease;
+        }
+
+        .eq-fader-value:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
         }
 
         .eq-fader-center {
@@ -14837,11 +14928,18 @@
 
                         // Also draw overlay for Canvas 2D mode
                         const overlayCanvas = document.getElementById('spectrumOverlayCanvas');
-                        if (overlayCanvas && window.spectrumPeakHold) {
+                        if (overlayCanvas) {
                             const ctx = overlayCanvas.getContext('2d');
                             if (ctx) {
                                 ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-                                drawSpectrumPeakDots(overlayCanvas);
+                                // Draw EQ curve overlay (FabFilter-style)
+                                if (window.drawEQCurveOverlay) {
+                                    drawEQCurveOverlay(overlayCanvas);
+                                }
+                                // Draw peak dots on top
+                                if (window.spectrumPeakHold) {
+                                    drawSpectrumPeakDots(overlayCanvas);
+                                }
                             }
                         }
                     } else {
@@ -15132,6 +15230,164 @@
             }
         }
         window.drawSpectrumPeakDots = drawSpectrumPeakDots;
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // PROFESSIONAL EQ CURVE OVERLAY - FabFilter/iZotope Style
+        // Draws the EQ response curve on top of the spectrum analyzer
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function drawEQCurveOverlay(canvas) {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Get current EQ values
+            const eqValues = {
+                sub: eqSubFilter ? eqSubFilter.gain.value : 0,
+                bass: eqBassFilter ? eqBassFilter.gain.value : 0,
+                lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
+                mid: eqMidFilter ? eqMidFilter.gain.value : 0,
+                highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
+                high: eqHighFilter ? eqHighFilter.gain.value : 0,
+                air: eqAirFilter ? eqAirFilter.gain.value : 0
+            };
+
+            // Check if EQ has any non-zero values
+            const hasEQ = Object.values(eqValues).some(v => Math.abs(v) > 0.1);
+            if (!hasEQ) return;
+
+            // EQ band center frequencies and Q values
+            const bands = [
+                { freq: 40, gain: eqValues.sub, q: 1.0, color: '#ff6b6b' },
+                { freq: 120, gain: eqValues.bass, q: 1.2, color: '#ffa94d' },
+                { freq: 350, gain: eqValues.lowmid, q: 1.5, color: '#ffd43b' },
+                { freq: 1000, gain: eqValues.mid, q: 1.5, color: '#69db7c' },
+                { freq: 3500, gain: eqValues.highmid, q: 1.5, color: '#4dabf7' },
+                { freq: 8000, gain: eqValues.high, q: 1.2, color: '#9775fa' },
+                { freq: 14000, gain: eqValues.air, q: 0.8, color: '#f783ac' }
+            ];
+
+            // Calculate EQ response at each pixel
+            const response = new Float32Array(width);
+            const freqMin = 20, freqMax = 20000;
+
+            for (let x = 0; x < width; x++) {
+                // Logarithmic frequency mapping
+                const freq = freqMin * Math.pow(freqMax / freqMin, x / width);
+                let totalGain = 0;
+
+                // Sum contribution from each band (simplified bell curve)
+                for (const band of bands) {
+                    const octaves = Math.log2(freq / band.freq);
+                    const bandwidth = 1 / band.q;
+                    const influence = Math.exp(-(octaves * octaves) / (2 * bandwidth * bandwidth));
+                    totalGain += band.gain * influence;
+                }
+
+                response[x] = totalGain;
+            }
+
+            // ═══ DRAW FILLED AREA (boost = green, cut = purple) ═══
+            const centerY = height * 0.5;
+            const dbScale = height * 0.35 / 12; // ±12dB maps to 35% of height
+
+            // Boost fill (above center line)
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            for (let x = 0; x < width; x++) {
+                const y = centerY - response[x] * dbScale;
+                if (x === 0) ctx.moveTo(x, Math.min(y, centerY));
+                else ctx.lineTo(x, Math.min(y, centerY));
+            }
+            ctx.lineTo(width, centerY);
+            ctx.closePath();
+            const boostGrad = ctx.createLinearGradient(0, centerY - height * 0.35, 0, centerY);
+            boostGrad.addColorStop(0, 'rgba(0, 255, 136, 0.4)');
+            boostGrad.addColorStop(1, 'rgba(0, 255, 136, 0.05)');
+            ctx.fillStyle = boostGrad;
+            ctx.fill();
+
+            // Cut fill (below center line)
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            for (let x = 0; x < width; x++) {
+                const y = centerY - response[x] * dbScale;
+                if (x === 0) ctx.moveTo(x, Math.max(y, centerY));
+                else ctx.lineTo(x, Math.max(y, centerY));
+            }
+            ctx.lineTo(width, centerY);
+            ctx.closePath();
+            const cutGrad = ctx.createLinearGradient(0, centerY, 0, centerY + height * 0.35);
+            cutGrad.addColorStop(0, 'rgba(184, 79, 255, 0.05)');
+            cutGrad.addColorStop(1, 'rgba(184, 79, 255, 0.4)');
+            ctx.fillStyle = cutGrad;
+            ctx.fill();
+
+            // ═══ DRAW EQ CURVE LINE (bright, glowing) ═══
+            ctx.shadowColor = 'rgba(0, 255, 200, 0.8)';
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = 'rgba(0, 255, 200, 0.9)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let x = 0; x < width; x++) {
+                const y = centerY - response[x] * dbScale;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // ═══ DRAW BAND MARKERS (circles at each EQ point) ═══
+            for (const band of bands) {
+                if (Math.abs(band.gain) < 0.1) continue;
+
+                const x = width * (Math.log10(band.freq) - Math.log10(freqMin)) / (Math.log10(freqMax) - Math.log10(freqMin));
+                const y = centerY - band.gain * dbScale;
+
+                // Outer glow
+                ctx.beginPath();
+                ctx.arc(x, y, 12, 0, Math.PI * 2);
+                const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, 12);
+                glowGrad.addColorStop(0, band.color + '80');
+                glowGrad.addColorStop(1, band.color + '00');
+                ctx.fillStyle = glowGrad;
+                ctx.fill();
+
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = band.color;
+                ctx.shadowColor = band.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // White center dot
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+
+                // dB value label
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                const labelY = band.gain > 0 ? y - 16 : y + 20;
+                ctx.fillText((band.gain > 0 ? '+' : '') + band.gain.toFixed(1), x, labelY);
+            }
+
+            // ═══ CENTER LINE (0dB reference) ═══
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        window.drawEQCurveOverlay = drawEQCurveOverlay;
 
         function updateReactiveEQFaders(frequencyData) {
             if (!analyser || !audioContext || !frequencyData) return;
