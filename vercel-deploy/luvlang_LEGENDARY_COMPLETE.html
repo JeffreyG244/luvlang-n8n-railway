@@ -3083,6 +3083,167 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════════════
+           MOBILE RESPONSIVE LAYOUT - Professional Experience on All Devices
+           ═══════════════════════════════════════════════════════════════════════════ */
+
+        /* Tablet Portrait (768px - 1024px) */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 200px 1fr 200px;
+            }
+            .sticky-viz-wrapper {
+                max-height: calc(100vh - 70px - 300px);
+            }
+            .viz-panel { margin-bottom: 8px; }
+            .meters-panel-viz { padding: 8px; }
+        }
+
+        /* Tablet Portrait & Large Phones (max-width: 900px) */
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            .left-sidebar {
+                display: none; /* Hide on mobile - use bottom sheet instead */
+            }
+            .right-sidebar {
+                display: none; /* Hide on mobile - meters shown inline */
+            }
+            .center-main {
+                padding: 10px;
+            }
+            .sticky-viz-wrapper {
+                max-height: 50vh;
+                border-radius: 0;
+            }
+            .ai-command-bar {
+                padding: 0 10px;
+                height: 60px;
+            }
+            .transport-section {
+                gap: 6px !important;
+            }
+            .transport-btn {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 1rem !important;
+            }
+        }
+
+        /* Phone Portrait (max-width: 640px) */
+        @media (max-width: 640px) {
+            body {
+                font-size: 14px;
+            }
+            .app-container {
+                height: calc(100vh - 60px);
+                margin-top: 60px;
+            }
+            .ai-command-bar {
+                height: 60px;
+            }
+            .transport-section {
+                gap: 4px !important;
+            }
+            .transport-btn {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            .meter-section, .branding-section, .user-section {
+                display: none !important; /* Hide less critical elements on phone */
+            }
+            .center-main {
+                padding: 8px;
+                padding-bottom: 80px;
+            }
+            .sticky-viz-wrapper {
+                max-height: 45vh;
+                padding-bottom: 5px;
+            }
+            .viz-panel {
+                border-radius: 8px;
+                margin-bottom: 6px;
+            }
+            .panel-title {
+                font-size: 0.55rem !important;
+                padding: 6px 8px !important;
+            }
+            .eq-section {
+                padding: 12px;
+                border-radius: 10px;
+            }
+            .eq-faders {
+                gap: 8px;
+            }
+            .eq-fader-container {
+                min-width: 40px;
+            }
+            .eq-fader-label { font-size: 0.55rem; }
+            .eq-fader-value { font-size: 0.5rem; }
+            .dynamics-section {
+                padding: 10px;
+            }
+            .scroll-content-indicator {
+                padding: 8px 12px;
+                margin-bottom: 12px;
+            }
+            .scroll-content-indicator span {
+                font-size: 0.6rem;
+                letter-spacing: 1px;
+            }
+            /* Larger touch targets */
+            input[type="range"] {
+                height: 24px;
+            }
+            button, .eq-bypass-btn {
+                min-height: 36px;
+                padding: 8px 12px;
+            }
+            select {
+                min-height: 36px;
+                font-size: 14px;
+            }
+        }
+
+        /* Small Phone Portrait (max-width: 480px) */
+        @media (max-width: 480px) {
+            .sticky-viz-wrapper {
+                max-height: 40vh;
+            }
+            .secondary-visuals-row {
+                flex-direction: column;
+            }
+            .secondary-visuals-row .viz-panel {
+                width: 100% !important;
+                flex: none !important;
+            }
+            .eq-faders {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .eq-fader-container {
+                flex: 1 1 calc(33% - 8px);
+                min-width: 60px;
+                max-width: 80px;
+            }
+        }
+
+        /* Landscape Mode on Phones */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .sticky-viz-wrapper {
+                max-height: 60vh;
+            }
+            .app-container {
+                height: calc(100vh - 50px);
+                margin-top: 50px;
+            }
+            .ai-command-bar {
+                height: 50px;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
            A/B COMPARISON MODAL - Premium High-End Plugin Aesthetic
            ═══════════════════════════════════════════════════════════════════════════ */
         .ab-modal-overlay {
@@ -25261,6 +25422,180 @@
 
         console.log('🎤 Voice-Interactive Tour System Ready');
     })();
+    </script>
+
+    <!-- Initialize Keyboard Shortcuts -->
+    <script>
+    window.addEventListener('load', function() {
+        // Initialize keyboard shortcuts with all callbacks
+        if (typeof KeyboardShortcuts !== 'undefined') {
+            window.keyboardShortcuts = new KeyboardShortcuts({
+                // Playback
+                playPause: function() {
+                    const audioEl = window.audioElement;
+                    if (audioEl) {
+                        audioEl.paused ? audioEl.play() : audioEl.pause();
+                    }
+                },
+                stop: function() {
+                    const audioEl = window.audioElement;
+                    if (audioEl) {
+                        audioEl.pause();
+                        audioEl.currentTime = 0;
+                    }
+                },
+
+                // A/B Comparison
+                abToggle: function() {
+                    if (typeof toggleABComparison === 'function') {
+                        toggleABComparison();
+                    }
+                },
+
+                // EQ Band Selection
+                selectBand1: function() { highlightEQBand('sub'); },
+                selectBand2: function() { highlightEQBand('bass'); },
+                selectBand3: function() { highlightEQBand('lowmid'); },
+                selectBand4: function() { highlightEQBand('mid'); },
+                selectBand5: function() { highlightEQBand('highmid'); },
+                selectBand6: function() { highlightEQBand('high'); },
+                selectBand7: function() { highlightEQBand('air'); },
+
+                // Reset Controls
+                resetEQ: function() {
+                    if (typeof resetAllEQ === 'function') {
+                        resetAllEQ();
+                        showNotification('EQ Reset to 0dB', 'info');
+                    }
+                },
+                resetAll: function() {
+                    if (typeof resetAll === 'function') {
+                        resetAll();
+                        showNotification('All Settings Reset', 'info');
+                    }
+                },
+
+                // Bypass Controls
+                bypassAll: function() {
+                    if (typeof toggleBypass === 'function') {
+                        toggleBypass();
+                        showNotification('Processing Bypassed', 'warning');
+                    }
+                },
+                bypassEQ: function() {
+                    if (typeof toggleEQBypass === 'function') {
+                        toggleEQBypass();
+                    }
+                },
+
+                // Master Gain Controls
+                increaseMasterGain: function() {
+                    const slider = document.getElementById('outputGainSlider');
+                    if (slider) {
+                        slider.value = Math.min(12, parseFloat(slider.value) + 0.5);
+                        slider.dispatchEvent(new Event('input'));
+                    }
+                },
+                decreaseMasterGain: function() {
+                    const slider = document.getElementById('outputGainSlider');
+                    if (slider) {
+                        slider.value = Math.max(-12, parseFloat(slider.value) - 0.5);
+                        slider.dispatchEvent(new Event('input'));
+                    }
+                },
+
+                // Stereo Width Controls
+                widenStereo: function() {
+                    const slider = document.getElementById('widthSlider');
+                    if (slider) {
+                        slider.value = Math.min(200, parseFloat(slider.value) + 5);
+                        slider.dispatchEvent(new Event('input'));
+                    }
+                },
+                narrowStereo: function() {
+                    const slider = document.getElementById('widthSlider');
+                    if (slider) {
+                        slider.value = Math.max(0, parseFloat(slider.value) - 5);
+                        slider.dispatchEvent(new Event('input'));
+                    }
+                },
+
+                // M/S Processing
+                toggleMS: function() {
+                    if (typeof toggleMSProcessing === 'function') {
+                        toggleMSProcessing();
+                    }
+                },
+                soloMid: function() {
+                    showNotification('Mid Solo', 'info');
+                },
+                soloSide: function() {
+                    showNotification('Side Solo', 'info');
+                },
+
+                // Export
+                export: function() {
+                    if (typeof showExportModal === 'function') {
+                        showExportModal();
+                    }
+                },
+
+                // AI Auto Master
+                autoMaster: function() {
+                    if (typeof startAIMastering === 'function') {
+                        startAIMastering();
+                    }
+                },
+
+                // Help - show built-in help overlay
+                showHelp: function() {
+                    // The KeyboardShortcuts class handles this internally
+                }
+            });
+
+            console.log('⌨️ Professional keyboard shortcuts enabled');
+        }
+
+        // Helper function to highlight EQ band
+        function highlightEQBand(band) {
+            const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
+            if (track) {
+                track.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.8)';
+                track.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => { track.style.boxShadow = ''; }, 1500);
+            }
+        }
+
+        // Helper function to show notification
+        function showNotification(message, type) {
+            const existing = document.getElementById('keyboardNotification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.id = 'keyboardNotification';
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                right: 30px;
+                padding: 12px 24px;
+                background: ${type === 'warning' ? 'rgba(255, 152, 0, 0.95)' : 'rgba(0, 212, 255, 0.95)'};
+                color: #000;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                z-index: 10000;
+                animation: slideInRight 0.2s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 1500);
+        }
+    });
     </script>
 
 </body>
