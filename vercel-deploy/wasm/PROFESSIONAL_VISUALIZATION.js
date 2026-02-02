@@ -250,7 +250,7 @@ window.drawStereoMeter = function(canvas, level, peakHoldObj, isLeft) {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// GONIOMETER - Phase scope
+// GONIOMETER - State-of-the-Art Phase Scope with Glow Effects
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 window.drawGoniometer = function(canvas, leftSamples, rightSamples) {
     if (!canvas || !leftSamples || !rightSamples) return;
@@ -258,41 +258,103 @@ window.drawGoniometer = function(canvas, leftSamples, rightSamples) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width, h = canvas.height;
     const cx = w / 2, cy = h / 2;
-    const scale = Math.min(w, h) * 0.4;
+    const radius = Math.min(w, h) * 0.42;
 
-    // Fade
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    // Slow fade for persistence trails
+    ctx.fillStyle = 'rgba(5, 5, 12, 0.15)';
     ctx.fillRect(0, 0, w, h);
 
-    // Crosshairs
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    // Draw subtle grid circles
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.lineWidth = 1;
+    [0.33, 0.66, 1].forEach(r => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * r, 0, Math.PI * 2);
+        ctx.stroke();
+    });
+
+    // Crosshairs with glow
+    ctx.strokeStyle = 'rgba(0, 212, 255, 0.12)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
-    ctx.moveTo(0, cy); ctx.lineTo(w, cy);
-    ctx.moveTo(0, 0); ctx.lineTo(w, h);
-    ctx.moveTo(w, 0); ctx.lineTo(0, h);
+    ctx.moveTo(cx, 2); ctx.lineTo(cx, h - 2);
+    ctx.moveTo(2, cy); ctx.lineTo(w - 2, cy);
     ctx.stroke();
 
-    // Samples
-    const n = Math.min(leftSamples.length, rightSamples.length, 512);
+    // Diagonal guides (L-R axis)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
     ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-        const x = cx + (rightSamples[i] - leftSamples[i]) * scale * 0.7;
-        const y = cy - (rightSamples[i] + leftSamples[i]) * scale * 0.5;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.strokeStyle = 'rgba(0, 180, 220, 0.5)';
+    ctx.moveTo(cx - radius * 0.7, cy - radius * 0.7);
+    ctx.lineTo(cx + radius * 0.7, cy + radius * 0.7);
+    ctx.moveTo(cx + radius * 0.7, cy - radius * 0.7);
+    ctx.lineTo(cx - radius * 0.7, cy + radius * 0.7);
     ctx.stroke();
 
-    // Labels
-    ctx.font = '8px system-ui';
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.textAlign = 'center';
-    ctx.fillText('M', cx, 10);
-    ctx.fillText('S', cx, h - 4);
-    ctx.textAlign = 'left'; ctx.fillText('L', 3, cy + 3);
-    ctx.textAlign = 'right'; ctx.fillText('R', w - 3, cy + 3);
+    // Calculate correlation for color
+    let sumLR = 0, sumL2 = 0, sumR2 = 0;
+    const n = Math.min(leftSamples.length, rightSamples.length, 256);
+    for (let i = 0; i < n; i++) {
+        const l = leftSamples[i], r = rightSamples[i];
+        sumLR += l * r;
+        sumL2 += l * l;
+        sumR2 += r * r;
+    }
+    const correlation = (sumL2 > 0 && sumR2 > 0) ? sumLR / Math.sqrt(sumL2 * sumR2) : 0;
+
+    // Color based on correlation: green (mono) -> cyan -> magenta (wide) -> red (phase issues)
+    let hue, saturation, alpha;
+    if (correlation > 0.7) {
+        hue = 140; saturation = 80; // Green - mono compatible
+    } else if (correlation > 0.3) {
+        hue = 180; saturation = 90; // Cyan - good stereo
+    } else if (correlation > -0.2) {
+        hue = 280; saturation = 85; // Magenta - wide stereo
+    } else {
+        hue = 0; saturation = 100; // Red - phase issues
+    }
+
+    // Draw glowing samples as dots with trails
+    const step = Math.max(1, Math.floor(n / 128)); // Limit dots for performance
+
+    for (let i = 0; i < n; i += step) {
+        const l = leftSamples[i] || 0;
+        const r = rightSamples[i] || 0;
+
+        // Lissajous calculation (rotated 45°)
+        const x = cx + (r - l) * radius * 0.9;
+        const y = cy - (r + l) * radius * 0.65;
+
+        // Intensity based on amplitude
+        const amp = Math.sqrt(l * l + r * r);
+        alpha = Math.min(1, amp * 3 + 0.2);
+
+        // Draw glowing dot
+        const dotSize = 1.5 + amp * 2;
+
+        // Outer glow
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize + 2, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, ${saturation}%, 60%, ${alpha * 0.3})`;
+        ctx.fill();
+
+        // Core dot
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, ${saturation}%, 70%, ${alpha * 0.8})`;
+        ctx.fill();
+
+        // Bright center
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, 40%, 90%, ${alpha})`;
+        ctx.fill();
+    }
+
+    // Center reference dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fill();
 };
 
 console.log('✅ PRO SPECTRUM - Hardware Grade Analyzer loaded');
