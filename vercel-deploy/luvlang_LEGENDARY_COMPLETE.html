@@ -66,7 +66,9 @@
         .center-main {
             background: linear-gradient(180deg, #0d0d14 0%, #080810 100%);
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 20px;
+            padding-bottom: 100px;
         }
 
         /* Sticky visualizations - stay visible while scrolling */
@@ -5302,15 +5304,13 @@
             <!-- WAVEFORM PANEL (60% width) - Professional design -->
             <div class="viz-panel waveform-panel-secondary" style="background: linear-gradient(180deg, #0a0a12 0%, #0f0f18 100%); border: 1px solid rgba(0, 212, 255, 0.15); border-radius: 10px; overflow: hidden;">
                 <div class="panel-title" style="padding: 6px 12px; background: rgba(0, 212, 255, 0.05); border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.6rem;">WAVEFORM</div>
-                <div id="waveformContainer" style="position: relative; width: 100%; height: 140px; background: linear-gradient(180deg, #08080c 0%, #0c0c14 50%, #08080c 100%);">
-                    <canvas id="waveformCanvasStatic" width="1600" height="280" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;"></canvas>
+                <div id="waveformContainer" style="position: relative; width: 100%; height: 140px; background: #000;">
+                    <canvas id="waveformCanvasStatic" width="1600" height="280" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: #000;"></canvas>
                     <canvas id="waveformCanvasPlayhead" width="1600" height="280" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;"></canvas>
-                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 2px; height: 100%; background: #00ffff; z-index: 20; box-shadow: 0 0 8px rgba(0,255,255,0.8); cursor: ew-resize;">
-                        <div style="position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 8px #00ffff;"></div>
-                        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 12px; height: 12px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 8px #00ffff;"></div>
+                    <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 2px; height: 100%; background: #00ffff; z-index: 20; box-shadow: 0 0 8px rgba(0,255,255,0.8); cursor: ew-resize; display: none;">
+                        <div style="position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 6px #00ffff;"></div>
+                        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 10px; height: 10px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 6px #00ffff;"></div>
                     </div>
-                    <!-- Center line -->
-                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.1); z-index: 5;"></div>
                 </div>
             </div>
 
@@ -14053,14 +14053,23 @@
             const container = canvas.parentElement;
             const width = container ? container.offsetWidth : 800;
             const height = container ? container.offsetHeight : 140;
+
+            // Reset canvas completely (clears all content)
             canvas.width = width;
             canvas.height = height;
 
-            // ═══ DARK GRADIENT BACKGROUND ═══
+            // Explicit clear to ensure no old content remains
+            ctx.clearRect(0, 0, width, height);
+
+            // ═══ PURE BLACK BACKGROUND (fully opaque) ═══
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+
+            // Subtle dark gradient overlay
             const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-            bgGradient.addColorStop(0, '#05050a');
-            bgGradient.addColorStop(0.5, '#0a0a14');
-            bgGradient.addColorStop(1, '#05050a');
+            bgGradient.addColorStop(0, 'rgba(8, 8, 15, 0.9)');
+            bgGradient.addColorStop(0.5, 'rgba(5, 5, 10, 0.8)');
+            bgGradient.addColorStop(1, 'rgba(8, 8, 15, 0.9)');
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
