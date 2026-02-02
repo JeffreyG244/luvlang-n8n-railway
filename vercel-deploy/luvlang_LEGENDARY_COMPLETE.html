@@ -14049,8 +14049,8 @@
             }
             globalPeak = Math.max(globalPeak, 0.001);
 
-            // Scale factor to fill 90% of available height
-            const maxAmp = (height / 2) - padding;
+            // Scale factor - professional 65% height for cleaner look
+            const maxAmp = ((height / 2) - padding) * 0.65;
             const scaleFactor = maxAmp / globalPeak;
 
             console.log(`🎚️ Waveform: peak=${globalPeak.toFixed(4)}, scale=${scaleFactor.toFixed(1)}x, maxAmp=${maxAmp}`);
@@ -14067,14 +14067,16 @@
                 peaks[i] = max * scaleFactor;
             }
 
-            // ═══ DRAW MAIN WAVEFORM - Filled symmetric shape ═══
-            const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
-            waveGradient.addColorStop(0, '#00d4ff');
-            waveGradient.addColorStop(0.5, '#0088cc');
-            waveGradient.addColorStop(1, '#00d4ff');
+            // ═══ STATE-OF-THE-ART WAVEFORM (SoundCloud/Ableton style) ═══
+            // Professional gradient - subtle cyan to purple
+            const waveGradient = ctx.createLinearGradient(0, centerY - maxAmp, 0, centerY + maxAmp);
+            waveGradient.addColorStop(0, 'rgba(0, 200, 255, 0.9)');
+            waveGradient.addColorStop(0.3, 'rgba(0, 150, 220, 0.85)');
+            waveGradient.addColorStop(0.5, 'rgba(100, 120, 200, 0.8)');
+            waveGradient.addColorStop(0.7, 'rgba(0, 150, 220, 0.85)');
+            waveGradient.addColorStop(1, 'rgba(0, 200, 255, 0.9)');
 
             ctx.fillStyle = waveGradient;
-            ctx.globalAlpha = 0.85;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
 
@@ -14091,10 +14093,9 @@
             ctx.closePath();
             ctx.fill();
 
-            // Draw top outline
-            ctx.strokeStyle = '#00ffff';
+            // Subtle highlight on peaks
+            ctx.strokeStyle = 'rgba(150, 220, 255, 0.4)';
             ctx.lineWidth = 1;
-            ctx.globalAlpha = 0.7;
             ctx.beginPath();
             ctx.moveTo(0, centerY - peaks[0]);
             for (let i = 1; i < width; i++) {
@@ -14102,7 +14103,8 @@
             }
             ctx.stroke();
 
-            // Draw bottom outline
+            // Subtle shadow on bottom
+            ctx.strokeStyle = 'rgba(0, 100, 150, 0.3)';
             ctx.beginPath();
             ctx.moveTo(0, centerY + peaks[0]);
             for (let i = 1; i < width; i++) {
@@ -14110,40 +14112,28 @@
             }
             ctx.stroke();
 
-            ctx.globalAlpha = 1.0;
-
-            // Center line (subtle white)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            // Center line - very subtle
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
             ctx.lineTo(width, centerY);
             ctx.stroke();
 
-            // Grid lines (very subtle)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            for (let i = 1; i < 4; i++) {
-                const y = (height / 4) * i;
+            // -6dB and -12dB reference lines (barely visible)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            const db6 = maxAmp * 0.5;  // -6dB
+            const db12 = maxAmp * 0.25; // -12dB
+            [db6, db12].forEach(offset => {
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
+                ctx.moveTo(0, centerY - offset);
+                ctx.lineTo(width, centerY - offset);
+                ctx.moveTo(0, centerY + offset);
+                ctx.lineTo(width, centerY + offset);
                 ctx.stroke();
-            }
+            });
 
-            console.log('✅✅✅ WAVEFORM DRAWING COMPLETE! ✅✅✅');
-            console.log('   Width:', width, 'Height:', height);
-            console.log('   DPR:', dpr);
-            console.log('   Canvas internal size:', canvas.width, 'x', canvas.height);
-
-            // VERIFY: Check if canvas actually has cyan/blue waveform pixels
-            const testPixels = ctx.getImageData(width/2, centerY - 10, 1, 1).data;
-            console.log('   🔍 PIXEL CHECK at (' + Math.floor(width/2) + ',' + Math.floor(centerY - 10) + '): R=' + testPixels[0] + ' G=' + testPixels[1] + ' B=' + testPixels[2] + ' A=' + testPixels[3]);
-            // Check for cyan/blue pixels (not background)
-            if (testPixels[2] > 100 || testPixels[1] > 100) {
-                console.log('   ✅ WAVEFORM PIXELS CONFIRMED IN CANVAS!');
-            } else {
-                console.log('   ❌ WARNING: Canvas does NOT have waveform pixels!');
-            }
+            console.log('✅ Waveform drawn:', width + 'x' + height);
 
             console.log('================================================');
         }
