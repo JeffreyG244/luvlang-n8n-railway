@@ -7523,6 +7523,11 @@
                 masterGain = audioContext.createGain();
                 masterGain.gain.value = 1.0;
 
+                // Voice Ducking Gain (reduces volume during voice tour - at very end of chain)
+                const voiceDuckingGain = audioContext.createGain();
+                voiceDuckingGain.gain.value = 1.0;
+                window.voiceDuckingGain = voiceDuckingGain;
+
                 // Export dynamics processors globally for mastering chain access
                 window.compressor = compressor;
                 window.limiter = limiter;
@@ -9541,8 +9546,11 @@
                 wetGain.connect(outputMixer);
 
                 // Final output to speakers + analyser for metering
+                // Voice ducking gain sits at the very end - only affects what user hears
+                // Does NOT affect LUFS metering or exports (those tap before this point)
                 outputMixer.connect(analyser);
-                analyser.connect(audioContext.destination);
+                analyser.connect(voiceDuckingGain);
+                voiceDuckingGain.connect(audioContext.destination);
 
                 // Connect analyser for metering (stereo split)
                 outputMixer.connect(stereoSplitter);
@@ -24366,19 +24374,44 @@
 
         // Speak text with strong male voice - GLOBAL so it can be called from anywhere
         // Uses workaround for Chrome speechSynthesis.cancel() bug
+        // Includes audio ducking so voice is clearly audible over music
         function speak(text) {
             if (!voiceEnabled || !voiceSynth || !text) return;
 
             // Force stop any current speech - Chrome bug workaround
             window.speechSynthesis.cancel();
 
+            const ac = window.audioContext;
+            const duckGain = window.voiceDuckingGain;
+            const duckLevel = 0.15; // Duck to 15% volume (-16dB) while speaking
+            const fadeTime = 0.3;   // 300ms fade
+
             // Small delay after cancel to ensure clean stop (Chrome bug)
             setTimeout(() => {
+                // Duck the audio before speaking
+                if (ac && duckGain) {
+                    duckGain.gain.setTargetAtTime(duckLevel, ac.currentTime, fadeTime * 0.3);
+                }
+
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
                 utterance.rate = 0.92; // Slightly slower for clarity
                 utterance.pitch = 0.9; // Lower pitch for male voice
                 utterance.volume = 1.0;
+
+                // Restore volume when speech ends
+                utterance.onend = function() {
+                    if (ac && duckGain) {
+                        duckGain.gain.setTargetAtTime(1.0, ac.currentTime, fadeTime);
+                    }
+                };
+
+                // Also restore if speech errors
+                utterance.onerror = function() {
+                    if (ac && duckGain) {
+                        duckGain.gain.setTargetAtTime(1.0, ac.currentTime, fadeTime);
+                    }
+                };
 
                 window.speechSynthesis.speak(utterance);
             }, 50);
@@ -24386,22 +24419,49 @@
         // Make speak globally accessible
         window.speak = speak;
 
-        // Speak with audio ducking - DISABLED to prevent LUFS issues
-        // The mastering chain must remain stable during voice tour
+        // Speak with audio ducking - reduces master volume while voice plays
+        // Uses voiceDuckingGain at end of chain (after LUFS metering, before speakers)
+        // This does NOT affect LUFS readings or exports - only what user hears
         window.speakWithDucking = function(text) {
-            // Simply speak without ducking - mastering integrity is priority
             if (!window.speechSynthesis || !text) return;
 
             window.speechSynthesis.cancel();
 
+            const ac = window.audioContext;
+            const duckGain = window.voiceDuckingGain;
+            const duckLevel = 0.15; // Duck to 15% volume (-16dB) while speaking
+            const fadeTime = 0.3;   // 300ms fade
+
             setTimeout(() => {
+                // Duck the audio before speaking
+                if (ac && duckGain) {
+                    duckGain.gain.setTargetAtTime(duckLevel, ac.currentTime, fadeTime * 0.3);
+                    console.log('🔉 Audio ducked for voice guide');
+                }
+
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
                 utterance.rate = 0.92;
                 utterance.pitch = 0.9;
                 utterance.volume = 1.0;
+
+                // Restore volume when speech ends
+                utterance.onend = function() {
+                    if (ac && duckGain) {
+                        duckGain.gain.setTargetAtTime(1.0, ac.currentTime, fadeTime);
+                        console.log('🔊 Audio restored to full volume');
+                    }
+                };
+
+                // Also restore if speech is interrupted/cancelled
+                utterance.onerror = function() {
+                    if (ac && duckGain) {
+                        duckGain.gain.setTargetAtTime(1.0, ac.currentTime, fadeTime);
+                    }
+                };
+
                 window.speechSynthesis.speak(utterance);
-            }, 50);
+            }, 100);
         };
 
         function stopSpeaking() {
