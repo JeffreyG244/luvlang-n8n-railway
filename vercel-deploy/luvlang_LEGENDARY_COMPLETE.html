@@ -14095,33 +14095,23 @@
                 console.error('❌ Cannot get 2D context!');
                 return;
             }
-            console.log('✅ Context obtained');
 
             if (!window.audioBuffer) {
                 console.warn('⚠️ No audioBuffer provided');
                 return;
             }
-            console.log('✅ AudioBuffer exists:', audioBuffer.duration.toFixed(2), 'seconds');
 
-            // ═══ RETINA/HIGH-DPI FIX ═══
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            const displayWidth = rect.width;
-            const displayHeight = rect.height;
+            // ═══ SIMPLE ROBUST CANVAS SETUP ═══
+            // Use container dimensions, not bounding rect (more reliable)
+            const container = canvas.parentElement;
+            const width = container ? container.offsetWidth : 800;
+            const height = container ? container.offsetHeight : 140;
 
-            // Set internal canvas resolution to match pixel density
-            canvas.width = displayWidth * dpr;
-            canvas.height = displayHeight * dpr;
+            // Set canvas to match container (1:1 pixel ratio for simplicity)
+            canvas.width = width;
+            canvas.height = height;
 
-            // Scale context for sharp rendering
-            ctx.scale(dpr, dpr);
-
-            // Enable crisp anti-aliasing
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            const width = displayWidth;
-            const height = displayHeight;
+            console.log(`🎨 Waveform canvas: ${width}x${height}`);
 
             // Professional dark gradient background
             const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -14131,115 +14121,80 @@
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Get audio data with higher resolution sampling
+            // Get audio data
             const data = audioBuffer.getChannelData(0);
-            const step = Math.max(1, Math.floor(data.length / (width * 2))); // Higher resolution
-            const padding = 8; // Padding from top/bottom edges
+            const step = Math.max(1, Math.floor(data.length / width));
             const centerY = height / 2;
+            const padding = 10;
 
-            // ═══ NORMALIZE WAVEFORM - Find peak and scale to fill canvas ═══
+            // ═══ FIND PEAK FOR NORMALIZATION ═══
             let globalPeak = 0;
             for (let i = 0; i < data.length; i += step) {
                 globalPeak = Math.max(globalPeak, Math.abs(data[i]));
             }
-            // Ensure minimum peak to avoid division issues, and scale to 95% of available height
             globalPeak = Math.max(globalPeak, 0.001);
-            const normalizeScale = 0.95 / globalPeak;
-            console.log(`🎚️ Waveform normalization: peak=${globalPeak.toFixed(4)}, scale=${normalizeScale.toFixed(2)}x`);
 
-            const amp = (height - padding * 2) / 2; // Ensure waveform fits within padded area
+            // Scale factor to fill 90% of available height
+            const maxAmp = (height / 2) - padding;
+            const scaleFactor = maxAmp / globalPeak;
 
-            // ═══ TRANSIENT GHOST LAYER (Pre-Limiting Peaks) ═══
-            if (showGhost && window.originalPeaksData) {
-                ctx.fillStyle = 'rgba(255, 100, 0, 0.3)'; // Orange ghost
-                ctx.globalAlpha = 0.5;
-                ctx.beginPath();
-                ctx.moveTo(0, centerY);
+            console.log(`🎚️ Waveform: peak=${globalPeak.toFixed(4)}, scale=${scaleFactor.toFixed(1)}x, maxAmp=${maxAmp}`);
 
-                // Draw original peaks (before limiting) - use same scale for comparison
-                for (let i = 0; i < width; i++) {
-                    let max = 0;
-                    for (let j = 0; j < step; j++) {
-                        const idx = i * step + j;
-                        if (idx < window.originalPeaksData.length) {
-                            max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
-                        }
-                    }
-                    ctx.lineTo(i, centerY - (max * normalizeScale * amp));
+            // Precompute peaks for each pixel column
+            const peaks = new Float32Array(width);
+            for (let i = 0; i < width; i++) {
+                let max = 0;
+                const startIdx = Math.floor(i * data.length / width);
+                const endIdx = Math.floor((i + 1) * data.length / width);
+                for (let j = startIdx; j < endIdx && j < data.length; j++) {
+                    max = Math.max(max, Math.abs(data[j]));
                 }
-                for (let i = width - 1; i >= 0; i--) {
-                    let max = 0;
-                    for (let j = 0; j < step; j++) {
-                        const idx = i * step + j;
-                        if (idx < window.originalPeaksData.length) {
-                            max = Math.max(max, Math.abs(window.originalPeaksData[idx]));
-                        }
-                    }
-                    ctx.lineTo(i, centerY + (max * normalizeScale * amp));
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.globalAlpha = 1.0;
+                peaks[i] = max * scaleFactor;
             }
 
-            // ═══ MAIN WAVEFORM (Post-Processing) - Professional Gradient ═══
+            // ═══ DRAW MAIN WAVEFORM - Filled symmetric shape ═══
             const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
-            waveGradient.addColorStop(0, '#00d4ff');      // Bright cyan top
-            waveGradient.addColorStop(0.5, '#0088cc');    // Mid blue
-            waveGradient.addColorStop(1, '#00d4ff');      // Bright cyan bottom
+            waveGradient.addColorStop(0, '#00d4ff');
+            waveGradient.addColorStop(0.5, '#0088cc');
+            waveGradient.addColorStop(1, '#00d4ff');
+
             ctx.fillStyle = waveGradient;
             ctx.globalAlpha = 0.85;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
 
-            // Top half
+            // Draw top edge (left to right)
             for (let i = 0; i < width; i++) {
-                let max = 0;
-                for (let j = 0; j < step; j++) {
-                    const idx = i * step + j;
-                    if (idx < data.length) {
-                        max = Math.max(max, Math.abs(data[idx]));
-                    }
-                }
-                ctx.lineTo(i, centerY - (max * normalizeScale * amp));
+                ctx.lineTo(i, centerY - peaks[i]);
             }
 
-            // Bottom half (reverse)
+            // Draw bottom edge (right to left) - creates mirror
             for (let i = width - 1; i >= 0; i--) {
-                let max = 0;
-                for (let j = 0; j < step; j++) {
-                    const idx = i * step + j;
-                    if (idx < data.length) {
-                        max = Math.max(max, Math.abs(data[idx]));
-                    }
-                }
-                ctx.lineTo(i, centerY + (max * normalizeScale * amp));
+                ctx.lineTo(i, centerY + peaks[i]);
             }
 
             ctx.closePath();
             ctx.fill();
-            ctx.globalAlpha = 1.0;
 
-            // Draw outline (Bright Cyan)
-            ctx.strokeStyle = '#00d4ff';
-            ctx.lineWidth = 1.5;
-            ctx.globalAlpha = 0.6;
+            // Draw top outline
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.7;
             ctx.beginPath();
-
-            for (let i = 0; i < width; i++) {
-                let max = 0;
-                for (let j = 0; j < step; j++) {
-                    const idx = i * step + j;
-                    if (idx < data.length) {
-                        max = Math.max(max, Math.abs(data[idx]));
-                    }
-                }
-                const y = centerY - (max * normalizeScale * amp);
-                if (i === 0) ctx.moveTo(i, y);
-                else ctx.lineTo(i, y);
+            ctx.moveTo(0, centerY - peaks[0]);
+            for (let i = 1; i < width; i++) {
+                ctx.lineTo(i, centerY - peaks[i]);
             }
-
             ctx.stroke();
+
+            // Draw bottom outline
+            ctx.beginPath();
+            ctx.moveTo(0, centerY + peaks[0]);
+            for (let i = 1; i < width; i++) {
+                ctx.lineTo(i, centerY + peaks[i]);
+            }
+            ctx.stroke();
+
             ctx.globalAlpha = 1.0;
 
             // Center line (subtle white)
