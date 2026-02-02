@@ -14545,59 +14545,19 @@
                         const playheadX = (audioElement.currentTime / audioElement.duration) * width;
                         // NOTE: Removed console.log - was causing 60 logs/second performance issue
 
-                        // ULTRA BRIGHT VERTICAL LINE - Impossible to miss
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = 'rgba(255, 255, 0, 0.8)';
-                        ctx.strokeStyle = '#FFFF00';  // BRIGHT YELLOW
-                        ctx.lineWidth = 4;
+                        // Professional playhead line (subtle cyan)
+                        ctx.shadowBlur = 4;
+                        ctx.shadowColor = 'rgba(0, 212, 255, 0.6)';
+                        ctx.strokeStyle = '#00d4ff';
+                        ctx.lineWidth = 2;
                         ctx.lineCap = 'round';
                         ctx.beginPath();
                         ctx.moveTo(playheadX, 0);
                         ctx.lineTo(playheadX, height);
                         ctx.stroke();
 
-                        // White highlight line
-                        ctx.shadowBlur = 10;
-                        ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-                        ctx.strokeStyle = '#FFFFFF';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(playheadX, 0);
-                        ctx.lineTo(playheadX, height);
-                        ctx.stroke();
-
-                        // HUGE DRAGGABLE HANDLE at top
-                        ctx.shadowBlur = 20;
-                        ctx.shadowColor = 'rgba(255, 255, 0, 0.9)';
-
-                        // Outer circle (yellow glow)
-                        ctx.fillStyle = '#FFFF00';
-                        ctx.beginPath();
-                        ctx.arc(playheadX, 15, 12, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Inner circle (white center)
-                        ctx.shadowBlur = 5;
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.beginPath();
-                        ctx.arc(playheadX, 15, 8, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // Center dot (yellow)
+                        // Reset shadow
                         ctx.shadowBlur = 0;
-                        ctx.fillStyle = '#FFFF00';
-                        ctx.beginPath();
-                        ctx.arc(playheadX, 15, 4, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // TIME DISPLAY above handle
-                        ctx.shadowBlur = 3;
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.font = 'bold 11px Arial';
-                        ctx.textAlign = 'center';
-                        const currentTime = formatTime(audioElement.currentTime);
-                        ctx.fillText(currentTime, playheadX, 5);
                     }
                 }
 
