@@ -50,21 +50,26 @@
                     align-items: center;
                     margin-bottom: 16px;
                 ">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="
-                            width: 8px;
-                            height: 8px;
-                            background: #00ff88;
+                            width: 10px;
+                            height: 10px;
+                            background: linear-gradient(135deg, #00ff88, #00d4ff);
                             border-radius: 50%;
                             animation: pulse 2s infinite;
-                            box-shadow: 0 0 10px #00ff88;
+                            box-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0, 255, 136, 0.4);
                         "></div>
                         <span style="
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: 0.85rem;
+                            font-weight: 800;
                             text-transform: uppercase;
-                            letter-spacing: 2px;
-                            color: rgba(255,255,255,0.6);
+                            letter-spacing: 3px;
+                            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #b84fff 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+                            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
                         ">Loudness History</span>
                     </div>
                     <button id="loudnessResetBtn" style="
@@ -452,11 +457,16 @@
                             box-shadow: 0 0 10px #b84fff;
                         "></div>
                         <span style="
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: 0.85rem;
+                            font-weight: 800;
                             text-transform: uppercase;
-                            letter-spacing: 2px;
-                            color: rgba(255,255,255,0.6);
+                            letter-spacing: 3px;
+                            background: linear-gradient(135deg, #b84fff 0%, #ff6b9d 50%, #ffd700 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            text-shadow: 0 0 30px rgba(184, 79, 255, 0.3);
+                            filter: drop-shadow(0 0 8px rgba(255, 107, 157, 0.4));
                         ">Spectrogram</span>
                         <span style="
                             font-size: 0.6rem;
