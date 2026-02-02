@@ -79,6 +79,25 @@
             background: linear-gradient(180deg, #0d0d14 0%, #080810 100%);
             padding-bottom: 10px;
             margin-bottom: 15px;
+            /* CRITICAL: Limit height to ensure EQ section is visible below */
+            max-height: calc(100vh - 70px - 250px); /* Leave 250px for EQ section visibility */
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* Visual indicator that content scrolls */
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        /* Scroll indicator for sticky wrapper */
+        .sticky-viz-wrapper::after {
+            content: '';
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, rgba(8, 8, 16, 0.95));
+            pointer-events: none;
+            display: block;
         }
 
         /* RIGHT SIDEBAR - Meters, Master Section, Export */
@@ -1177,21 +1196,48 @@
             border-radius: 4px;
         }
 
+        /* SCROLL INDICATOR - Shows user there's more content below visualizations */
+        .scroll-content-indicator {
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), rgba(184, 79, 255, 0.3), transparent);
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            border-radius: 10px;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        .scroll-content-indicator span {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            PROFESSIONAL 7-BAND EQ WITH VERTICAL DRAGGABLE FADERS
-           STICKY BOTTOM STRIP - Always accessible
+           Always visible in scroll area
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .eq-section {
             background: linear-gradient(180deg, rgba(10, 10, 20, 0.98) 0%, rgba(5, 5, 12, 0.99) 100%);
             border-radius: 15px;
             padding: 16px 24px 20px;
             margin-bottom: 15px;
-            margin-top: 15px;
-            border: 1px solid rgba(0, 212, 255, 0.25);
+            margin-top: 20px;
+            border: 2px solid rgba(0, 212, 255, 0.4);
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
             position: relative;
             z-index: 10;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.15);
         }
 
         /* Highlight effect when preset is applied */
@@ -1478,8 +1524,10 @@
             background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 40, 0.9));
             border-radius: 15px;
             padding: 18px;
-            border: 1px solid rgba(184, 79, 255, 0.2);
+            border: 2px solid rgba(184, 79, 255, 0.35);
             margin-bottom: 15px;
+            margin-top: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(184, 79, 255, 0.1);
         }
 
         .dynamics-controls {
@@ -5446,6 +5494,13 @@
             </div>
 
             </div><!-- END sticky-viz-wrapper -->
+
+            <!-- SCROLL INDICATOR - Shows more controls below -->
+            <div class="scroll-content-indicator">
+                <span style="color: #00d4ff;">▼</span>
+                <span>PROCESSING CONTROLS BELOW</span>
+                <span style="color: #00d4ff;">▼</span>
+            </div>
 
             <!-- PROFESSIONAL 7-BAND EQ -->
             <div class="eq-section" id="eqSection">
