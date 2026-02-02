@@ -1196,9 +1196,9 @@
 
         /* Highlight effect when preset is applied */
         .eq-section.preset-highlight {
-            border-color: rgba(0, 255, 136, 0.6);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 212, 255, 0.2);
-            animation: eqSectionPulse 0.8s ease-out;
+            border-color: rgba(0, 255, 136, 0.8) !important;
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 212, 255, 0.3), inset 0 0 30px rgba(0, 255, 136, 0.1) !important;
+            animation: eqSectionPulse 1s ease-out;
         }
 
         @keyframes eqSectionPulse {
@@ -1392,9 +1392,10 @@
             box-shadow: 0 8px 30px rgba(0, 212, 255, 0.8);
         }
 
-        /* Animated glow when preset is applied */
+        /* Animated glow when preset is applied - DRAMATIC EFFECT */
         .eq-fader-thumb.preset-active {
-            animation: presetPulse 0.6s ease-out;
+            animation: presetPulse 0.8s ease-out;
+            background: linear-gradient(180deg, #00ffcc 0%, #00d4ff 50%, #00ff88 100%) !important;
         }
 
         @keyframes presetPulse {
@@ -1402,14 +1403,49 @@
                 box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
                 transform: translateX(-50%) scale(1);
             }
+            25% {
+                box-shadow: 0 0 40px rgba(0, 255, 136, 1), 0 0 80px rgba(0, 212, 255, 0.8), 0 0 120px rgba(0, 255, 200, 0.5);
+                transform: translateX(-50%) scale(1.3);
+            }
             50% {
-                box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 0 50px rgba(0, 212, 255, 0.6);
-                transform: translateX(-50%) scale(1.2);
+                box-shadow: 0 0 50px rgba(0, 255, 200, 1), 0 0 100px rgba(0, 255, 136, 0.8);
+                transform: translateX(-50%) scale(1.15);
             }
             100% {
                 box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
                 transform: translateX(-50%) scale(1);
             }
+        }
+
+        /* Value display animation when changing */
+        .eq-fader-value.changing {
+            color: #00ffcc !important;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            animation: valueGlow 0.5s ease-out;
+        }
+
+        @keyframes valueGlow {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #00ff88; }
+            100% { transform: scale(1); }
+        }
+
+        /* Track glow when active */
+        .eq-fader-track.active-glow {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 15px rgba(0, 255, 136, 0.3) !important;
+            border-color: rgba(0, 255, 136, 0.8) !important;
+        }
+
+        /* Boost indicator (green glow for positive values) */
+        .eq-fader-thumb.boosted {
+            background: linear-gradient(180deg, #00ff88, #00d4ff) !important;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.8), 0 4px 15px rgba(0, 212, 255, 0.5) !important;
+        }
+
+        /* Cut indicator (purple glow for negative values) */
+        .eq-fader-thumb.cut {
+            background: linear-gradient(180deg, #b84fff, #8844ff) !important;
+            box-shadow: 0 0 20px rgba(184, 79, 255, 0.8), 0 4px 15px rgba(136, 68, 255, 0.5) !important;
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -13104,14 +13140,45 @@
         function updateEQFaderPosition(band, gainDB, animate = false) {
             const percent = (12 - gainDB) / 24; // Map ±12dB to 0-1
             const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
+            const track = document.querySelector(`.eq-fader-track[data-eq="${band}"]`);
+            const bandToId = {
+                sub: 'eqSubValue', bass: 'eqBassValue', lowmid: 'eqLowMidValue',
+                mid: 'eqMidValue', highmid: 'eqHighMidValue', high: 'eqHighValue', air: 'eqAirValue'
+            };
+            const valueEl = document.getElementById(bandToId[band]);
+
             if (thumb) {
+                // Smooth transition for fader movement
+                thumb.style.transition = animate ? 'top 0.15s ease-out' : 'none';
                 thumb.style.top = (percent * 100) + '%';
+
+                // Remove old state classes
+                thumb.classList.remove('boosted', 'cut', 'preset-active');
+
+                // Add boost/cut class based on value
+                if (gainDB > 0.5) {
+                    thumb.classList.add('boosted');
+                } else if (gainDB < -0.5) {
+                    thumb.classList.add('cut');
+                }
 
                 // Trigger pulse animation for visual feedback
                 if (animate) {
                     thumb.classList.add('preset-active');
-                    setTimeout(() => thumb.classList.remove('preset-active'), 600);
+                    setTimeout(() => thumb.classList.remove('preset-active'), 800);
                 }
+            }
+
+            // Track glow effect
+            if (track && animate) {
+                track.classList.add('active-glow');
+                setTimeout(() => track.classList.remove('active-glow'), 600);
+            }
+
+            // Value display animation
+            if (valueEl && animate) {
+                valueEl.classList.add('changing');
+                setTimeout(() => valueEl.classList.remove('changing'), 500);
             }
         }
 
