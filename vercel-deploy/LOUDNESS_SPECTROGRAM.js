@@ -181,20 +181,26 @@
             </style>
         `;
 
-        // Initialize canvas
-        loudnessCanvas = document.getElementById('loudnessHistoryCanvas');
-        if (loudnessCanvas) {
-            loudnessCtx = loudnessCanvas.getContext('2d');
-            resizeLoudnessCanvas();
-            window.addEventListener('resize', resizeLoudnessCanvas);
-            requestAnimationFrame(drawLoudnessHistory);
-        }
+        // Initialize canvas with delay to ensure container is rendered
+        setTimeout(() => {
+            loudnessCanvas = document.getElementById('loudnessHistoryCanvas');
+            if (loudnessCanvas) {
+                loudnessCtx = loudnessCanvas.getContext('2d');
+                resizeLoudnessCanvas();
+                window.addEventListener('resize', resizeLoudnessCanvas);
+                requestAnimationFrame(drawLoudnessHistory);
+                console.log('📊 Loudness History canvas initialized');
+            } else {
+                console.warn('📊 Loudness History canvas not found');
+            }
+        }, 100);
 
         // Reset button
         document.getElementById('loudnessResetBtn')?.addEventListener('click', () => {
             loudnessData.shortTerm = [];
             loudnessData.integrated = [];
             loudnessData.momentary = [];
+            console.log('📊 Loudness History reset');
         });
 
         console.log('📊 Loudness History - ITU-R BS.1770-5 initialized');
@@ -203,10 +209,11 @@
     function resizeLoudnessCanvas() {
         if (!loudnessCanvas) return;
         const rect = loudnessCanvas.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return; // Skip if not visible
         const dpr = window.devicePixelRatio || 1;
         loudnessCanvas.width = rect.width * dpr;
         loudnessCanvas.height = rect.height * dpr;
-        loudnessCtx.scale(dpr, dpr);
+        loudnessCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // Reset and apply scale (prevents accumulation)
     }
 
     function drawLoudnessHistory() {
@@ -494,20 +501,26 @@
             </style>
         `;
 
-        // Initialize canvas
-        spectrogramCanvas = document.getElementById('spectrogramCanvas');
-        if (spectrogramCanvas) {
-            spectrogramCtx = spectrogramCanvas.getContext('2d');
-            resizeSpectrogramCanvas();
-            window.addEventListener('resize', resizeSpectrogramCanvas);
-        }
+        // Initialize canvas with delay to ensure container is rendered
+        setTimeout(() => {
+            spectrogramCanvas = document.getElementById('spectrogramCanvas');
+            if (spectrogramCanvas) {
+                spectrogramCtx = spectrogramCanvas.getContext('2d');
+                resizeSpectrogramCanvas();
+                window.addEventListener('resize', resizeSpectrogramCanvas);
+                console.log('📈 Spectrogram canvas initialized');
+            } else {
+                console.warn('📈 Spectrogram canvas not found');
+            }
+        }, 100);
 
         console.log('📈 Spectrogram - Time × Frequency initialized');
     };
 
     function resizeSpectrogramCanvas() {
-        if (!spectrogramCanvas) return;
+        if (!spectrogramCanvas || !spectrogramCtx) return;
         const rect = spectrogramCanvas.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return; // Skip if not visible
         const dpr = window.devicePixelRatio || 1;
         spectrogramCanvas.width = rect.width * dpr;
         spectrogramCanvas.height = rect.height * dpr;
@@ -598,24 +611,39 @@
     function connectToAudioAnalysis() {
         if (analysisConnected) return;
 
-        // Check for existing analyzer
+        console.log('📊📈 Looking for audio analyzer...');
+
+        // Check for existing analyzer - try multiple times with longer timeout
         const checkInterval = setInterval(() => {
             const analyser = window.analyser || window.analyserNode || window.outputAnalyser;
-            if (analyser) {
+            if (analyser && analyser.frequencyBinCount > 0) {
                 clearInterval(checkInterval);
                 startRealTimeAnalysis(analyser);
                 analysisConnected = true;
-                console.log('📊📈 Visualizations connected to audio analysis');
+                console.log('📊📈 Visualizations connected to audio analysis (bins: ' + analyser.frequencyBinCount + ')');
             }
-        }, 500);
+        }, 1000);
 
-        // Stop checking after 30 seconds
-        setTimeout(() => clearInterval(checkInterval), 30000);
+        // Stop checking after 2 minutes (user might load audio later)
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!analysisConnected) {
+                console.log('📊📈 Analyzer not found - will connect when audio loads');
+            }
+        }, 120000);
     }
 
     function startRealTimeAnalysis(analyser) {
+        if (!analyser || !analyser.frequencyBinCount) {
+            console.warn('📊📈 Invalid analyzer provided');
+            return;
+        }
+
         const frequencyData = new Uint8Array(analyser.frequencyBinCount);
         let frameCount = 0;
+        let lastLogTime = 0;
+
+        console.log('📊📈 Starting real-time analysis loop');
 
         function analyze() {
             if (!analyser) return;
@@ -623,31 +651,51 @@
             try {
                 analyser.getByteFrequencyData(frequencyData);
 
-                // Update spectrogram every 2 frames
-                if (frameCount % 2 === 0) {
+                // Update spectrogram every 2 frames (for smooth scrolling)
+                if (frameCount % 2 === 0 && typeof window.updateSpectrogram === 'function') {
                     window.updateSpectrogram(frequencyData);
                 }
 
                 // Update loudness history every 30 frames (~0.5s at 60fps)
-                if (frameCount % 30 === 0) {
+                if (frameCount % 30 === 0 && typeof window.updateLoudnessHistory === 'function') {
                     // Get LUFS from global meters - using window.dynamicRangeMetering
-                    let shortTerm, integrated;
+                    let shortTerm = null, integrated = null;
 
                     if (window.dynamicRangeMetering) {
                         shortTerm = window.dynamicRangeMetering.shortTermLUFS;
                         integrated = window.dynamicRangeMetering.integratedLUFS;
-                    } else {
-                        // Fallback to other global variables or estimation
-                        shortTerm = window.shortTermLUFS ?? window.currentShortTermLUFS ?? estimateLUFS(frequencyData);
-                        integrated = window.integratedLUFS ?? window.currentIntegratedLUFS ?? shortTerm * 0.98;
+                    }
+
+                    // Fallback to other global variables
+                    if (shortTerm === null || shortTerm === undefined || !isFinite(shortTerm)) {
+                        shortTerm = window.shortTermLUFS ?? window.currentShortTermLUFS ?? null;
+                    }
+                    if (integrated === null || integrated === undefined || !isFinite(integrated)) {
+                        integrated = window.integratedLUFS ?? window.currentIntegratedLUFS ?? null;
+                    }
+
+                    // Last resort: estimate from frequency data
+                    if (shortTerm === null || !isFinite(shortTerm)) {
+                        shortTerm = estimateLUFS(frequencyData);
+                    }
+                    if (integrated === null || !isFinite(integrated)) {
+                        integrated = shortTerm * 0.98;
                     }
 
                     window.updateLoudnessHistory(shortTerm, integrated);
+
+                    // Log occasionally for debugging (every 5 seconds)
+                    const now = Date.now();
+                    if (now - lastLogTime > 5000) {
+                        console.log('📊 LUFS Update: Short-term=' + (shortTerm?.toFixed(1) || '--') + ', Integrated=' + (integrated?.toFixed(1) || '--'));
+                        lastLogTime = now;
+                    }
                 }
 
                 frameCount++;
             } catch (e) {
                 // Analyzer might be disconnected
+                console.warn('📊📈 Analysis error:', e.message);
             }
 
             requestAnimationFrame(analyze);
@@ -686,6 +734,23 @@
     } else {
         connectToAudioAnalysis();
     }
+
+    // Expose function to manually connect when audio loads
+    window.connectVisualizationsToAnalyzer = function() {
+        if (!analysisConnected) {
+            const analyser = window.analyser || window.analyserNode || window.outputAnalyser;
+            if (analyser && analyser.frequencyBinCount > 0) {
+                startRealTimeAnalysis(analyser);
+                analysisConnected = true;
+                console.log('📊📈 Visualizations manually connected to analyzer');
+                return true;
+            }
+        }
+        return analysisConnected;
+    };
+
+    // Also try to connect when audio context is created
+    window.addEventListener('audioContextCreated', connectToAudioAnalysis);
 
     console.log('📊📈 LOUDNESS_SPECTROGRAM.js - State-of-the-Art Visualizations loaded');
 })();
