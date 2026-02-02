@@ -383,31 +383,41 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONNECT EXPORT BUTTON TO CHECKOUT
+// CONNECT EXPORT BUTTON TO ACTUAL EXPORT
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Wait for DOM to be ready, then connect export button
 window.addEventListener('load', function() {
-    // Find all export buttons and connect to checkout
-    const exportButtons = [
-        document.getElementById('exportBtn'),
-        document.getElementById('exportWavBtn'),
-        document.getElementById('exportMp3Btn')
-    ].filter(btn => btn !== null);
+    // Find all export buttons and connect to export function
+    const exportBtn = document.getElementById('exportBtn');
 
-    exportButtons.forEach(btn => {
-        // Store original click handler
-        const originalHandler = btn.onclick;
-
-        // Replace with checkout handler
-        btn.onclick = function(e) {
+    if (exportBtn) {
+        exportBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            console.log('📤 Export clicked - Opening checkout');
-            openCheckout();
-        };
+            console.log('📤 Export clicked - Starting export process');
 
-        console.log(`✅ Export button connected to checkout:`, btn.id);
-    });
+            // Call the actual export function
+            if (typeof window.performExport === 'function') {
+                await window.performExport();
+            } else {
+                console.error('❌ Export function not found');
+                alert('Export function not available. Please reload the page.');
+            }
+        });
+        console.log('✅ Export button connected to performExport()');
+    }
+
+    // Export Bar A/B button (if exists)
+    const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
+    if (exportBarAbBtn) {
+        exportBarAbBtn.addEventListener('click', function() {
+            // Toggle A/B comparison
+            if (typeof toggleABComparison === 'function') {
+                toggleABComparison();
+            }
+        });
+        console.log('✅ A/B comparison button connected');
+    }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -5173,7 +5173,7 @@
                     cursor: pointer;
                     transition: all 0.2s;
                 ">A/B</button>
-                <button onclick="openPricingModal()" style="
+                <button onclick="if(typeof performExport === 'function') performExport(); else if(typeof window.performExport === 'function') window.performExport(); else alert('Please reload the page');" style="
                     padding: 10px 20px;
                     background: linear-gradient(180deg, rgba(92,184,92,0.2) 0%, rgba(92,184,92,0.1) 100%);
                     border: 1px solid rgba(92,184,92,0.4);
@@ -17947,6 +17947,125 @@
         window.showToast = showToast;
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // STATE-OF-THE-ART REAL-TIME LUFS TARGETING SYSTEM
+        // ITU-R BS.1770-4 compliant with smooth gain transitions
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const LUFSController = {
+            currentTarget: -14,
+            isActive: false,
+            smoothingFactor: 0.05, // Smooth gain changes (lower = smoother)
+            updateInterval: null,
+            lastMeasuredLUFS: -70,
+            gainOffset: 0,
+
+            // Platform presets with precise targets
+            presets: {
+                streaming: { target: -14.0, name: 'Streaming', ceiling: -1.0 },
+                apple: { target: -16.0, name: 'Apple Music', ceiling: -1.0 },
+                podcast: { target: -16.0, name: 'Podcast', ceiling: -2.0 }
+            },
+
+            // Set target LUFS and apply immediately
+            setTarget: function(platform) {
+                const preset = this.presets[platform] || this.presets.streaming;
+                const oldTarget = this.currentTarget;
+                this.currentTarget = preset.target;
+
+                console.log(`🎯 LUFS Target: ${oldTarget} → ${preset.target} LUFS (${preset.name})`);
+
+                // Update UI displays
+                this.updateUI(preset);
+
+                // Apply gain change if audio is playing
+                this.applyTargetGain();
+
+                return preset;
+            },
+
+            // Calculate and apply gain to hit target LUFS
+            applyTargetGain: function() {
+                const ac = window.audioContext;
+                const mu = window.makeupGain;
+                const inputLUFS = window.originalInputLUFS || window.autoLUFSInputLevel;
+
+                if (!ac || !mu) {
+                    console.log('⏳ Audio not ready - target will apply when audio loads');
+                    return;
+                }
+
+                if (inputLUFS === undefined || inputLUFS === null || inputLUFS <= -70) {
+                    console.log('⏳ No LUFS measurement yet - using default gain');
+                    return;
+                }
+
+                // Calculate precise gain needed
+                const gainNeeded = this.currentTarget - inputLUFS;
+
+                // Safety limits with headroom protection
+                const safeGain = Math.max(-12, Math.min(14, gainNeeded));
+                const linearGain = Math.pow(10, safeGain / 20);
+
+                console.log(`   Input: ${inputLUFS.toFixed(1)} LUFS`);
+                console.log(`   Target: ${this.currentTarget.toFixed(1)} LUFS`);
+                console.log(`   Gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(2)} dB`);
+
+                // Smooth transition (50ms ramp)
+                const now = ac.currentTime;
+                mu.gain.cancelScheduledValues(now);
+                mu.gain.setValueAtTime(mu.gain.value, now);
+                mu.gain.linearRampToValueAtTime(linearGain, now + 0.05);
+
+                // Store for other systems
+                window.autoLUFSTargetLevel = this.currentTarget;
+                window.autoLUFSGainApplied = safeGain;
+                window.originalMakeupGainValue = linearGain;
+                window.appliedMakeupGainDB = safeGain;
+
+                this.gainOffset = safeGain;
+            },
+
+            // Update all UI elements
+            updateUI: function(preset) {
+                // Update target display in meter
+                const targetEl = document.getElementById('liveLufsTarget');
+                if (targetEl) {
+                    targetEl.textContent = `${preset.target} LUFS`;
+                    targetEl.style.color = preset.target === -14 ? '#ffd700' : '#00d4ff';
+                }
+
+                // Update any other displays
+                const lufsTargetEl = document.getElementById('lufsTarget');
+                if (lufsTargetEl) {
+                    lufsTargetEl.textContent = `Target: ${preset.target} LUFS (${preset.name})`;
+                }
+
+                // Flash the meter to show change
+                const meterEl = document.getElementById('liveLufsIndicator');
+                if (meterEl) {
+                    meterEl.style.transition = 'box-shadow 0.3s ease';
+                    meterEl.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.6)';
+                    setTimeout(() => {
+                        meterEl.style.boxShadow = '';
+                    }, 500);
+                }
+            },
+
+            // Get current state
+            getState: function() {
+                return {
+                    target: this.currentTarget,
+                    measured: this.lastMeasuredLUFS,
+                    gainOffset: this.gainOffset,
+                    difference: this.lastMeasuredLUFS - this.currentTarget
+                };
+            }
+        };
+
+        // Expose globally
+        window.LUFSController = LUFSController;
+        console.log('🎯 Real-time LUFS Controller initialized');
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // SELECTOR BUTTONS - Real-time audio changes
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         document.querySelectorAll('.selector-btn').forEach(btn => {
@@ -17957,113 +18076,45 @@
                 // Update LUFS target display when platform changes
                 const platform = this.getAttribute('data-platform');
                 if (platform) {
-                    // Determine target LUFS and platform name
-                    let targetLUFS, platformName;
-                    if (platform === 'streaming' || platform === 'spotify' || platform === 'youtube' || platform === 'tidal') {
-                        targetLUFS = -14;
-                        platformName = 'Streaming';
-                    } else if (platform === 'apple') {
-                        targetLUFS = -16;
-                        platformName = 'Apple Music';
-                    } else if (platform === 'podcast') {
-                        targetLUFS = -16;
-                        platformName = 'Podcast';
-                    } else {
-                        targetLUFS = -14;
-                        platformName = 'Streaming';
-                    }
-
-                    // Update UI target display
-                    const lufsTargetElement = document.getElementById('lufsTarget');
-                    if (lufsTargetElement) {
-                        lufsTargetElement.textContent = `Target: ${targetLUFS} LUFS (${platformName})`;
-                    }
-
-                    // 🏆 PLATFORM LUFS TARGETING
-                    console.log('🎯 Platform preset:', platformName, '| Target:', targetLUFS, 'LUFS');
-
-                    // Store selected platform globally for EQ compensation
+                    // Store selected platform globally
                     window.selectedPlatform = platform;
 
                     // Check if mastering has already been completed
                     const masteringComplete = window.masteringComplete === true;
-                    console.log('🔍 Platform change - masteringComplete:', masteringComplete);
 
                     if (masteringComplete) {
-                        // ═══════════════════════════════════════════════════════════════════════
-                        // LUFS LOCKED AFTER MASTERING
-                        // User must click RESET to re-master at a different LUFS target
-                        // This ensures consistent, professional results
-                        // ═══════════════════════════════════════════════════════════════════════
+                        // LUFS LOCKED AFTER MASTERING - User must RESET to change target
                         console.log('🔒 LUFS LOCKED - Mastering complete, user must RESET to change target');
 
                         // Revert the button selection to the current target
                         this.classList.remove('active');
                         const currentTarget = window.autoLUFSTargetLevel || -14;
-                        const currentPlatformMap = { '-14': 'streaming', '-16': 'apple' };
                         const currentPlatformId = currentTarget === -16 ? 'apple' : 'streaming';
                         const currentBtn = document.querySelector(`.selector-btn[data-platform="${currentPlatformId}"]`);
                         if (currentBtn) currentBtn.classList.add('active');
 
-                        // Show toast explaining what to do
+                        // Get target for user message
+                        const targetLUFS = LUFSController.presets[platform]?.target || -14;
                         if (typeof showToast === 'function') {
                             showToast(`Click RESET to master at ${targetLUFS} LUFS`, 'warning');
                         }
-
-                        return; // Don't change anything - LUFS is locked after mastering
+                        return;
                     }
 
-                    // BEFORE MASTERING: Configure limiter and apply LUFS targeting in real-time
+                    // REAL-TIME LUFS TARGETING via precision controller
+                    const preset = LUFSController.setTarget(platform);
+
+                    // Configure limiter for platform
                     setPlatformTarget(platform);
-                    const mu = window.makeupGain || makeupGain;
-                    const ac = window.audioContext || audioContext;
 
-                    // Use originalInputLUFS (set when file loads) or autoLUFSInputLevel (set after mastering)
-                    const inputLUFS = window.originalInputLUFS || window.autoLUFSInputLevel;
-
-                    if (mu && ac && inputLUFS !== undefined && inputLUFS !== null) {
-
-                        // Direct LUFS targeting - no compensation needed
-                        // The mastering chain and limiter handle everything
-                        const gainNeeded = targetLUFS - inputLUFS;
-
-                        // Safety limits: max +12dB boost, max -10dB cut
-                        const safeGain = Math.max(-10, Math.min(12, gainNeeded));
-                        const linearGain = Math.pow(10, safeGain / 20);
-
-                        console.log(`🎯 LUFS Targeting: ${inputLUFS.toFixed(1)} → ${targetLUFS} LUFS`);
-                        console.log(`   Makeup gain: ${safeGain >= 0 ? '+' : ''}${safeGain.toFixed(1)} dB`);
-
-                        // Smooth ramp to new gain
-                        mu.gain.cancelScheduledValues(ac.currentTime);
-                        mu.gain.setTargetAtTime(linearGain, ac.currentTime, 0.1);
-
-                        // Update stored values - CRITICAL for EQ compensation
-                        window.autoLUFSGainApplied = safeGain;
-                        window.autoLUFSTargetLevel = targetLUFS;
-                        window.originalMakeupGainValue = linearGain; // Base for EQ compensation
-                        window.appliedMakeupGainDB = safeGain;
-                        console.log(`   ✅ Stored originalMakeupGainValue = ${linearGain.toFixed(4)} for EQ compensation`);
-
-                        // Show toast notification
-                        const msg = `${platformName}: ${targetLUFS} LUFS`;
-                        if (typeof showToast === 'function') {
-                            showToast(msg, 'success');
+                    // Show feedback toast
+                    const hasAudio = window.originalInputLUFS || window.autoLUFSInputLevel;
+                    if (typeof showToast === 'function') {
+                        if (hasAudio) {
+                            showToast(`🎯 ${preset.name}: ${preset.target} LUFS`, 'success');
+                        } else {
+                            showToast(`${preset.name} selected (${preset.target} LUFS)`, 'info');
                         }
-                    } else if (mu && ac) {
-                        // No audio loaded yet - just show toast and store target
-                        window.autoLUFSTargetLevel = targetLUFS;
-                        if (typeof showToast === 'function') {
-                            showToast(`${platformName} selected (${targetLUFS} LUFS)`, 'info');
-                        }
-                        console.log('⚠️ No audio loaded - LUFS targeting will apply when file is loaded');
-                    } else {
-                        // Show toast anyway to confirm selection
-                        window.autoLUFSTargetLevel = targetLUFS;
-                        if (typeof showToast === 'function') {
-                            showToast(`${platformName} selected (${targetLUFS} LUFS)`, 'info');
-                        }
-                        console.log('⚠️ Audio context not ready - load audio to hear difference');
                     }
                 }
 
