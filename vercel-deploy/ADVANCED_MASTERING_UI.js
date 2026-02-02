@@ -23,7 +23,6 @@ function createLimiterModeUI(containerId) {
         <div class="limiter-mode-panel">
             <div class="panel-header">
                 <span class="panel-title">IRC LIMITER MODE</span>
-                <span class="panel-badge">5 ALGORITHMS</span>
             </div>
             <div class="limiter-mode-grid">
                 ${modes.map(m => `
