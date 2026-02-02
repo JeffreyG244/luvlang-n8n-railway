@@ -1,11 +1,13 @@
 /**
  * LUVLANG PRO - State-of-the-Art Loudness History & Spectrogram
  * Broadcast-grade visualization with true ITU-R BS.1770-5 measurements
- * Version 2.0 - Professional Studio Quality
+ * Version 2.1 - Professional Studio Quality (Fixed initialization)
  */
 
 (function() {
     'use strict';
+
+    console.log('📊📈 LOUDNESS_SPECTROGRAM.js loading...');
 
     // ═══════════════════════════════════════════════════════════════════════════
     // LOUDNESS HISTORY - ITU-R BS.1770-5 Compliant
@@ -13,6 +15,7 @@
 
     let loudnessCanvas = null;
     let loudnessCtx = null;
+    let loudnessAnimationRunning = false;
     let loudnessData = {
         shortTerm: [],      // 3-second window LUFS
         integrated: [],     // Running integrated LUFS
@@ -63,14 +66,6 @@
                             letter-spacing: 2px;
                             color: rgba(255,255,255,0.6);
                         ">Loudness History</span>
-                        <span style="
-                            font-size: 0.6rem;
-                            padding: 2px 8px;
-                            background: rgba(0,212,255,0.15);
-                            border: 1px solid rgba(0,212,255,0.3);
-                            border-radius: 10px;
-                            color: #00d4ff;
-                        ">ITU-R BS.1770-5</span>
                     </div>
                     <button id="loudnessResetBtn" style="
                         background: rgba(255,255,255,0.03);
@@ -181,19 +176,44 @@
             </style>
         `;
 
-        // Initialize canvas with delay to ensure container is rendered
-        setTimeout(() => {
+        // Initialize canvas with multiple retries to ensure container is rendered
+        const initCanvas = (retries = 0) => {
             loudnessCanvas = document.getElementById('loudnessHistoryCanvas');
             if (loudnessCanvas) {
                 loudnessCtx = loudnessCanvas.getContext('2d');
-                resizeLoudnessCanvas();
+
+                // Force canvas size based on parent
+                const parent = loudnessCanvas.parentElement;
+                if (parent) {
+                    const rect = parent.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        const dpr = window.devicePixelRatio || 1;
+                        loudnessCanvas.width = rect.width * dpr;
+                        loudnessCanvas.height = rect.height * dpr;
+                        loudnessCanvas.style.width = rect.width + 'px';
+                        loudnessCanvas.style.height = rect.height + 'px';
+                        loudnessCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                        console.log('📊 Loudness canvas sized:', rect.width, 'x', rect.height);
+                    }
+                }
+
                 window.addEventListener('resize', resizeLoudnessCanvas);
-                requestAnimationFrame(drawLoudnessHistory);
+
+                // Start drawing loop if not already running
+                if (!loudnessAnimationRunning) {
+                    loudnessAnimationRunning = true;
+                    requestAnimationFrame(drawLoudnessHistory);
+                }
                 console.log('📊 Loudness History canvas initialized');
+            } else if (retries < 10) {
+                // Retry with exponential backoff
+                setTimeout(() => initCanvas(retries + 1), 100 * (retries + 1));
             } else {
-                console.warn('📊 Loudness History canvas not found');
+                console.warn('📊 Loudness History canvas not found after retries');
             }
-        }, 100);
+        };
+
+        setTimeout(initCanvas, 200);
 
         // Reset button
         document.getElementById('loudnessResetBtn')?.addEventListener('click', () => {
@@ -203,7 +223,7 @@
             console.log('📊 Loudness History reset');
         });
 
-        console.log('📊 Loudness History - ITU-R BS.1770-5 initialized');
+        console.log('📊 Loudness History UI created');
     };
 
     function resizeLoudnessCanvas() {
@@ -501,20 +521,51 @@
             </style>
         `;
 
-        // Initialize canvas with delay to ensure container is rendered
-        setTimeout(() => {
+        // Initialize canvas with multiple retries to ensure container is rendered
+        const initCanvas = (retries = 0) => {
             spectrogramCanvas = document.getElementById('spectrogramCanvas');
             if (spectrogramCanvas) {
                 spectrogramCtx = spectrogramCanvas.getContext('2d');
-                resizeSpectrogramCanvas();
+
+                // Force canvas size based on parent
+                const parent = spectrogramCanvas.parentElement;
+                if (parent) {
+                    const rect = parent.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        const dpr = window.devicePixelRatio || 1;
+                        spectrogramCanvas.width = rect.width * dpr;
+                        spectrogramCanvas.height = rect.height * dpr;
+                        spectrogramCanvas.style.width = rect.width + 'px';
+                        spectrogramCanvas.style.height = rect.height + 'px';
+
+                        // Initialize image data for spectrogram scrolling
+                        spectrogramImageData = spectrogramCtx.createImageData(
+                            spectrogramCanvas.width,
+                            spectrogramCanvas.height
+                        );
+                        // Fill with black
+                        for (let i = 0; i < spectrogramImageData.data.length; i += 4) {
+                            spectrogramImageData.data[i] = 0;
+                            spectrogramImageData.data[i + 1] = 0;
+                            spectrogramImageData.data[i + 2] = 0;
+                            spectrogramImageData.data[i + 3] = 255;
+                        }
+                        console.log('📈 Spectrogram canvas sized:', rect.width, 'x', rect.height);
+                    }
+                }
+
                 window.addEventListener('resize', resizeSpectrogramCanvas);
                 console.log('📈 Spectrogram canvas initialized');
+            } else if (retries < 10) {
+                setTimeout(() => initCanvas(retries + 1), 100 * (retries + 1));
             } else {
-                console.warn('📈 Spectrogram canvas not found');
+                console.warn('📈 Spectrogram canvas not found after retries');
             }
-        }, 100);
+        };
 
-        console.log('📈 Spectrogram - Time × Frequency initialized');
+        setTimeout(initCanvas, 200);
+
+        console.log('📈 Spectrogram UI created');
     };
 
     function resizeSpectrogramCanvas() {
