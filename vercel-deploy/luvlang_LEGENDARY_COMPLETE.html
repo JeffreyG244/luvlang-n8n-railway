@@ -14797,6 +14797,26 @@
                 // Continue broadcast metering
                 updateMeters(drawDataArray);
 
+                // Update Limiter Gain Reduction meter (real-time)
+                if (limiter && limiter.reduction) {
+                    const gr = limiter.reduction; // Negative dB value
+                    const grDisplay = document.getElementById('limiterGR');
+                    if (grDisplay) {
+                        const grValue = Math.abs(gr).toFixed(1);
+                        grDisplay.textContent = `GR: -${grValue}dB`;
+                        // Color based on GR amount: green < 3dB, yellow 3-6dB, red > 6dB
+                        if (Math.abs(gr) < 0.5) {
+                            grDisplay.style.color = '#00ff88'; // Green - minimal
+                        } else if (Math.abs(gr) < 3) {
+                            grDisplay.style.color = '#7cb8ff'; // Blue - healthy
+                        } else if (Math.abs(gr) < 6) {
+                            grDisplay.style.color = '#ffd700'; // Yellow - working
+                        } else {
+                            grDisplay.style.color = '#ff6b6b'; // Red - heavy
+                        }
+                    }
+                }
+
                 animationFrame = requestAnimationFrame(draw);
             }
 
