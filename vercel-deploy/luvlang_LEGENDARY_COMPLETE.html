@@ -14028,9 +14028,8 @@
         // PROFESSIONAL WAVEFORM DRAWER - Uses new visualization system
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // 🏆 WAVEFORM RENDERER - Fixed and Working
+        // 🏆 STATE-OF-THE-ART WAVEFORM RENDERER - Neon Bars with Glow
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // PROFESSIONAL WAVEFORM - RETINA-READY WITH DPI SCALING
         function drawWaveformFromBuffer(audioBuffer, showGhost = true) {
             console.log('🎨 drawWaveformFromBuffer() CALLED');
 
@@ -14039,7 +14038,6 @@
                 console.error('❌ Canvas waveformCanvasStatic NOT FOUND!');
                 return;
             }
-            console.log('✅ Canvas found:', canvas);
 
             const ctx = canvas.getContext('2d');
             if (!ctx) {
@@ -14052,126 +14050,168 @@
                 return;
             }
 
-            // ═══ SIMPLE ROBUST CANVAS SETUP ═══
-            // Use container dimensions, not bounding rect (more reliable)
+            // ═══ CANVAS SETUP ═══
             const container = canvas.parentElement;
             const width = container ? container.offsetWidth : 800;
             const height = container ? container.offsetHeight : 140;
-
-            // Set canvas to match container (1:1 pixel ratio for simplicity)
             canvas.width = width;
             canvas.height = height;
 
-            console.log(`🎨 Waveform canvas: ${width}x${height}`);
-
-            // Professional dark gradient background
+            // ═══ DARK GRADIENT BACKGROUND ═══
             const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-            bgGradient.addColorStop(0, '#0a0a0f');
-            bgGradient.addColorStop(0.5, '#12121a');
-            bgGradient.addColorStop(1, '#0a0a0f');
+            bgGradient.addColorStop(0, '#05050a');
+            bgGradient.addColorStop(0.5, '#0a0a14');
+            bgGradient.addColorStop(1, '#05050a');
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
+            // Subtle grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                ctx.stroke();
+            }
+
             // Get audio data
             const data = audioBuffer.getChannelData(0);
-            const step = Math.max(1, Math.floor(data.length / width));
             const centerY = height / 2;
-            const padding = 20; // Generous padding to keep waveform within bounds
+            const padding = 15;
+            const maxAmp = (height / 2) - padding;
 
             // ═══ FIND PEAK FOR NORMALIZATION ═══
             let globalPeak = 0;
-            for (let i = 0; i < data.length; i += step) {
+            for (let i = 0; i < data.length; i += 100) {
                 globalPeak = Math.max(globalPeak, Math.abs(data[i]));
             }
             globalPeak = Math.max(globalPeak, 0.001);
 
-            // Scale factor - 55% of available height (keeps peaks well within canvas)
-            const maxAmp = ((height / 2) - padding) * 0.55;
-            const scaleFactor = maxAmp / globalPeak;
+            // ═══ BAR-STYLE WAVEFORM (Like SoundCloud/Spotify) ═══
+            const barWidth = 3;
+            const barGap = 1;
+            const totalBarWidth = barWidth + barGap;
+            const numBars = Math.floor(width / totalBarWidth);
 
-            console.log(`🎚️ Waveform: peak=${globalPeak.toFixed(4)}, scale=${scaleFactor.toFixed(1)}x, maxAmp=${maxAmp}`);
-
-            // Precompute peaks for each pixel column
-            const peaks = new Float32Array(width);
-            for (let i = 0; i < width; i++) {
+            // Precompute bar heights
+            const barHeights = [];
+            for (let i = 0; i < numBars; i++) {
                 let max = 0;
-                const startIdx = Math.floor(i * data.length / width);
-                const endIdx = Math.floor((i + 1) * data.length / width);
+                const startIdx = Math.floor(i * data.length / numBars);
+                const endIdx = Math.floor((i + 1) * data.length / numBars);
                 for (let j = startIdx; j < endIdx && j < data.length; j++) {
                     max = Math.max(max, Math.abs(data[j]));
                 }
-                peaks[i] = max * scaleFactor;
+                barHeights.push((max / globalPeak) * maxAmp * 0.9);
             }
 
-            // ═══ STATE-OF-THE-ART WAVEFORM (SoundCloud/Ableton style) ═══
-            // Professional gradient - subtle cyan to purple
-            const waveGradient = ctx.createLinearGradient(0, centerY - maxAmp, 0, centerY + maxAmp);
-            waveGradient.addColorStop(0, 'rgba(0, 200, 255, 0.9)');
-            waveGradient.addColorStop(0.3, 'rgba(0, 150, 220, 0.85)');
-            waveGradient.addColorStop(0.5, 'rgba(100, 120, 200, 0.8)');
-            waveGradient.addColorStop(0.7, 'rgba(0, 150, 220, 0.85)');
-            waveGradient.addColorStop(1, 'rgba(0, 200, 255, 0.9)');
+            // ═══ DRAW REFLECTION FIRST (faded) ═══
+            for (let i = 0; i < numBars; i++) {
+                const x = i * totalBarWidth;
+                const barH = barHeights[i];
+                const reflectionH = barH * 0.4;
 
-            ctx.fillStyle = waveGradient;
-            ctx.beginPath();
-            ctx.moveTo(0, centerY);
+                // Reflection gradient (fades out)
+                const reflectGrad = ctx.createLinearGradient(0, centerY + 2, 0, centerY + reflectionH);
+                reflectGrad.addColorStop(0, 'rgba(0, 200, 255, 0.25)');
+                reflectGrad.addColorStop(1, 'rgba(0, 200, 255, 0)');
 
-            // Draw top edge (left to right)
-            for (let i = 0; i < width; i++) {
-                ctx.lineTo(i, centerY - peaks[i]);
+                ctx.fillStyle = reflectGrad;
+                ctx.fillRect(x, centerY + 2, barWidth, reflectionH);
             }
 
-            // Draw bottom edge (right to left) - creates mirror
-            for (let i = width - 1; i >= 0; i--) {
-                ctx.lineTo(i, centerY + peaks[i]);
+            // ═══ DRAW MAIN BARS WITH GLOW ═══
+            for (let i = 0; i < numBars; i++) {
+                const x = i * totalBarWidth;
+                const barH = Math.max(2, barHeights[i]);
+                const intensity = barH / maxAmp;
+
+                // Dynamic color based on intensity (cyan → magenta → hot pink for loud parts)
+                let r, g, b;
+                if (intensity < 0.5) {
+                    // Cyan to purple
+                    r = Math.floor(intensity * 2 * 180);
+                    g = Math.floor(200 - intensity * 100);
+                    b = 255;
+                } else {
+                    // Purple to hot pink/magenta
+                    r = Math.floor(180 + (intensity - 0.5) * 150);
+                    g = Math.floor(150 - (intensity - 0.5) * 100);
+                    b = Math.floor(255 - (intensity - 0.5) * 50);
+                }
+
+                // Outer glow for loud bars
+                if (intensity > 0.6) {
+                    ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                    ctx.shadowBlur = 8 + intensity * 12;
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+
+                // Main bar gradient
+                const barGrad = ctx.createLinearGradient(0, centerY - barH, 0, centerY);
+                barGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
+                barGrad.addColorStop(0.5, `rgba(${Math.floor(r*0.8)}, ${Math.floor(g*0.9)}, ${b}, 0.9)`);
+                barGrad.addColorStop(1, `rgba(${Math.floor(r*0.6)}, ${Math.floor(g*0.7)}, ${Math.floor(b*0.9)}, 0.8)`);
+
+                ctx.fillStyle = barGrad;
+
+                // Draw bar (upward from center)
+                ctx.beginPath();
+                ctx.roundRect(x, centerY - barH, barWidth, barH, 1);
+                ctx.fill();
+
+                // Mirror bar (downward, slightly shorter)
+                ctx.shadowBlur = 0;
+                const mirrorGrad = ctx.createLinearGradient(0, centerY, 0, centerY + barH * 0.7);
+                mirrorGrad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.7)`);
+                mirrorGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.2)`);
+                ctx.fillStyle = mirrorGrad;
+                ctx.beginPath();
+                ctx.roundRect(x, centerY + 1, barWidth, barH * 0.7, 1);
+                ctx.fill();
+
+                // Bright top cap on loud bars
+                if (intensity > 0.4) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + intensity * 0.5})`;
+                    ctx.fillRect(x, centerY - barH, barWidth, 2);
+                }
             }
 
-            ctx.closePath();
-            ctx.fill();
-
-            // Subtle highlight on peaks
-            ctx.strokeStyle = 'rgba(150, 220, 255, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, centerY - peaks[0]);
-            for (let i = 1; i < width; i++) {
-                ctx.lineTo(i, centerY - peaks[i]);
-            }
-            ctx.stroke();
-
-            // Subtle shadow on bottom
-            ctx.strokeStyle = 'rgba(0, 100, 150, 0.3)';
-            ctx.beginPath();
-            ctx.moveTo(0, centerY + peaks[0]);
-            for (let i = 1; i < width; i++) {
-                ctx.lineTo(i, centerY + peaks[i]);
-            }
-            ctx.stroke();
-
-            // Center line - very subtle
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            // ═══ CENTER LINE WITH GLOW ═══
+            ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
             ctx.lineTo(width, centerY);
             ctx.stroke();
+            ctx.shadowBlur = 0;
 
-            // -6dB and -12dB reference lines (barely visible)
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-            const db6 = maxAmp * 0.5;  // -6dB
-            const db12 = maxAmp * 0.25; // -12dB
-            [db6, db12].forEach(offset => {
-                ctx.beginPath();
-                ctx.moveTo(0, centerY - offset);
-                ctx.lineTo(width, centerY - offset);
-                ctx.moveTo(0, centerY + offset);
-                ctx.lineTo(width, centerY + offset);
-                ctx.stroke();
-            });
+            // ═══ PEAK MARKERS ═══
+            // Find and mark the loudest sections
+            let peakIdx = 0;
+            let peakVal = 0;
+            for (let i = 0; i < barHeights.length; i++) {
+                if (barHeights[i] > peakVal) {
+                    peakVal = barHeights[i];
+                    peakIdx = i;
+                }
+            }
 
-            console.log('✅ Waveform drawn:', width + 'x' + height);
+            // Draw peak indicator
+            const peakX = peakIdx * totalBarWidth + barWidth / 2;
+            ctx.beginPath();
+            ctx.arc(peakX, centerY - peakVal - 6, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#ff00ff';
+            ctx.shadowColor = '#ff00ff';
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
 
-            console.log('================================================');
+            console.log('✅ Neon bar waveform drawn:', width + 'x' + height, 'bars:', numBars);
         }
 
         // Legacy function name for compatibility
