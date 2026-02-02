@@ -14106,6 +14106,28 @@
                 barHeights.push((max / globalPeak) * maxAmp * 0.9);
             }
 
+            // ═══ TRANSIENT DETECTION ═══
+            // Transients = sudden amplitude increases (attacks, drums, etc.)
+            const transients = [];
+            const transientThreshold = 0.15; // Minimum jump to be a transient
+            const minTransientHeight = maxAmp * 0.3; // Must be reasonably loud
+
+            for (let i = 2; i < barHeights.length; i++) {
+                const prev = Math.max(barHeights[i-1], barHeights[i-2]);
+                const current = barHeights[i];
+                const jump = current - prev;
+
+                // Detect sudden jump in amplitude
+                if (jump > transientThreshold * maxAmp && current > minTransientHeight) {
+                    transients.push({
+                        index: i,
+                        strength: Math.min(1, jump / (maxAmp * 0.4)), // Normalize strength 0-1
+                        height: current
+                    });
+                }
+            }
+            console.log(`🥁 Detected ${transients.length} transients`);
+
             // ═══ DRAW REFLECTION FIRST (faded) ═══
             for (let i = 0; i < numBars; i++) {
                 const x = i * totalBarWidth;
@@ -14121,15 +14143,25 @@
                 ctx.fillRect(x, centerY + 2, barWidth, reflectionH);
             }
 
-            // ═══ DRAW MAIN BARS WITH GLOW ═══
+            // ═══ DRAW MAIN BARS WITH GLOW + TRANSIENT HIGHLIGHTS ═══
+            const transientIndices = new Set(transients.map(t => t.index));
+
             for (let i = 0; i < numBars; i++) {
                 const x = i * totalBarWidth;
                 const barH = Math.max(2, barHeights[i]);
                 const intensity = barH / maxAmp;
+                const isTransient = transientIndices.has(i);
+                const transientData = transients.find(t => t.index === i);
 
-                // Dynamic color based on intensity (cyan → magenta → hot pink for loud parts)
+                // Dynamic color - transients get special orange/yellow treatment
                 let r, g, b;
-                if (intensity < 0.5) {
+                if (isTransient) {
+                    // Transients: bright orange → yellow → white
+                    const tStrength = transientData ? transientData.strength : 0.5;
+                    r = 255;
+                    g = Math.floor(150 + tStrength * 105); // More yellow with strength
+                    b = Math.floor(50 + tStrength * 100);  // Hint of white
+                } else if (intensity < 0.5) {
                     // Cyan to purple
                     r = Math.floor(intensity * 2 * 180);
                     g = Math.floor(200 - intensity * 100);
@@ -14141,8 +14173,11 @@
                     b = Math.floor(255 - (intensity - 0.5) * 50);
                 }
 
-                // Outer glow for loud bars
-                if (intensity > 0.6) {
+                // TRANSIENT GLOW - extra strong for attacks
+                if (isTransient) {
+                    ctx.shadowColor = `rgba(255, 200, 50, 1)`;
+                    ctx.shadowBlur = 15 + (transientData ? transientData.strength * 20 : 10);
+                } else if (intensity > 0.6) {
                     ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
                     ctx.shadowBlur = 8 + intensity * 12;
                 } else {
@@ -14157,9 +14192,10 @@
 
                 ctx.fillStyle = barGrad;
 
-                // Draw bar (upward from center)
+                // Draw bar (upward from center) - transients slightly wider
+                const actualBarWidth = isTransient ? barWidth + 1 : barWidth;
                 ctx.beginPath();
-                ctx.roundRect(x, centerY - barH, barWidth, barH, 1);
+                ctx.roundRect(x, centerY - barH, actualBarWidth, barH, 1);
                 ctx.fill();
 
                 // Mirror bar (downward, slightly shorter)
@@ -14169,14 +14205,40 @@
                 mirrorGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.2)`);
                 ctx.fillStyle = mirrorGrad;
                 ctx.beginPath();
-                ctx.roundRect(x, centerY + 1, barWidth, barH * 0.7, 1);
+                ctx.roundRect(x, centerY + 1, actualBarWidth, barH * 0.7, 1);
                 ctx.fill();
 
-                // Bright top cap on loud bars
-                if (intensity > 0.4) {
+                // Bright top cap - EXTRA BRIGHT for transients
+                if (isTransient) {
+                    // Transient spike marker - bright white/yellow cap
+                    ctx.fillStyle = 'rgba(255, 255, 200, 1)';
+                    ctx.shadowColor = 'rgba(255, 255, 100, 1)';
+                    ctx.shadowBlur = 8;
+                    ctx.fillRect(x - 1, centerY - barH - 3, actualBarWidth + 2, 5);
+                    ctx.shadowBlur = 0;
+                } else if (intensity > 0.4) {
                     ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + intensity * 0.5})`;
                     ctx.fillRect(x, centerY - barH, barWidth, 2);
                 }
+            }
+
+            // ═══ TRANSIENT SPIKE MARKERS (above waveform) ═══
+            for (const t of transients) {
+                const x = t.index * totalBarWidth + barWidth / 2;
+                const y = centerY - t.height - 10;
+
+                // Draw spike/triangle marker
+                ctx.beginPath();
+                ctx.moveTo(x, y - 6);
+                ctx.lineTo(x - 4, y + 2);
+                ctx.lineTo(x + 4, y + 2);
+                ctx.closePath();
+
+                ctx.fillStyle = `rgba(255, 220, 50, ${0.6 + t.strength * 0.4})`;
+                ctx.shadowColor = 'rgba(255, 200, 0, 0.8)';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
             // ═══ CENTER LINE WITH GLOW ═══
