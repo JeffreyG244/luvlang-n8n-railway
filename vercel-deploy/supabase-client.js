@@ -367,11 +367,118 @@ async function loadMasteringHistory(limit = 10) {
 }
 
 /**
+ * SUBSCRIPTION TIERS CONFIGURATION
+ * Defines features and limits for each tier
+ */
+const SUBSCRIPTION_TIERS = {
+    free: {
+        name: 'Free',
+        price: 0,
+        limits: {
+            presets: 3,
+            historyDays: 7,
+            exportsPerMonth: 5,
+            maxFileSize: 25 // MB
+        },
+        features: {
+            aiMastering: true,
+            basicEQ: true,
+            lufsMetering: true,
+            basicLimiter: true,
+            // Premium features DISABLED
+            ircLimiter: false,
+            softClipper: false,
+            upwardCompression: false,
+            unlimiter: false,
+            linearPhaseEQ: false,
+            loudnessHistory: false,
+            spectrogram: false,
+            multitrackBatch: false,
+            cloudSync: false,
+            referenceMatching: false,
+            stemSeparation: false,
+            advancedAnalytics: false,
+            priorityProcessing: false
+        }
+    },
+    pro: {
+        name: 'Pro',
+        price: 9.99,
+        limits: {
+            presets: 50,
+            historyDays: 90,
+            exportsPerMonth: 100,
+            maxFileSize: 100 // MB
+        },
+        features: {
+            aiMastering: true,
+            basicEQ: true,
+            lufsMetering: true,
+            basicLimiter: true,
+            // PRO features ENABLED
+            ircLimiter: true,
+            softClipper: true,
+            upwardCompression: true,
+            unlimiter: true,
+            linearPhaseEQ: true,
+            loudnessHistory: true,
+            spectrogram: true,
+            multitrackBatch: false,
+            cloudSync: true,
+            referenceMatching: false,
+            stemSeparation: false,
+            advancedAnalytics: true,
+            priorityProcessing: false
+        }
+    },
+    legendary: {
+        name: 'Legendary',
+        price: 29.99,
+        limits: {
+            presets: -1, // Unlimited
+            historyDays: 365,
+            exportsPerMonth: -1, // Unlimited
+            maxFileSize: 500 // MB
+        },
+        features: {
+            aiMastering: true,
+            basicEQ: true,
+            lufsMetering: true,
+            basicLimiter: true,
+            // ALL features ENABLED
+            ircLimiter: true,
+            softClipper: true,
+            upwardCompression: true,
+            unlimiter: true,
+            linearPhaseEQ: true,
+            loudnessHistory: true,
+            spectrogram: true,
+            multitrackBatch: true,
+            cloudSync: true,
+            referenceMatching: true,
+            stemSeparation: true,
+            advancedAnalytics: true,
+            priorityProcessing: true
+        }
+    }
+};
+
+// Make tiers globally available
+if (typeof window !== 'undefined') {
+    window.SUBSCRIPTION_TIERS = SUBSCRIPTION_TIERS;
+}
+
+/**
  * Get user subscription tier
  */
 async function getUserSubscription() {
     if (!currentUser) {
-        return { tier: 'free', limits: { presets: 3, historyDays: 7 } };
+        return {
+            tier: 'free',
+            tierData: SUBSCRIPTION_TIERS.free,
+            limits: SUBSCRIPTION_TIERS.free.limits,
+            features: SUBSCRIPTION_TIERS.free.features
+        };
     }
 
     try {
@@ -383,31 +490,129 @@ async function getUserSubscription() {
 
         if (error) throw error;
 
-        // Get tier limits from mastering_tiers table
-        const { data: tierData, error: tierError } = await supabaseClient
-            .from('mastering_tiers')
-            .select('*')
-            .eq('tier_name', data.subscription_tier)
-            .single();
-
-        if (tierError) throw tierError;
-
-        // Extract max_presets from features JSON or use default
-        const maxPresets = tierData.features?.max_presets || 999;
+        const tierName = data.subscription_tier || 'free';
+        const tierData = SUBSCRIPTION_TIERS[tierName] || SUBSCRIPTION_TIERS.free;
 
         return {
-            tier: data.subscription_tier,
-            limits: {
-                presets: maxPresets,
-                historyDays: 365, // Default to 1 year
-                features: tierData.features
-            }
+            tier: tierName,
+            tierData: tierData,
+            limits: tierData.limits,
+            features: tierData.features
         };
 
     } catch (error) {
         console.error('❌ Failed to get subscription:', error.message);
-        return { tier: 'free', limits: { presets: 3, historyDays: 7 } };
+        return {
+            tier: 'free',
+            tierData: SUBSCRIPTION_TIERS.free,
+            limits: SUBSCRIPTION_TIERS.free.limits,
+            features: SUBSCRIPTION_TIERS.free.features
+        };
     }
+}
+
+/**
+ * Check if user has access to a specific feature
+ */
+async function hasFeature(featureName) {
+    const subscription = await getUserSubscription();
+    return subscription.features[featureName] || false;
+}
+
+/**
+ * Get all available features for current user
+ */
+async function getAvailableFeatures() {
+    const subscription = await getUserSubscription();
+    return {
+        tier: subscription.tier,
+        features: subscription.features,
+        limits: subscription.limits
+    };
+}
+
+/**
+ * Update UI elements based on subscription tier
+ * Locks/unlocks premium features
+ */
+async function applyTierRestrictions() {
+    const subscription = await getUserSubscription();
+    const features = subscription.features;
+
+    console.log(`🔐 Applying tier restrictions for: ${subscription.tier.toUpperCase()}`);
+
+    // IRC Limiter
+    const ircContainer = document.getElementById('limiterModeContainer');
+    if (ircContainer) {
+        if (!features.ircLimiter) {
+            ircContainer.classList.add('feature-locked');
+            ircContainer.setAttribute('data-locked', 'true');
+            ircContainer.setAttribute('data-upgrade-tier', 'pro');
+        } else {
+            ircContainer.classList.remove('feature-locked');
+            ircContainer.removeAttribute('data-locked');
+        }
+    }
+
+    // Soft Clipper
+    const softClipContainer = document.getElementById('softClipperContainer');
+    if (softClipContainer) {
+        if (!features.softClipper) {
+            softClipContainer.classList.add('feature-locked');
+            softClipContainer.setAttribute('data-locked', 'true');
+        } else {
+            softClipContainer.classList.remove('feature-locked');
+        }
+    }
+
+    // Upward Compression
+    const upwardContainer = document.getElementById('upwardCompContainer');
+    if (upwardContainer) {
+        if (!features.upwardCompression) {
+            upwardContainer.classList.add('feature-locked');
+            upwardContainer.setAttribute('data-locked', 'true');
+        } else {
+            upwardContainer.classList.remove('feature-locked');
+        }
+    }
+
+    // Unlimiter
+    const unlimiterContainer = document.getElementById('unlimiterContainer');
+    if (unlimiterContainer) {
+        if (!features.unlimiter) {
+            unlimiterContainer.classList.add('feature-locked');
+            unlimiterContainer.setAttribute('data-locked', 'true');
+        } else {
+            unlimiterContainer.classList.remove('feature-locked');
+        }
+    }
+
+    // Loudness History
+    const loudnessContainer = document.getElementById('loudnessHistoryContainer');
+    if (loudnessContainer) {
+        if (!features.loudnessHistory) {
+            loudnessContainer.classList.add('feature-locked');
+            loudnessContainer.setAttribute('data-locked', 'true');
+        } else {
+            loudnessContainer.classList.remove('feature-locked');
+        }
+    }
+
+    // Spectrogram
+    const spectrogramContainer = document.getElementById('spectrogramContainer');
+    if (spectrogramContainer) {
+        if (!features.spectrogram) {
+            spectrogramContainer.classList.add('feature-locked');
+            spectrogramContainer.setAttribute('data-locked', 'true');
+        } else {
+            spectrogramContainer.classList.remove('feature-locked');
+        }
+    }
+
+    // Store current subscription for quick access
+    window.currentSubscription = subscription;
+
+    return subscription;
 }
 
 /**
@@ -481,7 +686,12 @@ if (typeof window !== 'undefined') {
     window.saveMasteringHistory = saveMasteringHistory;
     window.loadMasteringHistory = loadMasteringHistory;
     window.getUserSubscription = getUserSubscription;
+    window.hasFeature = hasFeature;
+    window.getAvailableFeatures = getAvailableFeatures;
+    window.applyTierRestrictions = applyTierRestrictions;
+    window.SUBSCRIPTION_TIERS = SUBSCRIPTION_TIERS;
     window.currentUser = currentUser;
 }
 
 console.log('✅ Supabase client module loaded');
+console.log('   Subscription Tiers: Free, Pro ($9.99/mo), Legendary ($29.99/mo)');

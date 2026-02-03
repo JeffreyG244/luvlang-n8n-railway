@@ -3426,6 +3426,95 @@
                 transition: none;
             }
         }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           PREMIUM FEATURE LOCK STYLING - For Tier-Based Access Control
+           ═══════════════════════════════════════════════════════════════════════════ */
+        .feature-locked {
+            position: relative;
+            pointer-events: none;
+            user-select: none;
+        }
+        .feature-locked::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 10, 20, 0.85);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            border-radius: inherit;
+            z-index: 100;
+        }
+        .feature-locked::after {
+            content: '🔒 Upgrade to Unlock';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: #ffd700;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            z-index: 101;
+            white-space: nowrap;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+        }
+        .feature-locked:hover::after {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.2));
+            box-shadow: 0 6px 30px rgba(255, 215, 0, 0.3);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        /* Pro tier locked message */
+        .feature-locked[data-upgrade-tier="pro"]::after {
+            content: '🔒 Pro Feature - Upgrade to Unlock';
+        }
+        /* Legendary tier locked message */
+        .feature-locked[data-upgrade-tier="legendary"]::after {
+            content: '👑 Legendary Feature - Upgrade to Unlock';
+            background: linear-gradient(135deg, rgba(184, 79, 255, 0.2), rgba(138, 43, 226, 0.1));
+            border-color: rgba(184, 79, 255, 0.4);
+            color: #b84fff;
+            box-shadow: 0 4px 20px rgba(184, 79, 255, 0.2);
+        }
+        .feature-locked[data-upgrade-tier="legendary"]:hover::after {
+            background: linear-gradient(135deg, rgba(184, 79, 255, 0.3), rgba(138, 43, 226, 0.2));
+            box-shadow: 0 6px 30px rgba(184, 79, 255, 0.3);
+        }
+
+        /* Tier badge styling */
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .tier-badge.free {
+            background: rgba(100, 100, 100, 0.2);
+            border: 1px solid rgba(100, 100, 100, 0.3);
+            color: #888;
+        }
+        .tier-badge.pro {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 150, 255, 0.1));
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            color: #00d4ff;
+        }
+        .tier-badge.legendary {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -4967,6 +5056,697 @@
             </div>
         </div>
     </div>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         STATE-OF-THE-ART SIGNUP GATE - Premium Landing Experience
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div id="signupGateOverlay" class="signup-gate-overlay">
+        <style>
+            .signup-gate-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: radial-gradient(ellipse at 30% 20%, rgba(20, 30, 60, 0.98) 0%, rgba(5, 8, 18, 0.99) 50%, rgba(0, 0, 0, 1) 100%);
+                backdrop-filter: blur(40px);
+                -webkit-backdrop-filter: blur(40px);
+                z-index: 999999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 1;
+                transition: opacity 0.5s ease, transform 0.5s ease;
+                overflow: hidden;
+            }
+            .signup-gate-overlay.hidden {
+                opacity: 0;
+                pointer-events: none;
+                transform: scale(1.02);
+            }
+            /* Animated background particles */
+            .gate-particles {
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                overflow: hidden;
+                pointer-events: none;
+            }
+            .gate-particle {
+                position: absolute;
+                width: 2px;
+                height: 2px;
+                background: rgba(0, 212, 255, 0.6);
+                border-radius: 50%;
+                animation: gateParticle 15s infinite linear;
+            }
+            @keyframes gateParticle {
+                0% { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { transform: translateY(-100vh) translateX(50px) scale(1.5); opacity: 0; }
+            }
+            /* Animated gradient lines */
+            .gate-gradient-line {
+                position: absolute;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), rgba(184, 79, 255, 0.4), transparent);
+                animation: lineMove 8s ease-in-out infinite;
+            }
+            .gate-gradient-line:nth-child(1) { top: 20%; animation-delay: 0s; }
+            .gate-gradient-line:nth-child(2) { top: 50%; animation-delay: 2s; }
+            .gate-gradient-line:nth-child(3) { top: 80%; animation-delay: 4s; }
+            @keyframes lineMove {
+                0%, 100% { left: -100%; width: 50%; opacity: 0; }
+                50% { left: 100%; width: 50%; opacity: 1; }
+            }
+            /* Main card */
+            .gate-card {
+                position: relative;
+                width: 95%;
+                max-width: 480px;
+                background: linear-gradient(165deg, rgba(20, 30, 50, 0.95) 0%, rgba(10, 15, 30, 0.98) 100%);
+                border: 1px solid rgba(0, 212, 255, 0.2);
+                border-radius: 24px;
+                padding: 48px 40px;
+                box-shadow: 0 50px 150px rgba(0, 0, 0, 0.8), 0 0 120px rgba(0, 212, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+                animation: cardFloat 6s ease-in-out infinite;
+            }
+            @keyframes cardFloat {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
+            /* Logo area */
+            .gate-logo {
+                text-align: center;
+                margin-bottom: 32px;
+            }
+            .gate-logo-icon {
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 16px;
+                background: linear-gradient(135deg, #00d4ff 0%, #b84fff 50%, #00ff88 100%);
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 36px;
+                box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+                animation: iconPulse 3s ease-in-out infinite;
+            }
+            @keyframes iconPulse {
+                0%, 100% { box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3); }
+                50% { box-shadow: 0 20px 80px rgba(0, 212, 255, 0.5), 0 0 40px rgba(184, 79, 255, 0.3); }
+            }
+            .gate-logo h1 {
+                font-size: 2rem;
+                font-weight: 800;
+                background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin: 0;
+                letter-spacing: -0.5px;
+            }
+            .gate-logo p {
+                font-size: 0.9rem;
+                color: rgba(255,255,255,0.5);
+                margin: 8px 0 0;
+                letter-spacing: 1px;
+            }
+            /* Tabs */
+            .gate-tabs {
+                display: flex;
+                gap: 4px;
+                background: rgba(0,0,0,0.3);
+                border-radius: 12px;
+                padding: 4px;
+                margin-bottom: 24px;
+            }
+            .gate-tab {
+                flex: 1;
+                padding: 12px 16px;
+                background: transparent;
+                border: none;
+                border-radius: 10px;
+                color: rgba(255,255,255,0.5);
+                font-size: 0.9rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .gate-tab:hover {
+                color: rgba(255,255,255,0.8);
+            }
+            .gate-tab.active {
+                background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(184, 79, 255, 0.2));
+                color: #fff;
+                box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+            }
+            /* Form */
+            .gate-form {
+                display: none;
+            }
+            .gate-form.active {
+                display: block;
+                animation: formFade 0.3s ease;
+            }
+            @keyframes formFade {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .gate-input-group {
+                margin-bottom: 16px;
+            }
+            .gate-input-group label {
+                display: block;
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: rgba(255,255,255,0.5);
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 8px;
+            }
+            .gate-input {
+                width: 100%;
+                padding: 14px 16px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 10px;
+                color: #fff;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+                box-sizing: border-box;
+            }
+            .gate-input:focus {
+                outline: none;
+                border-color: rgba(0, 212, 255, 0.5);
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+            }
+            .gate-input::placeholder {
+                color: rgba(255,255,255,0.3);
+            }
+            .gate-submit-btn {
+                width: 100%;
+                padding: 16px;
+                background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
+                border: none;
+                border-radius: 12px;
+                color: #fff;
+                font-size: 1rem;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 8px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            .gate-submit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4);
+            }
+            .gate-submit-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+            /* Divider */
+            .gate-divider {
+                display: flex;
+                align-items: center;
+                margin: 24px 0;
+                color: rgba(255,255,255,0.3);
+                font-size: 0.75rem;
+            }
+            .gate-divider::before, .gate-divider::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: rgba(255,255,255,0.1);
+            }
+            .gate-divider span {
+                padding: 0 16px;
+            }
+            /* Social buttons */
+            .gate-social-btns {
+                display: flex;
+                gap: 12px;
+            }
+            .gate-social-btn {
+                flex: 1;
+                padding: 12px;
+                background: rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 10px;
+                color: #fff;
+                font-size: 0.85rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            .gate-social-btn:hover {
+                background: rgba(255,255,255,0.1);
+                border-color: rgba(255,255,255,0.2);
+            }
+            /* Features preview */
+            .gate-features {
+                margin-top: 32px;
+                padding-top: 24px;
+                border-top: 1px solid rgba(255,255,255,0.08);
+            }
+            .gate-features-title {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                color: rgba(255,255,255,0.4);
+                text-align: center;
+                margin-bottom: 16px;
+            }
+            .gate-features-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+            .gate-feature {
+                text-align: center;
+                padding: 12px 8px;
+                background: rgba(0, 212, 255, 0.05);
+                border-radius: 10px;
+                border: 1px solid rgba(0, 212, 255, 0.1);
+            }
+            .gate-feature-icon {
+                font-size: 1.2rem;
+                margin-bottom: 4px;
+            }
+            .gate-feature-text {
+                font-size: 0.65rem;
+                color: rgba(255,255,255,0.6);
+                font-weight: 500;
+            }
+            /* Error message */
+            .gate-error {
+                background: rgba(255, 100, 100, 0.1);
+                border: 1px solid rgba(255, 100, 100, 0.3);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 16px;
+                color: #ff6b6b;
+                font-size: 0.85rem;
+                display: none;
+            }
+            .gate-error.show {
+                display: block;
+                animation: shakeError 0.5s ease;
+            }
+            @keyframes shakeError {
+                0%, 100% { transform: translateX(0); }
+                20%, 60% { transform: translateX(-5px); }
+                40%, 80% { transform: translateX(5px); }
+            }
+            /* Success message */
+            .gate-success {
+                background: rgba(0, 255, 136, 0.1);
+                border: 1px solid rgba(0, 255, 136, 0.3);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 16px;
+                color: #00ff88;
+                font-size: 0.85rem;
+                display: none;
+            }
+            .gate-success.show {
+                display: block;
+            }
+            /* Skip button (for demo/testing - can be hidden in production) */
+            .gate-skip {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                padding: 8px 16px;
+                background: transparent;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 6px;
+                color: rgba(255,255,255,0.3);
+                font-size: 0.7rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .gate-skip:hover {
+                color: rgba(255,255,255,0.6);
+                border-color: rgba(255,255,255,0.3);
+            }
+        </style>
+
+        <!-- Animated background elements -->
+        <div class="gate-particles">
+            <div class="gate-particle" style="left: 10%; animation-delay: 0s;"></div>
+            <div class="gate-particle" style="left: 25%; animation-delay: 2s;"></div>
+            <div class="gate-particle" style="left: 40%; animation-delay: 4s;"></div>
+            <div class="gate-particle" style="left: 55%; animation-delay: 1s;"></div>
+            <div class="gate-particle" style="left: 70%; animation-delay: 3s;"></div>
+            <div class="gate-particle" style="left: 85%; animation-delay: 5s;"></div>
+            <div class="gate-gradient-line"></div>
+            <div class="gate-gradient-line"></div>
+            <div class="gate-gradient-line"></div>
+        </div>
+
+        <!-- Main signup card -->
+        <div class="gate-card">
+            <div class="gate-logo">
+                <div class="gate-logo-icon">🎵</div>
+                <h1>LuvLang</h1>
+                <p>Professional AI Mastering Suite</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="gate-tabs">
+                <button class="gate-tab active" onclick="switchGateTab('signup')">Create Account</button>
+                <button class="gate-tab" onclick="switchGateTab('signin')">Sign In</button>
+            </div>
+
+            <!-- Error/Success messages -->
+            <div class="gate-error" id="gateError"></div>
+            <div class="gate-success" id="gateSuccess"></div>
+
+            <!-- Sign Up Form -->
+            <form class="gate-form active" id="gateSignupForm" onsubmit="handleGateSignup(event)">
+                <div class="gate-input-group">
+                    <label>Full Name</label>
+                    <input type="text" class="gate-input" id="gateSignupName" placeholder="Enter your name" required>
+                </div>
+                <div class="gate-input-group">
+                    <label>Email Address</label>
+                    <input type="email" class="gate-input" id="gateSignupEmail" placeholder="you@example.com" required>
+                </div>
+                <div class="gate-input-group">
+                    <label>Password</label>
+                    <input type="password" class="gate-input" id="gateSignupPassword" placeholder="Minimum 6 characters" required minlength="6">
+                </div>
+                <button type="submit" class="gate-submit-btn" id="gateSignupBtn">
+                    Start Mastering Free
+                </button>
+            </form>
+
+            <!-- Sign In Form -->
+            <form class="gate-form" id="gateSigninForm" onsubmit="handleGateSignin(event)">
+                <div class="gate-input-group">
+                    <label>Email Address</label>
+                    <input type="email" class="gate-input" id="gateSigninEmail" placeholder="you@example.com" required>
+                </div>
+                <div class="gate-input-group">
+                    <label>Password</label>
+                    <input type="password" class="gate-input" id="gateSigninPassword" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="gate-submit-btn" id="gateSigninBtn">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Social login divider -->
+            <div class="gate-divider">
+                <span>or continue with</span>
+            </div>
+
+            <!-- Social login buttons -->
+            <div class="gate-social-btns">
+                <button class="gate-social-btn" onclick="handleGoogleLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Google
+                </button>
+                <button class="gate-social-btn" onclick="handleGithubLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </button>
+            </div>
+
+            <!-- Features preview -->
+            <div class="gate-features">
+                <div class="gate-features-title">Unlock Professional Features</div>
+                <div class="gate-features-grid">
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">🎯</div>
+                        <div class="gate-feature-text">AI Mastering</div>
+                    </div>
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">📊</div>
+                        <div class="gate-feature-text">LUFS Metering</div>
+                    </div>
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">🎚️</div>
+                        <div class="gate-feature-text">7-Band EQ</div>
+                    </div>
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">🛡️</div>
+                        <div class="gate-feature-text">True Peak Limiter</div>
+                    </div>
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">☁️</div>
+                        <div class="gate-feature-text">Cloud Presets</div>
+                    </div>
+                    <div class="gate-feature">
+                        <div class="gate-feature-icon">🎨</div>
+                        <div class="gate-feature-text">Genre Profiles</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo/Skip button (optional - remove in production if needed) -->
+        <button class="gate-skip" onclick="skipSignupGate()">
+            Skip for now (Demo)
+        </button>
+    </div>
+
+    <script>
+        // Signup Gate Functions
+        function switchGateTab(tab) {
+            const signupForm = document.getElementById('gateSignupForm');
+            const signinForm = document.getElementById('gateSigninForm');
+            const tabs = document.querySelectorAll('.gate-tab');
+
+            tabs.forEach(t => t.classList.remove('active'));
+
+            if (tab === 'signup') {
+                signupForm.classList.add('active');
+                signinForm.classList.remove('active');
+                tabs[0].classList.add('active');
+            } else {
+                signupForm.classList.remove('active');
+                signinForm.classList.add('active');
+                tabs[1].classList.add('active');
+            }
+
+            // Clear messages
+            hideGateMessages();
+        }
+
+        function showGateError(message) {
+            const errorEl = document.getElementById('gateError');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            document.getElementById('gateSuccess').classList.remove('show');
+        }
+
+        function showGateSuccess(message) {
+            const successEl = document.getElementById('gateSuccess');
+            successEl.textContent = message;
+            successEl.classList.add('show');
+            document.getElementById('gateError').classList.remove('show');
+        }
+
+        function hideGateMessages() {
+            document.getElementById('gateError').classList.remove('show');
+            document.getElementById('gateSuccess').classList.remove('show');
+        }
+
+        async function handleGateSignup(event) {
+            event.preventDefault();
+            hideGateMessages();
+
+            const name = document.getElementById('gateSignupName').value.trim();
+            const email = document.getElementById('gateSignupEmail').value.trim();
+            const password = document.getElementById('gateSignupPassword').value;
+            const btn = document.getElementById('gateSignupBtn');
+
+            if (!name || !email || !password) {
+                showGateError('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 6) {
+                showGateError('Password must be at least 6 characters');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+
+            try {
+                // Initialize Supabase if needed
+                if (typeof initializeSupabase === 'function') {
+                    await initializeSupabase();
+                }
+
+                if (typeof signUp === 'function') {
+                    const result = await signUp(email, password, name);
+                    if (result.success) {
+                        showGateSuccess('Account created! Check your email to confirm, or continue to the app.');
+                        // Wait a moment then hide the gate
+                        setTimeout(() => {
+                            hideSignupGate();
+                        }, 2000);
+                    } else {
+                        showGateError(result.error || 'Sign up failed. Please try again.');
+                    }
+                } else {
+                    // Fallback - allow access without Supabase
+                    console.warn('Supabase not available, allowing demo access');
+                    showGateSuccess('Demo mode - proceeding to app...');
+                    setTimeout(() => hideSignupGate(), 1500);
+                }
+            } catch (err) {
+                showGateError(err.message || 'An error occurred. Please try again.');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Start Mastering Free';
+        }
+
+        async function handleGateSignin(event) {
+            event.preventDefault();
+            hideGateMessages();
+
+            const email = document.getElementById('gateSigninEmail').value.trim();
+            const password = document.getElementById('gateSigninPassword').value;
+            const btn = document.getElementById('gateSigninBtn');
+
+            if (!email || !password) {
+                showGateError('Please enter both email and password');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+
+            try {
+                // Initialize Supabase if needed
+                if (typeof initializeSupabase === 'function') {
+                    await initializeSupabase();
+                }
+
+                if (typeof signIn === 'function') {
+                    const result = await signIn(email, password);
+                    if (result.success) {
+                        showGateSuccess('Welcome back! Loading your workspace...');
+                        setTimeout(() => hideSignupGate(), 1000);
+                    } else {
+                        showGateError(result.error || 'Invalid email or password.');
+                    }
+                } else {
+                    // Fallback - allow access without Supabase
+                    console.warn('Supabase not available, allowing demo access');
+                    showGateSuccess('Demo mode - proceeding to app...');
+                    setTimeout(() => hideSignupGate(), 1500);
+                }
+            } catch (err) {
+                showGateError(err.message || 'An error occurred. Please try again.');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+        }
+
+        async function handleGoogleLogin() {
+            hideGateMessages();
+            try {
+                if (typeof initializeSupabase === 'function') {
+                    await initializeSupabase();
+                }
+                if (window.supabaseClient) {
+                    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin
+                        }
+                    });
+                    if (error) throw error;
+                } else {
+                    showGateError('Google login not available. Please use email signup.');
+                }
+            } catch (err) {
+                showGateError('Google login failed: ' + err.message);
+            }
+        }
+
+        async function handleGithubLogin() {
+            hideGateMessages();
+            try {
+                if (typeof initializeSupabase === 'function') {
+                    await initializeSupabase();
+                }
+                if (window.supabaseClient) {
+                    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+                        provider: 'github',
+                        options: {
+                            redirectTo: window.location.origin
+                        }
+                    });
+                    if (error) throw error;
+                } else {
+                    showGateError('GitHub login not available. Please use email signup.');
+                }
+            } catch (err) {
+                showGateError('GitHub login failed: ' + err.message);
+            }
+        }
+
+        function hideSignupGate() {
+            const overlay = document.getElementById('signupGateOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                // Remove from DOM after animation
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+            }
+            // Store that user has authenticated
+            sessionStorage.setItem('luvlang_authenticated', 'true');
+        }
+
+        function skipSignupGate() {
+            // For demo/testing purposes
+            hideSignupGate();
+        }
+
+        // Check if user is already authenticated on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check session storage first (for page refreshes)
+            if (sessionStorage.getItem('luvlang_authenticated') === 'true') {
+                hideSignupGate();
+                return;
+            }
+
+            // Check Supabase auth state
+            try {
+                if (typeof initializeSupabase === 'function') {
+                    const initialized = await initializeSupabase();
+                    if (initialized && window.currentUser) {
+                        // User is logged in, hide the gate
+                        hideSignupGate();
+                    }
+                }
+            } catch (err) {
+                console.warn('Auth check failed:', err);
+            }
+        });
+    </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          3-COLUMN PROFESSIONAL LAYOUT
@@ -7119,6 +7899,12 @@
                         initializeSupabase().then(success => {
                             if (success) {
                                 console.log('✅ Supabase cloud sync ready');
+                                // Apply tier-based feature restrictions
+                                if (typeof applyTierRestrictions === 'function') {
+                                    applyTierRestrictions().then(sub => {
+                                        console.log(`✅ Tier restrictions applied: ${sub.tier.toUpperCase()}`);
+                                    });
+                                }
                             }
                         }).catch(err => {
                             console.warn('⚠️ Supabase initialization failed (offline mode):', err.message);
@@ -20990,6 +21776,100 @@
                 console.log('   Stored for preset switching: Input LUFS =', currentLUFS.toFixed(1), ', Gain =', clampedGainDB.toFixed(1), 'dB');
 
                 console.log('[AI Suite] All processing stages complete');
+
+                // ══════════════════════════════════════════════════════════════════════
+                // APPLY ADVANCED ENGINE DEFAULTS - AI Mastering Premium Plugin Settings
+                // These values are applied after every AI mastering run for consistency
+                // ══════════════════════════════════════════════════════════════════════
+                if (window.advancedEngine) {
+                    try {
+                        // IRC LIMITER: Balanced mode, Ceiling -1.0 dB, Release 100 ms
+                        if (typeof window.advancedEngine.setLimiterMode === 'function') {
+                            window.advancedEngine.setLimiterMode('balanced');
+                        }
+                        if (typeof window.advancedEngine.setLimiterCeiling === 'function') {
+                            window.advancedEngine.setLimiterCeiling(-1.0);
+                        }
+
+                        // SOFT CLIPPER: Drive 0.0 dB, Mix 100%
+                        if (typeof window.advancedEngine.setSoftClipDrive === 'function') {
+                            window.advancedEngine.setSoftClipDrive(0.0);
+                        }
+                        if (typeof window.advancedEngine.setSoftClipMix === 'function') {
+                            window.advancedEngine.setSoftClipMix(100);
+                        }
+
+                        // UPWARD COMPRESSION: Threshold -40 dB, Ratio 2.0:1
+                        if (typeof window.advancedEngine.setUpwardThreshold === 'function') {
+                            window.advancedEngine.setUpwardThreshold(-40);
+                        }
+                        if (typeof window.advancedEngine.setUpwardRatio === 'function') {
+                            window.advancedEngine.setUpwardRatio(2.0);
+                        }
+
+                        // UNLIMITER: Restoration 50%, Transient Boost +3 dB
+                        if (typeof window.advancedEngine.setUnlimiterAmount === 'function') {
+                            window.advancedEngine.setUnlimiterAmount(50);
+                        }
+                        if (typeof window.advancedEngine.setUnlimiterTransientBoost === 'function') {
+                            window.advancedEngine.setUnlimiterTransientBoost(3);
+                        }
+
+                        console.log('✅ Advanced Engine Premium Settings Applied:');
+                        console.log('   IRC Limiter: Balanced, -1.0 dB ceiling, 100ms release');
+                        console.log('   Soft Clipper: 0.0 dB drive, 100% mix');
+                        console.log('   Upward Compression: -40 dB threshold, 2.0:1 ratio');
+                        console.log('   Unlimiter: 50% restoration, +3 dB transient boost');
+
+                        // Update UI sliders to reflect the applied values
+                        // IRC Limiter
+                        const limiterModeSelect = document.getElementById('limiterModeSelect');
+                        if (limiterModeSelect) limiterModeSelect.value = 'balanced';
+                        const limiterCeiling = document.getElementById('limiterCeiling');
+                        if (limiterCeiling) { limiterCeiling.value = -1; }
+                        const limiterCeilingValue = document.getElementById('limiterCeilingValue');
+                        if (limiterCeilingValue) limiterCeilingValue.textContent = '-1.0 dB';
+                        const limiterRelease = document.getElementById('limiterRelease');
+                        if (limiterRelease) { limiterRelease.value = 100; }
+                        const limiterReleaseValue = document.getElementById('limiterReleaseValue');
+                        if (limiterReleaseValue) limiterReleaseValue.textContent = '100 ms';
+
+                        // Soft Clipper
+                        const softClipDrive = document.getElementById('softClipDrive');
+                        if (softClipDrive) { softClipDrive.value = 0; }
+                        const softClipDriveValue = document.getElementById('softClipDriveValue');
+                        if (softClipDriveValue) softClipDriveValue.textContent = '0.0 dB';
+                        const softClipMix = document.getElementById('softClipMix');
+                        if (softClipMix) { softClipMix.value = 100; }
+                        const softClipMixValue = document.getElementById('softClipMixValue');
+                        if (softClipMixValue) softClipMixValue.textContent = '100%';
+
+                        // Upward Compression
+                        const upwardThreshold = document.getElementById('upwardThreshold');
+                        if (upwardThreshold) { upwardThreshold.value = -40; }
+                        const upwardThresholdValue = document.getElementById('upwardThresholdValue');
+                        if (upwardThresholdValue) upwardThresholdValue.textContent = '-40 dB';
+                        const upwardRatio = document.getElementById('upwardRatio');
+                        if (upwardRatio) { upwardRatio.value = 2; }
+                        const upwardRatioValue = document.getElementById('upwardRatioValue');
+                        if (upwardRatioValue) upwardRatioValue.textContent = '2.0:1';
+
+                        // Unlimiter
+                        const unlimiterAmount = document.getElementById('unlimiterAmount');
+                        if (unlimiterAmount) { unlimiterAmount.value = 50; }
+                        const unlimiterAmountValue = document.getElementById('unlimiterAmountValue');
+                        if (unlimiterAmountValue) unlimiterAmountValue.textContent = '50%';
+                        const unlimiterTransient = document.getElementById('unlimiterTransient');
+                        if (unlimiterTransient) { unlimiterTransient.value = 3; }
+                        const unlimiterTransientValue = document.getElementById('unlimiterTransientValue');
+                        if (unlimiterTransientValue) unlimiterTransientValue.textContent = '+3 dB';
+                        const unlimiterMeter = document.getElementById('unlimiterMeter');
+                        if (unlimiterMeter) unlimiterMeter.style.width = '50%';
+
+                    } catch (e) {
+                        console.warn('⚠️ Could not apply advanced engine settings:', e);
+                    }
+                }
 
                 // Build results with mastering data
                 const results = {
