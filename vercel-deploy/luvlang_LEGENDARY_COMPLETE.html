@@ -24318,7 +24318,7 @@
             console.log('   4. Refresh the page');
         }
 
-        // ElevenLabs speak function - Premium AI voice
+        // ElevenLabs speak function - Premium AI voice with STREAMING for fast response
         let currentAudio = null;
         async function speakWithElevenLabs(text) {
             if (!ELEVENLABS_CONFIG.enabled || !text) return false;
@@ -24332,7 +24332,8 @@
 
                 console.log('🎙️ ElevenLabs speaking:', text.substring(0, 50) + '...');
 
-                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_CONFIG.voiceId}`, {
+                // Use streaming endpoint with latency optimization for FAST response
+                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_CONFIG.voiceId}/stream?optimize_streaming_latency=4`, {
                     method: 'POST',
                     headers: {
                         'Accept': 'audio/mpeg',
@@ -24341,11 +24342,11 @@
                     },
                     body: JSON.stringify({
                         text: text,
-                        model_id: ELEVENLABS_CONFIG.modelId,
+                        model_id: 'eleven_turbo_v2', // Turbo model = fastest response
                         voice_settings: {
-                            stability: 0.6,        // Higher = cleaner, more consistent
-                            similarity_boost: 0.9, // Higher = clearer enunciation
-                            style: 0.4,            // Professional, not overly dramatic
+                            stability: 0.5,
+                            similarity_boost: 0.75,
+                            style: 0.3,
                             use_speaker_boost: true
                         }
                     })
@@ -24357,6 +24358,7 @@
                     return false;
                 }
 
+                // Stream the audio for immediate playback
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 currentAudio = new Audio(audioUrl);
