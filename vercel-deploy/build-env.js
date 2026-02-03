@@ -23,10 +23,21 @@ const config = {
     STRIPE_PRICE_LEGENDARY: process.env.STRIPE_PRICE_LEGENDARY || ''
 };
 
-console.log('📦 Building env-config.js...');
-console.log('   SUPABASE_URL:', config.SUPABASE_URL ? '✓ Set' : '✗ Missing');
-console.log('   SUPABASE_ANON_KEY:', config.SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing');
+console.log('');
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('📦 BUILD-ENV.JS - Building env-config.js');
+console.log('═══════════════════════════════════════════════════════════════');
+console.log('Build time:', new Date().toISOString());
+console.log('Node version:', process.version);
+console.log('');
+console.log('Environment variables available:');
+console.log('   SUPABASE_URL:', config.SUPABASE_URL ? '✓ Set (' + config.SUPABASE_URL.substring(0, 30) + '...)' : '✗ MISSING');
+console.log('   SUPABASE_ANON_KEY:', config.SUPABASE_ANON_KEY ? '✓ Set (length: ' + config.SUPABASE_ANON_KEY.length + ')' : '✗ MISSING');
 console.log('   STRIPE_PUBLIC_KEY:', config.STRIPE_PUBLIC_KEY ? '✓ Set' : '✗ Missing');
+console.log('');
+console.log('All env vars starting with SUPA:', Object.keys(process.env).filter(k => k.startsWith('SUPA')).join(', ') || 'NONE FOUND');
+console.log('All env vars starting with STRIPE:', Object.keys(process.env).filter(k => k.startsWith('STRIPE')).join(', ') || 'NONE FOUND');
+console.log('');
 
 // Generate env-config.js with values injected at build time
 // Using JSON.stringify ensures special characters are properly escaped
