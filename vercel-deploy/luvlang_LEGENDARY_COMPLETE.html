@@ -24673,9 +24673,25 @@
                 }
             }
 
-            // Speak the translated step
+            // Speak the translated step - start voice first, then fade in UI
             console.log('🎤 Step complete, speaking voice for step:', step.id);
+
+            // Hide content initially for smooth fade-in sync with voice
+            if (tooltip) tooltip.style.opacity = '0';
+            const uploadZoneEl = document.getElementById('tourUploadZone');
+            const formatZoneEl = document.getElementById('tourFormatZone');
+            if (uploadZoneEl) uploadZoneEl.style.opacity = '0';
+            if (formatZoneEl) formatZoneEl.style.opacity = '0';
+
+            // Start voice immediately
             speak(trans.voice);
+
+            // Fade in content as voice starts playing
+            setTimeout(() => {
+                if (tooltip) { tooltip.style.transition = 'opacity 0.4s ease'; tooltip.style.opacity = '1'; }
+                if (uploadZoneEl && step.id === 'upload') { uploadZoneEl.style.transition = 'opacity 0.4s ease'; uploadZoneEl.style.opacity = '1'; }
+                if (formatZoneEl && (step.id === 'format' || step.useFormatZone)) { formatZoneEl.style.transition = 'opacity 0.4s ease'; formatZoneEl.style.opacity = '1'; }
+            }, 400);
         }
 
         // Show Premium Explore Modal with translations
