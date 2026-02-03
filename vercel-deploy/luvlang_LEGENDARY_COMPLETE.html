@@ -24320,14 +24320,23 @@
 
         // ElevenLabs speak function - Premium AI voice with STREAMING for fast response
         let currentAudio = null;
+        let musicWasPlaying = false;
         async function speakWithElevenLabs(text) {
             if (!ELEVENLABS_CONFIG.enabled || !text) return false;
 
             try {
-                // Stop any current audio
+                // Stop any current voice audio
                 if (currentAudio) {
                     currentAudio.pause();
                     currentAudio = null;
+                }
+
+                // Pause music while speaking
+                const musicPlayer = document.getElementById('audioElement');
+                if (musicPlayer && !musicPlayer.paused) {
+                    musicWasPlaying = true;
+                    musicPlayer.pause();
+                    console.log('🎙️ Paused music for voice');
                 }
 
                 console.log('🎙️ ElevenLabs speaking:', text.substring(0, 50) + '...');
@@ -24362,6 +24371,19 @@
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 currentAudio = new Audio(audioUrl);
+
+                // Resume music when voice ends
+                currentAudio.onended = () => {
+                    if (musicWasPlaying) {
+                        const musicPlayer = document.getElementById('audioElement');
+                        if (musicPlayer) {
+                            musicPlayer.play();
+                            console.log('🎙️ Resumed music after voice');
+                        }
+                        musicWasPlaying = false;
+                    }
+                };
+
                 currentAudio.play();
 
                 return true;
