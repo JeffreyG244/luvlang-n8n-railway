@@ -24230,24 +24230,33 @@
             const voices = voiceSynth.getVoices();
             const targetLang = langToVoiceLang[currentLang] || 'en';
 
-            // Find best female voice for the selected language - smooth, professional, engaging
-            // Prioritize premium female voices known for pleasant, warm tones
-            const premiumFemaleVoices = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Fiona', 'Amelie', 'Monica', 'Paulina', 'Kyoko', 'Yuna', 'Tingting'];
+            // Find the most lifelike, clear female voice - prioritize neural/enhanced voices
+            // These are the highest quality, most natural-sounding voices available
+
+            // Neural/Enhanced voices (most lifelike - sounds like real humans)
+            const neuralVoices = ['Enhanced', 'Neural', 'Premium', 'Siri', 'Google', 'Microsoft'];
+
+            // Premium female voices known for crystal-clear, pleasant tones
+            const premiumFemaleVoices = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Fiona', 'Amelie', 'Monica', 'Paulina', 'Kyoko', 'Yuna', 'Tingting', 'Siri', 'Joanna', 'Kendra', 'Ivy', 'Salli', 'Kimberly', 'Aria', 'Jenny', 'Natasha'];
 
             preferredVoice =
-                // First: Find premium female voice for this language
+                // TOP PRIORITY: Neural/Enhanced female voice for this language (most lifelike)
+                voices.find(v => v.lang.startsWith(targetLang) && neuralVoices.some(n => v.name.includes(n)) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
+                // Second: Any Enhanced/Neural voice for this language
+                voices.find(v => v.lang.startsWith(targetLang) && neuralVoices.some(n => v.name.includes(n))) ||
+                // Third: Premium female voice for this language
                 voices.find(v => v.lang.startsWith(targetLang) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
-                // Second: Any female voice for this language
+                // Fourth: Any female voice for this language
                 voices.find(v => v.lang.startsWith(targetLang) && v.name.toLowerCase().includes('female')) ||
-                voices.find(v => v.lang.startsWith(targetLang) && (v.name.includes('Samantha') || v.name.includes('Karen') || v.name.includes('Victoria'))) ||
-                // Third: Any voice for this language (let pitch adjustment make it pleasant)
+                // Fifth: Any voice for this language
                 voices.find(v => v.lang.startsWith(targetLang)) ||
-                // Fallback: English female voice
+                // Fallback: Best English voice
+                voices.find(v => v.lang.startsWith('en') && neuralVoices.some(n => v.name.includes(n))) ||
                 voices.find(v => v.lang.startsWith('en') && premiumFemaleVoices.some(name => v.name.includes(name))) ||
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
-            console.log('🎤 Voice for', currentLang, ':', preferredVoice?.name || 'default');
+            console.log('🎤 Selected voice:', preferredVoice?.name, '| Quality:', neuralVoices.some(n => preferredVoice?.name?.includes(n)) ? 'NEURAL/ENHANCED' : 'Standard');
         }
 
         function changeVoiceTourLanguage(lang) {
@@ -24281,10 +24290,10 @@
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Sweet, sultry yet professional female voice settings
-                utterance.rate = 0.82; // Slower, more deliberate and alluring delivery
-                utterance.pitch = 1.15; // Higher pitch for sweeter, more inviting tone
-                utterance.volume = 0.92; // Softer for intimate, engaging feel
+                // Lifelike, clear, sweet female voice - natural conversational pace
+                utterance.rate = 0.92; // Natural speaking pace - clear but not robotic
+                utterance.pitch = 1.12; // Warm, inviting pitch - sweet but not exaggerated
+                utterance.volume = 1.0; // Full clarity
 
                 window.speechSynthesis.speak(utterance);
             }, 50);
@@ -24303,10 +24312,10 @@
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Sweet, sultry yet professional female voice settings
-                utterance.rate = 0.82;
-                utterance.pitch = 1.15;
-                utterance.volume = 0.92;
+                // Lifelike, clear, sweet female voice - natural conversational pace
+                utterance.rate = 0.92;
+                utterance.pitch = 1.12;
+                utterance.volume = 1.0;
                 window.speechSynthesis.speak(utterance);
             }, 50);
         };
