@@ -24296,13 +24296,13 @@
         // ElevenLabs Configuration - PREMIUM AI VOICE ACTIVE
         const ELEVENLABS_CONFIG = {
             apiKey: 'sk_3711beb194b8c8c15fa80927c3394f607668316faefdc91a',
-            // Charlotte - Australian female, warm and engaging
-            voiceId: 'XB0fDUnXU5powFXDhCwa', // Charlotte - Australian accent
-            // Alternative voices:
-            // 'EXAVITQu4vr4xnSDxMaL' - Bella (American, warm)
-            // 'ThT5KcBeYPX3keUQqHPh' - Dorothy (British, warm)
-            // 'XB0fDUnXU5powFXDhCwa' - Charlotte (Australian, young)
-            modelId: 'eleven_monolingual_v1',
+            // Matilda - Australian female, clear, professional, confident
+            voiceId: 'XrExE9yKIg1WjnnlVkGX', // Matilda - Australian professional
+            // Alternative Australian/professional voices:
+            // 'XrExE9yKIg1WjnnlVkGX' - Matilda (Australian, professional, clear)
+            // 'jsCqWAovK2LkecY7zXl4' - Freya (American, professional)
+            // 'oWAxZDx7w5VEj9dCyTzz' - Grace (American, Southern, professional)
+            modelId: 'eleven_multilingual_v2', // Best quality model
             enabled: true
         };
 
@@ -24343,9 +24343,9 @@
                         text: text,
                         model_id: ELEVENLABS_CONFIG.modelId,
                         voice_settings: {
-                            stability: 0.5,
-                            similarity_boost: 0.75,
-                            style: 0.5,
+                            stability: 0.6,        // Higher = cleaner, more consistent
+                            similarity_boost: 0.9, // Higher = clearer enunciation
+                            style: 0.4,            // Professional, not overly dramatic
                             use_speaker_boost: true
                         }
                     })
