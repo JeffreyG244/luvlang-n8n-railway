@@ -65,6 +65,16 @@ async function initializeSupabase() {
     isInitializing = true;
 
     try {
+        // Check if Supabase URL and key are configured
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL === '' || SUPABASE_ANON_KEY === '') {
+            console.warn('⚠️ Supabase not configured. Running in demo mode.');
+            console.warn('   Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel environment variables.');
+            isInitializing = false;
+            isInitialized = false;
+            updateUIForLoggedOutUser();
+            return false;
+        }
+
         // Check if @supabase/supabase-js is loaded
         if (!window.supabase || !window.supabase.createClient) {
             console.warn('⚠️ Supabase library not loaded yet, waiting...');
@@ -72,11 +82,24 @@ async function initializeSupabase() {
             await new Promise(resolve => setTimeout(resolve, 500));
 
             if (!window.supabase || !window.supabase.createClient) {
-                throw new Error('Supabase library not loaded. Add <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> to your HTML.');
+                console.warn('⚠️ Supabase library not available. Running in demo mode.');
+                isInitializing = false;
+                isInitialized = false;
+                updateUIForLoggedOutUser();
+                return false;
             }
         }
 
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Verify client was created successfully
+        if (!supabaseClient || !supabaseClient.auth) {
+            console.warn('⚠️ Supabase client creation failed. Running in demo mode.');
+            isInitializing = false;
+            isInitialized = false;
+            updateUIForLoggedOutUser();
+            return false;
+        }
 
         // Make globally available
         window.supabaseClient = supabaseClient;
