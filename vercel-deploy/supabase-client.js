@@ -23,89 +23,48 @@ const getEnvConfig = () => {
     return { url: '', anonKey: '' };
 };
 
-// Wait for env config to load from API (with timeout)
-// Uses both event listener and polling for reliability
-async function waitForEnvConfig(timeoutMs = 5000) {
-    console.log('🔄 Waiting for environment config...');
+// Wait for env config (build-time injected, so should be immediate)
+async function waitForEnvConfig(timeoutMs = 2000) {
+    console.log('🔄 Checking environment config...');
 
-    // First check if already loaded
-    const immediateConfig = getEnvConfig();
-    if (immediateConfig.url && immediateConfig.anonKey) {
-        SUPABASE_URL = immediateConfig.url;
-        SUPABASE_ANON_KEY = immediateConfig.anonKey;
-        console.log('✅ Supabase config already available');
+    // Config is injected at build time, should be available immediately
+    const config = getEnvConfig();
+    if (config.url && config.anonKey) {
+        SUPABASE_URL = config.url;
+        SUPABASE_ANON_KEY = config.anonKey;
+        console.log('✅ Supabase config loaded');
+        console.log('   URL:', SUPABASE_URL.substring(0, 40) + '...');
         return true;
     }
 
-    // Check if env-config.js already marked as loaded (even with error)
-    if (window.__ENV__ && window.__ENV__._loaded) {
-        const config = getEnvConfig();
-        if (config.url && config.anonKey) {
-            SUPABASE_URL = config.url;
-            SUPABASE_ANON_KEY = config.anonKey;
-            console.log('✅ Supabase config loaded from environment');
-            return true;
-        }
-        console.warn('⚠️ Config loaded but missing Supabase credentials:', window.__ENV__._error || 'unknown error');
-        return false;
-    }
-
-    // Wait for event or timeout
+    // If not immediately available, wait briefly for script to execute
     return new Promise((resolve) => {
-        let resolved = false;
+        let attempts = 0;
+        const maxAttempts = timeoutMs / 100;
 
-        // Listen for config loaded event
-        const handleConfigLoaded = (event) => {
-            if (resolved) return;
-            resolved = true;
-            window.removeEventListener('envConfigLoaded', handleConfigLoaded);
+        const checkConfig = () => {
+            attempts++;
+            const cfg = getEnvConfig();
 
-            const config = getEnvConfig();
-            if (config.url && config.anonKey) {
-                SUPABASE_URL = config.url;
-                SUPABASE_ANON_KEY = config.anonKey;
-                console.log('✅ Supabase config loaded via event');
+            if (cfg.url && cfg.anonKey) {
+                SUPABASE_URL = cfg.url;
+                SUPABASE_ANON_KEY = cfg.anonKey;
+                console.log('✅ Supabase config loaded (attempt ' + attempts + ')');
                 resolve(true);
-            } else {
-                console.warn('⚠️ Config event received but missing credentials');
-                resolve(false);
-            }
-        };
-
-        window.addEventListener('envConfigLoaded', handleConfigLoaded);
-
-        // Also poll in case event was missed
-        const startTime = Date.now();
-        const pollInterval = setInterval(() => {
-            if (resolved) {
-                clearInterval(pollInterval);
                 return;
             }
 
-            // Check if loaded via polling
-            if (window.__ENV__ && window.__ENV__._loaded) {
-                const config = getEnvConfig();
-                if (config.url && config.anonKey) {
-                    resolved = true;
-                    clearInterval(pollInterval);
-                    window.removeEventListener('envConfigLoaded', handleConfigLoaded);
-                    SUPABASE_URL = config.url;
-                    SUPABASE_ANON_KEY = config.anonKey;
-                    console.log('✅ Supabase config loaded via polling');
-                    resolve(true);
-                    return;
-                }
+            if (attempts >= maxAttempts) {
+                console.warn('⚠️ Supabase config not available. Check Vercel environment variables.');
+                console.warn('   window.__ENV__:', window.__ENV__);
+                resolve(false);
+                return;
             }
 
-            // Check timeout
-            if (Date.now() - startTime >= timeoutMs) {
-                resolved = true;
-                clearInterval(pollInterval);
-                window.removeEventListener('envConfigLoaded', handleConfigLoaded);
-                console.warn('⚠️ Supabase config not available after', timeoutMs, 'ms. Running in demo mode.');
-                resolve(false);
-            }
-        }, 100);
+            setTimeout(checkConfig, 100);
+        };
+
+        setTimeout(checkConfig, 100);
     });
 }
 
