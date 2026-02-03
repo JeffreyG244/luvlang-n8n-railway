@@ -19,15 +19,17 @@ window.__ENV__ = {
 // Load configuration from API
 (async function loadConfig() {
     try {
-        // Only fetch from API in production (on Vercel)
-        const isProduction = window.location.hostname.includes('vercel.app') ||
-                            window.location.hostname.includes('luvlang');
+        // Check if we're on localhost (development) or production
+        const isLocalhost = window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1';
 
-        if (!isProduction) {
-            console.log('🔧 Development mode - using local config or defaults');
+        if (isLocalhost) {
+            console.log('🔧 Development mode (localhost) - using local config or defaults');
             return;
         }
 
+        // In production, always try to fetch config
+        console.log('🔄 Fetching config from /api/config...');
         const response = await fetch('/api/config');
 
         if (!response.ok) {
@@ -35,11 +37,14 @@ window.__ENV__ = {
         }
 
         const config = await response.json();
+        console.log('📦 Config received:', Object.keys(config).join(', '));
 
         // Update window.__ENV__ with fetched values
         Object.assign(window.__ENV__, config, { _loaded: true });
 
         console.log('✅ Environment config loaded from API');
+        console.log('   SUPABASE_URL:', window.__ENV__.SUPABASE_URL ? '✓ Set' : '✗ Missing');
+        console.log('   SUPABASE_ANON_KEY:', window.__ENV__.SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing');
 
         // Validate required configuration
         const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'STRIPE_PUBLIC_KEY'];
