@@ -32,14 +32,19 @@ console.log('📦 BUILD-ENV.JS - Building env-config.js');
 console.log('═══════════════════════════════════════════════════════════════');
 console.log('Build time:', new Date().toISOString());
 console.log('Node version:', process.version);
+console.log('Working directory:', __dirname);
 console.log('');
-console.log('Environment variables available:');
-console.log('   SUPABASE_URL:', config.SUPABASE_URL ? '✓ Set (' + config.SUPABASE_URL.substring(0, 30) + '...)' : '✗ MISSING');
-console.log('   SUPABASE_ANON_KEY:', config.SUPABASE_ANON_KEY ? '✓ Set (length: ' + config.SUPABASE_ANON_KEY.length + ')' : '✗ MISSING');
-console.log('   STRIPE_PUBLIC_KEY:', config.STRIPE_PUBLIC_KEY ? '✓ Set' : '✗ Missing');
+console.log('RAW environment variables:');
+console.log('   process.env.SUPABASE_URL =', JSON.stringify(process.env.SUPABASE_URL));
+console.log('   process.env.SUPABASE_ANON_KEY =', process.env.SUPABASE_ANON_KEY ? '[SET - ' + process.env.SUPABASE_ANON_KEY.length + ' chars]' : '[NOT SET]');
 console.log('');
-console.log('All env vars starting with SUPA:', Object.keys(process.env).filter(k => k.startsWith('SUPA')).join(', ') || 'NONE FOUND');
-console.log('All env vars starting with STRIPE:', Object.keys(process.env).filter(k => k.startsWith('STRIPE')).join(', ') || 'NONE FOUND');
+console.log('After clean():');
+console.log('   SUPABASE_URL:', config.SUPABASE_URL ? '✓ "' + config.SUPABASE_URL + '"' : '✗ EMPTY');
+console.log('   SUPABASE_ANON_KEY:', config.SUPABASE_ANON_KEY ? '✓ Set (length: ' + config.SUPABASE_ANON_KEY.length + ')' : '✗ EMPTY');
+console.log('   STRIPE_PUBLIC_KEY:', config.STRIPE_PUBLIC_KEY ? '✓ Set' : '✗ Empty');
+console.log('');
+console.log('All env vars containing SUPA:', Object.keys(process.env).filter(k => k.includes('SUPA')).join(', ') || 'NONE');
+console.log('All env vars containing STRIPE:', Object.keys(process.env).filter(k => k.includes('STRIPE')).join(', ') || 'NONE');
 console.log('');
 
 // Generate env-config.js with values injected at build time
