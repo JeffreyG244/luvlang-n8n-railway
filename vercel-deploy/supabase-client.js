@@ -747,6 +747,21 @@ async function applyTierRestrictions() {
  * Update UI for logged in user
  */
 async function updateUIForLoggedInUser() {
+    console.log('✅ User logged in, updating UI...');
+
+    // Hide signup gate overlay
+    const signupGate = document.getElementById('signupGateOverlay');
+    if (signupGate) {
+        signupGate.classList.add('hidden');
+        signupGate.style.display = 'none';
+        console.log('   Signup gate hidden');
+    }
+
+    // Store auth state in session storage
+    if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('luvlang_authenticated', 'true');
+    }
+
     // Hide auth buttons section, show user menu
     const authButtons = document.getElementById('authButtons');
     if (authButtons) {
