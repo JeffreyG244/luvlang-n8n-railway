@@ -10,17 +10,20 @@
 const fs = require('fs');
 const path = require('path');
 
+// Helper to clean env vars (remove whitespace, newlines)
+const clean = (val) => (val || '').replace(/[\s\n\r]+/g, '').trim();
+
 // Read environment variables (set in Vercel dashboard)
 const config = {
-    SUPABASE_URL: process.env.SUPABASE_URL || '',
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
-    STRIPE_PUBLIC_KEY: process.env.STRIPE_PUBLIC_KEY || '',
-    STRIPE_LINK_BASIC: process.env.STRIPE_LINK_BASIC || '',
-    STRIPE_LINK_ADVANCED: process.env.STRIPE_LINK_ADVANCED || '',
-    STRIPE_LINK_PREMIUM: process.env.STRIPE_LINK_PREMIUM || '',
-    STRIPE_PRICE_INSTANT: process.env.STRIPE_PRICE_INSTANT || '',
-    STRIPE_PRICE_PRECISION: process.env.STRIPE_PRICE_PRECISION || '',
-    STRIPE_PRICE_LEGENDARY: process.env.STRIPE_PRICE_LEGENDARY || ''
+    SUPABASE_URL: clean(process.env.SUPABASE_URL),
+    SUPABASE_ANON_KEY: clean(process.env.SUPABASE_ANON_KEY),
+    STRIPE_PUBLIC_KEY: clean(process.env.STRIPE_PUBLIC_KEY),
+    STRIPE_LINK_BASIC: clean(process.env.STRIPE_LINK_BASIC),
+    STRIPE_LINK_ADVANCED: clean(process.env.STRIPE_LINK_ADVANCED),
+    STRIPE_LINK_PREMIUM: clean(process.env.STRIPE_LINK_PREMIUM),
+    STRIPE_PRICE_INSTANT: clean(process.env.STRIPE_PRICE_INSTANT),
+    STRIPE_PRICE_PRECISION: clean(process.env.STRIPE_PRICE_PRECISION),
+    STRIPE_PRICE_LEGENDARY: clean(process.env.STRIPE_PRICE_LEGENDARY)
 };
 
 console.log('');
