@@ -24230,43 +24230,71 @@
             const voices = voiceSynth.getVoices();
             const targetLang = langToVoiceLang[currentLang] || 'en';
 
-            // Find the most lifelike female voice with attractive accent
-            // Prioritize British, Australian, and other appealing accents
+            // ═══════════════════════════════════════════════════════════════════
+            // PREMIUM STATE-OF-THE-ART LIFELIKE VOICE SELECTION
+            // Finds the most human-like, attractive female voice available
+            // ═══════════════════════════════════════════════════════════════════
 
-            // Neural/Enhanced voices (most lifelike - sounds like real humans)
-            const neuralVoices = ['Enhanced', 'Neural', 'Premium', 'Siri', 'Google', 'Microsoft'];
+            // TIER 1: Neural/Enhanced/Premium voices (most lifelike - AI-generated quality)
+            const neuralKeywords = ['Enhanced', 'Neural', 'Premium', 'Natural', 'Wavenet', 'Neural2'];
 
-            // Sexy accent locales - British UK, Australian, South African, Irish
-            const sexyAccentLocales = ['en-GB', 'en-AU', 'en-ZA', 'en-IE', 'en-IN'];
+            // TIER 2: High-quality system voices
+            const premiumSystemVoices = ['Siri', 'Google', 'Microsoft', 'Amazon', 'Apple'];
 
-            // Premium female voices with attractive, sultry qualities
-            const sexyFemaleVoices = ['Kate', 'Serena', 'Veena', 'Moira', 'Fiona', 'Tessa', 'Karen', 'Victoria', 'Rishi', 'Martha', 'Libby', 'Mia', 'Zoe', 'Olivia', 'Emma', 'Amy', 'Sonia', 'Aditi', 'Nicole', 'Natasha'];
+            // Attractive accent locales - British, Australian, Irish (most appealing accents)
+            const attractiveAccents = ['en-GB', 'en-AU', 'en-IE', 'en-NZ'];
 
-            // All premium female voices as fallback
-            const premiumFemaleVoices = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Fiona', 'Amelie', 'Monica', 'Paulina', 'Kyoko', 'Yuna', 'Tingting', 'Siri', 'Joanna', 'Kendra', 'Ivy', 'Salli', 'Kimberly', 'Aria', 'Jenny', 'Natasha', 'Kate', 'Serena'];
+            // Premium female voice names known for lifelike, attractive qualities
+            const premiumFemaleNames = [
+                // British/Australian accents (sexiest)
+                'Kate', 'Serena', 'Moira', 'Fiona', 'Martha', 'Libby', 'Mia', 'Emma', 'Amy', 'Sonia', 'Olivia',
+                // American premium
+                'Samantha', 'Allison', 'Ava', 'Joanna', 'Kendra', 'Ivy', 'Salli', 'Kimberly', 'Aria', 'Jenny',
+                // Other premium
+                'Victoria', 'Karen', 'Tessa', 'Susan', 'Zira', 'Hazel', 'Natasha', 'Nicole', 'Veena'
+            ];
+
+            // Log all available voices for debugging
+            if (voices.length > 0) {
+                console.log('🎤 Available voices:', voices.length);
+                const premiumVoices = voices.filter(v => neuralKeywords.some(k => v.name.includes(k)));
+                const accentedVoices = voices.filter(v => attractiveAccents.includes(v.lang));
+                console.log('   Premium/Neural voices:', premiumVoices.map(v => v.name).join(', ') || 'None');
+                console.log('   British/Australian voices:', accentedVoices.map(v => v.name).join(', ') || 'None');
+            }
 
             preferredVoice =
-                // TOP PRIORITY: Neural British/Australian female voice (sexiest accent)
-                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && neuralVoices.some(n => v.name.includes(n)) && sexyFemaleVoices.some(name => v.name.includes(name))) ||
-                // Second: Any British/Australian female voice
-                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && sexyFemaleVoices.some(name => v.name.includes(name))) ||
-                // Third: Neural female voice for target language
-                voices.find(v => v.lang.startsWith(targetLang) && neuralVoices.some(n => v.name.includes(n)) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
-                // Fourth: Any Enhanced/Neural voice with accent
-                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && neuralVoices.some(n => v.name.includes(n))) ||
-                // Fifth: Premium female voice for this language
-                voices.find(v => v.lang.startsWith(targetLang) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
-                // Sixth: Any voice for this language
+                // PRIORITY 1: Neural + Attractive accent + Female name (BEST POSSIBLE)
+                voices.find(v => attractiveAccents.includes(v.lang) && neuralKeywords.some(k => v.name.includes(k)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // PRIORITY 2: Neural + Attractive accent
+                voices.find(v => attractiveAccents.includes(v.lang) && neuralKeywords.some(k => v.name.includes(k))) ||
+                // PRIORITY 3: Attractive accent + Premium female name
+                voices.find(v => attractiveAccents.includes(v.lang) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // PRIORITY 4: Any Neural female voice for target language
+                voices.find(v => v.lang.startsWith(targetLang) && neuralKeywords.some(k => v.name.includes(k)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // PRIORITY 5: Premium system voice with female name
+                voices.find(v => premiumSystemVoices.some(s => v.name.includes(s)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // PRIORITY 6: Any voice with attractive accent
+                voices.find(v => attractiveAccents.includes(v.lang)) ||
+                // PRIORITY 7: Any Neural/Enhanced voice
+                voices.find(v => neuralKeywords.some(k => v.name.includes(k))) ||
+                // PRIORITY 8: Any premium female voice
+                voices.find(v => v.lang.startsWith(targetLang) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // PRIORITY 9: Any voice for this language
                 voices.find(v => v.lang.startsWith(targetLang)) ||
-                // Fallback: Best English voice with accent
-                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc)) ||
-                voices.find(v => v.lang.startsWith('en') && neuralVoices.some(n => v.name.includes(n))) ||
-                voices.find(v => v.lang.startsWith('en') && premiumFemaleVoices.some(name => v.name.includes(name))) ||
+                // Fallback
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
-            const hasSexyAccent = sexyAccentLocales.some(loc => preferredVoice?.lang === loc);
-            console.log('🎤 Selected voice:', preferredVoice?.name, '| Accent:', hasSexyAccent ? '🔥 SEXY' : 'Standard', '| Lang:', preferredVoice?.lang);
+            const isNeural = neuralKeywords.some(k => preferredVoice?.name?.includes(k));
+            const hasAccent = attractiveAccents.includes(preferredVoice?.lang);
+            const qualityLevel = isNeural ? '★★★ NEURAL/PREMIUM' : hasAccent ? '★★ ACCENTED' : '★ STANDARD';
+            console.log('🎤 SELECTED:', preferredVoice?.name, '|', qualityLevel, '| Lang:', preferredVoice?.lang);
+
+            // Tip for Mac users to get better voices
+            if (!isNeural && navigator.platform.includes('Mac')) {
+                console.log('💡 TIP: Enable "Enhanced" voices in System Preferences > Accessibility > Spoken Content for more lifelike voices');
+            }
         }
 
         function changeVoiceTourLanguage(lang) {
