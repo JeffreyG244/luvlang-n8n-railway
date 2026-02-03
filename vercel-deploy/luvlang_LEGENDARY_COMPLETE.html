@@ -24289,33 +24289,128 @@
             console.log('🌍 Language changed to:', lang);
         }
 
-        // Speak text with warm, engaging female voice - GLOBAL so it can be called from anywhere
-        // Uses workaround for Chrome speechSynthesis.cancel() bug
-        function speak(text) {
-            if (!voiceEnabled || !voiceSynth || !text) return;
+        // ═══════════════════════════════════════════════════════════════════
+        // ELEVENLABS PREMIUM AI VOICE - Ultra Lifelike Human Quality
+        // ═══════════════════════════════════════════════════════════════════
 
-            // Force stop any current speech - Chrome bug workaround
+        // ElevenLabs Configuration
+        const ELEVENLABS_CONFIG = {
+            apiKey: localStorage.getItem('elevenlabs_api_key') || '',
+            // Charlotte - Australian female, warm and engaging
+            voiceId: 'XB0fDUnXU5powFXDhCwa', // Charlotte - Australian accent
+            // Alternative voices:
+            // 'EXAVITQu4vr4xnSDxMaL' - Bella (American, warm)
+            // 'ThT5KcBeYPX3keUQqHPh' - Dorothy (British, warm)
+            // 'XB0fDUnXU5powFXDhCwa' - Charlotte (Australian, young)
+            modelId: 'eleven_monolingual_v1',
+            enabled: false
+        };
+
+        // Check if ElevenLabs is configured
+        if (ELEVENLABS_CONFIG.apiKey) {
+            ELEVENLABS_CONFIG.enabled = true;
+            console.log('🎙️ ElevenLabs PREMIUM voice enabled - Ultra lifelike Australian female');
+        } else {
+            console.log('🎙️ ElevenLabs not configured. To enable premium voices:');
+            console.log('   1. Sign up free at https://elevenlabs.io');
+            console.log('   2. Get your API key from Profile > API Key');
+            console.log('   3. Run in console: localStorage.setItem("elevenlabs_api_key", "YOUR_KEY")');
+            console.log('   4. Refresh the page');
+        }
+
+        // ElevenLabs speak function - Premium AI voice
+        let currentAudio = null;
+        async function speakWithElevenLabs(text) {
+            if (!ELEVENLABS_CONFIG.enabled || !text) return false;
+
+            try {
+                // Stop any current audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+
+                console.log('🎙️ ElevenLabs speaking:', text.substring(0, 50) + '...');
+
+                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_CONFIG.voiceId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'audio/mpeg',
+                        'Content-Type': 'application/json',
+                        'xi-api-key': ELEVENLABS_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: ELEVENLABS_CONFIG.modelId,
+                        voice_settings: {
+                            stability: 0.5,
+                            similarity_boost: 0.75,
+                            style: 0.5,
+                            use_speaker_boost: true
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    console.error('ElevenLabs API error:', error);
+                    return false;
+                }
+
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                currentAudio = new Audio(audioUrl);
+                currentAudio.play();
+
+                return true;
+            } catch (error) {
+                console.error('ElevenLabs error:', error);
+                return false;
+            }
+        }
+
+        // Speak text - Uses ElevenLabs if available, falls back to Web Speech API
+        async function speak(text) {
+            if (!voiceEnabled || !text) return;
+
+            // Try ElevenLabs first (premium quality)
+            if (ELEVENLABS_CONFIG.enabled) {
+                const success = await speakWithElevenLabs(text);
+                if (success) return;
+            }
+
+            // Fallback to Web Speech API
+            if (!voiceSynth) return;
+
             window.speechSynthesis.cancel();
 
-            // Small delay after cancel to ensure clean stop (Chrome bug)
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Sexy accented female voice - smooth, alluring, lifelike
-                utterance.rate = 0.88; // Slower, more deliberate - sultry pacing
-                utterance.pitch = 1.08; // Slightly higher - sweet and inviting
-                utterance.volume = 0.95; // Slightly softer - intimate feel
-
+                utterance.rate = 0.88;
+                utterance.pitch = 1.08;
+                utterance.volume = 0.95;
                 window.speechSynthesis.speak(utterance);
             }, 50);
         }
         // Make speak globally accessible
         window.speak = speak;
 
+        // Helper to set ElevenLabs API key
+        window.setElevenLabsKey = function(key) {
+            localStorage.setItem('elevenlabs_api_key', key);
+            ELEVENLABS_CONFIG.apiKey = key;
+            ELEVENLABS_CONFIG.enabled = true;
+            console.log('✅ ElevenLabs API key saved! Refresh the page to use premium voice.');
+        };
+
         // Speak with audio ducking - DISABLED to prevent LUFS issues
-        // The mastering chain must remain stable during voice tour
         window.speakWithDucking = function(text) {
-            // Simply speak without ducking - mastering integrity is priority
+            speak(text); // Just use the main speak function now
+        };
+
+        // Legacy compatibility - kept for any old code
+        window.speakWithDuckingLegacy = function(text) {
             if (!window.speechSynthesis || !text) return;
 
             window.speechSynthesis.cancel();
@@ -24323,7 +24418,6 @@
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Sexy accented female voice - smooth, alluring, lifelike
                 utterance.rate = 0.88;
                 utterance.pitch = 1.08;
                 utterance.volume = 0.95;
