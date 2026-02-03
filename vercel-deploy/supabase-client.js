@@ -7,22 +7,41 @@
 // Set these in Vercel Dashboard → Settings → Environment Variables:
 // - SUPABASE_URL
 // - SUPABASE_ANON_KEY
+
+// Dynamic getters to allow for async config loading
+let SUPABASE_URL = '';
+let SUPABASE_ANON_KEY = '';
+
 const getEnvConfig = () => {
     // Try to get from build-time injected config
     if (typeof window !== 'undefined' && window.__ENV__) {
         return {
-            url: window.__ENV__.SUPABASE_URL,
-            anonKey: window.__ENV__.SUPABASE_ANON_KEY
+            url: window.__ENV__.SUPABASE_URL || '',
+            anonKey: window.__ENV__.SUPABASE_ANON_KEY || ''
         };
     }
-    // Fallback for local development - set these in your local env-config.js
-    console.warn('⚠️ Environment config not found. Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel.');
     return { url: '', anonKey: '' };
 };
 
-const envConfig = getEnvConfig();
-const SUPABASE_URL = envConfig.url;
-const SUPABASE_ANON_KEY = envConfig.anonKey;
+// Wait for env config to load from API (with timeout)
+async function waitForEnvConfig(timeoutMs = 3000) {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeoutMs) {
+        const config = getEnvConfig();
+        if (config.url && config.anonKey) {
+            SUPABASE_URL = config.url;
+            SUPABASE_ANON_KEY = config.anonKey;
+            console.log('✅ Supabase config loaded from environment');
+            return true;
+        }
+        // Wait 100ms and check again
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    console.warn('⚠️ Supabase config not available after timeout. Running in demo mode.');
+    return false;
+}
 
 // Initialize Supabase client instance (not the library - that's window.supabase from CDN)
 let supabaseClient = null;
@@ -63,6 +82,14 @@ async function initializeSupabase() {
     }
 
     isInitializing = true;
+
+    // Wait for environment config to load from API
+    const configLoaded = await waitForEnvConfig(3000);
+    if (!configLoaded) {
+        isInitializing = false;
+        updateUIForLoggedOutUser();
+        return false;
+    }
 
     try {
         // Check if Supabase URL and key are configured
