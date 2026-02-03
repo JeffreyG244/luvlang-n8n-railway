@@ -24228,52 +24228,45 @@
 
         function updateVoiceForLanguage() {
             const voices = voiceSynth.getVoices();
-            const targetLang = langToVoiceLang[currentLang] || 'en';
 
             // ═══════════════════════════════════════════════════════════════════
-            // BRITISH ENGLISH FEMALE VOICE - TOP PRIORITY
-            // Sexy English accent - the voice you had before
+            // AUSTRALIAN FEMALE VOICE - ALWAYS USE THIS
             // ═══════════════════════════════════════════════════════════════════
 
-            // British female voice names (prioritized in order)
-            const britishFemaleVoices = ['Kate', 'Serena', 'Martha', 'Stephanie', 'Fiona', 'Emma', 'Amy', 'Libby'];
+            // Australian female voice names
+            const aussiFemaleVoices = ['Karen', 'Lee', 'Tessa', 'Catherine', 'Matilda', 'Nicole'];
 
-            // Neural/Enhanced keywords for best quality
+            // Neural/Enhanced for best quality
             const neuralKeywords = ['Enhanced', 'Neural', 'Premium', 'Natural', 'Wavenet'];
 
-            // Log all available British voices
-            const britishVoices = voices.filter(v => v.lang === 'en-GB' || v.lang.startsWith('en-GB'));
-            if (britishVoices.length > 0) {
-                console.log('🇬🇧 British voices available:', britishVoices.map(v => v.name).join(', '));
+            // Log available Australian voices
+            const aussiVoices = voices.filter(v => v.lang === 'en-AU');
+            if (aussiVoices.length > 0) {
+                console.log('🇦🇺 Australian voices available:', aussiVoices.map(v => v.name).join(', '));
+            } else {
+                console.log('🇦🇺 No Australian voices found - check System Preferences > Accessibility > Spoken Content');
             }
 
             preferredVoice =
-                // #1 PRIORITY: British Enhanced/Neural female (BEST - like you had before)
-                voices.find(v => v.lang === 'en-GB' && neuralKeywords.some(k => v.name.includes(k)) && britishFemaleVoices.some(n => v.name.includes(n))) ||
-                // #2: British Enhanced/Neural any
-                voices.find(v => v.lang === 'en-GB' && neuralKeywords.some(k => v.name.includes(k))) ||
-                // #3: British female voice by name (Kate, Serena, etc.)
-                voices.find(v => v.lang === 'en-GB' && britishFemaleVoices.some(n => v.name.includes(n))) ||
-                // #4: ANY British voice
-                voices.find(v => v.lang === 'en-GB') ||
-                // #5: Australian female (similar sexy accent)
-                voices.find(v => v.lang === 'en-AU' && britishFemaleVoices.some(n => v.name.includes(n))) ||
+                // #1: Australian Enhanced female (BEST)
+                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k)) && aussiFemaleVoices.some(n => v.name.includes(n))) ||
+                // #2: Australian Enhanced any
+                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k))) ||
+                // #3: Australian female by name
+                voices.find(v => v.lang === 'en-AU' && aussiFemaleVoices.some(n => v.name.includes(n))) ||
+                // #4: ANY Australian voice
                 voices.find(v => v.lang === 'en-AU') ||
-                // #6: Irish female
-                voices.find(v => v.lang === 'en-IE') ||
-                // Fallback to any English
-                voices.find(v => v.lang.startsWith('en') && neuralKeywords.some(k => v.name.includes(k))) ||
-                voices.find(v => v.lang.startsWith(targetLang)) ||
+                // Fallback to any English if no Australian
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
-            const isBritish = preferredVoice?.lang === 'en-GB';
+            const isAussie = preferredVoice?.lang === 'en-AU';
             const isNeural = neuralKeywords.some(k => preferredVoice?.name?.includes(k));
-            console.log('🎤 SELECTED:', preferredVoice?.name, '| Accent:', isBritish ? '🇬🇧 BRITISH' : preferredVoice?.lang, '| Quality:', isNeural ? '★★★ ENHANCED' : '★ STANDARD');
+            console.log('🎤 SELECTED:', preferredVoice?.name, '| Accent:', isAussie ? '🇦🇺 AUSTRALIAN' : preferredVoice?.lang, '| Quality:', isNeural ? '★★★ ENHANCED' : '★ STANDARD');
 
             // Tip for Mac users
-            if (!isNeural && navigator.platform.includes('Mac')) {
-                console.log('💡 TIP: Download "Kate (Enhanced)" or "Serena (Enhanced)" in System Preferences > Accessibility > Spoken Content for the best British voice');
+            if (!isAussie && navigator.platform.includes('Mac')) {
+                console.log('💡 TIP: Download Australian voices in System Preferences > Accessibility > Spoken Content > Manage Voices > English (Australia)');
             }
         }
 
