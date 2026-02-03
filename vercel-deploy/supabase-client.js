@@ -149,8 +149,8 @@ async function initializeSupabase() {
 
     isInitializing = true;
 
-    // Wait for environment config to load from API
-    const configLoaded = await waitForEnvConfig(3000);
+    // Wait for environment config to load from API (8 seconds to match env-config.js)
+    const configLoaded = await waitForEnvConfig(8000);
     if (!configLoaded) {
         isInitializing = false;
         updateUIForLoggedOutUser();
@@ -255,15 +255,37 @@ async function initializeSupabase() {
 
 /**
  * Sign up new user
+ * @param {string} email - User email
+ * @param {string} password - User password (min 8 chars)
+ * @param {string} displayName - Display name
  */
 async function signUp(email, password, displayName) {
+    // Input validation
+    if (!email || !password) {
+        return { success: false, error: 'Email and password are required' };
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return { success: false, error: 'Please enter a valid email address' };
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+        return { success: false, error: 'Password must be at least 8 characters' };
+    }
+
+    // Sanitize display name (prevent XSS)
+    const sanitizedName = displayName ? displayName.replace(/[<>]/g, '').trim().substring(0, 100) : '';
+
     try {
         const { data, error } = await supabaseClient.auth.signUp({
-            email: email,
+            email: email.toLowerCase().trim(),
             password: password,
             options: {
                 data: {
-                    display_name: displayName
+                    display_name: sanitizedName
                 }
             }
         });
@@ -274,7 +296,7 @@ async function signUp(email, password, displayName) {
 
         // Create user profile in database
         if (data.user) {
-            await createUserProfile(data.user.id, email, displayName);
+            await createUserProfile(data.user.id, email.toLowerCase().trim(), sanitizedName);
         }
 
         return { success: true, user: data.user };
@@ -287,11 +309,23 @@ async function signUp(email, password, displayName) {
 
 /**
  * Sign in existing user
+ * @param {string} email - User email
+ * @param {string} password - User password
  */
 async function signIn(email, password) {
+    // Input validation
+    if (!email || !password) {
+        return { success: false, error: 'Email and password are required' };
+    }
+
+    // Check Supabase client is ready
+    if (!supabaseClient || !supabaseClient.auth) {
+        return { success: false, error: 'Authentication service not available' };
+    }
+
     try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
+            email: email.toLowerCase().trim(),
             password: password
         });
 
@@ -299,12 +333,14 @@ async function signIn(email, password) {
 
         console.log('✅ Sign in successful:', data.user.email);
         currentUser = data.user;
+        window.currentUser = currentUser;
 
         return { success: true, user: data.user };
 
     } catch (error) {
         console.error('❌ Sign in failed:', error.message);
-        return { success: false, error: error.message };
+        // Don't expose detailed error info to prevent enumeration attacks
+        return { success: false, error: 'Invalid email or password' };
     }
 }
 
@@ -312,6 +348,14 @@ async function signIn(email, password) {
  * Sign out current user
  */
 async function signOut() {
+    // Check Supabase client is ready
+    if (!supabaseClient || !supabaseClient.auth) {
+        // Clear local state even if client not available
+        currentUser = null;
+        window.currentUser = null;
+        return { success: true };
+    }
+
     try {
         const { error } = await supabaseClient.auth.signOut();
 
@@ -319,11 +363,20 @@ async function signOut() {
 
         console.log('✅ Sign out successful');
         currentUser = null;
+        window.currentUser = null;
+
+        // Clear session storage
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem('luvlang_authenticated');
+        }
 
         return { success: true };
 
     } catch (error) {
         console.error('❌ Sign out failed:', error.message);
+        // Still clear local state on error
+        currentUser = null;
+        window.currentUser = null;
         return { success: false, error: error.message };
     }
 }
