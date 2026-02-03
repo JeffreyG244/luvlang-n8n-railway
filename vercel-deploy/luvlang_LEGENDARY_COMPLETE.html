@@ -5788,22 +5788,30 @@
 
         async function handleGoogleLogin() {
             hideGateMessages();
+            console.log('🔐 Google login clicked...');
             try {
                 if (typeof initializeSupabase === 'function') {
-                    await initializeSupabase();
+                    console.log('   Initializing Supabase...');
+                    const initialized = await initializeSupabase();
+                    console.log('   Supabase initialized:', initialized);
                 }
-                if (window.supabaseClient) {
+                if (window.supabaseClient && window.supabaseClient.auth) {
+                    console.log('   Supabase client ready, starting OAuth...');
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
                             redirectTo: window.location.origin
                         }
                     });
+                    console.log('   OAuth response:', { data, error });
                     if (error) throw error;
+                    // If successful, browser will redirect to Google
                 } else {
+                    console.error('   Supabase client not available:', window.supabaseClient);
                     showGateError('Google login not available. Please use email signup.');
                 }
             } catch (err) {
+                console.error('   Google login error:', err);
                 showGateError('Google login failed: ' + err.message);
             }
         }
