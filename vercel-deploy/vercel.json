@@ -34,7 +34,7 @@
       ]
     },
     {
-      "source": "/(.*).js",
+      "source": "/(?!api/)(.*)\\.js",
       "headers": [
         {
           "key": "Content-Type",
@@ -56,7 +56,16 @@
       ]
     }
   ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
     {
       "source": "/",
       "destination": "/luvlang_LEGENDARY_COMPLETE.html"
