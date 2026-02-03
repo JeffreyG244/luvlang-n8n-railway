@@ -24230,33 +24230,43 @@
             const voices = voiceSynth.getVoices();
             const targetLang = langToVoiceLang[currentLang] || 'en';
 
-            // Find the most lifelike, clear female voice - prioritize neural/enhanced voices
-            // These are the highest quality, most natural-sounding voices available
+            // Find the most lifelike female voice with attractive accent
+            // Prioritize British, Australian, and other appealing accents
 
             // Neural/Enhanced voices (most lifelike - sounds like real humans)
             const neuralVoices = ['Enhanced', 'Neural', 'Premium', 'Siri', 'Google', 'Microsoft'];
 
-            // Premium female voices known for crystal-clear, pleasant tones
-            const premiumFemaleVoices = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Fiona', 'Amelie', 'Monica', 'Paulina', 'Kyoko', 'Yuna', 'Tingting', 'Siri', 'Joanna', 'Kendra', 'Ivy', 'Salli', 'Kimberly', 'Aria', 'Jenny', 'Natasha'];
+            // Sexy accent locales - British UK, Australian, South African, Irish
+            const sexyAccentLocales = ['en-GB', 'en-AU', 'en-ZA', 'en-IE', 'en-IN'];
+
+            // Premium female voices with attractive, sultry qualities
+            const sexyFemaleVoices = ['Kate', 'Serena', 'Veena', 'Moira', 'Fiona', 'Tessa', 'Karen', 'Victoria', 'Rishi', 'Martha', 'Libby', 'Mia', 'Zoe', 'Olivia', 'Emma', 'Amy', 'Sonia', 'Aditi', 'Nicole', 'Natasha'];
+
+            // All premium female voices as fallback
+            const premiumFemaleVoices = ['Samantha', 'Victoria', 'Karen', 'Moira', 'Tessa', 'Allison', 'Ava', 'Susan', 'Zira', 'Hazel', 'Fiona', 'Amelie', 'Monica', 'Paulina', 'Kyoko', 'Yuna', 'Tingting', 'Siri', 'Joanna', 'Kendra', 'Ivy', 'Salli', 'Kimberly', 'Aria', 'Jenny', 'Natasha', 'Kate', 'Serena'];
 
             preferredVoice =
-                // TOP PRIORITY: Neural/Enhanced female voice for this language (most lifelike)
+                // TOP PRIORITY: Neural British/Australian female voice (sexiest accent)
+                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && neuralVoices.some(n => v.name.includes(n)) && sexyFemaleVoices.some(name => v.name.includes(name))) ||
+                // Second: Any British/Australian female voice
+                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && sexyFemaleVoices.some(name => v.name.includes(name))) ||
+                // Third: Neural female voice for target language
                 voices.find(v => v.lang.startsWith(targetLang) && neuralVoices.some(n => v.name.includes(n)) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
-                // Second: Any Enhanced/Neural voice for this language
-                voices.find(v => v.lang.startsWith(targetLang) && neuralVoices.some(n => v.name.includes(n))) ||
-                // Third: Premium female voice for this language
+                // Fourth: Any Enhanced/Neural voice with accent
+                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc) && neuralVoices.some(n => v.name.includes(n))) ||
+                // Fifth: Premium female voice for this language
                 voices.find(v => v.lang.startsWith(targetLang) && premiumFemaleVoices.some(name => v.name.includes(name))) ||
-                // Fourth: Any female voice for this language
-                voices.find(v => v.lang.startsWith(targetLang) && v.name.toLowerCase().includes('female')) ||
-                // Fifth: Any voice for this language
+                // Sixth: Any voice for this language
                 voices.find(v => v.lang.startsWith(targetLang)) ||
-                // Fallback: Best English voice
+                // Fallback: Best English voice with accent
+                voices.find(v => sexyAccentLocales.some(loc => v.lang === loc)) ||
                 voices.find(v => v.lang.startsWith('en') && neuralVoices.some(n => v.name.includes(n))) ||
                 voices.find(v => v.lang.startsWith('en') && premiumFemaleVoices.some(name => v.name.includes(name))) ||
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
-            console.log('🎤 Selected voice:', preferredVoice?.name, '| Quality:', neuralVoices.some(n => preferredVoice?.name?.includes(n)) ? 'NEURAL/ENHANCED' : 'Standard');
+            const hasSexyAccent = sexyAccentLocales.some(loc => preferredVoice?.lang === loc);
+            console.log('🎤 Selected voice:', preferredVoice?.name, '| Accent:', hasSexyAccent ? '🔥 SEXY' : 'Standard', '| Lang:', preferredVoice?.lang);
         }
 
         function changeVoiceTourLanguage(lang) {
@@ -24290,10 +24300,10 @@
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Cool, modern, professional female voice - confident & polished
-                utterance.rate = 0.95; // Confident pace - not rushed, not slow
-                utterance.pitch = 1.05; // Slightly warm but professional - modern sound
-                utterance.volume = 1.0; // Crystal clear
+                // Sexy accented female voice - smooth, alluring, lifelike
+                utterance.rate = 0.88; // Slower, more deliberate - sultry pacing
+                utterance.pitch = 1.08; // Slightly higher - sweet and inviting
+                utterance.volume = 0.95; // Slightly softer - intimate feel
 
                 window.speechSynthesis.speak(utterance);
             }, 50);
@@ -24312,10 +24322,10 @@
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.voice = preferredVoice;
-                // Cool, modern, professional female voice - confident & polished
-                utterance.rate = 0.95;
-                utterance.pitch = 1.05;
-                utterance.volume = 1.0;
+                // Sexy accented female voice - smooth, alluring, lifelike
+                utterance.rate = 0.88;
+                utterance.pitch = 1.08;
+                utterance.volume = 0.95;
                 window.speechSynthesis.speak(utterance);
             }, 50);
         };
