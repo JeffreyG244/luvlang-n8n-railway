@@ -42,62 +42,130 @@
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-           PROFESSIONAL 3-COLUMN LAYOUT - Clean Modern Design
+           PROFESSIONAL 3-COLUMN LAYOUT - State of the Art High-End Design
+           Balanced proportions inspired by premium DAW interfaces
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .app-container {
             display: grid;
-            grid-template-columns: 260px 1fr 280px;
+            /* Balanced 3-column layout: ~22% | ~56% | ~22% ratio */
+            grid-template-columns: minmax(300px, 22vw) 1fr minmax(320px, 24vw);
             height: 100vh;
             overflow: hidden;
-            gap: 1px;
-            background: #1a1a24;
+            gap: 2px;
+            background: linear-gradient(180deg, #0a0a0f 0%, #0d0d14 100%);
+        }
+
+        /* Ultra-wide screens (2000px+) - Generous sidebars */
+        @media screen and (min-width: 2000px) {
+            .app-container {
+                grid-template-columns: minmax(380px, 400px) 1fr minmax(400px, 420px);
+                max-width: 3000px;
+                margin: 0 auto;
+            }
+        }
+
+        /* Large screens (1600px - 2000px) - Wider sidebars */
+        @media screen and (min-width: 1600px) and (max-width: 1999px) {
+            .app-container {
+                grid-template-columns: minmax(340px, 360px) 1fr minmax(360px, 380px);
+            }
+        }
+
+        /* Standard desktop (1200px - 1600px) */
+        @media screen and (min-width: 1200px) and (max-width: 1599px) {
+            .app-container {
+                grid-template-columns: minmax(300px, 320px) 1fr minmax(320px, 340px);
+            }
         }
 
         /* LEFT SIDEBAR - Upload, Controls, Presets */
         .left-sidebar {
-            background: linear-gradient(180deg, #12121a 0%, #0a0a10 100%);
+            background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
-            padding: 20px 16px;
+            padding: 24px 20px;
             padding-bottom: 100px;
+            border-right: 1px solid rgba(0, 212, 255, 0.08);
         }
 
         /* CENTER MAIN - EQ Graph, Waveform, EQ, Dynamics */
         .center-main {
-            background: linear-gradient(180deg, #0d0d14 0%, #080810 100%);
+            background: linear-gradient(180deg, #0c0c12 0%, #070710 100%);
             overflow-y: auto;
-            padding: 20px;
+            padding: 24px 28px;
         }
 
         /* RIGHT SIDEBAR - Meters, Master Section, Export */
         .right-sidebar {
-            background: linear-gradient(180deg, #12121a 0%, #0a0a10 100%);
+            background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
-            padding: 20px 16px;
+            padding: 24px 20px;
+            border-left: 1px solid rgba(184, 79, 255, 0.08);
         }
 
-        /* Section styling */
+        /* Section styling - Premium High-End Look */
         .section-title {
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.72rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255,255,255,0.4);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Card/Panel styling */
+        .section-title::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: linear-gradient(180deg, #00d4ff, #b84fff);
+            border-radius: 2px;
+        }
+
+        /* Card/Panel styling - State of the Art */
         .panel-card {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .panel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.25s ease;
         }
 
         .panel-card:hover {
-            border-color: rgba(0, 212, 255, 0.15);
+            border-color: rgba(0, 212, 255, 0.2);
+            background: linear-gradient(145deg, rgba(0, 212, 255, 0.04) 0%, rgba(255,255,255,0.02) 100%);
+        }
+
+        .panel-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Sidebar section spacing */
+        .left-sidebar > div,
+        .right-sidebar > div {
+            margin-bottom: 24px;
+        }
+
+        .left-sidebar > div:last-child,
+        .right-sidebar > div:last-child {
+            margin-bottom: 0;
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3112,14 +3180,20 @@
             opacity: 1;
         }
 
-        /* Tablet Styles (768px - 1024px) */
-        @media screen and (max-width: 1024px) {
+        /* Tablet Styles (768px - 1199px) - Balanced proportions */
+        @media screen and (max-width: 1199px) and (min-width: 768px) {
             .app-container {
-                grid-template-columns: 200px 1fr 240px;
+                /* Maintain balanced ratio even on tablets */
+                grid-template-columns: minmax(240px, 26vw) 1fr minmax(260px, 28vw);
+                gap: 1px;
             }
 
             .left-sidebar, .right-sidebar {
-                padding: 16px 12px;
+                padding: 18px 16px;
+            }
+
+            .center-main {
+                padding: 18px 20px;
             }
 
             .ai-command-bar {
@@ -3130,6 +3204,12 @@
             .ai-master-btn-floating {
                 padding: 10px 24px;
                 font-size: 0.9rem;
+            }
+
+            /* Slightly smaller section titles on tablet */
+            .section-title {
+                font-size: 0.65rem;
+                letter-spacing: 1.2px;
             }
         }
 
