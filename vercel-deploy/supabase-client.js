@@ -161,28 +161,7 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
-        // Try to check auth session, but don't block if it fails
-        try {
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
-
-            if (error) {
-                console.warn('⚠️ Auth session check failed:', error.message);
-                updateUIForLoggedOutUser();
-            } else if (session) {
-                currentUser = session.user;
-                window.currentUser = currentUser;
-                console.log('👤 User already logged in:', currentUser.email);
-                updateUIForLoggedInUser();
-            } else {
-                console.log('👤 No active session');
-                updateUIForLoggedOutUser();
-            }
-        } catch (authError) {
-            console.warn('⚠️ Auth check skipped:', authError.message);
-            updateUIForLoggedOutUser();
-        }
-
-        // Listen for auth state changes
+        // Listen for auth state changes (handles initial session + changes)
         try {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
