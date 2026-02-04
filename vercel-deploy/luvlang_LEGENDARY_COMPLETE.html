@@ -3,6 +3,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // IMMEDIATE DEBUG - runs before anything else
+        console.log('=== PAGE LOAD DEBUG ===');
+        console.log('URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+        console.log('Search:', window.location.search);
+        if (window.location.hash.includes('access_token')) {
+            console.log('*** OAUTH TOKEN FOUND IN HASH ***');
+        }
+        if (window.location.search.includes('code=')) {
+            console.log('*** OAUTH CODE FOUND IN SEARCH ***');
+        }
+        if (window.location.hash.includes('error')) {
+            console.log('*** OAUTH ERROR:', decodeURIComponent(window.location.hash));
+        }
+        console.log('=== END DEBUG ===');
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
