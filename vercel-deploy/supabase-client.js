@@ -11,6 +11,21 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabaseClient = null;
 let currentUser = null;
 
+// DEBUG: Log OAuth state immediately on script load
+console.log('🔍 SUPABASE-CLIENT LOADING...');
+console.log('🔍 Current URL:', window.location.href);
+console.log('🔍 Hash:', window.location.hash ? 'HAS HASH' : 'NO HASH');
+console.log('🔍 Search:', window.location.search ? 'HAS SEARCH' : 'NO SEARCH');
+if (window.location.hash.includes('access_token')) {
+    console.log('✅ OAuth access_token DETECTED in URL hash!');
+}
+if (window.location.search.includes('code=')) {
+    console.log('✅ OAuth code DETECTED in URL search!');
+}
+if (window.location.hash.includes('error')) {
+    console.log('❌ OAuth ERROR detected in URL:', window.location.hash);
+}
+
 // Make supabase client available globally for payment integration
 if (typeof window !== 'undefined') {
     window.supabaseClient = null;
