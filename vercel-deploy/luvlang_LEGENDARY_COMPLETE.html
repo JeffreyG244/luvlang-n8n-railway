@@ -6798,56 +6798,51 @@
 
         async function handleGoogleLogin() {
             hideGateMessages();
-            console.log('🔐 Google login clicked...');
-
-            // Check if already signed in
-            if (window.currentUser) {
-                console.log('⚠️ Already signed in as:', window.currentUser.email);
-                alert('You are already signed in! Proceeding to app...');
-                if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
-                    window.OnboardingFlow.onLoginSuccess();
-                }
-                return;
-            }
+            console.log('🔐 Google login clicked - FORCING fresh OAuth flow...');
 
             try {
-                if (typeof initializeSupabase === 'function') {
-                    console.log('   Initializing Supabase...');
-                    const initialized = await initializeSupabase();
-                    console.log('   Supabase initialized:', initialized);
+                // STEP 1: ALWAYS sign out first to clear ANY cached session
+                // This is the KEY to preventing the auth loop
+                if (typeof signOut === 'function') {
+                    console.log('   Step 1: Clearing any cached sessions...');
+                    await signOut();
+                    console.log('   ✅ Cached sessions cleared');
                 }
 
-                // Double-check for existing session
-                if (window.supabaseClient && window.supabaseClient.auth) {
-                    const { data: sessionData } = await window.supabaseClient.auth.getSession();
-                    if (sessionData && sessionData.session) {
-                        console.log('⚠️ Found existing session!', sessionData.session.user.email);
-                        alert('Found existing session for: ' + sessionData.session.user.email);
-                        window.currentUser = sessionData.session.user;
-                        if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
-                            window.OnboardingFlow.onLoginSuccess();
-                        }
-                        return;
-                    }
+                // STEP 2: Wait a moment for storage to clear
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-                    console.log('   No existing session, starting OAuth...');
-                    console.log('   Redirecting to Google...');
+                // STEP 3: Initialize Supabase fresh
+                if (typeof initializeSupabase === 'function') {
+                    console.log('   Step 2: Initializing fresh Supabase client...');
+                    const initialized = await initializeSupabase();
+                    console.log('   ✅ Supabase initialized:', initialized);
+                }
+
+                // STEP 4: Start OAuth - NO session check, ALWAYS go to Google
+                if (window.supabaseClient && window.supabaseClient.auth) {
+                    console.log('   Step 3: Starting OAuth redirect to Google...');
 
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
                             redirectTo: window.location.origin,
                             queryParams: {
-                                prompt: 'select_account'
+                                prompt: 'select_account'  // Always show account picker
                             }
                         }
                     });
-                    console.log('   OAuth response:', { data, error });
-                    if (error) throw error;
-                    // If successful, browser will redirect to Google
+
+                    if (error) {
+                        console.error('   OAuth error:', error);
+                        throw error;
+                    }
+
+                    console.log('   ✅ OAuth initiated, redirecting to Google...');
+                    // Browser will now redirect to Google
                 } else {
-                    console.error('   Supabase client not available:', window.supabaseClient);
-                    showGateError('Google login not available. Please use email signup.');
+                    console.error('   Supabase client not available after init');
+                    showGateError('Authentication service unavailable. Please refresh the page.');
                 }
             } catch (err) {
                 console.error('   Google login error:', err);

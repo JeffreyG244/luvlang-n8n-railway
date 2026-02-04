@@ -262,47 +262,65 @@ async function signIn(email, password) {
 }
 
 /**
- * Sign out current user - COMPREHENSIVE cleanup
+ * Sign out current user - NUCLEAR cleanup
+ * This completely destroys the session and resets the client
  */
 async function signOut() {
-    console.log('🔐 Starting sign out...');
+    console.log('🔐 NUCLEAR SIGN OUT - Destroying ALL session data...');
 
-    // Clear local state first
-    currentUser = null;
-    window.currentUser = null;
-    window.OAUTH_IN_PROGRESS = false;
-
-    // Clear ALL Supabase-related storage
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('luvlang'))) {
-            keysToRemove.push(key);
-        }
-    }
-    keysToRemove.forEach(key => {
-        console.log('   Clearing localStorage:', key);
-        localStorage.removeItem(key);
-    });
-
-    // Clear session storage
-    sessionStorage.clear();
-    console.log('   Cleared sessionStorage');
-
-    // Call Supabase sign out
+    // Call Supabase sign out FIRST while client is still valid
     if (supabaseClient && supabaseClient.auth) {
         try {
+            console.log('   Calling Supabase signOut with global scope...');
             const { error } = await supabaseClient.auth.signOut({ scope: 'global' });
             if (error) {
                 console.warn('⚠️ Supabase signOut warning:', error.message);
             } else {
-                console.log('✅ Supabase sign out successful');
+                console.log('✅ Supabase sign out API call successful');
             }
         } catch (error) {
             console.warn('⚠️ Supabase signOut error:', error.message);
         }
     }
 
+    // Clear local state
+    currentUser = null;
+    window.currentUser = null;
+    window.OAUTH_IN_PROGRESS = false;
+
+    // NUCLEAR: Clear ALL localStorage (not just Supabase keys)
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (
+            key.startsWith('sb-') ||
+            key.includes('supabase') ||
+            key.includes('luvlang') ||
+            key.includes('auth') ||
+            key.includes('token') ||
+            key.includes('session')
+        )) {
+            keysToRemove.push(key);
+        }
+    }
+    keysToRemove.forEach(key => {
+        console.log('   Nuking localStorage key:', key);
+        localStorage.removeItem(key);
+    });
+
+    // Clear ALL session storage
+    sessionStorage.clear();
+    console.log('   Cleared sessionStorage');
+
+    // NUCLEAR: Destroy the Supabase client instance entirely
+    // This forces a fresh client to be created on next use
+    supabaseClient = null;
+    window.supabaseClient = null;
+    isInitialized = false;
+    isInitializing = false;
+    console.log('   Destroyed Supabase client instance');
+
+    console.log('✅ NUCLEAR SIGN OUT COMPLETE - All session data destroyed');
     return { success: true };
 }
 
