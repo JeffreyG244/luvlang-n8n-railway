@@ -5400,6 +5400,7 @@
 
             // Start the splash/loading sequence
             startSplash() {
+                const self = this; // Store reference to avoid context loss
                 const progressBar = document.getElementById('splashProgressBar');
                 const statusText = document.getElementById('splashStatus');
                 const statuses = [
@@ -5411,8 +5412,8 @@
                 ];
 
                 let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 2;
+                const interval = setInterval(function() {
+                    progress += 4; // Faster progress
                     if (progressBar) progressBar.style.width = progress + '%';
 
                     // Update status text
@@ -5421,10 +5422,13 @@
 
                     if (progress >= 100) {
                         clearInterval(interval);
+                        console.log('🚀 Splash complete, transitioning to sign in...');
                         // Transition to sign in after short delay
-                        setTimeout(() => this.goToPage('signin'), 500);
+                        setTimeout(function() {
+                            self.goToPage('signin');
+                        }, 400);
                     }
-                }, 40); // ~2 seconds total
+                }, 30); // ~1.5 seconds total
             },
 
             // Transition between pages
