@@ -377,21 +377,27 @@
         }
 
         .logo-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: 1px;
+            animation: headerLogoShine 3s ease-in-out infinite;
+        }
+
+        @keyframes headerLogoShine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.15); }
         }
 
         .logo-subtitle {
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            color: rgba(255,255,255,0.3);
-            margin-top: 6px;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 8px;
             font-weight: 500;
         }
 
@@ -6837,8 +6843,8 @@
 
             <!-- HEADER LOGO -->
             <div class="header-logo">
-                <div class="logo-text">LuvLang LEGENDARY</div>
-                <div class="logo-subtitle">Professional Mastering Suite</div>
+                <div class="logo-text">LuvLang</div>
+                <div class="logo-subtitle">Professional Mastering Platform</div>
                 <button onclick="restartTourFresh()" style="
                     margin-top: 10px;
                     padding: 6px 12px;
