@@ -5420,49 +5420,17 @@
             currentPage: 'splash'
         };
 
-        // Initialize onboarding
+        // Initialize onboarding - Supabase controls what gets shown
         OnboardingFlow.init = function() {
-            console.log('🚀 Onboarding system initializing...');
-
-            // Quick check for returning authenticated user
-            var isAuthenticated = sessionStorage.getItem('luvlang_authenticated') === 'true';
-            var hasLanguage = localStorage.getItem('luvlang_language_selected') === 'true';
-
-            if (isAuthenticated && hasLanguage) {
-                console.log('👤 Returning user detected, skipping onboarding');
-                OnboardingFlow.skipToApp();
-                return;
-            }
-
-            // If authenticated but no language yet (just signed in), wait for Supabase to trigger onLoginSuccess
-            if (isAuthenticated && !hasLanguage) {
-                console.log('👤 Authenticated user, waiting for tour to start...');
-                // Don't show landing page - Supabase will call onLoginSuccess
-                OnboardingFlow.skipToApp();
-                OnboardingFlow.showLoadingScreen();
-                return;
-            }
-
-            // Wait briefly to let Supabase check for existing session
-            // This prevents showing landing page to users who just signed in
-            console.log('⏳ Waiting for auth check...');
-            setTimeout(function() {
-                // Check again after Supabase has had time to detect session
-                var nowAuthenticated = sessionStorage.getItem('luvlang_authenticated') === 'true';
-                if (nowAuthenticated) {
-                    console.log('👤 Auth detected after wait, showing loading...');
-                    OnboardingFlow.skipToApp();
-                    OnboardingFlow.showLoadingScreen();
-                } else {
-                    console.log('🏠 No auth, showing landing page');
-                    OnboardingFlow.startSplash();
-                }
-            }, 500); // Wait 500ms for Supabase to check session
+            console.log('🚀 Onboarding system ready - Supabase will control the flow');
+            // Supabase auth check will call either:
+            // - onLoginSuccess() → loading screen → tour
+            // - showLandingPage() → landing page with "Get Started"
         };
 
-        // Show landing page - user clicks "Get Started" to continue
-        OnboardingFlow.startSplash = function() {
-            console.log('🏠 Showing landing page - waiting for user to click Get Started');
+        // Show landing page for non-authenticated users (called by Supabase)
+        OnboardingFlow.showLandingPage = function() {
+            console.log('🏠 Showing landing page');
             var splash = document.getElementById('onboardingSplash');
             if (splash) {
                 splash.style.opacity = '1';
@@ -5470,6 +5438,9 @@
                 splash.classList.add('active');
             }
         };
+
+        // Alias for backwards compatibility
+        OnboardingFlow.startSplash = OnboardingFlow.showLandingPage;
 
         // Page transitions
         OnboardingFlow.goToPage = function(page) {

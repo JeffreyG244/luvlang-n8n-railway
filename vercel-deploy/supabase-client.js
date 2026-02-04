@@ -754,10 +754,19 @@ async function updateUIForLoggedInUser() {
         sessionStorage.setItem('luvlang_authenticated', 'true');
     }
 
-    // Use OnboardingFlow if available (handles splash → signin → language → app)
+    // Check if returning user (already completed tour)
+    const hasCompletedTour = localStorage.getItem('voiceTourCompleted') === 'true';
+
     if (typeof window.OnboardingFlow !== 'undefined') {
-        console.log('📄 Using OnboardingFlow for page transition...');
-        window.OnboardingFlow.onLoginSuccess();
+        if (hasCompletedTour) {
+            // Returning user - skip to app directly
+            console.log('👤 Returning user, skipping to app...');
+            window.OnboardingFlow.skipToApp();
+        } else {
+            // New user or hasn't completed tour - show loading then start tour
+            console.log('📄 New user, showing loading screen then tour...');
+            window.OnboardingFlow.onLoginSuccess();
+        }
     } else {
         // Fallback: directly hide signup gate
         const signupGate = document.getElementById('signupGateOverlay');
@@ -805,15 +814,17 @@ async function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
-    console.log('👤 User not logged in, onboarding will show signin...');
+    console.log('👤 User not logged in, showing landing page...');
 
     // Clear session storage auth state
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem('luvlang_authenticated');
     }
 
-    // DON'T reload - let the onboarding flow handle showing the signin page
-    // The OnboardingFlow.startSplash() will transition to signin after splash
+    // Show the landing page via OnboardingFlow
+    if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.showLandingPage === 'function') {
+        window.OnboardingFlow.showLandingPage();
+    }
 
     // Hide user menu, show auth buttons
     const userMenu = document.getElementById('userMenu');
