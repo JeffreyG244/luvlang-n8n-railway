@@ -157,37 +157,25 @@ async function initializeSupabase() {
 
         // Listen for auth state changes (handles initial session + changes)
         try {
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('🔐 Auth state changed:', event);
+            // Simple: check session once, then only listen for sign out
+            const { data: { session } } = await supabaseClient.auth.getSession();
 
-                if (session) {
-                    // User is logged in - always process (clear any old flag first)
-                    const alreadyLoggedIn = sessionStorage.getItem('luvlang_logged_in') === 'true';
-                    if (alreadyLoggedIn) {
-                        console.log('⚠️ Already logged in, skipping duplicate');
-                        return;
-                    }
-                    sessionStorage.setItem('luvlang_logged_in', 'true');
-                    sessionStorage.removeItem('luvlang_logged_out');
-                    currentUser = session.user;
-                    window.currentUser = currentUser;
-                    console.log('👤 User logged in:', currentUser.email);
-                    updateUIForLoggedInUser();
-                } else if (event === 'SIGNED_OUT') {
-                    // Explicit sign out
-                    sessionStorage.removeItem('luvlang_logged_in');
-                    sessionStorage.removeItem('luvlang_logged_out');
+            if (session) {
+                currentUser = session.user;
+                window.currentUser = currentUser;
+                console.log('👤 User logged in:', currentUser.email);
+                updateUIForLoggedInUser();
+            } else {
+                console.log('👤 No session, showing landing');
+                updateUIForLoggedOutUser();
+            }
+
+            // Only listen for explicit sign out
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('🔐 Auth event:', event);
+                if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     window.currentUser = null;
-                    updateUIForLoggedOutUser();
-                } else {
-                    // No session (not logged in)
-                    const alreadyLoggedOut = sessionStorage.getItem('luvlang_logged_out') === 'true';
-                    if (alreadyLoggedOut) {
-                        console.log('⚠️ Already showed landing, skipping');
-                        return;
-                    }
-                    sessionStorage.setItem('luvlang_logged_out', 'true');
                     updateUIForLoggedOutUser();
                 }
             });
