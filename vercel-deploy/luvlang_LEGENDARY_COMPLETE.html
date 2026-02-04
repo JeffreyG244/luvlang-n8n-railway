@@ -2536,31 +2536,37 @@
             transform: scale(1.05);
         }
 
-        /* Genre section tour highlight - DRAMATIC pulsing glow */
+        /* Genre section tour highlight - SUPER DRAMATIC pulsing glow beacon */
         .genre-section-tour-highlight {
-            animation: genreSectionPulse 1s ease-in-out infinite !important;
-            border: 3px solid #00d4ff !important;
+            animation: genreSectionPulse 1.2s ease-in-out infinite !important;
+            border: 4px solid #00ffcc !important;
             border-radius: 16px !important;
-            position: relative;
-            z-index: 100001;
-            background: rgba(0, 212, 255, 0.05) !important;
+            position: relative !important;
+            z-index: 100001 !important;
+            background: rgba(0, 255, 204, 0.08) !important;
+            outline: 2px solid rgba(0, 255, 204, 0.5) !important;
+            outline-offset: 4px !important;
         }
         @keyframes genreSectionPulse {
             0%, 100% {
                 box-shadow:
-                    0 0 30px rgba(0, 212, 255, 0.6),
-                    0 0 60px rgba(0, 212, 255, 0.4),
-                    0 0 90px rgba(0, 212, 255, 0.2),
-                    inset 0 0 20px rgba(0, 212, 255, 0.1);
+                    0 0 40px rgba(0, 255, 204, 0.8),
+                    0 0 80px rgba(0, 255, 204, 0.5),
+                    0 0 120px rgba(0, 255, 204, 0.3),
+                    0 0 160px rgba(0, 212, 255, 0.2),
+                    inset 0 0 30px rgba(0, 255, 204, 0.15);
                 transform: scale(1);
+                border-color: #00ffcc;
             }
             50% {
                 box-shadow:
-                    0 0 50px rgba(0, 212, 255, 1),
-                    0 0 100px rgba(0, 212, 255, 0.7),
-                    0 0 150px rgba(0, 212, 255, 0.4),
-                    inset 0 0 30px rgba(0, 212, 255, 0.2);
-                transform: scale(1.02);
+                    0 0 60px rgba(0, 255, 204, 1),
+                    0 0 120px rgba(0, 255, 204, 0.8),
+                    0 0 180px rgba(0, 255, 204, 0.5),
+                    0 0 240px rgba(0, 212, 255, 0.3),
+                    inset 0 0 50px rgba(0, 255, 204, 0.25);
+                transform: scale(1.03);
+                border-color: #00d4ff;
             }
         }
 
@@ -26637,7 +26643,7 @@
                     genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
                     // Set up one-time click handlers for all genre buttons
-                    const genreButtons = genreSection.querySelectorAll('.genre-btn');
+                    const genreButtons = genreSection.querySelectorAll('.selector-btn[data-genre]');
                     const handleGenreClick = () => {
                         console.log('🎤 Genre button clicked - removing glow and advancing tour');
                         genreSection.classList.remove('genre-section-tour-highlight');
