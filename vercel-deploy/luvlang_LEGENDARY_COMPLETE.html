@@ -4325,10 +4325,10 @@
          Premium glass morphism with integrated master + A/B controls
          ═══════════════════════════════════════════════════════════════════════════ -->
     <div class="ai-command-bar" id="aiCommandBar" style="display: none;">
-        <!-- Master Button -->
-        <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');alert('Please wait for the page to fully load.');}" style="cursor: pointer;">
-            <span class="ai-btn-icon">◉</span>
-            <span>MASTER</span>
+        <!-- Master Button - Professional Processing -->
+        <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');alert('Please wait for the page to fully load.');}" style="cursor: pointer; padding: 14px 28px; font-size: 1rem; font-weight: 700; letter-spacing: 1px; box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4), 0 0 40px rgba(184, 79, 255, 0.2); border: 2px solid rgba(255,255,255,0.2);">
+            <span class="ai-btn-icon" style="font-size: 1.2rem;">⚡</span>
+            <span>PROCESS MASTER</span>
         </button>
 
         <!-- Vertical Divider - Shows after mastering -->
@@ -18979,7 +18979,7 @@
             // Restore MASTER button
             const masterBtn = document.getElementById('aiMasterBtnFloating');
             if (masterBtn) {
-                masterBtn.innerHTML = '<span class="ai-btn-icon">◉</span><span>MASTER</span>';
+                masterBtn.innerHTML = '<span class="ai-btn-icon" style="font-size: 1.2rem;">⚡</span><span>PROCESS MASTER</span>';
                 masterBtn.style.background = 'linear-gradient(135deg, #00d4ff 0%, #b84fff 100%)';
                 masterBtn.onclick = function() {
                     if (typeof runFullAIMaster === 'function') {
