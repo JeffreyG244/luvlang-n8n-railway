@@ -3,70 +3,9 @@
  * Handles authentication, database operations, and real-time subscriptions
  */
 
-// Supabase configuration - loaded from environment variables
-// Set these in Vercel Dashboard → Settings → Environment Variables:
-// - SUPABASE_URL
-// - SUPABASE_ANON_KEY
-
-// Dynamic getters to allow for async config loading
-let SUPABASE_URL = '';
-let SUPABASE_ANON_KEY = '';
-
-const getEnvConfig = () => {
-    // Try to get from build-time injected config
-    if (typeof window !== 'undefined' && window.__ENV__) {
-        return {
-            url: window.__ENV__.SUPABASE_URL || '',
-            anonKey: window.__ENV__.SUPABASE_ANON_KEY || ''
-        };
-    }
-    return { url: '', anonKey: '' };
-};
-
-// Wait for env config (build-time injected, so should be immediate)
-async function waitForEnvConfig(timeoutMs = 2000) {
-    console.log('🔄 Checking environment config...');
-
-    // Config is injected at build time, should be available immediately
-    const config = getEnvConfig();
-    if (config.url && config.anonKey) {
-        SUPABASE_URL = config.url;
-        SUPABASE_ANON_KEY = config.anonKey;
-        console.log('✅ Supabase config loaded');
-        console.log('   URL:', SUPABASE_URL.substring(0, 40) + '...');
-        return true;
-    }
-
-    // If not immediately available, wait briefly for script to execute
-    return new Promise((resolve) => {
-        let attempts = 0;
-        const maxAttempts = timeoutMs / 100;
-
-        const checkConfig = () => {
-            attempts++;
-            const cfg = getEnvConfig();
-
-            if (cfg.url && cfg.anonKey) {
-                SUPABASE_URL = cfg.url;
-                SUPABASE_ANON_KEY = cfg.anonKey;
-                console.log('✅ Supabase config loaded (attempt ' + attempts + ')');
-                resolve(true);
-                return;
-            }
-
-            if (attempts >= maxAttempts) {
-                console.warn('⚠️ Supabase config not available. Check Vercel environment variables.');
-                console.warn('   window.__ENV__:', window.__ENV__);
-                resolve(false);
-                return;
-            }
-
-            setTimeout(checkConfig, 100);
-        };
-
-        setTimeout(checkConfig, 100);
-    });
-}
+// Supabase configuration - HARDCODED for reliability
+const SUPABASE_URL = 'https://jzclawsctaczhgvfpssx.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6Y2xhd3NjdGFjemhndmZwc3N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1MjE2MDEsImV4cCI6MjA4NDA5NzYwMX0.3c08nfLITB4Z-DUZv4f-35CoZN7TXBHLgktgqB5c0K0';
 
 // Initialize Supabase client instance (not the library - that's window.supabase from CDN)
 let supabaseClient = null;
@@ -108,23 +47,7 @@ async function initializeSupabase() {
 
     isInitializing = true;
 
-    // Wait for environment config to load from API (8 seconds to match env-config.js)
-    const configLoaded = await waitForEnvConfig(8000);
-    if (!configLoaded) {
-        isInitializing = false;
-        return false;
-    }
-
     try {
-        // Check if Supabase URL and key are configured
-        if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL === '' || SUPABASE_ANON_KEY === '') {
-            console.warn('⚠️ Supabase not configured. Running in demo mode.');
-            console.warn('   Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel environment variables.');
-            isInitializing = false;
-            isInitialized = false;
-            return false;
-        }
-
         // Check if @supabase/supabase-js is loaded
         if (!window.supabase || !window.supabase.createClient) {
             console.warn('⚠️ Supabase library not loaded yet, waiting...');
@@ -155,28 +78,11 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
-        // Check initial session
-        try {
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
+        // Check if returning from OAuth callback
+        const isOAuthCallback = window.location.hash.includes('access_token') ||
+                                window.location.search.includes('code=');
 
-            if (error) {
-                console.warn('⚠️ Auth session check failed:', error.message);
-                updateUIForLoggedOutUser();
-            } else if (session) {
-                currentUser = session.user;
-                window.currentUser = currentUser;
-                console.log('👤 User already logged in:', currentUser.email);
-                updateUIForLoggedInUser();
-            } else {
-                console.log('👤 No active session');
-                updateUIForLoggedOutUser();
-            }
-        } catch (authError) {
-            console.warn('⚠️ Auth check skipped:', authError.message);
-            updateUIForLoggedOutUser();
-        }
-
-        // Listen for auth state changes (handles OAuth callbacks)
+        // Set up auth state change listener FIRST (handles OAuth callbacks)
         supabaseClient.auth.onAuthStateChange((event, session) => {
             console.log('🔐 Auth state changed:', event);
 
@@ -184,12 +90,38 @@ async function initializeSupabase() {
                 currentUser = session.user;
                 window.currentUser = currentUser;
                 updateUIForLoggedInUser();
-            } else {
+            } else if (!isOAuthCallback) {
+                // Only show logged out UI if NOT in OAuth callback
                 currentUser = null;
                 window.currentUser = null;
                 updateUIForLoggedOutUser();
             }
         });
+
+        // If NOT OAuth callback, check session immediately
+        if (!isOAuthCallback) {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+
+                if (error) {
+                    console.warn('⚠️ Auth session check failed:', error.message);
+                    updateUIForLoggedOutUser();
+                } else if (session) {
+                    currentUser = session.user;
+                    window.currentUser = currentUser;
+                    console.log('👤 User already logged in:', currentUser.email);
+                    updateUIForLoggedInUser();
+                } else {
+                    console.log('👤 No active session');
+                    updateUIForLoggedOutUser();
+                }
+            } catch (authError) {
+                console.warn('⚠️ Auth check skipped:', authError.message);
+                updateUIForLoggedOutUser();
+            }
+        } else {
+            console.log('🔐 OAuth callback - waiting for auth state change...');
+        }
 
         isInitializing = false;
         return true;
@@ -738,31 +670,23 @@ async function applyTierRestrictions() {
  */
 async function updateUIForLoggedInUser() {
     console.log('✅ User logged in, updating UI...');
-    console.log('   DEBUG: OnboardingFlow exists:', typeof window.OnboardingFlow !== 'undefined');
-    console.log('   DEBUG: onLoginSuccess exists:', typeof window.OnboardingFlow?.onLoginSuccess === 'function');
 
-    // Store auth state in session storage
-    if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem('luvlang_authenticated', 'true');
-    }
+    // Store auth state
+    sessionStorage.setItem('luvlang_authenticated', 'true');
 
     // Clear old tour flags so language selection shows
     localStorage.removeItem('voiceTourCompleted');
     localStorage.removeItem('tourLanguage');
 
-    // Always show loading screen then language selection after sign in
-    if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
-        console.log('📄 Calling OnboardingFlow.onLoginSuccess()...');
+    // Show loading screen then language selection
+    if (window.OnboardingFlow && window.OnboardingFlow.onLoginSuccess) {
         window.OnboardingFlow.onLoginSuccess();
-        console.log('📄 OnboardingFlow.onLoginSuccess() called');
     } else {
-        console.log('⚠️ OnboardingFlow not available, using fallback');
         // Fallback: directly hide signup gate
         const signupGate = document.getElementById('signupGateOverlay');
         if (signupGate) {
             signupGate.classList.add('hidden');
             signupGate.style.display = 'none';
-            console.log('   Signup gate hidden');
         }
     }
 
