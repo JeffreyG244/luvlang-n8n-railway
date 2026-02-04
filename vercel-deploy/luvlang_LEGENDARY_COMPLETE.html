@@ -23776,12 +23776,7 @@
                 voiceTourSpotlight.style.display = 'none';
             }
 
-            // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
-                    window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 10 different presets tuned by pro engineers. Try a few and watch the EQ faders move in real-time - see what vibes with your sound.");
-                }
-            }, 500);
+            // Voice disabled
 
             // Scroll genre section into view
             genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -23826,12 +23821,7 @@
                 rightSidebar.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // Voice prompt to direct user to the main interface
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
-                    window.speakWithDucking("Alright, here's your workspace. The spectrum shows everything happening in your mix. Those genre buttons on the left? Each one opens up 10 different styles to choose from. Play around with them - that's what they're there for. When you're happy with how it sounds, hit export and you're done.");
-                }
-            }, 500);
+            // Voice disabled
 
             // Highlight the spectrum/EQ panel with enhanced glow
             const spectrumPanel = document.querySelector('.spectrum-panel');
@@ -25792,12 +25782,7 @@
 
             console.log('✅ Genre overlay displayed');
 
-            // Voice prompt for genre selection - use the global speakWithDucking function
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
-                    window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
-                }
-            }, 500);
+            // Voice disabled
 
             // Capture BEFORE spectrum for comparison
             try {
@@ -26706,8 +26691,8 @@
             if (uploadZoneEl) uploadZoneEl.style.opacity = '0';
             if (formatZoneEl) formatZoneEl.style.opacity = '0';
 
-            // Start voice immediately
-            speak(trans.voice);
+            // Voice disabled
+            // speak(trans.voice);
 
             // Fade in content as voice starts playing
             setTimeout(() => {
@@ -26723,10 +26708,10 @@
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
             const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
 
-            // Speak the final step voice
-            if (stepTrans && stepTrans.voice) {
-                speak(stepTrans.voice);
-            }
+            // Voice disabled
+            // if (stepTrans && stepTrans.voice) {
+            //     speak(stepTrans.voice);
+            // }
 
             const modal = document.createElement('div');
             modal.id = 'voiceTourExploreModal';
@@ -27002,32 +26987,8 @@
                 }, 500);
             }
 
-            const trans = tourTranslations[currentLang]?.steps[currentStep] || tourTranslations['en'].steps[currentStep];
-            if (trans && trans.voice) {
-                // Stop any current speech and replay
-                if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-                // Force voice enabled for repeat (user wants to hear it)
-                const wasEnabled = voiceEnabled;
-                voiceEnabled = true;
-
-                setTimeout(() => {
-                    speak(trans.voice);
-                    // Restore mute state after speaking starts (but audio will continue)
-                    if (!wasEnabled) {
-                        // Keep enabled so it plays, user can mute again if wanted
-                        const btn = document.getElementById('voiceTourSpeakBtn');
-                        if (btn) {
-                            btn.textContent = '🔊';
-                            btn.style.background = 'rgba(0, 212, 255, 0.1)';
-                            btn.style.borderColor = 'rgba(0, 212, 255, 0.3)';
-                            btn.style.color = '#00d4ff';
-                        }
-                    }
-                }, 100);
-
-                console.log('🔄 Repeating instruction for step', currentStep + 1);
-            }
+            // Voice disabled - repeat function does nothing
+            console.log('🔄 Voice disabled - repeat not available');
         }
 
         function endVoiceTour() {
