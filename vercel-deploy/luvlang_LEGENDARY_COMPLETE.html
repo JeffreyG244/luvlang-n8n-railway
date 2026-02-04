@@ -26357,9 +26357,9 @@
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
-        // Voice Engine State
-        let voiceEnabled = true;
-        let voiceSynth = window.speechSynthesis;
+        // Voice Engine State - COMPLETELY DISABLED
+        let voiceEnabled = false;
+        let voiceSynth = null;
         let preferredVoice = null;
         let currentStep = 0;
         let tourActive = false;
@@ -26369,67 +26369,20 @@
             en: 'en', es: 'es', fr: 'fr', de: 'de', pt: 'pt', ja: 'ja', ko: 'ko', zh: 'zh'
         };
 
-        // Initialize Voice Engine - Find best voice for current language
+        // Voice Engine DISABLED
         function initVoiceEngine() {
-            if (!voiceSynth) {
-                console.warn('Speech synthesis not supported');
-                voiceEnabled = false;
-                return;
-            }
-            updateVoiceForLanguage();
-            voiceSynth.onvoiceschanged = updateVoiceForLanguage;
+            // Voice completely disabled
+            voiceEnabled = false;
         }
 
         function updateVoiceForLanguage() {
-            const voices = voiceSynth.getVoices();
-
-            // ═══════════════════════════════════════════════════════════════════
-            // AUSTRALIAN FEMALE VOICE - ALWAYS USE THIS
-            // ═══════════════════════════════════════════════════════════════════
-
-            // Australian female voice names
-            const aussiFemaleVoices = ['Karen', 'Lee', 'Tessa', 'Catherine', 'Matilda', 'Nicole'];
-
-            // Neural/Enhanced for best quality
-            const neuralKeywords = ['Enhanced', 'Neural', 'Premium', 'Natural', 'Wavenet'];
-
-            // Log available Australian voices
-            const aussiVoices = voices.filter(v => v.lang === 'en-AU');
-            if (aussiVoices.length > 0) {
-                console.log('🇦🇺 Australian voices available:', aussiVoices.map(v => v.name).join(', '));
-            } else {
-                console.log('🇦🇺 No Australian voices found - check System Preferences > Accessibility > Spoken Content');
-            }
-
-            preferredVoice =
-                // #1: Australian Enhanced female (BEST)
-                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k)) && aussiFemaleVoices.some(n => v.name.includes(n))) ||
-                // #2: Australian Enhanced any
-                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k))) ||
-                // #3: Australian female by name
-                voices.find(v => v.lang === 'en-AU' && aussiFemaleVoices.some(n => v.name.includes(n))) ||
-                // #4: ANY Australian voice
-                voices.find(v => v.lang === 'en-AU') ||
-                // Fallback to any English if no Australian
-                voices.find(v => v.lang.startsWith('en')) ||
-                voices[0];
-
-            const isAussie = preferredVoice?.lang === 'en-AU';
-            const isNeural = neuralKeywords.some(k => preferredVoice?.name?.includes(k));
-            console.log('🎤 SELECTED:', preferredVoice?.name, '| Accent:', isAussie ? '🇦🇺 AUSTRALIAN' : preferredVoice?.lang, '| Quality:', isNeural ? '★★★ ENHANCED' : '★ STANDARD');
-
-            // Tip for Mac users
-            if (!isAussie && navigator.platform.includes('Mac')) {
-                console.log('💡 TIP: Download Australian voices in System Preferences > Accessibility > Spoken Content > Manage Voices > English (Australia)');
-            }
+            // Voice completely disabled
         }
 
         function changeVoiceTourLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('voiceTourLang', lang);
-            updateVoiceForLanguage();
-
-            // Update current step display if tour is active
+            // Update current step display if tour is active (no voice)
             if (tourActive && currentStep < voiceTourSteps.length) {
                 const trans = tourTranslations[currentLang]?.steps[currentStep];
                 if (trans) {
@@ -26437,21 +26390,19 @@
                     document.getElementById('voiceTourDesc').textContent = trans.desc;
                     const actionEl = document.getElementById('voiceTourAction');
                     if (actionEl) actionEl.textContent = trans.action;
-                    speak(trans.voice);
                 }
             }
             console.log('🌍 Language changed to:', lang);
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // VOICE SYSTEM - DISABLED (Ready for fresh implementation)
+        // VOICE SYSTEM - COMPLETELY DISABLED
         // ═══════════════════════════════════════════════════════════════════
 
-        // Voice is currently disabled - placeholder functions
         let currentAudio = null;
 
         async function speak(text) {
-            // Voice disabled - do nothing
+            // Voice completely disabled - do nothing
             return;
         }
         window.speak = speak;
@@ -26469,7 +26420,7 @@
         };
 
         function stopSpeaking() {
-            window.speechSynthesis.cancel();
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -26481,7 +26432,7 @@
             const btn = document.getElementById('voiceTourSpeakBtn');
 
             if (!voiceEnabled) {
-                window.speechSynthesis.cancel();
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
                 if (currentAudio) {
                     currentAudio.pause();
                     currentAudio = null;
@@ -27011,7 +26962,7 @@
                 }
 
                 // Cancel any current speech before advancing to next step
-                window.speechSynthesis.cancel();
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
 
                 setTimeout(() => {
                     currentStep++;
@@ -27032,7 +26983,7 @@
         function nextTourStep() {
             if (!tourActive) return;
             // Always cancel current speech before advancing to next step
-            window.speechSynthesis.cancel();
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
             currentStep++;
             showStep(currentStep);
         }
@@ -27054,7 +27005,7 @@
             const trans = tourTranslations[currentLang]?.steps[currentStep] || tourTranslations['en'].steps[currentStep];
             if (trans && trans.voice) {
                 // Stop any current speech and replay
-                window.speechSynthesis.cancel();
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
 
                 // Force voice enabled for repeat (user wants to hear it)
                 const wasEnabled = voiceEnabled;
@@ -27117,7 +27068,7 @@
         function continueTourAfterLanguage() {
             console.log('🎤 Continuing tour after language selection...');
             // Cancel any speech
-            window.speechSynthesis.cancel();
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
             // Advance to next step (format selection)
             currentStep++;
             showStep(currentStep);
