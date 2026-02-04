@@ -142,7 +142,20 @@ async function initializeSupabase() {
                         currentUser = session.user;
                         window.currentUser = currentUser;
                         console.log('👤 Initial session:', currentUser.email);
-                        updateUIForLoggedInUser();
+
+                        // Check if this is a fresh visit (came from landing page)
+                        // Only auto-proceed if sessionStorage flag exists (meaning user just signed in this session)
+                        const wasJustAuthenticated = sessionStorage.getItem('luvlang_authenticated') === 'true';
+
+                        if (wasJustAuthenticated) {
+                            // User just signed in - proceed to onboarding
+                            console.log('👤 Continuing authenticated session...');
+                            updateUIForLoggedInUser();
+                        } else {
+                            // Fresh visit with old session - show landing page, require sign-in click
+                            console.log('👤 Fresh visit - showing landing page (must click sign-in)');
+                            updateUIForLoggedOutUser();
+                        }
                     } else {
                         // Check if OAuth callback is in progress - tokens may still be processing
                         const isOAuthCallback = window.location.hash.includes('access_token') ||
