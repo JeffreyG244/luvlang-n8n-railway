@@ -736,19 +736,14 @@ async function updateUIForLoggedInUser() {
         sessionStorage.setItem('luvlang_authenticated', 'true');
     }
 
-    // Check if returning user (already completed tour)
-    const hasCompletedTour = localStorage.getItem('voiceTourCompleted') === 'true';
+    // Clear old tour flags so language selection shows
+    localStorage.removeItem('voiceTourCompleted');
+    localStorage.removeItem('tourLanguage');
 
-    if (typeof window.OnboardingFlow !== 'undefined') {
-        if (hasCompletedTour) {
-            // Returning user - skip to app directly
-            console.log('👤 Returning user, skipping to app...');
-            window.OnboardingFlow.skipToApp();
-        } else {
-            // New user or hasn't completed tour - show loading then start tour
-            console.log('📄 New user, showing loading screen then tour...');
-            window.OnboardingFlow.onLoginSuccess();
-        }
+    // Always show loading screen then language selection after sign in
+    if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
+        console.log('📄 Showing loading screen then tour...');
+        window.OnboardingFlow.onLoginSuccess();
     } else {
         // Fallback: directly hide signup gate
         const signupGate = document.getElementById('signupGateOverlay');
