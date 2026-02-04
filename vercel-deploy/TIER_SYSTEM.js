@@ -388,23 +388,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Wait for DOM to be ready, then connect export button
 window.addEventListener('load', function() {
-    // Find all export buttons and connect to export function
+    // Find all export buttons and connect to PRICING MODAL (not direct export)
     const exportBtn = document.getElementById('exportBtn');
 
     if (exportBtn) {
         exportBtn.addEventListener('click', async function(e) {
             e.preventDefault();
-            console.log('📤 Export clicked - Starting export process');
+            e.stopPropagation();
+            console.log('📤 Export clicked - Opening pricing modal');
 
-            // Call the actual export function
-            if (typeof window.performExport === 'function') {
-                await window.performExport();
+            // Show pricing modal - user must pay before export
+            if (typeof window.openPricingModal === 'function') {
+                window.openPricingModal();
             } else {
-                console.error('❌ Export function not found');
-                alert('Export function not available. Please reload the page.');
+                console.error('❌ Pricing modal not found');
+                alert('Please wait for the page to fully load, then try again.');
             }
         });
-        console.log('✅ Export button connected to performExport()');
+        console.log('✅ Export button connected to pricing modal');
     }
 
     // Export Bar A/B button (if exists)
