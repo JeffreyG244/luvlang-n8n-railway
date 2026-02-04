@@ -78,50 +78,35 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
-        // Check if returning from OAuth callback
-        const isOAuthCallback = window.location.hash.includes('access_token') ||
-                                window.location.search.includes('code=');
+        // Let Supabase handle EVERYTHING - just listen for state changes
+        // This handles: initial session, OAuth callbacks, sign in, sign out
+        const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+            async (event, session) => {
+                console.log('🔐 Auth event:', event, session ? '(has session)' : '(no session)');
 
-        // Set up auth state change listener FIRST (handles OAuth callbacks)
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            console.log('🔐 Auth state changed:', event);
-
-            if (session) {
-                currentUser = session.user;
-                window.currentUser = currentUser;
-                updateUIForLoggedInUser();
-            } else if (!isOAuthCallback) {
-                // Only show logged out UI if NOT in OAuth callback
-                currentUser = null;
-                window.currentUser = null;
-                updateUIForLoggedOutUser();
-            }
-        });
-
-        // If NOT OAuth callback, check session immediately
-        if (!isOAuthCallback) {
-            try {
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-
-                if (error) {
-                    console.warn('⚠️ Auth session check failed:', error.message);
-                    updateUIForLoggedOutUser();
-                } else if (session) {
+                if (event === 'SIGNED_IN' && session) {
                     currentUser = session.user;
                     window.currentUser = currentUser;
-                    console.log('👤 User already logged in:', currentUser.email);
+                    console.log('👤 Signed in:', currentUser.email);
                     updateUIForLoggedInUser();
-                } else {
-                    console.log('👤 No active session');
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    window.currentUser = null;
+                    console.log('👤 Signed out');
                     updateUIForLoggedOutUser();
+                } else if (event === 'INITIAL_SESSION') {
+                    if (session) {
+                        currentUser = session.user;
+                        window.currentUser = currentUser;
+                        console.log('👤 Initial session:', currentUser.email);
+                        updateUIForLoggedInUser();
+                    } else {
+                        console.log('👤 No initial session');
+                        updateUIForLoggedOutUser();
+                    }
                 }
-            } catch (authError) {
-                console.warn('⚠️ Auth check skipped:', authError.message);
-                updateUIForLoggedOutUser();
             }
-        } else {
-            console.log('🔐 OAuth callback - waiting for auth state change...');
-        }
+        );
 
         isInitializing = false;
         return true;
