@@ -346,13 +346,13 @@ async function signOut() {
 async function createUserProfile(userId, email, displayName) {
     try {
         const { data, error } = await supabaseClient
-            .from('user_profiles')
+            .from('profiles')
             .insert([
                 {
                     id: userId,
                     email: email,
                     display_name: displayName,
-                    subscription_tier: 'free', // Default to free tier
+                    tier: 'free', // Default to free tier
                     created_at: new Date().toISOString()
                 }
             ]);
@@ -611,14 +611,14 @@ async function getUserSubscription() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('user_profiles')
-            .select('subscription_tier')
+            .from('profiles')
+            .select('tier')
             .eq('id', currentUser.id)
             .single();
 
         if (error) throw error;
 
-        const tierName = data.subscription_tier || 'free';
+        const tierName = data.tier || 'free';
         const tierData = SUBSCRIPTION_TIERS[tierName] || SUBSCRIPTION_TIERS.free;
 
         return {
@@ -799,6 +799,21 @@ async function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
+    console.log('👤 User logged out, showing signup gate...');
+
+    // Show signup gate overlay
+    const signupGate = document.getElementById('signupGateOverlay');
+    if (signupGate) {
+        signupGate.classList.remove('hidden');
+        signupGate.style.display = 'flex';
+        console.log('   Signup gate shown');
+    }
+
+    // Clear session storage auth state
+    if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('luvlang_authenticated');
+    }
+
     // Hide user menu, show auth buttons
     const userMenu = document.getElementById('userMenu');
     if (userMenu) {
