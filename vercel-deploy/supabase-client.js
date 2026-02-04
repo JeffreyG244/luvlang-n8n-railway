@@ -78,6 +78,22 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
+        // Check if we're in an OAuth callback and set up timeout
+        const isOAuthCallback = window.location.hash.includes('access_token') ||
+                                window.location.search.includes('code=');
+        if (isOAuthCallback) {
+            console.log('🔐 OAuth callback detected - setting up 10s timeout');
+            // Safety timeout: if OAuth doesn't complete in 10 seconds, show error
+            setTimeout(() => {
+                if (!currentUser) {
+                    console.error('❌ OAuth timeout - tokens not processed in time');
+                    // Clean URL and show landing page
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    updateUIForLoggedOutUser();
+                }
+            }, 10000);
+        }
+
         // Let Supabase handle EVERYTHING - just listen for state changes
         // This handles: initial session, OAuth callbacks, sign in, sign out
         const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
@@ -88,6 +104,13 @@ async function initializeSupabase() {
                     currentUser = session.user;
                     window.currentUser = currentUser;
                     console.log('👤 Signed in:', currentUser.email);
+
+                    // Clean up OAuth tokens from URL to prevent issues on refresh
+                    if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+                        console.log('🧹 Cleaning OAuth tokens from URL');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+
                     updateUIForLoggedInUser();
                 } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
@@ -101,8 +124,16 @@ async function initializeSupabase() {
                         console.log('👤 Initial session:', currentUser.email);
                         updateUIForLoggedInUser();
                     } else {
-                        console.log('👤 No initial session');
-                        updateUIForLoggedOutUser();
+                        // Check if OAuth callback is in progress - tokens may still be processing
+                        const isOAuthCallback = window.location.hash.includes('access_token') ||
+                                                window.location.search.includes('code=');
+                        if (isOAuthCallback) {
+                            console.log('🔐 No session yet but OAuth callback detected - waiting for SIGNED_IN event...');
+                            // Don't show landing page - wait for Supabase to process tokens
+                        } else {
+                            console.log('👤 No initial session');
+                            updateUIForLoggedOutUser();
+                        }
                     }
                 }
             }
@@ -712,6 +743,19 @@ async function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
+    // CRITICAL: Check if we're in an OAuth callback - don't show landing page yet!
+    // Supabase needs time to process the tokens from the URL
+    const isOAuthCallback = window.location.hash.includes('access_token') ||
+                            window.location.search.includes('code=') ||
+                            window.location.hash.includes('error=');
+
+    if (isOAuthCallback) {
+        console.log('🔐 OAuth callback in progress - NOT showing landing page, waiting for token processing...');
+        // Don't clear state or show landing page during OAuth callback
+        // Supabase will fire SIGNED_IN event once tokens are processed
+        return;
+    }
+
     console.log('👤 User not logged in, showing landing page...');
 
     // Clear all auth and tour state
