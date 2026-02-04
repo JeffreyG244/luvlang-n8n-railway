@@ -3708,14 +3708,23 @@
             const modal = document.getElementById('tourLanguageModal');
             if (modal) modal.style.display = 'none';
 
-            // Set the tour language and start
+            // Set the tour language
             if (typeof window.setTourLanguage === 'function') {
                 window.setTourLanguage(lang);
             }
 
-            // Actually start the tour now (auto-start for onboarding)
-            if (typeof window.startTourAfterLanguage === 'function') {
-                window.startTourAfterLanguage();
+            // Check if tour is already active (language selected mid-tour after file upload)
+            if (typeof window.tourActive !== 'undefined' && window.tourActive) {
+                // Continue tour to next step (format selection)
+                console.log('🌍 Language selected mid-tour, continuing to next step...');
+                if (typeof window.continueTourAfterLanguage === 'function') {
+                    window.continueTourAfterLanguage();
+                }
+            } else {
+                // Start tour from beginning
+                if (typeof window.startTourAfterLanguage === 'function') {
+                    window.startTourAfterLanguage();
+                }
             }
 
             // Clear onboarding flag
@@ -26753,6 +26762,19 @@
                 if (actionType === 'fileUploaded') {
                     const uploadZone = document.getElementById('tourUploadZone');
                     if (uploadZone) uploadZone.style.display = 'none';
+
+                    // Show language selection after file upload (if not already selected)
+                    const hasLanguage = localStorage.getItem('tourLanguage');
+                    if (!hasLanguage) {
+                        console.log('🌍 Showing language selection after file upload...');
+                        const langModal = document.getElementById('tourLanguageModal');
+                        if (langModal) {
+                            langModal.style.display = 'flex';
+                            // Don't advance yet - wait for language selection
+                            // The selectTourLanguage function will call continueTourAfterLanguage()
+                            return;
+                        }
+                    }
                 }
 
                 // Hide the format zone when format is selected
@@ -26872,6 +26894,16 @@
             console.log('🎤 Voice Tour Completed');
         }
 
+        // Continue tour after language selection (mid-tour)
+        function continueTourAfterLanguage() {
+            console.log('🎤 Continuing tour after language selection...');
+            // Cancel any speech
+            window.speechSynthesis.cancel();
+            // Advance to next step (format selection)
+            currentStep++;
+            showStep(currentStep);
+        }
+
         // Global Exports
         window.startVoiceTour = startVoiceTour;
         window.startTour = startVoiceTour;
@@ -26885,6 +26917,11 @@
         window.advanceTourOnAction = advanceVoiceTour;
         window.advanceVoiceTour = advanceVoiceTour; // Used by confirmTourFormat
         window.closeVoiceTourExplore = closeVoiceTourExplore;
+        window.continueTourAfterLanguage = continueTourAfterLanguage;
+        // Expose tourActive for checking if tour is in progress
+        Object.defineProperty(window, 'tourActive', {
+            get: function() { return tourActive; }
+        });
         window.onAudioFileLoaded = function() { advanceVoiceTour('fileUploaded'); };
         window.onFormatSelected = function() { advanceVoiceTour('formatSelected'); };
         window.onMasteringComplete = function() { advanceVoiceTour('masteringComplete'); };
