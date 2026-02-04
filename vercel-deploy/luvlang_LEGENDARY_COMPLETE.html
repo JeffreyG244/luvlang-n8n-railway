@@ -5398,37 +5398,30 @@
                 this.startSplash();
             },
 
-            // Start the splash/loading sequence
+            // Start the splash/loading sequence - bulletproof CSS transition version
             startSplash() {
-                const self = this; // Store reference to avoid context loss
-                const progressBar = document.getElementById('splashProgressBar');
-                const statusText = document.getElementById('splashStatus');
-                const statuses = [
-                    'Initializing audio engine...',
-                    'Loading professional presets...',
-                    'Calibrating meters...',
-                    'Preparing mastering suite...',
-                    'Ready!'
-                ];
+                console.log('🚀 Starting splash sequence...');
+                var self = this;
+                var progressBar = document.getElementById('splashProgressBar');
+                var statusText = document.getElementById('splashStatus');
 
-                let progress = 0;
-                const interval = setInterval(function() {
-                    progress += 4; // Faster progress
-                    if (progressBar) progressBar.style.width = progress + '%';
+                // Use CSS transition for smooth progress - no interval needed
+                if (progressBar) {
+                    progressBar.style.transition = 'width 1.8s ease-out';
+                    setTimeout(function() { progressBar.style.width = '100%'; }, 50);
+                }
 
-                    // Update status text
-                    const statusIndex = Math.min(Math.floor(progress / 25), statuses.length - 1);
-                    if (statusText) statusText.textContent = statuses[statusIndex];
+                // Status updates on fixed timers
+                setTimeout(function() { if (statusText) statusText.textContent = 'Loading professional presets...'; }, 400);
+                setTimeout(function() { if (statusText) statusText.textContent = 'Calibrating meters...'; }, 800);
+                setTimeout(function() { if (statusText) statusText.textContent = 'Preparing mastering suite...'; }, 1200);
+                setTimeout(function() { if (statusText) statusText.textContent = 'Ready!'; }, 1600);
 
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        console.log('🚀 Splash complete, transitioning to sign in...');
-                        // Transition to sign in after short delay
-                        setTimeout(function() {
-                            self.goToPage('signin');
-                        }, 400);
-                    }
-                }, 30); // ~1.5 seconds total
+                // Guaranteed transition after 2 seconds
+                setTimeout(function() {
+                    console.log('🚀 Splash complete, going to signin...');
+                    self.goToPage('signin');
+                }, 2000);
             },
 
             // Transition between pages
