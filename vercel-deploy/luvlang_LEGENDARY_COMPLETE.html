@@ -9,14 +9,20 @@
         console.log('URL:', window.location.href);
         console.log('Hash:', window.location.hash);
         console.log('Search:', window.location.search);
-        if (window.location.hash.includes('access_token')) {
-            console.log('*** OAUTH TOKEN FOUND IN HASH ***');
-        }
-        if (window.location.search.includes('code=')) {
-            console.log('*** OAUTH CODE FOUND IN SEARCH ***');
-        }
-        if (window.location.hash.includes('error')) {
-            console.log('*** OAUTH ERROR:', decodeURIComponent(window.location.hash));
+
+        // Check for OAuth callback
+        var hasToken = window.location.hash.includes('access_token');
+        var hasCode = window.location.search.includes('code=');
+        var hasError = window.location.hash.includes('error');
+
+        if (hasToken || hasCode || hasError) {
+            // This is an OAuth callback - show alert so we know what's happening
+            var msg = 'OAuth Callback Detected!\n\n';
+            if (hasToken) msg += '✅ ACCESS TOKEN FOUND\n';
+            if (hasCode) msg += '✅ AUTH CODE FOUND\n';
+            if (hasError) msg += '❌ ERROR: ' + decodeURIComponent(window.location.hash) + '\n';
+            msg += '\nURL: ' + window.location.href.substring(0, 100) + '...';
+            alert(msg);
         }
         console.log('=== END DEBUG ===');
     </script>
