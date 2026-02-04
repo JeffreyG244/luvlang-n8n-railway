@@ -2505,6 +2505,29 @@
             transform: scale(1.05);
         }
 
+        /* Genre section tour highlight - pulsing glow */
+        .genre-section-tour-highlight {
+            animation: genreSectionPulse 1.5s ease-in-out infinite;
+            border: 2px solid rgba(0, 212, 255, 0.6) !important;
+            border-radius: 12px !important;
+            position: relative;
+            z-index: 100001;
+        }
+        @keyframes genreSectionPulse {
+            0%, 100% {
+                box-shadow:
+                    0 0 20px rgba(0, 212, 255, 0.4),
+                    0 0 40px rgba(0, 212, 255, 0.2),
+                    0 0 60px rgba(0, 212, 255, 0.1);
+            }
+            50% {
+                box-shadow:
+                    0 0 30px rgba(0, 212, 255, 0.8),
+                    0 0 60px rgba(0, 212, 255, 0.5),
+                    0 0 100px rgba(0, 212, 255, 0.3);
+            }
+        }
+
         .genre-icon {
             font-size: 1.2rem;
             opacity: 0.7;
@@ -11617,7 +11640,14 @@
                 // Master button is already visible from the main MASTER button in the interface
 
                 // AUTO-PLAY: Start playback automatically when file is loaded
+                // SKIP auto-play during voice tour to prevent audio click before format step
                 setTimeout(() => {
+                    // Don't auto-play if voice tour is active - let the tour control audio
+                    if (window.tourActive) {
+                        console.log('🎤 Voice tour active - skipping auto-play to prevent audio click');
+                        return;
+                    }
+
                     const startPlayback = () => {
                         // ═══════════════════════════════════════════════════════════════
                         // CRITICAL FIX: FORCE ORIGINAL AUDIO ON INITIAL LOAD
@@ -26529,6 +26559,35 @@
                 // Hide instruction and remove glow
                 if (masterInstruction) masterInstruction.style.display = 'none';
                 if (masterBtn) masterBtn.classList.remove('master-btn-tour-highlight');
+            }
+
+            // Show/hide genre section glow for step 4 (complete step - "look to your left")
+            const genreSection = document.getElementById('genreSection');
+            if (step.id === 'complete') {
+                console.log('🎤 COMPLETE STEP - Showing genre section glow');
+                if (genreSection) {
+                    genreSection.classList.add('genre-section-tour-highlight');
+                    genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Set up one-time click handlers for all genre buttons
+                    const genreButtons = genreSection.querySelectorAll('.genre-btn');
+                    const handleGenreClick = () => {
+                        console.log('🎤 Genre button clicked - removing glow and advancing tour');
+                        genreSection.classList.remove('genre-section-tour-highlight');
+                        // Remove listeners from all buttons
+                        genreButtons.forEach(btn => btn.removeEventListener('click', handleGenreClick));
+                        // Advance to next step
+                        if (typeof nextTourStep === 'function') {
+                            setTimeout(() => nextTourStep(), 500);
+                        }
+                    };
+                    genreButtons.forEach(btn => btn.addEventListener('click', handleGenreClick));
+                }
+            } else {
+                // Remove glow from genre section
+                if (genreSection) {
+                    genreSection.classList.remove('genre-section-tour-highlight');
+                }
             }
 
             // Update progress bar
