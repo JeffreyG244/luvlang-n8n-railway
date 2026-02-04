@@ -5456,7 +5456,18 @@
             }
             OnboardingFlow.supabaseResponded = true;
             console.log('🏠 Showing landing page');
+
+            // Hide any other overlays that might be visible
+            var langModal = document.getElementById('tourLanguageModal');
+            var signupGate = document.getElementById('signupGateOverlay');
+            var postLogin = document.getElementById('postLoginLoading');
+            if (langModal) langModal.style.display = 'none';
+            if (signupGate) { signupGate.classList.add('hidden'); signupGate.style.display = 'none'; }
+            if (postLogin) postLogin.remove();
+
+            // Show splash/landing page
             if (splash) {
+                splash.style.display = 'flex';
                 splash.style.opacity = '1';
                 splash.style.visibility = 'visible';
                 splash.classList.add('active');
@@ -8661,7 +8672,15 @@
                     if (typeof signOut === 'function') {
                         const result = await signOut();
                         if (result.success) {
-                            alert('You have been signed out');
+                            // Clear ALL localStorage and sessionStorage
+                            localStorage.removeItem('voiceTourCompleted');
+                            localStorage.removeItem('tourLanguage');
+                            localStorage.removeItem('luvlang_language_selected');
+                            sessionStorage.removeItem('luvlang_authenticated');
+                            sessionStorage.removeItem('voiceTourStarted');
+
+                            // Reload page to show landing page
+                            window.location.reload();
                         }
                     }
                 });

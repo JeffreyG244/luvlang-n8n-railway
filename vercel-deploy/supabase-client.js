@@ -714,10 +714,12 @@ async function updateUIForLoggedInUser() {
 function updateUIForLoggedOutUser() {
     console.log('👤 User not logged in, showing landing page...');
 
-    // Clear session storage auth state
-    if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.removeItem('luvlang_authenticated');
-    }
+    // Clear all auth and tour state
+    sessionStorage.removeItem('luvlang_authenticated');
+    sessionStorage.removeItem('voiceTourStarted');
+    localStorage.removeItem('voiceTourCompleted');
+    localStorage.removeItem('tourLanguage');
+    localStorage.removeItem('luvlang_language_selected');
 
     // Show the landing page via OnboardingFlow
     if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.showLandingPage === 'function') {
