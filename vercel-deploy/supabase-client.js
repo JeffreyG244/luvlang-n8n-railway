@@ -81,6 +81,8 @@ if (typeof window !== 'undefined') {
 // Track initialization state
 let isInitialized = false;
 let isInitializing = false;
+let lastAuthEvent = null;
+let authHandlingInProgress = false;
 
 /**
  * Initialize Supabase client
@@ -185,6 +187,21 @@ async function initializeSupabase() {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
 
+                // Skip duplicate events
+                const eventKey = event + (session ? session.user?.id : 'none');
+                if (eventKey === lastAuthEvent) {
+                    console.log('⚠️ Duplicate auth event, skipping');
+                    return;
+                }
+                lastAuthEvent = eventKey;
+
+                // Prevent concurrent handling
+                if (authHandlingInProgress) {
+                    console.log('⚠️ Auth handling already in progress, skipping');
+                    return;
+                }
+                authHandlingInProgress = true;
+
                 if (session) {
                     currentUser = session.user;
                     window.currentUser = currentUser;
@@ -194,6 +211,9 @@ async function initializeSupabase() {
                     window.currentUser = null;
                     updateUIForLoggedOutUser();
                 }
+
+                // Reset after a short delay to allow next legitimate event
+                setTimeout(() => { authHandlingInProgress = false; }, 500);
             });
         } catch (listenerError) {
             console.warn('⚠️ Auth listener setup skipped:', listenerError.message);

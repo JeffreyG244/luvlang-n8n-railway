@@ -5420,16 +5420,25 @@
             currentPage: 'splash'
         };
 
+        // Track if Supabase has responded
+        OnboardingFlow.supabaseResponded = false;
+
         // Initialize onboarding - Supabase controls what gets shown
         OnboardingFlow.init = function() {
-            console.log('🚀 Onboarding system ready - Supabase will control the flow');
-            // Supabase auth check will call either:
-            // - onLoginSuccess() → loading screen → tour
-            // - showLandingPage() → landing page with "Get Started"
+            console.log('🚀 Onboarding system ready - waiting for Supabase...');
+
+            // Fallback: If Supabase doesn't respond in 2 seconds, show landing page
+            setTimeout(function() {
+                if (!OnboardingFlow.supabaseResponded) {
+                    console.log('⚠️ Supabase timeout - showing landing page as fallback');
+                    OnboardingFlow.showLandingPage();
+                }
+            }, 2000);
         };
 
         // Show landing page for non-authenticated users (called by Supabase)
         OnboardingFlow.showLandingPage = function() {
+            OnboardingFlow.supabaseResponded = true;
             console.log('🏠 Showing landing page');
             var splash = document.getElementById('onboardingSplash');
             if (splash) {
@@ -5484,8 +5493,18 @@
             }, 400);
         };
 
+        // Track if login handling is already in progress
+        OnboardingFlow.loginInProgress = false;
+
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
+            // Prevent multiple calls (auth state can fire multiple times)
+            if (OnboardingFlow.loginInProgress) {
+                console.log('⚠️ Login already in progress, skipping duplicate call');
+                return;
+            }
+            OnboardingFlow.loginInProgress = true;
+            OnboardingFlow.supabaseResponded = true;
             console.log('✅ Login successful, showing loading screen...');
 
             // Go to app first
@@ -5582,11 +5601,14 @@
 
         // Skip to app for returning users
         OnboardingFlow.skipToApp = function() {
+            OnboardingFlow.supabaseResponded = true;
             var splash = document.getElementById('onboardingSplash');
             var langPage = document.getElementById('onboardingLanguage');
             var signupGate = document.getElementById('signupGateOverlay');
+            var postLogin = document.getElementById('postLoginLoading');
             if (splash) splash.style.display = 'none';
             if (langPage) langPage.style.display = 'none';
+            if (postLogin) postLogin.remove();
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
