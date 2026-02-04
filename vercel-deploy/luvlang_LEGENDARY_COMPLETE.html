@@ -6913,8 +6913,8 @@
 
             <!-- HEADER LOGO -->
             <div class="header-logo">
-                <div class="logo-text">LuvLang</div>
-                <div class="logo-subtitle">Professional Mastering Platform</div>
+                <div class="logo-text" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">LuvLang</div>
+                <div class="logo-subtitle" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #00d4ff; margin-top: 4px; font-weight: 600;">Professional Mastering Platform</div>
                 <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 4px;">v4.2.0</div>
                 <button onclick="restartTourFresh()" style="
                     margin-top: 10px;
@@ -26499,7 +26499,15 @@
         };
 
         function stopSpeaking() {
+            // Stop Web Speech API
             window.speechSynthesis.cancel();
+            // Stop ElevenLabs audio if playing
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                console.log('🔇 Stopped ElevenLabs audio');
+            }
         }
 
         function toggleVoice() {
@@ -26509,6 +26517,12 @@
             if (!voiceEnabled) {
                 // MUTE - immediately stop any speaking
                 window.speechSynthesis.cancel();
+                // Also stop ElevenLabs audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
                 console.log('🔇 Voice muted');
             } else {
                 // UNMUTE - just enable future audio, don't restart current instruction
