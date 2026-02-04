@@ -5075,7 +5075,7 @@
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 
     <!-- PAGE 1: LOADING/SPLASH SCREEN -->
-    <div id="onboardingSplash" class="onboarding-page onboarding-splash active">
+    <div id="onboardingSplash" class="onboarding-page onboarding-splash active" style="opacity: 1 !important; visibility: visible !important;">
         <style>
             /* Onboarding System Core Styles */
             .onboarding-page {
@@ -5523,12 +5523,12 @@
         // Make OnboardingFlow globally accessible
         window.OnboardingFlow = OnboardingFlow;
 
-        // Start onboarding when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => OnboardingFlow.init());
-        } else {
-            // Small delay to ensure all scripts loaded
-            setTimeout(() => OnboardingFlow.init(), 100);
+        // Start onboarding IMMEDIATELY - no waiting
+        console.log('⚡ Onboarding script loaded, starting NOW');
+        try {
+            OnboardingFlow.init();
+        } catch(e) {
+            console.error('❌ Onboarding init error:', e);
         }
     </script>
 
