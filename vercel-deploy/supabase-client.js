@@ -155,33 +155,35 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
-        // Listen for auth state changes (handles initial session + changes)
-        try {
-            // Simple: check session once, then only listen for sign out
-            const { data: { session } } = await supabaseClient.auth.getSession();
+        // Use onAuthStateChange - it properly handles OAuth callback tokens
+        let authHandled = false;
 
-            if (session) {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('🔐 Auth event:', event, session ? 'has session' : 'no session');
+
+            // Only handle once per page load
+            if (authHandled && event !== 'SIGNED_OUT') {
+                console.log('⚠️ Auth already handled, skipping');
+                return;
+            }
+
+            if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
+                authHandled = true;
                 currentUser = session.user;
                 window.currentUser = currentUser;
                 console.log('👤 User logged in:', currentUser.email);
                 updateUIForLoggedInUser();
-            } else {
+            } else if (event === 'SIGNED_OUT') {
+                authHandled = false;
+                currentUser = null;
+                window.currentUser = null;
+                updateUIForLoggedOutUser();
+            } else if (event === 'INITIAL_SESSION' && !session) {
+                authHandled = true;
                 console.log('👤 No session, showing landing');
                 updateUIForLoggedOutUser();
             }
-
-            // Only listen for explicit sign out
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('🔐 Auth event:', event);
-                if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    window.currentUser = null;
-                    updateUIForLoggedOutUser();
-                }
-            });
-        } catch (listenerError) {
-            console.warn('⚠️ Auth listener setup skipped:', listenerError.message);
-        }
+        });
 
         isInitializing = false;
         return true;
