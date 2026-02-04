@@ -5456,31 +5456,38 @@
         </style>
 
         <div class="language-content">
-            <!-- EQ BAR LOGO -->
-            <div style="width: 100px; height: 100px; margin: 0 auto 24px;">
-                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; filter: drop-shadow(0 0 20px rgba(0,212,255,0.6)) drop-shadow(0 0 40px rgba(184,79,255,0.4));">
-                    <defs>
-                        <linearGradient id="langLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#b84fff;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
-                        </linearGradient>
-                        <filter id="langGlow">
-                            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                        </filter>
-                    </defs>
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#langLogoGrad)" stroke-width="2" opacity="0.6"/>
-                    <g filter="url(#langGlow)">
-                        <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="16;24;16" dur="1s" repeatCount="indefinite"/><animate attributeName="y" values="42;38;42" dur="1s" repeatCount="indefinite"/></rect>
-                        <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="30;20;30" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="35;40;35" dur="0.8s" repeatCount="indefinite"/></rect>
-                        <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="44;36;44" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y" values="28;32;28" dur="1.2s" repeatCount="indefinite"/></rect>
-                        <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="56;44;56" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="22;28;22" dur="0.9s" repeatCount="indefinite"/></rect>
-                        <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="44;32;44" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y" values="28;34;28" dur="1.1s" repeatCount="indefinite"/></rect>
-                        <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="30;22;30" dur="0.7s" repeatCount="indefinite"/><animate attributeName="y" values="35;39;35" dur="0.7s" repeatCount="indefinite"/></rect>
-                        <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="16;26;16" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y" values="42;37;42" dur="1.3s" repeatCount="indefinite"/></rect>
-                    </g>
-                </svg>
+            <!-- LOGO WITH GLOBE OVERLAY -->
+            <div style="position: relative; margin: 0 auto 24px; text-align: center;">
+                <!-- Background: EQ Bar Logo + LuvLang text -->
+                <div style="width: 100px; height: 100px; margin: 0 auto;">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; filter: drop-shadow(0 0 20px rgba(0,212,255,0.6)) drop-shadow(0 0 40px rgba(184,79,255,0.4));">
+                        <defs>
+                            <linearGradient id="langLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#b84fff;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
+                            </linearGradient>
+                            <filter id="langGlow">
+                                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#langLogoGrad)" stroke-width="2" opacity="0.6"/>
+                        <g filter="url(#langGlow)">
+                            <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="16;24;16" dur="1s" repeatCount="indefinite"/><animate attributeName="y" values="42;38;42" dur="1s" repeatCount="indefinite"/></rect>
+                            <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="30;20;30" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="35;40;35" dur="0.8s" repeatCount="indefinite"/></rect>
+                            <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="44;36;44" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y" values="28;32;28" dur="1.2s" repeatCount="indefinite"/></rect>
+                            <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="56;44;56" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="22;28;22" dur="0.9s" repeatCount="indefinite"/></rect>
+                            <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="44;32;44" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y" values="28;34;28" dur="1.1s" repeatCount="indefinite"/></rect>
+                            <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="30;22;30" dur="0.7s" repeatCount="indefinite"/><animate attributeName="y" values="35;39;35" dur="0.7s" repeatCount="indefinite"/></rect>
+                            <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#langLogoGrad)"><animate attributeName="height" values="16;26;16" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y" values="42;37;42" dur="1.3s" repeatCount="indefinite"/></rect>
+                        </g>
+                    </svg>
+                </div>
+                <!-- LuvLang text below logo -->
+                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 8px;">LuvLang</div>
+                <!-- Globe overlay in front -->
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); font-size: 3rem; z-index: 10; filter: drop-shadow(0 0 20px rgba(0,212,255,0.5));">🌍</div>
             </div>
             <h1 class="language-title">Choose Your Language</h1>
             <p class="language-subtitle">Select your preferred language for the guided tour</p>
