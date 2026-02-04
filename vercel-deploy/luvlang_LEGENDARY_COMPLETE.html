@@ -5170,33 +5170,53 @@
                 margin-bottom: 60px;
             }
 
-            /* Loading Progress Bar */
-            .splash-progress {
-                width: 280px;
-                height: 4px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 4px;
-                overflow: hidden;
-                margin: 0 auto;
+            /* Landing Page Features */
+            .landing-features {
+                display: flex;
+                gap: 40px;
+                margin-bottom: 50px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
-            .splash-progress-bar {
-                height: 100%;
-                width: 0%;
-                background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88);
-                background-size: 200% 100%;
-                border-radius: 4px;
-                animation: progressGradient 2s linear infinite;
-                transition: width 0.3s ease;
+            .landing-feature {
+                text-align: center;
             }
-            @keyframes progressGradient {
-                0% { background-position: 0% 50%; }
-                100% { background-position: 200% 50%; }
+            .landing-feature-icon {
+                font-size: 2rem;
+                margin-bottom: 8px;
             }
-            .splash-status {
-                font-size: 0.75rem;
-                color: rgba(255,255,255,0.4);
+            .landing-feature-text {
+                font-size: 0.85rem;
+                color: rgba(255,255,255,0.7);
+                font-weight: 500;
+            }
+            /* Get Started Button */
+            .landing-cta {
+                padding: 18px 60px;
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #fff;
+                background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+            .landing-cta:hover {
+                transform: translateY(-3px) scale(1.02);
+                box-shadow: 0 12px 40px rgba(0, 212, 255, 0.6);
+            }
+            .landing-cta:active {
+                transform: translateY(0) scale(0.98);
+            }
+            .landing-subtitle {
+                font-size: 1.1rem;
+                color: rgba(255,255,255,0.5);
                 margin-top: 20px;
-                letter-spacing: 1px;
+                font-weight: 400;
             }
         </style>
 
@@ -5255,11 +5275,12 @@
                 </svg>
             </div>
             <h1 class="splash-title">LuvLang</h1>
-            <p class="splash-tagline">Professional Mastering</p>
-            <div class="splash-progress">
-                <div class="splash-progress-bar" id="splashProgressBar"></div>
-            </div>
-            <p class="splash-status" id="splashStatus">Initializing audio engine...</p>
+            <p class="splash-tagline">Professional Mastering Platform</p>
+
+            <button class="landing-cta" onclick="OnboardingFlow.goToPage('signin')">
+                Get Started
+            </button>
+            <p class="landing-subtitle">Free to try • No credit card required</p>
         </div>
     </div>
 
@@ -5396,29 +5417,11 @@
             OnboardingFlow.startSplash();
         };
 
-        // Start splash screen
+        // Show landing page - user clicks "Get Started" to continue
         OnboardingFlow.startSplash = function() {
-            console.log('🚀 Starting splash sequence...');
-            var progressBar = document.getElementById('splashProgressBar');
-            var statusText = document.getElementById('splashStatus');
-
-            // CSS transition for progress bar
-            if (progressBar) {
-                progressBar.style.transition = 'width 1.8s ease-out';
-                setTimeout(function() { progressBar.style.width = '100%'; }, 50);
-            }
-
-            // Status text updates
-            setTimeout(function() { if (statusText) statusText.textContent = 'Loading professional presets...'; }, 400);
-            setTimeout(function() { if (statusText) statusText.textContent = 'Calibrating meters...'; }, 800);
-            setTimeout(function() { if (statusText) statusText.textContent = 'Preparing mastering suite...'; }, 1200);
-            setTimeout(function() { if (statusText) statusText.textContent = 'Ready!'; }, 1600);
-
-            // Go to signin after 2 seconds
-            setTimeout(function() {
-                console.log('🚀 Splash complete, showing signin...');
-                OnboardingFlow.goToPage('signin');
-            }, 2000);
+            console.log('🏠 Showing landing page - waiting for user to click Get Started');
+            // Landing page is already visible, just wait for user to click "Get Started"
+            // The button calls OnboardingFlow.goToPage('signin')
         };
 
         // Page transitions
@@ -5465,18 +5468,24 @@
 
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
-            console.log('✅ Login successful, checking language preference...');
-            var hasLanguage = localStorage.getItem('luvlang_language_selected') === 'true';
+            console.log('✅ Login successful, starting tour...');
 
-            if (hasLanguage) {
-                OnboardingFlow.goToPage('app');
-                var tourCompleted = localStorage.getItem('voiceTourCompleted') === 'true';
-                if (!tourCompleted && typeof window.startTour === 'function') {
-                    setTimeout(function() { window.startTour(); }, 1000);
+            // Go to app and start the tour
+            OnboardingFlow.goToPage('app');
+
+            // Set English as default and start tour
+            localStorage.setItem('tourLanguage', 'en');
+            localStorage.setItem('luvlang_language_selected', 'true');
+
+            // Start the voice-guided tour after a short delay
+            setTimeout(function() {
+                console.log('🎤 Starting voice-guided tour...');
+                if (typeof window.startTour === 'function') {
+                    window.startTour();
+                } else if (typeof window.startTourAfterLanguage === 'function') {
+                    window.startTourAfterLanguage();
                 }
-            } else {
-                OnboardingFlow.goToPage('language');
-            }
+            }, 1000);
         };
 
         // Skip to app for returning users
