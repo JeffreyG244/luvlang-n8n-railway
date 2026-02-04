@@ -738,6 +738,8 @@ async function applyTierRestrictions() {
  */
 async function updateUIForLoggedInUser() {
     console.log('✅ User logged in, updating UI...');
+    console.log('   DEBUG: OnboardingFlow exists:', typeof window.OnboardingFlow !== 'undefined');
+    console.log('   DEBUG: onLoginSuccess exists:', typeof window.OnboardingFlow?.onLoginSuccess === 'function');
 
     // Store auth state in session storage
     if (typeof sessionStorage !== 'undefined') {
@@ -750,9 +752,11 @@ async function updateUIForLoggedInUser() {
 
     // Always show loading screen then language selection after sign in
     if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
-        console.log('📄 Showing loading screen then tour...');
+        console.log('📄 Calling OnboardingFlow.onLoginSuccess()...');
         window.OnboardingFlow.onLoginSuccess();
+        console.log('📄 OnboardingFlow.onLoginSuccess() called');
     } else {
+        console.log('⚠️ OnboardingFlow not available, using fallback');
         // Fallback: directly hide signup gate
         const signupGate = document.getElementById('signupGateOverlay');
         if (signupGate) {
