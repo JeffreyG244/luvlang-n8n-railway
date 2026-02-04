@@ -6799,20 +6799,46 @@
         async function handleGoogleLogin() {
             hideGateMessages();
             console.log('🔐 Google login clicked...');
+
+            // Check if already signed in
+            if (window.currentUser) {
+                console.log('⚠️ Already signed in as:', window.currentUser.email);
+                alert('You are already signed in! Proceeding to app...');
+                if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
+                    window.OnboardingFlow.onLoginSuccess();
+                }
+                return;
+            }
+
             try {
                 if (typeof initializeSupabase === 'function') {
                     console.log('   Initializing Supabase...');
                     const initialized = await initializeSupabase();
                     console.log('   Supabase initialized:', initialized);
                 }
+
+                // Double-check for existing session
                 if (window.supabaseClient && window.supabaseClient.auth) {
-                    console.log('   Supabase client ready, starting OAuth...');
+                    const { data: sessionData } = await window.supabaseClient.auth.getSession();
+                    if (sessionData && sessionData.session) {
+                        console.log('⚠️ Found existing session!', sessionData.session.user.email);
+                        alert('Found existing session for: ' + sessionData.session.user.email);
+                        window.currentUser = sessionData.session.user;
+                        if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.onLoginSuccess === 'function') {
+                            window.OnboardingFlow.onLoginSuccess();
+                        }
+                        return;
+                    }
+
+                    console.log('   No existing session, starting OAuth...');
+                    console.log('   Redirecting to Google...');
+
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
                             redirectTo: window.location.origin,
                             queryParams: {
-                                prompt: 'select_account'  // Always show Google account selector
+                                prompt: 'select_account'
                             }
                         }
                     });
