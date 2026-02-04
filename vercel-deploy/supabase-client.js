@@ -120,6 +120,11 @@ async function initializeSupabase() {
                     window.currentUser = currentUser;
                     console.log('👤 Signed in:', currentUser.email);
 
+                    // Clear OAuth flag and remove loading overlay
+                    window.OAUTH_IN_PROGRESS = false;
+                    const oauthOverlay = document.getElementById('oauthLoadingOverlay');
+                    if (oauthOverlay) oauthOverlay.remove();
+
                     // Clean up OAuth tokens from URL to prevent issues on refresh
                     if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
                         console.log('🧹 Cleaning OAuth tokens from URL');
@@ -759,10 +764,10 @@ async function updateUIForLoggedInUser() {
  */
 function updateUIForLoggedOutUser() {
     // CRITICAL: Check if we're in an OAuth callback - don't show landing page yet!
-    // Supabase needs time to process the tokens from the URL
-    const isOAuthCallback = window.location.hash.includes('access_token') ||
-                            window.location.search.includes('code=') ||
-                            window.location.hash.includes('error=');
+    // Use both the global flag AND URL check for safety
+    const isOAuthCallback = window.OAUTH_IN_PROGRESS ||
+                            window.location.hash.includes('access_token') ||
+                            window.location.search.includes('code=');
 
     if (isOAuthCallback) {
         console.log('🔐 OAuth callback in progress - NOT showing landing page, waiting for token processing...');

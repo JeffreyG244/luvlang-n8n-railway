@@ -4,27 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <script>
-        // IMMEDIATE DEBUG - runs before anything else
-        console.log('=== PAGE LOAD DEBUG ===');
-        console.log('URL:', window.location.href);
-        console.log('Hash:', window.location.hash);
-        console.log('Search:', window.location.search);
+        // CRITICAL: OAuth detection - MUST run before anything else
+        // Sets global flag to prevent landing page from showing during OAuth callback
+        window.OAUTH_IN_PROGRESS = false;
 
-        // Check for OAuth callback
-        var hasToken = window.location.hash.includes('access_token');
-        var hasCode = window.location.search.includes('code=');
-        var hasError = window.location.hash.includes('error');
+        (function() {
+            var hasToken = window.location.hash.includes('access_token');
+            var hasCode = window.location.search.includes('code=');
 
-        if (hasToken || hasCode || hasError) {
-            // This is an OAuth callback - show alert so we know what's happening
-            var msg = 'OAuth Callback Detected!\n\n';
-            if (hasToken) msg += '✅ ACCESS TOKEN FOUND\n';
-            if (hasCode) msg += '✅ AUTH CODE FOUND\n';
-            if (hasError) msg += '❌ ERROR: ' + decodeURIComponent(window.location.hash) + '\n';
-            msg += '\nURL: ' + window.location.href.substring(0, 100) + '...';
-            alert(msg);
-        }
-        console.log('=== END DEBUG ===');
+            if (hasToken || hasCode) {
+                window.OAUTH_IN_PROGRESS = true;
+                console.log('🔐 OAuth callback detected - will wait for Supabase to process tokens');
+
+                // Show a loading message instead of landing page
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Create loading overlay
+                    var overlay = document.createElement('div');
+                    overlay.id = 'oauthLoadingOverlay';
+                    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a12;display:flex;align-items:center;justify-content:center;z-index:999999;flex-direction:column;';
+                    overlay.innerHTML = '<div style="font-size:2rem;margin-bottom:20px;">🔐</div><div style="color:#fff;font-size:1.2rem;">Signing you in...</div><div style="color:rgba(255,255,255,0.5);font-size:0.9rem;margin-top:10px;">Please wait</div>';
+                    document.body.appendChild(overlay);
+                });
+            }
+        })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -5500,6 +5502,12 @@
 
         // Show landing page for non-authenticated users (called by Supabase)
         OnboardingFlow.showLandingPage = function() {
+            // CRITICAL: Don't show landing page during OAuth callback
+            if (window.OAUTH_IN_PROGRESS) {
+                console.log('🔐 OAuth in progress - blocking landing page');
+                return;
+            }
+
             var splash = document.getElementById('onboardingSplash');
             // Skip if already showing
             if (splash && splash.classList.contains('active')) {
