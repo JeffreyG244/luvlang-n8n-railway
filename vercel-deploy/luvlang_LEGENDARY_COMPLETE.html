@@ -6745,7 +6745,7 @@
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
-                            redirectTo: window.location.origin
+                            redirectTo: window.location.origin + '/app'
                         }
                     });
                     console.log('   OAuth response:', { data, error });
