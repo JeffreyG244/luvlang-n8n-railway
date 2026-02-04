@@ -2536,26 +2536,31 @@
             transform: scale(1.05);
         }
 
-        /* Genre section tour highlight - pulsing glow */
+        /* Genre section tour highlight - DRAMATIC pulsing glow */
         .genre-section-tour-highlight {
-            animation: genreSectionPulse 1.5s ease-in-out infinite;
-            border: 2px solid rgba(0, 212, 255, 0.6) !important;
-            border-radius: 12px !important;
+            animation: genreSectionPulse 1s ease-in-out infinite !important;
+            border: 3px solid #00d4ff !important;
+            border-radius: 16px !important;
             position: relative;
             z-index: 100001;
+            background: rgba(0, 212, 255, 0.05) !important;
         }
         @keyframes genreSectionPulse {
             0%, 100% {
                 box-shadow:
-                    0 0 20px rgba(0, 212, 255, 0.4),
-                    0 0 40px rgba(0, 212, 255, 0.2),
-                    0 0 60px rgba(0, 212, 255, 0.1);
+                    0 0 30px rgba(0, 212, 255, 0.6),
+                    0 0 60px rgba(0, 212, 255, 0.4),
+                    0 0 90px rgba(0, 212, 255, 0.2),
+                    inset 0 0 20px rgba(0, 212, 255, 0.1);
+                transform: scale(1);
             }
             50% {
                 box-shadow:
-                    0 0 30px rgba(0, 212, 255, 0.8),
-                    0 0 60px rgba(0, 212, 255, 0.5),
-                    0 0 100px rgba(0, 212, 255, 0.3);
+                    0 0 50px rgba(0, 212, 255, 1),
+                    0 0 100px rgba(0, 212, 255, 0.7),
+                    0 0 150px rgba(0, 212, 255, 0.4),
+                    inset 0 0 30px rgba(0, 212, 255, 0.2);
+                transform: scale(1.02);
             }
         }
 
