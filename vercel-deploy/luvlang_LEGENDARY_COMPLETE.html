@@ -3746,6 +3746,16 @@
 
             // Clear onboarding flag
             window.isOnboardingLanguageSelect = false;
+
+            // End the tour if it was starting
+            if (typeof window.endVoiceTour === 'function') {
+                window.endVoiceTour();
+            }
+
+            // Show a toast message
+            if (typeof showToast === 'function') {
+                showToast('Tour skipped. Click ? anytime to start the tour!', 'info');
+            }
         }
     </script>
 
@@ -5477,24 +5487,98 @@
 
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
-            console.log('✅ Login successful, starting tour...');
+            console.log('✅ Login successful, showing loading screen...');
 
-            // Go to app and start the tour
+            // Go to app first
             OnboardingFlow.goToPage('app');
 
-            // Set English as default and start tour
-            localStorage.setItem('tourLanguage', 'en');
-            localStorage.setItem('luvlang_language_selected', 'true');
+            // Show loading overlay
+            OnboardingFlow.showLoadingScreen();
+        };
 
-            // Start the voice-guided tour after a short delay
+        // Show loading screen after sign in
+        OnboardingFlow.showLoadingScreen = function() {
+            // Create loading overlay if it doesn't exist
+            var loadingOverlay = document.getElementById('postLoginLoading');
+            if (!loadingOverlay) {
+                loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'postLoginLoading';
+                loadingOverlay.innerHTML = `
+                    <style>
+                        #postLoginLoading {
+                            position: fixed;
+                            top: 0; left: 0; right: 0; bottom: 0;
+                            background: linear-gradient(135deg, #000510 0%, #020a18 50%, #000510 100%);
+                            z-index: 999999;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            opacity: 1;
+                            transition: opacity 0.5s ease;
+                        }
+                        #postLoginLoading.fade-out { opacity: 0; pointer-events: none; }
+                        .loading-title {
+                            font-size: 2.5rem;
+                            font-weight: 700;
+                            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            margin-bottom: 40px;
+                        }
+                        .loading-bar-container {
+                            width: 300px;
+                            height: 4px;
+                            background: rgba(255,255,255,0.1);
+                            border-radius: 4px;
+                            overflow: hidden;
+                        }
+                        .loading-bar {
+                            height: 100%;
+                            width: 0%;
+                            background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88);
+                            border-radius: 4px;
+                            transition: width 1.8s ease-out;
+                        }
+                        .loading-status {
+                            margin-top: 20px;
+                            font-size: 0.85rem;
+                            color: rgba(255,255,255,0.5);
+                        }
+                    </style>
+                    <h1 class="loading-title">LuvLang</h1>
+                    <div class="loading-bar-container">
+                        <div class="loading-bar" id="postLoginBar"></div>
+                    </div>
+                    <p class="loading-status" id="postLoginStatus">Preparing your studio...</p>
+                `;
+                document.body.appendChild(loadingOverlay);
+            }
+
+            // Animate loading bar
+            var bar = document.getElementById('postLoginBar');
+            var status = document.getElementById('postLoginStatus');
+            if (bar) {
+                setTimeout(function() { bar.style.width = '100%'; }, 50);
+            }
+
+            // Status updates
+            setTimeout(function() { if (status) status.textContent = 'Loading audio engine...'; }, 500);
+            setTimeout(function() { if (status) status.textContent = 'Calibrating processors...'; }, 1000);
+            setTimeout(function() { if (status) status.textContent = 'Ready!'; }, 1500);
+
+            // After loading, start tour (language selection will be Step 1)
             setTimeout(function() {
-                console.log('🎤 Starting voice-guided tour...');
-                if (typeof window.startTour === 'function') {
-                    window.startTour();
-                } else if (typeof window.startTourAfterLanguage === 'function') {
-                    window.startTourAfterLanguage();
-                }
-            }, 1000);
+                console.log('🎤 Loading complete, starting tour...');
+                loadingOverlay.classList.add('fade-out');
+                setTimeout(function() {
+                    loadingOverlay.remove();
+                    // Start tour - will show language selection first (no saved language)
+                    if (typeof window.startTour === 'function') {
+                        window.startTour();
+                    }
+                }, 500);
+            }, 2000);
         };
 
         // Skip to app for returning users
