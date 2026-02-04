@@ -805,16 +805,15 @@ async function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
-    console.log('👤 User logged out, restarting onboarding...');
+    console.log('👤 User not logged in, onboarding will show signin...');
 
     // Clear session storage auth state
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem('luvlang_authenticated');
     }
 
-    // Reload page to restart onboarding flow (splash → signin)
-    // This ensures a clean state and proper flow
-    window.location.reload();
+    // DON'T reload - let the onboarding flow handle showing the signin page
+    // The OnboardingFlow.startSplash() will transition to signin after splash
 
     // Hide user menu, show auth buttons
     const userMenu = document.getElementById('userMenu');
