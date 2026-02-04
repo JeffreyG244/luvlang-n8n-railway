@@ -5427,13 +5427,23 @@
         OnboardingFlow.init = function() {
             console.log('🚀 Onboarding system ready - waiting for Supabase...');
 
-            // Fallback: If Supabase doesn't respond in 2 seconds, show landing page
+            // Check if returning from OAuth (has tokens in URL)
+            var isOAuthCallback = window.location.hash.includes('access_token') ||
+                                  window.location.search.includes('code=');
+
+            if (isOAuthCallback) {
+                console.log('🔐 OAuth callback detected - waiting for Supabase to process...');
+                // Don't show landing page during OAuth callback - let Supabase handle it
+                return;
+            }
+
+            // Fallback: If Supabase doesn't respond in 4 seconds, show landing page
             setTimeout(function() {
                 if (!OnboardingFlow.supabaseResponded) {
                     console.log('⚠️ Supabase timeout - showing landing page as fallback');
                     OnboardingFlow.showLandingPage();
                 }
-            }, 2000);
+            }, 4000);
         };
 
         // Show landing page for non-authenticated users (called by Supabase)
