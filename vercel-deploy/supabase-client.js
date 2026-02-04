@@ -81,8 +81,7 @@ if (typeof window !== 'undefined') {
 // Track initialization state
 let isInitialized = false;
 let isInitializing = false;
-let lastAuthEvent = null;
-let authHandlingInProgress = false;
+let authAlreadyHandled = false;
 
 /**
  * Initialize Supabase client
@@ -166,33 +165,28 @@ async function initializeSupabase() {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
 
-                // Skip duplicate events
-                const eventKey = event + (session ? session.user?.id : 'none');
-                if (eventKey === lastAuthEvent) {
-                    console.log('⚠️ Duplicate auth event, skipping');
+                // Only handle SIGNED_IN once per page load
+                if (session && authAlreadyHandled) {
+                    console.log('⚠️ Auth already handled this session, skipping');
                     return;
                 }
-                lastAuthEvent = eventKey;
-
-                // Prevent concurrent handling
-                if (authHandlingInProgress) {
-                    console.log('⚠️ Auth handling already in progress, skipping');
-                    return;
-                }
-                authHandlingInProgress = true;
 
                 if (session) {
+                    authAlreadyHandled = true;
                     currentUser = session.user;
                     window.currentUser = currentUser;
+                    console.log('👤 User logged in:', currentUser.email);
                     updateUIForLoggedInUser();
-                } else {
+                } else if (event === 'SIGNED_OUT') {
+                    authAlreadyHandled = false;
                     currentUser = null;
                     window.currentUser = null;
                     updateUIForLoggedOutUser();
+                } else if (!authAlreadyHandled) {
+                    // No session and not handled yet = show landing
+                    updateUIForLoggedOutUser();
+                    authAlreadyHandled = true;
                 }
-
-                // Reset after a short delay to allow next legitimate event
-                setTimeout(() => { authHandlingInProgress = false; }, 500);
             });
         } catch (listenerError) {
             console.warn('⚠️ Auth listener setup skipped:', listenerError.message);

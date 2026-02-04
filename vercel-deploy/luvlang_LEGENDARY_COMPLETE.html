@@ -5438,9 +5438,14 @@
 
         // Show landing page for non-authenticated users (called by Supabase)
         OnboardingFlow.showLandingPage = function() {
+            var splash = document.getElementById('onboardingSplash');
+            // Skip if already showing
+            if (splash && splash.classList.contains('active')) {
+                console.log('⚠️ Landing page already showing, skipping');
+                return;
+            }
             OnboardingFlow.supabaseResponded = true;
             console.log('🏠 Showing landing page');
-            var splash = document.getElementById('onboardingSplash');
             if (splash) {
                 splash.style.opacity = '1';
                 splash.style.visibility = 'visible';
@@ -5493,17 +5498,13 @@
             }, 400);
         };
 
-        // Track if login handling is already in progress
-        OnboardingFlow.loginInProgress = false;
-
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
-            // Prevent multiple calls (auth state can fire multiple times)
-            if (OnboardingFlow.loginInProgress) {
-                console.log('⚠️ Login already in progress, skipping duplicate call');
+            // Prevent multiple calls - check if loading screen already exists
+            if (document.getElementById('postLoginLoading')) {
+                console.log('⚠️ Loading already showing, skipping duplicate');
                 return;
             }
-            OnboardingFlow.loginInProgress = true;
             OnboardingFlow.supabaseResponded = true;
             console.log('✅ Login successful, showing loading screen...');
 
