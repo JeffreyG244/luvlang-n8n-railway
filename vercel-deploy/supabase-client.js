@@ -749,17 +749,23 @@ async function applyTierRestrictions() {
 async function updateUIForLoggedInUser() {
     console.log('✅ User logged in, updating UI...');
 
-    // Hide signup gate overlay
-    const signupGate = document.getElementById('signupGateOverlay');
-    if (signupGate) {
-        signupGate.classList.add('hidden');
-        signupGate.style.display = 'none';
-        console.log('   Signup gate hidden');
-    }
-
     // Store auth state in session storage
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('luvlang_authenticated', 'true');
+    }
+
+    // Use OnboardingFlow if available (handles splash → signin → language → app)
+    if (typeof window.OnboardingFlow !== 'undefined') {
+        console.log('📄 Using OnboardingFlow for page transition...');
+        window.OnboardingFlow.onLoginSuccess();
+    } else {
+        // Fallback: directly hide signup gate
+        const signupGate = document.getElementById('signupGateOverlay');
+        if (signupGate) {
+            signupGate.classList.add('hidden');
+            signupGate.style.display = 'none';
+            console.log('   Signup gate hidden');
+        }
     }
 
     // Hide auth buttons section, show user menu
@@ -799,20 +805,16 @@ async function updateUIForLoggedInUser() {
  * Update UI for logged out user
  */
 function updateUIForLoggedOutUser() {
-    console.log('👤 User logged out, showing signup gate...');
-
-    // Show signup gate overlay
-    const signupGate = document.getElementById('signupGateOverlay');
-    if (signupGate) {
-        signupGate.classList.remove('hidden');
-        signupGate.style.display = 'flex';
-        console.log('   Signup gate shown');
-    }
+    console.log('👤 User logged out, restarting onboarding...');
 
     // Clear session storage auth state
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.removeItem('luvlang_authenticated');
     }
+
+    // Reload page to restart onboarding flow (splash → signin)
+    // This ensures a clean state and proper flow
+    window.location.reload();
 
     // Hide user menu, show auth buttons
     const userMenu = document.getElementById('userMenu');
