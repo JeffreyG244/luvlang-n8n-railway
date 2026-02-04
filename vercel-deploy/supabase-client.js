@@ -262,40 +262,48 @@ async function signIn(email, password) {
 }
 
 /**
- * Sign out current user
+ * Sign out current user - COMPREHENSIVE cleanup
  */
 async function signOut() {
-    // Check Supabase client is ready
-    if (!supabaseClient || !supabaseClient.auth) {
-        // Clear local state even if client not available
-        currentUser = null;
-        window.currentUser = null;
-        return { success: true };
-    }
+    console.log('🔐 Starting sign out...');
 
-    try {
-        const { error } = await supabaseClient.auth.signOut();
+    // Clear local state first
+    currentUser = null;
+    window.currentUser = null;
+    window.OAUTH_IN_PROGRESS = false;
 
-        if (error) throw error;
-
-        console.log('✅ Sign out successful');
-        currentUser = null;
-        window.currentUser = null;
-
-        // Clear session storage
-        if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.removeItem('luvlang_authenticated');
+    // Clear ALL Supabase-related storage
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('sb-') || key.includes('supabase') || key.includes('luvlang'))) {
+            keysToRemove.push(key);
         }
-
-        return { success: true };
-
-    } catch (error) {
-        console.error('❌ Sign out failed:', error.message);
-        // Still clear local state on error
-        currentUser = null;
-        window.currentUser = null;
-        return { success: false, error: error.message };
     }
+    keysToRemove.forEach(key => {
+        console.log('   Clearing localStorage:', key);
+        localStorage.removeItem(key);
+    });
+
+    // Clear session storage
+    sessionStorage.clear();
+    console.log('   Cleared sessionStorage');
+
+    // Call Supabase sign out
+    if (supabaseClient && supabaseClient.auth) {
+        try {
+            const { error } = await supabaseClient.auth.signOut({ scope: 'global' });
+            if (error) {
+                console.warn('⚠️ Supabase signOut warning:', error.message);
+            } else {
+                console.log('✅ Supabase sign out successful');
+            }
+        } catch (error) {
+            console.warn('⚠️ Supabase signOut error:', error.message);
+        }
+    }
+
+    return { success: true };
 }
 
 /**

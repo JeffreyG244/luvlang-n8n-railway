@@ -6810,7 +6810,10 @@
                     const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
-                            redirectTo: window.location.origin
+                            redirectTo: window.location.origin,
+                            queryParams: {
+                                prompt: 'select_account'  // Always show Google account selector
+                            }
                         }
                     });
                     console.log('   OAuth response:', { data, error });
