@@ -81,7 +81,6 @@ if (typeof window !== 'undefined') {
 // Track initialization state
 let isInitialized = false;
 let isInitializing = false;
-let authAlreadyHandled = false;
 
 /**
  * Initialize Supabase client
@@ -113,7 +112,6 @@ async function initializeSupabase() {
     const configLoaded = await waitForEnvConfig(8000);
     if (!configLoaded) {
         isInitializing = false;
-        updateUIForLoggedOutUser();
         return false;
     }
 
@@ -124,7 +122,6 @@ async function initializeSupabase() {
             console.warn('   Set SUPABASE_URL and SUPABASE_ANON_KEY in Vercel environment variables.');
             isInitializing = false;
             isInitialized = false;
-            updateUIForLoggedOutUser();
             return false;
         }
 
@@ -138,7 +135,6 @@ async function initializeSupabase() {
                 console.warn('⚠️ Supabase library not available. Running in demo mode.');
                 isInitializing = false;
                 isInitialized = false;
-                updateUIForLoggedOutUser();
                 return false;
             }
         }
@@ -150,7 +146,6 @@ async function initializeSupabase() {
             console.warn('⚠️ Supabase client creation failed. Running in demo mode.');
             isInitializing = false;
             isInitialized = false;
-            updateUIForLoggedOutUser();
             return false;
         }
 
@@ -165,27 +160,35 @@ async function initializeSupabase() {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('🔐 Auth state changed:', event);
 
-                // Only handle SIGNED_IN once per page load
-                if (session && authAlreadyHandled) {
-                    console.log('⚠️ Auth already handled this session, skipping');
-                    return;
-                }
-
                 if (session) {
-                    authAlreadyHandled = true;
+                    // User is logged in - always process (clear any old flag first)
+                    const alreadyLoggedIn = sessionStorage.getItem('luvlang_logged_in') === 'true';
+                    if (alreadyLoggedIn) {
+                        console.log('⚠️ Already logged in, skipping duplicate');
+                        return;
+                    }
+                    sessionStorage.setItem('luvlang_logged_in', 'true');
+                    sessionStorage.removeItem('luvlang_logged_out');
                     currentUser = session.user;
                     window.currentUser = currentUser;
                     console.log('👤 User logged in:', currentUser.email);
                     updateUIForLoggedInUser();
                 } else if (event === 'SIGNED_OUT') {
-                    authAlreadyHandled = false;
+                    // Explicit sign out
+                    sessionStorage.removeItem('luvlang_logged_in');
+                    sessionStorage.removeItem('luvlang_logged_out');
                     currentUser = null;
                     window.currentUser = null;
                     updateUIForLoggedOutUser();
-                } else if (!authAlreadyHandled) {
-                    // No session and not handled yet = show landing
+                } else {
+                    // No session (not logged in)
+                    const alreadyLoggedOut = sessionStorage.getItem('luvlang_logged_out') === 'true';
+                    if (alreadyLoggedOut) {
+                        console.log('⚠️ Already showed landing, skipping');
+                        return;
+                    }
+                    sessionStorage.setItem('luvlang_logged_out', 'true');
                     updateUIForLoggedOutUser();
-                    authAlreadyHandled = true;
                 }
             });
         } catch (listenerError) {
@@ -199,8 +202,6 @@ async function initializeSupabase() {
         console.error('❌ Failed to initialize Supabase:', error);
         isInitializing = false;
         isInitialized = false;
-        // Still allow app to function without Supabase
-        updateUIForLoggedOutUser();
         return false;
     }
 }
