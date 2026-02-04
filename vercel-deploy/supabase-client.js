@@ -155,32 +155,38 @@ async function initializeSupabase() {
         console.log('✅ Supabase client initialized');
         isInitialized = true;
 
-        // Use onAuthStateChange - it properly handles OAuth callback tokens
-        let authHandled = false;
+        // Check initial session
+        try {
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
 
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            console.log('🔐 Auth event:', event, session ? 'has session' : 'no session');
-
-            // Only handle once per page load
-            if (authHandled && event !== 'SIGNED_OUT') {
-                console.log('⚠️ Auth already handled, skipping');
-                return;
-            }
-
-            if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
-                authHandled = true;
+            if (error) {
+                console.warn('⚠️ Auth session check failed:', error.message);
+                updateUIForLoggedOutUser();
+            } else if (session) {
                 currentUser = session.user;
                 window.currentUser = currentUser;
-                console.log('👤 User logged in:', currentUser.email);
+                console.log('👤 User already logged in:', currentUser.email);
                 updateUIForLoggedInUser();
-            } else if (event === 'SIGNED_OUT') {
-                authHandled = false;
+            } else {
+                console.log('👤 No active session');
+                updateUIForLoggedOutUser();
+            }
+        } catch (authError) {
+            console.warn('⚠️ Auth check skipped:', authError.message);
+            updateUIForLoggedOutUser();
+        }
+
+        // Listen for auth state changes (handles OAuth callbacks)
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('🔐 Auth state changed:', event);
+
+            if (session) {
+                currentUser = session.user;
+                window.currentUser = currentUser;
+                updateUIForLoggedInUser();
+            } else {
                 currentUser = null;
                 window.currentUser = null;
-                updateUIForLoggedOutUser();
-            } else if (event === 'INITIAL_SESSION' && !session) {
-                authHandled = true;
-                console.log('👤 No session, showing landing');
                 updateUIForLoggedOutUser();
             }
         });
