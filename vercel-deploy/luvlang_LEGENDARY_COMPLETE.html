@@ -26544,13 +26544,10 @@
                 return;
             }
 
-            // Remove any blocking overlays first
-            const blockers = ['initialLoadingScreen', 'postLoginLoading', 'signupGateOverlay'];
-            blockers.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.remove();
-            });
-            console.log('🎤 Cleared blocking overlays');
+            // Remove only the loading screen overlay (NOT signup - that's needed for login flow)
+            const initialLoader = document.getElementById('initialLoadingScreen');
+            if (initialLoader) initialLoader.remove();
+            console.log('🎤 Cleared initial loading overlay');
 
             // Check if user has a saved language preference
             const savedLang = localStorage.getItem('tourLanguage');
