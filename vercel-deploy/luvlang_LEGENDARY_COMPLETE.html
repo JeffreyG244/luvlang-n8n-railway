@@ -5038,6 +5038,12 @@
                 window.endVoiceTour();
             }
 
+            // Remove ALL blocking overlays
+            ['initialLoadingScreen', 'postLoginLoading', 'signupGateOverlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            });
+
             // Hide the main tour overlay if visible
             const tourOverlay = document.getElementById('voiceTourOverlay');
             if (tourOverlay) tourOverlay.style.display = 'none';
@@ -5048,10 +5054,11 @@
             const formatZone = document.getElementById('tourFormatZone');
             if (formatZone) formatZone.style.display = 'none';
 
-            // Directly show the language modal
+            // Directly show the language modal with high z-index
             const langModal = document.getElementById('tourLanguageModal');
             if (langModal) {
                 langModal.style.display = 'flex';
+                langModal.style.zIndex = '99999999';
                 console.log('🎤 Language selection modal shown');
             } else {
                 console.error('🎤 Language modal not found!');
@@ -26537,6 +26544,14 @@
                 return;
             }
 
+            // Remove any blocking overlays first
+            const blockers = ['initialLoadingScreen', 'postLoginLoading', 'signupGateOverlay'];
+            blockers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            });
+            console.log('🎤 Cleared blocking overlays');
+
             // Check if user has a saved language preference
             const savedLang = localStorage.getItem('tourLanguage');
             if (savedLang) {
@@ -26549,6 +26564,7 @@
                 const langModal = document.getElementById('tourLanguageModal');
                 if (langModal) {
                     langModal.style.display = 'flex';
+                    langModal.style.zIndex = '99999999';
                     console.log('🎤 Showing language selection');
                 } else {
                     // Fallback: start with English
