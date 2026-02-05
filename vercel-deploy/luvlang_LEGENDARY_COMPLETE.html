@@ -5656,10 +5656,16 @@
             // Hide all other screens
             var splash = document.getElementById('onboardingSplash');
             var signupGate = document.getElementById('signupGateOverlay');
+            var initialLoader = document.getElementById('initialLoadingScreen');
             if (splash) splash.style.display = 'none';
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
+            }
+            // Remove initial loading screen
+            if (initialLoader) {
+                initialLoader.classList.add('fade-out');
+                setTimeout(function() { initialLoader.remove(); }, 400);
             }
 
             // Show loading overlay then tour
@@ -5790,12 +5796,18 @@
             var langPage = document.getElementById('onboardingLanguage');
             var signupGate = document.getElementById('signupGateOverlay');
             var postLogin = document.getElementById('postLoginLoading');
+            var initialLoader = document.getElementById('initialLoadingScreen');
             if (splash) splash.style.display = 'none';
             if (langPage) langPage.style.display = 'none';
             if (postLogin) postLogin.remove();
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
+            }
+            // Remove initial loading screen
+            if (initialLoader) {
+                initialLoader.classList.add('fade-out');
+                setTimeout(function() { initialLoader.remove(); }, 400);
             }
         };
 
@@ -5837,6 +5849,23 @@
         } catch(e) {
             console.error('❌ Onboarding init error:', e);
         }
+
+        // BULLETPROOF FALLBACK: Remove initial loader after 6 seconds NO MATTER WHAT
+        setTimeout(function() {
+            var initialLoader = document.getElementById('initialLoadingScreen');
+            if (initialLoader) {
+                console.log('⚠️ Bulletproof fallback: Forcing removal of initial loader');
+                initialLoader.classList.add('fade-out');
+                setTimeout(function() {
+                    if (initialLoader.parentNode) initialLoader.remove();
+                }, 400);
+                // Also show landing page if nothing else is visible
+                var splash = document.getElementById('onboardingSplash');
+                if (splash && !splash.classList.contains('active')) {
+                    OnboardingFlow.showLandingPage();
+                }
+            }
+        }, 6000);
     </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
