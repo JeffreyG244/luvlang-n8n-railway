@@ -5038,12 +5038,6 @@
                 window.endVoiceTour();
             }
 
-            // Remove ALL blocking overlays
-            ['initialLoadingScreen', 'postLoginLoading', 'signupGateOverlay'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.remove();
-            });
-
             // Hide the main tour overlay if visible
             const tourOverlay = document.getElementById('voiceTourOverlay');
             if (tourOverlay) tourOverlay.style.display = 'none';
@@ -5054,11 +5048,10 @@
             const formatZone = document.getElementById('tourFormatZone');
             if (formatZone) formatZone.style.display = 'none';
 
-            // Directly show the language modal with high z-index
+            // Directly show the language modal
             const langModal = document.getElementById('tourLanguageModal');
             if (langModal) {
                 langModal.style.display = 'flex';
-                langModal.style.zIndex = '99999999';
                 console.log('🎤 Language selection modal shown');
             } else {
                 console.error('🎤 Language modal not found!');
@@ -23783,7 +23776,12 @@
                 voiceTourSpotlight.style.display = 'none';
             }
 
-            // Voice disabled
+            // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
+            setTimeout(() => {
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 10 different presets tuned by pro engineers. Try a few and watch the EQ faders move in real-time - see what vibes with your sound.");
+                }
+            }, 500);
 
             // Scroll genre section into view
             genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -23828,7 +23826,12 @@
                 rightSidebar.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // Voice disabled
+            // Voice prompt to direct user to the main interface
+            setTimeout(() => {
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Alright, here's your workspace. The spectrum shows everything happening in your mix. Those genre buttons on the left? Each one opens up 10 different styles to choose from. Play around with them - that's what they're there for. When you're happy with how it sounds, hit export and you're done.");
+                }
+            }, 500);
 
             // Highlight the spectrum/EQ panel with enhanced glow
             const spectrumPanel = document.querySelector('.spectrum-panel');
@@ -25789,7 +25792,12 @@
 
             console.log('✅ Genre overlay displayed');
 
-            // Voice disabled
+            // Voice prompt for genre selection - use the global speakWithDucking function
+            setTimeout(() => {
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
+                }
+            }, 500);
 
             // Capture BEFORE spectrum for comparison
             try {
@@ -26349,30 +26357,79 @@
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
-        // Voice Engine State - ElevenLabs Dorothy ONLY (no Web Speech API fallback)
+        // Voice Engine State
         let voiceEnabled = true;
+        let voiceSynth = window.speechSynthesis;
+        let preferredVoice = null;
         let currentStep = 0;
         let tourActive = false;
 
-        // Language code mapping
+        // Language code to voice language mapping
         const langToVoiceLang = {
             en: 'en', es: 'es', fr: 'fr', de: 'de', pt: 'pt', ja: 'ja', ko: 'ko', zh: 'zh'
         };
 
-        // Voice Engine - ElevenLabs ONLY
+        // Initialize Voice Engine - Find best voice for current language
         function initVoiceEngine() {
-            voiceEnabled = true;
-            console.log('🎙️ Dorothy (ElevenLabs) ready - NO Web Speech API fallback');
+            if (!voiceSynth) {
+                console.warn('Speech synthesis not supported');
+                voiceEnabled = false;
+                return;
+            }
+            updateVoiceForLanguage();
+            voiceSynth.onvoiceschanged = updateVoiceForLanguage;
         }
 
         function updateVoiceForLanguage() {
-            // ElevenLabs handles multi-language
+            const voices = voiceSynth.getVoices();
+
+            // ═══════════════════════════════════════════════════════════════════
+            // AUSTRALIAN FEMALE VOICE - ALWAYS USE THIS
+            // ═══════════════════════════════════════════════════════════════════
+
+            // Australian female voice names
+            const aussiFemaleVoices = ['Karen', 'Lee', 'Tessa', 'Catherine', 'Matilda', 'Nicole'];
+
+            // Neural/Enhanced for best quality
+            const neuralKeywords = ['Enhanced', 'Neural', 'Premium', 'Natural', 'Wavenet'];
+
+            // Log available Australian voices
+            const aussiVoices = voices.filter(v => v.lang === 'en-AU');
+            if (aussiVoices.length > 0) {
+                console.log('🇦🇺 Australian voices available:', aussiVoices.map(v => v.name).join(', '));
+            } else {
+                console.log('🇦🇺 No Australian voices found - check System Preferences > Accessibility > Spoken Content');
+            }
+
+            preferredVoice =
+                // #1: Australian Enhanced female (BEST)
+                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k)) && aussiFemaleVoices.some(n => v.name.includes(n))) ||
+                // #2: Australian Enhanced any
+                voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k))) ||
+                // #3: Australian female by name
+                voices.find(v => v.lang === 'en-AU' && aussiFemaleVoices.some(n => v.name.includes(n))) ||
+                // #4: ANY Australian voice
+                voices.find(v => v.lang === 'en-AU') ||
+                // Fallback to any English if no Australian
+                voices.find(v => v.lang.startsWith('en')) ||
+                voices[0];
+
+            const isAussie = preferredVoice?.lang === 'en-AU';
+            const isNeural = neuralKeywords.some(k => preferredVoice?.name?.includes(k));
+            console.log('🎤 SELECTED:', preferredVoice?.name, '| Accent:', isAussie ? '🇦🇺 AUSTRALIAN' : preferredVoice?.lang, '| Quality:', isNeural ? '★★★ ENHANCED' : '★ STANDARD');
+
+            // Tip for Mac users
+            if (!isAussie && navigator.platform.includes('Mac')) {
+                console.log('💡 TIP: Download Australian voices in System Preferences > Accessibility > Spoken Content > Manage Voices > English (Australia)');
+            }
         }
 
         function changeVoiceTourLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('voiceTourLang', lang);
-            // Update current step display if tour is active (no voice)
+            updateVoiceForLanguage();
+
+            // Update current step display if tour is active
             if (tourActive && currentStep < voiceTourSteps.length) {
                 const trans = tourTranslations[currentLang]?.steps[currentStep];
                 if (trans) {
@@ -26380,6 +26437,7 @@
                     document.getElementById('voiceTourDesc').textContent = trans.desc;
                     const actionEl = document.getElementById('voiceTourAction');
                     if (actionEl) actionEl.textContent = trans.action;
+                    speak(trans.voice);
                 }
             }
             console.log('🌍 Language changed to:', lang);
@@ -26394,11 +26452,7 @@
             apiKey: 'sk_e02f732c39e1322367398a6845814fb1879251eb6a0b65d1',
             // Dorothy - British female, warm, professional, clear English accent
             voiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy - British English professional
-            // Alternative voices:
-            // 'XrExE9yKIg1WjnnlVkGX' - Matilda (Australian, professional)
-            // 'XB0fDUnXU5powFXDhCwa' - Charlotte (slight English accent, warm)
-            // 'ThT5KcBeYPX3keUQqHPh' - Dorothy (British, warm, professional)
-            modelId: 'eleven_multilingual_v2', // Best quality model
+            modelId: 'eleven_turbo_v2_5', // Updated model for free tier
             enabled: true
         };
 
@@ -26406,12 +26460,17 @@
         if (ELEVENLABS_CONFIG.apiKey) {
             ELEVENLABS_CONFIG.enabled = true;
             console.log('🎙️ ElevenLabs PREMIUM voice enabled - British English female (Dorothy)');
+        } else {
+            console.log('🎙️ ElevenLabs not configured. To enable premium voices:');
+            console.log('   1. Sign up free at https://elevenlabs.io');
+            console.log('   2. Get your API key from Profile > API Key');
+            console.log('   3. Run in console: localStorage.setItem("elevenlabs_api_key", "YOUR_KEY")');
+            console.log('   4. Refresh the page');
         }
 
         // ElevenLabs speak function - Premium AI voice with STREAMING for fast response
         let currentAudio = null;
         let musicWasPlaying = false;
-
         async function speakWithElevenLabs(text) {
             if (!ELEVENLABS_CONFIG.enabled || !text) return false;
 
@@ -26442,7 +26501,7 @@
                     },
                     body: JSON.stringify({
                         text: text,
-                        model_id: 'eleven_turbo_v2_5', // Latest turbo model - works on free tier
+                        model_id: 'eleven_turbo_v2_5', // Updated turbo model for free tier
                         voice_settings: {
                             stability: 0.5,
                             similarity_boost: 0.75,
@@ -26476,6 +26535,7 @@
                 };
 
                 currentAudio.play();
+
                 return true;
             } catch (error) {
                 console.error('ElevenLabs error:', error);
@@ -26483,37 +26543,71 @@
             }
         }
 
-        // Speak text - Uses ElevenLabs premium voice
+        // Speak text - Uses ElevenLabs if available, falls back to Web Speech API
         async function speak(text) {
             if (!voiceEnabled || !text) return;
 
-            // Use ElevenLabs (premium quality)
+            // Try ElevenLabs first (premium quality)
             if (ELEVENLABS_CONFIG.enabled) {
-                await speakWithElevenLabs(text);
+                const success = await speakWithElevenLabs(text);
+                if (success) return;
             }
+
+            // Fallback to Web Speech API
+            if (!voiceSynth) return;
+
+            window.speechSynthesis.cancel();
+
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = preferredVoice;
+                utterance.rate = 0.88;
+                utterance.pitch = 1.08;
+                utterance.volume = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         }
+        // Make speak globally accessible
         window.speak = speak;
-
-        window.speakWithDucking = function(text) {
-            speak(text);
-        };
-
-        window.speakWithDuckingLegacy = function(text) {
-            speak(text);
-        };
 
         // Helper to set ElevenLabs API key
         window.setElevenLabsKey = function(key) {
             localStorage.setItem('elevenlabs_api_key', key);
             ELEVENLABS_CONFIG.apiKey = key;
             ELEVENLABS_CONFIG.enabled = true;
-            console.log('✅ ElevenLabs API key saved! Premium voice is now active.');
+            console.log('✅ ElevenLabs API key saved! Refresh the page to use premium voice.');
+        };
+
+        // Speak with audio ducking - DISABLED to prevent LUFS issues
+        window.speakWithDucking = function(text) {
+            speak(text); // Just use the main speak function now
+        };
+
+        // Legacy compatibility - kept for any old code
+        window.speakWithDuckingLegacy = function(text) {
+            if (!window.speechSynthesis || !text) return;
+
+            window.speechSynthesis.cancel();
+
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = preferredVoice;
+                utterance.rate = 0.88;
+                utterance.pitch = 1.08;
+                utterance.volume = 0.95;
+                window.speechSynthesis.speak(utterance);
+            }, 50);
         };
 
         function stopSpeaking() {
+            // Stop Web Speech API
+            window.speechSynthesis.cancel();
+            // Stop ElevenLabs audio if playing
             if (currentAudio) {
                 currentAudio.pause();
+                currentAudio.currentTime = 0;
                 currentAudio = null;
+                console.log('🔇 Stopped ElevenLabs audio');
             }
         }
 
@@ -26521,9 +26615,20 @@
             voiceEnabled = !voiceEnabled;
             const btn = document.getElementById('voiceTourSpeakBtn');
 
-            if (!voiceEnabled && currentAudio) {
-                currentAudio.pause();
-                currentAudio = null;
+            if (!voiceEnabled) {
+                // MUTE - immediately stop any speaking
+                window.speechSynthesis.cancel();
+                // Also stop ElevenLabs audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
+                console.log('🔇 Voice muted');
+            } else {
+                // UNMUTE - just enable future audio, don't restart current instruction
+                // Use the repeat button if you want to hear the instruction again
+                console.log('🔊 Voice unmuted');
             }
 
             // Update button appearance
@@ -26544,11 +26649,6 @@
                 return;
             }
 
-            // Remove only the loading screen overlay (NOT signup - that's needed for login flow)
-            const initialLoader = document.getElementById('initialLoadingScreen');
-            if (initialLoader) initialLoader.remove();
-            console.log('🎤 Cleared initial loading overlay');
-
             // Check if user has a saved language preference
             const savedLang = localStorage.getItem('tourLanguage');
             if (savedLang) {
@@ -26561,7 +26661,6 @@
                 const langModal = document.getElementById('tourLanguageModal');
                 if (langModal) {
                     langModal.style.display = 'flex';
-                    langModal.style.zIndex = '99999999';
                     console.log('🎤 Showing language selection');
                 } else {
                     // Fallback: start with English
@@ -26648,17 +26747,6 @@
                 if (masterInstruction) masterInstruction.style.display = 'block';
                 // Add glow to Master button
                 if (masterBtn) masterBtn.classList.add('master-btn-tour-highlight');
-
-                // AUTO-PLAY the track so user can hear it before mastering
-                setTimeout(() => {
-                    const audioEl = document.getElementById('audioElement');
-                    if (audioEl && audioEl.src && audioEl.paused) {
-                        console.log('🎤 MASTER STEP - Auto-playing track for preview');
-                        audioEl.play().catch(err => {
-                            console.warn('Could not auto-play:', err.message);
-                        });
-                    }
-                }, 500);
             } else {
                 // Hide instruction and remove glow
                 if (masterInstruction) masterInstruction.style.display = 'none';
@@ -26810,7 +26898,7 @@
             if (uploadZoneEl) uploadZoneEl.style.opacity = '0';
             if (formatZoneEl) formatZoneEl.style.opacity = '0';
 
-            // Speak with Dorothy's voice
+            // Start voice immediately
             speak(trans.voice);
 
             // Fade in content as voice starts playing
@@ -26827,7 +26915,7 @@
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
             const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
 
-            // Speak the explore modal intro
+            // Speak the final step voice
             if (stepTrans && stepTrans.voice) {
                 speak(stepTrans.voice);
             }
@@ -27066,7 +27154,7 @@
                 }
 
                 // Cancel any current speech before advancing to next step
-                stopSpeaking();
+                window.speechSynthesis.cancel();
 
                 setTimeout(() => {
                     currentStep++;
@@ -27087,7 +27175,7 @@
         function nextTourStep() {
             if (!tourActive) return;
             // Always cancel current speech before advancing to next step
-            stopSpeaking();
+            window.speechSynthesis.cancel();
             currentStep++;
             showStep(currentStep);
         }
@@ -27106,8 +27194,32 @@
                 }, 500);
             }
 
-            // Voice disabled - repeat function does nothing
-            console.log('🔄 Voice disabled - repeat not available');
+            const trans = tourTranslations[currentLang]?.steps[currentStep] || tourTranslations['en'].steps[currentStep];
+            if (trans && trans.voice) {
+                // Stop any current speech and replay
+                window.speechSynthesis.cancel();
+
+                // Force voice enabled for repeat (user wants to hear it)
+                const wasEnabled = voiceEnabled;
+                voiceEnabled = true;
+
+                setTimeout(() => {
+                    speak(trans.voice);
+                    // Restore mute state after speaking starts (but audio will continue)
+                    if (!wasEnabled) {
+                        // Keep enabled so it plays, user can mute again if wanted
+                        const btn = document.getElementById('voiceTourSpeakBtn');
+                        if (btn) {
+                            btn.textContent = '🔊';
+                            btn.style.background = 'rgba(0, 212, 255, 0.1)';
+                            btn.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+                            btn.style.color = '#00d4ff';
+                        }
+                    }
+                }, 100);
+
+                console.log('🔄 Repeating instruction for step', currentStep + 1);
+            }
         }
 
         function endVoiceTour() {
@@ -27148,7 +27260,7 @@
         function continueTourAfterLanguage() {
             console.log('🎤 Continuing tour after language selection...');
             // Cancel any speech
-            stopSpeaking();
+            window.speechSynthesis.cancel();
             // Advance to next step (format selection)
             currentStep++;
             showStep(currentStep);
@@ -27373,4 +27485,3 @@
 
 </body>
 </html>
-// Cache bust: 1770258682
