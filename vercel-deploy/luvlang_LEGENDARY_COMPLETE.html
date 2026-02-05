@@ -26342,26 +26342,24 @@
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
-        // Voice Engine State - ElevenLabs Dorothy Enabled
+        // Voice Engine State - ElevenLabs Dorothy ONLY (no Web Speech API fallback)
         let voiceEnabled = true;
-        let voiceSynth = null;
-        let preferredVoice = null;
         let currentStep = 0;
         let tourActive = false;
 
-        // Language code to voice language mapping
+        // Language code mapping
         const langToVoiceLang = {
             en: 'en', es: 'es', fr: 'fr', de: 'de', pt: 'pt', ja: 'ja', ko: 'ko', zh: 'zh'
         };
 
-        // Voice Engine - ElevenLabs Active
+        // Voice Engine - ElevenLabs ONLY
         function initVoiceEngine() {
             voiceEnabled = true;
-            console.log('🎙️ Voice engine initialized - Dorothy ready');
+            console.log('🎙️ Dorothy (ElevenLabs) ready - NO Web Speech API fallback');
         }
 
         function updateVoiceForLanguage() {
-            // ElevenLabs handles multi-language automatically
+            // ElevenLabs handles multi-language
         }
 
         function changeVoiceTourLanguage(lang) {
@@ -26506,7 +26504,6 @@
         };
 
         function stopSpeaking() {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -26517,12 +26514,9 @@
             voiceEnabled = !voiceEnabled;
             const btn = document.getElementById('voiceTourSpeakBtn');
 
-            if (!voiceEnabled) {
-                if (window.speechSynthesis) window.speechSynthesis.cancel();
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
-                }
+            if (!voiceEnabled && currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
             }
 
             // Update button appearance
@@ -27059,7 +27053,7 @@
                 }
 
                 // Cancel any current speech before advancing to next step
-                if (window.speechSynthesis) window.speechSynthesis.cancel();
+                stopSpeaking();
 
                 setTimeout(() => {
                     currentStep++;
@@ -27080,7 +27074,7 @@
         function nextTourStep() {
             if (!tourActive) return;
             // Always cancel current speech before advancing to next step
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            stopSpeaking();
             currentStep++;
             showStep(currentStep);
         }
@@ -27141,7 +27135,7 @@
         function continueTourAfterLanguage() {
             console.log('🎤 Continuing tour after language selection...');
             // Cancel any speech
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            stopSpeaking();
             // Advance to next step (format selection)
             currentStep++;
             showStep(currentStep);
