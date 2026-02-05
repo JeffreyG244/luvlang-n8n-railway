@@ -26342,8 +26342,8 @@
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
-        // Voice Engine State - COMPLETELY DISABLED
-        let voiceEnabled = false;
+        // Voice Engine State - ElevenLabs Dorothy Enabled
+        let voiceEnabled = true;
         let voiceSynth = null;
         let preferredVoice = null;
         let currentStep = 0;
@@ -26354,14 +26354,14 @@
             en: 'en', es: 'es', fr: 'fr', de: 'de', pt: 'pt', ja: 'ja', ko: 'ko', zh: 'zh'
         };
 
-        // Voice Engine DISABLED
+        // Voice Engine - ElevenLabs Active
         function initVoiceEngine() {
-            // Voice completely disabled
-            voiceEnabled = false;
+            voiceEnabled = true;
+            console.log('🎙️ Voice engine initialized - Dorothy ready');
         }
 
         function updateVoiceForLanguage() {
-            // Voice completely disabled
+            // ElevenLabs handles multi-language automatically
         }
 
         function changeVoiceTourLanguage(lang) {
@@ -26381,27 +26381,128 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // VOICE SYSTEM - COMPLETELY DISABLED
+        // ELEVENLABS PREMIUM AI VOICE - Ultra Lifelike Human Quality
         // ═══════════════════════════════════════════════════════════════════
 
-        let currentAudio = null;
+        // ElevenLabs Configuration - PREMIUM AI VOICE ACTIVE
+        const ELEVENLABS_CONFIG = {
+            apiKey: 'sk_3711beb194b8c8c15fa80927c3394f607668316faefdc91a',
+            // Dorothy - British female, warm, professional, clear English accent
+            voiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy - British English professional
+            // Alternative voices:
+            // 'XrExE9yKIg1WjnnlVkGX' - Matilda (Australian, professional)
+            // 'XB0fDUnXU5powFXDhCwa' - Charlotte (slight English accent, warm)
+            // 'ThT5KcBeYPX3keUQqHPh' - Dorothy (British, warm, professional)
+            modelId: 'eleven_multilingual_v2', // Best quality model
+            enabled: true
+        };
 
+        // ElevenLabs is now active
+        if (ELEVENLABS_CONFIG.apiKey) {
+            ELEVENLABS_CONFIG.enabled = true;
+            console.log('🎙️ ElevenLabs PREMIUM voice enabled - British English female (Dorothy)');
+        }
+
+        // ElevenLabs speak function - Premium AI voice with STREAMING for fast response
+        let currentAudio = null;
+        let musicWasPlaying = false;
+
+        async function speakWithElevenLabs(text) {
+            if (!ELEVENLABS_CONFIG.enabled || !text) return false;
+
+            try {
+                // Stop any current voice audio
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+
+                // Pause music while speaking
+                const musicPlayer = document.getElementById('audioElement');
+                if (musicPlayer && !musicPlayer.paused) {
+                    musicWasPlaying = true;
+                    musicPlayer.pause();
+                    console.log('🎙️ Paused music for voice');
+                }
+
+                console.log('🎙️ ElevenLabs speaking:', text.substring(0, 50) + '...');
+
+                // Use streaming endpoint with latency optimization for FAST response
+                const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_CONFIG.voiceId}/stream?optimize_streaming_latency=4`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'audio/mpeg',
+                        'Content-Type': 'application/json',
+                        'xi-api-key': ELEVENLABS_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: 'eleven_turbo_v2', // Turbo model = fastest response
+                        voice_settings: {
+                            stability: 0.5,
+                            similarity_boost: 0.75,
+                            style: 0.3,
+                            use_speaker_boost: true
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    console.error('ElevenLabs API error:', error);
+                    return false;
+                }
+
+                // Stream the audio for immediate playback
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                currentAudio = new Audio(audioUrl);
+
+                // Resume music when voice ends
+                currentAudio.onended = () => {
+                    if (musicWasPlaying) {
+                        const musicPlayer = document.getElementById('audioElement');
+                        if (musicPlayer) {
+                            musicPlayer.play();
+                            console.log('🎙️ Resumed music after voice');
+                        }
+                        musicWasPlaying = false;
+                    }
+                };
+
+                currentAudio.play();
+                return true;
+            } catch (error) {
+                console.error('ElevenLabs error:', error);
+                return false;
+            }
+        }
+
+        // Speak text - Uses ElevenLabs premium voice
         async function speak(text) {
-            // Voice completely disabled - do nothing
-            return;
+            if (!voiceEnabled || !text) return;
+
+            // Use ElevenLabs (premium quality)
+            if (ELEVENLABS_CONFIG.enabled) {
+                await speakWithElevenLabs(text);
+            }
         }
         window.speak = speak;
 
         window.speakWithDucking = function(text) {
-            // Voice disabled
+            speak(text);
         };
 
         window.speakWithDuckingLegacy = function(text) {
-            // Voice disabled
+            speak(text);
         };
 
+        // Helper to set ElevenLabs API key
         window.setElevenLabsKey = function(key) {
-            console.log('Voice system is currently disabled.');
+            localStorage.setItem('elevenlabs_api_key', key);
+            ELEVENLABS_CONFIG.apiKey = key;
+            ELEVENLABS_CONFIG.enabled = true;
+            console.log('✅ ElevenLabs API key saved! Premium voice is now active.');
         };
 
         function stopSpeaking() {
@@ -26691,8 +26792,8 @@
             if (uploadZoneEl) uploadZoneEl.style.opacity = '0';
             if (formatZoneEl) formatZoneEl.style.opacity = '0';
 
-            // Voice disabled
-            // speak(trans.voice);
+            // Speak with Dorothy's voice
+            speak(trans.voice);
 
             // Fade in content as voice starts playing
             setTimeout(() => {
@@ -26708,10 +26809,10 @@
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
             const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
 
-            // Voice disabled
-            // if (stepTrans && stepTrans.voice) {
-            //     speak(stepTrans.voice);
-            // }
+            // Speak the explore modal intro
+            if (stepTrans && stepTrans.voice) {
+                speak(stepTrans.voice);
+            }
 
             const modal = document.createElement('div');
             modal.id = 'voiceTourExploreModal';
