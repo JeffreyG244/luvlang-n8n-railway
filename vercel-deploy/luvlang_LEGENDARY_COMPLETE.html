@@ -5673,9 +5673,9 @@
             OnboardingFlow.showLoadingScreen();
         };
 
-        // Show loading screen after sign in - MULTI-STEP ONBOARDING
+        // Show loading screen after sign in
         OnboardingFlow.showLoadingScreen = function() {
-            // Create AI Engine Loading overlay
+            // Create loading overlay if it doesn't exist
             var loadingOverlay = document.getElementById('postLoginLoading');
             if (!loadingOverlay) {
                 loadingOverlay = document.createElement('div');
@@ -5693,385 +5693,101 @@
                             justify-content: center;
                             opacity: 1;
                             transition: opacity 0.5s ease;
-                            overflow: hidden;
                         }
                         #postLoginLoading.fade-out { opacity: 0; pointer-events: none; }
-
-                        /* Background animated glow */
-                        .ai-bg-glow {
-                            position: absolute;
-                            border-radius: 50%;
-                            filter: blur(120px);
-                            animation: aiGlow 4s ease-in-out infinite alternate;
-                        }
-                        .ai-glow-1 {
-                            width: 500px; height: 500px;
-                            background: radial-gradient(circle, rgba(0, 212, 255, 0.3), transparent 70%);
-                            top: -150px; left: -100px;
-                        }
-                        .ai-glow-2 {
-                            width: 400px; height: 400px;
-                            background: radial-gradient(circle, rgba(184, 79, 255, 0.25), transparent 70%);
-                            bottom: -100px; right: -50px;
-                            animation-delay: -2s;
-                        }
-                        @keyframes aiGlow {
-                            0% { transform: scale(1); opacity: 0.4; }
-                            100% { transform: scale(1.3); opacity: 0.6; }
-                        }
-
-                        .ai-content {
-                            position: relative;
-                            z-index: 1;
-                            text-align: center;
-                            max-width: 500px;
-                            padding: 40px;
-                        }
-                        .ai-logo-container {
-                            margin-bottom: 30px;
-                        }
-                        .ai-title {
-                            font-size: 2.8rem;
-                            font-weight: 800;
+                        .loading-title {
+                            font-size: 2.5rem;
+                            font-weight: 700;
                             background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
-                            background-clip: text;
-                            margin: 0 0 8px;
-                            letter-spacing: -1px;
-                        }
-                        .ai-subtitle {
-                            font-size: 1rem;
-                            text-transform: uppercase;
-                            letter-spacing: 4px;
-                            color: rgba(0, 212, 255, 0.8);
-                            margin-bottom: 50px;
-                            font-weight: 600;
-                        }
-
-                        /* Feature loading bars */
-                        .ai-features {
-                            width: 100%;
                             margin-bottom: 40px;
                         }
-                        .ai-feature-row {
-                            display: flex;
-                            align-items: center;
-                            margin-bottom: 16px;
-                            opacity: 0;
-                            transform: translateX(-20px);
-                            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-                        }
-                        .ai-feature-row.loaded {
-                            opacity: 1;
-                            transform: translateX(0);
-                        }
-                        .ai-feature-icon {
-                            font-size: 1.2rem;
-                            width: 30px;
-                            text-align: center;
-                        }
-                        .ai-feature-name {
-                            flex: 1;
-                            font-size: 0.85rem;
-                            color: rgba(255,255,255,0.7);
-                            text-align: left;
-                            padding-left: 12px;
-                        }
-                        .ai-feature-bar {
-                            width: 120px;
-                            height: 3px;
+                        .loading-bar-container {
+                            width: 300px;
+                            height: 4px;
                             background: rgba(255,255,255,0.1);
-                            border-radius: 3px;
+                            border-radius: 4px;
                             overflow: hidden;
-                            margin-left: 12px;
                         }
-                        .ai-feature-progress {
+                        .loading-bar {
                             height: 100%;
                             width: 0%;
-                            background: linear-gradient(90deg, #00d4ff, #b84fff);
-                            border-radius: 3px;
-                            transition: width 0.8s ease-out;
+                            background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88);
+                            border-radius: 4px;
+                            transition: width 1.8s ease-out;
                         }
-                        .ai-feature-row.loaded .ai-feature-progress {
-                            width: 100%;
+                        .loading-status {
+                            margin-top: 20px;
+                            font-size: 0.85rem;
+                            color: rgba(255,255,255,0.5);
                         }
-                        .ai-feature-check {
-                            width: 20px;
-                            font-size: 0.8rem;
-                            text-align: center;
-                            opacity: 0;
-                            transition: opacity 0.3s ease;
-                        }
-                        .ai-feature-row.loaded .ai-feature-check {
-                            opacity: 1;
-                        }
-
-                        /* Start Tour button */
-                        .ai-start-btn {
-                            padding: 18px 50px;
-                            font-size: 1.1rem;
-                            font-weight: 700;
-                            color: #fff;
-                            background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%);
-                            border: none;
-                            border-radius: 50px;
-                            cursor: pointer;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
+                        .loading-subtitle {
+                            font-size: 1rem;
                             text-transform: uppercase;
-                            letter-spacing: 2px;
-                            opacity: 0;
-                            transform: translateY(20px);
-                            pointer-events: none;
-                        }
-                        .ai-start-btn.ready {
-                            opacity: 1;
-                            transform: translateY(0);
-                            pointer-events: auto;
-                        }
-                        .ai-start-btn:hover {
-                            transform: translateY(-3px) scale(1.02);
-                            box-shadow: 0 12px 40px rgba(0, 212, 255, 0.6);
+                            letter-spacing: 3px;
+                            color: #00d4ff;
+                            margin-top: -30px;
+                            margin-bottom: 40px;
+                            font-weight: 600;
                         }
                     </style>
-
-                    <div class="ai-bg-glow ai-glow-1"></div>
-                    <div class="ai-bg-glow ai-glow-2"></div>
-
-                    <div class="ai-content">
-                        <div class="ai-logo-container">
-                            <svg viewBox="0 0 100 100" style="width: 100px; height: 100px; filter: drop-shadow(0 0 20px rgba(0,212,255,0.6));">
-                                <defs>
-                                    <linearGradient id="aiLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#00d4ff"/>
-                                        <stop offset="50%" stop-color="#b84fff"/>
-                                        <stop offset="100%" stop-color="#00ff88"/>
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#aiLogoGrad)" stroke-width="2" opacity="0.6"/>
-                                <g>
-                                    <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="16;24;16" dur="1s" repeatCount="indefinite"/><animate attributeName="y" values="42;38;42" dur="1s" repeatCount="indefinite"/></rect>
-                                    <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="30;20;30" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="35;40;35" dur="0.8s" repeatCount="indefinite"/></rect>
-                                    <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="44;36;44" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y" values="28;32;28" dur="1.2s" repeatCount="indefinite"/></rect>
-                                    <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="56;44;56" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="22;28;22" dur="0.9s" repeatCount="indefinite"/></rect>
-                                    <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="44;32;44" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y" values="28;34;28" dur="1.1s" repeatCount="indefinite"/></rect>
-                                    <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="30;22;30" dur="0.7s" repeatCount="indefinite"/><animate attributeName="y" values="35;39;35" dur="0.7s" repeatCount="indefinite"/></rect>
-                                    <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#aiLogoGrad)"><animate attributeName="height" values="16;26;16" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y" values="42;37;42" dur="1.3s" repeatCount="indefinite"/></rect>
-                                </g>
-                            </svg>
-                        </div>
-                        <h1 class="ai-title">LuvLang</h1>
-                        <p class="ai-subtitle">AI Mastering Engine</p>
-
-                        <div class="ai-features">
-                            <div class="ai-feature-row" data-delay="300">
-                                <span class="ai-feature-icon">🎛️</span>
-                                <span class="ai-feature-name">7-Band Parametric EQ</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                            <div class="ai-feature-row" data-delay="600">
-                                <span class="ai-feature-icon">📊</span>
-                                <span class="ai-feature-name">Professional Limiter</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                            <div class="ai-feature-row" data-delay="900">
-                                <span class="ai-feature-icon">🎚️</span>
-                                <span class="ai-feature-name">Multiband Compression</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                            <div class="ai-feature-row" data-delay="1200">
-                                <span class="ai-feature-icon">📡</span>
-                                <span class="ai-feature-name">LUFS Metering (ITU-R BS.1770)</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                            <div class="ai-feature-row" data-delay="1500">
-                                <span class="ai-feature-icon">🤖</span>
-                                <span class="ai-feature-name">AI Auto-Master Algorithm</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                            <div class="ai-feature-row" data-delay="1800">
-                                <span class="ai-feature-icon">✨</span>
-                                <span class="ai-feature-name">Stereo Enhancement</span>
-                                <div class="ai-feature-bar"><div class="ai-feature-progress"></div></div>
-                                <span class="ai-feature-check">✓</span>
-                            </div>
-                        </div>
-
-                        <button class="ai-start-btn" id="aiStartTourBtn">START TOUR</button>
+                    <div style="width: 80px; height: 80px; margin: 0 auto 20px;">
+                        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; filter: drop-shadow(0 0 15px rgba(0,212,255,0.6)) drop-shadow(0 0 30px rgba(184,79,255,0.4));">
+                            <defs>
+                                <linearGradient id="loadLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#00d4ff" />
+                                    <stop offset="50%" style="stop-color:#b84fff" />
+                                    <stop offset="100%" style="stop-color:#00ff88" />
+                                </linearGradient>
+                                <filter id="loadGlow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                            </defs>
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="url(#loadLogoGrad)" stroke-width="2" opacity="0.6"/>
+                            <g filter="url(#loadGlow)">
+                                <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="16;24;16" dur="1s" repeatCount="indefinite"/><animate attributeName="y" values="42;38;42" dur="1s" repeatCount="indefinite"/></rect>
+                                <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="30;20;30" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="35;40;35" dur="0.8s" repeatCount="indefinite"/></rect>
+                                <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="44;36;44" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y" values="28;32;28" dur="1.2s" repeatCount="indefinite"/></rect>
+                                <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="56;44;56" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="22;28;22" dur="0.9s" repeatCount="indefinite"/></rect>
+                                <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="44;32;44" dur="1.1s" repeatCount="indefinite"/><animate attributeName="y" values="28;34;28" dur="1.1s" repeatCount="indefinite"/></rect>
+                                <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="30;22;30" dur="0.7s" repeatCount="indefinite"/><animate attributeName="y" values="35;39;35" dur="0.7s" repeatCount="indefinite"/></rect>
+                                <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#loadLogoGrad)"><animate attributeName="height" values="16;26;16" dur="1.3s" repeatCount="indefinite"/><animate attributeName="y" values="42;37;42" dur="1.3s" repeatCount="indefinite"/></rect>
+                            </g>
+                        </svg>
                     </div>
+                    <h1 class="loading-title">LuvLang</h1>
+                    <p class="loading-subtitle">Professional Mastering Platform</p>
+                    <div class="loading-bar-container">
+                        <div class="loading-bar" id="postLoginBar"></div>
+                    </div>
+                    <p class="loading-status" id="postLoginStatus">Preparing your studio...</p>
                 `;
                 document.body.appendChild(loadingOverlay);
             }
 
-            // Animate feature loading bars
-            var features = loadingOverlay.querySelectorAll('.ai-feature-row');
-            features.forEach(function(row) {
-                var delay = parseInt(row.getAttribute('data-delay')) || 0;
-                setTimeout(function() {
-                    row.classList.add('loaded');
-                }, delay);
-            });
+            // Animate loading bar
+            var bar = document.getElementById('postLoginBar');
+            var status = document.getElementById('postLoginStatus');
+            if (bar) {
+                setTimeout(function() { bar.style.width = '100%'; }, 50);
+            }
 
-            // Show start button after all features loaded
+            // Status updates
+            setTimeout(function() { if (status) status.textContent = 'Loading audio engine...'; }, 500);
+            setTimeout(function() { if (status) status.textContent = 'Calibrating processors...'; }, 1000);
+            setTimeout(function() { if (status) status.textContent = 'Ready!'; }, 1500);
+
+            // After loading, start tour (language selection will be Step 1)
             setTimeout(function() {
-                var startBtn = document.getElementById('aiStartTourBtn');
-                if (startBtn) startBtn.classList.add('ready');
-            }, 2400);
-
-            // Start Tour button click - goes to Master Me screen
-            setTimeout(function() {
-                var startBtn = document.getElementById('aiStartTourBtn');
-                if (startBtn) {
-                    startBtn.addEventListener('click', function() {
-                        OnboardingFlow.showMasterMeScreen();
-                    });
-                }
-            }, 100);
-        };
-
-        // STEP 2: Master Me Screen
-        OnboardingFlow.showMasterMeScreen = function() {
-            var loadingOverlay = document.getElementById('postLoginLoading');
-            if (loadingOverlay) {
+                console.log('🎤 Loading complete, starting tour...');
                 loadingOverlay.classList.add('fade-out');
-                setTimeout(function() { loadingOverlay.remove(); }, 500);
-            }
-
-            var masterMeOverlay = document.createElement('div');
-            masterMeOverlay.id = 'masterMeScreen';
-            masterMeOverlay.innerHTML = `
-                <style>
-                    #masterMeScreen {
-                        position: fixed;
-                        top: 0; left: 0; right: 0; bottom: 0;
-                        background: linear-gradient(135deg, #000510 0%, #0a0520 50%, #000510 100%);
-                        z-index: 999999;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        opacity: 0;
-                        transition: opacity 0.6s ease;
-                        overflow: hidden;
-                    }
-                    #masterMeScreen.active { opacity: 1; }
-                    #masterMeScreen.fade-out { opacity: 0; pointer-events: none; }
-
-                    .master-bg-pulse {
-                        position: absolute;
-                        width: 600px; height: 600px;
-                        border-radius: 50%;
-                        background: radial-gradient(circle, rgba(184, 79, 255, 0.15), transparent 70%);
-                        animation: masterPulse 3s ease-in-out infinite;
-                    }
-                    @keyframes masterPulse {
-                        0%, 100% { transform: scale(1); opacity: 0.3; }
-                        50% { transform: scale(1.2); opacity: 0.5; }
-                    }
-
-                    .master-content {
-                        position: relative;
-                        z-index: 1;
-                        text-align: center;
-                    }
-                    .master-icon {
-                        font-size: 5rem;
-                        margin-bottom: 30px;
-                        animation: masterFloat 2s ease-in-out infinite;
-                    }
-                    @keyframes masterFloat {
-                        0%, 100% { transform: translateY(0) scale(1); }
-                        50% { transform: translateY(-15px) scale(1.05); }
-                    }
-                    .master-title {
-                        font-size: 4rem;
-                        font-weight: 900;
-                        background: linear-gradient(135deg, #fff 0%, #b84fff 50%, #00d4ff 100%);
-                        -webkit-background-clip: text;
-                        -webkit-text-fill-color: transparent;
-                        background-clip: text;
-                        margin: 0 0 20px;
-                        letter-spacing: -2px;
-                        text-transform: uppercase;
-                    }
-                    .master-desc {
-                        font-size: 1.2rem;
-                        color: rgba(255,255,255,0.6);
-                        margin-bottom: 50px;
-                        max-width: 400px;
-                    }
-                    .master-cta {
-                        padding: 20px 60px;
-                        font-size: 1.3rem;
-                        font-weight: 700;
-                        color: #fff;
-                        background: linear-gradient(135deg, #b84fff 0%, #00d4ff 100%);
-                        border: none;
-                        border-radius: 50px;
-                        cursor: pointer;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 10px 40px rgba(184, 79, 255, 0.5);
-                        text-transform: uppercase;
-                        letter-spacing: 3px;
-                    }
-                    .master-cta:hover {
-                        transform: translateY(-5px) scale(1.05);
-                        box-shadow: 0 15px 50px rgba(184, 79, 255, 0.7);
-                    }
-                </style>
-
-                <div class="master-bg-pulse"></div>
-
-                <div class="master-content">
-                    <div class="master-icon">🎧</div>
-                    <h1 class="master-title">Master Me</h1>
-                    <p class="master-desc">Your professional-grade AI mastering studio is ready. Let's get started!</p>
-                    <button class="master-cta" id="masterMeContinueBtn">LET'S GO</button>
-                </div>
-            `;
-            document.body.appendChild(masterMeOverlay);
-
-            // Fade in
-            setTimeout(function() { masterMeOverlay.classList.add('active'); }, 50);
-
-            // Continue button - goes to language selection
-            document.getElementById('masterMeContinueBtn').addEventListener('click', function() {
-                masterMeOverlay.classList.add('fade-out');
                 setTimeout(function() {
-                    masterMeOverlay.remove();
-                    OnboardingFlow.showLanguageSelection();
+                    loadingOverlay.remove();
+                    // Start tour - will show language selection first (no saved language)
+                    if (typeof window.startTour === 'function') {
+                        window.startTour();
+                    }
                 }, 500);
-            });
-        };
-
-        // STEP 3: Language Selection with Dorothy speaking
-        OnboardingFlow.showLanguageSelection = function() {
-            console.log('🎤 Showing language selection with Dorothy voice');
-
-            // Show the language modal
-            var langModal = document.getElementById('tourLanguageModal');
-            if (langModal) {
-                langModal.style.display = 'flex';
-                langModal.style.zIndex = '99999999';
-
-                // Have Dorothy speak after a brief delay
-                setTimeout(function() {
-                    if (typeof window.speakWithElevenLabs === 'function') {
-                        window.speakWithElevenLabs("Welcome to LuvLang! Please select your preferred language to begin the tour.");
-                    }
-                }, 800);
-            } else {
-                // Fallback: start tour directly
-                if (typeof window.startTourAfterLanguage === 'function') {
-                    window.startTourAfterLanguage();
-                }
-            }
+            }, 2000);
         };
 
         // Skip to app for returning users
@@ -26820,7 +26536,7 @@
             }
         }
 
-        // Start Tour - Goes through AI Engine → Master Me → Language flow
+        // Start Tour - Shows language selection first
         function startVoiceTour() {
             // Prevent restarting if already active
             if (tourActive) {
@@ -26828,57 +26544,29 @@
                 return;
             }
 
-            // Remove any blocking overlays
+            // Remove only the loading screen overlay (NOT signup - that's needed for login flow)
             const initialLoader = document.getElementById('initialLoadingScreen');
             if (initialLoader) initialLoader.remove();
+            console.log('🎤 Cleared initial loading overlay');
 
-            // Check if user has already completed the full onboarding this session
-            const onboardingShown = sessionStorage.getItem('onboardingFlowShown');
+            // Check if user has a saved language preference
             const savedLang = localStorage.getItem('tourLanguage');
-
-            if (onboardingShown && savedLang) {
-                // User has seen onboarding and has a language - start tour directly
-                console.log('🎤 Returning user - starting tour directly');
+            if (savedLang) {
+                // Use saved language and start directly
                 currentLang = savedLang;
                 initVoiceEngine();
                 startTourAfterLanguage();
             } else {
-                // Show full onboarding flow: AI Engine → Master Me → Language
-                console.log('🎤 Starting full onboarding flow...');
-                sessionStorage.setItem('onboardingFlowShown', 'true');
-
-                // Hide any other overlays that might interfere
-                const signupGate = document.getElementById('signupGateOverlay');
-                if (signupGate) {
-                    signupGate.style.display = 'none';
-                    signupGate.classList.add('hidden');
-                }
-
-                // Start the AI Engine Loading screen
-                if (typeof OnboardingFlow !== 'undefined' && OnboardingFlow.showLoadingScreen) {
-                    OnboardingFlow.showLoadingScreen();
+                // Show language selection modal first
+                const langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.display = 'flex';
+                    langModal.style.zIndex = '99999999';
+                    console.log('🎤 Showing language selection');
                 } else {
-                    // Fallback: show language selection directly
-                    showLanguageSelectionDirect();
+                    // Fallback: start with English
+                    startTourAfterLanguage();
                 }
-            }
-        }
-
-        // Direct language selection (fallback)
-        function showLanguageSelectionDirect() {
-            const langModal = document.getElementById('tourLanguageModal');
-            if (langModal) {
-                langModal.style.display = 'flex';
-                langModal.style.zIndex = '99999999';
-                console.log('🎤 Showing language selection (direct)');
-                // Have Dorothy speak
-                setTimeout(function() {
-                    if (typeof window.speakWithElevenLabs === 'function') {
-                        window.speakWithElevenLabs("Welcome to LuvLang! Please select your preferred language to begin the tour.");
-                    }
-                }, 500);
-            } else {
-                startTourAfterLanguage();
             }
         }
 
