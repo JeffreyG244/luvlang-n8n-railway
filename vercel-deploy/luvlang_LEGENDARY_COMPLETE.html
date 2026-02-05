@@ -26641,6 +26641,17 @@
                 if (masterInstruction) masterInstruction.style.display = 'block';
                 // Add glow to Master button
                 if (masterBtn) masterBtn.classList.add('master-btn-tour-highlight');
+
+                // AUTO-PLAY the track so user can hear it before mastering
+                setTimeout(() => {
+                    const audioEl = document.getElementById('audioElement');
+                    if (audioEl && audioEl.src && audioEl.paused) {
+                        console.log('🎤 MASTER STEP - Auto-playing track for preview');
+                        audioEl.play().catch(err => {
+                            console.warn('Could not auto-play:', err.message);
+                        });
+                    }
+                }, 500);
             } else {
                 // Hide instruction and remove glow
                 if (masterInstruction) masterInstruction.style.display = 'none';
