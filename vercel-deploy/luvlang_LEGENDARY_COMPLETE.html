@@ -26820,7 +26820,7 @@
             }
         }
 
-        // Start Tour - Shows language selection first
+        // Start Tour - Goes through AI Engine → Master Me → Language flow
         function startVoiceTour() {
             // Prevent restarting if already active
             if (tourActive) {
@@ -26828,29 +26828,57 @@
                 return;
             }
 
-            // Remove only the loading screen overlay (NOT signup - that's needed for login flow)
+            // Remove any blocking overlays
             const initialLoader = document.getElementById('initialLoadingScreen');
             if (initialLoader) initialLoader.remove();
-            console.log('🎤 Cleared initial loading overlay');
 
-            // Check if user has a saved language preference
+            // Check if user has already completed the full onboarding this session
+            const onboardingShown = sessionStorage.getItem('onboardingFlowShown');
             const savedLang = localStorage.getItem('tourLanguage');
-            if (savedLang) {
-                // Use saved language and start directly
+
+            if (onboardingShown && savedLang) {
+                // User has seen onboarding and has a language - start tour directly
+                console.log('🎤 Returning user - starting tour directly');
                 currentLang = savedLang;
                 initVoiceEngine();
                 startTourAfterLanguage();
             } else {
-                // Show language selection modal first
-                const langModal = document.getElementById('tourLanguageModal');
-                if (langModal) {
-                    langModal.style.display = 'flex';
-                    langModal.style.zIndex = '99999999';
-                    console.log('🎤 Showing language selection');
-                } else {
-                    // Fallback: start with English
-                    startTourAfterLanguage();
+                // Show full onboarding flow: AI Engine → Master Me → Language
+                console.log('🎤 Starting full onboarding flow...');
+                sessionStorage.setItem('onboardingFlowShown', 'true');
+
+                // Hide any other overlays that might interfere
+                const signupGate = document.getElementById('signupGateOverlay');
+                if (signupGate) {
+                    signupGate.style.display = 'none';
+                    signupGate.classList.add('hidden');
                 }
+
+                // Start the AI Engine Loading screen
+                if (typeof OnboardingFlow !== 'undefined' && OnboardingFlow.showLoadingScreen) {
+                    OnboardingFlow.showLoadingScreen();
+                } else {
+                    // Fallback: show language selection directly
+                    showLanguageSelectionDirect();
+                }
+            }
+        }
+
+        // Direct language selection (fallback)
+        function showLanguageSelectionDirect() {
+            const langModal = document.getElementById('tourLanguageModal');
+            if (langModal) {
+                langModal.style.display = 'flex';
+                langModal.style.zIndex = '99999999';
+                console.log('🎤 Showing language selection (direct)');
+                // Have Dorothy speak
+                setTimeout(function() {
+                    if (typeof window.speakWithElevenLabs === 'function') {
+                        window.speakWithElevenLabs("Welcome to LuvLang! Please select your preferred language to begin the tour.");
+                    }
+                }, 500);
+            } else {
+                startTourAfterLanguage();
             }
         }
 
