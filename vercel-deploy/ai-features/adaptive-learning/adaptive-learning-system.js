@@ -316,7 +316,6 @@ class AdaptiveLearningSystem {
             const stored = localStorage.getItem('luvlang_adaptive_learning');
             if (stored) {
                 this.learningData = JSON.parse(stored);
-                           this.learningData.totalSessions, 'sessions');
             }
         } catch (error) {
             console.error('[Adaptive Learning] Load failed:', error);
