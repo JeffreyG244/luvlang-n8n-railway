@@ -14,14 +14,16 @@
     <meta property="og:url" content="https://luvlang.studio">
     <meta property="og:title" content="LuvLang - Professional Audio Mastering Made Simple">
     <meta property="og:description" content="The most advanced mastering platform on the web. Reference track matching, multiband compression, M/S processing, and 12 professional modules.">
-    <meta property="og:image" content="https://luvlang.studio/favicon.svg">
+    <meta property="og:image" content="https://luvlang.studio/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="LuvLang - Professional Audio Mastering Made Simple">
     <meta name="twitter:description" content="The most advanced mastering platform on the web. 12 professional modules starting at $12.99.">
-    <meta name="twitter:image" content="https://luvlang.studio/favicon.svg">
+    <meta name="twitter:image" content="https://luvlang.studio/og-image.png">
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00d4ff">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1391,6 +1393,13 @@
             const separator = onclick.includes('?') ? '&' : '?';
             btn.setAttribute('onclick', onclick.replace(/(\/app[^'"]*)/, '$1' + separator + 'v=' + cacheBuster));
         });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>

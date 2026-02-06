@@ -45,15 +45,17 @@
     <meta property="og:url" content="https://luvlang.studio/app">
     <meta property="og:title" content="LuvLang - Professional Audio Mastering Studio">
     <meta property="og:description" content="Master your audio to professional quality in your browser. Reference matching, multiband compression, M/S processing, and 12 pro modules.">
-    <meta property="og:image" content="https://luvlang.studio/favicon.svg">
+    <meta property="og:image" content="https://luvlang.studio/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="LuvLang - Professional Audio Mastering Studio">
     <meta name="twitter:description" content="Professional browser-based audio mastering. 12 pro modules starting at $12.99/track.">
-    <meta name="twitter:image" content="https://luvlang.studio/favicon.svg">
+    <meta name="twitter:image" content="https://luvlang.studio/og-image.png">
     <link rel="canonical" href="https://luvlang.studio/app">
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00d4ff">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27000,5 +27002,12 @@
     })();
     </script>
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
 </body>
 </html>
