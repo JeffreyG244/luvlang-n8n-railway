@@ -5469,64 +5469,7 @@
             <h1 class="splash-title">LuvLang</h1>
             <p class="splash-tagline">Professional Mastering Platform</p>
 
-            <!-- Premium Status Bar - Always visible -->
-            <div id="masterMeStatusBar" style="margin: 28px 0; text-align: center;">
-                <!-- Outer container with glass effect -->
-                <div style="
-                    display: inline-block;
-                    padding: 16px 32px;
-                    background: linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(184,79,255,0.08) 100%);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    border-radius: 16px;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    box-shadow:
-                        0 8px 32px rgba(0,0,0,0.3),
-                        inset 0 1px 0 rgba(255,255,255,0.1),
-                        0 0 40px rgba(0,212,255,0.1);
-                ">
-                    <!-- Progress bar container -->
-                    <div style="
-                        width: 280px;
-                        height: 6px;
-                        background: rgba(255,255,255,0.08);
-                        border-radius: 6px;
-                        margin: 0 auto 14px;
-                        overflow: hidden;
-                        position: relative;
-                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
-                    ">
-                        <!-- Animated gradient progress bar -->
-                        <div id="masterMeProgressBar" style="
-                            width: 0%;
-                            height: 100%;
-                            background: linear-gradient(90deg, #00d4ff, #00ff88, #b84fff, #ff6b6b, #00d4ff);
-                            background-size: 300% 100%;
-                            border-radius: 6px;
-                            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                            animation: shimmerGradient 3s ease infinite;
-                            box-shadow: 0 0 12px rgba(0,212,255,0.6), 0 0 24px rgba(184,79,255,0.4);
-                        "></div>
-                    </div>
-                    <!-- Status text with premium styling -->
-                    <p id="masterMeStatusText" style="
-                        color: rgba(255,255,255,0.85);
-                        font-size: 0.8rem;
-                        font-weight: 500;
-                        letter-spacing: 1.5px;
-                        text-transform: uppercase;
-                        margin: 0;
-                        text-shadow: 0 0 20px rgba(0,212,255,0.5);
-                    ">Initializing Studio</p>
-                </div>
-            </div>
-            <style>
-                @keyframes shimmerGradient {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-            </style>
+            <!-- Status bar removed -->
 
             <button class="landing-cta" onclick="OnboardingFlow.handleMasterMeClick()">
                 MASTER ME!
@@ -6048,24 +5991,25 @@
                 if (s) s.textContent = 'Ready!';
             }, 1500);
 
-            // After 3 seconds, go to Master Me page (with logo)
+            // After 3 seconds, go straight to language selection or app
             setTimeout(function() {
 
                 var overlay = document.getElementById('postLoginLoading');
                 if (overlay) overlay.remove();
 
-                // Show Master Me splash page (with logo)
-                var masterMeSplash = document.getElementById('onboardingSplash');
-                if (masterMeSplash) {
-                    masterMeSplash.style.display = 'flex';
-                    masterMeSplash.style.zIndex = '9999999';
-                    // Mark that we're post-login so button goes to language
-                    masterMeSplash.setAttribute('data-post-login', 'true');
+                // Remove initial loading screen too
+                var initLoader = document.getElementById('initialLoadingScreen');
+                if (initLoader) initLoader.remove();
 
-                    // Animate the premium status bar (post-login mode)
-                    OnboardingFlow.animateStatusBar('post-login');
+                // Check if language already selected — skip to app
+                var langDone = false;
+                try { langDone = localStorage.getItem('luvlang_language_selected') === 'true'; } catch(_) {}
+
+                if (langDone) {
+                    // Returning user — go straight to app
+                    OnboardingFlow.skipToApp();
                 } else {
-
+                    // New user — show language selection
                     var langModal = document.getElementById('tourLanguageModal');
                     if (langModal) {
                         langModal.style.display = 'flex';
@@ -6080,12 +6024,11 @@
                 if (stuckOverlay) {
 
                     stuckOverlay.remove();
-                    // Show Master Me page
-                    var splash = document.getElementById('onboardingSplash');
-                    if (splash) {
-                        splash.style.display = 'flex';
-                        splash.style.zIndex = '9999999';
-                        splash.setAttribute('data-post-login', 'true');
+                    // Go straight to language selection
+                    var langModal = document.getElementById('tourLanguageModal');
+                    if (langModal) {
+                        langModal.style.display = 'flex';
+                        langModal.style.zIndex = '9999999';
                     }
                 }
             }, 7000);
