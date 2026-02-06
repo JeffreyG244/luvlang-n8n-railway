@@ -81,7 +81,16 @@
       ]
     },
     {
-      "source": "/og-image.png",
+      "source": "/:path*.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/:path*.svg",
       "headers": [
         {
           "key": "Cache-Control",
@@ -108,16 +117,7 @@
       ]
     },
     {
-      "source": "/favicon.svg",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400"
-        }
-      ]
-    },
-    {
-      "source": "/manifest.json",
+      "source": "/:path*.json",
       "headers": [
         {
           "key": "Cache-Control",
