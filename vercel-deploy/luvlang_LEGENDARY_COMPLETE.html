@@ -5432,7 +5432,7 @@
                 }
             </style>
 
-            <button class="landing-cta" onclick="OnboardingFlow.goToPage('signin')">
+            <button class="landing-cta" onclick="OnboardingFlow.handleMasterMeClick()">
                 MASTER ME!
             </button>
             <p class="landing-subtitle">Free to try • No credit card required</p>
@@ -5690,6 +5690,34 @@
 
         // Alias for backwards compatibility
         OnboardingFlow.startSplash = OnboardingFlow.showLandingPage;
+
+        // MASTER ME button click handler - simplified and direct
+        OnboardingFlow.handleMasterMeClick = function() {
+            console.log('🔘 MASTER ME button clicked!');
+            var splash = document.getElementById('onboardingSplash');
+            var isPostLogin = splash && splash.getAttribute('data-post-login') === 'true';
+            console.log('📍 Post-login mode:', isPostLogin);
+
+            if (isPostLogin) {
+                // POST-LOGIN: Go directly to language selection
+                console.log('✅ Going to language selection...');
+                splash.style.display = 'none';
+                var langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.display = 'flex';
+                    langModal.style.zIndex = '9999999';
+                    console.log('🌍 Language modal shown!');
+                } else {
+                    console.error('❌ Language modal not found!');
+                    // Fallback: start tour
+                    if (typeof window.startTour === 'function') window.startTour();
+                }
+            } else {
+                // PRE-LOGIN: Go to sign-in page
+                console.log('🔐 Going to sign-in...');
+                OnboardingFlow.goToPage('signin');
+            }
+        };
 
         // Page transitions
         OnboardingFlow.goToPage = function(page) {
