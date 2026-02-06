@@ -5373,6 +5373,14 @@
             <h1 class="splash-title">LuvLang</h1>
             <p class="splash-tagline">Professional Mastering Platform</p>
 
+            <!-- Post-login status bar (hidden initially, shown after login) -->
+            <div id="masterMeStatusBar" style="display: none; margin: 20px 0; text-align: center;">
+                <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 0 auto 10px; overflow: hidden;">
+                    <div id="masterMeProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff); border-radius: 2px; transition: width 0.3s ease;"></div>
+                </div>
+                <p id="masterMeStatusText" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin: 0;">Preparing your studio...</p>
+            </div>
+
             <button class="landing-cta" onclick="OnboardingFlow.goToPage('signin')">
                 MASTER ME!
             </button>
@@ -5804,6 +5812,31 @@
                     // Mark that we're post-login so button goes to language
                     masterMeSplash.setAttribute('data-post-login', 'true');
                     console.log('✅ Master Me page shown (post-login)');
+
+                    // Show and animate the status bar
+                    var statusBar = document.getElementById('masterMeStatusBar');
+                    var progressBar = document.getElementById('masterMeProgressBar');
+                    var statusText = document.getElementById('masterMeStatusText');
+                    if (statusBar) {
+                        statusBar.style.display = 'block';
+                        // Animate progress
+                        setTimeout(function() {
+                            if (progressBar) progressBar.style.width = '30%';
+                            if (statusText) statusText.textContent = 'Loading audio engine...';
+                        }, 100);
+                        setTimeout(function() {
+                            if (progressBar) progressBar.style.width = '60%';
+                            if (statusText) statusText.textContent = 'Initializing processors...';
+                        }, 600);
+                        setTimeout(function() {
+                            if (progressBar) progressBar.style.width = '90%';
+                            if (statusText) statusText.textContent = 'Almost ready...';
+                        }, 1100);
+                        setTimeout(function() {
+                            if (progressBar) progressBar.style.width = '100%';
+                            if (statusText) statusText.textContent = 'Ready! Click MASTER ME to continue';
+                        }, 1600);
+                    }
                 } else {
                     console.log('⚠️ No Master Me page found, showing language');
                     var langModal = document.getElementById('tourLanguageModal');
