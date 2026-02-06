@@ -5701,11 +5701,22 @@
             if (isPostLogin) {
                 // POST-LOGIN: Go directly to language selection
                 console.log('✅ Going to language selection...');
+
+                // Hide ALL possible overlays first
                 splash.style.display = 'none';
+                splash.style.zIndex = '1';
+                var signupGate = document.getElementById('signupGateOverlay');
+                if (signupGate) signupGate.style.display = 'none';
+                var postLoginLoad = document.getElementById('postLoginLoading');
+                if (postLoginLoad) postLoginLoad.remove();
+
+                // Show language modal on TOP of everything
                 var langModal = document.getElementById('tourLanguageModal');
                 if (langModal) {
                     langModal.style.display = 'flex';
-                    langModal.style.zIndex = '9999999';
+                    langModal.style.zIndex = '99999999';
+                    langModal.style.opacity = '1';
+                    langModal.style.visibility = 'visible';
                     console.log('🌍 Language modal shown!');
                 } else {
                     console.error('❌ Language modal not found!');
