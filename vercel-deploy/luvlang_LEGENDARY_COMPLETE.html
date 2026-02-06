@@ -5807,21 +5807,33 @@
         // Called after login success
         OnboardingFlow.loginComplete = false;
         OnboardingFlow.onLoginSuccess = function() {
-            console.log('✅ Login successful, showing loading screen...');
+            console.log('✅ Login successful!');
             OnboardingFlow.supabaseResponded = true;
-            OnboardingFlow.loginComplete = true; // Flag to cancel landing page auto-advance
+            OnboardingFlow.loginComplete = true;
 
-            // Hide all screens first
-            var splash = document.getElementById('onboardingSplash');
-            var signupGate = document.getElementById('signupGateOverlay');
-            if (splash) splash.style.display = 'none';
-            if (signupGate) {
-                signupGate.classList.add('hidden');
-                signupGate.style.display = 'none';
+            // NUCLEAR: Hide ALL overlays
+            ['onboardingSplash', 'signupGateOverlay', 'postLoginLoading', 'initialLoadingScreen'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.cssText = 'display:none!important;';
+            });
+
+            // Go DIRECTLY to language selection
+            console.log('🌍 Going directly to language selection...');
+            var langPage = document.getElementById('onboardingLanguage');
+            if (langPage) {
+                langPage.style.cssText = 'display:flex!important;opacity:1!important;visibility:visible!important;z-index:99999999!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;';
+                langPage.classList.add('active');
+                console.log('🌍 Language page shown!');
+            } else {
+                // Fallback to modal
+                var langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.cssText = 'display:flex!important;opacity:1!important;visibility:visible!important;z-index:99999999!important;';
+                    console.log('🌍 Language modal shown!');
+                } else {
+                    console.error('❌ No language UI found');
+                }
             }
-
-            // Show loading screen
-            OnboardingFlow.showLoadingScreen();
         };
 
         // Show loading screen after sign in
