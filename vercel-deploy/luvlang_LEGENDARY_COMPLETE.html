@@ -10622,8 +10622,8 @@
                 const nyCompOutput = audioContext.createGain();
 
                 nyCompInput.gain.value = 1.0;
-                nyCompDry.gain.value = 0.7;  // 70% dry (original dynamics)
-                nyCompWet.gain.value = 0.3;  // 30% crushed (energy and punch)
+                nyCompDry.gain.value = 1.0;  // 100% dry (disabled by default — pass-through)
+                nyCompWet.gain.value = 0.0;  // 0% wet (enable via window.nyCompression.presets.punchy())
                 nyCompOutput.gain.value = 1.0;
 
                 // The "crush" compressor - aggressive settings
@@ -11789,24 +11789,128 @@
                 window.isMasteringApplied = false;
 
                 // ═══════════════════════════════════════════════════════════════════════════
-                // ═══════════════════════════════════════════════════════════════════════════
-                // ⚡ PROFESSIONAL MASTERING SIGNAL CHAIN (WET PATH)
-                // Based on Bob Ludwig, Bernie Grundman, Randy Merrill techniques
-                // Signal flow: Cleanup → EQ → Compression → Saturation → Gain → Limiting
+                // WRAPPER NODES - Connect disconnected processors into the serial chain
+                // Each module has internal routing; these wrappers provide chain in/out points
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                // ════════════════════════════════════════════════════════════════════════════
-                // WORLD-CLASS 6-STAGE MASTERING CHAIN
-                // "Less is more" - minimal processing for transparent results
-                // ════════════════════════════════════════════════════════════════════════════
+                // --- Multiband Crossover wrappers ---
+                const mbInput = audioContext.createGain();
+                const mbOutput = audioContext.createGain();
+                mbInput.gain.value = 1.0;
+                mbOutput.gain.value = 1.0;
+                // Low band:  mbInput → mbLowPass → mbLowGain → mbOutput
+                mbInput.connect(mbLowPass);
+                mbLowPass.connect(mbLowGain);
+                mbLowGain.connect(mbOutput);
+                // Mid band:  mbInput → mbHighPass → mbMidLowPass → mbMidGain → mbOutput
+                mbInput.connect(mbHighPass);
+                mbHighPass.connect(mbMidLowPass);
+                mbMidLowPass.connect(mbMidGain);
+                mbMidGain.connect(mbOutput);
+                // High band: mbInput → mbHighPass → mbMidHighPass → mbHighGain → mbOutput
+                mbHighPass.connect(mbMidHighPass);
+                mbMidHighPass.connect(mbHighGain);
+                mbHighGain.connect(mbOutput);
 
-                // STAGE 1: INPUT CLEANUP - Subsonic Filter (removes rumble < 25Hz)
-                // Critical for headroom and preventing limiter issues
-                sourceNode.connect(subsonicFilter);
+                // --- NY Parallel Compression wrappers ---
+                // Dry path: nyCompInput → nyCompDry → nyCompOutput
+                nyCompInput.connect(nyCompDry);
+                nyCompDry.connect(nyCompOutput);
+                // Wet path: nyCompInput → nyHighPass → nyCompressor → nyMakeupGain → nyCompWet → nyCompOutput
+                nyCompInput.connect(nyHighPass);
+                nyHighPass.connect(nyCompressor);
+                nyCompressor.connect(nyMakeupGain);
+                nyMakeupGain.connect(nyCompWet);
+                nyCompWet.connect(nyCompOutput);
 
-                // STAGE 2: TONAL SHAPING - 7-Band Parametric EQ
-                // Use primarily for CUTS (subtractive EQ) - fixes problems
-                // Boosts should be subtle (< 2dB) - "if it needs more, fix the mix"
+                // --- M/S EQ wrappers ---
+                const msEQ_Input = audioContext.createGain();
+                msEQ_Input.gain.value = 1.0;
+                // Encode: split L/R → sum to Mid (L+R) and Side (L-R)
+                msEQ_Input.connect(msEQ_Splitter);
+                msEQ_Splitter.connect(msEQ_MidL, 0);   // Left → Mid encoder
+                msEQ_Splitter.connect(msEQ_MidR, 1);   // Right → Mid encoder
+                msEQ_Splitter.connect(msEQ_SideL, 0);   // Left → Side encoder
+                msEQ_Splitter.connect(msEQ_SideR, 1);   // Right → Side encoder
+                // Mid = 0.5*L + 0.5*R → EQ chain (already connected: midEQ_Low→...→msEQ_MidChannel)
+                msEQ_MidL.connect(midEQ_Low);
+                msEQ_MidR.connect(midEQ_Low);
+                // Side = 0.5*L - 0.5*R → EQ chain (already connected: sideEQ_Low→...→msEQ_SideChannel)
+                msEQ_SideL.connect(sideEQ_Low);
+                msEQ_SideR.connect(sideEQ_Low);
+                // Decode: Mid/Side → L (Mid+Side) and R (Mid-Side)
+                msEQ_MidChannel.connect(msEQ_DecodeLMid);
+                msEQ_MidChannel.connect(msEQ_DecodeRMid);
+                msEQ_SideChannel.connect(msEQ_DecodeLSide);
+                msEQ_SideChannel.connect(msEQ_DecodeRSide);
+                msEQ_DecodeLMid.connect(msEQ_OutL);
+                msEQ_DecodeLSide.connect(msEQ_OutL);
+                msEQ_DecodeRMid.connect(msEQ_OutR);
+                msEQ_DecodeRSide.connect(msEQ_OutR);
+                msEQ_OutL.connect(msEQ_Merger, 0, 0);
+                msEQ_OutR.connect(msEQ_Merger, 0, 1);
+                msEQ_Merger.connect(msEQ_Output);
+
+                // --- Bass Mono Crossover wrappers ---
+                const bassMonoInput = audioContext.createGain();
+                bassMonoInput.gain.value = 1.0;
+                // Wet path: split → LPF to mono sum + HPF stereo pass-through → merge → output
+                bassMonoInput.connect(bassMonoSplitter);
+                bassMonoSplitter.connect(bassMonoLPF_L, 0);
+                bassMonoSplitter.connect(bassMonoLPF_R, 1);
+                bassMonoLPF_L.connect(bassMonoSum);
+                bassMonoLPF_R.connect(bassMonoSum);
+                bassMonoSum.connect(bassMonoMerger, 0, 0);   // Mono bass → both channels
+                bassMonoSum.connect(bassMonoMerger, 0, 1);
+                bassMonoSplitter.connect(bassMonoHPF_L, 0);
+                bassMonoSplitter.connect(bassMonoHPF_R, 1);
+                bassMonoHPF_L.connect(bassMonoMerger, 0, 0); // Stereo highs → L
+                bassMonoHPF_R.connect(bassMonoMerger, 0, 1); // Stereo highs → R
+                bassMonoMerger.connect(bassMonoWet);
+                bassMonoWet.connect(bassMonoOutput);
+                // Bypass path: bassMonoInput → bassMonoBypass → bassMonoOutput
+                bassMonoInput.connect(bassMonoBypass);
+                bassMonoBypass.connect(bassMonoOutput);
+
+                // --- HF Limiter wrappers ---
+                const hfLimiterInput = audioContext.createGain();
+                hfLimiterInput.gain.value = 1.0;
+                // Below 6kHz passes through untouched
+                hfLimiterInput.connect(hfLimiterLP);
+                hfLimiterLP.connect(hfLimiterMix);
+                // Above 6kHz gets compressed then recombined
+                hfLimiterInput.connect(hfLimiterHP);
+                hfLimiterHP.connect(hfLimiterComp);
+                hfLimiterComp.connect(hfLimiterGain);
+                hfLimiterGain.connect(hfLimiterMix);
+
+                // --- Analog Warmth wrappers (FIX: use dry/wet mixer) ---
+                const warmthInput = audioContext.createGain();
+                const warmthOutput = audioContext.createGain();
+                warmthInput.gain.value = 1.0;
+                warmthOutput.gain.value = 1.0;
+                // Dry path: warmthInput → warmthDry → warmthOutput
+                warmthInput.connect(warmthDry);
+                warmthDry.connect(warmthOutput);
+                // Wet path: warmthInput → analogWarmth → warmthWet → warmthOutput
+                warmthInput.connect(analogWarmth);
+                analogWarmth.connect(warmthWet);
+                warmthWet.connect(warmthOutput);
+
+                // ═══════════════════════════════════════════════════════════════════════════
+                // ═══════════════════════════════════════════════════════════════════════════
+                // ⚡ PROFESSIONAL MASTERING SIGNAL CHAIN (WET PATH) — 20 STAGES
+                // Based on Bob Ludwig, Bernie Grundman, Randy Merrill, Chris Athens techniques
+                // Order: Cleanup → Corrective EQ → Dynamic EQ → Compression → Saturation → Limiting
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // STAGE 1: DC OFFSET REMOVAL
+                sourceNode.connect(dcOffsetFilter);
+
+                // STAGE 2: SUBSONIC FILTER (removes rumble < 25Hz)
+                dcOffsetFilter.connect(subsonicFilter);
+
+                // STAGE 3: 7-BAND PARAMETRIC EQ (corrective/tonal shaping)
                 subsonicFilter.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
@@ -11815,26 +11919,57 @@
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
 
-                // STAGE 3: DYNAMICS - Glue Compressor (SSL-style bus compression)
-                // Settings: 1.5:1 ratio, 30ms attack, 150ms release, 2-3dB GR max
-                // "Compression should be invisible" - subtle glue only
-                eqAirFilter.connect(compressor);
+                // STAGE 4: DYNAMIC EQ (frequency-dependent compression)
+                eqAirFilter.connect(dynEqInput);
 
-                // STAGE 4: COLORATION - Single Analog Warmth Stage
-                // ONE saturation stage only (not 3!) - tape-style cohesion
-                // 15% wet maximum - "saturation should enhance, not dominate"
-                compressor.connect(analogWarmth);
+                // STAGE 5: DE-ESSER (sibilance control before compression)
+                dynEqOutput.connect(deEsserFilter);
 
-                // STAGE 5: LOUDNESS - Makeup Gain (LUFS targeting)
-                analogWarmth.connect(makeupGain);
+                // STAGE 6: MULTIBAND CROSSOVER (per-band gain control)
+                deEsserFilter.connect(mbInput);
 
-                // STAGE 6: LIMITING - True Peak Limiter with Lookahead
-                // 3-4dB gain reduction maximum for transparency
-                // -1.0 dBTP ceiling for streaming platforms
-                makeupGain.connect(limiter);
+                // STAGE 7: BUS COMPRESSOR (SSL-style glue)
+                mbOutput.connect(compressor);
 
-                // OUTPUT - Master Gain
-                limiter.connect(masterGain);
+                // STAGE 8: NY PARALLEL COMPRESSION (punch)
+                compressor.connect(nyCompInput);
+
+                // STAGE 9: TRANSIENT SHAPER (attack/sustain)
+                nyCompOutput.connect(transientInput);
+
+                // STAGE 10: M/S EQ (mid/side processing)
+                transientOutput.connect(msEQ_Input);
+
+                // STAGE 11: BASS MONO CROSSOVER (mono < 150Hz)
+                msEQ_Output.connect(bassMonoInput);
+
+                // STAGE 12: HF LIMITER (de-harsh > 6kHz)
+                bassMonoOutput.connect(hfLimiterInput);
+
+                // STAGE 13: HARMONIC EXCITER (presence/air)
+                hfLimiterMix.connect(exciterInput);
+
+                // STAGE 14: ANALOG WARMTH (tape saturation, 85/15 dry/wet)
+                exciterOutput.connect(warmthInput);
+
+                // STAGE 15: SOFT CLIPPER (pre-limiter saturation)
+                warmthOutput.connect(softClipInput);
+
+                // STAGE 16: MAKEUP GAIN (LUFS targeting)
+                softClipOutput.connect(makeupGain);
+
+                // STAGE 17: LOOK-AHEAD LIMITER (5ms anticipation)
+                makeupGain.connect(lookAheadDelay);
+                lookAheadDelay.connect(lookAheadLimiter);
+
+                // STAGE 18: BRICKWALL LIMITER (-1.0 dBTP ceiling)
+                lookAheadLimiter.connect(limiter);
+
+                // STAGE 19: TPDF DITHER (bit-depth conversion)
+                limiter.connect(ditherProcessor);
+
+                // STAGE 20: FINAL OUTPUT GAIN
+                ditherProcessor.connect(masterGain);
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // OUTPUT ROUTING
