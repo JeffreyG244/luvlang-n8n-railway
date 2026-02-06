@@ -26758,6 +26758,12 @@
                 if (!response.ok) {
                     const error = await response.text();
                     console.error('ElevenLabs API error:', error);
+
+                    // If quota exceeded, disable ElevenLabs for this session
+                    if (error.includes('quota_exceeded') || error.includes('quota')) {
+                        console.log('⚠️ ElevenLabs quota exceeded - switching to browser voice for this session');
+                        ELEVENLABS_CONFIG.enabled = false;
+                    }
                     return false;
                 }
 
@@ -26795,10 +26801,14 @@
             if (ELEVENLABS_CONFIG.enabled) {
                 const success = await speakWithElevenLabs(text);
                 if (success) return;
+                console.log('🎙️ ElevenLabs failed, falling back to browser voice...');
             }
 
             // Fallback to Web Speech API
-            if (!voiceSynth) return;
+            if (!voiceSynth) {
+                console.log('⚠️ No speech synthesis available');
+                return;
+            }
 
             window.speechSynthesis.cancel();
 
@@ -26808,6 +26818,7 @@
                 utterance.rate = 0.88;
                 utterance.pitch = 1.08;
                 utterance.volume = 0.95;
+                console.log('🎙️ Browser voice speaking:', text.substring(0, 50) + '...');
                 window.speechSynthesis.speak(utterance);
             }, 50);
         }
