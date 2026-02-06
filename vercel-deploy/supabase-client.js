@@ -782,12 +782,36 @@ async function updateUIForLoggedInUser() {
         userEmail.textContent = currentUser.email;
     }
 
-    // Get and display subscription tier
+    // Set avatar initials from email
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar && currentUser && currentUser.email) {
+        const initials = currentUser.email.substring(0, 2).toUpperCase();
+        userAvatar.textContent = initials;
+    }
+
+    // Get and display subscription tier with premium badge
     const userTier = document.getElementById('userTier');
     if (userTier) {
         const subscription = await getUserSubscription();
         const tierName = subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1);
-        userTier.textContent = `${tierName} tier`;
+
+        // Determine colors based on tier
+        let tierColor = '#00d4ff';
+        let glowColor = '#00d4ff';
+        if (subscription.tier === 'premium') {
+            tierColor = '#ffd700';
+            glowColor = '#ffd700';
+        } else if (subscription.tier === 'pro') {
+            tierColor = '#b84fff';
+            glowColor = '#b84fff';
+        }
+
+        userTier.innerHTML = `
+            <span style="width: 6px; height: 6px; background: ${tierColor}; border-radius: 50%; box-shadow: 0 0 8px ${glowColor};"></span>
+            <span>${tierName} Tier</span>
+        `;
+        userTier.style.borderColor = `${tierColor}40`;
+        userTier.style.color = tierColor;
     }
 
     // Enable cloud features
