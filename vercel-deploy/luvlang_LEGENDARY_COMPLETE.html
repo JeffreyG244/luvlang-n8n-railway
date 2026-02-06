@@ -5687,7 +5687,15 @@
         };
 
         // Show loading screen after sign in
+        OnboardingFlow.loadingScreenShown = false;
         OnboardingFlow.showLoadingScreen = function() {
+            // Prevent duplicate calls
+            if (OnboardingFlow.loadingScreenShown) {
+                console.log('⚠️ Loading screen already shown, skipping duplicate');
+                return;
+            }
+            OnboardingFlow.loadingScreenShown = true;
+
             // Remove any existing overlay first
             var existing = document.getElementById('postLoginLoading');
             if (existing) existing.remove();
@@ -5846,6 +5854,22 @@
                     }
                 }
             }, 2000);
+
+            // NUCLEAR FALLBACK: If loading screen is still there after 5 seconds, force remove it
+            setTimeout(function() {
+                var stuckOverlay = document.getElementById('postLoginLoading');
+                if (stuckOverlay) {
+                    console.log('⚠️ NUCLEAR: Force removing stuck loading screen');
+                    stuckOverlay.remove();
+                    // Show Master Me page
+                    var splash = document.getElementById('onboardingSplash');
+                    if (splash) {
+                        splash.style.display = 'flex';
+                        splash.style.zIndex = '9999999';
+                        splash.setAttribute('data-post-login', 'true');
+                    }
+                }
+            }, 5000);
         };
 
         // Skip to app for returning users
@@ -27382,6 +27406,22 @@
                 // Only auto-start tour for first-time users who haven't seen it this session
                 const tourCompleted = localStorage.getItem('voiceTourCompleted');
                 const tourStartedThisSession = sessionStorage.getItem('voiceTourStarted');
+
+                // DON'T auto-start if onboarding screens are visible
+                const postLoginLoading = document.getElementById('postLoginLoading');
+                const masterMeSplash = document.getElementById('onboardingSplash');
+                const langModal = document.getElementById('tourLanguageModal');
+                const signupGate = document.getElementById('signupGateOverlay');
+
+                const onboardingVisible = (postLoginLoading) ||
+                    (masterMeSplash && masterMeSplash.style.display === 'flex') ||
+                    (langModal && langModal.style.display === 'flex') ||
+                    (signupGate && !signupGate.classList.contains('hidden'));
+
+                if (onboardingVisible) {
+                    console.log('🎤 Onboarding screens visible, skipping auto-start tour');
+                    return;
+                }
 
                 if (!tourCompleted && !tourStartedThisSession) {
                     sessionStorage.setItem('voiceTourStarted', 'true');
