@@ -6842,19 +6842,14 @@
         <div class="gate-card">
             <div class="gate-logo">
                 <div class="gate-logo-icon" style="background: transparent; box-shadow: none; position: relative;">
-                    <!-- State of the Art Waveform Logo -->
-                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; filter: drop-shadow(0 0 20px rgba(0,212,255,0.6)) drop-shadow(0 0 40px rgba(184,79,255,0.4));">
+                    <svg class="splash-logo" viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                         <defs>
-                            <linearGradient id="logoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
-                                <stop offset="50%" style="stop-color:#b84fff;stop-opacity:1" />
-                                <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
+                            <linearGradient id="gateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00d4ff"/>
+                                <stop offset="50%" stop-color="#b84fff"/>
+                                <stop offset="100%" stop-color="#00ff88"/>
                             </linearGradient>
-                            <linearGradient id="logoGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                                <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.8" />
-                                <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0.8" />
-                            </linearGradient>
-                            <filter id="glow">
+                            <filter id="gateGlow">
                                 <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
                                 <feMerge>
                                     <feMergeNode in="coloredBlur"/>
@@ -6862,48 +6857,37 @@
                                 </feMerge>
                             </filter>
                         </defs>
-                        <!-- Outer ring -->
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGrad1)" stroke-width="2" opacity="0.6"/>
-                        <!-- Inner hexagon -->
-                        <polygon points="50,12 82,31 82,69 50,88 18,69 18,31" fill="none" stroke="url(#logoGrad1)" stroke-width="1.5" opacity="0.4"/>
-                        <!-- Audio waveform bars - center piece -->
-                        <g filter="url(#glow)">
-                            <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#logoGrad1)">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gateGrad)" stroke-width="2" opacity="0.6"/>
+                        <g filter="url(#gateGlow)">
+                            <rect x="26" y="42" width="4" height="16" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="16;24;16" dur="1s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="42;38;42" dur="1s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#logoGrad1)">
+                            <rect x="34" y="35" width="4" height="30" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="30;20;30" dur="0.8s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="35;40;35" dur="0.8s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#logoGrad1)">
+                            <rect x="42" y="28" width="4" height="44" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="44;36;44" dur="1.2s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="28;32;28" dur="1.2s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#logoGrad2)">
+                            <rect x="50" y="22" width="4" height="56" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="56;44;56" dur="0.9s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="22;28;22" dur="0.9s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#logoGrad1)">
+                            <rect x="58" y="28" width="4" height="44" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="44;32;44" dur="1.1s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="28;34;28" dur="1.1s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#logoGrad1)">
+                            <rect x="66" y="35" width="4" height="30" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="30;22;30" dur="0.7s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="35;39;35" dur="0.7s" repeatCount="indefinite"/>
                             </rect>
-                            <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#logoGrad1)">
+                            <rect x="74" y="42" width="4" height="16" rx="2" fill="url(#gateGrad)">
                                 <animate attributeName="height" values="16;26;16" dur="1.3s" repeatCount="indefinite"/>
                                 <animate attributeName="y" values="42;37;42" dur="1.3s" repeatCount="indefinite"/>
                             </rect>
                         </g>
-                        <!-- Peak indicators -->
-                        <circle cx="50" cy="15" r="3" fill="#00ff88" opacity="0.9">
-                            <animate attributeName="opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="50" cy="85" r="3" fill="#ff6b6b" opacity="0.9">
-                            <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2s" repeatCount="indefinite"/>
-                        </circle>
                     </svg>
                 </div>
                 <h1>LuvLang</h1>
