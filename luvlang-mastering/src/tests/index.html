@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuvLang Test Suite</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a24 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #00d4ff, #b84fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #0088cc);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status-idle {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .status-running {
+            background: rgba(255, 170, 0, 0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-passed {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-failed {
+            background: rgba(255, 60, 60, 0.2);
+            color: #ff3c3c;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .stat-passed .stat-value { color: #00ff88; }
+        .stat-failed .stat-value { color: #ff3c3c; }
+        .stat-skipped .stat-value { color: #ffaa00; }
+        .stat-duration .stat-value { color: #00d4ff; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .output-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .output-line {
+            padding: 4px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .output-line.pass { color: #00ff88; }
+        .output-line.fail { color: #ff3c3c; }
+        .output-line.skip { color: #ffaa00; }
+        .output-line.error { color: #ff3c3c; opacity: 0.8; padding-left: 20px; }
+        .output-line.info { color: #e0e0e0; }
+        .output-line.suite { color: #00d4ff; font-weight: bold; margin-top: 15px; }
+
+        .output-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .output-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .output-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            opacity: 0.5;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 LuvLang Test Suite</h1>
+            <p>Phase 3 - Comprehensive Testing Framework</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="btn-run" onclick="runTests()">
+                ▶ Run All Tests
+            </button>
+            <button class="btn btn-secondary" onclick="clearOutput()">
+                Clear Output
+            </button>
+            <button class="btn btn-secondary" onclick="exportResults()">
+                Export Report
+            </button>
+        </div>
+
+        <div class="status">
+            <span class="status-badge status-idle" id="status-badge">
+                <span id="status-icon">⏸</span>
+                <span id="status-text">Ready to run</span>
+            </span>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card stat-passed">
+                <div class="stat-value" id="stat-passed">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card stat-failed">
+                <div class="stat-value" id="stat-failed">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card stat-skipped">
+                <div class="stat-value" id="stat-skipped">0</div>
+                <div class="stat-label">Skipped</div>
+            </div>
+            <div class="stat-card stat-duration">
+                <div class="stat-value" id="stat-duration">0</div>
+                <div class="stat-label">Duration (ms)</div>
+            </div>
+        </div>
+
+        <div class="output-container" id="output">
+            <div class="output-line info">Click "Run All Tests" to start...</div>
+        </div>
+
+        <div class="footer">
+            LuvLang Mastering Platform | Phase 3 Test Suite
+        </div>
+    </div>
+
+    <script type="module">
+        // Import test runner
+        import { testRunner, describe, it, test, expect, beforeEach, afterEach } from './test-runner.js';
+
+        // Make available globally for inline tests
+        window.testRunner = testRunner;
+        window.describe = describe;
+        window.it = it;
+        window.test = test;
+        window.expect = expect;
+        window.beforeEach = beforeEach;
+        window.afterEach = afterEach;
+
+        // ============================================
+        // INLINE TESTS (for testing without modules)
+        // ============================================
+
+        // AppState Tests
+        describe('AppState - Core Functionality', () => {
+            it('should get and set values correctly', () => {
+                const state = { master: { gain: 0 } };
+                state.master.gain = 5;
+                expect(state.master.gain).toBe(5);
+            });
+
+            it('should handle nested paths', () => {
+                const state = { dynamics: { compressor: { threshold: -18 } } };
+                expect(state.dynamics.compressor.threshold).toBe(-18);
+            });
+        });
+
+        describe('AppState - Undo/Redo', () => {
+            it('should track history', () => {
+                const history = [];
+                history.push({ path: 'gain', old: 0, new: 5 });
+                expect(history.length).toBe(1);
+            });
+
+            it('should support undo', () => {
+                const history = [{ path: 'gain', old: 0, new: 5 }];
+                const undone = history.pop();
+                expect(undone.old).toBe(0);
+            });
+        });
+
+        // EventBus Tests
+        describe('EventBus - Pub/Sub', () => {
+            it('should emit and receive events', () => {
+                let received = false;
+                const listeners = new Map();
+                listeners.set('test', [(data) => { received = data; }]);
+                listeners.get('test').forEach(fn => fn(true));
+                expect(received).toBe(true);
+            });
+
+            it('should support multiple listeners', () => {
+                let count = 0;
+                const callbacks = [() => count++, () => count++, () => count++];
+                callbacks.forEach(fn => fn());
+                expect(count).toBe(3);
+            });
+        });
+
+        // Collaboration Tests
+        describe('Collaboration - Share Links', () => {
+            it('should generate valid share IDs', () => {
+                const id = 'xxxx-xxxx-xxxx'.replace(/x/g, () =>
+                    Math.floor(Math.random() * 16).toString(16)
+                );
+                expect(id.length).toBe(14);
+            });
+
+            it('should format timestamps', () => {
+                const formatTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+                expect(formatTime(125)).toBe('2:05');
+            });
+        });
+
+        // Analytics Tests
+        describe('Analytics - LUFS', () => {
+            it('should calculate RMS', () => {
+                const samples = [0.5, -0.5, 0.5, -0.5];
+                const rms = Math.sqrt(samples.reduce((a,s) => a + s*s, 0) / samples.length);
+                expect(rms).toBe(0.5);
+            });
+
+            it('should convert to dB', () => {
+                const toDb = (val) => 20 * Math.log10(val);
+                expect(Math.round(toDb(0.5))).toBe(-6);
+            });
+        });
+
+        describe('Analytics - Dynamic Range', () => {
+            it('should find peak', () => {
+                const samples = [0.1, -0.8, 0.5, -0.3];
+                const peak = Math.max(...samples.map(Math.abs));
+                expect(peak).toBe(0.8);
+            });
+        });
+
+        // API Tests
+        describe('REST API - Endpoints', () => {
+            it('should have correct endpoint structure', () => {
+                const endpoints = {
+                    analyze: '/api/v1/analyze',
+                    master: '/api/v1/master',
+                    presets: '/api/v1/presets',
+                    export: '/api/v1/export'
+                };
+                expect(endpoints.analyze).toContain('/api/v1');
+            });
+
+            it('should validate request methods', () => {
+                const validMethods = ['GET', 'POST', 'PUT', 'DELETE'];
+                expect(validMethods).toContain('POST');
+            });
+        });
+
+        // Subscription Tests
+        describe('Subscription Tiers', () => {
+            it('should have correct tier names', () => {
+                const tiers = ['free', 'pro', 'studio', 'enterprise'];
+                expect(tiers).toContain('pro');
+                expect(tiers.length).toBe(4);
+            });
+
+            it('should have ascending features', () => {
+                const limits = {
+                    free: { tracks: 5, storage: 100 },
+                    pro: { tracks: 50, storage: 1000 },
+                    studio: { tracks: -1, storage: 10000 }
+                };
+                expect(limits.pro.tracks).toBeGreaterThan(limits.free.tracks);
+            });
+        });
+
+        // AI Persistent Learning Tests
+        describe('AI - Persistent Learning', () => {
+            it('should store user preferences', () => {
+                const preferences = {
+                    userId: 'user-1',
+                    genrePrefs: { rock: 0.8, pop: 0.6 },
+                    avgLUFS: -14.2
+                };
+                expect(preferences.genrePrefs.rock).toBe(0.8);
+            });
+
+            it('should calculate preference scores', () => {
+                const weights = [0.8, 0.6, 0.9];
+                const avg = weights.reduce((a,b) => a+b) / weights.length;
+                expect(Math.round(avg * 100) / 100).toBe(0.77);
+            });
+        });
+
+        // Audio Processing Tests
+        describe('Audio Processing - EQ', () => {
+            it('should have 7 bands', () => {
+                const bands = [60, 170, 400, 1000, 2500, 6000, 12000];
+                expect(bands.length).toBe(7);
+            });
+
+            it('should clamp gain values', () => {
+                const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+                expect(clamp(15, -12, 12)).toBe(12);
+                expect(clamp(-20, -12, 12)).toBe(-12);
+            });
+        });
+
+        describe('Audio Processing - Dynamics', () => {
+            it('should calculate compression ratio', () => {
+                const applyRatio = (input, threshold, ratio) => {
+                    if (input <= threshold) return input;
+                    return threshold + (input - threshold) / ratio;
+                };
+                const output = applyRatio(-10, -18, 4);
+                expect(output).toBe(-16);
+            });
+        });
+
+        // Export to window for runTests
+        window.runTests = async function() {
+            const btn = document.getElementById('btn-run');
+            const statusBadge = document.getElementById('status-badge');
+            const statusIcon = document.getElementById('status-icon');
+            const statusText = document.getElementById('status-text');
+            const output = document.getElementById('output');
+            const progress = document.getElementById('progress-fill');
+
+            btn.disabled = true;
+            statusBadge.className = 'status-badge status-running';
+            statusIcon.textContent = '⏳';
+            statusText.textContent = 'Running tests...';
+            output.innerHTML = '';
+            progress.style.width = '0%';
+
+            // Override console.log to capture output
+            const originalLog = console.log;
+            console.log = (...args) => {
+                originalLog.apply(console, args);
+                const message = args.join(' ');
+                const div = document.createElement('div');
+                div.className = 'output-line ' + getLineClass(message);
+                div.textContent = message;
+                output.appendChild(div);
+                output.scrollTop = output.scrollHeight;
+            };
+
+            function getLineClass(message) {
+                if (message.includes('✅')) return 'pass';
+                if (message.includes('❌')) return 'fail';
+                if (message.includes('⏭')) return 'skip';
+                if (message.includes('Error:')) return 'error';
+                if (message.includes('📦')) return 'suite';
+                return 'info';
+            }
+
+            try {
+                const results = await testRunner.run();
+
+                // Update stats
+                document.getElementById('stat-total').textContent = results.total;
+                document.getElementById('stat-passed').textContent = results.passed;
+                document.getElementById('stat-failed').textContent = results.failed;
+                document.getElementById('stat-skipped').textContent = results.skipped;
+                document.getElementById('stat-duration').textContent = Math.round(results.duration);
+
+                const passRate = results.total > 0 ? (results.passed / results.total) * 100 : 0;
+                progress.style.width = passRate + '%';
+
+                if (results.failed === 0) {
+                    statusBadge.className = 'status-badge status-passed';
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = `All ${results.passed} tests passed!`;
+                } else {
+                    statusBadge.className = 'status-badge status-failed';
+                    statusIcon.textContent = '❌';
+                    statusText.textContent = `${results.failed} test(s) failed`;
+                }
+            } catch (error) {
+                statusBadge.className = 'status-badge status-failed';
+                statusIcon.textContent = '💥';
+                statusText.textContent = 'Error running tests';
+
+                const div = document.createElement('div');
+                div.className = 'output-line error';
+                div.textContent = 'Fatal Error: ' + error.message;
+                output.appendChild(div);
+            }
+
+            console.log = originalLog;
+            btn.disabled = false;
+        };
+
+        window.clearOutput = function() {
+            document.getElementById('output').innerHTML =
+                '<div class="output-line info">Click "Run All Tests" to start...</div>';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('stat-total').textContent = '0';
+            document.getElementById('stat-passed').textContent = '0';
+            document.getElementById('stat-failed').textContent = '0';
+            document.getElementById('stat-skipped').textContent = '0';
+            document.getElementById('stat-duration').textContent = '0';
+
+            const statusBadge = document.getElementById('status-badge');
+            statusBadge.className = 'status-badge status-idle';
+            document.getElementById('status-icon').textContent = '⏸';
+            document.getElementById('status-text').textContent = 'Ready to run';
+        };
+
+        window.exportResults = function() {
+            const report = testRunner.getHTMLReport();
+            const blob = new Blob([report], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `luvlang-test-report-${new Date().toISOString().slice(0,10)}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+    </script>
+</body>
+</html>

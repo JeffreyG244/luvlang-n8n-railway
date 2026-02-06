@@ -1,0 +1,631 @@
+/**
+ * MOBILE RESPONSIVE CSS
+ * Responsive breakpoints and mobile-first design
+ * Breakpoints: Mobile (<768px), Tablet (768-1200px), Desktop (>1200px)
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (Mobile Overrides)
+   ============================================ */
+:root {
+    --mobile-padding: 12px;
+    --mobile-gap: 10px;
+    --mobile-border-radius: 12px;
+    --mobile-font-size-sm: 0.75rem;
+    --mobile-font-size-base: 0.875rem;
+    --mobile-header-height: 56px;
+    --mobile-bottom-nav-height: 64px;
+    --mobile-fab-size: 56px;
+}
+
+/* ============================================
+   BASE MOBILE STYLES (<768px)
+   ============================================ */
+@media screen and (max-width: 767px) {
+    /* Override grid layout */
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Hide sidebars on mobile */
+    .left-sidebar,
+    .right-sidebar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .left-sidebar.open {
+        display: block;
+        transform: translateX(0);
+    }
+
+    .right-sidebar {
+        transform: translateX(100%);
+    }
+
+    .right-sidebar.open {
+        display: block;
+        transform: translateX(0);
+    }
+
+    /* Main content area */
+    .center-main {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--mobile-padding);
+        padding-bottom: calc(var(--mobile-bottom-nav-height) + 20px);
+    }
+
+    /* Mobile header */
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: var(--mobile-header-height);
+        padding: 0 var(--mobile-padding);
+        background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+        border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .mobile-header .logo-text {
+        font-size: 1.2rem;
+    }
+
+    .mobile-header-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .mobile-header-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    /* Bottom navigation */
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--mobile-bottom-nav-height);
+        background: linear-gradient(180deg, #1a1a24 0%, #0a0a0f 100%);
+        border-top: 1px solid rgba(0, 212, 255, 0.1);
+        z-index: 100;
+        padding: 8px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .mobile-nav-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.65rem;
+        transition: color 0.2s ease;
+    }
+
+    .mobile-nav-btn.active {
+        color: #00d4ff;
+    }
+
+    .mobile-nav-btn .icon {
+        font-size: 1.4rem;
+    }
+
+    /* Floating Action Button */
+    .mobile-fab {
+        display: flex;
+        position: fixed;
+        right: 16px;
+        bottom: calc(var(--mobile-bottom-nav-height) + 16px);
+        width: var(--mobile-fab-size);
+        height: var(--mobile-fab-size);
+        border-radius: 50%;
+        background: linear-gradient(135deg, #00d4ff, #0088cc);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+        z-index: 90;
+    }
+
+    .mobile-fab:active {
+        transform: scale(0.95);
+    }
+
+    /* Compact visualizations */
+    .viz-panel {
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    .spectrum-panel canvas {
+        height: 200px !important;
+    }
+
+    /* Compact transport controls */
+    .transport-controls {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .play-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* EQ faders - horizontal on mobile */
+    .eq-faders {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 8px;
+        min-height: auto;
+        padding: 10px 8px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
+    .eq-fader-container {
+        flex: 0 0 auto;
+        min-width: 50px;
+        scroll-snap-align: start;
+    }
+
+    .eq-fader-track {
+        height: 120px;
+        width: 28px;
+    }
+
+    /* Meters as bottom sheet */
+    .meters-bottom-sheet {
+        position: fixed;
+        bottom: var(--mobile-bottom-nav-height);
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, #1a1a24 0%, #0f0f16 100%);
+        border-top: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 20px 20px 0 0;
+        padding: 12px;
+        transform: translateY(calc(100% - 50px));
+        transition: transform 0.3s ease;
+        z-index: 80;
+    }
+
+    .meters-bottom-sheet.expanded {
+        transform: translateY(0);
+    }
+
+    .meters-handle {
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin: 0 auto 10px;
+    }
+
+    .meters-summary {
+        display: flex;
+        justify-content: space-around;
+        padding: 8px 0;
+    }
+
+    .meter-item {
+        text-align: center;
+    }
+
+    .meter-label {
+        font-size: 0.65rem;
+        opacity: 0.6;
+        margin-bottom: 4px;
+    }
+
+    .meter-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    /* Touch-friendly controls */
+    button, .action-btn, .selector-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Full-width buttons */
+    .action-btn {
+        width: 100%;
+    }
+
+    /* Upload area */
+    .upload-area {
+        padding: 30px 15px;
+    }
+
+    /* Panels as sheets */
+    .mobile-sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-height: 80vh;
+        background: #0f0f16;
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        z-index: 1001;
+    }
+
+    .mobile-sheet.open {
+        transform: translateY(0);
+    }
+
+    .mobile-sheet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-sheet-content {
+        overflow-y: auto;
+        padding: 16px;
+        max-height: calc(80vh - 60px);
+    }
+
+    .mobile-sheet-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-sheet-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Multitrack panel */
+    .multitrack-panel {
+        padding: 10px;
+    }
+
+    .track-row {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .track-gain, .track-pan {
+        flex: 1 1 45%;
+    }
+
+    /* Batch panel */
+    .batch-panel {
+        padding: 10px;
+    }
+
+    .batch-settings {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .setting-row {
+        flex-wrap: wrap;
+    }
+
+    /* History timeline */
+    .undo-timeline.compact .timeline-visual {
+        display: none;
+    }
+
+    /* Touch gestures */
+    .swipe-container {
+        touch-action: pan-y;
+    }
+
+    /* Pinch zoom on waveform */
+    .waveform-canvas {
+        touch-action: pinch-zoom pan-x;
+    }
+}
+
+/* ============================================
+   TABLET STYLES (768px - 1200px)
+   ============================================ */
+@media screen and (min-width: 768px) and (max-width: 1199px) {
+    .app-container {
+        grid-template-columns: 240px 1fr;
+    }
+
+    .right-sidebar {
+        display: none;
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 320px;
+        z-index: 1000;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .right-sidebar.open {
+        display: block;
+        transform: translateX(0);
+    }
+
+    /* Toggle button for right sidebar */
+    .toggle-right-sidebar {
+        display: flex;
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 60px;
+        background: linear-gradient(90deg, transparent, rgba(184, 79, 255, 0.3));
+        border: none;
+        border-radius: 10px 0 0 10px;
+        color: white;
+        align-items: center;
+        justify-content: center;
+        z-index: 90;
+    }
+
+    .left-sidebar {
+        padding: 12px;
+    }
+
+    .center-main {
+        padding: 12px;
+    }
+
+    /* Adjust EQ graph */
+    .spectrum-panel canvas {
+        height: 300px;
+    }
+
+    /* Collapsible sections */
+    .collapsible-section {
+        cursor: pointer;
+    }
+
+    .collapsible-section .section-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .collapsible-section.expanded .section-content {
+        max-height: 500px;
+    }
+
+    /* Two-column batch queue */
+    .batch-queue {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+}
+
+/* ============================================
+   DESKTOP ENHANCEMENTS (>1200px)
+   ============================================ */
+@media screen and (min-width: 1200px) {
+    /* Hide mobile-specific elements */
+    .mobile-header,
+    .mobile-bottom-nav,
+    .mobile-fab,
+    .meters-bottom-sheet,
+    .toggle-right-sidebar {
+        display: none !important;
+    }
+
+    /* Full layout */
+    .app-container {
+        grid-template-columns: 280px 1fr 320px;
+    }
+
+    .left-sidebar,
+    .right-sidebar {
+        display: block;
+        position: static;
+        transform: none;
+    }
+
+    /* Wide screens */
+    @media screen and (min-width: 1600px) {
+        .app-container {
+            grid-template-columns: 320px 1fr 380px;
+        }
+
+        .spectrum-panel canvas {
+            height: 450px;
+        }
+    }
+
+    /* Ultra-wide screens */
+    @media screen and (min-width: 2000px) {
+        .app-container {
+            max-width: 2400px;
+            margin: 0 auto;
+        }
+    }
+}
+
+/* ============================================
+   ORIENTATION HANDLING
+   ============================================ */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+    .mobile-header {
+        height: 44px;
+    }
+
+    .mobile-bottom-nav {
+        height: 48px;
+    }
+
+    .spectrum-panel canvas {
+        height: 150px !important;
+    }
+
+    .eq-fader-track {
+        height: 80px;
+    }
+}
+
+/* ============================================
+   SAFE AREA INSETS (iPhone X+, notch devices)
+   ============================================ */
+@supports (padding: max(0px)) {
+    .mobile-header {
+        padding-top: max(0px, env(safe-area-inset-top));
+    }
+
+    .mobile-bottom-nav {
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .left-sidebar {
+        padding-left: max(15px, env(safe-area-inset-left));
+    }
+
+    .right-sidebar {
+        padding-right: max(15px, env(safe-area-inset-right));
+    }
+}
+
+/* ============================================
+   DARK MODE / LIGHT MODE
+   ============================================ */
+@media (prefers-color-scheme: light) {
+    /* Light mode overrides if needed */
+    /* Currently keeping dark theme for audio apps */
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .mobile-sheet,
+    .left-sidebar,
+    .right-sidebar {
+        transition: none;
+    }
+}
+
+/* ============================================
+   HIGH CONTRAST
+   ============================================ */
+@media (prefers-contrast: high) {
+    .action-btn,
+    .selector-btn {
+        border-width: 2px;
+    }
+
+    .meter-fill {
+        border: 1px solid white;
+    }
+}
+
+/* ============================================
+   TOUCH UTILITIES
+   ============================================ */
+.touch-target {
+    position: relative;
+}
+
+.touch-target::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+}
+
+/* Prevent text selection on draggable elements */
+.draggable {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+/* Scroll snap for carousels */
+.scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.scroll-snap-item {
+    scroll-snap-align: start;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .mobile-header,
+    .mobile-bottom-nav,
+    .mobile-fab,
+    .left-sidebar,
+    .right-sidebar {
+        display: none !important;
+    }
+
+    .center-main {
+        padding: 0;
+    }
+
+    .app-container {
+        display: block;
+    }
+}
