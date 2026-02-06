@@ -5647,23 +5647,26 @@
 
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
-            console.log('✅ Login successful, starting onboarding...');
-
-            // Prevent multiple calls
-            if (document.getElementById('postLoginLoading')) return;
+            console.log('✅ Login successful, going to language selection...');
             OnboardingFlow.supabaseResponded = true;
 
-            // Hide all other screens
+            // Hide all screens
             var splash = document.getElementById('onboardingSplash');
             var signupGate = document.getElementById('signupGateOverlay');
+            var postLogin = document.getElementById('postLoginLoading');
             if (splash) splash.style.display = 'none';
+            if (postLogin) postLogin.remove();
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
             }
 
-            // Show loading overlay then tour
-            OnboardingFlow.showLoadingScreen();
+            // Go straight to language selection
+            var langModal = document.getElementById('tourLanguageModal');
+            if (langModal) {
+                langModal.style.display = 'flex';
+                langModal.style.zIndex = '9999999';
+            }
         };
 
         // Show loading screen after sign in
