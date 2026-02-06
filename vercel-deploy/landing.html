@@ -1288,6 +1288,16 @@
                 }
             });
         });
+
+        // CACHE BUSTING: Add timestamp to all /app links to force fresh load
+        const cacheBuster = Date.now();
+        document.querySelectorAll('a[href="/app"]').forEach(link => {
+            link.href = '/app?v=' + cacheBuster;
+        });
+        document.querySelectorAll('button[onclick*="/app"]').forEach(btn => {
+            const onclick = btn.getAttribute('onclick');
+            btn.setAttribute('onclick', onclick.replace('/app', '/app?v=' + cacheBuster));
+        });
     </script>
 </body>
 </html>
