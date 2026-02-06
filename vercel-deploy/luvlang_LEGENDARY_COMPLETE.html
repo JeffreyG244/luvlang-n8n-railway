@@ -24525,16 +24525,7 @@
             // We need to boost the unmastered by the difference to match mastered loudness
             window.loudnessMatchGain = -lufsDiff; // Invert: if mastered is +4dB louder, boost unmastered by +4dB
 
-            // Apply compensation to dry (unmastered) path
-            if (window.dryGain && window.audioContext) {
-                const linearGain = Math.pow(10, window.loudnessMatchGain / 20);
-                // Store original dry gain
-                window.originalDryGainValue = 1.0;
-                // Only apply when in unmastered mode
-                if (window.abCompareMode) {
-                    window.dryGain.gain.setTargetAtTime(linearGain, window.audioContext.currentTime, 0.05);
-                }
-            }
+            // Loudness match info stored for display only — dry path always plays at true level
 
             // Update indicator
             const indicator = document.getElementById('loudnessMatchIndicator');
@@ -24553,25 +24544,8 @@
             }
         }
 
-        // Hook into A/B toggle to apply loudness matching
-        const originalToggleABCompare = window.toggleABCompare;
-        window.toggleABCompare = function() {
-            // Call original toggle
-            if (originalToggleABCompare) originalToggleABCompare();
-
-            // Apply loudness matching if enabled
-            if (window.loudnessMatchEnabled && window.dryGain && window.audioContext) {
-                const isUnmastered = window.abCompareMode;
-                if (isUnmastered) {
-                    // Boost unmastered to match mastered loudness
-                    const linearGain = Math.pow(10, window.loudnessMatchGain / 20);
-                    window.dryGain.gain.setTargetAtTime(linearGain, window.audioContext.currentTime, 0.02);
-                } else {
-                    // Mastered plays at normal level
-                    window.dryGain.gain.setTargetAtTime(0.0, window.audioContext.currentTime, 0.02);
-                }
-            }
-        };
+        // A/B toggle — always play the true unmastered track at its real level
+        // No loudness compensation on the dry path so users hear their actual original
 
         // === REFERENCE TRACK LOADING ===
         window.referenceAudioElement = null;
