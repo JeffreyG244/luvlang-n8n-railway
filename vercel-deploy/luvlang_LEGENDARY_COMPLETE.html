@@ -5650,26 +5650,20 @@
 
         // Called after login success
         OnboardingFlow.onLoginSuccess = function() {
-            console.log('✅ Login successful, going to language selection...');
+            console.log('✅ Login successful, showing loading screen...');
             OnboardingFlow.supabaseResponded = true;
 
-            // Hide all screens
+            // Hide all screens first
             var splash = document.getElementById('onboardingSplash');
             var signupGate = document.getElementById('signupGateOverlay');
-            var postLogin = document.getElementById('postLoginLoading');
             if (splash) splash.style.display = 'none';
-            if (postLogin) postLogin.remove();
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
             }
 
-            // Go straight to language selection
-            var langModal = document.getElementById('tourLanguageModal');
-            if (langModal) {
-                langModal.style.display = 'flex';
-                langModal.style.zIndex = '9999999';
-            }
+            // Show loading screen
+            OnboardingFlow.showLoadingScreen();
         };
 
         // Show loading screen after sign in
@@ -5784,19 +5778,23 @@
                 if (s) s.textContent = 'Ready!';
             }, 1500);
 
-            // After loading, go to language selection
+            // After 2 seconds, go to language selection
             setTimeout(function() {
-                console.log('🎤 Loading complete, starting tour...');
+                console.log('🎤 Loading complete, showing language selection...');
                 var overlay = document.getElementById('postLoginLoading');
-                if (overlay) {
-                    overlay.classList.add('fade-out');
-                    setTimeout(function() {
-                        if (overlay.parentNode) overlay.remove();
-                        // Start tour - shows language selection
-                        if (typeof window.startTour === 'function') {
-                            window.startTour();
-                        }
-                    }, 500);
+                if (overlay) overlay.remove();
+
+                // Show language modal directly
+                var langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.display = 'flex';
+                    langModal.style.zIndex = '9999999';
+                    console.log('✅ Language modal shown');
+                } else {
+                    console.log('⚠️ No language modal found, starting tour');
+                    if (typeof window.startTour === 'function') {
+                        window.startTour();
+                    }
                 }
             }, 2000);
         };
