@@ -27258,12 +27258,16 @@
 
             setTimeout(() => {
                 // Only auto-start tour for first-time users who haven't seen it this session
+                // AND only if the loading screen is NOT showing (let it finish first)
                 const tourCompleted = localStorage.getItem('voiceTourCompleted');
                 const tourStartedThisSession = sessionStorage.getItem('voiceTourStarted');
+                const loadingScreenActive = document.getElementById('postLoginLoading');
 
-                if (!tourCompleted && !tourStartedThisSession) {
+                if (!tourCompleted && !tourStartedThisSession && !loadingScreenActive) {
                     sessionStorage.setItem('voiceTourStarted', 'true');
                     startVoiceTour();
+                } else if (loadingScreenActive) {
+                    console.log('🎤 Loading screen active, tour will start after it completes');
                 }
             }, 2000);
 
