@@ -5714,6 +5714,15 @@
                 return;
             }
             OnboardingFlow.loadingScreenShown = true;
+            console.log('🚀 SHOWING LOADING SCREEN NOW');
+
+            // Hide ALL other overlays to ensure loading screen is visible
+            var splash = document.getElementById('onboardingSplash');
+            var signupGate = document.getElementById('signupGateOverlay');
+            var langModal = document.getElementById('tourLanguageModal');
+            if (splash) splash.style.display = 'none';
+            if (signupGate) { signupGate.style.display = 'none'; }
+            if (langModal) langModal.style.display = 'none';
 
             // Remove any existing overlay first
             var existing = document.getElementById('postLoginLoading');
@@ -5825,7 +5834,7 @@
                 if (s) s.textContent = 'Ready!';
             }, 1500);
 
-            // After 2 seconds, go to Master Me page (with logo)
+            // After 3 seconds, go to Master Me page (with logo)
             setTimeout(function() {
                 console.log('🎤 Loading complete, showing Master Me page...');
                 var overlay = document.getElementById('postLoginLoading');
@@ -5883,9 +5892,9 @@
                         langModal.style.zIndex = '9999999';
                     }
                 }
-            }, 2000);
+            }, 3000);
 
-            // NUCLEAR FALLBACK: If loading screen is still there after 5 seconds, force remove it
+            // NUCLEAR FALLBACK: If loading screen is still there after 7 seconds, force remove it
             setTimeout(function() {
                 var stuckOverlay = document.getElementById('postLoginLoading');
                 if (stuckOverlay) {
@@ -5899,7 +5908,7 @@
                         splash.setAttribute('data-post-login', 'true');
                     }
                 }
-            }, 5000);
+            }, 7000);
         };
 
         // Skip to app for returning users
