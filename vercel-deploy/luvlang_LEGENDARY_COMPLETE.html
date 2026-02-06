@@ -5668,11 +5668,13 @@
 
         // Show loading screen after sign in
         OnboardingFlow.showLoadingScreen = function() {
-            // Create loading overlay if it doesn't exist
-            var loadingOverlay = document.getElementById('postLoginLoading');
-            if (!loadingOverlay) {
-                loadingOverlay = document.createElement('div');
-                loadingOverlay.id = 'postLoginLoading';
+            // Remove any existing overlay first
+            var existing = document.getElementById('postLoginLoading');
+            if (existing) existing.remove();
+
+            // Create fresh loading overlay
+            var loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'postLoginLoading';
                 loadingOverlay.innerHTML = `
                     <style>
                         #postLoginLoading {
@@ -5754,32 +5756,42 @@
                     </div>
                     <p class="loading-status" id="postLoginStatus">Preparing your studio...</p>
                 `;
-                document.body.appendChild(loadingOverlay);
-            }
+            document.body.appendChild(loadingOverlay);
 
             // Animate loading bar
-            var bar = document.getElementById('postLoginBar');
-            var status = document.getElementById('postLoginStatus');
-            if (bar) {
-                setTimeout(function() { bar.style.width = '100%'; }, 50);
-            }
+            setTimeout(function() {
+                var bar = document.getElementById('postLoginBar');
+                if (bar) bar.style.width = '100%';
+            }, 50);
 
             // Status updates
-            setTimeout(function() { if (status) status.textContent = 'Loading audio engine...'; }, 500);
-            setTimeout(function() { if (status) status.textContent = 'Calibrating processors...'; }, 1000);
-            setTimeout(function() { if (status) status.textContent = 'Ready!'; }, 1500);
+            setTimeout(function() {
+                var s = document.getElementById('postLoginStatus');
+                if (s) s.textContent = 'Loading audio engine...';
+            }, 500);
+            setTimeout(function() {
+                var s = document.getElementById('postLoginStatus');
+                if (s) s.textContent = 'Calibrating processors...';
+            }, 1000);
+            setTimeout(function() {
+                var s = document.getElementById('postLoginStatus');
+                if (s) s.textContent = 'Ready!';
+            }, 1500);
 
-            // After loading, start tour (language selection will be Step 1)
+            // After loading, go to language selection
             setTimeout(function() {
                 console.log('🎤 Loading complete, starting tour...');
-                loadingOverlay.classList.add('fade-out');
-                setTimeout(function() {
-                    loadingOverlay.remove();
-                    // Start tour - will show language selection first (no saved language)
-                    if (typeof window.startTour === 'function') {
-                        window.startTour();
-                    }
-                }, 500);
+                var overlay = document.getElementById('postLoginLoading');
+                if (overlay) {
+                    overlay.classList.add('fade-out');
+                    setTimeout(function() {
+                        if (overlay.parentNode) overlay.remove();
+                        // Start tour - shows language selection
+                        if (typeof window.startTour === 'function') {
+                            window.startTour();
+                        }
+                    }, 500);
+                }
             }, 2000);
         };
 
