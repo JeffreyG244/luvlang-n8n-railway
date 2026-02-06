@@ -5702,26 +5702,31 @@
                 // POST-LOGIN: Go directly to language selection
                 console.log('✅ Going to language selection...');
 
-                // Hide ALL possible overlays first
-                splash.style.display = 'none';
-                splash.style.zIndex = '1';
-                var signupGate = document.getElementById('signupGateOverlay');
-                if (signupGate) signupGate.style.display = 'none';
-                var postLoginLoad = document.getElementById('postLoginLoading');
-                if (postLoginLoad) postLoginLoad.remove();
+                // NUCLEAR: Hide EVERYTHING that could be blocking
+                var hideList = ['onboardingSplash', 'signupGateOverlay', 'postLoginLoading', 'initialLoadingScreen'];
+                hideList.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) {
+                        el.style.cssText = 'display:none!important;opacity:0!important;visibility:hidden!important;z-index:-1!important;';
+                    }
+                });
 
-                // Show language modal on TOP of everything
-                var langModal = document.getElementById('tourLanguageModal');
-                if (langModal) {
-                    langModal.style.display = 'flex';
-                    langModal.style.zIndex = '99999999';
-                    langModal.style.opacity = '1';
-                    langModal.style.visibility = 'visible';
-                    console.log('🌍 Language modal shown!');
+                // Show the full language PAGE (not just modal)
+                var langPage = document.getElementById('onboardingLanguage');
+                if (langPage) {
+                    langPage.style.cssText = 'display:flex!important;opacity:1!important;visibility:visible!important;z-index:99999999!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;';
+                    langPage.classList.add('active');
+                    console.log('🌍 Language PAGE shown!');
                 } else {
-                    console.error('❌ Language modal not found!');
-                    // Fallback: start tour
-                    if (typeof window.startTour === 'function') window.startTour();
+                    // Fallback to modal
+                    var langModal = document.getElementById('tourLanguageModal');
+                    if (langModal) {
+                        langModal.style.cssText = 'display:flex!important;opacity:1!important;visibility:visible!important;z-index:99999999!important;';
+                        console.log('🌍 Language MODAL shown!');
+                    } else {
+                        console.error('❌ No language UI found - starting tour');
+                        if (typeof window.startTour === 'function') window.startTour();
+                    }
                 }
             } else {
                 // PRE-LOGIN: Go to sign-in page
