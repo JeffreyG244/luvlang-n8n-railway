@@ -5621,6 +5621,18 @@
                 }
 
                 if (page === 'signin') {
+                    // Check if we're post-login - if so, go to language instead
+                    if (splash && splash.getAttribute('data-post-login') === 'true') {
+                        console.log('✅ Post-login: Going to language selection');
+                        splash.style.display = 'none';
+                        // Show language modal
+                        var langModal = document.getElementById('tourLanguageModal');
+                        if (langModal) {
+                            langModal.style.display = 'flex';
+                            langModal.style.zIndex = '9999999';
+                        }
+                        return;
+                    }
                     if (splash) splash.style.display = 'none';
                     if (signupGate) {
                         signupGate.classList.remove('hidden');
@@ -5778,22 +5790,26 @@
                 if (s) s.textContent = 'Ready!';
             }, 1500);
 
-            // After 2 seconds, go to language selection
+            // After 2 seconds, go to Master Me page (with logo)
             setTimeout(function() {
-                console.log('🎤 Loading complete, showing language selection...');
+                console.log('🎤 Loading complete, showing Master Me page...');
                 var overlay = document.getElementById('postLoginLoading');
                 if (overlay) overlay.remove();
 
-                // Show language modal directly
-                var langModal = document.getElementById('tourLanguageModal');
-                if (langModal) {
-                    langModal.style.display = 'flex';
-                    langModal.style.zIndex = '9999999';
-                    console.log('✅ Language modal shown');
+                // Show Master Me splash page (with logo)
+                var masterMeSplash = document.getElementById('onboardingSplash');
+                if (masterMeSplash) {
+                    masterMeSplash.style.display = 'flex';
+                    masterMeSplash.style.zIndex = '9999999';
+                    // Mark that we're post-login so button goes to language
+                    masterMeSplash.setAttribute('data-post-login', 'true');
+                    console.log('✅ Master Me page shown (post-login)');
                 } else {
-                    console.log('⚠️ No language modal found, starting tour');
-                    if (typeof window.startTour === 'function') {
-                        window.startTour();
+                    console.log('⚠️ No Master Me page found, showing language');
+                    var langModal = document.getElementById('tourLanguageModal');
+                    if (langModal) {
+                        langModal.style.display = 'flex';
+                        langModal.style.zIndex = '9999999';
                     }
                 }
             }, 2000);
