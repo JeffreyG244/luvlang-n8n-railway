@@ -92,7 +92,7 @@ describe('PLATFORM_TARGETS', () => {
     it('should include major streaming platforms', () => {
         const platforms = Object.keys(PLATFORM_TARGETS);
         expect(platforms).toContain('spotify');
-        expect(platforms).toContain('apple_music');
+        expect(platforms).toContain('appleMusic');
         expect(platforms).toContain('youtube');
     });
 
@@ -104,9 +104,14 @@ describe('PLATFORM_TARGETS', () => {
 });
 
 describe('PRESETS', () => {
-    it('should be a non-empty array', () => {
-        expect(Array.isArray(PRESETS)).toBe(true);
-        expect(PRESETS.length).toBeGreaterThan(0);
+    it('should be a non-empty object with genre categories', () => {
+        expect(typeof PRESETS).toBe('object');
+        expect(PRESETS).not.toBeNull();
+        const categories = Object.keys(PRESETS);
+        expect(categories.length).toBeGreaterThan(0);
+        for (const category of categories) {
+            expect(Array.isArray(PRESETS[category])).toBe(true);
+        }
     });
 });
 

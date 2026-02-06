@@ -58,8 +58,6 @@ class AdaptiveLearningSystem {
         // Save to localStorage
         this.saveLearningData();
 
-        console.log('[Adaptive Learning] Recorded adjustment for', context.genre);
-        console.log('[Adaptive Learning] Total sessions:', this.learningData.totalSessions);
     }
 
     /**
@@ -146,7 +144,6 @@ class AdaptiveLearningSystem {
      */
     applyLearnedPreferences(aiSettings, genre) {
         if (!this.learningData.genrePreferences[genre]) {
-            console.log('[Adaptive Learning] No learned preferences for', genre);
             return aiSettings;
         }
 
@@ -154,12 +151,10 @@ class AdaptiveLearningSystem {
 
         // Only apply if we have enough data (at least 3 sessions)
         if (genrePref.sessions < 3) {
-            console.log('[Adaptive Learning] Insufficient data for', genre,
                        `(${genrePref.sessions} sessions)`);
             return aiSettings;
         }
 
-        console.log('[Adaptive Learning] Applying learned preferences for', genre,
                    `(based on ${genrePref.sessions} sessions)`);
 
         // Apply EQ adjustments
@@ -167,7 +162,6 @@ class AdaptiveLearningSystem {
             for (const [band, avgChange] of Object.entries(genrePref.avgEQAdjustments)) {
                 if (aiSettings.eq[band] !== undefined) {
                     aiSettings.eq[band] += avgChange;
-                    console.log(`  EQ ${band}: +${avgChange.toFixed(1)} dB (learned)`);
                 }
             }
         }
@@ -261,7 +255,6 @@ class AdaptiveLearningSystem {
             };
 
             this.saveLearningData();
-            console.log('[Adaptive Learning] Learning data reset');
             return true;
         }
         return false;
@@ -281,7 +274,6 @@ class AdaptiveLearningSystem {
         a.click();
 
         URL.revokeObjectURL(url);
-        console.log('[Adaptive Learning] Learning data exported');
     }
 
     /**
@@ -300,7 +292,6 @@ class AdaptiveLearningSystem {
             this.learningData = imported;
             this.saveLearningData();
 
-            console.log('[Adaptive Learning] Learning data imported');
             return true;
         } catch (error) {
             console.error('[Adaptive Learning] Import failed:', error);
@@ -328,7 +319,6 @@ class AdaptiveLearningSystem {
             const stored = localStorage.getItem('luvlang_adaptive_learning');
             if (stored) {
                 this.learningData = JSON.parse(stored);
-                console.log('[Adaptive Learning] Loaded data:',
                            this.learningData.totalSessions, 'sessions');
             }
         } catch (error) {

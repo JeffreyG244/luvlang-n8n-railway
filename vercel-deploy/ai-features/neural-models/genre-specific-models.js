@@ -64,12 +64,10 @@ class GenreSpecificModels {
         }
 
         if (this.models[genre]) {
-            console.log(`[Neural Models] Model already loaded: ${genre}`);
             this.currentModel = this.models[genre];
             return true;
         }
 
-        console.log(`[Neural Models] Loading ${genre} model...`);
 
         try {
             // In production, this would load a TensorFlow.js model
@@ -81,7 +79,6 @@ class GenreSpecificModels {
             this.currentModel = model;
             this.modelDefinitions[genre].loaded = true;
 
-            console.log(`[Neural Models] ${genre} model loaded successfully`);
             return true;
 
         } catch (error) {
@@ -284,21 +281,18 @@ class GenreSpecificModels {
         // If already compressed, reduce compression
         if (audioFeatures.crestFactor < 5) {
             adapted.compression.ratio *= 0.7;
-            console.log(`[Neural Models] Reducing compression for pre-compressed audio`);
         }
 
         // If harsh highs, reduce high-end boost
         if (audioFeatures.spectralBrightness > 0.35) {
             adapted.eq['8000Hz'] -= 2;
             adapted.eq['14000Hz'] -= 2;
-            console.log(`[Neural Models] Reducing high-end for bright audio`);
         }
 
         // If thin bass, boost more
         if (audioFeatures.lowEndEnergy < 0.25) {
             adapted.eq['40Hz'] += 2;
             adapted.eq['120Hz'] += 1;
-            console.log(`[Neural Models] Boosting bass for thin audio`);
         }
 
         return adapted;
@@ -312,7 +306,6 @@ class GenreSpecificModels {
             throw new Error('No model loaded');
         }
 
-        console.log(`[Neural Models] Processing with ${this.currentModel.genre} model...`);
 
         // Get genre-specific settings
         const settings = await this.currentModel.predict(audioFeatures);

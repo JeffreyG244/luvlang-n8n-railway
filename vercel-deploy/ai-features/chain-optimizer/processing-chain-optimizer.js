@@ -160,12 +160,10 @@ class ProcessingChainOptimizer {
      * @returns {Object} Optimized chain and audio profile
      */
     async optimizeChain(audioBuffer) {
-        console.log('[Chain Optimizer] Analyzing audio content...');
 
         // Step 1: Analyze audio characteristics
         this.audioProfile = await this.analyzeAudio(audioBuffer);
 
-        console.log('[Chain Optimizer] Audio profile:', this.audioProfile);
 
         // Step 2: Score each chain template based on audio profile
         this.scoreChainTemplates(this.audioProfile);
@@ -173,9 +171,6 @@ class ProcessingChainOptimizer {
         // Step 3: Select best chain
         const bestChain = this.selectBestChain();
 
-        console.log('[Chain Optimizer] Optimal chain:', bestChain.name);
-        console.log('[Chain Optimizer] Description:', bestChain.description);
-        console.log('[Chain Optimizer] Modules:', bestChain.chain.join(' → '));
 
         this.optimizedChain = bestChain.chain;
 

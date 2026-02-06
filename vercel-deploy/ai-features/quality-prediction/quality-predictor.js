@@ -29,14 +29,11 @@ class QualityPredictor {
      * Predict mastering quality before processing
      */
     async predictQuality(audioBuffer) {
-        console.log('[Quality Prediction] Analyzing source material...');
 
         const features = await this.extractFeatures(audioBuffer);
 
         const prediction = this.runPrediction(features);
 
-        console.log('[Quality Prediction] Predicted score:', prediction.score);
-        console.log('[Quality Prediction] Confidence:', prediction.confidence);
 
         return prediction;
     }

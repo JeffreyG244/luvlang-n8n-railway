@@ -1,9 +1,11 @@
 /**
  * COLLABORATION SYSTEM TESTS
  * Unit tests for project sharing, comments, and real-time features
+ *
+ * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach } from './test-runner.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // Mock Supabase client for testing
 const mockSupabase = {

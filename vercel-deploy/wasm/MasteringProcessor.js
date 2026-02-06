@@ -83,13 +83,11 @@ class MasteringProcessor extends AudioWorkletProcessor {
                 break;
 
             default:
-                console.warn('[MasteringProcessor] Unknown message type:', type);
         }
     }
 
     async initializeWASM(wasmModule) {
         try {
-            console.log('[MasteringProcessor] Initializing WASM engine...');
 
             // Store module reference
             MasteringEngineModule = wasmModule;
@@ -111,7 +109,6 @@ class MasteringProcessor extends AudioWorkletProcessor {
                 data: { success: true }
             });
 
-            console.log('[MasteringProcessor] ✅ WASM engine initialized');
         } catch (error) {
             console.error('[MasteringProcessor] ❌ Failed to initialize WASM:', error);
             this.port.postMessage({
@@ -124,7 +121,6 @@ class MasteringProcessor extends AudioWorkletProcessor {
     loadPreset(presetName) {
         if (!this.initialized) return;
 
-        console.log(`[MasteringProcessor] Loading preset: ${presetName}`);
 
         let gains;
         let limiterThreshold = -1.0;
@@ -202,7 +198,6 @@ class MasteringProcessor extends AudioWorkletProcessor {
                 break;
 
             default:
-                console.warn(`[MasteringProcessor] Unknown preset: ${presetName}`);
                 return;
         }
 
@@ -225,7 +220,6 @@ class MasteringProcessor extends AudioWorkletProcessor {
             }
         });
 
-        console.log(`[MasteringProcessor] ✅ Loaded ${presetName} preset`);
     }
 
     process(inputs, outputs, parameters) {

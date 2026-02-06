@@ -296,27 +296,26 @@ async function signOut() {
     window.OAUTH_IN_PROGRESS = false;
 
     // NUCLEAR: Clear ALL localStorage (not just Supabase keys)
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (
-            key.startsWith('sb-') ||
-            key.includes('supabase') ||
-            key.includes('luvlang') ||
-            key.includes('auth') ||
-            key.includes('token') ||
-            key.includes('session')
-        )) {
-            keysToRemove.push(key);
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (
+                key.startsWith('sb-') ||
+                key.includes('supabase') ||
+                key.includes('luvlang') ||
+                key.includes('auth') ||
+                key.includes('token') ||
+                key.includes('session')
+            )) {
+                keysToRemove.push(key);
+            }
         }
-    }
-    keysToRemove.forEach(key => {
-
-        localStorage.removeItem(key);
-    });
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+    } catch (_) { /* private browsing */ }
 
     // Clear ALL session storage
-    sessionStorage.clear();
+    try { sessionStorage.clear(); } catch (_) { /* private browsing */ }
 
     // NUCLEAR: Destroy the Supabase client instance entirely
     // This forces a fresh client to be created on next use
@@ -740,8 +739,10 @@ async function updateUIForLoggedInUser() {
     sessionStorage.setItem('luvlang_authenticated', 'true');
 
     // Clear old tour flags so language selection shows
-    localStorage.removeItem('voiceTourCompleted');
-    localStorage.removeItem('tourLanguage');
+    try {
+        localStorage.removeItem('voiceTourCompleted');
+        localStorage.removeItem('tourLanguage');
+    } catch (_) { /* private browsing */ }
 
     // Show loading screen then language selection
     if (window.OnboardingFlow && window.OnboardingFlow.onLoginSuccess) {
@@ -830,11 +831,13 @@ function updateUIForLoggedOutUser() {
     }
 
     // Clear all auth and tour state
-    sessionStorage.removeItem('luvlang_authenticated');
-    sessionStorage.removeItem('voiceTourStarted');
-    localStorage.removeItem('voiceTourCompleted');
-    localStorage.removeItem('tourLanguage');
-    localStorage.removeItem('luvlang_language_selected');
+    try {
+        sessionStorage.removeItem('luvlang_authenticated');
+        sessionStorage.removeItem('voiceTourStarted');
+        localStorage.removeItem('voiceTourCompleted');
+        localStorage.removeItem('tourLanguage');
+        localStorage.removeItem('luvlang_language_selected');
+    } catch (_) { /* private browsing */ }
 
     // Show the landing page via OnboardingFlow
     if (typeof window.OnboardingFlow !== 'undefined' && typeof window.OnboardingFlow.showLandingPage === 'function') {

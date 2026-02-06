@@ -67,9 +67,11 @@ const _isDev = typeof window !== 'undefined' && (
 );
 
 export const log = {
+    // eslint-disable-next-line no-console
     info: (...args) => _isDev && console.log('[LuvLang]', ...args),
     warn: (...args) => console.warn('[LuvLang]', ...args),
     error: (...args) => console.error('[LuvLang]', ...args),
+    // eslint-disable-next-line no-console
     debug: (...args) => _isDev && console.log('[LuvLang:debug]', ...args),
 };
 

@@ -22,7 +22,6 @@ class WebGLSpectrumRenderer {
         this.initBuffers();
         this.resize();
 
-        console.log('✅ WebGL Spectrum Renderer initialized');
     }
 
     initShaders() {

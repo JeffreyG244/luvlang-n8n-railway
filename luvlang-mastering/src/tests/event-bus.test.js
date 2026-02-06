@@ -3,7 +3,7 @@
  * Unit tests for the pub/sub event system
  */
 
-import { describe, it, expect, beforeEach, afterEach } from './test-runner.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { EventBus, eventBus, Events } from '../js/core/event-bus.js';
 
 describe('EventBus - Core Functionality', () => {
@@ -103,13 +103,12 @@ describe('EventBus - Clear Functionality', () => {
         testBus = new EventBus();
     });
 
-    it('should clear specific event listeners', () => {
+    it('should clear specific event listener by callback', () => {
         let called = false;
-        testBus.on('test', () => {
-            called = true;
-        });
+        const handler = () => { called = true; };
+        testBus.on('test', handler);
 
-        testBus.off('test');
+        testBus.off('test', handler);
         testBus.emit('test');
 
         expect(called).toBe(false);

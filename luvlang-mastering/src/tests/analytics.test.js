@@ -3,7 +3,7 @@
  * Unit tests for LUFS, dynamics, spectrogram, and comparison features
  */
 
-import { describe, it, expect, beforeEach } from './test-runner.js';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('Analytics - LUFS Calculation', () => {
     it('should calculate RMS correctly', () => {
@@ -75,7 +75,7 @@ describe('Analytics - Dynamic Range', () => {
     it('should convert to dB correctly', () => {
         const toDb = (linear) => 20 * Math.log10(linear + 1e-10);
 
-        expect(toDb(1.0)).toBe(0);
+        expect(toDb(1.0)).toBeCloseTo(0, 5);
         expect(Math.round(toDb(0.5))).toBe(-6);
         expect(Math.round(toDb(0.1))).toBe(-20);
     });
@@ -85,7 +85,7 @@ describe('Analytics - Dynamic Range', () => {
 
         // If peak = 1.0 and RMS = 0.5, crest factor = 2.0
         const crest = calculateCrestFactor(1.0, 0.5);
-        expect(crest).toBe(2.0);
+        expect(crest).toBeCloseTo(2.0, 5);
     });
 
     it('should detect heavy compression', () => {

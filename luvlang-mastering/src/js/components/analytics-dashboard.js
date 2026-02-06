@@ -356,7 +356,7 @@ class AnalyticsDashboard {
 
         // Block size for momentary (400ms) and short-term (3s)
         const momentaryBlockSize = Math.floor(sampleRate * 0.4);
-        const shortTermBlockSize = Math.floor(sampleRate * 3);
+        const _shortTermBlockSize = Math.floor(sampleRate * 3);
 
         this.lufsHistory = [];
         let integratedSum = 0;
@@ -484,7 +484,7 @@ class AnalyticsDashboard {
         if (!canvas || !ctx) return;
 
         const channelData = audioBuffer.getChannelData(0);
-        const sampleRate = audioBuffer.sampleRate;
+        const _sampleRate = audioBuffer.sampleRate;
         const fftSize = 2048;
         const hopSize = 512;
 

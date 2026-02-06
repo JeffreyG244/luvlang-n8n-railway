@@ -20,7 +20,6 @@ class RoomCompensator {
      * Calibrate room/speaker response
      */
     async calibrate() {
-        console.log('[Room Compensation] Starting calibration...');
 
         try {
             // Request microphone access
@@ -37,7 +36,6 @@ class RoomCompensator {
             const responses = [];
 
             for (const freq of frequencies) {
-                console.log(`[Room Compensation] Testing ${freq}Hz...`);
 
                 // Play test tone
                 await this.playTestTone(freq, 0.5, audioContext);
@@ -60,7 +58,6 @@ class RoomCompensator {
             stream.getTracks().forEach(track => track.stop());
             audioContext.close();
 
-            console.log('[Room Compensation] Calibration complete');
             return this.compensation;
 
         } catch (error) {
@@ -185,7 +182,6 @@ class RoomCompensator {
             return eqSettings;
         }
 
-        console.log('[Room Compensation] Applying room compensation...');
 
         for (const band of this.compensation.bands) {
             // Find matching EQ band
@@ -195,7 +191,6 @@ class RoomCompensator {
 
             if (eqBand) {
                 eqBand.gain += band.gain;
-                console.log(`  ${band.frequency}Hz: ${band.gain > 0 ? '+' : ''}${band.gain.toFixed(1)}dB`);
             }
         }
 

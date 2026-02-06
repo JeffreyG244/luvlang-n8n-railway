@@ -20,19 +20,14 @@ class WASMMasteringIntegration {
      * Call this before processing any audio
      */
     async initialize() {
-        console.log('🚀 Initializing WASM Mastering Engine...');
 
         try {
             // 1. Load WASM module
-            console.log('   📦 Loading WASM module...');
             const createMasteringEngine = await import('./wasm/build/mastering-engine.js');
             this.wasmModule = await createMasteringEngine.default();
-            console.log('   ✅ WASM module loaded');
 
             // 2. Add AudioWorklet module
-            console.log('   🔊 Registering AudioWorklet...');
             await this.audioContext.audioWorklet.addModule('./wasm/MasteringProcessor.js');
-            console.log('   ✅ AudioWorklet registered');
 
             // 3. Create AudioWorkletNode
             this.workletNode = new AudioWorkletNode(this.audioContext, 'mastering-processor', {
@@ -46,7 +41,6 @@ class WASMMasteringIntegration {
             this.workletNode.port.onmessage = this.handleWorkletMessage.bind(this);
 
             // 5. Send WASM module to worklet
-            console.log('   💾 Sending WASM to AudioWorklet thread...');
             this.workletNode.port.postMessage({
                 type: 'init_wasm',
                 data: { wasmModule: this.wasmModule }
@@ -56,7 +50,6 @@ class WASMMasteringIntegration {
             await this.waitForInitialization();
 
             this.initialized = true;
-            console.log('🎉 WASM Mastering Engine ready!');
 
             return this.workletNode;
 
@@ -72,7 +65,6 @@ class WASMMasteringIntegration {
         switch (type) {
             case 'wasm_initialized':
                 if (data.success) {
-                    console.log('   ✅ WASM engine initialized in AudioWorklet');
                     this.initializationComplete = true;
                 } else {
                     console.error('   ❌ WASM initialization failed:', data.error);
@@ -87,7 +79,6 @@ class WASMMasteringIntegration {
                 break;
 
             case 'preset_loaded':
-                console.log(`✅ Preset loaded: ${data.preset}`);
                 // Optionally update UI here
                 break;
 
@@ -100,7 +91,6 @@ class WASMMasteringIntegration {
                 break;
 
             default:
-                console.warn('[WASM Integration] Unknown message:', type);
         }
     }
 
@@ -139,7 +129,6 @@ class WASMMasteringIntegration {
         source.connect(this.workletNode);
         this.workletNode.connect(destination);
 
-        console.log('🔗 WASM processor connected to audio graph');
     }
 
     /**
@@ -225,7 +214,6 @@ class WASMMasteringIntegration {
             data: { preset: presetName }
         });
 
-        console.log(`🎛️ Loading ${presetName} preset...`);
     }
 
     /**
@@ -306,9 +294,6 @@ wasmMastering.setLimiterRelease(0.1);     // 100ms release
 
 // 6. Get metering data
 wasmMastering.onMetering((data) => {
-    console.log(`LUFS: ${data.integratedLUFS.toFixed(1)}`);
-    console.log(`Phase: ${data.phaseCorrelation.toFixed(2)}`);
-    console.log(`Limiter GR: ${data.limiterGainReduction.toFixed(1)} dB`);
 
     // Update UI meters here
 });

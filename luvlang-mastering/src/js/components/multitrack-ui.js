@@ -1,3 +1,4 @@
+/* global MultiTrackMixer */
 /**
  * MULTITRACK UI COMPONENT
  * Visual interface for the MultiTrackMixer engine
@@ -228,7 +229,6 @@ class MultitrackUI {
             appState.set('multitrack.enabled', true);
 
             eventBus.emit(Events.TRACK_ADD, track);
-            console.log(`[MultitrackUI] Added track: ${trackName} (${type})`);
 
             this.renderTrack(track);
             return track;
@@ -539,7 +539,6 @@ class MultitrackUI {
             })));
 
             eventBus.emit(Events.PROCESSING_COMPLETE, { type: 'auto-mix' });
-            console.log('[MultitrackUI] Auto-mix complete');
         } catch (error) {
             console.error('[MultitrackUI] Auto-mix failed:', error);
             eventBus.emit(Events.PROCESSING_ERROR, { type: 'auto-mix', error });
@@ -575,8 +574,6 @@ class MultitrackUI {
 
             eventBus.emit(Events.MIX_RENDER, { buffer: mixBuffer });
             eventBus.emit(Events.PROCESSING_COMPLETE, { type: 'render-mix', buffer: mixBuffer });
-
-            console.log('[MultitrackUI] Mix rendered successfully');
         } catch (error) {
             console.error('[MultitrackUI] Render failed:', error);
             eventBus.emit(Events.PROCESSING_ERROR, { type: 'render-mix', error });
@@ -597,7 +594,6 @@ class MultitrackUI {
         try {
             // Create ZIP file with processed stems
             // This would typically use a library like JSZip
-            console.log('[MultitrackUI] Exporting stems...');
 
             eventBus.emit(Events.EXPORT_COMPLETE, { type: 'stems' });
         } catch (error) {

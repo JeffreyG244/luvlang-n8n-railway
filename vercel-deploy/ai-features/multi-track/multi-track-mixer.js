@@ -66,7 +66,6 @@ class MultiTrackMixer {
 
         this.tracks.push(track);
 
-        console.log(`[Multi-Track] Added track ${trackId}: ${track.name} (${track.type})`);
 
         return trackId;
     }
@@ -76,7 +75,6 @@ class MultiTrackMixer {
      * @returns {Object} Mix settings
      */
     async autoMix() {
-        console.log(`[Multi-Track] Auto-mixing ${this.tracks.length} tracks...`);
 
         if (this.tracks.length === 0) {
             throw new Error('No tracks to mix');
@@ -102,7 +100,6 @@ class MultiTrackMixer {
         // Step 6: Apply per-track compression
         this.autoCompression();
 
-        console.log('[Multi-Track] Auto-mix complete');
 
         return this.getMixSettings();
     }
@@ -153,16 +150,12 @@ class MultiTrackMixer {
             // Detect based on characteristics
             if (transientDensity > 15 && !hasPitch) {
                 track.type = 'drum';
-                console.log(`[Multi-Track] Detected ${track.name} as drums`);
             } else if (centroid < 300 && hasPitch) {
                 track.type = 'bass';
-                console.log(`[Multi-Track] Detected ${track.name} as bass`);
             } else if (centroid > 800 && centroid < 4000 && hasPitch) {
                 track.type = 'vocal';
-                console.log(`[Multi-Track] Detected ${track.name} as vocal`);
             } else {
                 track.type = 'instrument';
-                console.log(`[Multi-Track] Detected ${track.name} as instrument`);
             }
         }
     }
@@ -171,7 +164,6 @@ class MultiTrackMixer {
      * Auto-level tracks (balance)
      */
     autoLevel(analyses) {
-        console.log('[Multi-Track] Setting levels...');
 
         // Find reference level (loudest track)
         const levels = analyses.map(a => a.rmsDB);
@@ -193,7 +185,6 @@ class MultiTrackMixer {
             const gainNeeded = target - (rmsDB - maxLevel);
             track.gain = gainNeeded;
 
-            console.log(`  ${track.name}: ${gainNeeded > 0 ? '+' : ''}${gainNeeded.toFixed(1)} dB`);
         }
     }
 
@@ -201,7 +192,6 @@ class MultiTrackMixer {
      * Auto-pan tracks
      */
     autoPan() {
-        console.log('[Multi-Track] Setting panning...');
 
         // Panning strategy:
         // - Vocals, bass, kick: center (0)
@@ -223,7 +213,6 @@ class MultiTrackMixer {
         // Assign panning
         instrumentTracks.forEach((track, i) => {
             track.pan = panPositions[i];
-            console.log(`  ${track.name}: ${track.pan.toFixed(0)}% ${track.pan > 0 ? 'R' : 'L'}`);
         });
 
         // Center important elements
@@ -231,7 +220,6 @@ class MultiTrackMixer {
             if (track.type === 'vocal' || track.type === 'bass' ||
                 track.name.toLowerCase().includes('kick')) {
                 track.pan = 0;
-                console.log(`  ${track.name}: Center`);
             }
         });
     }
@@ -240,7 +228,6 @@ class MultiTrackMixer {
      * Auto-EQ tracks
      */
     autoEQ(analyses) {
-        console.log('[Multi-Track] Applying per-track EQ...');
 
         for (const analysis of analyses) {
             const { track } = analysis;
@@ -251,14 +238,12 @@ class MultiTrackMixer {
                     track.eq.lowShelf = { frequency: 100, gain: -3 }; // Cut rumble
                     track.eq.mid = { frequency: 3000, gain: +2, q: 1.0 }; // Presence
                     track.eq.highShelf = { frequency: 8000, gain: +1 }; // Air
-                    console.log(`  ${track.name}: Vocal EQ applied`);
                     break;
 
                 case 'bass':
                     track.eq.enabled = true;
                     track.eq.lowShelf = { frequency: 60, gain: +2 }; // Sub boost
                     track.eq.mid = { frequency: 500, gain: -2, q: 1.0 }; // Cut mud
-                    console.log(`  ${track.name}: Bass EQ applied`);
                     break;
 
                 case 'drum':
@@ -266,7 +251,6 @@ class MultiTrackMixer {
                     track.eq.lowShelf = { frequency: 80, gain: +2 }; // Kick punch
                     track.eq.mid = { frequency: 3000, gain: +1, q: 1.0 }; // Snare snap
                     track.eq.highShelf = { frequency: 10000, gain: +2 }; // Cymbal shine
-                    console.log(`  ${track.name}: Drum EQ applied`);
                     break;
 
                 case 'instrument':
@@ -274,7 +258,6 @@ class MultiTrackMixer {
                     track.eq.lowShelf = { frequency: 100, gain: -2 }; // Clean low-end
                     track.eq.mid = { frequency: 1000, gain: 0, q: 1.0 };
                     track.eq.highShelf = { frequency: 8000, gain: +1 }; // Clarity
-                    console.log(`  ${track.name}: Instrument EQ applied`);
                     break;
             }
         }
@@ -284,7 +267,6 @@ class MultiTrackMixer {
      * Auto-compression
      */
     autoCompression() {
-        console.log('[Multi-Track] Applying compression...');
 
         this.tracks.forEach(track => {
             switch (track.type) {
@@ -329,7 +311,6 @@ class MultiTrackMixer {
                     break;
             }
 
-            console.log(`  ${track.name}: ${track.compression.ratio}:1 @ ${track.compression.threshold}dB`);
         });
     }
 
@@ -338,7 +319,6 @@ class MultiTrackMixer {
      * @returns {Promise<AudioBuffer>} Mixed stereo audio
      */
     async renderMix() {
-        console.log('[Multi-Track] Rendering mix...');
 
         if (this.tracks.length === 0) {
             throw new Error('No tracks to render');
@@ -386,10 +366,8 @@ class MultiTrackMixer {
                 leftChannel[i] *= normGain;
                 rightChannel[i] *= normGain;
             }
-            console.log(`[Multi-Track] Normalized by ${(20 * Math.log10(normGain)).toFixed(1)} dB`);
         }
 
-        console.log('[Multi-Track] Mix rendered');
 
         return mixBuffer;
     }
@@ -425,7 +403,6 @@ class MultiTrackMixer {
      */
     clearTracks() {
         this.tracks = [];
-        console.log('[Multi-Track] All tracks cleared');
     }
 
     // Helper functions

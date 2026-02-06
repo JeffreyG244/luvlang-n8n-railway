@@ -238,7 +238,7 @@ class AILearningEngine {
             const { data: { user } } = await this.supabase.auth.getUser();
             if (!user) return;
 
-            const { data, error } = await this.supabase
+            const { data, error: _error } = await this.supabase
                 .from('ai_profiles')
                 .select('*')
                 .eq('user_id', user.id)
@@ -249,8 +249,7 @@ class AILearningEngine {
             } else {
                 this.userProfile = new UserProfile(user.id);
             }
-        } catch (error) {
-            console.error('[AILearningEngine] Failed to load profile:', error);
+        } catch (_error) {
             this.userProfile = new UserProfile('anonymous');
         }
     }
@@ -279,7 +278,7 @@ class AILearningEngine {
                     onConflict: 'user_id'
                 });
         } catch (error) {
-            console.error('[AILearningEngine] Failed to save profile:', error);
+            // Save failed silently
         }
     }
 
@@ -295,8 +294,6 @@ class AILearningEngine {
             finalSettings: null,
             satisfaction: null
         };
-
-        console.log('[AILearningEngine] Session started');
     }
 
     /**
@@ -324,7 +321,6 @@ class AILearningEngine {
             await this.saveUserProfile();
         }
 
-        console.log('[AILearningEngine] Session ended, profile updated');
         this.currentSession = null;
     }
 
@@ -433,7 +429,7 @@ class AILearningEngine {
     /**
      * Extract audio features for genre detection
      */
-    extractAudioFeatures(audioData) {
+    extractAudioFeatures(_audioData) {
         // Placeholder - would use actual audio analysis
         return {
             bassEnergy: 0.5,
@@ -447,7 +443,7 @@ class AILearningEngine {
     /**
      * Handle processing complete event
      */
-    onProcessingComplete(data) {
+    onProcessingComplete(_data) {
         if (this.currentSession) {
             this.currentSession.actions.push({
                 type: 'processing_complete',
@@ -459,7 +455,7 @@ class AILearningEngine {
     /**
      * Handle export complete event
      */
-    async onExportComplete(data) {
+    async onExportComplete(_data) {
         // End session with implicit satisfaction (user exported = satisfied)
         await this.endSession(0.8);
     }
@@ -467,7 +463,7 @@ class AILearningEngine {
     /**
      * Get AI suggestions based on user profile
      */
-    getSuggestions(audioAnalysis = null) {
+    getSuggestions(_audioAnalysis = null) {
         if (!this.userProfile) {
             return this.getDefaultSuggestions();
         }
@@ -581,13 +577,12 @@ class AILearningEngine {
         }
 
         eventBus.emit(Events.AI_APPLY, { suggestions, applied: true });
-        console.log('[AILearningEngine] Suggestions applied');
     }
 
     /**
      * Learn from user feedback
      */
-    async learnFromFeedback(rating, comments = '') {
+    async learnFromFeedback(rating, _comments = '') {
         if (!this.currentSession) return;
 
         this.currentSession.satisfaction = rating / 5; // Normalize to 0-1
@@ -605,7 +600,6 @@ class AILearningEngine {
             await this.endSession(rating / 5);
         }
 
-        console.log(`[AILearningEngine] Learned from feedback: ${rating}/5`);
     }
 
     /**
@@ -633,8 +627,6 @@ class AILearningEngine {
         const userId = this.userProfile.userId;
         this.userProfile = new UserProfile(userId);
         await this.saveUserProfile();
-
-        console.log('[AILearningEngine] Profile reset');
     }
 
     /**

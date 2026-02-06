@@ -75,11 +75,9 @@ class IntelligentDitheringSystem {
      * @returns {string} Selected algorithm name
      */
     async selectAlgorithm(audioBuffer, targetBitDepth = 16, sourceBitDepth = 24) {
-        console.log('[Dithering] Analyzing audio for optimal dithering...');
 
         // If no bit depth reduction needed, skip dithering
         if (targetBitDepth >= sourceBitDepth) {
-            console.log('[Dithering] No bit depth reduction needed - skipping');
             this.selectedAlgorithm = 'None';
             return 'None';
         }
@@ -87,7 +85,6 @@ class IntelligentDitheringSystem {
         // Analyze audio characteristics
         const analysis = await this.analyzeAudio(audioBuffer);
 
-        console.log('[Dithering] Analysis:', analysis);
 
         // Decision logic
         let algorithm = 'TPDF'; // Default
@@ -95,27 +92,21 @@ class IntelligentDitheringSystem {
         if (analysis.noiseFloor > -70) {
             // High noise floor - dithering won't help much
             algorithm = 'None';
-            console.log('[Dithering] High noise floor detected - skipping dithering');
         } else if (analysis.dynamicRange > 60 && analysis.isAcoustic) {
             // High dynamic range acoustic music - use noise shaping
             algorithm = 'Noise-Shaped-2';
-            console.log('[Dithering] Acoustic with high DR - using noise shaping');
         } else if (analysis.dynamicRange > 40) {
             // Moderate dynamic range - light noise shaping
             algorithm = 'Noise-Shaped-1';
-            console.log('[Dithering] Moderate DR - using light noise shaping');
         } else if (analysis.isLoudMastered) {
             // Loud mastering - POW-R for minimal artifacts
             algorithm = 'POW-R-1';
-            console.log('[Dithering] Loud master - using POW-R');
         } else {
             // General music - TPDF
             algorithm = 'TPDF';
-            console.log('[Dithering] General music - using TPDF');
         }
 
         this.selectedAlgorithm = algorithm;
-        console.log('[Dithering] Selected:', this.algorithms[algorithm].name);
 
         return algorithm;
     }
@@ -167,11 +158,9 @@ class IntelligentDitheringSystem {
      */
     async applyDithering(audioBuffer, targetBitDepth = 16) {
         if (!this.selectedAlgorithm || this.selectedAlgorithm === 'None') {
-            console.log('[Dithering] Skipping dithering');
             return audioBuffer;
         }
 
-        console.log('[Dithering] Applying', this.algorithms[this.selectedAlgorithm].name);
 
         const algorithm = this.algorithms[this.selectedAlgorithm];
         const outputBuffer = new AudioContext().createBuffer(
@@ -197,7 +186,6 @@ class IntelligentDitheringSystem {
             }
         }
 
-        console.log('[Dithering] Complete');
         return outputBuffer;
     }
 

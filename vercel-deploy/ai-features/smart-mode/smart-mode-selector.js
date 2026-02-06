@@ -129,12 +129,10 @@ class SmartModeSelector {
      * @returns {Object} Detected mode and recommendations
      */
     async detectMode(audioBuffer) {
-        console.log('[Smart Mode] Analyzing audio content...');
 
         // Extract audio features
         const features = await this.extractFeatures(audioBuffer);
 
-        console.log('[Smart Mode] Extracted features:', features);
 
         // Match against genre profiles
         const genreMatch = this.matchGenre(features);
@@ -172,7 +170,6 @@ class SmartModeSelector {
             recommendations
         };
 
-        console.log('[Smart Mode] Detected:', this.detectedMode.genre,
                     `(${(this.detectedMode.confidence * 100).toFixed(0)}% confidence)`);
 
         return this.detectedMode;
@@ -443,7 +440,6 @@ class SmartModeSelector {
             avgMFCCs[i] /= frameMFCCs.length || 1;
         }
 
-        console.log('[Smart Mode] MFCC computation complete:', avgMFCCs);
         return avgMFCCs;
     }
 
@@ -578,13 +574,11 @@ class SmartModeSelector {
 
         // If already mastered, suggest minimal adjustment
         if (masteringStatus.isMastered) {
-            console.log('[Smart Mode] Audio appears already mastered - using conservative target');
             targetLUFS = Math.max(targetLUFS, -13); // Don't over-compress
         }
 
         // If high dynamic range (classical, jazz), preserve it
         if (features.crestFactor > 12) {
-            console.log('[Smart Mode] High dynamic range detected - preserving');
             targetLUFS = Math.min(targetLUFS, -16);
         }
 

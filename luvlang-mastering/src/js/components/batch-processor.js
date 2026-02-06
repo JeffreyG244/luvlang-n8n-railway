@@ -1,3 +1,4 @@
+/* global JSZip */
 /**
  * BATCH PROCESSOR
  * Process albums/playlists with consistent settings
@@ -247,7 +248,6 @@ class BatchProcessor {
             this.queue.push(item);
             eventBus.emit(Events.BATCH_ADD, item);
 
-            console.log(`[BatchProcessor] Added to queue: ${item.name}`);
             return item;
         } catch (error) {
             console.error('[BatchProcessor] Failed to add file:', error);
@@ -282,7 +282,7 @@ class BatchProcessor {
             return;
         }
 
-        queueContainer.innerHTML = this.queue.map((item, index) => `
+        queueContainer.innerHTML = this.queue.map((item, _index) => `
             <div class="queue-item ${item.status}" data-id="${item.id}">
                 <div class="item-status">
                     ${this.getStatusIcon(item.status)}
@@ -387,7 +387,6 @@ class BatchProcessor {
         eventBus.emit(Events.BATCH_START, { total: this.queue.length });
         this.updateControls();
 
-        console.log(`[BatchProcessor] Starting batch of ${this.queue.length} files`);
 
         // First pass: Analyze all files for LUFS
         await this.analyzeAllFiles();
@@ -438,9 +437,8 @@ class BatchProcessor {
             .map(i => i.lufs);
 
         if (lufsValues.length > 0) {
-            const avgLufs = lufsValues.reduce((a, b) => a + b, 0) / lufsValues.length;
-            const variance = Math.max(...lufsValues) - Math.min(...lufsValues);
-            console.log(`[BatchProcessor] LUFS range: ${Math.min(...lufsValues).toFixed(1)} to ${Math.max(...lufsValues).toFixed(1)} (variance: ${variance.toFixed(1)} dB)`);
+            const _avgLufs = lufsValues.reduce((a, b) => a + b, 0) / lufsValues.length;
+            const _variance = Math.max(...lufsValues) - Math.min(...lufsValues);
         }
     }
 
@@ -696,7 +694,7 @@ class BatchProcessor {
         const exportBtn = this.container.querySelector('#btn-export-zip');
 
         const hasItems = this.queue.length > 0;
-        const allDone = this.queue.every(i => i.status === 'done' || i.status === 'error');
+        const _allDone = this.queue.every(i => i.status === 'done' || i.status === 'error');
         const hasDone = this.queue.some(i => i.status === 'done');
 
         if (startBtn) {

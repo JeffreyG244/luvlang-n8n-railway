@@ -32,14 +32,12 @@
      */
     async function loadMonoBassWASM() {
         try {
-            console.log('🔧 Attempting to load Mono-Bass WASM module...');
 
             // Check if WASM file exists by attempting to fetch
             const wasmPath = 'wasm/mono-bass-crossover.wasm';
             const response = await fetch(wasmPath);
 
             if (!response.ok) {
-                console.log('ℹ️  WASM file not found, using JavaScript fallback');
                 return false;
             }
 
@@ -48,7 +46,6 @@
             const scriptResponse = await fetch(scriptPath);
 
             if (!scriptResponse.ok) {
-                console.log('ℹ️  WASM loader script not found, using JavaScript fallback');
                 return false;
             }
 
@@ -67,11 +64,10 @@
             });
 
             wasmReady = true;
-            console.log('✅ Mono-Bass WASM module loaded successfully (3-5x performance boost)');
             return true;
 
         } catch (error) {
-            console.log('ℹ️  WASM loading failed, using JavaScript fallback:', error.message);
+            // WASM loading failed, using JavaScript fallback
             return false;
         }
     }
@@ -89,10 +85,8 @@
             this.crossoverFreq = 140;
 
             if (this.useWASM) {
-                console.log('⚡ MonoBassCrossover using WASM backend');
                 this.initWASM();
             } else {
-                console.log('📱 MonoBassCrossover using JavaScript backend');
             }
         }
 
@@ -213,7 +207,6 @@
 
     // Attempt to load WASM on script load (non-blocking)
     loadMonoBassWASM().catch(err => {
-        console.log('ℹ️  WASM auto-load skipped:', err.message);
     });
 
     // Export enhanced wrapper globally

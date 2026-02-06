@@ -205,4 +205,3 @@ window.drawCorrelationLegend = function(canvas) {
     ctx.fillText('Mono Safe', w - 2, h + 1);
 };
 
-console.log('🎨 CORRELATION_HEATMAP.js loaded - Phase analysis ready');

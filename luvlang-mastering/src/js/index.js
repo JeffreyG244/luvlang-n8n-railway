@@ -14,10 +14,10 @@ import { AILearningEngine, AISuggestionUI, initAILearning } from './features/ai-
 
 // Component modules
 import { AnalyticsDashboard } from './components/analytics-dashboard.js';
-import { PodcastPanel } from './components/podcast-panel.js';
-import { BatchProcessor } from './components/batch-processor.js';
-import { UndoTimeline } from './components/undo-timeline.js';
-import { MultitrackUI } from './components/multitrack-ui.js';
+import { PodcastPanel as _PodcastPanel } from './components/podcast-panel.js';
+import { BatchProcessor as _BatchProcessor } from './components/batch-processor.js';
+import { UndoTimeline as _UndoTimeline } from './components/undo-timeline.js';
+import { MultitrackUI as _MultitrackUI } from './components/multitrack-ui.js';
 
 // Configuration
 import CONFIG from '../config/index.js';
@@ -198,12 +198,12 @@ class LuvLangApp {
         });
 
         // Processing complete
-        eventBus.on(Events.PROCESSING_COMPLETE, (data) => {
+        eventBus.on(Events.PROCESSING_COMPLETE, (_data) => {
             log.info('Processing complete');
         });
 
         // Export complete
-        eventBus.on(Events.EXPORT_COMPLETE, async (data) => {
+        eventBus.on(Events.EXPORT_COMPLETE, async (_data) => {
             log.info('Export complete');
 
             // Record usage
@@ -213,7 +213,7 @@ class LuvLangApp {
         });
 
         // State change - sync with collaboration
-        eventBus.on(Events.STATE_CHANGE, (data) => {
+        eventBus.on(Events.STATE_CHANGE, (_data) => {
             if (this.modules.collaboration) {
                 this.modules.collaboration.saveProjectState();
             }
@@ -239,7 +239,7 @@ class LuvLangApp {
      * Handle keyboard shortcuts
      */
     handleKeyboardShortcut(e) {
-        const shortcuts = CONFIG.UI.shortcuts;
+        const _shortcuts = CONFIG.UI.shortcuts;
 
         // Ignore if in input field
         if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;

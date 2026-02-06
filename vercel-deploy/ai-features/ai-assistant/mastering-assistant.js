@@ -115,7 +115,6 @@ class MasteringAssistant {
      * @returns {Object} Action to take
      */
     processCommand(command) {
-        console.log(`[AI Assistant] Processing: "${command}"`);
 
         const lowerCommand = command.toLowerCase();
 
@@ -132,14 +131,12 @@ class MasteringAssistant {
         }
 
         if (!matchedIntent || highestScore < 0.5) {
-            console.log('[AI Assistant] No clear intent matched');
             return {
                 success: false,
                 message: "I'm not sure what you mean. Try phrases like 'make vocals more present' or 'add more bass'."
             };
         }
 
-        console.log(`[AI Assistant] Matched intent: ${matchedIntent.name} (score: ${highestScore})`);
 
         // Generate response
         const response = this.generateResponse(matchedIntent);

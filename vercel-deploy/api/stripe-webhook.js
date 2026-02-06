@@ -56,13 +56,11 @@ module.exports = async (req, res) => {
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log('Webhook received:', event.type);
 
     try {
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object;
-                console.log('Payment completed:', session.id);
 
                 // Record purchase in Supabase
                 await recordPurchase({
@@ -79,7 +77,6 @@ module.exports = async (req, res) => {
 
             case 'charge.refunded': {
                 const charge = event.data.object;
-                console.log('Refund processed:', charge.id);
                 await updatePurchaseStatus(charge.payment_intent, 'refunded');
                 break;
             }
@@ -98,7 +95,6 @@ async function recordPurchase(data) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-        console.log('Supabase not configured, skipping database recording');
         return;
     }
 
@@ -125,7 +121,6 @@ async function recordPurchase(data) {
         });
 
         if (response.ok) {
-            console.log('Purchase recorded in database');
         } else {
             console.error('Failed to record purchase:', await response.text());
         }

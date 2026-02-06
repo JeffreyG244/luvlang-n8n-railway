@@ -58,8 +58,6 @@ class LuvlangAIMasteringSuite {
             multiTrackMixer: false
         };
 
-        console.log('[AI Suite] Luvlang AI Mastering Suite initialized');
-        console.log('[AI Suite] 13 revolutionary features available');
     }
 
     /**
@@ -69,11 +67,9 @@ class LuvlangAIMasteringSuite {
      */
     async loadModule(moduleName) {
         if (this.loaded[moduleName]) {
-            console.log(`[AI Suite] ${moduleName} already loaded`);
             return true;
         }
 
-        console.log(`[AI Suite] Loading ${moduleName}...`);
 
         try {
             switch (moduleName) {
@@ -164,7 +160,6 @@ class LuvlangAIMasteringSuite {
             }
 
             this.loaded[moduleName] = true;
-            console.log(`[AI Suite] ${moduleName} loaded successfully`);
             return true;
 
         } catch (error) {
@@ -177,7 +172,6 @@ class LuvlangAIMasteringSuite {
      * Load all modules
      */
     async loadAll() {
-        console.log('[AI Suite] Loading all modules...');
 
         const modules = Object.keys(this.modules);
         const results = await Promise.all(
@@ -185,7 +179,6 @@ class LuvlangAIMasteringSuite {
         );
 
         const successCount = results.filter(r => r).length;
-        console.log(`[AI Suite] Loaded ${successCount}/${modules.length} modules`);
 
         return successCount === modules.length;
     }
@@ -195,7 +188,6 @@ class LuvlangAIMasteringSuite {
      */
     getModule(moduleName) {
         if (!this.loaded[moduleName]) {
-            console.warn(`[AI Suite] Module ${moduleName} not loaded. Call loadModule() first.`);
             return null;
         }
 
@@ -235,7 +227,6 @@ class LuvlangAIMasteringSuite {
      * Uses all modules in intelligent sequence
      */
     async masterAudio(audioBuffer, options = {}) {
-        console.log('[AI Suite] === MASTER AI WORKFLOW START ===');
 
         const results = {
             input: audioBuffer,
@@ -248,70 +239,53 @@ class LuvlangAIMasteringSuite {
         try {
             // STEP 1: Quality Prediction
             if (this.loaded.qualityPredictor) {
-                console.log('[AI Suite] Step 1: Quality Prediction');
                 const prediction = await this.modules.qualityPredictor.predictQuality(audioBuffer);
                 results.steps.push({ name: 'Quality Prediction', result: prediction });
                 results.warnings.push(...prediction.warnings);
 
-                console.log(`  Predicted Score: ${prediction.score}/100`);
-                console.log(`  Confidence: ${(prediction.confidence * 100).toFixed(0)}%`);
             }
 
             // STEP 2: Artifact Detection
             if (this.loaded.artifactDetector) {
-                console.log('[AI Suite] Step 2: Artifact Detection');
                 const artifacts = await this.modules.artifactDetector.detectArtifacts(audioBuffer);
                 results.steps.push({ name: 'Artifact Detection', result: artifacts });
 
                 if (artifacts.hasProblems) {
-                    console.log(`  ⚠️ Found ${artifacts.issues.length} issues`);
                     results.warnings.push(...artifacts.issues.map(i => i.description));
                 } else {
-                    console.log('  ✓ No major artifacts detected');
                 }
             }
 
             // STEP 3: Smart Mode Selection
             if (this.loaded.smartMode) {
-                console.log('[AI Suite] Step 3: Smart Mode Selection');
                 const mode = await this.modules.smartMode.detectMode(audioBuffer);
                 results.steps.push({ name: 'Smart Mode', result: mode });
 
-                console.log(`  Genre: ${mode.genre} (${(mode.confidence * 100).toFixed(0)}% confidence)`);
-                console.log(`  Target: ${mode.targetLUFS} LUFS for ${mode.platform}`);
                 results.suggestions.push(...mode.recommendations);
             }
 
             // STEP 4: Audio Fingerprinting (Reference Suggestions)
             if (this.loaded.fingerprinting) {
-                console.log('[AI Suite] Step 4: Audio Fingerprinting');
                 await this.modules.fingerprinting.generateFingerprint(audioBuffer);
                 const suggestions = this.modules.fingerprinting.findSimilarTracks(3);
                 results.steps.push({ name: 'Fingerprinting', result: suggestions });
 
                 if (suggestions.length > 0) {
-                    console.log(`  Similar to: ${suggestions[0].artist} - ${suggestions[0].title}`);
                 }
             }
 
             // STEP 5: Processing Chain Optimization
             if (this.loaded.chainOptimizer) {
-                console.log('[AI Suite] Step 5: Processing Chain Optimization');
                 const chain = await this.modules.chainOptimizer.optimizeChain(audioBuffer);
                 results.steps.push({ name: 'Chain Optimization', result: chain });
 
-                console.log(`  Optimal Chain: ${chain.chainName}`);
-                console.log(`  Processing Order: ${chain.chain.slice(0, 5).join(' → ')}...`);
             }
 
             // STEP 6-13: Apply processing based on optimized chain
             // (Implementation would apply actual audio processing here)
-            console.log('[AI Suite] Steps 6-13: Applying processing...');
-            console.log('  (Full processing implementation would go here)');
 
             results.output = audioBuffer; // Placeholder - would be processed buffer
 
-            console.log('[AI Suite] === MASTER AI WORKFLOW COMPLETE ===');
 
             return results;
 

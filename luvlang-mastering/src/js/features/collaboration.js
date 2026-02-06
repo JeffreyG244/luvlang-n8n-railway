@@ -212,7 +212,7 @@ class CollaborationManager {
 
         try {
             // Get current audio state
-            const audioState = appState.get('audio');
+            const _audioState = appState.get('audio');
             const eqState = appState.get('eq');
             const dynamicsState = appState.get('dynamics');
 
@@ -407,7 +407,7 @@ class CollaborationManager {
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
         try {
-            const { data, error } = await this.supabase
+            const { data: _data, error } = await this.supabase
                 .from('project_shares')
                 .insert({
                     project_id: this.currentProject.id,

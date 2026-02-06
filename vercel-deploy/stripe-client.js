@@ -1,7 +1,7 @@
 /**
  * STRIPE PAYMENT INTEGRATION
- * Handles per-song purchases for LuvLang Mastering
- * Tiers: INSTANT ($9.99), PRECISION ($19.99), LEGENDARY ($29.99)
+ * Handles per-track purchases for LuvLang Mastering
+ * Tiers: BASIC ($12.99), PROFESSIONAL ($29.99), STUDIO ($59.99)
  *
  * SECURITY: Keys loaded from config.js - never hardcode in production
  */
@@ -60,11 +60,11 @@ async function initializeStripe() {
  * Mastering tier definitions
  */
 const MASTERING_TIERS = {
-    instant: {
-        name: 'INSTANT',
-        slug: 'instant',
-        price: 9.99,
-        priceId: 'price_instant_999', // You'll create this in Stripe Dashboard
+    basic: {
+        name: 'BASIC',
+        slug: 'basic',
+        price: 12.99,
+        priceId: 'price_basic_per_track',
         features: [
             'AI-powered loudness normalization (99%+ LUFS accuracy)',
             'Platform presets (Spotify, Apple Music, YouTube, Tidal)',
@@ -83,13 +83,13 @@ const MASTERING_TIERS = {
             exportFormats: ['WAV']
         }
     },
-    precision: {
-        name: 'PRECISION',
-        slug: 'precision',
-        price: 19.99,
-        priceId: 'price_precision_1999', // You'll create this in Stripe Dashboard
+    professional: {
+        name: 'PROFESSIONAL',
+        slug: 'professional',
+        price: 29.99,
+        priceId: 'price_professional_per_track',
         features: [
-            'Everything in INSTANT, plus:',
+            'Everything in BASIC, plus:',
             'Real-time transient detection (drum optimization)',
             'AI spectral noise removal (4 noise types)',
             '7-band stereo field editor',
@@ -108,13 +108,13 @@ const MASTERING_TIERS = {
             exportFormats: ['WAV', 'MP3', 'FLAC']
         }
     },
-    legendary: {
-        name: 'LEGENDARY',
-        slug: 'legendary',
-        price: 29.99,
-        priceId: 'price_legendary_2999', // You'll create this in Stripe Dashboard
+    studio: {
+        name: 'STUDIO',
+        slug: 'studio',
+        price: 59.99,
+        priceId: 'price_studio_per_track',
         features: [
-            'Everything in PRECISION, plus:',
+            'Everything in PROFESSIONAL, plus:',
             'Stem mastering (up to 5 stems)',
             'Reference track matching',
             'Advanced spectral repair',
@@ -403,14 +403,14 @@ async function hasAccessToTier(tierSlug) {
             return false;
         }
 
-        // If user has purchased LEGENDARY, they have access to all tiers
-        if (purchases.some(p => p.tier_slug === 'legendary')) {
+        // If user has purchased STUDIO, they have access to all tiers
+        if (purchases.some(p => p.tier_slug === 'studio')) {
             return true;
         }
 
-        // If user has purchased PRECISION, they have access to INSTANT and PRECISION
-        if (tierSlug === 'instant' || tierSlug === 'precision') {
-            if (purchases.some(p => p.tier_slug === 'precision' || p.tier_slug === 'legendary')) {
+        // If user has purchased PROFESSIONAL, they have access to BASIC and PROFESSIONAL
+        if (tierSlug === 'basic' || tierSlug === 'professional') {
+            if (purchases.some(p => p.tier_slug === 'professional' || p.tier_slug === 'studio')) {
                 return true;
             }
         }

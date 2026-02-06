@@ -26,6 +26,7 @@ class EventBus {
         this.events.get(event).add(callback);
 
         if (this.debugMode) {
+            // eslint-disable-next-line no-console
             console.log(`[EventBus] Subscribed to: ${event}`);
         }
 
@@ -70,6 +71,7 @@ class EventBus {
      */
     emit(event, data) {
         if (this.debugMode) {
+            // eslint-disable-next-line no-console
             console.log(`[EventBus] Emitting: ${event}`, data);
         }
 
@@ -119,6 +121,7 @@ class EventBus {
      */
     setDebugMode(enabled) {
         this.debugMode = enabled;
+        // eslint-disable-next-line no-console
         console.log(`[EventBus] Debug mode: ${enabled ? 'ON' : 'OFF'}`);
     }
 }

@@ -87,7 +87,6 @@ class AudioFingerprinting {
      * @returns {Object} Audio fingerprint
      */
     async generateFingerprint(audioBuffer) {
-        console.log('[Fingerprinting] Generating audio fingerprint...');
 
         const monoData = this.convertToMono(audioBuffer);
         const sampleRate = audioBuffer.sampleRate;
@@ -104,7 +103,6 @@ class AudioFingerprinting {
             timestamp: Date.now()
         };
 
-        console.log('[Fingerprinting] Fingerprint generated:', this.currentFingerprint);
 
         return this.currentFingerprint;
     }
@@ -120,7 +118,6 @@ class AudioFingerprinting {
             return [];
         }
 
-        console.log('[Fingerprinting] Searching for similar tracks...');
 
         // Calculate similarity scores for all references
         const scores = this.referenceDatabase.map(ref => ({
@@ -134,7 +131,6 @@ class AudioFingerprinting {
         // Return top matches
         this.suggestions = scores.slice(0, maxResults);
 
-        console.log('[Fingerprinting] Top suggestions:', this.suggestions);
 
         return this.suggestions;
     }
@@ -263,7 +259,6 @@ class AudioFingerprinting {
      * and spectral envelope matching
      */
     spectralMatch(fingerprint1, fingerprint2) {
-        console.log('[Fingerprinting] Running spectral matching algorithm...');
 
         // 1. Compute spectral envelope correlation
         const envelopeCorrelation = this.computeEnvelopeCorrelation(
@@ -361,7 +356,6 @@ class AudioFingerprinting {
         // Run spectral matching
         const matchResult = this.spectralMatch(originalFingerprint, comparisonFingerprint);
 
-        console.log('[Fingerprinting] Track comparison result:', matchResult);
 
         return matchResult;
     }
@@ -385,7 +379,6 @@ class AudioFingerprinting {
 
         this.referenceDatabase.push(reference);
 
-        console.log('[Fingerprinting] Added custom reference:', reference);
 
         // Save to localStorage
         this.saveCustomReferences();

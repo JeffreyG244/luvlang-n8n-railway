@@ -3863,9 +3863,10 @@
         // Language selection for tour
         function selectTourLanguage(lang) {
             // Store the selected language
-            localStorage.setItem('tourLanguage', lang);
-            // Mark that user has completed language selection (for onboarding flow)
-            localStorage.setItem('luvlang_language_selected', 'true');
+            try {
+                localStorage.setItem('tourLanguage', lang);
+                localStorage.setItem('luvlang_language_selected', 'true');
+            } catch (_) { /* private browsing */ }
 
             // Hide the language modal
             const modal = document.getElementById('tourLanguageModal');
@@ -3900,12 +3901,12 @@
             if (modal) modal.style.display = 'none';
 
             // Mark language selection as done (skip = English default)
-            localStorage.setItem('luvlang_language_selected', 'true');
-            localStorage.setItem('tourLanguage', 'en');
-
-            // Mark tour as completed so it doesn't show again
-            localStorage.setItem('voiceTourCompleted', 'true');
-            sessionStorage.setItem('voiceTourStarted', 'true');
+            try {
+                localStorage.setItem('luvlang_language_selected', 'true');
+                localStorage.setItem('tourLanguage', 'en');
+                localStorage.setItem('voiceTourCompleted', 'true');
+                sessionStorage.setItem('voiceTourStarted', 'true');
+            } catch (_) { /* private browsing */ }
 
             // Clear onboarding flag
             window.isOnboardingLanguageSelect = false;
@@ -5117,10 +5118,12 @@
         // Restart tour fresh - clears all tour state and shows language selection
         function restartTourFresh() {
             // Clear all tour-related storage
-            localStorage.removeItem('voiceTourCompleted');
-            localStorage.removeItem('tourLanguage');
-            localStorage.removeItem('voiceTourLang');
-            sessionStorage.removeItem('voiceTourStarted');
+            try {
+                localStorage.removeItem('voiceTourCompleted');
+                localStorage.removeItem('tourLanguage');
+                localStorage.removeItem('voiceTourLang');
+                sessionStorage.removeItem('voiceTourStarted');
+            } catch (_) { /* private browsing */ }
 
             // End any active tour
             if (typeof window.endVoiceTour === 'function') {
@@ -5164,20 +5167,20 @@
         <div class="tier-selector-switch">
             <button class="tier-option active" data-tier="basic">
                 BASIC
-                <span class="tier-price">$29/song</span>
+                <span class="tier-price">$12.99/track</span>
             </button>
-            <button class="tier-option" data-tier="advanced">
-                ADVANCED
-                <span class="tier-price">$79/song</span>
+            <button class="tier-option" data-tier="professional">
+                PROFESSIONAL
+                <span class="tier-price">$29.99/track</span>
             </button>
-            <button class="tier-option" data-tier="premium">
-                PREMIUM
-                <span class="tier-price">$149/song</span>
+            <button class="tier-option" data-tier="studio">
+                STUDIO
+                <span class="tier-price">$59.99/track</span>
             </button>
         </div>
     </div>
 
-    <!-- LASER-ETCHED SPEC SHEET PRICING - HIDDEN FOR NOW -->
+    <!-- SPEC SHEET PRICING - HIDDEN FOR NOW -->
     <div class="spec-sheet-container" style="display: none;">
         <div class="spec-sheet-title">TECHNICAL SPECIFICATIONS</div>
         <div class="spec-sheet-grid">
@@ -5187,27 +5190,27 @@
                     MP3 Export<br>
                     32-bit Processing
                 </div>
-                <div class="spec-price">$29</div>
+                <div class="spec-price">$12.99</div>
             </div>
-            <div class="spec-row" data-tier="advanced">
-                <div class="spec-tier">ADVANCED</div>
+            <div class="spec-row" data-tier="professional">
+                <div class="spec-tier">PROFESSIONAL</div>
                 <div class="spec-features">
                     24-bit WAV<br>
                     Stereo Width
                 </div>
-                <div class="spec-price">$79</div>
+                <div class="spec-price">$29.99</div>
             </div>
-            <div class="spec-row" data-tier="premium">
-                <div class="spec-tier">PREMIUM</div>
+            <div class="spec-row" data-tier="studio">
+                <div class="spec-tier">STUDIO</div>
                 <div class="spec-features">
                     64-bit Engine<br>
                     Full Manual Control<br>
                     DDP + Reference Match
                 </div>
-                <div class="spec-price">$149</div>
+                <div class="spec-price">$59.99</div>
             </div>
         </div>
-        <div class="spec-note">Per-song pricing • Unlimited revisions</div>
+        <div class="spec-note">Per-track pricing • Unlimited revisions</div>
     </div>
 
     <!-- CHECKOUT BACKDROP -->
@@ -5225,7 +5228,7 @@
 
             <div class="checkout-tier-info" id="checkoutTierInfo">
                 <div class="checkout-tier-name" id="checkoutTierName">BASIC TIER</div>
-                <div class="checkout-tier-price" id="checkoutTierPrice">$29.00</div>
+                <div class="checkout-tier-price" id="checkoutTierPrice">$12.99</div>
                 <ul class="checkout-tier-features" id="checkoutTierFeatures">
                     <li>Unlimited MP3 exports (320kbps)</li>
                     <li>32-bit float processing</li>
@@ -6099,8 +6102,10 @@
         // Language selection handler
         function completeLanguageSelection(lang) {
 
-            localStorage.setItem('tourLanguage', lang);
-            localStorage.setItem('luvlang_language_selected', 'true');
+            try {
+                localStorage.setItem('tourLanguage', lang);
+                localStorage.setItem('luvlang_language_selected', 'true');
+            } catch (_) { /* private browsing */ }
 
             // Set tour language
             if (typeof window.setTourLanguage === 'function') {
@@ -9184,11 +9189,13 @@
                         const result = await signOut();
                         if (result.success) {
                             // Clear ALL localStorage and sessionStorage
-                            localStorage.removeItem('voiceTourCompleted');
-                            localStorage.removeItem('tourLanguage');
-                            localStorage.removeItem('luvlang_language_selected');
-                            sessionStorage.removeItem('luvlang_authenticated');
-                            sessionStorage.removeItem('voiceTourStarted');
+                            try {
+                                localStorage.removeItem('voiceTourCompleted');
+                                localStorage.removeItem('tourLanguage');
+                                localStorage.removeItem('luvlang_language_selected');
+                                sessionStorage.removeItem('luvlang_authenticated');
+                                sessionStorage.removeItem('voiceTourStarted');
+                            } catch (_) { /* private browsing */ }
 
                             // Reload page to show landing page
                             window.location.reload();
@@ -22883,7 +22890,15 @@
 
             } catch (error) {
                 const analysisPanel = document.getElementById('analysisPanel');
-                analysisPanel.innerHTML = `<div style="color: #ff6b6b; text-align: center;"><strong>❌ Mastering Error</strong><br>${error.message}</div>`;
+                analysisPanel.textContent = '';
+                const errDiv = document.createElement('div');
+                errDiv.style.cssText = 'color: #ff6b6b; text-align: center;';
+                const strong = document.createElement('strong');
+                strong.textContent = '\u274C Mastering Error';
+                errDiv.appendChild(strong);
+                errDiv.appendChild(document.createElement('br'));
+                errDiv.appendChild(document.createTextNode(error.message || 'Unknown error'));
+                analysisPanel.appendChild(errDiv);
                 console.error('Full AI Master failed:', error);
 
                 // Update floating status pill to ERROR
@@ -25915,7 +25930,7 @@
 
         function changeVoiceTourLanguage(lang) {
             currentLang = lang;
-            localStorage.setItem('voiceTourLang', lang);
+            try { localStorage.setItem('voiceTourLang', lang); } catch (_) { /* private browsing */ }
             updateVoiceForLanguage();
 
             // Update current step display if tour is active
@@ -26070,7 +26085,7 @@
 
         // Helper to set ElevenLabs API key
         window.setElevenLabsKey = function(key) {
-            localStorage.setItem('elevenlabs_api_key', key);
+            try { localStorage.setItem('elevenlabs_api_key', key); } catch (_) { /* private browsing */ }
             ELEVENLABS_CONFIG.apiKey = key;
             ELEVENLABS_CONFIG.enabled = true;
 
@@ -26741,7 +26756,7 @@
                 highlighted.style.zIndex = '';
             }
 
-            localStorage.setItem('voiceTourCompleted', 'true');
+            try { localStorage.setItem('voiceTourCompleted', 'true'); } catch (_) { /* private browsing */ }
 
         }
 

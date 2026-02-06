@@ -203,7 +203,7 @@ class SubscriptionManager {
         if (!this.supabase || !this.currentUser) return;
 
         try {
-            const { data, error } = await this.supabase
+            const { data, error: _loadError } = await this.supabase
                 .from('subscriptions')
                 .select('*')
                 .eq('user_id', this.currentUser.id)
@@ -217,8 +217,7 @@ class SubscriptionManager {
                 // Default to free tier
                 this.currentSubscription = { tier: 'free', status: 'active' };
             }
-        } catch (error) {
-            console.error('[SubscriptionManager] Failed to load subscription:', error);
+        } catch (_error) {
             this.currentSubscription = { tier: 'free', status: 'active' };
         }
     }
@@ -382,7 +381,7 @@ class SubscriptionManager {
 
         try {
             // Upsert usage record
-            const { data, error } = await this.supabase
+            const { data: _data, error: _error } = await this.supabase
                 .from('usage')
                 .upsert({
                     user_id: this.currentUser.id,
@@ -750,8 +749,8 @@ class UpgradePrompt {
 
 // Create singleton instances
 let subscriptionManager = null;
-let pricingUI = null;
-const upgradePrompt = new UpgradePrompt();
+const _pricingUI = null;
+const _upgradePrompt = new UpgradePrompt();
 
 const initSubscription = (supabaseClient, stripeKey) => {
     subscriptionManager = new SubscriptionManager(supabaseClient, stripeKey);

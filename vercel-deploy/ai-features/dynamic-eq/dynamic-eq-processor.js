@@ -184,7 +184,6 @@ class DynamicEQProcessor {
      * Initialize all filter and analysis nodes
      */
     init() {
-        console.log('[Dynamic EQ] Initializing...');
 
         for (let i = 0; i < this.bands.length; i++) {
             const band = this.bands[i];
@@ -204,10 +203,8 @@ class DynamicEQProcessor {
             this.filterNodes.push(filter);
             this.analysisNodes.push(analyser);
 
-            console.log(`[Dynamic EQ] Band ${i + 1} (${band.name} @ ${band.frequency}Hz) initialized`);
         }
 
-        console.log('[Dynamic EQ] Initialization complete');
     }
 
     /**
@@ -216,7 +213,6 @@ class DynamicEQProcessor {
      * @returns {Promise<AudioBuffer>} Processed audio
      */
     async processBuffer(inputBuffer) {
-        console.log('[Dynamic EQ] Processing buffer...');
 
         const outputBuffer = this.audioContext.createBuffer(
             inputBuffer.numberOfChannels,
@@ -242,7 +238,6 @@ class DynamicEQProcessor {
             }
         }
 
-        console.log('[Dynamic EQ] Processing complete');
         return outputBuffer;
     }
 
@@ -394,7 +389,6 @@ class DynamicEQProcessor {
             return false;
         }
 
-        console.log(`[Dynamic EQ] Loading preset: ${presetName}`);
 
         // Reset all bands
         this.bands.forEach(band => band.enabled = false);
@@ -410,7 +404,6 @@ class DynamicEQProcessor {
             if (setting.mode) band.mode = setting.mode;
         });
 
-        console.log(`[Dynamic EQ] Preset loaded: ${preset.description}`);
         return true;
     }
 
@@ -420,7 +413,6 @@ class DynamicEQProcessor {
     setBandEnabled(bandIndex, enabled) {
         if (bandIndex < 0 || bandIndex >= this.bands.length) return;
         this.bands[bandIndex].enabled = enabled;
-        console.log(`[Dynamic EQ] Band ${bandIndex + 1} ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     /**
@@ -432,7 +424,6 @@ class DynamicEQProcessor {
 
         if (parameter in band) {
             band[parameter] = value;
-            console.log(`[Dynamic EQ] Band ${bandIndex + 1} ${parameter} = ${value}`);
         }
     }
 
@@ -474,33 +465,27 @@ class DynamicEQProcessor {
      * Auto-detect and suggest preset based on audio analysis
      */
     async autoDetectPreset(audioBuffer) {
-        console.log('[Dynamic EQ] Auto-detecting optimal preset...');
 
         // Analyze spectral content
         const spectralAnalysis = await this.analyzeSpectralContent(audioBuffer);
 
         // Decision logic
         if (spectralAnalysis.harshness > 0.7) {
-            console.log('[Dynamic EQ] Detected harshness - suggesting De-Harsh preset');
             return 'De-Harsh';
         }
 
         if (spectralAnalysis.sibilance > 0.6) {
-            console.log('[Dynamic EQ] Detected sibilance - suggesting De-Ess preset');
             return 'De-Ess';
         }
 
         if (spectralAnalysis.lowEndExcess > 0.7) {
-            console.log('[Dynamic EQ] Detected excessive low-end - suggesting Boom Control preset');
             return 'Boom Control';
         }
 
         if (spectralAnalysis.vocalContent > 0.6) {
-            console.log('[Dynamic EQ] Detected vocal content - suggesting Vocal Presence preset');
             return 'Vocal Presence';
         }
 
-        console.log('[Dynamic EQ] Suggesting Mastering preset (general purpose)');
         return 'Mastering';
     }
 

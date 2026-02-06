@@ -1,3 +1,4 @@
+/* global PodcastMasteringEngine */
 /**
  * PODCAST MODE UI
  * Dedicated interface for podcast-specific mastering
@@ -413,19 +414,15 @@ class PodcastPanel {
     async balanceSpeakers() {
         if (this.detectedSpeakers.length < 2) return;
 
-        console.log('[PodcastPanel] Auto-balancing speakers...');
-
         // Find target level (loudest speaker)
         const targetLevel = Math.max(...this.detectedSpeakers.map(s => s.avgLevel));
 
         // Calculate gain adjustments
-        const adjustments = this.detectedSpeakers.map((speaker, i) => ({
+        const _adjustments = this.detectedSpeakers.map((speaker, i) => ({
             speaker: i + 1,
             currentLevel: speaker.avgLevel,
             adjustment: targetLevel - speaker.avgLevel
         }));
-
-        console.log('[PodcastPanel] Speaker balance adjustments:', adjustments);
 
         // This would apply gain changes to specific time regions
         // For now, just log the recommendations

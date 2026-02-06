@@ -220,7 +220,11 @@ async function showApiKeysModal() {
         const keys = await listApiKeys();
         renderApiKeysList(keys);
     } catch (error) {
-        content.innerHTML = `<div style="text-align: center; padding: 40px; color: #ff6b6b;">Error: ${error.message}</div>`;
+        content.textContent = '';
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'text-align: center; padding: 40px; color: #ff6b6b;';
+        errDiv.textContent = 'Error: ' + (error.message || 'Unknown error');
+        content.appendChild(errDiv);
     }
 }
 

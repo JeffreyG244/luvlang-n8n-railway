@@ -84,7 +84,6 @@ let peakHoldTimes = null;
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initWebGL(canvasElement) {
-    console.log('🎨 PRO SPECTRUM v3.0 initializing...');
 
     canvas = canvasElement;
     gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
@@ -121,7 +120,6 @@ function initWebGL(canvasElement) {
         peakHoldTimes[i] = 0;
     }
 
-    console.log('✅ PRO SPECTRUM ready - Studio grade visualization');
     return true;
 }
 
@@ -464,4 +462,3 @@ window.WebGLSpectrum = {
     isReady: () => gl !== null
 };
 
-console.log('🎨 PRO SPECTRUM v3.0 loaded');

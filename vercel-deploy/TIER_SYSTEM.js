@@ -176,7 +176,7 @@ function switchWASMPrecision(mode) {
     }
 
     // Store in localStorage for persistence
-    localStorage.setItem('wasmPrecisionMode', mode);
+    try { localStorage.setItem('wasmPrecisionMode', mode); } catch (_) { /* private browsing */ }
 
     if (mode === '64bit') {
 

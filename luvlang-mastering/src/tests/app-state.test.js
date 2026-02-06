@@ -3,7 +3,7 @@
  * Unit tests for the central state management system
  */
 
-import { describe, it, expect, beforeEach, afterEach } from './test-runner.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AppState, appState } from '../js/core/app-state.js';
 
 describe('AppState - Core Functionality', () => {

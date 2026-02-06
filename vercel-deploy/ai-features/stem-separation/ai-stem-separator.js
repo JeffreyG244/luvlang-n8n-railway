@@ -42,7 +42,6 @@ class AIStemSeparator {
      */
     async init() {
         try {
-            console.log('[AI Stem Sep] Initializing TensorFlow.js...');
 
             // Check if TensorFlow.js is loaded
             if (typeof tf === 'undefined') {
@@ -50,14 +49,12 @@ class AIStemSeparator {
             }
 
             this.tfReady = true;
-            console.log('[AI Stem Sep] TensorFlow.js ready');
 
             // For now, we'll use a lightweight CNN-based separator
             // In production, you would load a pre-trained Spleeter model
             await this.createLightweightModel();
 
             this.isLoaded = true;
-            console.log('[AI Stem Sep] Model loaded successfully');
 
             return true;
         } catch (error) {
@@ -71,7 +68,6 @@ class AIStemSeparator {
      * This is a simplified version - in production you'd use pre-trained weights
      */
     async createLightweightModel() {
-        console.log('[AI Stem Sep] Creating lightweight separation model...');
 
         // This creates a simple U-Net style architecture for stem separation
         // In production, you'd load pre-trained Spleeter/Demucs weights
@@ -107,7 +103,6 @@ class AIStemSeparator {
             }
         };
 
-        console.log('[AI Stem Sep] Model created');
     }
 
     /**
@@ -123,9 +118,7 @@ class AIStemSeparator {
 
         // Use source audio's native sample rate for accurate processing
         this.modelConfig.sampleRate = audioBuffer.sampleRate;
-        console.log(`[AI Stem Sep] Using source sample rate: ${audioBuffer.sampleRate}Hz`);
 
-        console.log('[AI Stem Sep] Starting separation...');
         this.separationProgress = 0;
 
         try {
@@ -175,7 +168,6 @@ class AIStemSeparator {
             if (progressCallback) progressCallback(100, 'Separation complete!');
             this.separationProgress = 100;
 
-            console.log('[AI Stem Sep] Separation complete');
 
             return {
                 vocals: this.stems.vocals,

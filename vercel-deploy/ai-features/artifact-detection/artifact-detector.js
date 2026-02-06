@@ -47,7 +47,6 @@ class ArtifactDetector {
      * @returns {Object} Detection results and suggestions
      */
     async detectArtifacts(audioBuffer) {
-        console.log('[Artifact Detector] Starting comprehensive analysis...');
 
         this.detectedIssues = [];
 
@@ -70,7 +69,6 @@ class ArtifactDetector {
         // Generate report
         const report = this.generateReport(results);
 
-        console.log('[Artifact Detector] Analysis complete. Found', this.detectedIssues.length, 'issues.');
 
         return {
             results,

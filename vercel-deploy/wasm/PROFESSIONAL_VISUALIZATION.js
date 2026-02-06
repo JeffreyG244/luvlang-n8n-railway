@@ -357,4 +357,3 @@ window.drawGoniometer = function(canvas, leftSamples, rightSamples) {
     ctx.fill();
 };
 
-console.log('✅ PRO SPECTRUM - Hardware Grade Analyzer loaded');
