@@ -20,6 +20,12 @@
                 loader.id = 'initialLoadingScreen';
                 loader.innerHTML = '<div style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#fff 0%,#00d4ff 50%,#b84fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;">LuvLang</div><div style="font-size:0.8rem;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;">Professional Mastering Platform</div>';
                 document.body.insertBefore(loader, document.body.firstChild);
+
+                // FAILSAFE: Remove loading screen after 3 seconds no matter what
+                setTimeout(function() {
+                    var ls = document.getElementById('initialLoadingScreen');
+                    if (ls) { ls.classList.add('fade-out'); setTimeout(function() { if (ls.parentNode) ls.remove(); }, 500); }
+                }, 3000);
             });
         })();
 
