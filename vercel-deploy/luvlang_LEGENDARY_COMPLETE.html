@@ -11798,25 +11798,20 @@
                 const mbOutput = audioContext.createGain();
                 mbInput.gain.value = 1.0;
                 mbOutput.gain.value = 1.0;
-                // Low band:  mbInput → mbLowPass → mbLowGain → mbOutput
                 mbInput.connect(mbLowPass);
                 mbLowPass.connect(mbLowGain);
                 mbLowGain.connect(mbOutput);
-                // Mid band:  mbInput → mbHighPass → mbMidLowPass → mbMidGain → mbOutput
                 mbInput.connect(mbHighPass);
                 mbHighPass.connect(mbMidLowPass);
                 mbMidLowPass.connect(mbMidGain);
                 mbMidGain.connect(mbOutput);
-                // High band: mbInput → mbHighPass → mbMidHighPass → mbHighGain → mbOutput
                 mbHighPass.connect(mbMidHighPass);
                 mbMidHighPass.connect(mbHighGain);
                 mbHighGain.connect(mbOutput);
 
                 // --- NY Parallel Compression wrappers ---
-                // Dry path: nyCompInput → nyCompDry → nyCompOutput
                 nyCompInput.connect(nyCompDry);
                 nyCompDry.connect(nyCompOutput);
-                // Wet path: nyCompInput → nyHighPass → nyCompressor → nyMakeupGain → nyCompWet → nyCompOutput
                 nyCompInput.connect(nyHighPass);
                 nyHighPass.connect(nyCompressor);
                 nyCompressor.connect(nyMakeupGain);
@@ -11826,19 +11821,15 @@
                 // --- M/S EQ wrappers ---
                 const msEQ_Input = audioContext.createGain();
                 msEQ_Input.gain.value = 1.0;
-                // Encode: split L/R → sum to Mid (L+R) and Side (L-R)
                 msEQ_Input.connect(msEQ_Splitter);
-                msEQ_Splitter.connect(msEQ_MidL, 0);   // Left → Mid encoder
-                msEQ_Splitter.connect(msEQ_MidR, 1);   // Right → Mid encoder
-                msEQ_Splitter.connect(msEQ_SideL, 0);   // Left → Side encoder
-                msEQ_Splitter.connect(msEQ_SideR, 1);   // Right → Side encoder
-                // Mid = 0.5*L + 0.5*R → EQ chain (already connected: midEQ_Low→...→msEQ_MidChannel)
+                msEQ_Splitter.connect(msEQ_MidL, 0);
+                msEQ_Splitter.connect(msEQ_MidR, 1);
+                msEQ_Splitter.connect(msEQ_SideL, 0);
+                msEQ_Splitter.connect(msEQ_SideR, 1);
                 msEQ_MidL.connect(midEQ_Low);
                 msEQ_MidR.connect(midEQ_Low);
-                // Side = 0.5*L - 0.5*R → EQ chain (already connected: sideEQ_Low→...→msEQ_SideChannel)
                 msEQ_SideL.connect(sideEQ_Low);
                 msEQ_SideR.connect(sideEQ_Low);
-                // Decode: Mid/Side → L (Mid+Side) and R (Mid-Side)
                 msEQ_MidChannel.connect(msEQ_DecodeLMid);
                 msEQ_MidChannel.connect(msEQ_DecodeRMid);
                 msEQ_SideChannel.connect(msEQ_DecodeLSide);
@@ -11854,31 +11845,27 @@
                 // --- Bass Mono Crossover wrappers ---
                 const bassMonoInput = audioContext.createGain();
                 bassMonoInput.gain.value = 1.0;
-                // Wet path: split → LPF to mono sum + HPF stereo pass-through → merge → output
                 bassMonoInput.connect(bassMonoSplitter);
                 bassMonoSplitter.connect(bassMonoLPF_L, 0);
                 bassMonoSplitter.connect(bassMonoLPF_R, 1);
                 bassMonoLPF_L.connect(bassMonoSum);
                 bassMonoLPF_R.connect(bassMonoSum);
-                bassMonoSum.connect(bassMonoMerger, 0, 0);   // Mono bass → both channels
+                bassMonoSum.connect(bassMonoMerger, 0, 0);
                 bassMonoSum.connect(bassMonoMerger, 0, 1);
                 bassMonoSplitter.connect(bassMonoHPF_L, 0);
                 bassMonoSplitter.connect(bassMonoHPF_R, 1);
-                bassMonoHPF_L.connect(bassMonoMerger, 0, 0); // Stereo highs → L
-                bassMonoHPF_R.connect(bassMonoMerger, 0, 1); // Stereo highs → R
+                bassMonoHPF_L.connect(bassMonoMerger, 0, 0);
+                bassMonoHPF_R.connect(bassMonoMerger, 0, 1);
                 bassMonoMerger.connect(bassMonoWet);
                 bassMonoWet.connect(bassMonoOutput);
-                // Bypass path: bassMonoInput → bassMonoBypass → bassMonoOutput
                 bassMonoInput.connect(bassMonoBypass);
                 bassMonoBypass.connect(bassMonoOutput);
 
                 // --- HF Limiter wrappers ---
                 const hfLimiterInput = audioContext.createGain();
                 hfLimiterInput.gain.value = 1.0;
-                // Below 6kHz passes through untouched
                 hfLimiterInput.connect(hfLimiterLP);
                 hfLimiterLP.connect(hfLimiterMix);
-                // Above 6kHz gets compressed then recombined
                 hfLimiterInput.connect(hfLimiterHP);
                 hfLimiterHP.connect(hfLimiterComp);
                 hfLimiterComp.connect(hfLimiterGain);
@@ -11889,10 +11876,8 @@
                 const warmthOutput = audioContext.createGain();
                 warmthInput.gain.value = 1.0;
                 warmthOutput.gain.value = 1.0;
-                // Dry path: warmthInput → warmthDry → warmthOutput
                 warmthInput.connect(warmthDry);
                 warmthDry.connect(warmthOutput);
-                // Wet path: warmthInput → analogWarmth → warmthWet → warmthOutput
                 warmthInput.connect(analogWarmth);
                 analogWarmth.connect(warmthWet);
                 warmthWet.connect(warmthOutput);
@@ -25669,6 +25654,8 @@
             setTimeout(() => {
                 drawSpectrumComparison();
             }, 100);
+
+            });
 
             // Skip overlay - go straight to interface with export bar and genre presets
             // Show toast notification instead
