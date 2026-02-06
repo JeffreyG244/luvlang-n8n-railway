@@ -5373,13 +5373,64 @@
             <h1 class="splash-title">LuvLang</h1>
             <p class="splash-tagline">Professional Mastering Platform</p>
 
-            <!-- Post-login status bar (hidden initially, shown after login) -->
-            <div id="masterMeStatusBar" style="display: none; margin: 20px 0; text-align: center;">
-                <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 0 auto 10px; overflow: hidden;">
-                    <div id="masterMeProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #b84fff); border-radius: 2px; transition: width 0.3s ease;"></div>
+            <!-- Premium Status Bar - Always visible -->
+            <div id="masterMeStatusBar" style="margin: 28px 0; text-align: center;">
+                <!-- Outer container with glass effect -->
+                <div style="
+                    display: inline-block;
+                    padding: 16px 32px;
+                    background: linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(184,79,255,0.08) 100%);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 16px;
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    box-shadow:
+                        0 8px 32px rgba(0,0,0,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.1),
+                        0 0 40px rgba(0,212,255,0.1);
+                ">
+                    <!-- Progress bar container -->
+                    <div style="
+                        width: 280px;
+                        height: 6px;
+                        background: rgba(255,255,255,0.08);
+                        border-radius: 6px;
+                        margin: 0 auto 14px;
+                        overflow: hidden;
+                        position: relative;
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+                    ">
+                        <!-- Animated gradient progress bar -->
+                        <div id="masterMeProgressBar" style="
+                            width: 0%;
+                            height: 100%;
+                            background: linear-gradient(90deg, #00d4ff, #00ff88, #b84fff, #ff6b6b, #00d4ff);
+                            background-size: 300% 100%;
+                            border-radius: 6px;
+                            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                            animation: shimmerGradient 3s ease infinite;
+                            box-shadow: 0 0 12px rgba(0,212,255,0.6), 0 0 24px rgba(184,79,255,0.4);
+                        "></div>
+                    </div>
+                    <!-- Status text with premium styling -->
+                    <p id="masterMeStatusText" style="
+                        color: rgba(255,255,255,0.85);
+                        font-size: 0.8rem;
+                        font-weight: 500;
+                        letter-spacing: 1.5px;
+                        text-transform: uppercase;
+                        margin: 0;
+                        text-shadow: 0 0 20px rgba(0,212,255,0.5);
+                    ">Initializing Studio</p>
                 </div>
-                <p id="masterMeStatusText" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin: 0;">Preparing your studio...</p>
             </div>
+            <style>
+                @keyframes shimmerGradient {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+            </style>
 
             <button class="landing-cta" onclick="OnboardingFlow.goToPage('signin')">
                 MASTER ME!
@@ -5603,7 +5654,38 @@
                 setTimeout(function() { initialLoader.remove(); }, 400);
             }
 
-            // User must click MASTER ME button to proceed
+            // Animate the premium status bar
+            OnboardingFlow.animateStatusBar('pre-login');
+        };
+
+        // Premium status bar animation
+        OnboardingFlow.animateStatusBar = function(mode) {
+            var progressBar = document.getElementById('masterMeProgressBar');
+            var statusText = document.getElementById('masterMeStatusText');
+            if (!progressBar || !statusText) return;
+
+            // Reset
+            progressBar.style.width = '0%';
+
+            var messages = mode === 'post-login' ? [
+                { pct: '25%', text: 'Loading Audio Engine' },
+                { pct: '50%', text: 'Calibrating Processors' },
+                { pct: '75%', text: 'Initializing 24 Modules' },
+                { pct: '100%', text: 'Ready • Click MASTER ME' }
+            ] : [
+                { pct: '20%', text: 'Professional Grade Audio' },
+                { pct: '40%', text: '24 Mastering Modules' },
+                { pct: '60%', text: 'Studio Quality Output' },
+                { pct: '80%', text: 'AI-Powered Processing' },
+                { pct: '100%', text: 'Ready • Click MASTER ME' }
+            ];
+
+            messages.forEach(function(step, i) {
+                setTimeout(function() {
+                    progressBar.style.width = step.pct;
+                    statusText.textContent = step.text;
+                }, (i + 1) * 600);
+            });
         };
 
         // Alias for backwards compatibility
@@ -5834,31 +5916,8 @@
                     masterMeSplash.setAttribute('data-post-login', 'true');
                     console.log('✅ Master Me page shown (post-login)');
 
-                    // Show and animate the status bar
-                    var statusBar = document.getElementById('masterMeStatusBar');
-                    var progressBar = document.getElementById('masterMeProgressBar');
-                    var statusText = document.getElementById('masterMeStatusText');
-                    if (statusBar) {
-                        statusBar.style.display = 'block';
-                        // Animate progress
-                        setTimeout(function() {
-                            if (progressBar) progressBar.style.width = '30%';
-                            if (statusText) statusText.textContent = 'Loading audio engine...';
-                        }, 100);
-                        setTimeout(function() {
-                            if (progressBar) progressBar.style.width = '60%';
-                            if (statusText) statusText.textContent = 'Initializing processors...';
-                        }, 600);
-                        setTimeout(function() {
-                            if (progressBar) progressBar.style.width = '90%';
-                            if (statusText) statusText.textContent = 'Almost ready...';
-                        }, 1100);
-                        setTimeout(function() {
-                            if (progressBar) progressBar.style.width = '100%';
-                            if (statusText) statusText.textContent = 'Ready! Click MASTER ME to continue';
-                        }, 1600);
-                        // User must click MASTER ME button to proceed to language selection
-                    }
+                    // Animate the premium status bar (post-login mode)
+                    OnboardingFlow.animateStatusBar('post-login');
                 } else {
                     console.log('⚠️ No Master Me page found, showing language');
                     var langModal = document.getElementById('tourLanguageModal');
