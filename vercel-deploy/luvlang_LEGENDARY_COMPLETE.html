@@ -5694,9 +5694,13 @@
         // Page transitions
         OnboardingFlow.goToPage = function(page) {
             console.log('📄 Transitioning to:', page);
+            console.log('🔘 MASTER ME button clicked!');
+
             var splash = document.getElementById('onboardingSplash');
             var signupGate = document.getElementById('signupGateOverlay');
             var langPage = document.getElementById('onboardingLanguage');
+
+            console.log('📍 splash data-post-login:', splash ? splash.getAttribute('data-post-login') : 'no splash');
 
             // Hide splash
             if (splash) {
@@ -5719,9 +5723,13 @@
                         splash.style.display = 'none';
                         // Show language modal
                         var langModal = document.getElementById('tourLanguageModal');
+                        console.log('🌍 Language modal element:', langModal);
                         if (langModal) {
                             langModal.style.display = 'flex';
                             langModal.style.zIndex = '9999999';
+                            console.log('🌍 Language modal shown!');
+                        } else {
+                            console.error('❌ Language modal NOT FOUND!');
                         }
                         return;
                     }
