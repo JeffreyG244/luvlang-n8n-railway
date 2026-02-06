@@ -5636,96 +5636,113 @@
 
         // Show loading screen after sign in
         OnboardingFlow.showLoadingScreen = function() {
-            // Create loading overlay if it doesn't exist
-            var loadingOverlay = document.getElementById('postLoginLoading');
-            if (!loadingOverlay) {
-                loadingOverlay = document.createElement('div');
-                loadingOverlay.id = 'postLoginLoading';
-                loadingOverlay.innerHTML = `
-                    <style>
-                        #postLoginLoading {
-                            position: fixed;
-                            top: 0; left: 0; right: 0; bottom: 0;
-                            background: linear-gradient(135deg, #000510 0%, #020a18 50%, #000510 100%);
-                            z-index: 999999;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            opacity: 1;
-                            transition: opacity 0.5s ease;
-                        }
-                        #postLoginLoading.fade-out { opacity: 0; pointer-events: none; }
-                        .loading-title {
-                            font-size: 2.5rem;
-                            font-weight: 700;
-                            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
-                            -webkit-background-clip: text;
-                            -webkit-text-fill-color: transparent;
-                            margin-bottom: 40px;
-                        }
-                        .loading-bar-container {
-                            width: 300px;
-                            height: 4px;
-                            background: rgba(255,255,255,0.1);
-                            border-radius: 4px;
-                            overflow: hidden;
-                        }
-                        .loading-bar {
-                            height: 100%;
-                            width: 0%;
-                            background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88);
-                            border-radius: 4px;
-                            transition: width 1.8s ease-out;
-                        }
-                        .loading-status {
-                            margin-top: 20px;
-                            font-size: 0.85rem;
-                            color: rgba(255,255,255,0.5);
-                        }
-                        .loading-subtitle {
-                            font-size: 1rem;
-                            text-transform: uppercase;
-                            letter-spacing: 3px;
-                            color: #00d4ff;
-                            margin-top: -30px;
-                            margin-bottom: 40px;
-                            font-weight: 600;
-                        }
-                    </style>
-                    <h1 class="loading-title">LuvLang</h1>
-                    <p class="loading-subtitle">Professional Mastering Platform</p>
-                    <div class="loading-bar-container">
-                        <div class="loading-bar" id="postLoginBar"></div>
-                    </div>
-                    <p class="loading-status" id="postLoginStatus">Preparing your studio...</p>
-                `;
-                document.body.appendChild(loadingOverlay);
-            }
+            // Remove any existing overlay first to prevent duplicates
+            var existing = document.getElementById('postLoginLoading');
+            if (existing) existing.remove();
+
+            // Create fresh loading overlay
+            var loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'postLoginLoading';
+            loadingOverlay.innerHTML = `
+                <style>
+                    #postLoginLoading {
+                        position: fixed;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        background: linear-gradient(135deg, #000510 0%, #020a18 50%, #000510 100%);
+                        z-index: 999999;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 1;
+                        transition: opacity 0.5s ease;
+                    }
+                    #postLoginLoading.fade-out { opacity: 0; pointer-events: none; }
+                    .loading-title {
+                        font-size: 2.5rem;
+                        font-weight: 700;
+                        background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        margin-bottom: 40px;
+                    }
+                    .loading-bar-container {
+                        width: 300px;
+                        height: 4px;
+                        background: rgba(255,255,255,0.1);
+                        border-radius: 4px;
+                        overflow: hidden;
+                    }
+                    .loading-bar {
+                        height: 100%;
+                        width: 0%;
+                        background: linear-gradient(90deg, #00d4ff, #b84fff, #00ff88);
+                        border-radius: 4px;
+                        transition: width 1.8s ease-out;
+                    }
+                    .loading-status {
+                        margin-top: 20px;
+                        font-size: 0.85rem;
+                        color: rgba(255,255,255,0.5);
+                    }
+                    .loading-subtitle {
+                        font-size: 1rem;
+                        text-transform: uppercase;
+                        letter-spacing: 3px;
+                        color: #00d4ff;
+                        margin-top: -30px;
+                        margin-bottom: 40px;
+                        font-weight: 600;
+                    }
+                </style>
+                <h1 class="loading-title">LuvLang</h1>
+                <p class="loading-subtitle">Professional Mastering Platform</p>
+                <div class="loading-bar-container">
+                    <div class="loading-bar" id="postLoginBar"></div>
+                </div>
+                <p class="loading-status" id="postLoginStatus">Preparing your studio...</p>
+            `;
+            document.body.appendChild(loadingOverlay);
 
             // Animate loading bar
-            var bar = document.getElementById('postLoginBar');
-            var status = document.getElementById('postLoginStatus');
-            if (bar) {
-                setTimeout(function() { bar.style.width = '100%'; }, 50);
-            }
+            setTimeout(function() {
+                var bar = document.getElementById('postLoginBar');
+                if (bar) bar.style.width = '100%';
+            }, 50);
 
             // Status updates
-            setTimeout(function() { if (status) status.textContent = 'Loading audio engine...'; }, 500);
-            setTimeout(function() { if (status) status.textContent = 'Calibrating processors...'; }, 1000);
-            setTimeout(function() { if (status) status.textContent = 'Ready!'; }, 1500);
+            setTimeout(function() {
+                var status = document.getElementById('postLoginStatus');
+                if (status) status.textContent = 'Loading audio engine...';
+            }, 500);
+            setTimeout(function() {
+                var status = document.getElementById('postLoginStatus');
+                if (status) status.textContent = 'Calibrating processors...';
+            }, 1000);
+            setTimeout(function() {
+                var status = document.getElementById('postLoginStatus');
+                if (status) status.textContent = 'Ready!';
+            }, 1500);
 
             // After loading, start tour (language selection will be Step 1)
             setTimeout(function() {
                 console.log('🎤 Loading complete, starting tour...');
-                loadingOverlay.classList.add('fade-out');
-                setTimeout(function() {
-                    loadingOverlay.remove();
-                    // Start tour - will show language selection first (no saved language)
+                var overlay = document.getElementById('postLoginLoading');
+                if (overlay) {
+                    overlay.classList.add('fade-out');
+                    setTimeout(function() {
+                        if (overlay.parentNode) overlay.remove();
+                        // Start tour - will show language selection first (no saved language)
+                        if (typeof window.startTour === 'function') {
+                            window.startTour();
+                        }
+                    }, 500);
+                } else {
+                    // Overlay already gone, just start tour
                     if (typeof window.startTour === 'function') {
                         window.startTour();
                     }
-                }, 500);
+                }
             }, 2000);
         };
 
@@ -5783,6 +5800,26 @@
         } catch(e) {
             console.error('❌ Onboarding init error:', e);
         }
+
+        // BULLETPROOF FALLBACK: Remove stuck loading screens after 8 seconds
+        setTimeout(function() {
+            var postLogin = document.getElementById('postLoginLoading');
+            var initialLoader = document.getElementById('initialLoadingScreen');
+            if (postLogin) {
+                console.warn('⚠️ Fallback: Removing stuck postLoginLoading');
+                postLogin.classList.add('fade-out');
+                setTimeout(function() { if (postLogin.parentNode) postLogin.remove(); }, 400);
+                // Start tour if it hasn't started
+                if (typeof window.startTour === 'function') {
+                    window.startTour();
+                }
+            }
+            if (initialLoader) {
+                console.warn('⚠️ Fallback: Removing stuck initialLoadingScreen');
+                initialLoader.classList.add('fade-out');
+                setTimeout(function() { if (initialLoader.parentNode) initialLoader.remove(); }, 400);
+            }
+        }, 8000);
     </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
