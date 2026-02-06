@@ -743,7 +743,15 @@ async function applyTierRestrictions() {
 /**
  * Update UI for logged in user
  */
+let uiUpdateInProgress = false;
 async function updateUIForLoggedInUser() {
+    // Prevent duplicate calls (SIGNED_IN and INITIAL_SESSION can both fire)
+    if (uiUpdateInProgress) {
+        console.log('⚠️ UI update already in progress, skipping duplicate');
+        return;
+    }
+    uiUpdateInProgress = true;
+
     console.log('✅ User logged in, updating UI...');
 
     // Store auth state
