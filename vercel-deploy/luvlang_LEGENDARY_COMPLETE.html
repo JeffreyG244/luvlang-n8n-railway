@@ -5849,6 +5849,20 @@
         } catch(e) {
             console.error('❌ Onboarding init error:', e);
         }
+
+        // NUCLEAR FALLBACK: Force remove loading screen after 5 seconds NO MATTER WHAT
+        setInterval(function() {
+            var postLogin = document.getElementById('postLoginLoading');
+            if (postLogin) {
+                console.log('⚠️ NUCLEAR FALLBACK: Force removing stuck loading screen');
+                postLogin.remove();
+                // Go straight to language selection
+                var langModal = document.getElementById('tourLanguageModal');
+                if (langModal) {
+                    langModal.style.display = 'flex';
+                }
+            }
+        }, 5000);
     </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
