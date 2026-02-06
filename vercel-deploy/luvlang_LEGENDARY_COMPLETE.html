@@ -5605,6 +5605,11 @@
 
             // AUTO-ADVANCE: Show sign-in after 3 seconds
             setTimeout(function() {
+                // Cancel if user already logged in
+                if (OnboardingFlow.loginComplete) {
+                    console.log('⚠️ Login already complete, canceling auto-advance to sign-in');
+                    return;
+                }
                 // Only advance if splash is still showing and user hasn't clicked anything
                 var currentSplash = document.getElementById('onboardingSplash');
                 var signupGateCheck = document.getElementById('signupGateOverlay');
@@ -5681,9 +5686,11 @@
         };
 
         // Called after login success
+        OnboardingFlow.loginComplete = false;
         OnboardingFlow.onLoginSuccess = function() {
             console.log('✅ Login successful, showing loading screen...');
             OnboardingFlow.supabaseResponded = true;
+            OnboardingFlow.loginComplete = true; // Flag to cancel landing page auto-advance
 
             // Hide all screens first
             var splash = document.getElementById('onboardingSplash');
