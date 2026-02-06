@@ -5591,9 +5591,9 @@
         // Track if Supabase has responded
         OnboardingFlow.supabaseResponded = false;
 
-        // Initialize onboarding - Supabase controls what gets shown
+        // Initialize onboarding - ALWAYS show Master Me page first
         OnboardingFlow.init = function() {
-            console.log('🚀 Onboarding system ready - waiting for Supabase...');
+            console.log('🚀 Onboarding system ready');
 
             // Check if returning from OAuth (has tokens in URL)
             var isOAuthCallback = window.location.hash.includes('access_token') ||
@@ -5605,13 +5605,9 @@
                 return;
             }
 
-            // Fallback: If Supabase doesn't respond in 4 seconds, show landing page
-            setTimeout(function() {
-                if (!OnboardingFlow.supabaseResponded) {
-                    console.log('⚠️ Supabase timeout - showing landing page as fallback');
-                    OnboardingFlow.showLandingPage();
-                }
-            }, 4000);
+            // ALWAYS show Master Me page first (not OAuth callback)
+            console.log('🏠 Showing Master Me page');
+            OnboardingFlow.showLandingPage();
         };
 
         // Show landing page for non-authenticated users (called by Supabase)

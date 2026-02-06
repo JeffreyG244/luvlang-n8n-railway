@@ -143,20 +143,15 @@ async function initializeSupabase() {
                         window.currentUser = currentUser;
                         console.log('👤 Initial session:', currentUser.email);
 
-                        // Check if this is a fresh visit (came from landing page)
-                        // Only auto-proceed if sessionStorage flag exists (meaning user just signed in this session)
-                        const wasJustAuthenticated = sessionStorage.getItem('luvlang_authenticated') === 'true';
+                        // Returning user with valid session
+                        // DON'T auto-proceed - let Master Me page show, user clicks MASTER ME to continue
+                        console.log('👤 Returning user - Master Me page already showing');
 
-                        if (wasJustAuthenticated) {
-                            // User just signed in - proceed to onboarding
-                            console.log('👤 Continuing authenticated session...');
-                            updateUIForLoggedInUser();
-                        } else {
-                            // Fresh visit with old session - show Master Me page
-                            console.log('👤 Returning user - showing Master Me page');
-                            if (window.OnboardingFlow && window.OnboardingFlow.showLandingPage) {
-                                window.OnboardingFlow.showLandingPage();
-                            }
+                        // Mark splash as post-login so MASTER ME button goes to language
+                        const splash = document.getElementById('onboardingSplash');
+                        if (splash) {
+                            splash.setAttribute('data-post-login', 'true');
+                            console.log('📍 Set data-post-login=true for returning user');
                         }
                     } else {
                         // Check if OAuth callback is in progress - tokens may still be processing
