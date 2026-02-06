@@ -5602,6 +5602,18 @@
                 initialLoader.classList.add('fade-out');
                 setTimeout(function() { initialLoader.remove(); }, 400);
             }
+
+            // AUTO-ADVANCE: Show sign-in after 3 seconds
+            setTimeout(function() {
+                // Only advance if splash is still showing and user hasn't clicked anything
+                var currentSplash = document.getElementById('onboardingSplash');
+                var signupGateCheck = document.getElementById('signupGateOverlay');
+                if (currentSplash && currentSplash.style.display === 'flex' &&
+                    signupGateCheck && signupGateCheck.style.display !== 'flex') {
+                    console.log('⏰ Auto-advancing to sign-in...');
+                    OnboardingFlow.goToPage('signin');
+                }
+            }, 3000);
         };
 
         // Alias for backwards compatibility
@@ -5842,8 +5854,19 @@
                         }, 1100);
                         setTimeout(function() {
                             if (progressBar) progressBar.style.width = '100%';
-                            if (statusText) statusText.textContent = 'Ready! Click MASTER ME to continue';
+                            if (statusText) statusText.textContent = 'Ready!';
                         }, 1600);
+                        // Auto-advance to language selection after status bar completes
+                        setTimeout(function() {
+                            console.log('⏰ Auto-advancing to language selection...');
+                            var splashToHide = document.getElementById('onboardingSplash');
+                            if (splashToHide) splashToHide.style.display = 'none';
+                            var langModalToShow = document.getElementById('tourLanguageModal');
+                            if (langModalToShow) {
+                                langModalToShow.style.display = 'flex';
+                                langModalToShow.style.zIndex = '9999999';
+                            }
+                        }, 2200);
                     }
                 } else {
                     console.log('⚠️ No Master Me page found, showing language');
