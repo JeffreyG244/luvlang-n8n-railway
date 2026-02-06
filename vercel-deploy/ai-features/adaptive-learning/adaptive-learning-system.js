@@ -151,11 +151,8 @@ class AdaptiveLearningSystem {
 
         // Only apply if we have enough data (at least 3 sessions)
         if (genrePref.sessions < 3) {
-                       `(${genrePref.sessions} sessions)`);
             return aiSettings;
         }
-
-                   `(based on ${genrePref.sessions} sessions)`);
 
         // Apply EQ adjustments
         if (aiSettings.eq) {

@@ -170,8 +170,6 @@ class SmartModeSelector {
             recommendations
         };
 
-                    `(${(this.detectedMode.confidence * 100).toFixed(0)}% confidence)`);
-
         return this.detectedMode;
     }
 
