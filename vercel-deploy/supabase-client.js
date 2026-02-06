@@ -125,13 +125,22 @@ async function initializeSupabase() {
                     const oauthOverlay = document.getElementById('oauthLoadingOverlay');
                     if (oauthOverlay) oauthOverlay.remove();
 
-                    // Clean up OAuth tokens from URL to prevent issues on refresh
-                    if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+                    // Check if this is a FRESH sign-in (OAuth callback) or just page load
+                    const isOAuthCallback = window.location.hash.includes('access_token') || window.location.search.includes('code=');
+
+                    if (isOAuthCallback) {
+                        // Fresh sign-in from OAuth - proceed to language
                         console.log('🧹 Cleaning OAuth tokens from URL');
                         window.history.replaceState({}, document.title, window.location.pathname);
+                        updateUIForLoggedInUser();
+                    } else {
+                        // Returning user - just mark splash as post-login, don't auto-proceed
+                        console.log('👤 Returning signed-in user - staying on Master Me page');
+                        const splash = document.getElementById('onboardingSplash');
+                        if (splash) {
+                            splash.setAttribute('data-post-login', 'true');
+                        }
                     }
-
-                    updateUIForLoggedInUser();
                 } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     window.currentUser = null;
