@@ -12,13 +12,14 @@
         (function() {
             // Create and inject loading screen CSS + HTML immediately
             var style = document.createElement('style');
-            style.textContent = '#initialLoadingScreen{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#000510 0%,#020a18 50%,#000510 100%);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease;}#initialLoadingScreen.fade-out{opacity:0;pointer-events:none;}';
+            style.textContent = '#initialLoadingScreen{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#000510 0%,#020a18 50%,#000510 100%);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease;}#initialLoadingScreen.fade-out{opacity:0;pointer-events:none;}#initLoadBar{width:240px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:24px;overflow:hidden;}#initLoadProgress{height:100%;width:0%;background:linear-gradient(90deg,#00d4ff,#b84fff,#00ff88);border-radius:3px;transition:width 2.5s cubic-bezier(0.4,0,0.2,1);}';
             document.head.appendChild(style);
 
             document.addEventListener('DOMContentLoaded', function() {
                 var loader = document.createElement('div');
                 loader.id = 'initialLoadingScreen';
-                loader.innerHTML = '<div style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#fff 0%,#00d4ff 50%,#b84fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;">LuvLang</div><div style="font-size:0.8rem;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;">Professional Mastering Platform</div>';
+                loader.innerHTML = '<div style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#fff 0%,#00d4ff 50%,#b84fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;">LuvLang</div><div style="font-size:0.8rem;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;">Professional Mastering Platform</div><div id="initLoadBar"><div id="initLoadProgress"></div></div>';
+                setTimeout(function() { var p = document.getElementById('initLoadProgress'); if (p) p.style.width = '100%'; }, 100);
                 document.body.insertBefore(loader, document.body.firstChild);
 
                 // FAILSAFE: Remove loading screen after 3 seconds no matter what
