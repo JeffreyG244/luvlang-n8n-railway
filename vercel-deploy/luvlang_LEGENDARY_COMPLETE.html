@@ -5650,8 +5650,18 @@
             console.log('✅ Login successful, starting onboarding...');
 
             // Prevent multiple calls
-            if (document.getElementById('postLoginLoading')) return;
+            if (document.getElementById('postLoginLoading') || document.getElementById('aiEngineLoading')) return;
             OnboardingFlow.supabaseResponded = true;
+
+            // Mark onboarding as active to prevent auto-start tour from interfering
+            sessionStorage.setItem('onboardingFlowActive', 'true');
+
+            // Remove initial loading screen FIRST
+            var initialLoader = document.getElementById('initialLoadingScreen');
+            if (initialLoader) {
+                initialLoader.classList.add('fade-out');
+                setTimeout(function() { if (initialLoader.parentNode) initialLoader.remove(); }, 400);
+            }
 
             // Hide all other screens
             var splash = document.getElementById('onboardingSplash');
@@ -5833,6 +5843,9 @@
                 loadingOverlay.classList.add('fade-out');
                 setTimeout(function() {
                     loadingOverlay.remove();
+                    // Clear onboarding active flag and mark tour as started
+                    sessionStorage.removeItem('onboardingFlowActive');
+                    sessionStorage.setItem('voiceTourStarted', 'true');
                     if (typeof window.startTour === 'function') {
                         window.startTour();
                     }
@@ -5840,16 +5853,18 @@
             }, 2000);
         };
 
-        // Skip to app for returning users
+        // Skip to app for returning users - REMOVE ALL OVERLAYS
         OnboardingFlow.skipToApp = function() {
             OnboardingFlow.supabaseResponded = true;
-            var splash = document.getElementById('onboardingSplash');
-            var langPage = document.getElementById('onboardingLanguage');
+            // Remove ALL possible blocking overlays
+            ['initialLoadingScreen', 'aiEngineLoading', 'postLoginLoading', 'onboardingSplash', 'onboardingLanguage', 'tourLanguageModal'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('fade-out');
+                    setTimeout(function() { if (el.parentNode) el.remove(); }, 400);
+                }
+            });
             var signupGate = document.getElementById('signupGateOverlay');
-            var postLogin = document.getElementById('postLoginLoading');
-            if (splash) splash.style.display = 'none';
-            if (langPage) langPage.style.display = 'none';
-            if (postLogin) postLogin.remove();
             if (signupGate) {
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
@@ -5894,6 +5909,28 @@
         } catch(e) {
             console.error('❌ Onboarding init error:', e);
         }
+
+        // ═══════════════════════════════════════════════════════════════
+        // BULLETPROOF FALLBACK: Clear all blocking overlays after 12 seconds
+        // This prevents users from EVER getting stuck on a loading screen
+        // ═══════════════════════════════════════════════════════════════
+        setTimeout(function() {
+            var blockingOverlays = ['initialLoadingScreen', 'aiEngineLoading', 'postLoginLoading'];
+            var anyRemoved = false;
+            blockingOverlays.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    console.warn('⚠️ FALLBACK: Removing stuck overlay: ' + id);
+                    el.classList.add('fade-out');
+                    setTimeout(function() { if (el.parentNode) el.remove(); }, 400);
+                    anyRemoved = true;
+                }
+            });
+            if (anyRemoved) {
+                console.log('🔧 Fallback triggered - overlays cleared to prevent stuck state');
+                sessionStorage.removeItem('onboardingFlowActive');
+            }
+        }, 12000);
     </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -27353,12 +27390,20 @@
 
             setTimeout(() => {
                 // Only auto-start tour for first-time users who haven't seen it this session
+                // AND only if onboarding flow is not in progress
                 const tourCompleted = localStorage.getItem('voiceTourCompleted');
                 const tourStartedThisSession = sessionStorage.getItem('voiceTourStarted');
+                const onboardingInProgress = document.getElementById('aiEngineLoading') ||
+                                             document.getElementById('postLoginLoading') ||
+                                             document.getElementById('initialLoadingScreen') ||
+                                             document.getElementById('onboardingSplash') ||
+                                             sessionStorage.getItem('onboardingFlowActive');
 
-                if (!tourCompleted && !tourStartedThisSession) {
+                if (!tourCompleted && !tourStartedThisSession && !onboardingInProgress) {
                     sessionStorage.setItem('voiceTourStarted', 'true');
                     startVoiceTour();
+                } else if (onboardingInProgress) {
+                    console.log('🎤 Onboarding in progress, tour will start after onboarding completes');
                 }
             }, 2000);
 
