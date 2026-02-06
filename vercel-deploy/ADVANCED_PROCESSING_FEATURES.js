@@ -11,8 +11,6 @@
  * - Preset Management with cloud sync
  */
 
-console.log('🚀 Loading Advanced Processing Features...');
-
 // ============================================================================
 // 1. ADVANCED TRUE-PEAK LIMITER
 // ============================================================================
@@ -190,7 +188,6 @@ class MonoBassCrossover {
         this.connectNodes();
         this.bypassed = false;
 
-        console.log('✅ Mono-Bass Crossover initialized at 140Hz (Linkwitz-Riley 4th order)');
     }
 
     connectNodes() {
@@ -263,7 +260,6 @@ class MonoBassCrossover {
         this.highPass1R.frequency.value = this.crossoverFrequency;
         this.highPass2R.frequency.value = this.crossoverFrequency;
 
-        console.log(`🔊 Mono-Bass crossover set to ${this.crossoverFrequency}Hz`);
     }
 
     bypass() {
@@ -278,7 +274,6 @@ class MonoBassCrossover {
         this.input.disconnect();
         this.input.connect(this.output);
 
-        console.log('⏸️  Mono-Bass Crossover bypassed');
     }
 
     enable() {
@@ -292,7 +287,6 @@ class MonoBassCrossover {
         this.highMixL.gain.value = 1.0;
         this.highMixR.gain.value = 1.0;
 
-        console.log('▶️  Mono-Bass Crossover enabled');
     }
 }
 
@@ -527,7 +521,7 @@ class EnhancedEQ {
 
     toggleMSMode(enabled) {
         this.msMode = enabled;
-        console.log('M/S Mode:', enabled ? 'ON' : 'OFF');
+
     }
 }
 
@@ -557,8 +551,6 @@ class ReferenceTrackMatcher {
         const arrayBuffer = await file.arrayBuffer();
         this.referenceBuffer = await this.context.decodeAudioData(arrayBuffer);
 
-        console.log('📎 Reference track loaded:', file.name);
-
         // Analyze reference track with spectral analysis
         await this.analyzeReference();
 
@@ -567,8 +559,6 @@ class ReferenceTrackMatcher {
 
     async analyzeReference() {
         if (!this.referenceBuffer) return null;
-
-        console.log('🔬 Analyzing reference track with 31-band FFT...');
 
         // Use professional mastering engine for LUFS/LRA analysis
         const engine = window.professionalMasteringEngine;
@@ -584,9 +574,6 @@ class ReferenceTrackMatcher {
         if (element && this.referenceAnalysis) {
             element.textContent = this.referenceAnalysis.integratedLUFS.toFixed(1) + ' LUFS';
         }
-
-        console.log('✅ Reference analysis complete');
-        console.log('📊 31-band spectral profile:', this.referenceSpectrum.map(v => v.toFixed(1)));
 
         return this.referenceAnalysis;
     }
@@ -698,7 +685,7 @@ class ReferenceTrackMatcher {
     matchLoudness(currentLUFS, targetLUFS) {
         const gainAdjustment = targetLUFS - currentLUFS;
         const sign = gainAdjustment >= 0 ? '+' : '';
-        console.log('🎯 Matching loudness: ' + sign + gainAdjustment.toFixed(2) + ' dB');
+
         return gainAdjustment;
     }
 
@@ -708,14 +695,10 @@ class ReferenceTrackMatcher {
             return;
         }
 
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🎯 APPLYING REFERENCE MATCH WITH SPECTRAL ANALYSIS');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
         // Analyze current audio
         let currentAnalysis = window.analysisResults;
         if (!currentAnalysis || !currentAnalysis.integratedLUFS) {
-            console.log('📊 Analyzing current audio...');
+
             const engine = window.professionalMasteringEngine;
             if (engine) {
                 currentAnalysis = await engine.analyzeAudio(currentBuffer);
@@ -732,12 +715,8 @@ class ReferenceTrackMatcher {
             this.referenceSpectrum
         );
 
-        console.log('📊 Spectral Difference Curve:', differenceCurve.map(v => v.toFixed(1)));
-
         // Apply smoothing (70% damping)
         const smoothedCurve = this.applySmoothingAndLimits(differenceCurve, strength);
-
-        console.log('🎚️ Smoothed EQ Adjustments:', smoothedCurve.map(v => v.toFixed(1)));
 
         // Map to EQ sliders and apply
         this.applyEQAdjustments(smoothedCurve);
@@ -751,15 +730,12 @@ class ReferenceTrackMatcher {
         if (window.makeupGain) {
             const linearGain = Math.pow(10, adjustedGain / 20);
             window.makeupGain.gain.setValueAtTime(linearGain, this.context.currentTime);
-            console.log('✅ Loudness matched: ' + adjustedGain.toFixed(1) + ' dB');
+
         }
 
         // Draw spectral comparison if canvas exists
         this.drawSpectralComparison();
 
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('✅ AI Reference matching complete!');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     calculateSpectralDifference(userSpectrum, referenceSpectrum) {
@@ -802,8 +778,6 @@ class ReferenceTrackMatcher {
             { freq: 14000, slider: 'eqAirSlider', indices: [24, 25, 26, 27, 28, 29, 30] } // Air: 12500+ Hz
         ];
 
-        console.log('🎛️ Applying EQ adjustments to sliders...');
-
         for (const band of eqBands) {
             // Average adjustments in this frequency range
             let avgAdjustment = 0;
@@ -826,7 +800,6 @@ class ReferenceTrackMatcher {
                 // Trigger input event to update audio nodes
                 slider.dispatchEvent(new Event('input', { bubbles: true }));
 
-                console.log(`   ${band.freq}Hz: ${avgAdjustment > 0 ? '+' : ''}${avgAdjustment.toFixed(1)} dB`);
             }
         }
     }
@@ -967,7 +940,6 @@ class PresetManager {
         };
 
         this.saveToLocalStorage();
-        console.log('💾 Preset saved: ' + name);
 
         return true;
     }
@@ -977,7 +949,7 @@ class PresetManager {
 
         if (preset) {
             this.currentPreset = name;
-            console.log('📂 Preset loaded: ' + name);
+
             return preset.settings;
         }
 
@@ -989,7 +961,7 @@ class PresetManager {
         if (this.presets[name]) {
             delete this.presets[name];
             this.saveToLocalStorage();
-            console.log('🗑️ Preset deleted: ' + name);
+
             return true;
         }
         return false;
@@ -1015,7 +987,7 @@ class PresetManager {
             const stored = localStorage.getItem('luvlang_presets');
             if (stored) {
                 this.presets = JSON.parse(stored);
-                console.log('📚 Loaded ' + Object.keys(this.presets).length + ' presets from storage');
+
             }
         } catch (e) {
             console.error('❌ Failed to load presets from localStorage:', e);
@@ -1031,7 +1003,7 @@ class PresetManager {
             const imported = JSON.parse(json);
             this.presets = { ...this.presets, ...imported };
             this.saveToLocalStorage();
-            console.log('📥 Imported ' + Object.keys(imported).length + ' presets');
+
             return true;
         } catch (e) {
             console.error('❌ Failed to import presets:', e);
@@ -1053,4 +1025,3 @@ if (typeof EnhancedEQ !== 'undefined') window.EnhancedEQ = EnhancedEQ;
 if (typeof ReferenceTrackMatcher !== 'undefined') window.ReferenceTrackMatcher = ReferenceTrackMatcher;
 if (typeof PresetManager !== 'undefined') window.PresetManager = PresetManager;
 
-console.log('✅ Advanced Processing Features loaded successfully');

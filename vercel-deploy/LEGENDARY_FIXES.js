@@ -23,10 +23,6 @@
  * @returns {Promise<Object>} Actual measured LUFS, True Peak, etc.
  */
 async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB) {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎯 LEGENDARY: Offline Preview Analysis');
-    console.log('   Simulating complete mastering chain...');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     const sampleRate = sourceBuffer.sampleRate;
     const duration = sourceBuffer.duration;
@@ -36,8 +32,6 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
     const sliceStart = Math.max(0, duration * 0.4); // Start at 40% (usually chorus)
     const sliceDuration = Math.min(5, duration - sliceStart);
     const sliceLength = Math.floor(sliceDuration * sampleRate);
-
-    console.log(`   Analyzing ${sliceDuration.toFixed(1)}s slice from ${sliceStart.toFixed(1)}s`);
 
     // Create offline context for simulation
     const offlineContext = new OfflineAudioContext(
@@ -59,7 +53,7 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
         gainNode.gain.value = Math.pow(10, makeupGainDB / 20);
         currentNode.connect(gainNode);
         currentNode = gainNode;
-        console.log(`   ✓ Gain: ${makeupGainDB.toFixed(1)} dB`);
+
     }
 
     // 2. EQ (7-band)
@@ -69,7 +63,7 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
             currentNode.connect(node);
             currentNode = node;
         });
-        console.log('   ✓ EQ: 7-band parametric');
+
     }
 
     // 3. Compressor
@@ -82,7 +76,7 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
         comp.release.value = processingChain.compressor.release || 0.25;
         currentNode.connect(comp);
         currentNode = comp;
-        console.log(`   ✓ Compressor: ${comp.ratio.value}:1 @ ${comp.threshold.value} dB`);
+
     }
 
     // 4. Limiter (CRITICAL - this changes the LUFS!)
@@ -95,7 +89,7 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
         limiter.release.value = 0.1; // 100ms
         currentNode.connect(limiter);
         currentNode = limiter;
-        console.log(`   ✓ Limiter: ${limiter.threshold.value} dB (brick-wall)`);
+
     }
 
     // Connect to destination
@@ -104,24 +98,14 @@ async function simulateMasteringPass(sourceBuffer, processingChain, makeupGainDB
     // Start rendering
     source.start(0, sliceStart, sliceDuration);
 
-    console.log('   ⏳ Rendering... (this takes ~0.5s)');
     const startTime = performance.now();
 
     const renderedBuffer = await offlineContext.startRendering();
 
     const renderTime = performance.now() - startTime;
-    console.log(`   ✓ Rendered in ${renderTime.toFixed(0)}ms`);
 
     // Now measure the ACTUAL output
     const analysis = await analyzeRenderedBuffer(renderedBuffer);
-
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✅ ACTUAL Post-Processing Results:');
-    console.log(`   Integrated LUFS: ${analysis.integratedLUFS.toFixed(1)} LUFS`);
-    console.log(`   True Peak: ${analysis.truePeakDB.toFixed(1)} dBTP`);
-    console.log(`   Loudness Range: ${analysis.lra.toFixed(1)} LU`);
-    console.log(`   Peak: ${analysis.maxPeak.toFixed(3)} (${(20 * Math.log10(analysis.maxPeak)).toFixed(1)} dB)`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     return analysis;
 }
@@ -253,7 +237,6 @@ async function analyzeRenderedBuffer(buffer) {
     };
 }
 
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // FIX #2: INTERACTIVE WAVEFORM SCRUBBER
 // Problem: Beautiful waveform but not clickable
@@ -303,7 +286,6 @@ function makeWaveformInteractive(canvas, audioContext, audioBuffer, audioElement
         // Update scrubber position immediately
         updateScrubberPosition(time);
 
-        console.log(`🎯 Scrubbed to ${time.toFixed(2)}s`);
     }
 
     /**
@@ -361,9 +343,7 @@ function makeWaveformInteractive(canvas, audioContext, audioBuffer, audioElement
         isDragging = false;
     });
 
-    console.log('✅ Waveform is now interactive (click or drag to scrub)');
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // FIX #3: CLIENT-SIDE TRANSIENT DETECTION
@@ -381,7 +361,6 @@ function makeWaveformInteractive(canvas, audioContext, audioBuffer, audioElement
  * @returns {Object} Transient analysis results
  */
 function detectTransients(audioBuffer) {
-    console.log('🧠 CLIENT-SIDE: Transient Detection');
 
     const sampleRate = audioBuffer.sampleRate;
     const channelData = audioBuffer.getChannelData(0); // Use left channel
@@ -460,14 +439,6 @@ function detectTransients(audioBuffer) {
         recommendedRelease: 0.15 // Default release
     };
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✅ Transient Analysis Complete:');
-    console.log(`   Transient Count: ${transientCount}`);
-    console.log(`   Density: ${transientDensity.toFixed(1)} transients/second`);
-    console.log(`   Material Type: ${materialType}`);
-    console.log(`   Recommended Attack: ${(recommendedAttack * 1000).toFixed(1)}ms`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
     return results;
 }
 
@@ -480,11 +451,8 @@ function autoSetCompressorAttack(compressor, audioBuffer) {
     compressor.attack.value = transientAnalysis.recommendedAttack;
     compressor.release.value = transientAnalysis.recommendedRelease;
 
-    console.log(`✅ Auto-set compressor: ${(transientAnalysis.recommendedAttack * 1000).toFixed(1)}ms attack (${transientAnalysis.materialType} material)`);
-
     return transientAnalysis;
 }
-
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // EXPORT FOR USE IN MAIN APPLICATION
@@ -496,10 +464,4 @@ if (typeof window !== 'undefined') {
     window.detectTransients = detectTransients;
     window.autoSetCompressorAttack = autoSetCompressorAttack;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🏆 LEGENDARY FIXES LOADED');
-    console.log('   ✓ Offline Preview Analysis');
-    console.log('   ✓ Interactive Waveform Scrubber');
-    console.log('   ✓ Client-Side Transient Detection');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }

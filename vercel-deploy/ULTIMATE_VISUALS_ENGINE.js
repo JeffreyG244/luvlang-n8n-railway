@@ -24,8 +24,6 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-console.log('✨ Loading ULTIMATE VISUALS ENGINE...');
-
 // ═══════════════════════════════════════════════════════════════════════════
 // PROFESSIONAL EQ GRAPH - NEXT GENERATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -86,10 +84,6 @@ class UltimateEQVisualizer {
         // Color gradients cache
         this.gradients = {};
 
-        console.log('✨ Ultimate EQ Visualizer initialized');
-        console.log(`   Resolution: ${this.canvas.width}x${this.canvas.height}`);
-        console.log(`   FFT Size: ${this.settings.fftSize}`);
-        console.log(`   DPI Scaling: ${window.devicePixelRatio}x`);
     }
 
     setupHighDPI() {
@@ -107,7 +101,6 @@ class UltimateEQVisualizer {
         this.width = width;
         this.height = height;
 
-        console.log(`   Canvas size: ${this.width}x${this.height}`);
     }
 
     createGradients() {
@@ -484,7 +477,6 @@ class UltimateEQVisualizer {
         this.createGradients();
         this.animate();
 
-        console.log('✨ EQ Visualizer started (60fps)');
     }
 
     stop() {
@@ -494,7 +486,6 @@ class UltimateEQVisualizer {
             this.animationId = null;
         }
 
-        console.log('⏸ EQ Visualizer stopped');
     }
 
     animate() {
@@ -563,7 +554,6 @@ class UltimateWaveformVisualizer {
             peakIndicatorColor: 'rgba(255, 50, 100, 1)'
         };
 
-        console.log('✨ Ultimate Waveform Visualizer initialized');
     }
 
     setupHighDPI() {
@@ -592,10 +582,6 @@ class UltimateWaveformVisualizer {
         // Draw static waveform
         this.drawWaveform();
 
-        console.log('✨ Waveform loaded and drawn');
-        console.log(`   Duration: ${audioBuffer.duration.toFixed(2)}s`);
-        console.log(`   Samples: ${audioBuffer.length}`);
-        console.log(`   Peak points: ${this.peaks.length}`);
     }
 
     async analyzePeaks() {
@@ -775,4 +761,3 @@ window.UltimateWaveformVisualizer = UltimateWaveformVisualizer;
 window.ultimateEQViz = null;
 window.ultimateWaveformViz = null;
 
-console.log('✅ ULTIMATE VISUALS ENGINE loaded successfully');

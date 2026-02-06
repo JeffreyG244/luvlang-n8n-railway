@@ -7,8 +7,6 @@
 (function() {
     'use strict';
 
-    console.log('📊📈 LOUDNESS_SPECTROGRAM.js v3.0 loading...');
-
     // ═══════════════════════════════════════════════════════════════════════════
     // LOUDNESS HISTORY - State-of-the-Art Graph
     // ═══════════════════════════════════════════════════════════════════════════
@@ -29,8 +27,6 @@
             console.error('📊 Loudness History container not found:', containerId);
             return;
         }
-
-        console.log('📊 Creating Loudness History UI in:', containerId);
 
         container.innerHTML = `
             <div style="
@@ -115,7 +111,7 @@
 
         // Initialize canvas immediately
         setTimeout(() => initLoudnessCanvas(), 100);
-        console.log('📊 Loudness History UI created');
+
     };
 
     function initLoudnessCanvas() {
@@ -136,8 +132,6 @@
         loudnessCanvas.width = width * dpr;
         loudnessCanvas.height = height * dpr;
         loudnessCtx.scale(dpr, dpr);
-
-        console.log('📊 Loudness canvas initialized:', width, 'x', height);
 
         // Start animation loop
         if (loudnessAnimationId) cancelAnimationFrame(loudnessAnimationId);
@@ -267,7 +261,7 @@
     window.resetLoudnessHistory = function() {
         loudnessData.shortTerm = [];
         loudnessData.integrated = [];
-        console.log('📊 Loudness History reset');
+
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -300,8 +294,6 @@
             console.error('📈 Spectrogram container not found:', containerId);
             return;
         }
-
-        console.log('📈 Creating Spectrogram UI in:', containerId);
 
         container.innerHTML = `
             <div style="
@@ -368,7 +360,7 @@
 
         // Initialize canvas immediately
         setTimeout(() => initSpectrogramCanvas(), 100);
-        console.log('📈 Spectrogram UI created');
+
     };
 
     function initSpectrogramCanvas() {
@@ -398,8 +390,6 @@
             spectrogramImageData.data[i + 2] = 0;
             spectrogramImageData.data[i + 3] = 255;
         }
-
-        console.log('📈 Spectrogram canvas initialized:', width, 'x', height);
 
         // Draw initial "waiting for audio" message
         drawSpectrogramWaiting();
@@ -475,22 +465,20 @@
     function connectToAudioAnalysis() {
         if (analysisConnected) return;
 
-        console.log('📊📈 Looking for audio analyzer...');
-
         const checkInterval = setInterval(() => {
             const analyser = window.analyser || window.analyserNode || window.outputAnalyser;
             if (analyser && analyser.frequencyBinCount > 0) {
                 clearInterval(checkInterval);
                 startRealTimeAnalysis(analyser);
                 analysisConnected = true;
-                console.log('📊📈 Connected to audio analyzer (bins:', analyser.frequencyBinCount + ')');
+
             }
         }, 1000);
 
         setTimeout(() => {
             clearInterval(checkInterval);
             if (!analysisConnected) {
-                console.log('📊📈 Analyzer not found - will connect when audio loads');
+
             }
         }, 120000);
     }
@@ -500,8 +488,6 @@
 
         const frequencyData = new Uint8Array(analyser.frequencyBinCount);
         let frameCount = 0;
-
-        console.log('📊📈 Starting real-time analysis loop');
 
         function analyze() {
             try {
@@ -573,5 +559,4 @@
         return analysisConnected;
     };
 
-    console.log('📊📈 LOUDNESS_SPECTROGRAM.js v3.0 - State-of-the-Art Visualizations loaded');
 })();

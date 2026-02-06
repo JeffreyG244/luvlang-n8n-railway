@@ -146,7 +146,7 @@
             // Apply dither if requested
             let processedBuffer = audioBuffer;
             if (applyDither) {
-                console.log(`🎚️ Applying triangular dither for ${bitDepth}-bit export...`);
+
                 const dither = new TriangularDither();
                 processedBuffer = dither.applyStereoBuffer(audioBuffer, bitDepth);
             }
@@ -228,8 +228,6 @@
 
     window.TriangularDither = TriangularDither;
     window.ProfessionalWAVEncoder = ProfessionalWAVEncoder;
-
-    console.log('✅ Professional Export Dither loaded');
 
 })();
 

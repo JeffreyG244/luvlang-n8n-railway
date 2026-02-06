@@ -93,8 +93,6 @@ class CodecPreviewEngine {
             return source;
         }
 
-        console.log(`🎧 Applying ${profile.fullName} simulation...`);
-
         // Create processing chain
         const chain = {
             // 1. High-frequency rolloff (lossy codecs reduce HF content)
@@ -148,11 +146,6 @@ class CodecPreviewEngine {
 
         this.processingChain = chain;
         this.currentCodec = codecType;
-
-        console.log(`✅ ${profile.name} codec simulation active`);
-        console.log(`   - HF Rolloff: ${profile.hfRolloff}Hz`);
-        console.log(`   - Quality: ${Math.round(profile.quality * 100)}%`);
-        console.log(`   - Bitrate: ${profile.bitrate}kbps`);
 
         return chain.gainNode;
     }

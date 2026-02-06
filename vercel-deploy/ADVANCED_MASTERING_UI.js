@@ -48,7 +48,7 @@ function createLimiterModeUI(containerId) {
             if (window.advancedEngine) {
                 window.advancedEngine.setLimiterMode(mode);
             }
-            console.log(`🎚️ IRC Limiter mode: ${mode}`);
+
         });
     }
 
@@ -361,7 +361,6 @@ function createLinearPhaseToggle(containerId) {
             enabled ? 'Zero phase distortion mode' : 'Standard EQ mode'
         );
 
-        console.log('🎚️ Linear Phase EQ:', enabled ? 'ENABLED' : 'DISABLED');
     });
 
     return container;
@@ -456,7 +455,7 @@ window.resetLoudnessHistory = function() {
         ctx.fillStyle = '#0a0a0f';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    console.log('📊 Loudness history reset');
+
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -894,10 +893,6 @@ function initAdvancedMasteringUI() {
     // Inject styles
     injectAdvancedStyles();
 
-    console.log('✅ Advanced Mastering UI components loaded');
-    console.log('   Available: createLimiterModeUI, createSoftClipperUI');
-    console.log('   Available: createUpwardCompressorUI, createUnlimiterUI');
-    console.log('   Available: createLoudnessHistoryUI, createSpectrogramUI');
 }
 
 // Auto-init when DOM is ready
@@ -924,4 +919,3 @@ if (typeof window.showToast !== 'function') {
     window.showToast = showToast;
 }
 
-console.log('🎨 ADVANCED_MASTERING_UI.js loaded');

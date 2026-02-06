@@ -26,8 +26,6 @@ class WASMLoader {
      * This compiles the WASM while it downloads - like a "Just-In-Time" compiler
      */
     async loadStreaming(importObject = {}) {
-        console.log('🚀 Loading WASM with streaming compilation...');
-        console.log('   Path:', this.wasmPath);
 
         try {
             // Check if streaming is supported
@@ -55,13 +53,13 @@ class WASMLoader {
             const fromCache = response.headers.get('x-cache') === 'HIT' ||
                              response.headers.get('cf-cache-status') === 'HIT';
             if (fromCache) {
-                console.log('📦 WASM loaded from cache (instant!)');
+
             }
 
             // Get file size for progress tracking
             const contentLength = response.headers.get('content-length');
             if (contentLength) {
-                console.log(`📊 WASM size: ${(parseInt(contentLength) / 1024).toFixed(2)} KB`);
+
             }
 
             // STREAMING INSTANTIATION - This is the magic!
@@ -77,8 +75,6 @@ class WASMLoader {
             this.isLoaded = true;
 
             const loadTime = performance.now() - startTime;
-            console.log(`✅ WASM loaded in ${loadTime.toFixed(2)}ms`);
-            console.log(`   ${fromCache ? '(From cache)' : '(Fresh download + compile)'}`);
 
             return instance;
 
@@ -86,7 +82,7 @@ class WASMLoader {
             console.error('❌ Streaming load failed:', error);
 
             // Fallback to traditional loading
-            console.log('🔄 Attempting traditional loading method...');
+
             return await this.loadTraditional(importObject);
         }
     }
@@ -96,7 +92,6 @@ class WASMLoader {
      * Downloads entire file, then compiles
      */
     async loadTraditional(importObject = {}) {
-        console.log('📥 Loading WASM traditionally (download then compile)...');
 
         try {
             const startTime = performance.now();
@@ -112,7 +107,6 @@ class WASMLoader {
             }
 
             const buffer = await response.arrayBuffer();
-            console.log(`📊 Downloaded ${(buffer.byteLength / 1024).toFixed(2)} KB`);
 
             // Compile and instantiate
             const { instance, module } = await WebAssembly.instantiate(buffer, importObject);
@@ -123,7 +117,6 @@ class WASMLoader {
             this.isLoaded = true;
 
             const loadTime = performance.now() - startTime;
-            console.log(`✅ WASM loaded (traditional) in ${loadTime.toFixed(2)}ms`);
 
             return instance;
 
@@ -137,7 +130,6 @@ class WASMLoader {
      * Load with progress tracking (useful for large WASM files)
      */
     async loadWithProgress(importObject = {}, progressCallback = null) {
-        console.log('📊 Loading WASM with progress tracking...');
 
         try {
             const response = await fetch(this.wasmPath);
@@ -173,7 +165,6 @@ class WASMLoader {
                     progressCallback(progress, loaded, total);
                 }
 
-                console.log(`📦 Loading: ${progress.toFixed(1)}% (${(loaded / 1024).toFixed(2)} KB)`);
             }
 
             // Concatenate chunks into single ArrayBuffer
@@ -185,7 +176,7 @@ class WASMLoader {
             }
 
             // Compile and instantiate
-            console.log('🔧 Compiling WASM...');
+
             const { instance, module } = await WebAssembly.instantiate(buffer.buffer, importObject);
 
             this.instance = instance;
@@ -193,7 +184,6 @@ class WASMLoader {
             this.memory = instance.exports.memory;
             this.isLoaded = true;
 
-            console.log('✅ WASM loaded with progress tracking');
             return instance;
 
         } catch (error) {
@@ -244,9 +234,6 @@ async function loadMasteringEngine() {
             }
         });
 
-        console.log('🎉 Mastering engine loaded!');
-        console.log('   Available functions:', Object.keys(instance.exports));
-
         return instance;
 
     } catch (error) {
@@ -264,7 +251,7 @@ async function loadMasteringEngineWithProgress() {
     // Update UI progress bar
     const progressCallback = (percent, loaded, total) => {
         // Update your UI here
-        console.log(`Loading: ${percent.toFixed(1)}%`);
+
         // document.getElementById('progress').value = percent;
     };
 

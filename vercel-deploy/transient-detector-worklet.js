@@ -39,7 +39,6 @@ class TransientDetectorProcessor extends AudioWorkletProcessor {
         this.reportInterval = sampleRate;
         this.nextReport = this.reportInterval;
 
-        console.log('✅ TransientDetectorWorklet initialized at', sampleRate, 'Hz');
     }
 
     process(inputs, outputs, parameters) {

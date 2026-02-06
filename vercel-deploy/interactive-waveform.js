@@ -46,7 +46,6 @@ class InteractiveWaveform {
         this.canvas.addEventListener('touchmove', this.handleTouchMove, { passive: false });
         this.canvas.addEventListener('touchend', this.handleTouchEnd);
 
-        console.log('✅ Interactive Waveform initialized (click or drag to scrub)');
     }
 
     /**
@@ -145,8 +144,6 @@ class InteractiveWaveform {
         // Immediately seek to click position
         const time = this.seekToPosition(event.clientX);
 
-        console.log(`🎯 Scrubbed to ${time.toFixed(2)}s`);
-
         // Prevent default to avoid text selection
         event.preventDefault();
     }
@@ -195,7 +192,6 @@ class InteractiveWaveform {
         const touch = event.touches[0];
         const time = this.seekToPosition(touch.clientX);
 
-        console.log(`🎯 Scrubbed to ${time.toFixed(2)}s (touch)`);
     }
 
     /**
@@ -237,7 +233,6 @@ class InteractiveWaveform {
         this.canvas.removeEventListener('touchmove', this.handleTouchMove);
         this.canvas.removeEventListener('touchend', this.handleTouchEnd);
 
-        console.log('🔄 Interactive Waveform destroyed');
     }
 }
 
@@ -266,7 +261,6 @@ function initializeInteractiveWaveform() {
         audioContext
     );
 
-    console.log('✅ Waveform is now fully interactive');
     return interactiveWaveform;
 }
 

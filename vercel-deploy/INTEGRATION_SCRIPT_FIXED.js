@@ -9,24 +9,19 @@
  * 4. All new features integrated
  */
 
-console.log('🚀 Loading LuvLang LEGENDARY features...');
-
 // ============================================================================
 // INITIALIZATION - Run after DOM loads
 // ============================================================================
 
 // Don't auto-initialize on page load - wait for audio file to be uploaded
 // initializeLegendaryFeatures() will be called from setupWebAudio() after audioContext is created
-console.log('⏳ LEGENDARY features will initialize after audio file is loaded');
 
 function initializeLegendaryFeatures() {
     // Check if already initialized
     if (window.legendaryFeaturesInitialized) {
-        console.log('✅ LEGENDARY features already initialized');
+
         return;
     }
-
-    console.log('✨ Initializing LEGENDARY features...');
 
     // Get audioContext from window or local scope
     const ctx = window.audioContext || (typeof audioContext !== 'undefined' ? audioContext : null);
@@ -59,9 +54,6 @@ function initializeLegendaryFeatures() {
             showHelp: () => window.keyboardShortcuts.showHelp()
         });
 
-        console.log('✅ All LEGENDARY features initialized!');
-        console.log('   Press ? to see keyboard shortcuts');
-
         // Mark as initialized
         window.legendaryFeaturesInitialized = true;
 
@@ -87,7 +79,7 @@ function ensureAudioPlayback() {
     if (typeof analyser !== 'undefined' && analyser !== null) {
         // Audio chain is: ... → analyser → destination
         // Already connected in setupWebAudio at line 1514
-        console.log('🔊 Audio connected: analyser → destination (already setup)');
+
         return true;
     }
 
@@ -97,7 +89,7 @@ function ensureAudioPlayback() {
             masterOutputGain.disconnect();
         } catch (e) {}
         masterOutputGain.connect(audioContext.destination);
-        console.log('🔊 Audio connected: masterOutputGain → destination');
+
         return true;
     }
 
@@ -107,7 +99,7 @@ function ensureAudioPlayback() {
             limiterNode.disconnect();
         } catch (e) {}
         limiterNode.connect(audioContext.destination);
-        console.log('🔊 Audio connected: limiterNode → destination');
+
         return true;
     }
 
@@ -117,7 +109,7 @@ function ensureAudioPlayback() {
             compressorNode.disconnect();
         } catch (e) {}
         compressorNode.connect(audioContext.destination);
-        console.log('🔊 Audio connected: compressorNode → destination');
+
         return true;
     }
 
@@ -133,8 +125,7 @@ async function comprehensiveAnalysis(audioBuffer) {
     const issues = [];
     const fixes = [];
     
-    console.log('🔬 Running comprehensive analysis...');
-    
+
     // 1. CLIPPING CHECK
     let clippedSamples = 0;
     let peakLevel = 0;
@@ -243,46 +234,36 @@ async function comprehensiveAnalysis(audioBuffer) {
 // ============================================================================
 
 async function runEnhancedAIAutoMaster() {
-    console.log('');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🤖 AI AUTO MASTER - LEGENDARY EDITION');
-    console.log('   Target: -14 LUFS | Pristine Quality | All Issues Fixed');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('');
-    
+
     if (!audioBuffer) {
-        alert('⚠️  Please upload an audio file first');
+        (typeof showLuvLangToast==='function'?showLuvLangToast('⚠️  Please upload an audio file first'):void 0);
         return;
     }
     
     // STEP 1: COMPREHENSIVE ANALYSIS
-    console.log('━━━ STEP 1/4: COMPREHENSIVE ANALYSIS ━━━');
+
     const analysis = await comprehensiveAnalysis(audioBuffer);
     
     if (analysis.issues.length > 0) {
-        console.log(`⚠️  Found ${analysis.issues.length} issues:`);
+
         analysis.issues.forEach((issue, i) => {
-            console.log(`   ${i + 1}. ${issue}`);
+
         });
-        console.log('');
-        
+
         // Show in UI
         displayIssuesInUI(analysis);
     } else {
-        console.log('✅ No issues found - track is pristine!');
-        console.log('');
+
     }
     
     // STEP 2: AUTO-FIX ALL ISSUES
-    console.log('━━━ STEP 2/4: AUTO-FIX ALL ISSUES ━━━');
-    
+
     let totalGainAdjustment = 0;
     let stereoWidthTarget = 100;
     let compressionRatio = 6;
     
     analysis.fixes.forEach((fix, i) => {
-        console.log(`   ${i + 1}. ${fix.desc}`);
-        
+
         if (fix.type === 'gain' || fix.type === 'lufsGain') {
             totalGainAdjustment += fix.value;
         }
@@ -294,14 +275,8 @@ async function runEnhancedAIAutoMaster() {
         }
     });
     
-    console.log('');
-    console.log(`   Total Gain Adjustment: ${totalGainAdjustment > 0 ? '+' : ''}${totalGainAdjustment.toFixed(2)} dB`);
-    console.log(`   Stereo Width: ${stereoWidthTarget}%`);
-    console.log(`   Compression Ratio: ${compressionRatio}:1`);
-    console.log('');
-    
+
     // STEP 3: APPLY SETTINGS
-    console.log('━━━ STEP 3/4: APPLYING AI MASTERING ━━━');
 
     // Apply master gain using the window function from main HTML
     if (typeof window.applyMasterGain === 'function') {
@@ -331,25 +306,14 @@ async function runEnhancedAIAutoMaster() {
         console.error('❌ window.runAIEQOptimization not available');
     }
     
-    console.log('');
-    
+
     // STEP 4: VERIFICATION
-    console.log('━━━ STEP 4/4: FINAL VERIFICATION ━━━');
-    
+
     const finalAnalysis = await comprehensiveAnalysis(audioBuffer);
     
-    console.log(`   Final LUFS: ${finalAnalysis.lufs.toFixed(1)} (target: -14)`);
-    console.log(`   Dynamic Range: ${finalAnalysis.dynamicRange.toFixed(1)} dB`);
-    console.log(`   Peak Level: ${(20 * Math.log10(finalAnalysis.peakLevel)).toFixed(1)} dBFS`);
-    console.log(`   Clipping: ${finalAnalysis.clippedSamples === 0 ? '✅ None' : '⚠️  ' + finalAnalysis.clippedSamples + ' samples'}`);
-    console.log('');
-    
+
     const qualityScore = calculateQualityScore(finalAnalysis);
-    console.log(`   Quality Score: ${qualityScore}/100`);
-    console.log('');
-    console.log('✅ AI AUTO MASTER COMPLETE - STREAMING READY!');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('');
+
 }
 
 // ============================================================================
@@ -433,39 +397,39 @@ function displayIssuesInUI(analysis) {
 
 function togglePlayPause() {
     // Your play/pause logic
-    console.log('⏯️  Play/Pause');
+
 }
 
 function toggleABComparison() {
     // Your A/B comparison logic
-    console.log('🔀 A/B Toggle');
+
 }
 
 function resetAllEQ() {
     // Your EQ reset logic
-    console.log('🔄 Reset EQ');
+
 }
 
 function resetEverything() {
     // Your full reset logic
-    console.log('🔄 Reset Everything');
+
 }
 
 function toggleBypassAll() {
     // Your bypass logic
-    console.log('⏸️  Bypass All');
+
 }
 
 function toggleMSMode() {
     // Your M/S toggle logic
-    console.log('🔀 M/S Mode Toggle');
+
 }
 
 function performUndo() {
     if (window.undoRedoManager) {
         const state = window.undoRedoManager.undo();
         if (state) {
-            console.log('↶ Undo');
+
             // Apply state
         }
     }
@@ -475,7 +439,7 @@ function performRedo() {
     if (window.undoRedoManager) {
         const state = window.undoRedoManager.redo();
         if (state) {
-            console.log('↷ Redo');
+
             // Apply state
         }
     }
@@ -486,7 +450,7 @@ function showSavePresetDialog() {
     if (name && window.presetManager) {
         const state = getCurrentSettings();
         window.presetManager.savePreset(name, state);
-        console.log(`💾 Preset saved: ${name}`);
+
     }
 }
 
@@ -499,7 +463,4 @@ function getCurrentSettings() {
         stereoWidth: 100
     };
 }
-
-console.log('✅ LEGENDARY Integration Script Loaded');
-console.log('   Run initializeLegendaryFeatures() after audioContext is ready');
 

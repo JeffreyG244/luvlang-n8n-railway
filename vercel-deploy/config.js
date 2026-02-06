@@ -116,11 +116,7 @@ const LUVLANG_CONFIG = (() => {
         // Log configuration (only in development)
         logConfig: () => {
             if (isDevelopment) {
-                console.log('🔧 LuvLang Config:', {
-                    environment: isProduction ? 'production' : 'development',
-                    stripeMode: isProduction ? 'live' : 'test',
-                    demoMode: FEATURES.demoMode
-                });
+
             }
         }
     };
@@ -138,4 +134,3 @@ if (typeof document !== 'undefined') {
     });
 }
 
-console.log('✅ LuvLang configuration loaded');

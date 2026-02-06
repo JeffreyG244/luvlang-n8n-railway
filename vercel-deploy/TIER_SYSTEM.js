@@ -79,7 +79,6 @@ const TIER_CONFIG = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function switchTier(newTier) {
-    console.log(`🔄 Switching from ${currentTier} to ${newTier}`);
 
     // Remove old tier class from body
     document.body.classList.remove(`tier-${currentTier}`);
@@ -107,7 +106,7 @@ function switchTier(newTier) {
     }
 
     currentTier = newTier;
-    console.log(`✅ Tier switched to ${newTier.toUpperCase()}`);
+
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -116,7 +115,6 @@ function switchTier(newTier) {
 
 function updateModuleStates(tier) {
     const config = TIER_CONFIG[tier];
-    console.log('🎛️ Updating module states:', config.modules);
 
     // Stereo Width Module
     updateModule('stereoWidthModule', config.modules.stereoWidth, tier);
@@ -135,19 +133,16 @@ function updateModule(moduleId, isUnlocked, tier) {
         return;
     }
 
-    console.log(`  ${moduleId}: ${isUnlocked ? 'UNLOCKING' : 'LOCKING'}`);
-
     // Remove all state classes
     module.classList.remove('module-locked', 'module-cyan', 'module-gold', 'module-powering-on');
 
     if (!isUnlocked) {
         // LOCK MODULE - Dimmed state
         module.classList.add('module-locked');
-        console.log(`    🔒 ${moduleId} is now LOCKED (dimmed, non-interactive)`);
+
     } else {
         // UNLOCK MODULE - Power-on animation
         module.classList.add('module-powering-on');
-        console.log(`    ⚡ ${moduleId} powering on...`);
 
         // After animation, apply tier color
         setTimeout(() => {
@@ -155,10 +150,10 @@ function updateModule(moduleId, isUnlocked, tier) {
 
             if (tier === 'advanced') {
                 module.classList.add('module-cyan');
-                console.log(`    🔵 ${moduleId} is now CYAN (Advanced)`);
+
             } else if (tier === 'premium') {
                 module.classList.add('module-gold');
-                console.log(`    🟡 ${moduleId} is now GOLD (Premium)`);
+
             }
         }, 800); // Match animation duration
     }
@@ -169,30 +164,24 @@ function updateModule(moduleId, isUnlocked, tier) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function switchWASMPrecision(mode) {
-    console.log(`🔧 Switching WASM precision mode: ${wasmPrecisionMode} → ${mode}`);
 
     wasmPrecisionMode = mode;
 
     // Global flag for WASM engine (if loaded)
     if (typeof window.masteringEngine !== 'undefined') {
         window.masteringEngine.precisionMode = mode;
-        console.log(`   ✅ WASM engine precision mode set to: ${mode}`);
+
     } else {
-        console.log(`   ⚠️ WASM engine not loaded yet, mode will apply on load`);
+
     }
 
     // Store in localStorage for persistence
     localStorage.setItem('wasmPrecisionMode', mode);
 
     if (mode === '64bit') {
-        console.log('   🎯 64-bit precision enabled:');
-        console.log('      - 4x True-Peak Oversampling');
-        console.log('      - 4th-order Linkwitz-Riley filters');
-        console.log('      - Double-precision processing');
+
     } else {
-        console.log('   📊 32-bit precision (standard):');
-        console.log('      - 2nd-order filters');
-        console.log('      - Single-precision processing');
+
     }
 }
 
@@ -201,7 +190,6 @@ function switchWASMPrecision(mode) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function openCheckout() {
-    console.log('💳 Opening checkout tray');
 
     const config = TIER_CONFIG[currentTier];
 
@@ -217,13 +205,10 @@ function openCheckout() {
     document.getElementById('checkoutBackdrop').classList.add('active');
     document.getElementById('checkoutTray').classList.add('open');
 
-    console.log(`   Tier: ${config.label}`);
-    console.log(`   Price: $${config.price}`);
-    console.log(`   Features: ${config.features.length} items`);
 }
 
 function closeCheckout() {
-    console.log('❌ Closing checkout tray');
+
     document.getElementById('checkoutBackdrop').classList.remove('active');
     document.getElementById('checkoutTray').classList.remove('open');
 }
@@ -240,7 +225,6 @@ const STRIPE_PUBLIC_KEY = 'pk_test_51RXBWQP1VAtK8qeDRotSKHkuZF2UsKG18z4dDtoJM9MT
 let cardElement = null;
 
 function initializeStripe() {
-    console.log('💳 Initializing Stripe...');
 
     // Check if valid key is set
     if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'pk_test_YOUR_PUBLISHABLE_KEY_HERE') {
@@ -268,7 +252,7 @@ function initializeStripe() {
     // Check if card-element exists before mounting
     const cardContainer = document.getElementById('card-element');
     if (!cardContainer) {
-        console.log('ℹ️ Stripe card element not on this page - payment form will initialize when needed');
+
         return;
     }
 
@@ -303,31 +287,26 @@ function initializeStripe() {
         }
     });
 
-    console.log('✅ Stripe initialized successfully');
 }
 
 async function handlePaymentSubmit(event) {
     event.preventDefault();
-    console.log('💳 Redirecting to Stripe Checkout...');
 
     const config = TIER_CONFIG[currentTier];
     const paymentLink = config.stripeLink;
 
     if (!paymentLink) {
-        alert('Payment link not configured for this tier. Please contact support.');
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Payment link not configured for this tier. Please contact support.'):void 0);
         console.error('❌ No Stripe payment link configured for tier:', currentTier);
         return;
     }
-
-    console.log(`Redirecting to: ${paymentLink}`);
-    console.log(`Tier: ${config.label} - $${config.price}`);
 
     // Redirect to Stripe payment link
     window.location.href = paymentLink;
 }
 
 function enableExport() {
-    console.log('✅ Export enabled for tier:', currentTier);
+
     // Enable the export button (if it exists)
     const exportBtn = document.getElementById('exportBtn');
     if (exportBtn) {
@@ -341,7 +320,6 @@ function enableExport() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎛️ TIER SYSTEM - Initializing...');
 
     // Tier selector buttons
     document.querySelectorAll('.tier-option').forEach(btn => {
@@ -371,15 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set initial tier state
     switchTier('basic');
 
-    console.log('✅ TIER SYSTEM - Ready!');
-    console.log('');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('   TIER OPTIONS');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log(`   BASIC ($${TIER_CONFIG.basic.price}) - ${TIER_CONFIG.basic.exportFormats.join(', ')}`);
-    console.log(`   ADVANCED ($${TIER_CONFIG.advanced.price}) - ${TIER_CONFIG.advanced.exportFormats.join(', ')} + Stereo Width`);
-    console.log(`   PREMIUM ($${TIER_CONFIG.premium.price}) - ${TIER_CONFIG.premium.exportFormats.join(', ')} + Full Control + 64-bit`);
-    console.log('═══════════════════════════════════════════════════════════');
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -395,17 +364,16 @@ window.addEventListener('load', function() {
         exportBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📤 Export clicked - Opening pricing modal');
 
             // Show pricing modal - user must pay before export
             if (typeof window.openPricingModal === 'function') {
                 window.openPricingModal();
             } else {
                 console.error('❌ Pricing modal not found');
-                alert('Please wait for the page to fully load, then try again.');
+                (typeof showLuvLangToast==='function'?showLuvLangToast('Please wait for the page to fully load, then try again.'):void 0);
             }
         });
-        console.log('✅ Export button connected to pricing modal');
+
     }
 
     // Export Bar A/B button (if exists)
@@ -417,7 +385,7 @@ window.addEventListener('load', function() {
                 toggleABComparison();
             }
         });
-        console.log('✅ A/B comparison button connected');
+
     }
 });
 
@@ -437,4 +405,3 @@ window.TierSystem = {
     getPrecisionMode: () => wasmPrecisionMode
 };
 
-console.log('🎛️ TIER_SYSTEM.js loaded - Global API available at window.TierSystem');

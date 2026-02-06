@@ -198,7 +198,7 @@ async function showApiKeysModal() {
     if (typeof supabase !== 'undefined') {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            alert('Please sign in to manage API keys');
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Please sign in to manage API keys'):void 0);
             return;
         }
     }
@@ -498,7 +498,7 @@ async function submitCreateKey() {
     const monthlyQuota = parseInt(document.getElementById('newKeyQuota').value) || 100;
 
     if (!name) {
-        alert('Please enter a name for your API key');
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Please enter a name for your API key'):void 0);
         return;
     }
 
@@ -514,7 +514,7 @@ async function submitCreateKey() {
         showNewKeyCreated(key);
 
     } catch (error) {
-        alert('Error creating API key: ' + error.message);
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Error creating API key: ' + error.message):void 0);
     }
 }
 
@@ -584,7 +584,7 @@ function showNewKeyCreated(key) {
 async function copyApiKey(key) {
     try {
         await navigator.clipboard.writeText(key);
-        alert('API key copied to clipboard!');
+        (typeof showLuvLangToast==='function'?showLuvLangToast('API key copied to clipboard!'):void 0);
     } catch (err) {
         // Fallback
         const textarea = document.createElement('textarea');
@@ -593,7 +593,7 @@ async function copyApiKey(key) {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        alert('API key copied to clipboard!');
+        (typeof showLuvLangToast==='function'?showLuvLangToast('API key copied to clipboard!'):void 0);
     }
 }
 
@@ -605,7 +605,7 @@ async function toggleApiKey(keyId, isActive) {
         await updateApiKey(keyId, { isActive });
         showApiKeysModal(); // Refresh the list
     } catch (error) {
-        alert('Error updating API key: ' + error.message);
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Error updating API key: ' + error.message):void 0);
     }
 }
 
@@ -621,7 +621,7 @@ async function confirmDeleteApiKey(keyId, keyName) {
         await deleteApiKey(keyId);
         showApiKeysModal(); // Refresh the list
     } catch (error) {
-        alert('Error deleting API key: ' + error.message);
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Error deleting API key: ' + error.message):void 0);
     }
 }
 
@@ -683,4 +683,3 @@ if (typeof window !== 'undefined') {
     window.submitCreateKey = submitCreateKey;
 }
 
-console.log('API Keys client module loaded');

@@ -34,10 +34,6 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-console.log('═══════════════════════════════════════════════════════════════════════════');
-console.log('🚀 ULTIMATE INTEGRATION - Loading...');
-console.log('═══════════════════════════════════════════════════════════════════════════');
-
 // ═══════════════════════════════════════════════════════════════════════════
 // GLOBAL STATE MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -76,7 +72,7 @@ const LuvLangUltimate = {
 
     // User feedback
     toast: function(message, type = 'info') {
-        console.log(`[${type.toUpperCase()}] ${message}`);
+
         // TODO: Add visual toast notification
         showToast(message, type);
     }
@@ -171,13 +167,12 @@ if (!document.getElementById('toast-animations')) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function registerAudioWorkletProcessors(audioContext) {
-    console.log('🔌 Registering AudioWorklet processors...');
 
     try {
         // Register True-Peak processor
         try {
             await audioContext.audioWorklet.addModule('true-peak-processor.js');
-            console.log('  ✅ true-peak-processor.js registered');
+
             LuvLangUltimate.toast('True-Peak processor loaded', 'success');
         } catch (error) {
             console.warn('  ⚠️ true-peak-processor.js not found (using fallback)');
@@ -187,7 +182,7 @@ async function registerAudioWorkletProcessors(audioContext) {
         // Register Limiter processor
         try {
             await audioContext.audioWorklet.addModule('limiter-processor.js');
-            console.log('  ✅ limiter-processor.js registered');
+
         } catch (error) {
             console.warn('  ⚠️ limiter-processor.js not found (using fallback)');
         }
@@ -223,7 +218,6 @@ async function registerAudioWorkletProcessors(audioContext) {
                 }
             };
 
-            console.log('  ✅ True-Peak AudioWorkletNode created');
         } catch (error) {
             console.warn('  ⚠️ Could not create True-Peak node:', error.message);
         }
@@ -239,7 +233,6 @@ async function registerAudioWorkletProcessors(audioContext) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initializeLUFSWorker() {
-    console.log('🔊 Initializing LUFS Worker...');
 
     try {
         LuvLangUltimate.lufsWorker = new Worker('lufs-worker.js');
@@ -289,7 +282,6 @@ function initializeLUFSWorker() {
             LuvLangUltimate.toast('LUFS measurement error', 'error');
         };
 
-        console.log('  ✅ LUFS Worker initialized');
         LuvLangUltimate.toast('LUFS metering ready', 'success');
 
     } catch (error) {
@@ -323,7 +315,6 @@ function getPlatformTarget() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initializeKeyboardShortcuts() {
-    console.log('⌨️  Initializing Keyboard Shortcuts...');
 
     if (typeof KeyboardShortcuts === 'undefined') {
         console.warn('  ⚠️ KeyboardShortcuts class not found');
@@ -436,7 +427,7 @@ function initializeKeyboardShortcuts() {
     };
 
     LuvLangUltimate.keyboardShortcuts = new KeyboardShortcuts(callbacks);
-    console.log('  ✅ Keyboard Shortcuts initialized (30+ shortcuts)');
+
     LuvLangUltimate.toast('Keyboard shortcuts active (Press ? for help)', 'info');
 }
 
@@ -579,7 +570,6 @@ function showKeyboardShortcutsHelp() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initializeUndoRedo() {
-    console.log('↩️  Initializing Undo/Redo Manager...');
 
     if (typeof UndoRedoManager === 'undefined') {
         console.warn('  ⚠️ UndoRedoManager class not found');
@@ -591,7 +581,6 @@ function initializeUndoRedo() {
     // Save initial state
     saveCurrentState('Initial state');
 
-    console.log('  ✅ Undo/Redo Manager initialized (50-state history)');
 }
 
 function saveCurrentState(description = 'Change') {
@@ -699,12 +688,11 @@ function applyState(state) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 function initializePresetManagement() {
-    console.log('💾 Initializing Preset Management...');
 
     if (typeof PresetManager !== 'undefined') {
         // Use PresetManager from ADVANCED_PROCESSING_FEATURES.js
         LuvLangUltimate.presetManager = window.presetManager;
-        console.log('  ✅ Using existing PresetManager');
+
     } else {
         console.warn('  ⚠️ PresetManager not found');
         return;
@@ -729,7 +717,6 @@ function initializePresetManagement() {
         };
     }
 
-    console.log('  ✅ Preset Management initialized');
 }
 
 function saveCurrentPreset(name) {
@@ -849,7 +836,6 @@ class DeEsser {
         this.detector.connect(this.compressor);
         this.compressor.connect(this.output);
 
-        console.log('  ✅ De-Esser initialized');
     }
 
     setThreshold(dB) {
@@ -896,7 +882,6 @@ class TransientShaper {
         this.attackCompressor.connect(this.attackGain);
         this.attackGain.connect(this.output);
 
-        console.log('  ✅ Transient Shaper initialized');
     }
 
     setAttack(amount) {
@@ -952,7 +937,6 @@ class DynamicEQ {
             band.gain.connect(this.output);
         });
 
-        console.log('  ✅ Dynamic EQ initialized (3 bands)');
     }
 
     setBandThreshold(bandIndex, dB) {
@@ -978,7 +962,6 @@ class ProfessionalMeters {
         this.ppmMeter = new PPMMeter();
         this.kSystemMeter = new KSystemMeter();
 
-        console.log('  ✅ Professional Metering initialized');
     }
 }
 
@@ -1039,11 +1022,10 @@ class KSystemMeter {
 
 async function initializeUltimateIntegration(audioContext) {
     if (LuvLangUltimate.initialized) {
-        console.log('⚠️ Ultimate Integration already initialized');
+
         return;
     }
 
-    console.log('🚀 Initializing ULTIMATE Integration...');
     LuvLangUltimate.audioContext = audioContext;
 
     try {
@@ -1068,26 +1050,8 @@ async function initializeUltimateIntegration(audioContext) {
         LuvLangUltimate.dynamicEQ = new DynamicEQ(audioContext);
         LuvLangUltimate.professionalMeters = new ProfessionalMeters();
 
-        console.log('✅ All advanced processors initialized');
-
         // Mark as initialized
         LuvLangUltimate.initialized = true;
-
-        console.log('═══════════════════════════════════════════════════════════════════════════');
-        console.log('🎉 ULTIMATE INTEGRATION COMPLETE!');
-        console.log('═══════════════════════════════════════════════════════════════════════════');
-        console.log('');
-        console.log('✅ AudioWorklet Processors: Registered');
-        console.log('✅ LUFS Worker: Active');
-        console.log('✅ Keyboard Shortcuts: 30+ active (Press ? for help)');
-        console.log('✅ Undo/Redo: 50-state history');
-        console.log('✅ Preset Management: Ready');
-        console.log('✅ De-Esser: Initialized');
-        console.log('✅ Transient Shaper: Initialized');
-        console.log('✅ Dynamic EQ: Initialized');
-        console.log('✅ Professional Metering: VU, PPM, K-System');
-        console.log('');
-        console.log('═══════════════════════════════════════════════════════════════════════════');
 
         LuvLangUltimate.toast('🎉 Ultimate Integration Complete!', 'success');
 
@@ -1119,4 +1083,3 @@ if (typeof originalSetupWebAudio === 'function') {
     };
 }
 
-console.log('✅ ULTIMATE_INTEGRATION.js loaded');

@@ -57,7 +57,6 @@ class MultibandCompressor {
             }
         };
 
-        console.log('✅ Multiband Compressor initialized with 4 bands');
     }
 
     /**
@@ -146,8 +145,6 @@ class MultibandCompressor {
         // Initialize makeup gain (will be auto-calculated based on compression)
         band.makeupGain.gain.value = 1.0;
 
-        console.log(`  ✓ Band created: ${name} (${lowFreq}-${highFreq}Hz) [Linkwitz-Riley 24dB/oct]`);
-
         return band;
     }
 
@@ -170,8 +167,6 @@ class MultibandCompressor {
 
         band.makeupGain.gain.value = makeupLinear;
 
-        console.log(`  📊 ${bandName} makeup gain: +${makeupDB.toFixed(1)}dB (linear: ${makeupLinear.toFixed(3)})`);
-
         return makeupDB;
     }
 
@@ -182,7 +177,7 @@ class MultibandCompressor {
         Object.keys(this.bands).forEach(bandName => {
             this.calculateMakeupGain(bandName);
         });
-        console.log('✅ Auto makeup gain applied to all bands');
+
     }
 
     /**
@@ -193,7 +188,7 @@ class MultibandCompressor {
         Object.values(this.bands).forEach(band => {
             sourceNode.connect(band.input);
         });
-        console.log('🔌 Input connected to multiband compressor');
+
     }
 
     /**
@@ -224,7 +219,6 @@ class MultibandCompressor {
             this.calculateMakeupGain(bandName);
         }
 
-        console.log(`⚙️ ${bandName} settings updated:`, settings);
     }
 
     /**
@@ -244,7 +238,6 @@ class MultibandCompressor {
         // Apply automatic makeup gain after loading preset
         this.applyAutoMakeupGain();
 
-        console.log(`✅ Loaded multiband preset: ${genreName} (with auto makeup gain)`);
     }
 
     /**
@@ -287,13 +280,13 @@ class MultibandCompressor {
             Object.values(this.bands).forEach(band => {
                 band.output.disconnect();
             });
-            console.log('⏸️ Multiband compression bypassed');
+
         } else {
             // Reconnect all bands
             Object.values(this.bands).forEach(band => {
                 band.output.connect(this.output);
             });
-            console.log('▶️ Multiband compression active');
+
         }
     }
 
@@ -342,7 +335,6 @@ class MultibandCompressor {
             });
         }
 
-        console.log('🤖 Auto-set multiband compression from analysis');
     }
 }
 

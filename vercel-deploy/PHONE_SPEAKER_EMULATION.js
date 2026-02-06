@@ -101,7 +101,7 @@
          */
         setEnabled(enabled) {
             this.enabled = enabled;
-            console.log(`📱 Phone Speaker Emulation: ${enabled ? 'ON' : 'OFF'}`);
+
         }
 
         /**
@@ -278,8 +278,6 @@
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     window.PhoneSpeakerEmulator = PhoneSpeakerEmulator;
-
-    console.log('✅ Phone Speaker Emulation loaded');
 
 })();
 

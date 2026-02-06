@@ -559,7 +559,7 @@ function createPricingModal() {
         btn.addEventListener('click', function() {
             const tier = this.dataset.tier;
             const config = PRICING_TIERS[tier];
-            console.log(`💳 Selected tier: ${tier} - Redirecting to Stripe`);
+
             window.location.href = config.stripeLink;
         });
     });
@@ -581,7 +581,6 @@ function openPricingModal() {
         document.body.style.overflow = 'hidden';
     });
 
-    console.log('💳 Pricing modal opened');
 }
 
 // Close modal
@@ -593,7 +592,6 @@ function closePricingModal() {
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = '';
 
-    console.log('❌ Pricing modal closed');
 }
 
 // Override the old openCheckout function
@@ -615,9 +613,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 openPricingModal();
             };
-            console.log(`✅ Export button connected to pricing modal:`, btn.id);
+
         });
     }, 500);
 });
 
-console.log('✅ PROFESSIONAL_PRICING_MODAL.js loaded - Premium tier selection ready');

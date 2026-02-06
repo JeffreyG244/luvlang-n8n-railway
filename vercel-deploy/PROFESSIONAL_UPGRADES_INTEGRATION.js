@@ -14,7 +14,6 @@
  */
 
 (async function initProfessionalUpgrades() {
-    console.log('🔧 Initializing Professional Upgrades...');
 
     // Wait for audioContext to be available
     while (!window.audioContext) {
@@ -30,7 +29,6 @@
     try {
         // Load limiter worklet processor
         await audioContext.audioWorklet.addModule('limiter-processor.js');
-        console.log('✅ Limiter AudioWorklet loaded');
 
         // Store reference to old limiter for replacement
         const oldLimiter = window.limiter;
@@ -73,8 +71,6 @@
                 // Update global reference
                 window.limiter = limiterWorklet;
                 window.limiterWorklet = limiterWorklet; // Keep separate reference
-
-                console.log('✅ AudioWorklet Limiter activated (sample-accurate limiting)');
 
                 // Update limiter slider to control worklet
                 const limiterSlider = document.getElementById('limiterSlider');
@@ -128,8 +124,6 @@
         window.eqHighFilter,
         window.eqAirFilter
     ].filter(f => f !== null && f !== undefined);
-
-    console.log('✅ Found', eqFilters.length, 'EQ filters for curve visualization');
 
     /**
      * Enhanced EQ Graph Drawing with Cubic Spline Interpolation
@@ -310,8 +304,6 @@
     }
     window.drawEQGraph = drawProfessionalEQGraph;
 
-    console.log('✅ Professional EQ Curve with Cubic Spline Interpolation activated');
-
     // Trigger initial draw
     if (window.eqGraphCanvas) {
         drawProfessionalEQGraph();
@@ -342,9 +334,5 @@
             });
         }
     }
-
-    console.log('🏆 Professional Upgrades Complete:');
-    console.log('   ✅ AudioWorklet Limiter (sample-accurate)');
-    console.log('   ✅ Cubic Spline EQ Curve (smooth visualization)');
 
 })();

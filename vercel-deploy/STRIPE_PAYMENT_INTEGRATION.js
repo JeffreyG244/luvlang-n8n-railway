@@ -22,7 +22,6 @@
 
 async function downloadMaster() {
     try {
-        console.log('📥 Download Master initiated');
 
         // Show loading state
         showPaymentModal('Checking payment status...');
@@ -48,8 +47,6 @@ async function downloadMaster() {
             throw new Error('No mastered file to download. Please master your audio first.');
         }
 
-        console.log(`📂 File path: ${filePath}`);
-
         // ──────────────────────────────────────────────────────────────────
         // 3. CHECK IF USER HAS ALREADY PAID
         // ──────────────────────────────────────────────────────────────────
@@ -73,7 +70,6 @@ async function downloadMaster() {
         // ──────────────────────────────────────────────────────────────────
 
         if (orders && orders.length > 0) {
-            console.log('✅ File already purchased! Generating download link...');
 
             updatePaymentModal('Generating secure download link...');
 
@@ -86,8 +82,6 @@ async function downloadMaster() {
                 console.error('❌ Error creating signed URL:', urlError);
                 throw new Error('Failed to generate download link');
             }
-
-            console.log('🔗 Signed URL generated (expires in 60s)');
 
             // Start download
             const downloadUrl = signedUrlData.signedUrl;
@@ -111,7 +105,6 @@ async function downloadMaster() {
         // 5. IF NOT PAID → CREATE CHECKOUT SESSION
         // ──────────────────────────────────────────────────────────────────
 
-        console.log('💳 File not yet purchased. Creating checkout session...');
         updatePaymentModal('Preparing secure payment...');
 
         const checkoutUrl = await createCheckoutSession(filePath);
@@ -124,7 +117,7 @@ async function downloadMaster() {
     } catch (error) {
         console.error('❌ Error in downloadMaster:', error);
         hidePaymentModal();
-        alert(error.message || 'An error occurred. Please try again.');
+        (typeof showLuvLangToast==='function'?showLuvLangToast(error.message || 'An error occurred. Please try again.'):void 0);
     }
 }
 
@@ -167,8 +160,6 @@ async function createCheckoutSession(filePath) {
         if (!data.session_url) {
             throw new Error('No checkout URL returned');
         }
-
-        console.log('✅ Checkout session created:', data.session_id);
 
         return data.session_url;
 
@@ -221,8 +212,6 @@ async function getCurrentFilePath() {
             throw error;
         }
 
-        console.log('✅ File uploaded to storage:', filePath);
-
         // Store for future use
         window.currentMasterFilePath = filePath;
 
@@ -251,7 +240,7 @@ async function exportToWAV(buffer) {
     // ALWAYS use exportMasteredWAV to render through the mastering chain
     // This is critical - the original buffer is UNPROCESSED
     if (typeof window.exportMasteredWAV === 'function') {
-        console.log('🎛️ Exporting through full mastering chain...');
+
         return await window.exportMasteredWAV();
     }
 
@@ -382,7 +371,7 @@ function hidePaymentModal() {
 }
 
 function showAuthModal() {
-    alert('Please sign in to purchase and download your master.\n\nClick the "Sign In" button in the top right corner.');
+    (typeof showLuvLangToast==='function'?showLuvLangToast('Please sign in to purchase and download your master.\n\nClick the "Sign In" button in the top right corner.'):void 0);
     // Or show your actual auth modal
 }
 
@@ -421,8 +410,6 @@ async function handlePaymentSuccess() {
 
     if (!sessionId) return;
 
-    console.log('💰 Payment success! Session:', sessionId);
-
     showPaymentModal('Verifying payment...');
 
     // Poll for order completion (webhook may take a few seconds)
@@ -445,7 +432,7 @@ async function handlePaymentSuccess() {
                 setTimeout(checkOrder, 1000); // Check again in 1 second
             } else {
                 hidePaymentModal();
-                alert('Payment verification is taking longer than expected. Please check your email or try downloading again.');
+                (typeof showLuvLangToast==='function'?showLuvLangToast('Payment verification is taking longer than expected. Please check your email or try downloading again.'):void 0);
             }
             return;
         }
@@ -471,4 +458,3 @@ if (window.location.search.includes('session_id')) {
     window.addEventListener('DOMContentLoaded', handlePaymentSuccess);
 }
 
-console.log('✅ Stripe Payment Integration loaded');

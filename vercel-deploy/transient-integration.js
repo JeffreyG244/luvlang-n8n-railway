@@ -22,14 +22,6 @@ async function initializeTransientDetector(audioContext) {
             if (event.data.type === 'transient-analysis') {
                 currentTransientAnalysis = event.data.data;
 
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                console.log('🧠 REAL-TIME TRANSIENT ANALYSIS:');
-                console.log(`   Material: ${currentTransientAnalysis.materialType.toUpperCase()}`);
-                console.log(`   Transients: ${currentTransientAnalysis.transientCount} (${currentTransientAnalysis.transientDensity.toFixed(1)}/sec)`);
-                console.log(`   Recommended Attack: ${currentTransientAnalysis.attackMs}ms`);
-                console.log(`   Recommended Release: ${currentTransientAnalysis.releaseMs}ms`);
-                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
                 // Update UI if elements exist
                 updateTransientUI(currentTransientAnalysis);
 
@@ -40,7 +32,6 @@ async function initializeTransientDetector(audioContext) {
             }
         };
 
-        console.log('✅ Transient Detector initialized (AudioWorklet)');
         return transientDetectorNode;
 
     } catch (error) {
@@ -63,7 +54,6 @@ function connectTransientDetector(sourceNode, destinationNode) {
     sourceNode.connect(transientDetectorNode);
     transientDetectorNode.connect(destinationNode);
 
-    console.log('✅ Transient detector connected to audio chain');
 }
 
 /**
@@ -120,8 +110,6 @@ function applyTransientSettingsToCompressor(analysis) {
     compressor.attack.value = analysis.recommendedAttack;
     compressor.release.value = analysis.recommendedRelease;
 
-    console.log(`✅ Auto-applied compressor settings: ${analysis.attackMs}ms attack, ${analysis.releaseMs}ms release`);
-
     // Update UI sliders if they exist
     const attackSlider = document.getElementById('compressorAttackSlider');
     if (attackSlider) {
@@ -146,7 +134,7 @@ function getTransientAnalysis() {
  */
 function resetTransientDetector() {
     currentTransientAnalysis = null;
-    console.log('🔄 Transient detector reset');
+
 }
 
 // Export for use in main application

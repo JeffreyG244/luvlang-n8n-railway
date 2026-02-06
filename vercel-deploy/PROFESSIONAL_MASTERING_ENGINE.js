@@ -16,8 +16,6 @@
  * - Preset Management
  */
 
-console.log('🚀 Loading Professional Mastering Engine...');
-
 // ============================================================================
 // 1. TRUE-PEAK METERING (dBTP) WITH 4X OVERSAMPLING
 // ============================================================================
@@ -556,12 +554,11 @@ class ProfessionalMasteringEngine {
         this.spectrum = new SpectrumAnalyzer(audioContext);
         this.multiBand = new MultiBandDynamics(audioContext);
         
-        console.log('✅ Professional Mastering Engine initialized');
+
     }
     
     async analyzeAudio(audioBuffer) {
-        console.log('🔬 Starting comprehensive audio analysis...');
-        
+
         // Measure all parameters
         const truePeak = await this.truePeakMeter.measureTruePeak(audioBuffer);
         const lufs = await this.lufsMeter.measureLUFS(audioBuffer);
@@ -572,12 +569,7 @@ class ProfessionalMasteringEngine {
         this.lufsMeter.updateDisplay();
         this.phaseCorrelation.updateDisplay();
         
-        console.log('✅ Analysis complete');
-        console.log('   True Peak:', truePeak.toFixed(2), 'dBTP');
-        console.log('   Integrated LUFS:', lufs.integrated.toFixed(1));
-        console.log('   Phase Correlation:', phase.toFixed(3));
-        console.log('   LRA:', lufs.lra.toFixed(1), 'dB');
-        
+
         return {
             truePeak,
             lufs,
@@ -608,7 +600,7 @@ function initProfessionalEngine(audioContext) {
     if (!window.professionalMasteringEngine) {
         window.professionalMasteringEngine = new ProfessionalMasteringEngine(audioContext);
         window.professionalMasteringEngine.initVisualizations();
-        console.log('✅ Professional Mastering Engine ready');
+
     }
     return window.professionalMasteringEngine;
 }
@@ -617,4 +609,3 @@ function initProfessionalEngine(audioContext) {
 window.initProfessionalEngine = initProfessionalEngine;
 window.ProfessionalMasteringEngine = ProfessionalMasteringEngine;
 
-console.log('✅ Professional Mastering Engine loaded successfully');

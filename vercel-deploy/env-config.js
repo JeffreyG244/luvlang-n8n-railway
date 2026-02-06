@@ -3,8 +3,6 @@
 // Build: 2026-02-03T04:43:37.949Z
 // DO NOT EDIT - changes will be overwritten on next deploy
 
-console.log('📦 env-config.js loaded (build-time injected)');
-
 window.__ENV__ = {
     SUPABASE_URL: "",
     SUPABASE_ANON_KEY: "",
@@ -18,10 +16,6 @@ window.__ENV__ = {
     _loaded: true,
     _error: null
 };
-
-console.log('✅ Environment config ready');
-console.log('   SUPABASE_URL:', window.__ENV__.SUPABASE_URL ? '✓ Set' : '✗ Missing');
-console.log('   SUPABASE_ANON_KEY:', window.__ENV__.SUPABASE_ANON_KEY ? '✓ Set' : '✗ Missing');
 
 // Dispatch event so other scripts know config is ready
 window.dispatchEvent(new CustomEvent('envConfigLoaded', { detail: window.__ENV__ }));

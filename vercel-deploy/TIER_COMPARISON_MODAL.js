@@ -120,7 +120,7 @@
                 }
             }
             requestAnimationFrame(fade);
-            console.log('🔊 Fading out main audio for tier comparison');
+
         }
     }
 
@@ -146,7 +146,7 @@
                 }
             }
             requestAnimationFrame(fade);
-            console.log('🔊 Fading in main audio');
+
         }
     }
 
@@ -1071,7 +1071,6 @@
                 }
             }, FADE_DURATION * 1000);
 
-            console.log(`🔊 Crossfading from ${fromTierId} to ${toTierId}`);
         } else {
             // No current playback to crossfade from, just start new
             startPlayback(toTierId);
@@ -1164,7 +1163,6 @@
             stopPlayback(tierId);
         };
 
-        console.log(`🔊 Playing ${TIERS[tierId].name} tier with fade in`);
     }
 
     // Stop playback
@@ -1219,7 +1217,7 @@
     // Process all tiers
     async function processAll() {
         if (!originalBuffer) {
-            alert('Please upload a track first');
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Please upload a track first'):void 0);
             return;
         }
 
@@ -1253,8 +1251,8 @@
             window.showPricingModal(tierId);
         } else {
             // Fallback - set tier and show pricing
-            console.log(`Selected tier: ${tierId} - $${tier.price}`);
-            alert(`You selected ${tier.name} tier at $${tier.price}/track. Proceeding to checkout...`);
+
+            (typeof showLuvLangToast==='function'?showLuvLangToast(`You selected ${tier.name} tier at $${tier.price}/track. Proceeding to checkout...`):void 0);
         }
     }
 
@@ -1327,5 +1325,4 @@
         }
     });
 
-    console.log('🎚️ Tier Comparison Modal loaded');
 })();

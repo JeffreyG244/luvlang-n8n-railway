@@ -474,12 +474,4 @@
     // Override the default spectrum renderer
     window.drawProfessionalSpectrum = window.drawUltra2026Spectrum;
 
-    console.log('✅ ULTRA 2026 VISUALS loaded');
-    console.log('   ✨ Phosphor persistence/ghosting');
-    console.log('   ✨ Frequency-based color gradient (Purple → Cyan → Pink)');
-    console.log('   ✨ Neon glow effects');
-    console.log('   ✨ Bezier-smoothed curves');
-    console.log('   ✨ Peak hold with decay');
-    console.log('   ✨ Interactive EQ nodes');
-
 })();

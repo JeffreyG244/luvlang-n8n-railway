@@ -14,7 +14,6 @@ class SpectralRepairEngine {
 
     // Auto-detect audio issues
     async detectIssues(audioBuffer) {
-        console.log('🔍 Starting comprehensive audio analysis...');
 
         const channelData = audioBuffer.getChannelData(0);
         const sampleRate = audioBuffer.sampleRate;
@@ -104,7 +103,6 @@ class SpectralRepairEngine {
             });
         }
 
-        console.log(`✅ Audio analysis complete: ${this.detectedIssues.length} issue(s) found`);
         return this.detectedIssues;
     }
 
@@ -345,7 +343,6 @@ class SpectralRepairEngine {
             }
         };
 
-        console.log(`✅ Click remover: sensitivity ${sensitivity}/10`);
         return processor;
     }
 
@@ -367,7 +364,6 @@ class SpectralRepairEngine {
             filters[i].connect(filters[i + 1]);
         }
 
-        console.log(`✅ Hum remover: ${frequency}Hz + ${harmonics.length - 1} harmonics, Q=${filters[0].Q.value.toFixed(0)}`);
         return {
             input: filters[0],
             output: filters[filters.length - 1],
@@ -399,7 +395,6 @@ class SpectralRepairEngine {
         hpFilter.connect(gate);
         gate.connect(expander);
 
-        console.log(`✅ Noise reducer: HPF @ ${hpFilter.frequency.value.toFixed(0)}Hz, gate @ ${gate.threshold.value.toFixed(0)}dB`);
         return {
             input: hpFilter,
             output: expander
@@ -423,7 +418,6 @@ class SpectralRepairEngine {
 
         hpFilter.connect(breathGate);
 
-        console.log(`✅ Breath remover: threshold ${breathGate.threshold.value.toFixed(0)}dB, HPF @ 150Hz`);
         return {
             input: hpFilter,
             output: breathGate
@@ -444,7 +438,6 @@ class SpectralRepairEngine {
         softClipper.curve = curve;
         softClipper.oversample = '4x';
 
-        console.log('✅ De-clipper: soft clipping curve with 4x oversampling');
         return softClipper;
     }
 
@@ -456,7 +449,7 @@ class SpectralRepairEngine {
     // Clear detected issues
     clearDetectedIssues() {
         this.detectedIssues = [];
-        console.log('🗑️ Cleared detected issues');
+
     }
 }
 

@@ -42,7 +42,6 @@ class SpectralDenoiser {
         this.inputNode.connect(this.analyzerNode);
         this.analyzerNode.connect(this.outputNode);
 
-        console.log('✅ Spectral De-noiser initialized');
     }
 
     /**
@@ -50,7 +49,6 @@ class SpectralDenoiser {
      * User should select a quiet section with only noise
      */
     async learnNoiseProfile(audioBuffer, startTime = 0, duration = 1) {
-        console.log('🎤 Learning noise profile...');
 
         const sampleRate = audioBuffer.sampleRate;
         const startSample = Math.floor(startTime * sampleRate);
@@ -94,7 +92,6 @@ class SpectralDenoiser {
         // Analyze noise type
         this.analyzeNoiseType(profile);
 
-        console.log('✅ Noise profile learned from', duration, 'seconds of audio');
         return profile;
     }
 
@@ -124,19 +121,19 @@ class SpectralDenoiser {
         // Detect noise types
         if (highFreqEnergy > 30) {
             this.noiseTypes.hiss.enabled = true;
-            console.log('   🔊 Hiss detected (high frequency noise)');
+
         }
 
         if (lowFreqPeaks > 3) {
             this.noiseTypes.hum.enabled = true;
-            console.log('   🔊 Hum detected (mains hum / low frequency)');
+
         }
 
         // Broadband noise detection (overall noise floor)
         const avgEnergy = profile.reduce((a, b) => a + b, 0) / binCount;
         if (avgEnergy > 20) {
             this.noiseTypes.broadband.enabled = true;
-            console.log('   🔊 Broadband noise detected');
+
         }
     }
 
@@ -145,11 +142,9 @@ class SpectralDenoiser {
      */
     async process(audioBuffer) {
         if (!this.isActive || !this.noiseProfile) {
-            console.log('⚠️  De-noiser not active or no noise profile learned');
+
             return audioBuffer;
         }
-
-        console.log('🎛️ Applying spectral de-noising...');
 
         const sampleRate = audioBuffer.sampleRate;
         const duration = audioBuffer.duration;
@@ -176,7 +171,7 @@ class SpectralDenoiser {
             humFilter.Q.value = 0.7;
             processedNode.connect(humFilter);
             processedNode = humFilter;
-            console.log('   ✂️ Hum filter applied (highpass @ 80Hz)');
+
         }
 
         // Low-pass filter for hiss removal
@@ -187,7 +182,7 @@ class SpectralDenoiser {
             hissFilter.Q.value = 0.7;
             processedNode.connect(hissFilter);
             processedNode = hissFilter;
-            console.log('   ✂️ Hiss filter applied (lowpass @', hissFilter.frequency.value, 'Hz)');
+
         }
 
         // Broadband noise gate
@@ -200,7 +195,7 @@ class SpectralDenoiser {
             compressor.release.value = 0.1;
             processedNode.connect(compressor);
             processedNode = compressor;
-            console.log('   🎚️ Noise gate applied (threshold:', this.threshold, 'dB)');
+
         }
 
         // Click and crackle removal (simple implementation)
@@ -214,7 +209,7 @@ class SpectralDenoiser {
             clickSuppressor.release.value = 0.01;  // 10ms
             processedNode.connect(clickSuppressor);
             processedNode = clickSuppressor;
-            console.log('   ⚡ Click removal applied');
+
         }
 
         // Connect to destination
@@ -224,7 +219,6 @@ class SpectralDenoiser {
         source.start(0);
         const renderedBuffer = await offlineContext.startRendering();
 
-        console.log('✅ De-noising complete');
         return renderedBuffer;
     }
 
@@ -234,7 +228,7 @@ class SpectralDenoiser {
     setNoiseReduction(noiseType, amount) {
         if (this.noiseTypes[noiseType]) {
             this.noiseTypes[noiseType].reduction = Math.max(0, Math.min(100, amount));
-            console.log(`🎚️ ${noiseType} reduction:`, amount, '%');
+
         }
     }
 
@@ -244,7 +238,7 @@ class SpectralDenoiser {
     setNoiseTypeEnabled(noiseType, enabled) {
         if (this.noiseTypes[noiseType]) {
             this.noiseTypes[noiseType].enabled = enabled;
-            console.log(`${enabled ? '✅' : '❌'} ${noiseType} processing:`, enabled ? 'ON' : 'OFF');
+
         }
     }
 
@@ -253,14 +247,13 @@ class SpectralDenoiser {
      */
     setThreshold(thresholdDB) {
         this.threshold = Math.max(-60, Math.min(0, thresholdDB));
-        console.log('🎚️ Noise gate threshold:', this.threshold, 'dB');
+
     }
 
     /**
      * Apply preset
      */
     applyPreset(presetName) {
-        console.log('🎛️ Applying de-noise preset:', presetName);
 
         switch(presetName.toLowerCase()) {
             case 'gentle':
@@ -324,7 +317,7 @@ class SpectralDenoiser {
             this.noiseTypes[type].reduction = 50;
         });
         this.threshold = -40;
-        console.log('✅ Spectral De-noiser reset');
+
     }
 
     /**
@@ -332,7 +325,7 @@ class SpectralDenoiser {
      */
     setActive(active) {
         this.isActive = active;
-        console.log(active ? '✅ De-noiser: ACTIVE' : '⏸️ De-noiser: BYPASSED');
+
     }
 
     /**

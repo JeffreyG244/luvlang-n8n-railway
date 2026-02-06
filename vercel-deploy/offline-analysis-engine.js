@@ -17,9 +17,6 @@
  * @returns {Promise<Object>} Actual measured LUFS, True Peak, etc.
  */
 async function simulateMasteringPass(sourceBuffer, processingSettings) {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎯 OFFLINE ANALYSIS: Measuring TRUE Post-Processing Values');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     const startTime = performance.now();
 
@@ -32,9 +29,6 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
     const sliceStart = Math.max(0, duration * 0.4);
     const sliceDuration = Math.min(5, duration - sliceStart);
     const sliceLength = Math.floor(sliceDuration * sampleRate);
-
-    console.log(`   Source: ${duration.toFixed(1)}s @ ${sampleRate}Hz`);
-    console.log(`   Analyzing: ${sliceDuration.toFixed(1)}s slice from ${sliceStart.toFixed(1)}s`);
 
     // Create offline context
     const offlineContext = new OfflineAudioContext(
@@ -59,7 +53,7 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
         gainNode.gain.value = Math.pow(10, processingSettings.makeupGainDB / 20);
         currentNode.connect(gainNode);
         currentNode = gainNode;
-        console.log(`   ✓ Makeup Gain: ${processingSettings.makeupGainDB.toFixed(2)} dB`);
+
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -72,7 +66,7 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
             currentNode.connect(node);
             currentNode = node;
         });
-        console.log('   ✓ EQ: 7-band parametric');
+
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -88,7 +82,7 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
         comp.release.value = processingSettings.compressor.release || 0.25;
         currentNode.connect(comp);
         currentNode = comp;
-        console.log(`   ✓ Compressor: ${comp.ratio.value}:1 @ ${comp.threshold.value} dB`);
+
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -105,20 +99,19 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
         limiter.release.value = 0.1; // 100ms (prevent pumping)
         currentNode.connect(limiter);
         currentNode = limiter;
-        console.log(`   ✓ Limiter: ${limiter.threshold.value} dB (brick-wall)`);
+
     }
 
     // Connect to destination
     currentNode.connect(offlineContext.destination);
 
     // Start rendering
-    console.log('   ⏳ Rendering through processing chain...');
+
     source.start(0, sliceStart, sliceDuration);
 
     const renderedBuffer = await offlineContext.startRendering();
 
     const renderTime = performance.now() - startTime;
-    console.log(`   ✓ Rendered in ${renderTime.toFixed(0)}ms`);
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // STAGE 5: MEASURE ACTUAL OUTPUT
@@ -126,23 +119,12 @@ async function simulateMasteringPass(sourceBuffer, processingSettings) {
 
     const analysis = await measureRenderedBuffer(renderedBuffer);
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✅ ACTUAL POST-PROCESSING MEASUREMENTS:');
-    console.log(`   Integrated LUFS: ${analysis.integratedLUFS.toFixed(2)} LUFS`);
-    console.log(`   True Peak: ${analysis.truePeakDB.toFixed(2)} dBTP`);
-    console.log(`   Sample Peak: ${(20 * Math.log10(analysis.maxPeak)).toFixed(2)} dB`);
-    console.log(`   Loudness Range: ${analysis.lra.toFixed(1)} LU`);
-    console.log(`   Crest Factor: ${analysis.crestFactor.toFixed(1)} dB`);
-
     // Compare to target
     if (processingSettings.targetLUFS) {
         const error = Math.abs(analysis.integratedLUFS - processingSettings.targetLUFS);
         const accuracy = error <= 0.5 ? '✅ ON TARGET' : `⚠️  ${error.toFixed(1)} dB off`;
-        console.log(`   Target: ${processingSettings.targetLUFS.toFixed(1)} LUFS → ${accuracy}`);
-    }
 
-    console.log(`   Total Time: ${(performance.now() - startTime).toFixed(0)}ms`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
 
     return analysis;
 }

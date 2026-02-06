@@ -154,7 +154,7 @@ window.AdvancedLimiter = class AdvancedLimiter {
         if (this.modeParams[mode]) {
             this.mode = mode;
             this.updateMode(mode);
-            console.log(`🎚️ Limiter mode: ${mode.toUpperCase()}`);
+
         }
     }
 
@@ -577,10 +577,10 @@ class ABComparison {
     updateRouting() {
         if (this.currentState === 'A') {
             // Processed signal
-            console.log('🔊 A/B: Listening to PROCESSED (A)');
+
         } else {
             // Bypass signal
-            console.log('🔇 A/B: Listening to BYPASS (B)');
+
         }
 
         // Dispatch event for UI update
@@ -946,7 +946,7 @@ window.LinearPhaseEQ = class LinearPhaseEQ {
         this.enabled = enable;
         // Note: True linear phase requires convolution with pre-computed IR
         // This is a placeholder - full implementation would compute IR from EQ curve
-        console.log(`Linear Phase EQ: ${enable ? 'ENABLED' : 'DISABLED'}`);
+
     }
 
     connect(destination) {
@@ -988,7 +988,7 @@ class AdvancedMasteringEngine {
         // Wait for async processors
         await new Promise(resolve => setTimeout(resolve, 500));
         this.isInitialized = true;
-        console.log('✅ Advanced Mastering Engine initialized');
+
     }
 
     // Limiter controls
@@ -1067,6 +1067,3 @@ if (typeof LoudnessHistory !== 'undefined') window.LoudnessHistory = LoudnessHis
 if (typeof Spectrogram !== 'undefined') window.Spectrogram = Spectrogram;
 if (typeof LinearPhaseEQ !== 'undefined') window.LinearPhaseEQ = LinearPhaseEQ;
 
-console.log('🎚️ ADVANCED_MASTERING_ENGINE.js loaded');
-console.log('   Features: IRC Limiter, Upward Compression, Unlimiter, Soft Clipper');
-console.log('   Visualization: Loudness History, Spectrogram, A/B Comparison');

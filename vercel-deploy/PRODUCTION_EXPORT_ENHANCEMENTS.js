@@ -89,14 +89,9 @@
 
             // If no significant trimming needed (< 10ms), return original
             if (analysis.startSample < 441 && (buffer.length - analysis.endSample) < 441) {
-                console.log('✓ No significant silence detected, skipping trim');
+
                 return buffer;
             }
-
-            console.log(`✂️ Trimming silence:`);
-            console.log(`   Start: ${analysis.trimmedStart}s removed`);
-            console.log(`   End: ${analysis.trimmedEnd}s removed`);
-            console.log(`   New duration: ${analysis.trimmedDuration.toFixed(3)}s`);
 
             // Create trimmed buffer
             const trimmedLength = analysis.trimmedLength;
@@ -398,16 +393,13 @@
         } = options;
 
         if (!window.audioBuffer) {
-            alert('Please upload an audio file first');
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Please upload an audio file first'):void 0);
             return;
         }
 
         const progress = showProgress ? new RenderingProgressBar() : null;
 
         try {
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('🎬 STARTING PRODUCTION EXPORT');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
             if (progress) {
                 progress.show(audioBuffer.duration);
@@ -470,19 +462,12 @@
                 setTimeout(() => progress.hide(), 1000);
             }
 
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('✅ PRODUCTION EXPORT COMPLETE');
-            console.log('   ✓ Tail-trim applied');
-            console.log('   ✓ Dither applied');
-            console.log('   ✓ Metadata injected');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-            alert('Export complete!\n\n✓ Professional tail-trim\n✓ Triangular dither\n✓ Metadata tags');
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Export complete!\n\n✓ Professional tail-trim\n✓ Triangular dither\n✓ Metadata tags'):void 0);
 
         } catch (error) {
             console.error('❌ Export error:', error);
             if (progress) progress.hide();
-            alert('Export failed: ' + error.message);
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Export failed: ' + error.message):void 0);
         }
     };
 
@@ -506,7 +491,5 @@
     window.TailTrimProcessor = TailTrimProcessor;
     window.WAVMetadataInjector = WAVMetadataInjector;
     window.RenderingProgressBar = RenderingProgressBar;
-
-    console.log('✅ Production Export Enhancements loaded');
 
 })();

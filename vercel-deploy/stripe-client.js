@@ -43,11 +43,9 @@ async function initializeStripe() {
         // Initialize Stripe with publishable key
         stripe = Stripe(publishableKey);
 
-        console.log('✅ Stripe client initialized');
-
         // Log mode (test vs live)
         if (typeof LUVLANG_CONFIG !== 'undefined') {
-            console.log(`💳 Stripe mode: ${LUVLANG_CONFIG.isProduction ? 'LIVE' : 'TEST'}`);
+
         }
 
         return true;
@@ -186,8 +184,7 @@ async function createCheckoutSession(tierSlug, sessionData = {}) {
     const isDemoMode = typeof LUVLANG_CONFIG !== 'undefined' && LUVLANG_CONFIG.features?.demoMode;
 
     if (isDemoMode) {
-        console.log('🧪 DEMO MODE: Simulating payment for development');
-        console.log('Purchase data:', currentPurchaseData);
+
         localStorage.setItem('pendingPurchase', JSON.stringify(currentPurchaseData));
 
         return {
@@ -209,8 +206,6 @@ async function createCheckoutSession(tierSlug, sessionData = {}) {
 
         // Store pending purchase before redirect
         localStorage.setItem('pendingPurchase', JSON.stringify(currentPurchaseData));
-
-        console.log(`💳 Creating Stripe Checkout for ${tier.name} tier ($${tier.price})`);
 
         // Call backend to create checkout session
         const apiUrl = getApiBaseUrl();
@@ -238,8 +233,6 @@ async function createCheckoutSession(tierSlug, sessionData = {}) {
         if (!result.success) {
             throw new Error(result.error || 'Failed to create checkout session');
         }
-
-        console.log('✅ Checkout session created:', result.sessionId);
 
         // Redirect to Stripe Checkout
         if (result.url) {
@@ -301,8 +294,6 @@ async function handlePaymentSuccess(sessionId) {
                 throw new Error('Payment verification failed');
             }
 
-            console.log('✅ Payment verified:', verification);
-
             // Update purchase data with verified info
             if (purchaseData) {
                 purchaseData.verified = true;
@@ -356,10 +347,10 @@ async function handlePaymentSuccess(sessionId) {
                         if (error) {
                             console.error('❌ Failed to save purchase:', error);
                         } else {
-                            console.log('✅ Purchase saved to database:', purchase.id);
+
                         }
                     } else {
-                        console.log('ℹ️ Purchase already recorded by webhook');
+
                     }
                 }
             }
@@ -368,7 +359,6 @@ async function handlePaymentSuccess(sessionId) {
         // Clear pending purchase
         localStorage.removeItem('pendingPurchase');
 
-        console.log('✅ Payment successful!');
         return {
             success: true,
             purchase: purchaseData,
@@ -598,14 +588,12 @@ function closePaymentModal() {
 async function handleTierPurchase(tierSlug, sessionData) {
     const tier = MASTERING_TIERS[tierSlug];
 
-    console.log(`💳 Initiating purchase for ${tier.name} tier ($${tier.price})`);
-
     // Check if user is logged in
     if (typeof supabase !== 'undefined' && supabase) {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
-            alert('Please sign in to purchase. Your mastering session will be saved.');
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Please sign in to purchase. Your mastering session will be saved.'):void 0);
             // Trigger sign-in modal if available
             if (typeof showAuthModal === 'function') {
                 showAuthModal('signin');
@@ -629,7 +617,7 @@ async function handleTierPurchase(tierSlug, sessionData) {
         if (result.success) {
             if (result.demoMode) {
                 // Demo mode: simulate successful purchase
-                alert(`🧪 DEMO MODE\n\n${tier.name} tier for $${tier.price}\n\nIn production, this redirects to Stripe Checkout.\nYour download is now enabled for testing.`);
+                (typeof showLuvLangToast==='function'?showLuvLangToast(`🧪 DEMO MODE\n\n${tier.name} tier for $${tier.price}\n\nIn production, this redirects to Stripe Checkout.\nYour download is now enabled for testing.`):void 0);
 
                 // Simulate successful payment and enable download
                 if (typeof enableDownload === 'function') {
@@ -649,7 +637,7 @@ async function handleTierPurchase(tierSlug, sessionData) {
         }
     } catch (error) {
         console.error('❌ Purchase failed:', error);
-        alert('Payment failed: ' + error.message);
+        (typeof showLuvLangToast==='function'?showLuvLangToast('Payment failed: ' + error.message):void 0);
 
         // Reset button
         if (btn) {

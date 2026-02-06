@@ -30,7 +30,6 @@ class ReferenceTrackMatcher {
         this.dynamicsMatch = null;
         this.loudnessMatch = null;
 
-        console.log('[Reference Matcher] Initialized');
     }
 
     /**
@@ -59,14 +58,8 @@ class ReferenceTrackMatcher {
      * @param {AudioBuffer} referenceBuffer - Commercial reference track
      */
     async analyzeReference(referenceBuffer) {
-        console.log('[Reference Matcher] Analyzing reference track...');
 
         this.referenceAnalysis = await this.analyzeTrack(referenceBuffer);
-
-        console.log('[Reference Matcher] Reference analysis complete');
-        console.log('  - LUFS:', this.referenceAnalysis.integratedLUFS.toFixed(1));
-        console.log('  - Dynamic Range:', this.referenceAnalysis.dynamicRange.toFixed(1), 'dB');
-        console.log('  - Crest Factor:', this.referenceAnalysis.crestFactor.toFixed(1), 'dB');
 
         return this.referenceAnalysis;
     }
@@ -76,14 +69,8 @@ class ReferenceTrackMatcher {
      * @param {AudioBuffer} targetBuffer - Your track to be matched
      */
     async analyzeTarget(targetBuffer) {
-        console.log('[Reference Matcher] Analyzing target track...');
 
         this.targetAnalysis = await this.analyzeTrack(targetBuffer);
-
-        console.log('[Reference Matcher] Target analysis complete');
-        console.log('  - LUFS:', this.targetAnalysis.integratedLUFS.toFixed(1));
-        console.log('  - Dynamic Range:', this.targetAnalysis.dynamicRange.toFixed(1), 'dB');
-        console.log('  - Crest Factor:', this.targetAnalysis.crestFactor.toFixed(1), 'dB');
 
         return this.targetAnalysis;
     }
@@ -324,8 +311,6 @@ class ReferenceTrackMatcher {
             return null;
         }
 
-        console.log('[Reference Matcher] Generating matching EQ curve...');
-
         const eqCurve = [];
         const refBands = this.referenceAnalysis.bandLevels;
         const targetBands = this.targetAnalysis.bandLevels;
@@ -347,8 +332,6 @@ class ReferenceTrackMatcher {
 
         // Apply smoothing to avoid harsh transitions
         this.eqCurve = this.smoothEQCurve(eqCurve);
-
-        console.log('[Reference Matcher] EQ curve generated with', this.eqCurve.length, 'bands');
 
         return this.eqCurve;
     }
@@ -503,7 +486,6 @@ class ReferenceTrackMatcher {
      * @returns {Promise<Object>} Analysis results
      */
     async loadReferenceTrack(file) {
-        console.log('[Reference Matcher] Loading reference file:', file.name);
 
         try {
             // Read file as ArrayBuffer
@@ -511,12 +493,6 @@ class ReferenceTrackMatcher {
 
             // Decode audio data
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-
-            console.log('[Reference Matcher] Reference decoded:', {
-                duration: audioBuffer.duration.toFixed(2) + 's',
-                sampleRate: audioBuffer.sampleRate + 'Hz',
-                channels: audioBuffer.numberOfChannels
-            });
 
             // Store the reference buffer for later use
             this.referenceBuffer = audioBuffer;
@@ -561,9 +537,6 @@ class ReferenceTrackMatcher {
             this.applyLoudnessAdjustment(report.loudness.adjustment);
         }
 
-        console.log('[Reference Matcher] Match applied at', (strength * 100).toFixed(0) + '% strength');
-        console.log('[Reference Matcher] Report:', report);
-
         return report;
     }
 
@@ -598,12 +571,11 @@ class ReferenceTrackMatcher {
 
                 if (filter && filter.gain) {
                     filter.gain.setTargetAtTime(clampedGain, ac.currentTime, 0.1);
-                    console.log(`[Reference Matcher] ${band}: ${clampedGain.toFixed(1)}dB`);
+
                 }
             }
         }
 
-        console.log('[Reference Matcher] EQ curve applied to processing chain');
     }
 
     /**
@@ -623,7 +595,6 @@ class ReferenceTrackMatcher {
 
         window.makeupGain.gain.setTargetAtTime(newGain, ac.currentTime, 0.1);
 
-        console.log('[Reference Matcher] Loudness adjusted by', clampedAdj.toFixed(1), 'dB');
     }
 
     /**
@@ -631,7 +602,7 @@ class ReferenceTrackMatcher {
      */
     setMatchStrength(strength) {
         this.matchStrength = Math.max(0, Math.min(1, strength));
-        console.log('[Reference Matcher] Match strength:', this.matchStrength);
+
     }
 
     /**
@@ -639,7 +610,7 @@ class ReferenceTrackMatcher {
      */
     setSmoothing(smoothing) {
         this.smoothing = Math.max(0, Math.min(1, smoothing));
-        console.log('[Reference Matcher] Smoothing:', this.smoothing);
+
     }
 
     /**
@@ -648,7 +619,7 @@ class ReferenceTrackMatcher {
     clearReference() {
         this.referenceAnalysis = null;
         this.eqCurve = null;
-        console.log('[Reference Matcher] Reference cleared');
+
     }
 
     /**
@@ -657,7 +628,7 @@ class ReferenceTrackMatcher {
     clearTarget() {
         this.targetAnalysis = null;
         this.eqCurve = null;
-        console.log('[Reference Matcher] Target cleared');
+
     }
 
     /**

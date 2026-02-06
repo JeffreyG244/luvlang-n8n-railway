@@ -36,7 +36,6 @@ class LinearPhaseEQ {
         // Latency compensation
         this.latencySamples = this.fftSize;
 
-        console.log('[Linear Phase EQ] Initialized with FFT size:', this.fftSize);
     }
 
     /**
@@ -65,7 +64,6 @@ class LinearPhaseEQ {
             }
         }
 
-        console.log('[Linear Phase EQ] Filter response updated');
     }
 
     /**
@@ -115,7 +113,6 @@ class LinearPhaseEQ {
      * @returns {Promise<AudioBuffer>} Processed audio
      */
     async processBuffer(inputBuffer) {
-        console.log('[Linear Phase EQ] Processing buffer...');
 
         // Update filter response before processing
         this.updateFilterResponse();
@@ -142,7 +139,6 @@ class LinearPhaseEQ {
             }
         }
 
-        console.log('[Linear Phase EQ] Processing complete');
         return outputBuffer;
     }
 
@@ -398,7 +394,7 @@ class LinearPhaseEQ {
     setBandGain(bandIndex, gainDB) {
         if (bandIndex < 0 || bandIndex >= this.bands.length) return;
         this.bands[bandIndex].gain = gainDB;
-        console.log(`[Linear Phase EQ] Band ${bandIndex + 1} gain = ${gainDB} dB`);
+
     }
 
     /**
@@ -407,7 +403,7 @@ class LinearPhaseEQ {
     setBandFrequency(bandIndex, frequency) {
         if (bandIndex < 0 || bandIndex >= this.bands.length) return;
         this.bands[bandIndex].frequency = frequency;
-        console.log(`[Linear Phase EQ] Band ${bandIndex + 1} freq = ${frequency} Hz`);
+
     }
 
     /**
@@ -416,7 +412,7 @@ class LinearPhaseEQ {
     setBandQ(bandIndex, q) {
         if (bandIndex < 0 || bandIndex >= this.bands.length) return;
         this.bands[bandIndex].q = q;
-        console.log(`[Linear Phase EQ] Band ${bandIndex + 1} Q = ${q}`);
+
     }
 
     /**
@@ -425,7 +421,7 @@ class LinearPhaseEQ {
     setBandEnabled(bandIndex, enabled) {
         if (bandIndex < 0 || bandIndex >= this.bands.length) return;
         this.bands[bandIndex].enabled = enabled;
-        console.log(`[Linear Phase EQ] Band ${bandIndex + 1} ${enabled ? 'enabled' : 'disabled'}`);
+
     }
 
     /**
@@ -434,7 +430,7 @@ class LinearPhaseEQ {
     setMode(mode) {
         if (['stereo', 'mid', 'side', 'mid-side'].includes(mode)) {
             this.mode = mode;
-            console.log(`[Linear Phase EQ] Mode = ${mode}`);
+
         }
     }
 

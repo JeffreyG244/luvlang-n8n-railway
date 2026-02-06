@@ -3,11 +3,8 @@
  * Connects the new visualization engine to the existing audio processing
  */
 
-console.log('🎨 Initializing ULTIMATE VISUALS...');
-
 // Wait for DOM and audio context to be ready
 function initializeUltimateVisuals() {
-    console.log('🎨 Setting up ultimate visualizations...');
 
     // Get canvas elements
     const eqCanvas = document.getElementById('eq-graph-canvas') || document.getElementById('eqGraphCanvas');
@@ -30,8 +27,6 @@ function initializeUltimateVisuals() {
 
             // Start visualization
             window.ultimateEQViz.start();
-
-            console.log('✅ Ultimate EQ Visualizer initialized and started');
 
             // Update EQ bands when they change
             window.updateEQVisualization = function() {
@@ -70,15 +65,13 @@ function initializeUltimateVisuals() {
                 waveformPlayhead.id
             );
 
-            console.log('✅ Ultimate Waveform Visualizer initialized');
-
             // Update waveform when audio is loaded
             window.loadWaveformVisualization = async function(audioBuffer) {
                 if (!window.ultimateWaveformViz) return;
 
                 try {
                     await window.ultimateWaveformViz.loadAudio(audioBuffer);
-                    console.log('✅ Waveform visualization loaded');
+
                 } catch (error) {
                     console.error('❌ Error loading waveform:', error);
                 }
@@ -125,7 +118,7 @@ if (typeof originalSetupWebAudio === 'function') {
 window.addEventListener('load', () => {
     setTimeout(() => {
         if (!window.ultimateEQViz || !window.ultimateWaveformViz) {
-            console.log('🎨 Attempting late visual initialization...');
+
             initializeUltimateVisuals();
         }
     }, 1000);
@@ -150,4 +143,3 @@ if (typeof originalHandleFile === 'function') {
     };
 }
 
-console.log('✅ ULTIMATE VISUALS INIT loaded - waiting for audio context');

@@ -26,7 +26,7 @@ class StemMasteringEngine {
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
             this.stemBuffers[stemType] = audioBuffer;
-            console.log(`✅ Loaded ${stemType} stem: ${audioBuffer.duration.toFixed(2)}s, ${audioBuffer.numberOfChannels} channels`);
+
             return {
                 success: true,
                 duration: audioBuffer.duration,
@@ -111,7 +111,7 @@ class StemMasteringEngine {
         processor.gain.gain.value = Math.pow(10, (settings.volume || 0) / 20);
 
         this.stemProcessors[stemType] = processor;
-        console.log(`✅ Created ${stemType} processor:`, settings);
+
         return processor;
     }
 
@@ -198,7 +198,6 @@ class StemMasteringEngine {
         masterLimiter.connect(this.audioContext.destination);
 
         this.isPlaying = true;
-        console.log(`✅ Playing ${loadedStems.length} stems together with mastering`);
 
         return { success: true, stemsPlaying: loadedStems.length };
     }
@@ -214,7 +213,7 @@ class StemMasteringEngine {
         }
         this.stemSources = {};
         this.isPlaying = false;
-        console.log('⏹️ Stopped stem playback');
+
     }
 
     // Render stems to single file (offline rendering)
@@ -288,9 +287,7 @@ class StemMasteringEngine {
         masterCompressor.connect(masterLimiter);
         masterLimiter.connect(offlineContext.destination);
 
-        console.log(`🎬 Rendering ${loadedStems.length} stems offline...`);
         const renderedBuffer = await offlineContext.startRendering();
-        console.log(`✅ Stem rendering complete: ${renderedBuffer.duration.toFixed(2)}s`);
 
         return renderedBuffer;
     }
@@ -313,7 +310,7 @@ class StemMasteringEngine {
         this.stopStems();
         this.stemBuffers = {};
         this.stemProcessors = {};
-        console.log('🗑️ Cleared all stems');
+
     }
 }
 

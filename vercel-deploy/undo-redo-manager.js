@@ -10,8 +10,6 @@ class UndoRedoManager {
         this.maxHistorySize = 50; // Limit to prevent memory issues
         this.enabled = true;
 
-        console.log('✅ Undo/Redo Manager initialized');
-        console.log(`  📚 History size limit: ${this.maxHistorySize} states`);
     }
 
     /**
@@ -44,7 +42,6 @@ class UndoRedoManager {
             this.currentIndex--;
         }
 
-        console.log(`💾 State saved: "${actionDescription}" (${this.currentIndex + 1}/${this.history.length})`);
     }
 
     /**
@@ -59,7 +56,6 @@ class UndoRedoManager {
         this.currentIndex--;
         const entry = this.history[this.currentIndex];
 
-        console.log(`↶ Undo: "${entry.description}" (${this.currentIndex + 1}/${this.history.length})`);
         return entry.state;
     }
 
@@ -75,7 +71,6 @@ class UndoRedoManager {
         this.currentIndex++;
         const entry = this.history[this.currentIndex];
 
-        console.log(`↷ Redo: "${entry.description}" (${this.currentIndex + 1}/${this.history.length})`);
         return entry.state;
     }
 
@@ -109,7 +104,7 @@ class UndoRedoManager {
     clearHistory() {
         this.history = [];
         this.currentIndex = -1;
-        console.log('🗑️ History cleared');
+
     }
 
     /**
@@ -136,7 +131,6 @@ class UndoRedoManager {
         this.currentIndex = index;
         const entry = this.history[index];
 
-        console.log(`⏭️ Jumped to: "${entry.description}" (${index + 1}/${this.history.length})`);
         return entry.state;
     }
 
@@ -145,7 +139,7 @@ class UndoRedoManager {
      */
     setEnabled(enabled) {
         this.enabled = enabled;
-        console.log(enabled ? '✅ Undo/Redo enabled' : '⏸️ Undo/Redo disabled');
+
     }
 
     /**

@@ -42,7 +42,6 @@
             const safeTarget = Math.max(0.0001, targetValue);
             param.exponentialRampToValueAtTime(safeTarget, now + rampTime);
 
-            console.log(`🎚️ Safe ramp: ${param.value.toFixed(4)} → ${targetValue.toFixed(4)} (${rampTimeMS}ms)`);
         }
 
         /**
@@ -102,7 +101,7 @@
             // Log extreme cases
             if (Math.abs(spectralDiff) > 10.0) {
                 console.warn(`⚠️ Extreme spectral difference: ${spectralDiff.toFixed(1)} dB`);
-                console.log(`   → Damped to: ${dampedMove.toFixed(1)} dB (safe)`);
+
             }
 
             return dampedMove;
@@ -228,7 +227,7 @@
 
             if (!isValid) {
                 console.warn(`⚠️ Target ${targetLUFS} LUFS is outside safe range for ${genre}`);
-                console.log(`   Recommended: ${range.min} to ${range.max} LUFS (ideal: ${range.ideal})`);
+
             }
 
             return isValid;
@@ -255,7 +254,7 @@
 
             // Adjust for high dynamic content
             if (currentLRA > 15) {
-                console.log(`📊 High dynamics detected (LRA: ${currentLRA}), using conservative target`);
+
                 target = Math.min(target, -14.0); // Never exceed -14 LUFS for dynamic content
             }
 
@@ -361,10 +360,5 @@
     window.DampingEnforcer = DampingEnforcer;
     window.LUFSSafetyGate = LUFSSafetyGate;
     window.AISafetyOrchestrator = AISafetyOrchestrator;
-
-    console.log('✅ AI Safety Gates loaded');
-    console.log('   ✓ Gain ramping (30ms exponential)');
-    console.log('   ✓ Damping enforcement (70% factor)');
-    console.log('   ✓ LUFS safety (-1.0 dBTP ceiling)');
 
 })();

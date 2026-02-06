@@ -12,18 +12,15 @@ let supabaseClient = null;
 let currentUser = null;
 
 // DEBUG: Log OAuth state immediately on script load
-console.log('🔍 SUPABASE-CLIENT LOADING...');
-console.log('🔍 Current URL:', window.location.href);
-console.log('🔍 Hash:', window.location.hash ? 'HAS HASH' : 'NO HASH');
-console.log('🔍 Search:', window.location.search ? 'HAS SEARCH' : 'NO SEARCH');
+
 if (window.location.hash.includes('access_token')) {
-    console.log('✅ OAuth access_token DETECTED in URL hash!');
+
 }
 if (window.location.search.includes('code=')) {
-    console.log('✅ OAuth code DETECTED in URL search!');
+
 }
 if (window.location.hash.includes('error')) {
-    console.log('❌ OAuth ERROR detected in URL:', window.location.hash);
+
 }
 
 // Make supabase client available globally for payment integration
@@ -43,7 +40,7 @@ let isInitializing = false;
 async function initializeSupabase() {
     // Prevent multiple simultaneous initializations
     if (isInitializing) {
-        console.log('⏳ Supabase initialization already in progress...');
+
         // Wait for initialization to complete
         return new Promise((resolve) => {
             const checkInit = setInterval(() => {
@@ -56,7 +53,7 @@ async function initializeSupabase() {
     }
 
     if (isInitialized && supabaseClient) {
-        console.log('✅ Supabase already initialized');
+
         return true;
     }
 
@@ -90,14 +87,13 @@ async function initializeSupabase() {
         // Make globally available
         window.supabaseClient = supabaseClient;
 
-        console.log('✅ Supabase client initialized');
         isInitialized = true;
 
         // Check if we're in an OAuth callback and set up timeout
         const isOAuthCallback = window.location.hash.includes('access_token') ||
                                 window.location.search.includes('code=');
         if (isOAuthCallback) {
-            console.log('🔐 OAuth callback detected - setting up 10s timeout');
+
             // Safety timeout: if OAuth doesn't complete in 10 seconds, show error
             setTimeout(() => {
                 if (!currentUser) {
@@ -113,12 +109,10 @@ async function initializeSupabase() {
         // This handles: initial session, OAuth callbacks, sign in, sign out
         const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
             async (event, session) => {
-                console.log('🔐 Auth event:', event, session ? '(has session)' : '(no session)');
 
                 if (event === 'SIGNED_IN' && session) {
                     currentUser = session.user;
                     window.currentUser = currentUser;
-                    console.log('👤 Signed in:', currentUser.email);
 
                     // Clear OAuth flag and remove loading overlay
                     window.OAUTH_IN_PROGRESS = false;
@@ -130,12 +124,12 @@ async function initializeSupabase() {
 
                     if (isOAuthCallback) {
                         // Fresh sign-in from OAuth - proceed to language
-                        console.log('🧹 Cleaning OAuth tokens from URL');
+
                         window.history.replaceState({}, document.title, window.location.pathname);
                         updateUIForLoggedInUser();
                     } else {
                         // Returning user - just mark splash as post-login, don't auto-proceed
-                        console.log('👤 Returning signed-in user - staying on Master Me page');
+
                         const splash = document.getElementById('onboardingSplash');
                         if (splash) {
                             splash.setAttribute('data-post-login', 'true');
@@ -144,33 +138,31 @@ async function initializeSupabase() {
                 } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     window.currentUser = null;
-                    console.log('👤 Signed out');
+
                     updateUIForLoggedOutUser();
                 } else if (event === 'INITIAL_SESSION') {
                     if (session) {
                         currentUser = session.user;
                         window.currentUser = currentUser;
-                        console.log('👤 Initial session:', currentUser.email);
 
                         // Returning user with valid session
                         // DON'T auto-proceed - let Master Me page show, user clicks MASTER ME to continue
-                        console.log('👤 Returning user - Master Me page already showing');
 
                         // Mark splash as post-login so MASTER ME button goes to language
                         const splash = document.getElementById('onboardingSplash');
                         if (splash) {
                             splash.setAttribute('data-post-login', 'true');
-                            console.log('📍 Set data-post-login=true for returning user');
+
                         }
                     } else {
                         // Check if OAuth callback is in progress - tokens may still be processing
                         const isOAuthCallback = window.location.hash.includes('access_token') ||
                                                 window.location.search.includes('code=');
                         if (isOAuthCallback) {
-                            console.log('🔐 No session yet but OAuth callback detected - waiting for SIGNED_IN event...');
+
                             // Don't show landing page - wait for Supabase to process tokens
                         } else {
-                            console.log('👤 No initial session');
+
                             updateUIForLoggedOutUser();
                         }
                     }
@@ -228,8 +220,6 @@ async function signUp(email, password, displayName) {
 
         if (error) throw error;
 
-        console.log('✅ Sign up successful:', data.user.email);
-
         // Create user profile in database
         if (data.user) {
             await createUserProfile(data.user.id, email.toLowerCase().trim(), sanitizedName);
@@ -267,7 +257,6 @@ async function signIn(email, password) {
 
         if (error) throw error;
 
-        console.log('✅ Sign in successful:', data.user.email);
         currentUser = data.user;
         window.currentUser = currentUser;
 
@@ -285,17 +274,16 @@ async function signIn(email, password) {
  * This completely destroys the session and resets the client
  */
 async function signOut() {
-    console.log('🔐 NUCLEAR SIGN OUT - Destroying ALL session data...');
 
     // Call Supabase sign out FIRST while client is still valid
     if (supabaseClient && supabaseClient.auth) {
         try {
-            console.log('   Calling Supabase signOut with global scope...');
+
             const { error } = await supabaseClient.auth.signOut({ scope: 'global' });
             if (error) {
                 console.warn('⚠️ Supabase signOut warning:', error.message);
             } else {
-                console.log('✅ Supabase sign out API call successful');
+
             }
         } catch (error) {
             console.warn('⚠️ Supabase signOut error:', error.message);
@@ -323,13 +311,12 @@ async function signOut() {
         }
     }
     keysToRemove.forEach(key => {
-        console.log('   Nuking localStorage key:', key);
+
         localStorage.removeItem(key);
     });
 
     // Clear ALL session storage
     sessionStorage.clear();
-    console.log('   Cleared sessionStorage');
 
     // NUCLEAR: Destroy the Supabase client instance entirely
     // This forces a fresh client to be created on next use
@@ -337,9 +324,7 @@ async function signOut() {
     window.supabaseClient = null;
     isInitialized = false;
     isInitializing = false;
-    console.log('   Destroyed Supabase client instance');
 
-    console.log('✅ NUCLEAR SIGN OUT COMPLETE - All session data destroyed');
     return { success: true };
 }
 
@@ -362,7 +347,6 @@ async function createUserProfile(userId, email, displayName) {
 
         if (error) throw error;
 
-        console.log('✅ User profile created');
         return { success: true };
 
     } catch (error) {
@@ -397,7 +381,6 @@ async function savePreset(presetName, presetData) {
 
         if (error) throw error;
 
-        console.log('✅ Preset saved:', presetName);
         return { success: true };
 
     } catch (error) {
@@ -424,7 +407,6 @@ async function loadPresets() {
 
         if (error) throw error;
 
-        console.log(`✅ Loaded ${data.length} presets`);
         return { success: true, presets: data };
 
     } catch (error) {
@@ -460,7 +442,6 @@ async function saveMasteringHistory(sessionData) {
 
         if (error) throw error;
 
-        console.log('✅ Mastering session saved to history');
         return { success: true };
 
     } catch (error) {
@@ -488,7 +469,6 @@ async function loadMasteringHistory(limit = 10) {
 
         if (error) throw error;
 
-        console.log(`✅ Loaded ${data.length} history items`);
         return { success: true, history: data };
 
     } catch (error) {
@@ -670,8 +650,6 @@ async function applyTierRestrictions() {
     const subscription = await getUserSubscription();
     const features = subscription.features;
 
-    console.log(`🔐 Applying tier restrictions for: ${subscription.tier.toUpperCase()}`);
-
     // IRC Limiter
     const ircContainer = document.getElementById('limiterModeContainer');
     if (ircContainer) {
@@ -753,12 +731,10 @@ let uiUpdateInProgress = false;
 async function updateUIForLoggedInUser() {
     // Prevent duplicate calls (SIGNED_IN and INITIAL_SESSION can both fire)
     if (uiUpdateInProgress) {
-        console.log('⚠️ UI update already in progress, skipping duplicate');
+
         return;
     }
     uiUpdateInProgress = true;
-
-    console.log('✅ User logged in, updating UI...');
 
     // Store auth state
     sessionStorage.setItem('luvlang_authenticated', 'true');
@@ -847,13 +823,11 @@ function updateUIForLoggedOutUser() {
                             window.location.search.includes('code=');
 
     if (isOAuthCallback) {
-        console.log('🔐 OAuth callback in progress - NOT showing landing page, waiting for token processing...');
+
         // Don't clear state or show landing page during OAuth callback
         // Supabase will fire SIGNED_IN event once tokens are processed
         return;
     }
-
-    console.log('👤 User not logged in, showing landing page...');
 
     // Clear all auth and tour state
     sessionStorage.removeItem('luvlang_authenticated');
@@ -904,5 +878,3 @@ if (typeof window !== 'undefined') {
     window.currentUser = currentUser;
 }
 
-console.log('✅ Supabase client module loaded');
-console.log('   Subscription Tiers: Free, Pro ($9.99/mo), Legendary ($29.99/mo)');

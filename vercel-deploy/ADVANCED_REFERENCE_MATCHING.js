@@ -14,8 +14,6 @@
  * - Advanced spectral comparison visualization
  */
 
-console.log('🎵 Loading Advanced Reference Matching System...');
-
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ISO 31-BAND FREQUENCY STANDARD
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -79,7 +77,6 @@ const GENRE_TARGETS = {
  * @returns {Promise<Array<number>>} - 31-element array of dB values
  */
 async function analyzeSpectrum31Band(audioBuffer) {
-    console.log('🔬 Analyzing 31-band spectrum...');
 
     // Create offline context for analysis
     const offlineCtx = new OfflineAudioContext(
@@ -181,7 +178,6 @@ async function analyzeSpectrum31Band(audioBuffer) {
         return avgEnergy > 0 ? 20 * Math.log10(avgEnergy + 1e-10) : -100;
     });
 
-    console.log('✅ 31-band spectrum analysis complete');
     return avgSpectrum;
 }
 
@@ -241,20 +237,14 @@ function computeMagnitudeSpectrum(timeData) {
  * @param {number} matchStrength - Matching strength (0-1, default 0.7)
  */
 async function startReferenceMatching(userAudioBuffer, referenceBuffer, matchStrength = 0.7) {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🎯 STARTING ADVANCED REFERENCE MATCHING');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // STEP 1: Analyze both tracks (31-band spectrum)
-    console.log('📊 Step 1: Analyzing spectral profiles...');
+
     const userProfile = await analyzeSpectrum31Band(userAudioBuffer);
     const refProfile = await analyzeSpectrum31Band(referenceBuffer);
 
-    console.log('   User spectrum:', userProfile.map(v => v.toFixed(1)).join(', '));
-    console.log('   Reference spectrum:', refProfile.map(v => v.toFixed(1)).join(', '));
-
     // STEP 2: Calculate Smart Correction Curve
-    console.log('🎚️  Step 2: Calculating correction curve...');
+
     const matchCurve = ISO_31_BANDS.map((freq, i) => {
         let diff = refProfile[i] - userProfile[i];
 
@@ -266,37 +256,27 @@ async function startReferenceMatching(userAudioBuffer, referenceBuffer, matchStr
         const MAX_ADJUSTMENT = 5.0;
         dampenedMove = Math.max(-MAX_ADJUSTMENT, Math.min(MAX_ADJUSTMENT, dampenedMove));
 
-        console.log(`   ${freq}Hz: ${diff > 0 ? '+' : ''}${diff.toFixed(1)}dB diff → ${dampenedMove > 0 ? '+' : ''}${dampenedMove.toFixed(1)}dB applied`);
-
         return dampenedMove;
     });
 
     // STEP 3: Detect Genre and Apply Appropriate Targets
-    console.log('🎵 Step 3: Genre detection and targeting...');
+
     const genre = window.analysisResults?.genre || detectGenreFromBuffer(userAudioBuffer);
     const targets = GENRE_TARGETS[genre] || GENRE_TARGETS['Pop'];
 
-    console.log(`   Detected Genre: ${genre}`);
-    console.log(`   Target LUFS: ${targets.lufs} LUFS`);
-    console.log(`   Target LRA: ${targets.lra} dB`);
-    console.log(`   Strategy: ${targets.description}`);
-
     // STEP 4: Automate UI Sliders (Map 31 bands to 7-band EQ)
-    console.log('🎛️  Step 4: Automating EQ sliders...');
+
     applyEQAutomation(matchCurve);
 
     // STEP 5: Apply Final Loudness with -1.0 dBTP Ceiling
-    console.log('🔊 Step 5: Applying genre-specific loudness...');
+
     const currentLUFS = window.analysisResults?.integratedLUFS || -20;
     applyFinalLoudness(currentLUFS, targets.lufs, -1.0);
 
     // STEP 6: Render Spectral Comparison Canvas
-    console.log('📈 Step 6: Rendering spectral comparison...');
+
     drawSpectralComparison(userProfile, refProfile, matchCurve);
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✅ REFERENCE MATCHING COMPLETE');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
 /**
@@ -348,7 +328,6 @@ function updateEQSlider(sliderId, adjustment) {
     // Trigger input event to update audio nodes
     slider.dispatchEvent(new Event('input', { bubbles: true }));
 
-    console.log(`   ${sliderId}: ${currentValue.toFixed(1)}dB → ${newValue.toFixed(1)}dB (${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}dB)`);
 }
 
 /**
@@ -357,22 +336,17 @@ function updateEQSlider(sliderId, adjustment) {
 function applyFinalLoudness(currentLUFS, targetLUFS, ceiling = -1.0) {
     const lufsGainNeeded = targetLUFS - currentLUFS;
 
-    console.log(`   Current LUFS: ${currentLUFS.toFixed(1)} LUFS`);
-    console.log(`   Target LUFS: ${targetLUFS.toFixed(1)} LUFS`);
-    console.log(`   Gain needed: ${lufsGainNeeded > 0 ? '+' : ''}${lufsGainNeeded.toFixed(1)} dB`);
-    console.log(`   True-Peak Ceiling: ${ceiling.toFixed(1)} dBTP`);
-
     // Apply via makeupGain node (before limiter)
     if (window.makeupGain) {
         const linearGain = Math.pow(10, lufsGainNeeded / 20);
         window.makeupGain.gain.setValueAtTime(linearGain, audioContext.currentTime);
-        console.log(`   ✅ Applied ${lufsGainNeeded.toFixed(1)} dB to makeupGain`);
+
     }
 
     // Ensure limiter ceiling is set
     if (window.limiter) {
         window.limiter.threshold.value = ceiling;
-        console.log(`   ✅ Limiter ceiling set to ${ceiling.toFixed(1)} dBTP`);
+
     }
 }
 
@@ -495,7 +469,6 @@ function drawSpectralComparison(userProfile, refProfile, matchCurve) {
         ctx.fillText(freqLabels[i], x - 12, height - 5);
     });
 
-    console.log('✅ Spectral comparison rendered');
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -507,7 +480,3 @@ window.startReferenceMatching = startReferenceMatching;
 window.ISO_31_BANDS = ISO_31_BANDS;
 window.GENRE_TARGETS = GENRE_TARGETS;
 
-console.log('✅ Advanced Reference Matching System loaded');
-console.log('   31-band ISO standard analysis');
-console.log('   70% damping factor (±5dB limits)');
-console.log('   Genre-specific LUFS/LRA targeting');

@@ -41,7 +41,7 @@ class MSProcessor {
         this.currentTarget = 'stereo'; // 'mid', 'side', or 'stereo'
 
         this.setupMSEncoding();
-        console.log('✅ M/S Processor initialized');
+
     }
 
     /**
@@ -82,7 +82,6 @@ class MSProcessor {
         });
 
         currentNode.connect(chain.output);
-        console.log(`  ✓ ${label} EQ chain created (7 bands)`);
 
         return chain;
     }
@@ -143,7 +142,6 @@ class MSProcessor {
 
         this.merger.connect(this.output);
 
-        console.log('  ✓ M/S encoding/decoding topology configured');
     }
 
     /**
@@ -164,7 +162,7 @@ class MSProcessor {
         }
 
         filter.gain.value = dbValue;
-        console.log(`🎛️ ${target.toUpperCase()} EQ ${bandName}: ${dbValue.toFixed(1)} dB`);
+
     }
 
     /**
@@ -187,7 +185,6 @@ class MSProcessor {
         this.midGain.gain.value = midLevel;
         this.sideGain.gain.value = sideLevel;
 
-        console.log(`🔀 M/S Balance: Mid ${(midLevel * 100).toFixed(0)}%, Side ${(sideLevel * 100).toFixed(0)}%`);
     }
 
     /**
@@ -201,7 +198,6 @@ class MSProcessor {
         this.midGain.gain.value = 1.0;
         this.sideGain.gain.value = width;
 
-        console.log(`↔️ Stereo width: ${widthPercent.toFixed(0)}% (M/S mode)`);
     }
 
     /**
@@ -211,11 +207,11 @@ class MSProcessor {
         this.msMode = enabled;
 
         if (enabled) {
-            console.log('✅ M/S Mode ENABLED - Mid/Side processing active');
+
         } else {
             // Reset to neutral when disabled
             this.resetMSProcessing();
-            console.log('⏸️ M/S Mode DISABLED - Stereo processing');
+
         }
     }
 
@@ -237,7 +233,6 @@ class MSProcessor {
         this.midGain.gain.value = 1.0;
         this.sideGain.gain.value = 1.0;
 
-        console.log('🔄 M/S processing reset to neutral');
     }
 
     /**
@@ -287,7 +282,7 @@ class MSProcessor {
         });
 
         this.setMSMode(true);
-        console.log(`✅ Applied M/S preset: ${presetName}`);
+
     }
 
     /**
@@ -322,7 +317,7 @@ class MSProcessor {
      */
     connectInput(sourceNode) {
         sourceNode.connect(this.input);
-        console.log('🔌 Input connected to M/S processor');
+
     }
 
     /**

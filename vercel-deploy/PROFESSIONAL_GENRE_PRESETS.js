@@ -731,15 +731,9 @@
         const preset = window.PROFESSIONAL_PRESETS[genreName];
         if (!preset) {
             console.error('❌ Unknown genre preset:', genreName);
-            console.log('Available presets:', Object.keys(window.PROFESSIONAL_PRESETS).join(', '));
+
             return false;
         }
-
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`🎚️ Applying ${preset.name} preset...`);
-        console.log(`   Target LUFS: ${preset.targetLUFS}`);
-        console.log(`   Target LRA: ${preset.targetLRA}`);
-        console.log(`   True Peak Ceiling: ${preset.truePeakCeiling} dBTP`);
 
         // Apply EQ
         if (window.eqBands && preset.eq) {
@@ -753,7 +747,7 @@
                     band.filter.Q.value = setting.q;
                 }
             }
-            console.log('   ✅ EQ applied');
+
         }
 
         // Apply Multiband Compression
@@ -761,7 +755,7 @@
             for (const [bandName, settings] of Object.entries(preset.multiband)) {
                 window.multibandCompressor.setBandSettings(bandName, settings);
             }
-            console.log('   ✅ Multiband compression applied');
+
         }
 
         // Apply Bus Compression
@@ -772,26 +766,23 @@
             window.compressor.attack.value = comp.attack;
             window.compressor.release.value = comp.release;
             window.compressor.knee.value = comp.knee;
-            console.log('   ✅ Bus compression applied');
+
         }
 
         // Apply Limiter
         if (window.limiter && preset.limiter) {
             window.limiter.threshold.value = preset.limiter.threshold;
-            console.log('   ✅ Limiter applied');
+
         }
 
         // Apply Stereo Width
         if (window.stereoImager && preset.stereoWidth) {
             // Apply to stereo imager if available
-            console.log('   ✅ Stereo width configured');
+
         }
 
         // Store target values for AI processing
         window.currentPreset = preset;
-
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`✅ ${preset.name} preset applied successfully!`);
 
         return true;
     };
@@ -805,8 +796,6 @@
             console.warn('⚠️ No audio loaded for genre detection');
             return;
         }
-
-        console.log('🔍 Auto-detecting genre...');
 
         // Use SmartModeSelector if available
         if (window.aiSuite && window.aiSuite.smartModeSelector) {
@@ -840,10 +829,5 @@
         };
         return mapping[detectedName] || 'Pop';
     }
-
-    console.log('✅ PROFESSIONAL_GENRE_PRESETS loaded');
-    console.log('   📀 12 genre presets available:');
-    console.log('      ' + Object.keys(window.PROFESSIONAL_PRESETS).join(', '));
-    console.log('   🎛️ Use: applyGenrePreset("EDM") or autoDetectAndApplyPreset()');
 
 })();

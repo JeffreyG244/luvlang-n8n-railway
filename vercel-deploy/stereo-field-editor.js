@@ -108,7 +108,6 @@ class StereoFieldEditor {
             this.sideGains.push(sideGain);
         });
 
-        console.log('✅ Stereo Field Editor initialized with', this.bands.length, 'frequency bands');
     }
 
     /**
@@ -142,7 +141,6 @@ class StereoFieldEditor {
             this.sideGains[bandIndex].gain.value = widthFactor;
         }
 
-        console.log(`🎚️ Stereo width for ${this.bands[bandIndex].name} (${this.bands[bandIndex].frequency}Hz): ${widthPercent}%`);
     }
 
     /**
@@ -162,14 +160,13 @@ class StereoFieldEditor {
         this.bands.forEach((band, index) => {
             this.setWidth(index, 100);
         });
-        console.log('✅ Stereo Field Editor reset to defaults');
+
     }
 
     /**
      * Apply a preset (e.g., "wide", "mono-bass", "narrow")
      */
     applyPreset(presetName) {
-        console.log('🎛️ Applying stereo field preset:', presetName);
 
         switch(presetName.toLowerCase()) {
             case 'wide':
@@ -228,9 +225,9 @@ class StereoFieldEditor {
         this.isActive = active;
 
         if (active) {
-            console.log('✅ Stereo Field Editor: ACTIVE');
+
         } else {
-            console.log('⏸️ Stereo Field Editor: BYPASSED');
+
             this.reset();
         }
     }

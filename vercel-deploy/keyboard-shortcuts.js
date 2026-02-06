@@ -12,8 +12,6 @@ class KeyboardShortcuts {
         this.defineShortcuts();
         this.attachListeners();
 
-        console.log('✅ Keyboard Shortcuts initialized');
-        console.log('  ℹ️  Press "?" to show shortcut help');
     }
 
     /**
@@ -106,7 +104,6 @@ class KeyboardShortcuts {
             }
         });
 
-        console.log('  ✓ Keyboard event listeners attached');
     }
 
     /**
@@ -317,7 +314,7 @@ class KeyboardShortcuts {
      */
     setEnabled(enabled) {
         this.enabled = enabled;
-        console.log(enabled ? '✅ Keyboard shortcuts enabled' : '⏸️ Keyboard shortcuts disabled');
+
     }
 
     /**
@@ -325,7 +322,7 @@ class KeyboardShortcuts {
      */
     registerCallback(action, callback) {
         this.callbacks[action] = callback;
-        console.log(`  ✓ Callback registered: ${action}`);
+
     }
 
     /**

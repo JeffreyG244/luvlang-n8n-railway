@@ -137,7 +137,6 @@
             this.isRunning = true;
             this.updateMeter();
 
-            console.log('🔄 Phase Correlation Meter: Started');
         }
 
         /**
@@ -145,7 +144,7 @@
          */
         stop() {
             this.isRunning = false;
-            console.log('🔄 Phase Correlation Meter: Stopped');
+
         }
 
         /**
@@ -277,8 +276,6 @@
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     window.PhaseCorrelationMeter = PhaseCorrelationMeter;
-
-    console.log('✅ Phase Correlation Meter loaded');
 
 })();
 

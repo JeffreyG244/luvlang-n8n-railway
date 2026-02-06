@@ -4,7 +4,6 @@
 // ============================================
 
 (function initUXRefinements() {
-    console.log('🎨 Initializing UI/UX Refinements...');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // REFINEMENT #1: Double-Click Fader Reset to 0 dB
@@ -56,7 +55,6 @@
                 window.drawEQGraph();
             }
 
-            console.log(`✅ Reset ${faderConfig.sliderId} to 0 dB`);
         }
     }
 
@@ -89,8 +87,6 @@
             valueLabel.title = 'Double-click to reset to 0 dB';
         }
     });
-
-    console.log('✅ Double-click fader reset enabled (7 EQ bands)');
 
     // Also add double-click reset for other faders
     const otherFaders = [
@@ -137,8 +133,6 @@
             valueLabel.title = 'Double-click to reset to default';
         }
     });
-
-    console.log('✅ Double-click reset enabled for all faders');
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // REFINEMENT #2: Logarithmic Y-Axis for Spectrum Analyzer
@@ -266,7 +260,7 @@
      * DISABLED - Using the main drawEQGraph from HTML file instead
      */
     function enhanceEQGraphWithLogScale() {
-        console.log('⚠️ enhanceEQGraphWithLogScale DISABLED - using main drawEQGraph instead');
+
         return; // DISABLED
 
         // Wait for drawEQGraph to be defined
@@ -301,7 +295,6 @@
                     }
                 };
 
-                console.log('✅ Logarithmic Y-axis enabled for spectrum analyzer');
             }
         }, 100);
 
@@ -361,10 +354,6 @@
     // Export utility function for external use
     window.dbToLogY = dbToLogY;
     window.drawSpectrumLogarithmic = drawSpectrumLogarithmic;
-
-    console.log('🎨 UI/UX Refinements Complete:');
-    console.log('   ✅ Double-click fader reset (all controls)');
-    console.log('   ✅ Logarithmic Y-axis spectrum analyzer');
 
 })();
 

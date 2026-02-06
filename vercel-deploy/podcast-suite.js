@@ -107,7 +107,6 @@ class PodcastMasteringEngine {
         clarityFilter.Q.value = 1.2; // Focused boost
         clarityFilter.gain.value = amount;
 
-        console.log(`✅ Voice clarity filter: +${amount.toFixed(1)} dB @ 2.5kHz`);
         return clarityFilter;
     }
 
@@ -128,7 +127,6 @@ class PodcastMasteringEngine {
 
         deesser1.connect(deesser2);
 
-        console.log(`✅ De-esser: -${intensity.toFixed(1)} dB @ 6.5kHz & 8kHz`);
         return { input: deesser1, output: deesser2 };
     }
 
@@ -145,7 +143,6 @@ class PodcastMasteringEngine {
         gate.release.value = 0.05; // Quick release for breaths
         gate.knee.value = 5; // Slight softness
 
-        console.log(`✅ Breath gate: threshold ${threshold.toFixed(0)} dB`);
         return gate;
     }
 
@@ -170,7 +167,6 @@ class PodcastMasteringEngine {
 
         hpFilter.connect(noiseGate);
 
-        console.log(`✅ Noise gate: threshold ${threshold.toFixed(0)} dB, HPF @ 80Hz`);
         return { input: hpFilter, output: noiseGate };
     }
 
@@ -181,7 +177,6 @@ class PodcastMasteringEngine {
         proximityEQ.frequency.value = 120; // Reduce proximity bass
         proximityEQ.Q.value = 0.7;
 
-        console.log('✅ Proximity effect filter: HPF @ 120Hz');
         return proximityEQ;
     }
 
@@ -200,7 +195,6 @@ class PodcastMasteringEngine {
 
         plosiveFilter.connect(plosiveCompressor);
 
-        console.log('✅ Plosive reducer: HPF + fast compressor');
         return { input: plosiveFilter, output: plosiveCompressor };
     }
 
@@ -244,7 +238,6 @@ class PodcastMasteringEngine {
         deesser.output.connect(chain.eq.input);
         chain.eq.output.connect(chain.compressor);
 
-        console.log('✅ Complete podcast processing chain created');
         return {
             input: chain.proximityFilter,
             output: chain.compressor,
@@ -288,7 +281,6 @@ class PodcastMasteringEngine {
         mid.connect(highMid);
         highMid.connect(high);
 
-        console.log('✅ Podcast EQ chain created');
         return { input: bass, output: high };
     }
 
@@ -302,13 +294,11 @@ class PodcastMasteringEngine {
         compressor.release.value = 0.25;
         compressor.knee.value = 30; // Soft knee for natural sound
 
-        console.log(`✅ Podcast compressor: ${compressor.ratio.value.toFixed(1)}:1 ratio`);
         return compressor;
     }
 
     // Auto-detect speakers in podcast
     async detectSpeakers(audioBuffer) {
-        console.log('🎤 Analyzing podcast for multiple speakers...');
 
         const channelData = audioBuffer.getChannelData(0);
         const sampleRate = audioBuffer.sampleRate;
@@ -364,9 +354,8 @@ class PodcastMasteringEngine {
         const speakers = this.groupSpeakersByLevel(segments);
         this.detectedSpeakers = speakers;
 
-        console.log(`✅ Detected ${speakers.length} potential speaker(s)`);
         for (let i = 0; i < speakers.length; i++) {
-            console.log(`   Speaker ${i + 1}: ${speakers[i].segments.length} segments, avg level: ${speakers[i].avgLevel.toFixed(1)} dB`);
+
         }
 
         return speakers;
@@ -417,7 +406,6 @@ class PodcastMasteringEngine {
             return null;
         }
 
-        console.log(`🎙️ Applying podcast preset: ${preset.name}`);
         const chain = this.createPodcastChain(preset);
 
         return {
