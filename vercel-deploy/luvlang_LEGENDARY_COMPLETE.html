@@ -26745,7 +26745,7 @@
                     },
                     body: JSON.stringify({
                         text: text,
-                        model_id: 'eleven_turbo_v2', // Turbo model = fastest response
+                        model_id: 'eleven_turbo_v2_5', // Latest turbo model
                         voice_settings: {
                             stability: 0.5,
                             similarity_boost: 0.75,
@@ -26757,15 +26757,17 @@
 
                 if (!response.ok) {
                     const error = await response.text();
-                    console.error('ElevenLabs API error:', error);
+                    console.error('❌ ElevenLabs API error:', response.status, error);
 
-                    // If quota exceeded, disable ElevenLabs for this session
-                    if (error.includes('quota_exceeded') || error.includes('quota')) {
-                        console.log('⚠️ ElevenLabs quota exceeded - switching to browser voice for this session');
+                    // If quota exceeded or unauthorized, disable ElevenLabs for this session
+                    if (error.includes('quota_exceeded') || error.includes('quota') || response.status === 401) {
+                        console.log('⚠️ ElevenLabs issue - switching to browser voice for this session');
                         ELEVENLABS_CONFIG.enabled = false;
                     }
                     return false;
                 }
+
+                console.log('✅ ElevenLabs response OK - playing audio');
 
                 // Stream the audio for immediate playback
                 const audioBlob = await response.blob();
