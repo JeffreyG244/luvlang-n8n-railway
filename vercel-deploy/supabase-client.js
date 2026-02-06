@@ -152,9 +152,11 @@ async function initializeSupabase() {
                             console.log('👤 Continuing authenticated session...');
                             updateUIForLoggedInUser();
                         } else {
-                            // Fresh visit with old session - show landing page, require sign-in click
-                            console.log('👤 Fresh visit - showing landing page (must click sign-in)');
-                            updateUIForLoggedOutUser();
+                            // Fresh visit with old session - show Master Me page
+                            console.log('👤 Returning user - showing Master Me page');
+                            if (window.OnboardingFlow && window.OnboardingFlow.showLandingPage) {
+                                window.OnboardingFlow.showLandingPage();
+                            }
                         }
                     } else {
                         // Check if OAuth callback is in progress - tokens may still be processing
