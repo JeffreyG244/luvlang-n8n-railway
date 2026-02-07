@@ -22,11 +22,13 @@
                 setTimeout(function() { var p = document.getElementById('initLoadProgress'); if (p) p.style.width = '100%'; }, 100);
                 document.body.insertBefore(loader, document.body.firstChild);
 
-                // FAILSAFE: Remove loading screen after 3 seconds no matter what
+                // FAILSAFE: Remove loading screen after timeout
+                // Give OAuth callbacks more time (8s) so we don't flash the interface
+                var isOAuth = window.location.hash.includes('access_token') || window.location.search.includes('code=');
                 setTimeout(function() {
                     var ls = document.getElementById('initialLoadingScreen');
                     if (ls) { ls.classList.add('fade-out'); setTimeout(function() { if (ls.parentNode) ls.remove(); }, 500); }
-                }, 3000);
+                }, isOAuth ? 8000 : 3000);
             });
         })();
 
@@ -39,7 +41,11 @@
 
             if (hasToken || hasCode) {
                 window.OAUTH_IN_PROGRESS = true;
-
+                // Hide app container during OAuth to prevent interface flash
+                var s = document.createElement('style');
+                s.id = 'oauthHideApp';
+                s.textContent = '#appContainer{display:none!important;}';
+                document.head.appendChild(s);
             }
         })();
     </script>
@@ -3813,6 +3819,69 @@
                 </button>
             </div>
 
+            <!-- Voice Selection -->
+            <div style="margin-bottom: 20px; text-align: left;">
+                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin: 0 0 10px; text-align: center;">Choose your guide's voice</p>
+                <div id="voicePickerGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                    <button onclick="selectTourVoice('ava')" class="voice-pick-btn" data-voice="ava" style="
+                        padding: 10px 12px;
+                        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.08) 100%);
+                        border: 2px solid rgba(0, 212, 255, 0.5);
+                        border-radius: 10px;
+                        color: #fff;
+                        font-size: 0.8rem;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    ">
+                        <div style="font-weight: 600;">Ava</div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Modern, confident</div>
+                    </button>
+                    <button onclick="selectTourVoice('emma')" class="voice-pick-btn" data-voice="emma" style="
+                        padding: 10px 12px;
+                        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+                        border: 1px solid rgba(255,255,255,0.15);
+                        border-radius: 10px;
+                        color: #fff;
+                        font-size: 0.8rem;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    ">
+                        <div style="font-weight: 600;">Emma</div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Clear, warm</div>
+                    </button>
+                    <button onclick="selectTourVoice('jenny')" class="voice-pick-btn" data-voice="jenny" style="
+                        padding: 10px 12px;
+                        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+                        border: 1px solid rgba(255,255,255,0.15);
+                        border-radius: 10px;
+                        color: #fff;
+                        font-size: 0.8rem;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    ">
+                        <div style="font-weight: 600;">Jenny</div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Friendly, natural</div>
+                    </button>
+                    <button onclick="selectTourVoice('steffan')" class="voice-pick-btn" data-voice="steffan" style="
+                        padding: 10px 12px;
+                        background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+                        border: 1px solid rgba(255,255,255,0.15);
+                        border-radius: 10px;
+                        color: #fff;
+                        font-size: 0.8rem;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                    ">
+                        <div style="font-weight: 600;">Steffan</div>
+                        <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Male, smooth</div>
+                    </button>
+                </div>
+            </div>
+
             <button onclick="skipLanguageSelection()" style="
                 background: none;
                 border: none;
@@ -3858,6 +3927,60 @@
         };
     })();</script>
     <script>
+        // Voice selection for tour
+        function selectTourVoice(voice) {
+            // Save preference
+            try { localStorage.setItem('tourVoice', voice); } catch (_) {}
+
+            // Update AZURE_TTS_CONFIG if it exists yet
+            if (typeof AZURE_TTS_CONFIG !== 'undefined') {
+                AZURE_TTS_CONFIG.voice = voice;
+            }
+            window._selectedTourVoice = voice;
+
+            // Update button styles — highlight selected
+            const btns = document.querySelectorAll('.voice-pick-btn');
+            btns.forEach(function(btn) {
+                if (btn.getAttribute('data-voice') === voice) {
+                    btn.style.background = 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.08) 100%)';
+                    btn.style.border = '2px solid rgba(0, 212, 255, 0.5)';
+                } else {
+                    btn.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)';
+                    btn.style.border = '1px solid rgba(255,255,255,0.15)';
+                }
+            });
+
+            // Preview the voice with a short sample
+            fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'Hi, I\'ll be your guide today.', voice: voice })
+            }).then(function(r) {
+                if (r.ok) return r.blob();
+                return null;
+            }).then(function(blob) {
+                if (blob) {
+                    // Stop any current preview
+                    if (window._voicePreviewAudio) {
+                        window._voicePreviewAudio.pause();
+                    }
+                    var url = URL.createObjectURL(blob);
+                    window._voicePreviewAudio = new Audio(url);
+                    window._voicePreviewAudio.play();
+                }
+            }).catch(function() {});
+        }
+
+        // Restore saved voice preference
+        try {
+            var savedVoice = localStorage.getItem('tourVoice');
+            if (savedVoice) {
+                window._selectedTourVoice = savedVoice;
+                // Highlight saved voice button on modal open
+                setTimeout(function() { selectTourVoice(savedVoice); }, 100);
+            }
+        } catch (_) {}
+
         // Language selection for tour
         function selectTourLanguage(lang) {
             // Store the selected language
@@ -5583,8 +5706,6 @@
                 </div>
                 <!-- LuvLang text below logo -->
                 <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 8px;">LuvLang</div>
-                <!-- Globe overlay in front -->
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); font-size: 3rem; z-index: 10; filter: drop-shadow(0 0 20px rgba(0,212,255,0.5));">🌍</div>
             </div>
             <h1 class="language-title">Choose Your Language</h1>
             <p class="language-subtitle">Select your preferred language for the guided tour</p>
@@ -5636,6 +5757,15 @@
             if (isOAuthCallback) {
 
                 // Don't show landing page during OAuth callback - let Supabase handle it
+                // Add safety fallback: if onLoginSuccess hasn't fired in 5 seconds, force it
+                setTimeout(function() {
+                    if (!OnboardingFlow.loginComplete && window.currentUser) {
+                        OnboardingFlow.onLoginSuccess();
+                    } else if (!OnboardingFlow.loginComplete) {
+                        // Auth failed — show landing page
+                        OnboardingFlow.showLandingPage();
+                    }
+                }, 5000);
                 return;
             }
 
@@ -5822,6 +5952,9 @@
                     }
                     if (splash) splash.style.display = 'none';
                     if (langPage) langPage.style.display = 'none';
+                    // Remove OAuth app-hide style so app container becomes visible
+                    var oauthStyle = document.getElementById('oauthHideApp');
+                    if (oauthStyle) oauthStyle.remove();
                 }
                 OnboardingFlow.currentPage = page;
             }, 400);
@@ -5840,8 +5973,16 @@
                 if (el) el.style.cssText = 'display:none!important;';
             });
 
-            // Go DIRECTLY to language selection
+            // Check if returning user (language already selected) — skip to app
+            var langDone = false;
+            try { langDone = localStorage.getItem('luvlang_language_selected') === 'true'; } catch(_) {}
 
+            if (langDone) {
+                OnboardingFlow.skipToApp();
+                return;
+            }
+
+            // New user — show language selection
             var langPage = document.getElementById('onboardingLanguage');
             if (langPage) {
                 langPage.style.cssText = 'display:flex!important;opacity:1!important;visibility:visible!important;z-index:99999999!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;';
@@ -6044,6 +6185,9 @@
                 signupGate.classList.add('hidden');
                 signupGate.style.display = 'none';
             }
+            // Remove OAuth app-hide style so app container becomes visible
+            var oauthStyle = document.getElementById('oauthHideApp');
+            if (oauthStyle) oauthStyle.remove();
         };
 
         // Language selection handler
@@ -6059,17 +6203,22 @@
                 window.setTourLanguage(lang);
             }
 
-            // Transition to main app
-            OnboardingFlow.goToPage('app');
+            // Show tour overlay BEFORE revealing app to prevent interface flash
+            var tourOverlay = document.getElementById('voiceTourOverlay');
+            if (tourOverlay) {
+                tourOverlay.style.display = 'block';
+                tourOverlay.style.opacity = '1';
+            }
 
-            // Auto-start tour
-            setTimeout(() => {
-                if (typeof window.startTourAfterLanguage === 'function') {
-                    window.startTourAfterLanguage();
-                } else if (typeof window.startTour === 'function') {
-                    window.startTour();
-                }
-            }, 800);
+            // Start tour immediately (it will set up its own UI)
+            if (typeof window.startTourAfterLanguage === 'function') {
+                window.startTourAfterLanguage();
+            } else if (typeof window.startTour === 'function') {
+                window.startTour();
+            }
+
+            // Now transition to main app (tour overlay covers the interface)
+            OnboardingFlow.goToPage('app');
         }
 
         function skipOnboardingLanguage() {
@@ -6371,36 +6520,18 @@
                 align-items: center;
                 justify-content: center;
                 font-size: 36px;
-                box-shadow:
-                    0 20px 60px rgba(0, 212, 255, 0.4),
-                    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-                animation: iconPulse 4s ease-in-out infinite;
+                box-shadow: none;
                 position: relative;
             }
             .gate-logo-icon::after {
                 content: '';
                 position: absolute;
-                inset: -3px;
-                border-radius: 23px;
-                background: linear-gradient(135deg, #00d4ff, #b84fff, #00ff88);
+                inset: -2px;
+                border-radius: 22px;
+                background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.1), rgba(0, 255, 136, 0.08));
                 z-index: -1;
-                opacity: 0.6;
-                filter: blur(15px);
-                animation: iconGlow 4s ease-in-out infinite;
-            }
-            @keyframes iconPulse {
-                0%, 100% {
-                    box-shadow: 0 25px 70px rgba(0, 212, 255, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-                    transform: scale(1);
-                }
-                50% {
-                    box-shadow: 0 30px 90px rgba(0, 212, 255, 0.6), 0 0 60px rgba(184, 79, 255, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
-                    transform: scale(1.02);
-                }
-            }
-            @keyframes iconGlow {
-                0%, 100% { opacity: 0.5; }
-                50% { opacity: 0.8; }
+                opacity: 1;
+                filter: blur(12px);
             }
             .gate-logo h1 {
                 font-size: 2.2rem;
@@ -7140,6 +7271,9 @@
             hideGateMessages();
 
             try {
+                // Mark OAuth in progress BEFORE signOut to prevent splash flash
+                window.OAUTH_IN_PROGRESS = true;
+
                 // STEP 1: ALWAYS sign out first to clear ANY cached session
                 // This is the KEY to preventing the auth loop
                 if (typeof signOut === 'function') {
@@ -8194,10 +8328,82 @@
                 </div>
             </div>
 
+            <!-- EXPORT SECTION (below genre for easy workflow) -->
+            <div class="export-section" id="exportSection">
+                <div class="section-title">Export</div>
+
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
+                    <div class="export-format-grid">
+                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
+                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
+                        <div class="export-format-btn" data-format="flac">FLAC</div>
+                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
+                    </div>
+                </div>
+
+                <!-- BIT DEPTH SELECTOR (Professional Feature) -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
+                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">✓ TPDF Dithering</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">24-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
+                        </button>
+                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">16-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="bitDepthSelector" value="24">
+                </div>
+
+                <!-- 2x OVERSAMPLING TOGGLE -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px;">
+                        <div>
+                            <div style="font-size: 0.75rem; font-weight: 600;">2x Oversampling</div>
+                            <div style="font-size: 0.55rem; opacity: 0.6;">Reduces aliasing artifacts</div>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                            <input type="checkbox" id="oversamplingToggle" style="opacity: 0; width: 0; height: 0;" checked>
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); transition: 0.3s; border-radius: 24px;"></span>
+                            <span id="oversamplingSlider" style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #00ff88; transition: 0.3s; border-radius: 50%; transform: translateX(20px);"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="compare-tiers-btn" id="compareTiersBtn" onclick="openTierComparison()" disabled style="
+                    width: 100%;
+                    padding: 14px 20px;
+                    margin-bottom: 12px;
+                    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.15));
+                    border: 2px solid rgba(0, 212, 255, 0.4);
+                    border-radius: 12px;
+                    color: #00d4ff;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                ">
+                    🎚️ Compare Tiers & Pricing
+                </button>
+                <button class="export-btn" id="exportBtn" disabled>
+                    💾 Export Master
+                </button>
+            </div>
+
         </div>
 
         <!-- ═════════════════════════════════════════════════════════════════
-             RIGHT SIDEBAR - Professional Meters, Master, Export
+             RIGHT SIDEBAR - Professional Meters & Master Controls
              ═════════════════════════════════════════════════════════════════ -->
         <div class="right-sidebar">
 
@@ -8713,77 +8919,6 @@
                 </div>
             </div>
 
-            <!-- EXPORT SECTION -->
-            <div class="export-section" id="exportSection">
-                <div class="section-title">Export</div>
-
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
-                    <div class="export-format-grid">
-                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
-                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
-                        <div class="export-format-btn" data-format="flac">FLAC</div>
-                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
-                    </div>
-                </div>
-
-                <!-- BIT DEPTH SELECTOR (Professional Feature) -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
-                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">✓ TPDF Dithering</div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">24-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
-                        </button>
-                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">16-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="bitDepthSelector" value="24">
-                </div>
-
-                <!-- 2x OVERSAMPLING TOGGLE -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px;">
-                        <div>
-                            <div style="font-size: 0.75rem; font-weight: 600;">2x Oversampling</div>
-                            <div style="font-size: 0.55rem; opacity: 0.6;">Reduces aliasing artifacts</div>
-                        </div>
-                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
-                            <input type="checkbox" id="oversamplingToggle" style="opacity: 0; width: 0; height: 0;" checked>
-                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); transition: 0.3s; border-radius: 24px;"></span>
-                            <span id="oversamplingSlider" style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #00ff88; transition: 0.3s; border-radius: 50%; transform: translateX(20px);"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <button class="compare-tiers-btn" id="compareTiersBtn" onclick="openTierComparison()" disabled style="
-                    width: 100%;
-                    padding: 14px 20px;
-                    margin-bottom: 12px;
-                    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.15));
-                    border: 2px solid rgba(0, 212, 255, 0.4);
-                    border-radius: 12px;
-                    color: #00d4ff;
-                    font-weight: 700;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                ">
-                    🎚️ Compare Tiers & Pricing
-                </button>
-                <button class="export-btn" id="exportBtn" disabled>
-                    💾 Export Master
-                </button>
-            </div>
 
         </div>
 
@@ -9116,24 +9251,39 @@
 
             if (signOutBtn) {
                 signOutBtn.addEventListener('click', async () => {
-                    if (typeof signOut === 'function') {
-                        const result = await signOut();
-                        if (result.success) {
-                            // Clear ALL localStorage and sessionStorage
-                            try {
-                                localStorage.removeItem('voiceTourCompleted');
-                                localStorage.removeItem('tourLanguage');
-                                localStorage.removeItem('luvlang_language_selected');
-                                sessionStorage.removeItem('luvlang_authenticated');
-                                sessionStorage.removeItem('voiceTourStarted');
-                            } catch (_) { /* private browsing */ }
+                    // Clear ALL auth state immediately (don't wait for Supabase)
+                    try {
+                        sessionStorage.removeItem('luvlang_authenticated');
+                        sessionStorage.removeItem('voiceTourStarted');
+                        localStorage.removeItem('voiceTourCompleted');
+                        localStorage.removeItem('tourLanguage');
+                        localStorage.removeItem('luvlang_language_selected');
+                    } catch (_) { /* private browsing */ }
 
-                            // Reload page to show landing page
-                            window.location.reload();
-                        }
+                    // Try Supabase sign-out but don't block on it
+                    if (typeof signOut === 'function') {
+                        try { await signOut(); } catch (_) {}
                     }
+
+                    // Always reload to show landing page
+                    window.location.reload();
                 });
             }
+
+            // Clear auth session when user navigates away from the domain
+            // This forces re-authentication on next visit
+            window.addEventListener('beforeunload', () => {
+                try {
+                    sessionStorage.removeItem('luvlang_authenticated');
+                    // Clear Supabase's persisted session tokens so user must re-sign-in
+                    for (let i = localStorage.length - 1; i >= 0; i--) {
+                        const key = localStorage.key(i);
+                        if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                } catch (_) {}
+            });
 
             // Close modals on Escape key
             document.addEventListener('keydown', (e) => {
@@ -9976,9 +10126,9 @@
                 const mbLowGain = audioContext.createGain();
                 const mbMidGain = audioContext.createGain();
                 const mbHighGain = audioContext.createGain();
-                mbLowGain.gain.value = 1.0;
-                mbMidGain.gain.value = 1.0;
-                mbHighGain.gain.value = 1.0;
+                mbLowGain.gain.value = 0.0;  // Muted by default (bypass active)
+                mbMidGain.gain.value = 0.0;
+                mbHighGain.gain.value = 0.0;
 
                 window.multibandControls = {
                     low: mbLowGain,
@@ -10020,8 +10170,8 @@
                 // 15% wet maximum - "saturation should enhance, not dominate"
                 const warmthDry = audioContext.createGain();
                 const warmthWet = audioContext.createGain();
-                warmthDry.gain.value = 0.85; // 85% dry (transparent)
-                warmthWet.gain.value = 0.15; // 15% wet - tape cohesion (professional max)
+                warmthDry.gain.value = 1.0;  // 100% dry by default (no saturation until mastering)
+                warmthWet.gain.value = 0.0;  // 0% wet by default
                 window.warmthControls = {
                     dry: warmthDry,
                     wet: warmthWet,
@@ -10091,8 +10241,8 @@
                 // Bypass control
                 const bassMonoBypass = audioContext.createGain();
                 const bassMonoWet = audioContext.createGain();
-                bassMonoBypass.gain.value = 0.0; // Start with bass mono ON
-                bassMonoWet.gain.value = 1.0;
+                bassMonoBypass.gain.value = 1.0; // Start bypassed (no bass mono until mastering)
+                bassMonoWet.gain.value = 0.0;
 
                 window.bassMonoControls = {
                     enabled: true,
@@ -10403,10 +10553,10 @@
                 const msEQ_MidR = audioContext.createGain();
                 const msEQ_SideL = audioContext.createGain();
                 const msEQ_SideR = audioContext.createGain();
-                msEQ_MidL.gain.value = 0.5;
-                msEQ_MidR.gain.value = 0.5;
-                msEQ_SideL.gain.value = 0.5;
-                msEQ_SideR.gain.value = -0.5;
+                msEQ_MidL.gain.value = 0.0;   // Muted by default (bypass active)
+                msEQ_MidR.gain.value = 0.0;
+                msEQ_SideL.gain.value = 0.0;
+                msEQ_SideR.gain.value = 0.0;
 
                 // Mid and Side channel gains
                 const msEQ_MidChannel = audioContext.createGain();
@@ -10760,7 +10910,7 @@
                 const lookAheadDetectFilter = audioContext.createBiquadFilter();
                 lookAheadDetectFilter.type = 'highshelf';
                 lookAheadDetectFilter.frequency.value = 3000;
-                lookAheadDetectFilter.gain.value = 3; // Boost highs for better transient detection
+                lookAheadDetectFilter.gain.value = 1; // Gentle HF emphasis for transient detection
 
                 // The actual limiter (now with look-ahead)
                 const lookAheadLimiter = audioContext.createDynamicsCompressor();
@@ -10801,15 +10951,15 @@
 
                 // HF compressor/limiter
                 const hfLimiterComp = audioContext.createDynamicsCompressor();
-                hfLimiterComp.threshold.value = -12;
+                hfLimiterComp.threshold.value = 0;   // 0dB = transparent (no compression until mastering)
                 hfLimiterComp.knee.value = 6;
-                hfLimiterComp.ratio.value = 8;
+                hfLimiterComp.ratio.value = 1;       // 1:1 = no compression by default
                 hfLimiterComp.attack.value = 0.001;
                 hfLimiterComp.release.value = 0.05;
 
                 // HF output gain
                 const hfLimiterGain = audioContext.createGain();
-                hfLimiterGain.gain.value = 0.9; // Slightly reduce processed HF
+                hfLimiterGain.gain.value = 1.0; // Unity gain by default (transparent)
 
                 // Crossover for recombining
                 const hfLimiterLP = audioContext.createBiquadFilter();
@@ -10820,6 +10970,8 @@
                 const hfLimiterMix = audioContext.createGain();
                 hfLimiterMix.gain.value = 1.0;
 
+                window.hfLimiterComp = hfLimiterComp;
+                window.hfLimiterGain = hfLimiterGain;
                 window.hfLimiter = {
                     enabled: true,
                     crossover: 6000,
@@ -11725,8 +11877,13 @@
                 // --- Multiband Crossover wrappers ---
                 const mbInput = audioContext.createGain();
                 const mbOutput = audioContext.createGain();
+                const mbBypass = audioContext.createGain();
                 mbInput.gain.value = 1.0;
                 mbOutput.gain.value = 1.0;
+                mbBypass.gain.value = 1.0;  // Bypass ON by default
+                mbInput.connect(mbBypass);
+                mbBypass.connect(mbOutput);
+                window.mbBypass = mbBypass;
                 mbInput.connect(mbLowPass);
                 mbLowPass.connect(mbLowGain);
                 mbLowGain.connect(mbOutput);
@@ -11749,7 +11906,16 @@
 
                 // --- M/S EQ wrappers ---
                 const msEQ_Input = audioContext.createGain();
+                const msEQ_Bypass = audioContext.createGain();
                 msEQ_Input.gain.value = 1.0;
+                msEQ_Bypass.gain.value = 1.0;  // Bypass ON by default
+                msEQ_Input.connect(msEQ_Bypass);
+                msEQ_Bypass.connect(msEQ_Output);
+                window.msEQ_Bypass = msEQ_Bypass;
+                window.msEQ_MidL = msEQ_MidL;
+                window.msEQ_MidR = msEQ_MidR;
+                window.msEQ_SideL = msEQ_SideL;
+                window.msEQ_SideR = msEQ_SideR;
                 msEQ_Input.connect(msEQ_Splitter);
                 msEQ_Splitter.connect(msEQ_MidL, 0);
                 msEQ_Splitter.connect(msEQ_MidR, 1);
@@ -13056,12 +13222,12 @@
                 {
                     name: 'Modern Trap',
                     description: 'Metro Boomin / 808 Mafia - Heavy 808s, crisp hats',
-                    eq: { sub: +3.0, bass: +2.5, lowmid: -2.5, mid: -1.0, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +3.0, bass: +2.5, lowmid: -2.5, mid: -1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Vocal Forward',
                     description: 'Drake / Kendrick - Clear vocals, balanced low',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -1.8, mid: +0.8, highmid: +2.5, high: +1.5, air: +1.5 }
+                    eq: { sub: +1.8, bass: +1.2, lowmid: -1.8, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Club Ready',
@@ -13071,7 +13237,7 @@
                 {
                     name: 'Streaming Master',
                     description: 'Spotify/Apple - Balanced, -14 LUFS ready',
-                    eq: { sub: +2.0, bass: +1.8, lowmid: -1.2, mid: +0.3, highmid: +1.8, high: +1.5, air: +1.8 }
+                    eq: { sub: +2.0, bass: +1.8, lowmid: -1.2, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Lo-Fi Hip-Hop',
@@ -13081,7 +13247,7 @@
                 {
                     name: 'UK Drill',
                     description: 'Pop Smoke / Central Cee - Dark 808s, crisp slides',
-                    eq: { sub: +3.2, bass: +2.2, lowmid: -2.2, mid: -0.5, highmid: +1.8, high: +2.2, air: +1.5 }
+                    eq: { sub: +3.2, bass: +2.2, lowmid: -2.2, mid: -0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'West Coast G-Funk',
@@ -13091,7 +13257,7 @@
                 {
                     name: 'Afrobeats Fusion',
                     description: 'Burna Boy / Wizkid - Rhythmic, percussive, warm',
-                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.8, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Underground Raw',
@@ -13103,121 +13269,121 @@
                 {
                     name: 'Festival Banger',
                     description: 'Main stage - Massive bass, bright presence',
-                    eq: { sub: +3.5, bass: +2.8, lowmid: -1.5, mid: -0.5, highmid: +2.0, high: +2.5, air: +3.0 }
+                    eq: { sub: +3.5, bass: +2.8, lowmid: -1.5, mid: -0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Deep House',
                     description: 'Warm grooves - Rich low end, smooth highs',
-                    eq: { sub: +2.5, bass: +2.8, lowmid: +0.3, mid: -0.3, highmid: +0.8, high: +1.2, air: +1.8 }
+                    eq: { sub: +2.5, bass: +2.8, lowmid: +0.3, mid: -0.3, highmid: +0.8, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Techno',
                     description: 'Berlin style - Tight kicks, industrial edge',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +1.5, high: +1.8, air: +1.5 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Trance / Progressive',
                     description: 'Uplifting - Ethereal highs, driving bass',
-                    eq: { sub: +2.0, bass: +1.8, lowmid: -0.8, mid: +0.3, highmid: +2.0, high: +3.0, air: +3.5 }
+                    eq: { sub: +2.0, bass: +1.8, lowmid: -0.8, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Dubstep / Bass',
                     description: 'Maximum impact - Sub-heavy, aggressive',
-                    eq: { sub: +4.0, bass: +3.0, lowmid: -1.8, mid: +0.8, highmid: +1.8, high: +1.5, air: +1.2 }
+                    eq: { sub: +4.0, bass: +3.0, lowmid: -1.8, mid: +0.8, highmid: +1.4, high: +0.9, air: +1.1 }
                 },
                 {
                     name: 'Ambient / Chillout',
                     description: 'Spacious, atmospheric - Dreamy textures',
-                    eq: { sub: +1.5, bass: +1.2, lowmid: -0.3, mid: -0.5, highmid: +0.8, high: +1.5, air: +2.5 }
+                    eq: { sub: +1.5, bass: +1.2, lowmid: -0.3, mid: -0.5, highmid: +0.8, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Drum & Bass',
                     description: 'Liquid / Neurofunk - Punchy, energetic',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +2.2, high: +2.0, air: +1.8 }
+                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Synthwave / Retro',
                     description: '80s inspired - Warm synths, analog feel',
-                    eq: { sub: +1.8, bass: +2.2, lowmid: +0.5, mid: +0.8, highmid: +1.5, high: +1.8, air: +2.2 }
+                    eq: { sub: +1.8, bass: +2.2, lowmid: +0.5, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Minimal Techno',
                     description: 'Stripped back - Hypnotic, clean',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.8, mid: +0.3, highmid: +1.0, high: +1.2, air: +1.0 }
+                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.8, mid: +0.3, highmid: +1.0, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'Hardstyle / Hard Dance',
                     description: 'Aggressive kicks - Maximum energy',
-                    eq: { sub: +3.5, bass: +2.5, lowmid: -2.0, mid: +1.0, highmid: +2.5, high: +2.0, air: +1.5 }
+                    eq: { sub: +3.5, bass: +2.5, lowmid: -2.0, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 }
             ],
             'edm': [
                 {
                     name: 'Festival Main Stage',
                     description: 'Martin Garrix / Tiësto - Massive, euphoric',
-                    eq: { sub: +3.5, bass: +2.5, lowmid: -1.5, mid: -0.3, highmid: +2.0, high: +2.8, air: +3.2 }
+                    eq: { sub: +3.5, bass: +2.5, lowmid: -1.5, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Future Bass',
                     description: 'Flume / Odesza - Lush, wide, emotional',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +1.8, high: +2.5, air: +3.0 }
+                    eq: { sub: +2.8, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Big Room House',
                     description: 'Hardwell / W&W - Powerful kicks, soaring',
-                    eq: { sub: +3.0, bass: +2.2, lowmid: -1.8, mid: +0.3, highmid: +2.5, high: +2.2, air: +2.0 }
+                    eq: { sub: +3.0, bass: +2.2, lowmid: -1.8, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Melodic House',
                     description: 'Lane 8 / Rufus Du Sol - Atmospheric',
-                    eq: { sub: +2.2, bass: +2.0, lowmid: +0.3, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.8 }
+                    eq: { sub: +2.2, bass: +2.0, lowmid: +0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Bass House / Tech',
                     description: 'Chris Lake / Fisher - Punchy, groovy',
-                    eq: { sub: +3.2, bass: +2.8, lowmid: -1.2, mid: +0.8, highmid: +1.8, high: +1.5, air: +1.8 }
+                    eq: { sub: +3.2, bass: +2.8, lowmid: -1.2, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Electro House',
                     description: 'Deadmau5 / Feed Me - Gritty, driving',
-                    eq: { sub: +2.8, bass: +2.5, lowmid: -1.0, mid: +0.8, highmid: +2.0, high: +1.8, air: +1.5 }
+                    eq: { sub: +2.8, bass: +2.5, lowmid: -1.0, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Progressive House',
                     description: 'Eric Prydz / Pryda - Building, hypnotic',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.3, highmid: +1.5, high: +2.2, air: +2.5 }
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Tropical House',
                     description: 'Kygo / Thomas Jack - Bright, summery',
-                    eq: { sub: +1.8, bass: +1.5, lowmid: -0.3, mid: +0.5, highmid: +2.0, high: +2.8, air: +3.0 }
+                    eq: { sub: +1.8, bass: +1.5, lowmid: -0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Slap House',
                     description: 'Dynoro / Imanbek - Punchy bass, catchy',
-                    eq: { sub: +2.5, bass: +2.8, lowmid: -1.5, mid: +0.5, highmid: +2.2, high: +2.0, air: +2.0 }
+                    eq: { sub: +2.5, bass: +2.8, lowmid: -1.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Mainstage Anthem',
                     description: 'Festival closer - Maximum impact, epic',
-                    eq: { sub: +3.8, bass: +2.8, lowmid: -1.8, mid: +0.5, highmid: +2.8, high: +3.0, air: +3.5 }
+                    eq: { sub: +3.8, bass: +2.8, lowmid: -1.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 }
             ],
             'pop': [
                 {
                     name: 'Radio Ready',
                     description: 'Top 40 - Bright, polished, commercial',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: -0.8, mid: +0.5, highmid: +1.5, high: +1.8, air: +2.2 }
+                    eq: { sub: +0.8, bass: +1.2, lowmid: -0.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Indie Pop',
                     description: 'Authentic - Natural, less processed',
-                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.2, air: +1.5 }
+                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Dance Pop',
                     description: 'Club crossover - Energetic, driving',
-                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: -0.3, highmid: +1.8, high: +2.2, air: +2.5 }
+                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Ballad',
@@ -13227,59 +13393,59 @@
                 {
                     name: 'K-Pop / J-Pop',
                     description: 'Asian pop - Bright, punchy, detailed',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: -0.5, mid: +0.8, highmid: +2.0, high: +2.5, air: +2.8 }
+                    eq: { sub: +1.2, bass: +1.5, lowmid: -0.5, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Synth Pop',
                     description: 'The Weeknd / Dua Lipa - Modern, polished',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.5, mid: +0.3, highmid: +1.8, high: +2.2, air: +2.5 }
+                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Acoustic Pop',
                     description: 'Ed Sheeran style - Natural, warm',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +1.2, high: +1.5, air: +2.0 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Power Pop',
                     description: 'Energetic hooks - Punchy, uplifting',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: -0.3, mid: +1.0, highmid: +2.0, high: +2.0, air: +2.0 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: -0.3, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Electro Pop',
                     description: 'Charli XCX / Robyn - Bright, synthetic',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.8, mid: +0.5, highmid: +2.2, high: +2.5, air: +2.8 }
+                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Latin Pop',
                     description: 'Crossover appeal - Rhythmic, warm',
-                    eq: { sub: +1.2, bass: +1.8, lowmid: -0.3, mid: +0.8, highmid: +1.5, high: +1.8, air: +2.2 }
+                    eq: { sub: +1.2, bass: +1.8, lowmid: -0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 }
             ],
             'rock': [
                 {
                     name: 'Classic Rock',
                     description: 'Zeppelin / AC/DC - Warm, powerful',
-                    eq: { sub: +0.3, bass: +1.2, lowmid: +1.0, mid: +1.2, highmid: +1.5, high: +1.2, air: +0.8 }
+                    eq: { sub: +0.3, bass: +1.2, lowmid: +1.0, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Modern Rock',
                     description: 'Foo Fighters - Tight, punchy, clear',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +2.0, high: +2.0, air: +1.5 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Hard Rock',
                     description: 'High energy - Aggressive, driving',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.8, mid: +1.5, highmid: +2.5, high: +2.0, air: +1.2 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.8, mid: +1.5, highmid: +1.4, high: +0.9, air: +1.1 }
                 },
                 {
                     name: 'Alternative',
                     description: 'Indie rock - Balanced, textured',
-                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.8, air: +1.5 }
+                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Punk / Pop-Punk',
                     description: 'Raw energy - Fast, aggressive, mid-forward',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +1.5, mid: +2.0, highmid: +2.5, high: +2.0, air: +0.8 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: +1.5, mid: +2.0, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Grunge',
@@ -13294,17 +13460,17 @@
                 {
                     name: 'Progressive Rock',
                     description: 'Pink Floyd / Tool - Dynamic, wide, complex',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.8, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Arena Rock',
                     description: 'Stadium anthems - Big, powerful, soaring',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.2, air: +1.8 }
+                    eq: { sub: +0.8, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Post-Rock',
                     description: 'Explosions in the Sky - Atmospheric, building',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.2, high: +2.0, air: +2.5 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.1, high: +0.9, air: +1.4 }
                 }
             ],
             'rnb': [
@@ -13316,7 +13482,7 @@
                 {
                     name: 'Modern R&B',
                     description: 'The Weeknd / SZA style - Atmospheric, lush',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: -0.5, mid: +0.3, highmid: +1.2, high: +1.5, air: +2.0 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -0.5, mid: +0.3, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Neo-Soul',
@@ -13326,12 +13492,12 @@
                 {
                     name: 'Vocal Intimate',
                     description: 'Vocal-focused - Clear, present, emotional',
-                    eq: { sub: +1.2, bass: +1.0, lowmid: -0.3, mid: +1.0, highmid: +1.8, high: +1.2, air: +1.5 }
+                    eq: { sub: +1.2, bass: +1.0, lowmid: -0.3, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'R&B/Hip-Hop Hybrid',
                     description: 'Drake / Bryson Tiller - Atmospheric trap',
-                    eq: { sub: +2.2, bass: +1.8, lowmid: -1.0, mid: +0.3, highmid: +1.5, high: +1.5, air: +2.0 }
+                    eq: { sub: +2.2, bass: +1.8, lowmid: -1.0, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Slow Jam',
@@ -13341,29 +13507,29 @@
                 {
                     name: 'Alternative R&B',
                     description: 'Frank Ocean / Solange - Experimental, lush',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.3, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.2 }
+                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Gospel Soul',
                     description: 'Aretha / Hezekiah Walker - Powerful, uplifting',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.2, air: +1.5 }
+                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'PBR&B',
                     description: 'Minimalist R&B - Dark, sparse, moody',
-                    eq: { sub: +2.0, bass: +1.2, lowmid: -0.8, mid: -0.3, highmid: +0.8, high: +1.2, air: +1.8 }
+                    eq: { sub: +2.0, bass: +1.2, lowmid: -0.8, mid: -0.3, highmid: +0.8, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Funk R&B',
                     description: 'Bruno Mars / Anderson .Paak - Groovy, punchy',
-                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: +1.0, highmid: +1.8, high: +1.5, air: +1.5 }
+                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 }
             ],
             'acoustic': [
                 {
                     name: 'Singer-Songwriter',
                     description: 'Natural, intimate - Guitar & vocals',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.0, high: +1.2, air: +1.8 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Folk',
@@ -13373,7 +13539,7 @@
                 {
                     name: 'Bluegrass',
                     description: 'Bright, detailed - Instrument separation',
-                    eq: { sub: 0, bass: +0.3, lowmid: -0.3, mid: +0.5, highmid: +1.2, high: +1.5, air: +2.0 }
+                    eq: { sub: 0, bass: +0.3, lowmid: -0.3, mid: +0.5, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Unplugged Live',
@@ -13383,7 +13549,7 @@
                 {
                     name: 'Acoustic Pop',
                     description: 'Ed Sheeran style - Polished, radio-ready',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.5, high: +1.8, air: +2.2 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Classical Guitar',
@@ -13393,7 +13559,7 @@
                 {
                     name: 'Fingerstyle',
                     description: 'Andy McKee / Tommy Emmanuel - Complex, clear',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.2, high: +1.5, air: +1.8 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'World Acoustic',
@@ -13403,7 +13569,7 @@
                 {
                     name: 'Indie Folk',
                     description: 'Bon Iver / Fleet Foxes - Intimate, layered',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.0 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Campfire',
@@ -13435,7 +13601,7 @@
                 {
                     name: 'Vocal Jazz',
                     description: 'Diana Krall style - Mid +0.8dB, HighMid +1.2dB, Air +1.5dB',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: 0, mid: +0.8, highmid: +1.2, high: +1.0, air: +1.5 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: 0, mid: +0.8, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Bebop',
@@ -13445,7 +13611,7 @@
                 {
                     name: 'Fusion',
                     description: 'Weather Report / Chick Corea - Electric, dynamic',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.2, air: +1.5 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: 0, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Jazz Trio',
@@ -13455,7 +13621,7 @@
                 {
                     name: 'Latin Jazz',
                     description: 'Tito Puente / Chucho Valdés - Percussive, vibrant',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.2, air: +1.2 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.2 }
                 },
                 {
                     name: 'Cool Jazz',
@@ -13512,39 +13678,39 @@
                 {
                     name: 'Film Score',
                     description: 'Cinematic - Epic, wide, impactful',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.2, air: +1.5 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
                 }
             ],
             'metal': [
                 {
                     name: 'Modern Metal',
                     description: 'Djent / Prog - Tight, surgical',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +1.5, highmid: +2.5, high: +2.0, air: +1.0 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +1.5, highmid: +1.5, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'Classic Metal',
                     description: 'Metallica / Iron Maiden - Powerful, warm',
-                    eq: { sub: +0.5, bass: +1.8, lowmid: +1.0, mid: +1.2, highmid: +2.0, high: +1.5, air: +0.8 }
+                    eq: { sub: +0.5, bass: +1.8, lowmid: +1.0, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Death Metal',
                     description: 'Brutal - Heavy, aggressive',
-                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.8, highmid: +2.5, high: +1.8, air: +0.5 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.8, highmid: +1.5, high: +1.0, air: +0.5 }
                 },
                 {
                     name: 'Black Metal',
                     description: 'Raw, atmospheric - Cold, trebly',
-                    eq: { sub: -0.5, bass: +0.5, lowmid: +1.0, mid: +2.0, highmid: +3.0, high: +2.5, air: +1.0 }
+                    eq: { sub: -0.5, bass: +0.5, lowmid: +1.0, mid: +2.0, highmid: +1.5, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'Melodic Metal',
                     description: 'Symphonic / Power - Epic, full',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Thrash Metal',
                     description: 'Slayer / Megadeth - Fast, aggressive, tight',
-                    eq: { sub: +0.5, bass: +1.2, lowmid: +0.5, mid: +1.5, highmid: +2.8, high: +2.2, air: +1.0 }
+                    eq: { sub: +0.5, bass: +1.2, lowmid: +0.5, mid: +1.5, highmid: +1.5, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'Doom / Stoner',
@@ -13554,24 +13720,24 @@
                 {
                     name: 'Nu-Metal',
                     description: 'Deftones / Korn - Thick, downtuned, punchy',
-                    eq: { sub: +1.2, bass: +2.0, lowmid: +0.8, mid: +1.2, highmid: +2.0, high: +1.5, air: +0.8 }
+                    eq: { sub: +1.2, bass: +2.0, lowmid: +0.8, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Metalcore',
                     description: 'Architects / Parkway Drive - Modern, punchy',
-                    eq: { sub: +1.0, bass: +1.8, lowmid: -0.3, mid: +1.5, highmid: +2.5, high: +2.0, air: +1.2 }
+                    eq: { sub: +1.0, bass: +1.8, lowmid: -0.3, mid: +1.5, highmid: +1.4, high: +0.9, air: +1.1 }
                 },
                 {
                     name: 'Deathcore',
                     description: 'Breakdown heavy - Maximum impact, crushing',
-                    eq: { sub: +1.5, bass: +2.2, lowmid: +0.5, mid: +1.8, highmid: +2.5, high: +1.8, air: +0.8 }
+                    eq: { sub: +1.5, bass: +2.2, lowmid: +0.5, mid: +1.8, highmid: +1.5, high: +1.0, air: +0.8 }
                 }
             ],
             'country': [
                 {
                     name: 'Modern Country',
                     description: 'Nashville sound - Clear, polished',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Classic Country',
@@ -13581,17 +13747,17 @@
                 {
                     name: 'Country Rock',
                     description: 'High energy - Driving, powerful',
-                    eq: { sub: +0.5, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +1.8, high: +1.5, air: +1.2 }
+                    eq: { sub: +0.5, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +1.4, high: +0.9, air: +1.1 }
                 },
                 {
                     name: 'Americana',
                     description: 'Roots feel - Organic, earthy',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.2, air: +1.5 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Country Ballad',
                     description: 'Emotional - Intimate, vocal-focused',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +1.0, highmid: +1.2, high: +1.0, air: +1.5 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +1.0, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Outlaw Country',
@@ -13601,34 +13767,34 @@
                 {
                     name: 'Bro-Country',
                     description: 'Stadium party - Big, bright, punchy',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: -0.3, mid: +0.8, highmid: +1.8, high: +2.0, air: +2.2 }
+                    eq: { sub: +0.8, bass: +1.2, lowmid: -0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Bluegrass Country',
                     description: 'Traditional picking - Bright, crisp, detailed',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.2, high: +1.5, air: +1.8 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.3, mid: +0.5, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Country Pop',
                     description: 'Taylor Swift era - Modern, polished, radio',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Honky Tonk',
                     description: 'Classic barroom - Twangy, lively, warm',
-                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.2, air: +1.0 }
+                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.0, air: +1.0 }
                 }
             ],
             'latin': [
                 {
                     name: 'Reggaeton',
                     description: 'Club banger - Heavy dembow, sub bass',
-                    eq: { sub: +3.0, bass: +2.5, lowmid: -1.5, mid: +0.3, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +3.0, bass: +2.5, lowmid: -1.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Latin Pop',
                     description: 'Mainstream - Bright, commercial',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.8, high: +2.0, air: +2.2 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Salsa / Bachata',
@@ -13638,7 +13804,7 @@
                 {
                     name: 'Latin Trap',
                     description: 'Bad Bunny style - 808s, atmospheric',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.8, mid: -0.3, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.8, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Regional Mexican',
@@ -13648,7 +13814,7 @@
                 {
                     name: 'Cumbia',
                     description: 'Colombian rhythm - Warm, groovy, infectious',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.2, high: +1.2, air: +1.5 }
+                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.1, high: +0.9, air: +1.4 }
                 },
                 {
                     name: 'Bossa Nova',
@@ -13658,17 +13824,17 @@
                 {
                     name: 'Flamenco',
                     description: 'Spanish passion - Percussive, dynamic, bright',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.8, highmid: +1.5, high: +1.5, air: +1.8 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Merengue',
                     description: 'Dominican energy - Fast, bright, punchy',
-                    eq: { sub: +1.0, bass: +1.2, lowmid: -0.3, mid: +0.8, highmid: +1.5, high: +1.8, air: +1.5 }
+                    eq: { sub: +1.0, bass: +1.2, lowmid: -0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
                 },
                 {
                     name: 'Urbano Latino',
                     description: 'Modern Latin urban - 808s, crisp, streaming',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.2, mid: +0.3, highmid: +1.5, high: +1.8, air: +2.0 }
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.2, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
                 }
             ],
             'lofi': [
@@ -13742,7 +13908,7 @@
                 {
                     name: 'Streaming Optimized',
                     description: 'Spotify/Apple - Sub/Bass +1.2dB, Air +1.8dB',
-                    eq: { sub: +1.2, bass: +1.2, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.2, air: +1.8 }
+                    eq: { sub: +1.2, bass: +1.2, lowmid: -0.5, mid: 0, highmid: +1.0, high: +1.0, air: +1.5 }
                 },
                 {
                     name: 'Vinyl Pre-Master',
@@ -13981,8 +14147,8 @@
                             lowmid: 0,
                             mid: 0,
                             highmid: +1.0,
-                            high: +1.5,
-                            air: +2.0       // High shelf 10kHz (+2dB 'Air')
+                            high: +1.0,
+                            air: +1.5       // High shelf 10kHz (+1.5dB 'Air')
                         },
                         compression: {
                             threshold: -22,
@@ -14004,9 +14170,9 @@
                             bass: +3.0,
                             lowmid: -1.0,   // Cut mud
                             mid: 0,
-                            highmid: +2.0,  // High-mid 2.5kHz (+2dB) for 'Snap'
-                            high: +2.5,     // Aggressive highs
-                            air: +3.0       // Bright air
+                            highmid: +1.3,  // High-mid 2.5kHz (+1.3dB) for 'Snap'
+                            high: +0.9,     // Controlled highs
+                            air: +1.3       // Balanced air
                         },
                         compression: {
                             threshold: -18,
@@ -14029,7 +14195,7 @@
                             lowmid: +1.0,
                             mid: +0.5,
                             highmid: +1.5,
-                            high: +2.0,     // Highs 5kHz (+2dB 'Bite')
+                            high: +1.0,     // Highs 5kHz (+1dB 'Bite')
                             air: +1.0
                         },
                         compression: {
@@ -16280,7 +16446,7 @@
                 return;
             }
 
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             if (!ctx) {
                 console.error('❌ Cannot get 2D context!');
                 return;
@@ -19002,6 +19168,35 @@
             if (limiter) {
                 limiter.threshold.value = -2;
                 limiter.ratio.value = 20;
+            }
+
+            // Reset all processors to bypass defaults
+            if (window.warmthControls) {
+                window.warmthControls.dry.gain.value = 1.0;
+                window.warmthControls.wet.gain.value = 0.0;
+            }
+            if (window.mbBypass && window.multibandControls) {
+                window.mbBypass.gain.value = 1.0;
+                window.multibandControls.low.gain.value = 0.0;
+                window.multibandControls.mid.gain.value = 0.0;
+                window.multibandControls.high.gain.value = 0.0;
+            }
+            if (window.msEQ_Bypass) {
+                window.msEQ_Bypass.gain.value = 1.0;
+                if (window.msEQ_MidL) window.msEQ_MidL.gain.value = 0.0;
+                if (window.msEQ_MidR) window.msEQ_MidR.gain.value = 0.0;
+                if (window.msEQ_SideL) window.msEQ_SideL.gain.value = 0.0;
+                if (window.msEQ_SideR) window.msEQ_SideR.gain.value = 0.0;
+            }
+            if (window.bassMonoControls && window.bassMonoControls.disable) {
+                window.bassMonoControls.disable();
+            }
+            if (window.hfLimiterComp) {
+                window.hfLimiterComp.threshold.value = 0;
+                window.hfLimiterComp.ratio.value = 1;
+            }
+            if (window.hfLimiterGain) {
+                window.hfLimiterGain.gain.value = 1.0;
             }
 
             // Reset stored LUFS values
@@ -22178,14 +22373,14 @@
                 // Conservative values that enhance without coloring - "first do no harm"
                 // All values in dB - scaled by intensity multiplier
                 const eqCurves = {
-                    'hiphop':     { sub: 2.5, bass: 1.8, lowmid: -2.5, mid: 0.3, highmid: 1.2, high: 1.2, air: 1.8 },  // Heavy low end, scooped mids
-                    'electronic': { sub: 2.0, bass: 1.2, lowmid: -1.8, mid: -0.3, highmid: 0.8, high: 1.8, air: 2.5 }, // Sub focus, bright top
-                    'pop':        { sub: 1.2, bass: 0.8, lowmid: -1.2, mid: 0.5, highmid: 1.5, high: 1.5, air: 2.0 },  // Balanced, radio-ready
-                    'rock':       { sub: 0.8, bass: 1.5, lowmid: -0.8, mid: 1.2, highmid: 2.0, high: 1.2, air: 1.2 },  // Punchy mids, presence
-                    'rnb':        { sub: 1.8, bass: 1.2, lowmid: -1.2, mid: 0.3, highmid: 0.8, high: 0.8, air: 1.5 },  // Warm, smooth
-                    'acoustic':   { sub: 0.3, bass: 0.5, lowmid: -0.5, mid: 0.3, highmid: 0.8, high: 1.2, air: 1.8 },  // Natural, airy
-                    'jazz':       { sub: 0.3, bass: 0.3, lowmid: -0.3, mid: 0.3, highmid: 0.5, high: 0.8, air: 1.2 },  // Minimal, transparent
-                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.3, high: 0.5, air: 1.0 }   // Ultra-transparent
+                    'hiphop':     { sub: 2.0, bass: 1.5, lowmid: -2.0, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.5 },  // Heavy low end, scooped mids
+                    'electronic': { sub: 1.8, bass: 1.0, lowmid: -1.5, mid: -0.3, highmid: 0.5, high: 0.3, air: 0.5 }, // Sub focus, controlled top
+                    'pop':        { sub: 0.8, bass: 0.5, lowmid: -1.0, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.8 },  // Balanced, radio-ready
+                    'rock':       { sub: 0.5, bass: 1.2, lowmid: -0.8, mid: 1.0, highmid: 1.2, high: 0.5, air: 0.3 },  // Punchy mids, presence
+                    'rnb':        { sub: 1.5, bass: 1.0, lowmid: -1.0, mid: 0.3, highmid: 0.5, high: 0.3, air: 0.5 },  // Warm, smooth
+                    'acoustic':   { sub: 0.0, bass: 0.3, lowmid: -0.5, mid: 0.3, highmid: 0.5, high: 0.5, air: 0.8 },  // Natural, airy
+                    'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.3, mid: 0.0, highmid: 0.3, high: 0.3, air: 0.5 },  // Minimal, transparent
+                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 }   // Ultra-transparent
                 };
                 const eq = eqCurves[genre] || eqCurves['pop'];
 
@@ -22336,7 +22531,34 @@
 
                 }
 
-                // 12. Multiband Compression - Intensity-adaptive
+                // 12a. Engage multiband crossover bypass → active
+                if (window.mbBypass && window.multibandControls) {
+                    window.mbBypass.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    window.multibandControls.low.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    window.multibandControls.mid.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    window.multibandControls.high.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                }
+
+                // 12b. Engage M/S EQ bypass → active
+                if (window.msEQ_Bypass) {
+                    window.msEQ_Bypass.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    if (window.msEQ_MidL) window.msEQ_MidL.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
+                    if (window.msEQ_MidR) window.msEQ_MidR.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
+                    if (window.msEQ_SideL) window.msEQ_SideL.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
+                    if (window.msEQ_SideR) window.msEQ_SideR.gain.setTargetAtTime(-0.5, ac.currentTime, 0.1);
+                }
+
+                // 12c. Engage bass mono
+                if (window.bassMonoControls) {
+                    window.bassMonoControls.enable();
+                }
+
+                // 12d. Engage HF limiter to active compression
+                if (window.hfLimiter && window.hfLimiter.setThreshold) {
+                    // Will be set to proper value in stage 8 below
+                }
+
+                // 12e. Multiband Compression - Intensity-adaptive
                 if (window.multibandCompressor && window.multibandCompressor.enable) {
                     window.multibandCompressor.enable();
                     // Select preset based on genre
@@ -22408,6 +22630,13 @@
                     const warmthMult = warmthMultipliers[intensity] || 1.0;
                     const finalWarmth = baseWarmth * warmthMult;
 
+                    // Engage warmth dry/wet mix
+                    if (window.warmthControls) {
+                        const wetAmount = Math.min(finalWarmth, 0.2); // Max 20% wet
+                        window.warmthControls.wet.gain.setTargetAtTime(wetAmount, ac.currentTime, 0.1);
+                        window.warmthControls.dry.gain.setTargetAtTime(1.0 - wetAmount, ac.currentTime, 0.1);
+                    }
+
                     // If waveshaper drive is available, apply it
                     if (window.analogWarmth.setDrive) {
                         window.analogWarmth.setDrive(finalWarmth);
@@ -22464,11 +22693,11 @@
                 if (window.msEQ) {
                     // 5-level M/S processing intensity
                     const msSettings = {
-                        1: { midPresence: 0.5, sideAir: 1.0 },   // Subtle - minimal
-                        2: { midPresence: 0.75, sideAir: 1.5 },  // Light
-                        3: { midPresence: 1.0, sideAir: 2.0 },   // Balanced
-                        4: { midPresence: 1.25, sideAir: 2.5 },  // Aggressive
-                        5: { midPresence: 1.5, sideAir: 3.0 }    // Maximum
+                        1: { midPresence: 0.3, sideAir: 0.5 },   // Subtle - minimal
+                        2: { midPresence: 0.5, sideAir: 0.8 },   // Light
+                        3: { midPresence: 0.8, sideAir: 1.0 },   // Balanced
+                        4: { midPresence: 1.0, sideAir: 1.2 },   // Aggressive
+                        5: { midPresence: 1.2, sideAir: 1.5 }    // Maximum
                     };
                     const msSet = msSettings[intensity] || msSettings[3];
 
@@ -22524,7 +22753,8 @@
                     const limSet = limiterSettings[intensity] || limiterSettings[3];
 
                     // True peak limiting ratio: brickwall limiting at all levels
-                    const limiterRatio = 100; // Always brickwall to prevent clipping
+                    // Web Audio API DynamicsCompressor.ratio range is [1, 20]
+                    const limiterRatio = 20; // Maximum ratio = brickwall limiting
 
                     window.limiter.threshold.setTargetAtTime(limSet.threshold, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(limiterRatio, ac.currentTime, 0.1);
@@ -22567,13 +22797,20 @@
 
                 // 22. High-Frequency Limiter (De-Harsh) - Intensity-adaptive
                 if (window.hfLimiter && window.hfLimiter.setThreshold) {
-                    // Lower thresholds at higher intensities for more HF control
+                    // Engage HF limiter: restore compression ratio and gain
+                    if (window.hfLimiterComp) {
+                        window.hfLimiterComp.ratio.value = 4;
+                    }
+                    if (window.hfLimiterGain) {
+                        window.hfLimiterGain.gain.value = 1.0;
+                    }
+                    // Raised thresholds - catches harsh peaks only, not reshaping spectrum
                     const hfLimThresholds = {
-                        1: -8,    // Subtle - minimal HF limiting
-                        2: -10,   // Light
-                        3: -12,   // Balanced
-                        4: -14,   // Aggressive
-                        5: -16    // Maximum - tightest HF control
+                        1: -2,    // Subtle - barely engaged
+                        2: -4,    // Light
+                        3: -6,    // Balanced - catches harsh peaks only
+                        4: -8,    // Aggressive
+                        5: -10    // Maximum - tightest HF control
                     };
                     const hfThresh = hfLimThresholds[intensity] || -12;
                     window.hfLimiter.setThreshold(hfThresh);
@@ -22693,8 +22930,8 @@
                     }
                 }
 
-                // Conservative clamp range (-6 to +10 dB) for professional results
-                const clampedGainDB = Math.max(-6, Math.min(10, gainAdjustmentDB));
+                // Conservative clamp range (-6 to +6 dB) for professional results
+                const clampedGainDB = Math.max(-6, Math.min(6, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
@@ -24782,58 +25019,30 @@
         });
 
         // Genre preview toggle handler (for genre selection overlay)
+        // During genre selection, user always hears original — toggle is inactive
+        // After mastering, the A/B toggle is handled by the main A/B system
         window.handleGenrePreviewToggle = function(isPreview) {
             const labelOrig = document.getElementById('genreToggleLabelOrig');
             const labelPreview = document.getElementById('genreToggleLabelPreview');
             const toggle = document.getElementById('genrePreviewToggle');
             const ac = window.audioContext;
 
-            // Get the toggle track and thumb for animation
             const toggleLabel = toggle ? toggle.parentElement : null;
             const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
             const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
 
-            if (isPreview) {
-                // Play with genre preset applied (MASTERED path)
-                if (labelOrig) labelOrig.style.color = 'rgba(255,255,255,0.5)';
-                if (labelOrig) labelOrig.style.fontWeight = '600';
-                if (labelPreview) labelPreview.style.color = '#00d4ff';
-                if (labelPreview) labelPreview.style.fontWeight = '700';
+            // During genre selection (before mastering), always stay on original
+            // User must hit PROCESS to hear the mastered version
+            if (labelOrig) { labelOrig.style.color = '#ffffff'; labelOrig.style.fontWeight = '700'; }
+            if (labelPreview) { labelPreview.style.color = 'rgba(255,255,255,0.5)'; labelPreview.style.fontWeight = '600'; }
+            if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.3)';
+            if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
+            if (toggle) toggle.checked = false;
 
-                // Animate toggle
-                if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
-                if (toggleThumb) toggleThumb.style.transform = 'translateX(30px)';
-
-                // Apply the currently selected genre preview
-                const selectedGenre = document.querySelector('.genre-btn.selected');
-                if (selectedGenre) {
-                    const genre = selectedGenre.dataset.genre;
-                    if (typeof previewGenre === 'function') previewGenre(genre);
-                } else {
-                    // No genre selected - still switch to mastered path
-                    if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
-                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-
-                    }
-                }
-            } else {
-                // Play original (UNMASTERED path)
-                if (labelOrig) labelOrig.style.color = '#ffffff';
-                if (labelOrig) labelOrig.style.fontWeight = '700';
-                if (labelPreview) labelPreview.style.color = 'rgba(255,255,255,0.5)';
-                if (labelPreview) labelPreview.style.fontWeight = '600';
-
-                // Animate toggle
-                if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.3)';
-                if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
-
-                // Switch to unmastered path
-                if (window.dryGain && window.wetGain && ac) {
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
-
-                }
+            // Keep on dry/original path
+            if (window.dryGain && window.wetGain && ac) {
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
             }
         };
 
@@ -24855,7 +25064,7 @@
         const genrePresets = {
             hiphop: {
                 name: 'Hip-Hop',
-                eq: { sub: 2.5, bass: 2.0, lowMid: -2.0, mid: 0.3, highMid: 1.2, high: 1.5, air: 1.8 },
+                eq: { sub: 2.0, bass: 1.5, lowMid: -2.0, mid: 0.3, highMid: 0.8, high: 0.5, air: 0.5 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.15 },
                 stereoWidth: 1.12,
@@ -24864,16 +25073,16 @@
             },
             electronic: {
                 name: 'Electronic / EDM',
-                eq: { sub: 2.0, bass: 1.5, lowMid: -1.5, mid: -0.3, highMid: 1.0, high: 2.0, air: 2.5 },
+                eq: { sub: 1.8, bass: 1.0, lowMid: -1.5, mid: -0.3, highMid: 0.5, high: 0.3, air: 0.5 },
                 compression: { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.08, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.10 },
                 stereoWidth: 1.25,
                 targetLUFS: -14,
-                desc: 'Wide stereo, deep sub, bright presence'
+                desc: 'Wide stereo, deep sub, controlled presence'
             },
             pop: {
                 name: 'Pop',
-                eq: { sub: 1.2, bass: 1.0, lowMid: -1.0, mid: 0.5, highMid: 1.5, high: 1.8, air: 2.2 },
+                eq: { sub: 0.8, bass: 0.5, lowMid: -1.0, mid: 0.3, highMid: 0.8, high: 0.5, air: 0.8 },
                 compression: { threshold: -20, ratio: 2.0, attack: 0.012, release: 0.18, knee: 8 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.20 },
                 stereoWidth: 1.15,
@@ -24882,7 +25091,7 @@
             },
             rock: {
                 name: 'Rock',
-                eq: { sub: 0.8, bass: 1.5, lowMid: -0.5, mid: 1.2, highMid: 2.0, high: 1.2, air: 1.2 },
+                eq: { sub: 0.5, bass: 1.2, lowMid: -0.8, mid: 1.0, highMid: 1.2, high: 0.5, air: 0.3 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.006, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.12 },
                 stereoWidth: 1.08,
@@ -24891,7 +25100,7 @@
             },
             rnb: {
                 name: 'R&B / Soul',
-                eq: { sub: 1.8, bass: 1.5, lowMid: -0.8, mid: 0.3, highMid: 0.8, high: 1.0, air: 1.5 },
+                eq: { sub: 1.5, bass: 1.0, lowMid: -1.0, mid: 0.3, highMid: 0.5, high: 0.3, air: 0.5 },
                 compression: { threshold: -22, ratio: 1.8, attack: 0.018, release: 0.22, knee: 10 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.25 },
                 stereoWidth: 1.18,
@@ -24900,7 +25109,7 @@
             },
             acoustic: {
                 name: 'Acoustic / Folk',
-                eq: { sub: 0.3, bass: 0.5, lowMid: -0.3, mid: 0.3, highMid: 0.8, high: 1.2, air: 1.8 },
+                eq: { sub: 0.0, bass: 0.3, lowMid: -0.5, mid: 0.3, highMid: 0.5, high: 0.5, air: 0.8 },
                 compression: { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.05,
@@ -24909,7 +25118,7 @@
             },
             jazz: {
                 name: 'Jazz',
-                eq: { sub: 0.3, bass: 0.3, lowMid: -0.2, mid: 0.3, highMid: 0.5, high: 0.8, air: 1.2 },
+                eq: { sub: 0.0, bass: 0.0, lowMid: -0.3, mid: 0.0, highMid: 0.3, high: 0.3, air: 0.5 },
                 compression: { threshold: -28, ratio: 1.3, attack: 0.030, release: 0.35, knee: 15 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.35 },
                 stereoWidth: 1.03,
@@ -24918,7 +25127,7 @@
             },
             classical: {
                 name: 'Classical / Orchestral',
-                eq: { sub: 0.0, bass: 0.0, lowMid: -0.1, mid: 0.0, highMid: 0.3, high: 0.5, air: 1.0 },
+                eq: { sub: 0.0, bass: 0.0, lowMid: -0.2, mid: 0.0, highMid: 0.2, high: 0.2, air: 0.3 },
                 compression: { threshold: -32, ratio: 1.2, attack: 0.040, release: 0.50, knee: 20 },
                 limiter: { threshold: -1.0, attack: 0.002, release: 0.50 },
                 stereoWidth: 1.0,
@@ -24927,7 +25136,7 @@
             },
             metal: {
                 name: 'Metal / Hard Rock',
-                eq: { sub: 1.0, bass: 1.8, lowMid: -1.0, mid: 1.5, highMid: 2.5, high: 1.5, air: 1.0 },
+                eq: { sub: 0.8, bass: 1.5, lowMid: -1.0, mid: 1.2, highMid: 1.5, high: 0.5, air: 0.3 },
                 compression: { threshold: -16, ratio: 3.0, attack: 0.004, release: 0.10, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0002, release: 0.08 },
                 stereoWidth: 1.1,
@@ -24936,7 +25145,7 @@
             },
             country: {
                 name: 'Country',
-                eq: { sub: 0.5, bass: 1.0, lowMid: 0.0, mid: 0.5, highMid: 1.2, high: 1.5, air: 2.0 },
+                eq: { sub: 0.3, bass: 0.8, lowMid: -0.5, mid: 0.5, highMid: 0.8, high: 0.5, air: 0.8 },
                 compression: { threshold: -22, ratio: 2.0, attack: 0.015, release: 0.20, knee: 10 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.20 },
                 stereoWidth: 1.1,
@@ -24945,16 +25154,16 @@
             },
             latin: {
                 name: 'Latin / Reggaeton',
-                eq: { sub: 2.2, bass: 1.8, lowMid: -1.2, mid: 0.5, highMid: 1.5, high: 1.8, air: 2.0 },
+                eq: { sub: 1.8, bass: 1.5, lowMid: -1.2, mid: 0.3, highMid: 0.8, high: 0.5, air: 0.5 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0004, release: 0.12 },
                 stereoWidth: 1.15,
                 targetLUFS: -14,
-                desc: 'Deep bass, rhythmic punch, bright energy'
+                desc: 'Deep bass, rhythmic punch, controlled energy'
             },
             lofi: {
                 name: 'Lo-Fi / Chill',
-                eq: { sub: 1.0, bass: 1.2, lowMid: 0.3, mid: -0.5, highMid: -0.5, high: -1.0, air: 0.5 },
+                eq: { sub: 0.8, bass: 1.0, lowMid: 0.3, mid: -0.3, highMid: -0.3, high: -0.5, air: 0.0 },
                 compression: { threshold: -24, ratio: 2.0, attack: 0.020, release: 0.25, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.08,
@@ -24969,76 +25178,20 @@
 
         let selectedPreMasterGenre = null;
 
-        // Preview a genre in real-time (applies EQ/compression immediately)
+        // Select a genre for mastering (no processing applied — user hears original track)
+        // Full mastering chain only engages when user hits PROCESS
         window.previewGenre = function(genre) {
             selectedPreMasterGenre = genre;
             window.selectedPreMasterGenre = genre; // Also set globally for cross-scope access
             const preset = genrePresets[genre];
             if (!preset) return;
 
-            const ac = window.audioContext;
-            if (!ac) {
-                console.warn('AudioContext not ready');
-                return;
-            }
-
-            // Switch to MASTERED path so they hear the processing
+            // Keep user on ORIGINAL audio path — no wet chain during genre selection
             // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
-            if (window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Unmastered OFF
-                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Mastered ON
-
-                // SYNC THE TOGGLE VISUAL to match audio state (now playing PREVIEW/MASTERED)
-                const toggle = document.getElementById('genrePreviewToggle');
-                const labelOrig = document.getElementById('genreToggleLabelOrig');
-                const labelPreview = document.getElementById('genreToggleLabelPreview');
-                if (toggle) {
-                    toggle.checked = true; // Set toggle to PREVIEW position
-                    const toggleLabel = toggle.parentElement;
-                    const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
-                    const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
-                    if (toggleTrack) toggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
-                    if (toggleThumb) toggleThumb.style.transform = 'translateX(30px)';
-                }
-                if (labelOrig) { labelOrig.style.color = 'rgba(255,255,255,0.5)'; labelOrig.style.fontWeight = '600'; }
-                if (labelPreview) { labelPreview.style.color = '#00d4ff'; labelPreview.style.fontWeight = '700'; }
-            }
-
-            // Apply EQ preset in real-time
-            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub, ac.currentTime, 0.1);
-            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass, ac.currentTime, 0.1);
-            if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid, ac.currentTime, 0.1);
-            if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid, ac.currentTime, 0.1);
-            if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid, ac.currentTime, 0.1);
-            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high, ac.currentTime, 0.1);
-            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, ac.currentTime, 0.1);
-
-            // AUTO-GAIN COMPENSATION - Prevent clipping from EQ boosts
-            // Calculate total boost and compensate to maintain target loudness
-            const eqValues = Object.values(preset.eq);
-            const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
-            const avgBoost = totalBoost / 3; // Weighted average (not all bands contribute equally)
-            const compensationDB = Math.min(avgBoost * 0.7, 4); // Cap at 4dB reduction, apply 70%
-            const compensationLinear = Math.pow(10, -compensationDB / 20);
-
-            // Apply compensation to makeupGain (preserves original mastering level)
-            if (window.makeupGain && window.originalMakeupGainValue !== undefined) {
-                const compensatedGain = window.originalMakeupGainValue * compensationLinear;
-                window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
-
-            }
-
-            // Apply compression preset
-            if (window.compressor) {
-                window.compressor.threshold.setTargetAtTime(preset.compression.threshold, ac.currentTime, 0.1);
-                window.compressor.ratio.setTargetAtTime(preset.compression.ratio, ac.currentTime, 0.1);
-                window.compressor.attack.setTargetAtTime(preset.compression.attack, ac.currentTime, 0.1);
-                window.compressor.release.setTargetAtTime(preset.compression.release, ac.currentTime, 0.1);
-            }
-
-            // Apply stereo width
-            if (window.msControls && window.msControls.side) {
-                window.msControls.side.gain.setTargetAtTime(preset.stereoWidth, ac.currentTime, 0.1);
+            const ac = window.audioContext;
+            if (ac && window.dryGain && window.wetGain) {
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Original ON
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Processed OFF
             }
 
             // Update UI - highlight selected genre
@@ -25052,8 +25205,8 @@
             // Update status message
             const statusEl = document.getElementById('genrePreviewStatus');
             if (statusEl) {
-                statusEl.innerHTML = `🎧 Now previewing: <strong>${preset.name}</strong> - ${preset.desc}`;
-                statusEl.style.color = '#00ff88';
+                statusEl.innerHTML = `Selected: <strong>${preset.name}</strong> - ${preset.desc}. Hit PROCESS to master.`;
+                statusEl.style.color = '#00d4ff';
             }
 
             // Enable the Start Mastering button
@@ -25107,79 +25260,19 @@
                 labelEl.style.color = colors[processingIntensity];
             }
 
-            // Re-apply genre preview with new intensity
-            if (selectedPreMasterGenre) {
-                previewGenreWithIntensity(selectedPreMasterGenre, processingIntensity);
-            }
+            // Store intensity — processing only applied when user hits PROCESS
+            window.selectedIntensity = processingIntensity;
 
         };
 
         // Preview genre with intensity multiplier (1-5 scale)
+        // No-op during genre selection — processing only happens on PROCESS button
         function previewGenreWithIntensity(genre, intensity) {
-            const preset = genrePresets[genre];
-            if (!preset) return;
-
-            const ac = window.audioContext;
-            if (!ac) return;
-
-            // Safe intensity multipliers (1-5 scale) - prevents distortion
-            const intensityMultipliers = {
-                1: 0.4,   // Subtle
-                2: 0.65,  // Light
-                3: 0.85,  // Balanced
-                4: 1.0,   // Aggressive
-                5: 1.15   // Maximum (capped)
-            };
-            const multiplier = intensityMultipliers[intensity] || 0.85;
-
-            // Apply EQ with intensity (capped to prevent distortion)
-            const eqMult = Math.min(multiplier, 1.2); // Cap EQ boost
-            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub * eqMult, ac.currentTime, 0.1);
-            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass * eqMult, ac.currentTime, 0.1);
-            if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid * eqMult, ac.currentTime, 0.1);
-            if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid * eqMult, ac.currentTime, 0.1);
-            if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid * eqMult, ac.currentTime, 0.1);
-            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high * eqMult, ac.currentTime, 0.1);
-            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air * eqMult, ac.currentTime, 0.1);
-
-            // AUTO-GAIN COMPENSATION - Prevent clipping from EQ boosts
-            const eqValues = Object.values(preset.eq).map(v => v * eqMult);
-            const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
-            const avgBoost = totalBoost / 3;
-            const compensationDB = Math.min(avgBoost * 0.7, 4);
-            const compensationLinear = Math.pow(10, -compensationDB / 20);
-            if (window.makeupGain && window.originalMakeupGainValue !== undefined) {
-                const compensatedGain = window.originalMakeupGainValue * compensationLinear;
-                window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
-
-            }
-
-            // Apply compression with intensity (gentler at high levels)
-            if (window.compressor) {
-                // Threshold adjustment: higher intensity = lower threshold (more compression)
-                const thresholdAdjust = { 1: 6, 2: 3, 3: 0, 4: -2, 5: -3 }[intensity] || 0;
-                // Ratio adjustment: higher intensity = higher ratio (more limiting)
-                const ratioMult = { 1: 0.6, 2: 0.8, 3: 1.0, 4: 1.15, 5: 1.25 }[intensity] || 1.0;
-                window.compressor.threshold.setTargetAtTime(preset.compression.threshold + thresholdAdjust, ac.currentTime, 0.1);
-                window.compressor.ratio.setTargetAtTime(Math.min(preset.compression.ratio * ratioMult, 12), ac.currentTime, 0.1); // Cap ratio at 12:1
-            }
-
-            // Apply stereo width with intensity (capped)
-            if (window.msControls && window.msControls.side) {
-                const widthBoost = (preset.stereoWidth - 1.0) * Math.min(multiplier, 1.1);
-                window.msControls.side.gain.setTargetAtTime(1.0 + widthBoost, ac.currentTime, 0.1);
-            }
+            // Genre and intensity are stored but not applied until mastering
+            // User hears their original unmastered track while selecting
         }
 
-        // Proceed with mastering after genre selection
-        window.proceedWithMastering = function() {
-            // Hide the genre selection overlay
-            const overlay = document.getElementById('preMasteringGenreSelect');
-            if (overlay) overlay.style.display = 'none';
-
-            // Store intensity for results
-            window.selectedIntensity = processingIntensity;
-        };
+        // (proceedWithMastering defined below with full implementation)
 
         // Select processing intensity (1-5 buttons)
         window.selectIntensity = function(level) {
@@ -25211,10 +25304,8 @@
             const descEl = document.getElementById('intensityDescription');
             if (descEl) descEl.textContent = descriptions[level];
 
-            // If we have audio loaded, apply the intensity to the mastering chain in real-time
-            if (window.audioBuffer && window.applyIntensityToChain) {
-                window.applyIntensityToChain(level);
-            }
+            // Intensity stored — only applied during actual mastering (PROCESS button)
+            // User hears original track while adjusting settings
         };
 
         // Apply intensity to the mastering chain in real-time
@@ -25234,11 +25325,12 @@
             const mult = intensityMultipliers[level] || intensityMultipliers[3];
             const now = ac.currentTime;
 
-            // Apply to EQ (scale existing gains)
-            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(4.5 * mult.eq, now, 0.1);
-            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(3.5 * mult.eq, now, 0.1);
-            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(2.5 * mult.eq, now, 0.1);
-            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(3 * mult.eq, now, 0.1);
+            // Apply to EQ (scale genre preset values by intensity multiplier)
+            const activePreset = genrePresets[window.selectedPreMasterGenre || 'pop'];
+            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(activePreset.eq.sub * mult.eq, now, 0.1);
+            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(activePreset.eq.bass * mult.eq, now, 0.1);
+            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(activePreset.eq.high * mult.eq, now, 0.1);
+            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(activePreset.eq.air * mult.eq, now, 0.1);
 
             // Apply to compressor
             if (window.compressor) {
@@ -25342,13 +25434,6 @@
             // Force display with important styles
             overlay.style.cssText = 'display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100010; background: rgba(0,0,0,0.92); backdrop-filter: blur(20px); align-items: center; justify-content: center;';
 
-            // Voice prompt for genre selection - use the global speakWithDucking function
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
-                    window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
-                }
-            }, 500);
-
             // Capture BEFORE spectrum for comparison
             try {
                 captureBeforeSpectrum();
@@ -25377,12 +25462,19 @@
                 btn.classList.remove('selected');
             });
 
-            // Make sure audio is playing so they can hear the preview
-            if (window.audioElement && window.audioElement.paused) {
-                window.audioElement.play().catch(err => {
-                    console.warn('⚠️ Could not auto-play for preview:', err.message);
-                });
-            }
+            // Voice prompt FIRST, then start music ducked underneath
+            // Don't auto-play audio until the voice has started
+            setTimeout(() => {
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
+                }
+                // Start audio playback ducked (low volume) after voice starts
+                setTimeout(() => {
+                    if (window.audioElement && window.audioElement.paused) {
+                        window.audioElement.play().catch(() => {});
+                    }
+                }, 300);
+            }, 800);
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -25789,8 +25881,8 @@
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Dorothy, and I\'ll be walking you through everything. Right, let\'s get started shall we? Just drag your track onto that glowing area there, or give it a click to browse your files. We handle all the usual suspects - WAV, MP3, FLAC, whatever you\'ve got. No stress.' },
                     { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth. WAV, FLAC, MP3, or AAC - each has its purpose.', action: 'Check the format options on the right', voice: 'Lovely. Now before we work our magic, let\'s sort out your export settings. Quick rundown for you. WAV at 24-bit is your gold standard - that\'s what the pros use, completely lossless, pristine quality. FLAC gives you the same quality but half the file size, rather clever really. MP3 at 320 is brilliant for streaming, works absolutely everywhere. And AAC is what Apple uses, very efficient. For most people, I\'d say go with WAV 24-bit. Can\'t go wrong with that.' },
                     { title: 'Time to Master', desc: 'Hit that MASTER button and watch the magic happen. 24 studio-grade processors at your service.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll run your track through our full processing chain. We\'re talking 24 studio-grade processors - EQ, compression, limiting, stereo enhancement, the whole lot. It\'s like having a professional mastering engineer in your pocket. Go on, let\'s hear what you\'ve got.' },
-                    { title: 'Sounding Proper!', desc: 'Your track just got the professional treatment. Have a listen - notice the difference?', action: '', voice: 'Brilliant! Your track just went through the full mastering treatment. Have a listen and tell me that doesn\'t sound absolutely gorgeous. The clarity, the punch, the overall polish - that\'s what professional mastering does. Now, have a look at the genre options on the left. You can fine-tune things to match your style perfectly.' },
-                    { title: 'Make It Yours', desc: 'Dial in your perfect sound with genre presets, EQ tweaks, and more. This is where you shine.', action: '', voice: 'Alright, here\'s where you really make it your own. Pick your genre over there - Hip-Hop, Rock, Pop, EDM, Jazz, whatever fits your vibe. Then play around with the presets or dive into the manual EQ if you fancy getting hands-on. Your track, your sound, your rules. I\'ll leave you to it. If you need me again, just hit that question mark. Cheers!' }
+                    { title: 'Sounding Proper!', desc: 'Your track just got the professional treatment. Have a listen - notice the difference?', action: '', voice: 'Beautiful. Your master is sounding incredible. Now check out the genre options on the left to fine-tune your sound.' },
+                    { title: 'Make It Yours', desc: 'Pick a genre, tweak the EQ, and make it yours.', action: '', voice: 'Pick your genre, explore the presets, and make it yours. If you need me, tap the question mark. Enjoy.' }
                 ],
                 explore: { title: "You're All Set!", subtitle: 'Your track sounds brilliant. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
                 skip: 'Skip'
@@ -25929,6 +26021,9 @@
 
             }
 
+            // Premium English female voice names across platforms
+            const premiumFemaleNames = ['Samantha', 'Karen', 'Tessa', 'Moira', 'Fiona', 'Victoria', 'Zira', 'Hazel', 'Susan', 'Catherine', 'Matilda', 'Nicole', 'Lee'];
+
             preferredVoice =
                 // #1: Australian Enhanced female (BEST)
                 voices.find(v => v.lang === 'en-AU' && neuralKeywords.some(k => v.name.includes(k)) && aussiFemaleVoices.some(n => v.name.includes(n))) ||
@@ -25938,7 +26033,17 @@
                 voices.find(v => v.lang === 'en-AU' && aussiFemaleVoices.some(n => v.name.includes(n))) ||
                 // #4: ANY Australian voice
                 voices.find(v => v.lang === 'en-AU') ||
-                // Fallback to any English if no Australian
+                // #5: UK Enhanced female (Hazel, Fiona, etc. — natural British)
+                voices.find(v => v.lang === 'en-GB' && neuralKeywords.some(k => v.name.includes(k)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // #6: US Enhanced female (Samantha on Mac, Zira on Windows)
+                voices.find(v => v.lang === 'en-US' && neuralKeywords.some(k => v.name.includes(k)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // #7: Any Enhanced English female
+                voices.find(v => v.lang.startsWith('en') && neuralKeywords.some(k => v.name.includes(k)) && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // #8: Any English female by name
+                voices.find(v => v.lang.startsWith('en') && premiumFemaleNames.some(n => v.name.includes(n))) ||
+                // #9: Any Enhanced English voice
+                voices.find(v => v.lang.startsWith('en') && neuralKeywords.some(k => v.name.includes(k))) ||
+                // #10: Any English voice
                 voices.find(v => v.lang.startsWith('en')) ||
                 voices[0];
 
@@ -25971,52 +26076,139 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // ELEVENLABS PREMIUM AI VOICE - Ultra Lifelike Human Quality
+        // AI VOICE ENGINE — Azure Neural TTS (free tier) → ElevenLabs → Browser fallback
         // ═══════════════════════════════════════════════════════════════════
 
-        // ElevenLabs Configuration - PREMIUM AI VOICE ACTIVE
-        const ELEVENLABS_CONFIG = {
-            apiKey: 'sk_97bda769b06d3a0311a366fc5f2a46105b3bf1636eec32c7',
-            // Dorothy - British female, warm, professional, clear English accent
-            voiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy - British English professional
-            // Alternative voices:
-            // 'XrExE9yKIg1WjnnlVkGX' - Matilda (Australian, professional)
-            // 'XB0fDUnXU5powFXDhCwa' - Charlotte (slight English accent, warm)
-            // 'ThT5KcBeYPX3keUQqHPh' - Dorothy (British, warm, professional)
-            modelId: 'eleven_multilingual_v2', // Best quality model
+        // Azure TTS Configuration — FREE neural voices via /api/tts serverless function
+        const AZURE_TTS_CONFIG = {
+            endpoint: '/api/tts',
+            // Voice options: 'ava' (flagship), 'emma' (warm), 'jenny' (friendly),
+            //                'steffan' (male), 'sonia' (British), 'natasha' (Australian)
+            voice: (function() {
+                try { return localStorage.getItem('tourVoice') || 'ava'; } catch (_) { return 'ava'; }
+            })(),
             enabled: true
         };
 
-        // ElevenLabs is now active
+        // ElevenLabs Configuration — Premium fallback (if Azure unavailable or user has credits)
+        const ELEVENLABS_CONFIG = {
+            apiKey: 'sk_97bda769b06d3a0311a366fc5f2a46105b3bf1636eec32c7',
+            voiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy — British English professional
+            modelId: 'eleven_multilingual_v2',
+            enabled: true
+        };
+
         if (ELEVENLABS_CONFIG.apiKey) {
             ELEVENLABS_CONFIG.enabled = true;
-
-        } else {
-
         }
 
-        // ElevenLabs speak function - Premium AI voice with STREAMING for fast response
         let currentAudio = null;
-        let musicWasPlaying = false;
+        let musicDuckedVolume = null;
+
+        // ── L0: Client-side audio cache (Map of text+voice → Blob) ──
+        // Guided tour repeats the same phrases — never re-fetch what we already have
+        const ttsClientCache = new Map();
+
+        function ttsCacheKey(text, voice) {
+            return voice + ':' + text;
+        }
+
+        // ── Helper: duck music, play audio blob, restore volume ──
+        function duckMusicVolume() {
+            const musicPlayer = document.getElementById('audioElement');
+            if (musicPlayer && !musicPlayer.paused) {
+                musicDuckedVolume = musicPlayer.volume;
+                musicPlayer.volume = 0.12;
+            }
+        }
+
+        function restoreMusicVolume() {
+            const mp = document.getElementById('audioElement');
+            if (mp && musicDuckedVolume !== null) {
+                mp.volume = musicDuckedVolume;
+                musicDuckedVolume = null;
+            }
+        }
+
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+        }
+
+        function playAudioBlob(blob) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(blob);
+                currentAudio = new Audio(url);
+                currentAudio.onended = () => { restoreMusicVolume(); resolve(); };
+                currentAudio.onerror = (e) => { restoreMusicVolume(); reject(e); };
+                currentAudio.play().catch(reject);
+            });
+        }
+
+        // ── Azure Neural TTS — FREE (500K chars/month) with client cache ──
+        async function speakWithAzure(text) {
+            if (!AZURE_TTS_CONFIG.enabled || !text) return false;
+
+            try {
+                stopCurrentAudio();
+                duckMusicVolume();
+
+                // Check client cache first (instant, zero network)
+                const ck = ttsCacheKey(text, AZURE_TTS_CONFIG.voice);
+                if (ttsClientCache.has(ck)) {
+                    await playAudioBlob(ttsClientCache.get(ck));
+                    return true;
+                }
+
+                const response = await fetch(AZURE_TTS_CONFIG.endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        voice: AZURE_TTS_CONFIG.voice
+                    })
+                });
+
+                if (!response.ok) {
+                    console.warn('Azure TTS unavailable:', response.status);
+                    if (response.status === 503) {
+                        AZURE_TTS_CONFIG.enabled = false;
+                    }
+                    restoreMusicVolume();
+                    return false;
+                }
+
+                const audioBlob = await response.blob();
+
+                // Store in client cache for instant replay
+                ttsClientCache.set(ck, audioBlob);
+
+                await playAudioBlob(audioBlob);
+                return true;
+            } catch (error) {
+                console.warn('Azure TTS error:', error);
+                restoreMusicVolume();
+                return false;
+            }
+        }
+
+        // ── ElevenLabs TTS — Premium fallback (with client cache) ──
         async function speakWithElevenLabs(text) {
             if (!ELEVENLABS_CONFIG.enabled || !text) return false;
 
             try {
-                // Stop any current voice audio
-                if (currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
+                stopCurrentAudio();
+                duckMusicVolume();
+
+                // Check client cache first
+                const ck = ttsCacheKey(text, 'elevenlabs');
+                if (ttsClientCache.has(ck)) {
+                    await playAudioBlob(ttsClientCache.get(ck));
+                    return true;
                 }
 
-                // Pause music while speaking
-                const musicPlayer = document.getElementById('audioElement');
-                if (musicPlayer && !musicPlayer.paused) {
-                    musicWasPlaying = true;
-                    musicPlayer.pause();
-
-                }
-
-                // Use streaming endpoint with latency optimization for FAST response
                 const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_CONFIG.voiceId}/stream?optimize_streaming_latency=4`, {
                     method: 'POST',
                     headers: {
@@ -26026,7 +26218,7 @@
                     },
                     body: JSON.stringify({
                         text: text,
-                        model_id: 'eleven_turbo_v2_5', // Latest turbo model
+                        model_id: 'eleven_turbo_v2_5',
                         voice_settings: {
                             stability: 0.5,
                             similarity_boost: 0.75,
@@ -26038,60 +26230,52 @@
 
                 if (!response.ok) {
                     const error = await response.text();
-                    console.error('❌ ElevenLabs API error:', response.status, error);
-
-                    // If quota exceeded or unauthorized, disable ElevenLabs for this session
+                    console.warn('ElevenLabs API error:', response.status);
                     if (error.includes('quota_exceeded') || error.includes('quota') || response.status === 401) {
-
                         ELEVENLABS_CONFIG.enabled = false;
                     }
+                    restoreMusicVolume();
                     return false;
                 }
 
-                // Stream the audio for immediate playback
                 const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-                currentAudio = new Audio(audioUrl);
-
-                // Resume music when voice ends
-                currentAudio.onended = () => {
-                    if (musicWasPlaying) {
-                        const musicPlayer = document.getElementById('audioElement');
-                        if (musicPlayer) {
-                            musicPlayer.play();
-
-                        }
-                        musicWasPlaying = false;
-                    }
-                };
-
-                currentAudio.play();
-
+                ttsClientCache.set(ck, audioBlob);
+                await playAudioBlob(audioBlob);
                 return true;
             } catch (error) {
-                console.error('ElevenLabs error:', error);
+                console.warn('ElevenLabs error:', error);
+                restoreMusicVolume();
                 return false;
             }
         }
 
-        // Speak text - Uses ElevenLabs if available, falls back to Web Speech API
+        // ── Main speak() — cascade: Azure → ElevenLabs → Browser ──
         async function speak(text) {
             if (!voiceEnabled || !text) return;
 
-            // Try ElevenLabs first (premium quality)
+            // 1) Azure Neural TTS (FREE, high quality)
+            if (AZURE_TTS_CONFIG.enabled) {
+                const success = await speakWithAzure(text);
+                if (success) return;
+            }
+
+            // 2) ElevenLabs (premium, if credits available)
             if (ELEVENLABS_CONFIG.enabled) {
                 const success = await speakWithElevenLabs(text);
                 if (success) return;
-
             }
 
-            // Fallback to Web Speech API
-            if (!voiceSynth) {
-
-                return;
-            }
+            // 3) Browser Web Speech API (last resort)
+            if (!voiceSynth) return;
 
             window.speechSynthesis.cancel();
+
+            const musicEl = document.getElementById('audioElement');
+            let savedVol = null;
+            if (musicEl && !musicEl.paused) {
+                savedVol = musicEl.volume;
+                musicEl.volume = 0.12;
+            }
 
             setTimeout(() => {
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -26099,19 +26283,26 @@
                 utterance.rate = 0.88;
                 utterance.pitch = 1.08;
                 utterance.volume = 0.95;
-
+                utterance.onend = () => {
+                    if (musicEl && savedVol !== null) {
+                        musicEl.volume = savedVol;
+                    }
+                };
                 window.speechSynthesis.speak(utterance);
             }, 50);
         }
-        // Make speak globally accessible
         window.speak = speak;
 
-        // Helper to set ElevenLabs API key
+        // Helper to set ElevenLabs API key (if user tops up credits)
         window.setElevenLabsKey = function(key) {
             try { localStorage.setItem('elevenlabs_api_key', key); } catch (_) { /* private browsing */ }
             ELEVENLABS_CONFIG.apiKey = key;
             ELEVENLABS_CONFIG.enabled = true;
+        };
 
+        // Helper to switch Azure voice
+        window.setAzureVoice = function(voice) {
+            AZURE_TTS_CONFIG.voice = voice;
         };
 
         // Speak with audio ducking - DISABLED to prevent LUFS issues
@@ -26444,7 +26635,7 @@
         function showExploreModal() {
             // Get translated content
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
-            const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
+            const stepTrans = tourTranslations[currentLang]?.steps[4] || tourTranslations.en.steps[4];
 
             // Speak the final step voice
             if (stepTrans && stepTrans.voice) {
@@ -26497,15 +26688,17 @@
                         <p style="font-size: 1.1rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0 0 32px;">${trans.subtitle}</p>
 
                         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 36px; text-align: left;">
-                            <div style="
+                            <div class="explore-genre-card" style="
                                 display: flex;
                                 align-items: center;
                                 gap: 18px;
-                                background: linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(0,212,255,0.05) 100%);
-                                border: 1px solid rgba(0,212,255,0.35);
+                                background: linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(0,212,255,0.06) 100%);
+                                border: 1px solid rgba(0,212,255,0.5);
                                 border-radius: 16px;
                                 padding: 18px 22px;
                                 transition: all 0.3s ease;
+                                animation: genreCardGlow 2s ease-in-out infinite;
+                                box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 40px rgba(0, 212, 255, 0.05);
                             ">
                                 <span style="font-size: 2.5rem;">🎵</span>
                                 <div>
@@ -26563,27 +26756,33 @@
                            onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 40px rgba(0,212,255,0.4)';">
                             🚀 ${trans.btn}
                         </button>
-                        <button onclick="window.stopSpeaking(); if(window.currentAudio){window.currentAudio.pause();window.currentAudio=null;}" style="
+                        <button onclick="window.closeVoiceTourExplore()" style="
                             margin-top: 12px;
-                            padding: 10px 24px;
+                            width: 100%;
+                            padding: 14px;
                             background: transparent;
                             border: 1px solid rgba(255,255,255,0.2);
-                            border-radius: 8px;
-                            color: rgba(255,255,255,0.5);
-                            font-size: 0.85rem;
+                            border-radius: 10px;
+                            color: rgba(255,255,255,0.6);
+                            font-size: 0.95rem;
+                            font-weight: 500;
                             cursor: pointer;
                             transition: all 0.3s ease;
-                        " onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='rgba(255,255,255,0.8)';"
-                           onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.5)';">
-                            ⏹ Skip Voice
+                        " onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.05)';"
+                           onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent';">
+                            Exit Tour
                         </button>
-                        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.4); margin: 24px 0 0;">💡 ${trans.tip}</p>
+                        <p style="font-size: 0.8rem; color: rgba(255,255,255,0.35); margin: 20px 0 0;">${trans.tip}</p>
                     </div>
                 </div>
                 <style>
                     @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
                     @keyframes modalSlideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
                     @keyframes celebrateBounce { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-15px) rotate(-5deg); } 75% { transform: translateY(-15px) rotate(5deg); } }
+                    @keyframes genreCardGlow {
+                        0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 40px rgba(0, 212, 255, 0.05); border-color: rgba(0, 212, 255, 0.5); }
+                        50% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), 0 0 60px rgba(0, 212, 255, 0.1); border-color: rgba(0, 212, 255, 0.8); }
+                    }
                 </style>
             `;
             document.body.appendChild(modal);

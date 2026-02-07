@@ -57,20 +57,20 @@
             }
         };
 
-        // Replace in audio chain
-        if (oldLimiter && window.compressor && window.masterGain) {
+        // Skip limiter replacement if 20-stage mastering chain is active
+        // (chain already has look-ahead limiter + brickwall limiter)
+        if (window.lookAheadLimiter && window.lookAheadLimiter.limiter) {
+            console.log('✓ Professional mastering chain detected - using built-in look-ahead + brickwall limiters');
+            window.limiterWorklet = null; // Not needed
+        } else if (oldLimiter && window.compressor && window.masterGain) {
             try {
-                // Disconnect old limiter
+                // Legacy 6-stage chain fallback
                 window.compressor.disconnect(oldLimiter);
                 oldLimiter.disconnect(window.masterGain);
-
-                // Connect new worklet limiter
                 window.compressor.connect(limiterWorklet);
                 limiterWorklet.connect(window.masterGain);
-
-                // Update global reference
                 window.limiter = limiterWorklet;
-                window.limiterWorklet = limiterWorklet; // Keep separate reference
+                window.limiterWorklet = limiterWorklet;
 
                 // Update limiter slider to control worklet
                 const limiterSlider = document.getElementById('limiterSlider');

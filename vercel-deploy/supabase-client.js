@@ -293,7 +293,8 @@ async function signOut() {
     // Clear local state
     currentUser = null;
     window.currentUser = null;
-    window.OAUTH_IN_PROGRESS = false;
+    // Don't clear OAUTH_IN_PROGRESS here — it may have been set intentionally
+    // before signOut (e.g. during Google login flow)
 
     // NUCLEAR: Clear ALL localStorage (not just Supabase keys)
     try {
