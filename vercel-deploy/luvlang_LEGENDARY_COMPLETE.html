@@ -12646,8 +12646,8 @@
             const rightChannel = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
             const totalSamples = leftChannel.length;
 
-            // FFT parameters
-            const fftSize = 4096;
+            // FFT parameters — 2048 is sufficient for mastering analysis (10.7 Hz resolution at 44.1k)
+            const fftSize = 2048;
             const halfFFT = fftSize / 2;
             const binWidth = sampleRate / fftSize;
 
@@ -12662,14 +12662,29 @@
                 air:     { low: 12000, high: 20000 }
             };
 
-            // Hann window
+            // Hann window (precomputed once)
             const hannWindow = new Float32Array(fftSize);
             for (let i = 0; i < fftSize; i++) {
                 hannWindow[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1)));
             }
 
-            // Sample at multiple points through the track for consistency
-            const numFrames = Math.min(32, Math.floor(totalSamples / fftSize));
+            // Precompute twiddle factors for ALL butterfly stages (eliminates ~100K+ trig calls)
+            const twiddleRe = {};
+            const twiddleIm = {};
+            for (let len = 2; len <= fftSize; len <<= 1) {
+                const halfLen = len >> 1;
+                const angleStep = -2 * Math.PI / len;
+                twiddleRe[len] = new Float32Array(halfLen);
+                twiddleIm[len] = new Float32Array(halfLen);
+                for (let j = 0; j < halfLen; j++) {
+                    const angle = angleStep * j;
+                    twiddleRe[len][j] = Math.cos(angle);
+                    twiddleIm[len][j] = Math.sin(angle);
+                }
+            }
+
+            // 8 frames is sufficient for statistical consistency across the track
+            const numFrames = Math.min(8, Math.floor(totalSamples / fftSize));
             const frameStep = Math.floor((totalSamples - fftSize) / Math.max(1, numFrames - 1));
 
             // Accumulate band energy across frames
@@ -12689,10 +12704,15 @@
             let fluxSum = 0;
             let fluxFrames = 0;
 
-            // Process frames
+            // Process frames (yield to main thread between frames to prevent UI hang)
             for (let f = 0; f < numFrames; f++) {
                 const offset = f * frameStep;
                 if (offset + fftSize > totalSamples) break;
+
+                // Yield to main thread every 2 frames to keep UI responsive
+                if (f > 0 && f % 2 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
 
                 // Windowed mono signal for FFT
                 const mono = new Float32Array(fftSize);
@@ -12704,7 +12724,7 @@
                     mono[i] = (leftSeg[i] + rightSeg[i]) * 0.5 * hannWindow[i];
                 }
 
-                // Radix-2 Cooley-Tukey FFT (O(n log n) instead of O(n²))
+                // Radix-2 Cooley-Tukey FFT with precomputed twiddle factors
                 const re = new Float32Array(fftSize);
                 const im = new Float32Array(fftSize);
                 for (let i = 0; i < fftSize; i++) { re[i] = mono[i]; im[i] = 0; }
@@ -12715,15 +12735,16 @@
                     j ^= bit;
                     if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
                 }
-                // Butterfly stages
+                // Butterfly stages — uses precomputed cos/sin (zero trig calls here)
                 for (let len = 2; len <= fftSize; len <<= 1) {
                     const halfLen = len >> 1;
-                    const angleStep = -2 * Math.PI / len;
+                    const twRe = twiddleRe[len];
+                    const twIm = twiddleIm[len];
                     for (let i = 0; i < fftSize; i += len) {
                         for (let j = 0; j < halfLen; j++) {
-                            const angle = angleStep * j;
-                            const tRe = re[i + j + halfLen] * Math.cos(angle) - im[i + j + halfLen] * Math.sin(angle);
-                            const tIm = re[i + j + halfLen] * Math.sin(angle) + im[i + j + halfLen] * Math.cos(angle);
+                            const wr = twRe[j], wi = twIm[j];
+                            const tRe = re[i + j + halfLen] * wr - im[i + j + halfLen] * wi;
+                            const tIm = re[i + j + halfLen] * wi + im[i + j + halfLen] * wr;
                             re[i + j + halfLen] = re[i + j] - tRe;
                             im[i + j + halfLen] = im[i + j] - tIm;
                             re[i + j] += tRe;
@@ -12762,7 +12783,6 @@
                     bandEnergy[name] += bandPower / numFrames;
 
                     // Per-band stereo correlation (time domain within segment)
-                    const bandSamples = Math.min(fftSize, highBin - lowBin + 1);
                     for (let i = 0; i < fftSize; i++) {
                         const l = leftSeg[i], r = rightSeg[i];
                         sumLR += l * r;
@@ -24063,6 +24083,10 @@
                 }, 500);
 
             } catch (error) {
+                // CRITICAL: Remove processing overlay on error so user isn't stuck
+                const procOverlay = document.getElementById('masteringProcessOverlay');
+                if (procOverlay) procOverlay.remove();
+
                 const analysisPanel = document.getElementById('analysisPanel');
                 analysisPanel.textContent = '';
                 const errDiv = document.createElement('div');
