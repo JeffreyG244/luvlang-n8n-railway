@@ -23151,6 +23151,7 @@
 
                 // AI PROCESSING SCALE — reduce all processing for already-mastered tracks
                 // Already-balanced tracks get minimal processing to avoid degradation
+                const aiProfile = window.aiTrackProfile;
                 const aiScale = (aiProfile && aiProfile.processingScale != null) ? aiProfile.processingScale : 1.0;
                 intensityMult *= aiScale;
 
@@ -23227,7 +23228,6 @@
                 const eq = eqCurves[genre] || eqCurves['pop'];
 
                 // AI adaptive EQ deltas — applied on top of genre preset
-                const aiProfile = window.aiTrackProfile;
                 const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
 
                 // 3. Sub Bass (40Hz) - Foundation
