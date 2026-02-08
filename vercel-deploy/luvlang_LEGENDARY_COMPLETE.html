@@ -199,12 +199,14 @@
             padding: 24px 28px;
         }
 
-        /* RIGHT SIDEBAR - Meters, Master Section, Export */
+        /* RIGHT SIDEBAR - Meters & Master Controls */
         .right-sidebar {
             background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
-            padding: 24px 20px;
+            overflow-x: hidden;
+            padding: 24px 16px;
             border-left: 1px solid rgba(184, 79, 255, 0.08);
+            min-width: 0;
         }
 
         /* Section styling - Premium High-End Look */
@@ -1976,6 +1978,22 @@
         .export-btn:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        /* Export button glow animation - activated after mastering */
+        .export-btn.ready-glow {
+            animation: exportBtnGlow 2s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
+        }
+        @keyframes exportBtnGlow {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 255, 136, 0.2);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(0, 212, 255, 0.7), 0 0 50px rgba(0, 255, 136, 0.4), 0 0 80px rgba(0, 212, 255, 0.2);
+                transform: scale(1.02);
+            }
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3834,7 +3852,7 @@
                         transition: all 0.2s ease;
                         text-align: left;
                     ">
-                        <div style="font-weight: 600;">Ava</div>
+                        <div style="font-weight: 600;">Chloe</div>
                         <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Modern, confident</div>
                     </button>
                     <button onclick="selectTourVoice('emma')" class="voice-pick-btn" data-voice="emma" style="
@@ -4978,39 +4996,71 @@
                     </div>
                 </div>
 
-                <!-- A/B Toggle & Process Button -->
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-                    <!-- A/B Toggle - Pro Style -->
-                    <div style="display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
-                        <span id="genreToggleLabelOrig" style="font-size: 0.6rem; font-weight: 600; color: #fff; letter-spacing: 1px;">A</span>
-                        <label style="position: relative; display: inline-block; width: 44px; height: 22px; cursor: pointer;">
-                            <input type="checkbox" id="genrePreviewToggle" onchange="handleGenrePreviewToggle(this.checked)" style="opacity: 0; width: 0; height: 0;">
-                            <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); transition: 0.2s; border-radius: 22px; border: 1px solid rgba(255,255,255,0.1);">
-                                <span style="position: absolute; height: 16px; width: 16px; left: 3px; bottom: 2px; background: #fff; transition: 0.2s; border-radius: 50%;"></span>
-                            </span>
-                        </label>
-                        <span id="genreToggleLabelPreview" style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 1px;">B</span>
+                <!-- EQ Curve Preview -->
+                <div id="genreEqPreview" style="background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; margin-bottom: 12px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase;">EQ Curve Preview</span>
+                        <span id="eqPreviewGenreName" style="font-size: 0.55rem; font-weight: 700; color: #00d4ff; letter-spacing: 0.08em;"></span>
                     </div>
-
-                    <!-- Process Button - Premium -->
-                    <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="
-                        flex: 1;
-                        padding: 14px 28px;
-                        background: linear-gradient(180deg, rgba(92, 184, 92, 0.2) 0%, rgba(92, 184, 92, 0.1) 100%);
-                        border: 1px solid rgba(92, 184, 92, 0.4);
-                        border-radius: 6px;
-                        color: #8fd98f;
-                        cursor: pointer;
-                        font-weight: 600;
-                        font-size: 0.7rem;
-                        letter-spacing: 0.12em;
-                        text-transform: uppercase;
-                        opacity: 0.4;
-                        transition: all 0.2s;
-                    " disabled>
-                        PROCESS
-                    </button>
+                    <div id="eqBarsContainer" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; height: 60px; position: relative;">
+                        <div style="position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(255,255,255,0.06);"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">SUB</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">BASS</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">LOW</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">MID</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">HI-M</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">HIGH</span>
+                        <span style="font-size: 0.45rem; color: rgba(255,255,255,0.25);">AIR</span>
+                    </div>
+                    <!-- Genre Details -->
+                    <div id="genreDetailsRow" style="display: flex; justify-content: space-around; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.04);">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase;">Target</div>
+                            <div id="eqPreviewLUFS" style="font-size: 0.7rem; font-weight: 700; color: #00ff88;">-14 LUFS</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase;">Width</div>
+                            <div id="eqPreviewWidth" style="font-size: 0.7rem; font-weight: 700; color: #00d4ff;">1.12x</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase;">Ratio</div>
+                            <div id="eqPreviewRatio" style="font-size: 0.7rem; font-weight: 700; color: #ffd700;">2.5:1</div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Sub-Genre Presets (populated when genre is selected) -->
+                <div id="overlaySubGenrePresets" style="display: none; margin-bottom: 14px;">
+                    <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 12px;">
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span id="overlayPresetsTitle" style="color: #7cb8ff; font-weight: 600;">Sub-Genre Presets</span>
+                            <span style="font-size: 0.5rem; color: rgba(255,255,255,0.35);">Select style</span>
+                        </div>
+                        <div id="overlayPresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Button - Premium -->
+                <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="
+                    width: 100%;
+                    padding: 16px 28px;
+                    background: linear-gradient(180deg, rgba(92, 184, 92, 0.2) 0%, rgba(92, 184, 92, 0.1) 100%);
+                    border: 1px solid rgba(92, 184, 92, 0.4);
+                    border-radius: 8px;
+                    color: #8fd98f;
+                    cursor: pointer;
+                    font-weight: 700;
+                    font-size: 0.75rem;
+                    letter-spacing: 0.12em;
+                    text-transform: uppercase;
+                    opacity: 0.4;
+                    transition: all 0.3s;
+                " disabled>
+                    PROCESS MASTER NOW
+                </button>
 
                 <!-- Skip Link -->
                 <div style="text-align: center; margin-top: 12px;">
@@ -5222,24 +5272,6 @@
         </div>
     </div>
 
-    <!-- Restart Tour Button -->
-    <button id="restartTourBtn" onclick="restartTourFresh()" title="Restart Tour" style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 44px;
-        height: 44px;
-        border-radius: 8px;
-        background: linear-gradient(180deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%);
-        border: 1px solid rgba(0, 212, 255, 0.3);
-        color: rgba(0, 212, 255, 0.8);
-        font-size: 1.1rem;
-        cursor: pointer;
-        z-index: 9999;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        transition: all 0.2s ease;
-    " onmouseover="this.style.background='linear-gradient(180deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 212, 255, 0.15) 100%)';this.style.boxShadow='0 4px 25px rgba(0, 212, 255, 0.3)';"
-       onmouseout="this.style.background='linear-gradient(180deg, rgba(0, 212, 255, 0.15) 0%, rgba(0, 212, 255, 0.08) 100%)';this.style.boxShadow='0 4px 20px rgba(0, 0, 0, 0.3)';">↺</button>
 
     <script>
         // Restart tour fresh - clears all tour state and shows language selection
@@ -7477,75 +7509,125 @@
             <!-- GENRE SELECTOR with EQ Presets -->
             <div class="selector-group" id="genreSection">
                 <div class="section-title">Genre</div>
-                <div class="selector-grid">
-                    <div class="selector-btn" data-genre="hip-hop" style="position: relative;">
-                        <div>Hip-Hop</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Sub + Presence</div>
+                <div class="selector-grid" style="grid-template-columns: repeat(3, 1fr); gap: 6px;">
+                    <div class="selector-btn" data-genre="hip-hop" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Hip-Hop</div>
                     </div>
-                    <div class="selector-btn" data-genre="pop" style="position: relative;">
-                        <div>Pop</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Balanced + Air</div>
+                    <div class="selector-btn" data-genre="pop" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Pop</div>
                     </div>
-                    <div class="selector-btn" data-genre="edm" style="position: relative;">
-                        <div>EDM</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Massive Bass</div>
+                    <div class="selector-btn" data-genre="edm" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">EDM</div>
                     </div>
-                    <div class="selector-btn" data-genre="rock" style="position: relative;">
-                        <div>Rock</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Body + Bite</div>
+                    <div class="selector-btn" data-genre="rock" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Rock</div>
                     </div>
-                    <div class="selector-btn" data-genre="jazz" style="position: relative;">
-                        <div>Jazz</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Natural</div>
+                    <div class="selector-btn" data-genre="rnb" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">R&B</div>
                     </div>
-                    <div class="selector-btn active" data-genre="neutral" style="position: relative;">
-                        <div>Neutral</div>
-                        <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">Flat EQ</div>
+                    <div class="selector-btn" data-genre="acoustic" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Acoustic</div>
+                    </div>
+                    <div class="selector-btn" data-genre="jazz" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Jazz</div>
+                    </div>
+                    <div class="selector-btn" data-genre="classical" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Classical</div>
+                    </div>
+                    <div class="selector-btn" data-genre="metal" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Metal</div>
+                    </div>
+                    <div class="selector-btn" data-genre="country" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Country</div>
+                    </div>
+                    <div class="selector-btn" data-genre="latin" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Latin</div>
+                    </div>
+                    <div class="selector-btn" data-genre="lofi" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Lo-Fi</div>
+                    </div>
+                    <div class="selector-btn active" data-genre="neutral" style="position: relative; padding: 8px 4px;">
+                        <div style="font-size: 0.7rem;">Neutral</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- GENRE EQ PRESETS (Auto-expand below genre selection) - Premium Style -->
-            <div id="genreEQPresetsContainer" style="display: none; margin-top: 12px;">
-                <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 14px;">
-                    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="genrePresetsTitle" style="color: #7cb8ff; font-weight: 600;">Hip-Hop Presets</span>
-                        <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
-                    </div>
+                <!-- SUB-GENRE PRESETS - Visible below genre buttons -->
+                <div id="genreEQPresetsContainer" style="display: none; margin-top: 10px;">
+                    <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 12px;">
+                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span id="genrePresetsTitle" style="color: #7cb8ff; font-weight: 600;">Presets</span>
+                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
+                        </div>
 
-                    <!-- PROFESSIONAL MASTERING EQ CURVE - FabFilter/Ozone Style -->
-                    <div id="presetEQViz" style="position: relative; background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(15,20,35,0.95) 100%); border-radius: 8px; margin-bottom: 12px; border: 1px solid rgba(0,212,255,0.2); overflow: hidden; box-shadow: inset 0 2px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.05);">
-                        <!-- Professional grid overlay -->
-                        <div style="position: absolute; inset: 0; opacity: 0.06; pointer-events: none; background-image:
-                            linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
-                            background-size: 14.28% 33.33%;
-                        "></div>
-                        <!-- Zero line (0 dB reference) with glow -->
-                        <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.2); box-shadow: 0 0 4px rgba(255,255,255,0.1); z-index: 2;"></div>
-                        <!-- dB scale markers -->
-                        <div style="position: absolute; right: 6px; top: 8px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">+6dB</div>
-                        <div style="position: absolute; right: 6px; top: 47%; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">0dB</div>
-                        <div style="position: absolute; right: 6px; bottom: 22px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">-6dB</div>
-                        <!-- Canvas for smooth EQ curve with glow effect -->
-                        <canvas id="eqCurveCanvas" width="600" height="160" style="width: 100%; height: 80px; display: block;"></canvas>
-                        <!-- Frequency labels bar -->
-                        <div style="display: flex; justify-content: space-between; padding: 5px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); border-top: 1px solid rgba(255,255,255,0.05);">
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">40Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">120Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">400Hz</span>
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600;">1kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">3.5kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">8kHz</span>
-                            <span style="font-size: 0.55rem; color: rgba(184,79,255,0.7); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">12kHz</span>
+                        <!-- EQ Curve Visualization -->
+                        <div id="presetEQViz" style="position: relative; background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(15,20,35,0.95) 100%); border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(0,212,255,0.2); overflow: hidden; box-shadow: inset 0 2px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.05);">
+                            <div style="position: absolute; inset: 0; opacity: 0.06; pointer-events: none; background-image:
+                                linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+                                background-size: 14.28% 33.33%;
+                            "></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.2); box-shadow: 0 0 4px rgba(255,255,255,0.1); z-index: 2;"></div>
+                            <div style="position: absolute; right: 6px; top: 8px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">+6dB</div>
+                            <div style="position: absolute; right: 6px; top: 47%; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">0dB</div>
+                            <div style="position: absolute; right: 6px; bottom: 22px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">-6dB</div>
+                            <canvas id="eqCurveCanvas" width="600" height="160" style="width: 100%; height: 80px; display: block;"></canvas>
+                            <div style="display: flex; justify-content: space-between; padding: 5px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); border-top: 1px solid rgba(255,255,255,0.05);">
+                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">40Hz</span>
+                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">120Hz</span>
+                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">400Hz</span>
+                                <span style="font-size: 0.55rem; color: rgba(255,255,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600;">1kHz</span>
+                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">3.5kHz</span>
+                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">8kHz</span>
+                                <span style="font-size: 0.55rem; color: rgba(184,79,255,0.7); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">16kHz</span>
+                            </div>
+                        </div>
+
+                        <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 4px;">
+                            <!-- Preset buttons populated by showGenreEQPresets() -->
                         </div>
                     </div>
-
-                    <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 280px; overflow-y: auto; padding-right: 4px;">
-                        <!-- Preset buttons will be populated here -->
-                    </div>
                 </div>
             </div>
+
+            <!-- EXPORT SECTION (below genre for easy workflow) -->
+            <div class="export-section" id="exportSection">
+                <div class="section-title">Export</div>
+
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
+                    <div class="export-format-grid">
+                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
+                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
+                        <div class="export-format-btn" data-format="flac">FLAC</div>
+                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
+                    </div>
+                </div>
+
+                <!-- BIT DEPTH SELECTOR -->
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
+                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">TPDF Dithering</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">24-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
+                        </button>
+                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
+                            <div style="font-weight: 700;">16-bit</div>
+                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
+                        </button>
+                    </div>
+                    <input type="hidden" id="bitDepthSelector" value="24">
+                </div>
+
+                <button class="export-btn" id="exportBtn" disabled>
+                    Export Master
+                </button>
+            </div>
+
+            <!-- Presets container moved to below genre selector -->
 
             <!-- Hidden button for legacy code compatibility -->
             <button id="abCompareBtn" style="display: none;"></button>
@@ -8326,78 +8408,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- EXPORT SECTION (below genre for easy workflow) -->
-            <div class="export-section" id="exportSection">
-                <div class="section-title">Export</div>
-
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
-                    <div class="export-format-grid">
-                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
-                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
-                        <div class="export-format-btn" data-format="flac">FLAC</div>
-                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
-                    </div>
-                </div>
-
-                <!-- BIT DEPTH SELECTOR (Professional Feature) -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
-                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">✓ TPDF Dithering</div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">24-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
-                        </button>
-                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">16-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="bitDepthSelector" value="24">
-                </div>
-
-                <!-- 2x OVERSAMPLING TOGGLE -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px;">
-                        <div>
-                            <div style="font-size: 0.75rem; font-weight: 600;">2x Oversampling</div>
-                            <div style="font-size: 0.55rem; opacity: 0.6;">Reduces aliasing artifacts</div>
-                        </div>
-                        <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
-                            <input type="checkbox" id="oversamplingToggle" style="opacity: 0; width: 0; height: 0;" checked>
-                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.1); transition: 0.3s; border-radius: 24px;"></span>
-                            <span id="oversamplingSlider" style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #00ff88; transition: 0.3s; border-radius: 50%; transform: translateX(20px);"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <button class="compare-tiers-btn" id="compareTiersBtn" onclick="openTierComparison()" disabled style="
-                    width: 100%;
-                    padding: 14px 20px;
-                    margin-bottom: 12px;
-                    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(184, 79, 255, 0.15));
-                    border: 2px solid rgba(0, 212, 255, 0.4);
-                    border-radius: 12px;
-                    color: #00d4ff;
-                    font-weight: 700;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                ">
-                    🎚️ Compare Tiers & Pricing
-                </button>
-                <button class="export-btn" id="exportBtn" disabled>
-                    💾 Export Master
-                </button>
             </div>
 
         </div>
@@ -9705,10 +9715,10 @@
                 eqHighFilter.Q.value = 0.9; // Smooth, musical highs
                 eqHighFilter.gain.value = 0;
 
-                // Air (14kHz highshelf) - Butterworth response (Q=0.707)
+                // Air (16kHz highshelf) - Butterworth response (Q=0.707)
                 eqAirFilter = audioContext.createBiquadFilter();
                 eqAirFilter.type = 'highshelf';
-                eqAirFilter.frequency.value = 14000;
+                eqAirFilter.frequency.value = 16000;
                 eqAirFilter.Q.value = 0.707; // Butterworth (smooth air)
                 eqAirFilter.gain.value = 0;
 
@@ -10105,22 +10115,22 @@
                 const mbLowPass = audioContext.createBiquadFilter();
                 mbLowPass.type = 'lowpass';
                 mbLowPass.frequency.value = 200;
-                mbLowPass.Q.value = 0.5;
+                mbLowPass.Q.value = 0.707;  // Butterworth Q (1/√2) for flat crossover summing
 
                 const mbHighPass = audioContext.createBiquadFilter();
                 mbHighPass.type = 'highpass';
                 mbHighPass.frequency.value = 200;
-                mbHighPass.Q.value = 0.5;
+                mbHighPass.Q.value = 0.707;  // Butterworth Q (1/√2) for flat crossover summing
 
                 const mbMidLowPass = audioContext.createBiquadFilter();
                 mbMidLowPass.type = 'lowpass';
                 mbMidLowPass.frequency.value = 4000;
-                mbMidLowPass.Q.value = 0.5;
+                mbMidLowPass.Q.value = 0.707;  // Butterworth Q (1/√2) for flat crossover summing
 
                 const mbMidHighPass = audioContext.createBiquadFilter();
                 mbMidHighPass.type = 'highpass';
                 mbMidHighPass.frequency.value = 4000;
-                mbMidHighPass.Q.value = 0.5;
+                mbMidHighPass.Q.value = 0.707;  // Butterworth Q (1/√2) for flat crossover summing
 
                 // Band gains for multiband control
                 const mbLowGain = audioContext.createGain();
@@ -10541,7 +10551,7 @@
                 sideEQ_High.gain.value = 0;
 
                 sideEQ_Air.type = 'highshelf';
-                sideEQ_Air.frequency.value = 12000;
+                sideEQ_Air.frequency.value = 16000;
                 sideEQ_Air.gain.value = 0; // Add air to sides for width
 
                 // M/S Matrix for EQ (encode → process → decode)
@@ -12168,9 +12178,12 @@
             audioElement.load();
 
             // Enable controls
-            document.getElementById('resetBtn').disabled = false;
-            document.getElementById('exportBtn').disabled = false;
-            document.getElementById('compareTiersBtn').disabled = false;
+            const resetBtn = document.getElementById('resetBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const compareTiersBtn = document.getElementById('compareTiersBtn');
+            if (resetBtn) resetBtn.disabled = false;
+            if (exportBtn) exportBtn.disabled = false;
+            if (compareTiersBtn) compareTiersBtn.disabled = false;
 
             audioElement.addEventListener('loadedmetadata', async () => {
                 const duration = audioElement.duration || 0;
@@ -12394,6 +12407,18 @@
 
                 const analysisResults = await comprehensiveAnalysis(audioBuffer);
 
+                // AI Deep Analysis — run spectral profiling and generate corrections
+                try {
+                    const aiAnalysis = await analyzeTrackForAI(audioBuffer);
+                    const aiGenre = window.selectedPreMasterGenre || analysisResults.genre?.toLowerCase() || 'pop';
+                    window.aiTrackAnalysis = aiAnalysis; // Store raw analysis for genre-change recalc
+                    window.aiTrackProfile = generateAICorrections(aiAnalysis, aiGenre);
+                    console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore);
+                } catch (aiErr) {
+                    console.warn('⚠️ AI analysis skipped:', aiErr.message);
+                    window.aiTrackProfile = null;
+                }
+
                 // UPDATE GLOBAL CURRENT VALUES from initial analysis
                 if (analysisResults.integratedLUFS && isFinite(analysisResults.integratedLUFS)) {
                     currentIntegratedLUFS = analysisResults.integratedLUFS;
@@ -12410,6 +12435,11 @@
 
                 // Display results in UI (analysis only, no fixes)
                 displayAnalysisResults(analysisResults);
+
+                // Display AI corrections panel after analysis
+                if (window.aiTrackProfile) {
+                    displayAICorrections(window.aiTrackProfile);
+                }
 
                 // NOTE: Auto-fixes are NO LONGER applied here
                 // User must click AI AUTO MASTER button to apply fixes
@@ -12564,6 +12594,484 @@
                 console.error('   Falling back to estimated values');
                 // Return estimated values as fallback
                 return null;
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // AI-POWERED ADAPTIVE MASTERING ENGINE
+        // Deep spectral analysis, reference comparison, and delta corrections
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // Professional reference spectral profiles — based on analysis of mastered tracks
+        // Spectrum values in dBFS, dynamics targets, stereo correlation expectations
+        const GENRE_REFERENCE_TARGETS = {
+            'pop':        { spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
+            'hiphop':     { spectrum: { sub: -18, bass: -14, lowmid: -16, mid: -14, highmid: -17, high: -22, air: -32 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -12 }, stereo: { width: 0.50, lowCorrelation: 0.98, highCorrelation: 0.55 }, spectralTilt: -1.0 },
+            'electronic': { spectrum: { sub: -16, bass: -15, lowmid: -17, mid: -14, highmid: -16, high: -19, air: -28 }, dynamics: { crestFactor: 7, lra: 5, targetLUFS: -11 }, stereo: { width: 0.55, lowCorrelation: 0.95, highCorrelation: 0.50 }, spectralTilt: -0.3 },
+            'rock':       { spectrum: { sub: -26, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.42, lowCorrelation: 0.93, highCorrelation: 0.58 }, spectralTilt: 0.0 },
+            'rnb':        { spectrum: { sub: -20, bass: -15, lowmid: -15, mid: -13, highmid: -16, high: -21, air: -31 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -13 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.58 }, spectralTilt: -0.7 },
+            'acoustic':   { spectrum: { sub: -30, bass: -18, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 14, lra: 10, targetLUFS: -16 }, stereo: { width: 0.40, lowCorrelation: 0.92, highCorrelation: 0.65 }, spectralTilt: 0.2 },
+            'jazz':       { spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -15, high: -19, air: -28 }, dynamics: { crestFactor: 16, lra: 12, targetLUFS: -18 }, stereo: { width: 0.42, lowCorrelation: 0.90, highCorrelation: 0.60 }, spectralTilt: 0.1 },
+            'classical':  { spectrum: { sub: -30, bass: -20, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -28 }, dynamics: { crestFactor: 20, lra: 14, targetLUFS: -20 }, stereo: { width: 0.50, lowCorrelation: 0.88, highCorrelation: 0.55 }, spectralTilt: 0.3 },
+            'metal':      { spectrum: { sub: -24, bass: -15, lowmid: -14, mid: -11, highmid: -12, high: -18, air: -30 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -12 }, stereo: { width: 0.40, lowCorrelation: 0.95, highCorrelation: 0.55 }, spectralTilt: 0.5 },
+            'country':    { spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 12, lra: 8, targetLUFS: -14 }, stereo: { width: 0.43, lowCorrelation: 0.93, highCorrelation: 0.62 }, spectralTilt: -0.2 },
+            'latin':      { spectrum: { sub: -18, bass: -14, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -13 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.55 }, spectralTilt: -0.8 },
+            'lofi':       { spectrum: { sub: -22, bass: -15, lowmid: -13, mid: -14, highmid: -18, high: -24, air: -36 }, dynamics: { crestFactor: 11, lra: 8, targetLUFS: -15 }, stereo: { width: 0.38, lowCorrelation: 0.90, highCorrelation: 0.65 }, spectralTilt: -1.5 }
+        };
+
+        // Deep spectral analysis for AI-adaptive mastering
+        async function analyzeTrackForAI(audioBuffer) {
+            const sampleRate = audioBuffer.sampleRate;
+            const duration = audioBuffer.duration;
+            const leftChannel = audioBuffer.getChannelData(0);
+            const rightChannel = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
+            const totalSamples = leftChannel.length;
+
+            // FFT parameters
+            const fftSize = 4096;
+            const halfFFT = fftSize / 2;
+            const binWidth = sampleRate / fftSize;
+
+            // Band definitions (Hz ranges)
+            const bands = {
+                sub:     { low: 20, high: 60 },
+                bass:    { low: 60, high: 200 },
+                lowmid:  { low: 200, high: 600 },
+                mid:     { low: 600, high: 2500 },
+                highmid: { low: 2500, high: 6000 },
+                high:    { low: 6000, high: 12000 },
+                air:     { low: 12000, high: 20000 }
+            };
+
+            // Hann window
+            const hannWindow = new Float32Array(fftSize);
+            for (let i = 0; i < fftSize; i++) {
+                hannWindow[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1)));
+            }
+
+            // Sample at multiple points through the track for consistency
+            const numFrames = Math.min(32, Math.floor(totalSamples / fftSize));
+            const frameStep = Math.floor((totalSamples - fftSize) / Math.max(1, numFrames - 1));
+
+            // Accumulate band energy across frames
+            const bandEnergy = {};
+            const bandStereoCorr = {};
+            const bandCrestPeak = {};
+            const bandCrestRMS = {};
+            for (const name of Object.keys(bands)) {
+                bandEnergy[name] = 0;
+                bandStereoCorr[name] = { sumLR: 0, sumLL: 0, sumRR: 0 };
+                bandCrestPeak[name] = 0;
+                bandCrestRMS[name] = 0;
+            }
+
+            // Spectral flux tracking
+            let prevMagnitudes = null;
+            let fluxSum = 0;
+            let fluxFrames = 0;
+
+            // Process frames
+            for (let f = 0; f < numFrames; f++) {
+                const offset = f * frameStep;
+                if (offset + fftSize > totalSamples) break;
+
+                // Windowed mono signal for FFT
+                const mono = new Float32Array(fftSize);
+                const leftSeg = new Float32Array(fftSize);
+                const rightSeg = new Float32Array(fftSize);
+                for (let i = 0; i < fftSize; i++) {
+                    leftSeg[i] = leftChannel[offset + i];
+                    rightSeg[i] = rightChannel[offset + i];
+                    mono[i] = (leftSeg[i] + rightSeg[i]) * 0.5 * hannWindow[i];
+                }
+
+                // Radix-2 Cooley-Tukey FFT (O(n log n) instead of O(n²))
+                const re = new Float32Array(fftSize);
+                const im = new Float32Array(fftSize);
+                for (let i = 0; i < fftSize; i++) { re[i] = mono[i]; im[i] = 0; }
+                // Bit-reversal permutation
+                for (let i = 1, j = 0; i < fftSize; i++) {
+                    let bit = fftSize >> 1;
+                    for (; j & bit; bit >>= 1) j ^= bit;
+                    j ^= bit;
+                    if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
+                }
+                // Butterfly stages
+                for (let len = 2; len <= fftSize; len <<= 1) {
+                    const halfLen = len >> 1;
+                    const angleStep = -2 * Math.PI / len;
+                    for (let i = 0; i < fftSize; i += len) {
+                        for (let j = 0; j < halfLen; j++) {
+                            const angle = angleStep * j;
+                            const tRe = re[i + j + halfLen] * Math.cos(angle) - im[i + j + halfLen] * Math.sin(angle);
+                            const tIm = re[i + j + halfLen] * Math.sin(angle) + im[i + j + halfLen] * Math.cos(angle);
+                            re[i + j + halfLen] = re[i + j] - tRe;
+                            im[i + j + halfLen] = im[i + j] - tIm;
+                            re[i + j] += tRe;
+                            im[i + j] += tIm;
+                        }
+                    }
+                }
+                const magnitudes = new Float32Array(halfFFT);
+                for (let k = 0; k < halfFFT; k++) {
+                    magnitudes[k] = Math.sqrt(re[k] * re[k] + im[k] * im[k]) / fftSize;
+                }
+
+                // Spectral flux
+                if (prevMagnitudes) {
+                    let flux = 0;
+                    for (let k = 0; k < halfFFT; k++) {
+                        const diff = magnitudes[k] - prevMagnitudes[k];
+                        if (diff > 0) flux += diff * diff;
+                    }
+                    fluxSum += Math.sqrt(flux);
+                    fluxFrames++;
+                }
+                prevMagnitudes = magnitudes.slice();
+
+                // Accumulate per-band energy and stereo correlation
+                for (const [name, range] of Object.entries(bands)) {
+                    const lowBin = Math.max(1, Math.floor(range.low / binWidth));
+                    const highBin = Math.min(halfFFT - 1, Math.ceil(range.high / binWidth));
+                    let bandPower = 0;
+                    let segPeakL = 0, segRmsL = 0, segPeakR = 0, segRmsR = 0;
+                    let sumLR = 0, sumLL = 0, sumRR = 0;
+
+                    for (let k = lowBin; k <= highBin; k++) {
+                        bandPower += magnitudes[k] * magnitudes[k];
+                    }
+                    bandEnergy[name] += bandPower / numFrames;
+
+                    // Per-band stereo correlation (time domain within segment)
+                    const bandSamples = Math.min(fftSize, highBin - lowBin + 1);
+                    for (let i = 0; i < fftSize; i++) {
+                        const l = leftSeg[i], r = rightSeg[i];
+                        sumLR += l * r;
+                        sumLL += l * l;
+                        sumRR += r * r;
+                        const absL = Math.abs(l), absR = Math.abs(r);
+                        if (absL > segPeakL) segPeakL = absL;
+                        if (absR > segPeakR) segPeakR = absR;
+                        segRmsL += l * l;
+                        segRmsR += r * r;
+                    }
+                    bandStereoCorr[name].sumLR += sumLR;
+                    bandStereoCorr[name].sumLL += sumLL;
+                    bandStereoCorr[name].sumRR += sumRR;
+
+                    // Crest factor accumulation
+                    const segPeak = Math.max(segPeakL, segPeakR);
+                    const segRms = Math.sqrt((segRmsL + segRmsR) / (2 * fftSize));
+                    if (segPeak > bandCrestPeak[name]) bandCrestPeak[name] = segPeak;
+                    bandCrestRMS[name] += segRms / numFrames;
+                }
+            }
+
+            // Compute final band energy in dB
+            const spectrumDB = {};
+            for (const name of Object.keys(bands)) {
+                const energy = bandEnergy[name];
+                spectrumDB[name] = energy > 0 ? 10 * Math.log10(energy) : -70;
+            }
+
+            // Compute stereo correlation per band
+            const stereoCorrelation = {};
+            for (const name of Object.keys(bands)) {
+                const c = bandStereoCorr[name];
+                const denom = Math.sqrt(c.sumLL * c.sumRR);
+                stereoCorrelation[name] = denom > 0 ? c.sumLR / denom : 1.0;
+            }
+
+            // Compute crest factor per band (dB)
+            const crestFactor = {};
+            let overallCrest = 0;
+            for (const name of Object.keys(bands)) {
+                const peak = bandCrestPeak[name];
+                const rms = bandCrestRMS[name];
+                crestFactor[name] = rms > 0 ? 20 * Math.log10(peak / rms) : 0;
+                overallCrest += crestFactor[name];
+            }
+            overallCrest /= Object.keys(bands).length;
+
+            // Spectral tilt: linear regression of energy across bands
+            const bandKeys = Object.keys(bands);
+            const n = bandKeys.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+            for (let i = 0; i < n; i++) {
+                sumX += i;
+                sumY += spectrumDB[bandKeys[i]];
+                sumXY += i * spectrumDB[bandKeys[i]];
+                sumXX += i * i;
+            }
+            const spectralTilt = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+
+            // Spectral flux average
+            const avgFlux = fluxFrames > 0 ? fluxSum / fluxFrames : 0;
+
+            // Resonance detection: find bins >6dB above local average
+            const resonances = [];
+            if (prevMagnitudes) {
+                const smoothWindow = 20; // bins for local average
+                for (let k = smoothWindow; k < halfFFT - smoothWindow; k++) {
+                    let localSum = 0;
+                    for (let j = k - smoothWindow; j <= k + smoothWindow; j++) {
+                        localSum += prevMagnitudes[j];
+                    }
+                    const localAvg = localSum / (2 * smoothWindow + 1);
+                    if (localAvg > 0 && prevMagnitudes[k] / localAvg > 2.0) { // >6dB above average
+                        const freq = k * binWidth;
+                        const magnitudeDB = 20 * Math.log10(prevMagnitudes[k] / localAvg);
+                        if (freq > 80 && freq < 16000 && magnitudeDB > 6) {
+                            resonances.push({ frequency: Math.round(freq), magnitude: magnitudeDB, Q: 12 });
+                        }
+                    }
+                }
+            }
+
+            // Sibilance detection: energy ratio in 4-9kHz vs overall
+            const sibilanceBands = ['highmid', 'high'];
+            const totalEnergy = Object.values(bandEnergy).reduce((a, b) => a + b, 0);
+            const sibilanceEnergy = sibilanceBands.reduce((a, b) => a + bandEnergy[b], 0);
+            const sibilanceRatio = totalEnergy > 0 ? sibilanceEnergy / totalEnergy : 0;
+            const sibilanceExcessive = sibilanceRatio > 0.35; // >35% energy in sibilance range
+
+            // Overall stereo width estimate
+            const overallCorr = stereoCorrelation.mid || 1.0;
+            const estimatedWidth = 1.0 - overallCorr;
+
+            console.log('🤖 AI Track Analysis Complete:', {
+                spectrumDB, spectralTilt: spectralTilt.toFixed(2),
+                overallCrest: overallCrest.toFixed(1), avgFlux: avgFlux.toFixed(4),
+                resonances: resonances.length, sibilanceRatio: sibilanceRatio.toFixed(3),
+                stereoCorrelation
+            });
+
+            return {
+                spectrumDB,
+                stereoCorrelation,
+                crestFactor,
+                overallCrest,
+                spectralTilt,
+                spectralFlux: avgFlux,
+                resonances,
+                sibilanceRatio,
+                sibilanceExcessive,
+                estimatedWidth,
+                duration
+            };
+        }
+
+        // Generate AI correction deltas by comparing track analysis against genre reference
+        function generateAICorrections(analysis, genre) {
+            const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
+            const correctionStrength = 0.5; // Apply half the difference — mastering, not mixing
+            const issues = [];
+
+            // 1. EQ Deltas — per-band dB adjustments
+            const eqDeltas = {};
+            let totalEQCorrection = 0;
+            const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            for (const band of bandKeys) {
+                const trackEnergy = analysis.spectrumDB[band] || -40;
+                const refEnergy = ref.spectrum[band] || -20;
+                let delta = (refEnergy - trackEnergy) * correctionStrength;
+                delta = Math.max(-4, Math.min(4, delta)); // Clamp ±4 dB per band
+                eqDeltas[band] = Math.round(delta * 100) / 100;
+                totalEQCorrection += Math.abs(delta);
+            }
+            // Clamp total correction to ±8 dB
+            if (totalEQCorrection > 8) {
+                const scale = 8 / totalEQCorrection;
+                for (const band of bandKeys) eqDeltas[band] *= scale;
+            }
+
+            // Log issues for significant EQ corrections
+            for (const band of bandKeys) {
+                if (Math.abs(eqDeltas[band]) > 1.5) {
+                    const direction = eqDeltas[band] > 0 ? 'deficient' : 'excessive';
+                    issues.push({
+                        type: 'eq', severity: Math.abs(eqDeltas[band]) > 3 ? 'critical' : 'warning',
+                        description: `${band.toUpperCase()} is ${direction} (${eqDeltas[band] > 0 ? '+' : ''}${eqDeltas[band].toFixed(1)} dB correction)`,
+                        correction: `Applying ${eqDeltas[band].toFixed(1)} dB ${eqDeltas[band] > 0 ? 'boost' : 'cut'} to ${band}`
+                    });
+                }
+            }
+
+            // 2. Compression deltas
+            const crestDiff = (analysis.overallCrest || 10) - (ref.dynamics.crestFactor || 10);
+            const compDeltas = {
+                thresholdOffset: Math.max(-4, Math.min(4, crestDiff > 2 ? -crestDiff * 0.5 : crestDiff < -2 ? -crestDiff * 0.3 : 0)),
+                ratioMultiplier: crestDiff > 3 ? 1.15 : crestDiff < -3 ? 0.85 : 1.0,
+                attackMultiplier: analysis.spectralFlux > 0.02 ? 0.9 : analysis.spectralFlux < 0.005 ? 1.2 : 1.0,
+                releaseMultiplier: analysis.spectralFlux > 0.02 ? 0.85 : analysis.spectralFlux < 0.005 ? 1.15 : 1.0
+            };
+            if (Math.abs(crestDiff) > 3) {
+                issues.push({
+                    type: 'dynamics', severity: Math.abs(crestDiff) > 6 ? 'critical' : 'warning',
+                    description: crestDiff > 0 ? `Track is very dynamic (crest factor ${analysis.overallCrest.toFixed(1)} dB vs ${ref.dynamics.crestFactor} dB target)` :
+                                                 `Track is over-compressed (crest factor ${analysis.overallCrest.toFixed(1)} dB vs ${ref.dynamics.crestFactor} dB target)`,
+                    correction: crestDiff > 0 ? 'Increasing compression to control dynamics' : 'Reducing compression to restore dynamics'
+                });
+            }
+
+            // 3. Dynamic EQ deltas
+            const dynEQDeltas = {
+                lowThresholdOffset: analysis.spectralTilt < -1.5 ? -3 : 0,
+                midThresholdOffset: analysis.resonances.filter(r => r.frequency > 400 && r.frequency < 4000).length > 2 ? -4 : 0,
+                highThresholdOffset: analysis.spectralTilt > 1.0 ? -3 : analysis.sibilanceExcessive ? -2 : 0
+            };
+            if (analysis.spectralTilt < -1.5) {
+                issues.push({ type: 'tonal', severity: 'warning', description: `Track is muddy (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Tightening low-mid dynamic EQ' });
+            }
+            if (analysis.spectralTilt > 1.0) {
+                issues.push({ type: 'tonal', severity: 'warning', description: `Track is harsh (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Tightening high-frequency dynamic EQ' });
+            }
+
+            // 4. Stereo deltas
+            const lowCorr = analysis.stereoCorrelation.bass || 1.0;
+            const refWidth = ref.stereo.width || 0.45;
+            const widthDiff = analysis.estimatedWidth - refWidth;
+            const stereoDeltas = {
+                widthMultiplier: widthDiff > 0.1 ? 0.92 : widthDiff < -0.1 ? 1.08 : 1.0,
+                bassMonoThreshold: lowCorr < 0.9 ? 200 : 0 // Mono bass below 200Hz if phase issues
+            };
+            if (lowCorr < 0.85) {
+                issues.push({ type: 'stereo', severity: 'critical', description: `Low-frequency phase issues (bass correlation: ${lowCorr.toFixed(2)})`, correction: 'Increasing bass mono processing' });
+            }
+            if (Math.abs(widthDiff) > 0.15) {
+                issues.push({ type: 'stereo', severity: 'warning', description: widthDiff > 0 ? 'Track is excessively wide' : 'Track is too narrow', correction: widthDiff > 0 ? 'Narrowing stereo image' : 'Widening stereo image' });
+            }
+
+            // 5. De-esser delta
+            const deEsserDelta = {
+                thresholdOffset: analysis.sibilanceExcessive ? -4 : analysis.sibilanceRatio > 0.25 ? -2 : 0
+            };
+            if (analysis.sibilanceExcessive) {
+                issues.push({ type: 'sibilance', severity: 'warning', description: `Excessive sibilance detected (${(analysis.sibilanceRatio * 100).toFixed(0)}% HF energy)`, correction: 'Lowering de-esser threshold' });
+            }
+
+            // 6. Warmth/saturation delta
+            const warmthDelta = {
+                multiplier: analysis.spectralTilt < -1.0 ? 0.7 : analysis.spectralTilt > 1.0 ? 1.2 :
+                            analysis.overallCrest < 6 ? 0.8 : 1.0
+            };
+
+            // 7. M/S deltas
+            const msDeltas = {
+                midPresenceMultiplier: analysis.spectralTilt < -0.5 ? 1.15 : analysis.spectralTilt > 0.5 ? 0.9 : 1.0,
+                sideAirMultiplier: analysis.estimatedWidth < 0.3 ? 1.2 : analysis.estimatedWidth > 0.6 ? 0.85 : 1.0
+            };
+
+            // Resonance-based issues
+            if (analysis.resonances.length > 3) {
+                issues.push({ type: 'resonance', severity: 'warning', description: `${analysis.resonances.length} resonant peaks detected`, correction: 'Dynamic EQ targeting problem frequencies' });
+            }
+
+            // Mix score (0-100)
+            let mixScore = 80;
+            mixScore -= issues.filter(i => i.severity === 'critical').length * 12;
+            mixScore -= issues.filter(i => i.severity === 'warning').length * 5;
+            mixScore -= Math.min(15, totalEQCorrection * 2);
+            mixScore = Math.max(10, Math.min(100, Math.round(mixScore)));
+
+            const summary = issues.length === 0 ? 'Track is well-balanced — minimal corrections applied.' :
+                            issues.length <= 2 ? `Minor adjustments: ${issues.map(i => i.description).join('; ')}` :
+                            `${issues.length} issues detected — AI corrections applied for optimal mastering.`;
+
+            const profile = {
+                eqDeltas, compDeltas, dynEQDeltas, stereoDeltas, deEsserDelta, warmthDelta, msDeltas,
+                issues, mixScore, summary, genre
+            };
+            console.log('🤖 AI Corrections Generated:', profile);
+            return profile;
+        }
+
+        // Display AI corrections panel in the UI
+        function displayAICorrections(profile) {
+            if (!profile) return;
+
+            // Remove any existing panel
+            const existing = document.getElementById('aiCorrectionsPanel');
+            if (existing) existing.remove();
+
+            const panel = document.createElement('div');
+            panel.id = 'aiCorrectionsPanel';
+            const scoreColor = profile.mixScore >= 75 ? '#00e676' : profile.mixScore >= 50 ? '#ffc107' : '#ff5252';
+            const severityIcons = { critical: '🔴', warning: '🟡', info: '🟢' };
+
+            // EQ bar chart HTML
+            const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const eqBars = bandKeys.map(band => {
+                const val = profile.eqDeltas[band] || 0;
+                const barColor = val > 0 ? '#00e676' : val < 0 ? '#ff5252' : '#666';
+                const barHeight = Math.min(100, Math.abs(val) * 25);
+                const direction = val >= 0 ? 'up' : 'down';
+                return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1">
+                    <span style="font-size:10px;color:${barColor}">${val > 0 ? '+' : ''}${val.toFixed(1)}</span>
+                    <div style="width:16px;height:${barHeight}px;background:${barColor};border-radius:3px;${direction === 'down' ? 'align-self:flex-start' : ''}"></div>
+                    <span style="font-size:9px;color:#999;text-transform:uppercase">${band}</span>
+                </div>`;
+            }).join('');
+
+            // Issues list
+            const issuesHTML = profile.issues.length > 0
+                ? profile.issues.map(i => `<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                    <span>${severityIcons[i.severity] || '⚪'}</span>
+                    <div><div style="font-size:12px;color:#e0e0e0">${i.description}</div><div style="font-size:10px;color:#888">${i.correction}</div></div>
+                </div>`).join('')
+                : '<div style="color:#00e676;font-size:12px;padding:4px 0">No significant issues detected</div>';
+
+            // Dynamics summary
+            const dynSummary = Math.abs(profile.compDeltas.thresholdOffset) > 1
+                ? `Compression threshold ${profile.compDeltas.thresholdOffset > 0 ? 'raised' : 'lowered'} by ${Math.abs(profile.compDeltas.thresholdOffset).toFixed(1)} dB`
+                : 'Compression within normal range';
+
+            // Stereo summary
+            const stereoSummary = profile.stereoDeltas.widthMultiplier !== 1.0
+                ? `Stereo width ${profile.stereoDeltas.widthMultiplier > 1 ? 'increased' : 'decreased'} by ${Math.abs((profile.stereoDeltas.widthMultiplier - 1) * 100).toFixed(0)}%`
+                : 'Stereo image is well-balanced';
+
+            panel.innerHTML = `
+                <div style="background:linear-gradient(135deg,rgba(20,20,30,0.95),rgba(30,20,40,0.95));border:1px solid rgba(138,43,226,0.3);border-radius:12px;padding:16px;margin:12px 0;backdrop-filter:blur(10px)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span style="font-size:16px">🤖</span>
+                            <span style="font-size:14px;font-weight:600;color:#e0e0e0">AI Track Analysis</span>
+                        </div>
+                        <div style="background:${scoreColor}22;border:1px solid ${scoreColor};border-radius:20px;padding:4px 12px;display:flex;align-items:center;gap:6px">
+                            <span style="font-size:12px;color:${scoreColor};font-weight:700">${profile.mixScore}</span>
+                            <span style="font-size:10px;color:${scoreColor}">MIX SCORE</span>
+                        </div>
+                    </div>
+                    <div style="font-size:11px;color:#aaa;margin-bottom:10px">${profile.summary}</div>
+                    <div style="margin-bottom:12px">
+                        <div style="font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">EQ Corrections</div>
+                        <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding:4px;background:rgba(0,0,0,0.2);border-radius:6px">${eqBars}</div>
+                    </div>
+                    <div style="margin-bottom:8px">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Issues Found (${profile.issues.length})</div>
+                        ${issuesHTML}
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:8px">
+                        <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:6px;padding:8px">
+                            <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Dynamics</div>
+                            <div style="font-size:11px;color:#ccc">${dynSummary}</div>
+                        </div>
+                        <div style="flex:1;background:rgba(0,0,0,0.2);border-radius:6px;padding:8px">
+                            <div style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Stereo</div>
+                            <div style="font-size:11px;color:#ccc">${stereoSummary}</div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Insert after the analysis results section
+            const analysisSection = document.getElementById('analysisResults') || document.getElementById('trackAnalysis');
+            if (analysisSection) {
+                analysisSection.parentNode.insertBefore(panel, analysisSection.nextSibling);
+            } else {
+                // Fallback: append to the controls area
+                const controls = document.querySelector('.controls-section, .mastering-controls, #masteringControls');
+                if (controls) controls.appendChild(panel);
             }
         }
 
@@ -14072,9 +14580,9 @@
             const preset = presets[presetIndex];
             const eqValues = preset.eq;
 
-            // Only apply to audio if loaded
-            if (!window.audioBuffer) {
-
+            // Only apply to audio if audio engine is ready
+            if (!window.audioContext || !eqSubFilter) {
+                console.warn('⚠️ Audio engine not ready for EQ preset');
                 return;
             }
 
@@ -14209,28 +14717,174 @@
 
                     break;
 
-                case 'jazz':
-                case 'classical':
-                case 'acoustic':
+                case 'rnb':
+                case 'r&b':
                     preset = {
                         eq: {
-                            sub: 0,         // Flat (Bypass surgical EQ)
-                            bass: 0,
-                            lowmid: 0,
-                            mid: 0,
-                            highmid: 0,
+                            sub: +1.5,
+                            bass: +1.0,
+                            lowmid: -1.0,
+                            mid: +0.3,
+                            highmid: +0.5,
+                            high: +0.3,
+                            air: +0.5
+                        },
+                        compression: {
+                            threshold: -22,
+                            ratio: 2.0,
+                            attack: 0.008,
+                            release: 0.2
+                        },
+                        monoBass: 100
+                    };
+                    break;
+
+                case 'country':
+                    preset = {
+                        eq: {
+                            sub: +0.3,
+                            bass: +0.8,
+                            lowmid: -0.5,
+                            mid: +0.5,
+                            highmid: +0.8,
                             high: +0.5,
-                            air: +1.0       // High shelf 8kHz (+1dB) - Subtle air
+                            air: +0.8
+                        },
+                        compression: {
+                            threshold: -22,
+                            ratio: 2.5,
+                            attack: 0.005,
+                            release: 0.18
+                        },
+                        monoBass: 100
+                    };
+                    break;
+
+                case 'latin':
+                    preset = {
+                        eq: {
+                            sub: +1.8,
+                            bass: +1.5,
+                            lowmid: -1.2,
+                            mid: +0.3,
+                            highmid: +0.8,
+                            high: +0.5,
+                            air: +0.5
+                        },
+                        compression: {
+                            threshold: -20,
+                            ratio: 3.0,
+                            attack: 0.003,
+                            release: 0.15
+                        },
+                        monoBass: 120
+                    };
+                    break;
+
+                case 'lofi':
+                case 'lo-fi':
+                    preset = {
+                        eq: {
+                            sub: +0.8,
+                            bass: +1.0,
+                            lowmid: +0.3,
+                            mid: -0.3,
+                            highmid: -0.3,
+                            high: -0.5,
+                            air: +0.0
+                        },
+                        compression: {
+                            threshold: -24,
+                            ratio: 2.0,
+                            attack: 0.01,
+                            release: 0.25
+                        },
+                        monoBass: 80
+                    };
+                    break;
+
+                case 'jazz':
+                    preset = {
+                        eq: {
+                            sub: 0,
+                            bass: 0,
+                            lowmid: -0.3,
+                            mid: 0,
+                            highmid: +0.3,
+                            high: +0.3,
+                            air: +0.5
                         },
                         compression: {
                             threshold: -28,
-                            ratio: 1.5,     // Minimal (1.5:1) to preserve dynamics
-                            attack: 0.01,   // Slow attack
+                            ratio: 1.5,
+                            attack: 0.01,
                             release: 0.3
                         },
-                        monoBass: 80 // Minimal mono bass
+                        monoBass: 80
                     };
+                    break;
 
+                case 'classical':
+                    preset = {
+                        eq: {
+                            sub: 0,
+                            bass: 0,
+                            lowmid: -0.2,
+                            mid: 0,
+                            highmid: +0.2,
+                            high: +0.2,
+                            air: +0.3
+                        },
+                        compression: {
+                            threshold: -30,
+                            ratio: 1.3,
+                            attack: 0.015,
+                            release: 0.35
+                        },
+                        monoBass: 60
+                    };
+                    break;
+
+                case 'acoustic':
+                    preset = {
+                        eq: {
+                            sub: 0,
+                            bass: +0.3,
+                            lowmid: -0.5,
+                            mid: +0.3,
+                            highmid: +0.5,
+                            high: +0.5,
+                            air: +0.8
+                        },
+                        compression: {
+                            threshold: -26,
+                            ratio: 1.8,
+                            attack: 0.008,
+                            release: 0.25
+                        },
+                        monoBass: 80
+                    };
+                    break;
+
+                case 'metal':
+                    preset = {
+                        eq: {
+                            sub: +0.8,
+                            bass: +1.5,
+                            lowmid: -1.0,
+                            mid: +1.2,
+                            highmid: +1.5,
+                            high: +0.5,
+                            air: +0.3
+                        },
+                        compression: {
+                            threshold: -18,
+                            ratio: 4.0,
+                            attack: 0.001,
+                            release: 0.1
+                        },
+                        monoBass: 120
+                    };
                     break;
 
                 default:
@@ -15838,6 +16492,54 @@
             }
         });
 
+        // Touch support for mobile waveform seeking
+        waveformCanvasStatic.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            mouseDownTime = Date.now();
+            isDraggingWaveform = false;
+            wasPlayingBeforeSeek = !audioElement.paused;
+            const touch = e.touches[0];
+            seekToWaveformPosition({ clientX: touch.clientX });
+        }, { passive: false });
+
+        waveformCanvasStatic.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (mouseDownTime > 0 && !isDraggingWaveform) {
+                isDraggingWaveform = true;
+                if (wasPlayingBeforeSeek) audioElement.pause();
+            }
+            if (isDraggingWaveform) {
+                const touch = e.touches[0];
+                seekToWaveformPosition({ clientX: touch.clientX });
+            }
+        }, { passive: false });
+
+        waveformCanvasStatic.addEventListener('touchend', () => {
+            const wasDragging = isDraggingWaveform;
+            isDraggingWaveform = false;
+            mouseDownTime = 0;
+            if (waveformCanvasPlayhead) {
+                const ctx = waveformCanvasPlayhead.getContext('2d');
+                ctx.clearRect(0, 0, waveformCanvasPlayhead.width, waveformCanvasPlayhead.height);
+            }
+            if (wasDragging && wasPlayingBeforeSeek) {
+                audioElement.addEventListener('seeked', async () => {
+                    try {
+                        if (audioContext && audioContext.state !== 'running') await audioContext.resume();
+                        playPromise = audioElement.play();
+                        await playPromise;
+                        isPlaying = true;
+                        playBtn.textContent = '⏸';
+                        playPromise = null;
+                    } catch (err) {
+                        playPromise = null;
+                        isPlaying = false;
+                        playBtn.textContent = '▶';
+                    }
+                }, { once: true });
+            }
+        });
+
         // Add cursor to show it's horizontally scrubbable
         waveformCanvasStatic.style.cursor = 'ew-resize';
 
@@ -16526,11 +17228,13 @@
 
             // ═══ MAIN WAVEFORM (Post-Processing) - Professional Gradient ═══
             const waveGradient = ctx.createLinearGradient(0, 0, 0, height);
-            waveGradient.addColorStop(0, '#00d4ff');      // Bright cyan top
-            waveGradient.addColorStop(0.5, '#0088cc');    // Mid blue
-            waveGradient.addColorStop(1, '#00d4ff');      // Bright cyan bottom
+            waveGradient.addColorStop(0, '#00e5ff');      // Bright cyan top
+            waveGradient.addColorStop(0.35, '#00aadd');   // Upper transition
+            waveGradient.addColorStop(0.5, '#0099cc');    // Center blue
+            waveGradient.addColorStop(0.65, '#00aadd');   // Lower transition
+            waveGradient.addColorStop(1, '#00e5ff');      // Bright cyan bottom
             ctx.fillStyle = waveGradient;
-            ctx.globalAlpha = 0.85;
+            ctx.globalAlpha = 0.9;
             ctx.beginPath();
             ctx.moveTo(0, centerY);
 
@@ -16562,10 +17266,10 @@
             ctx.fill();
             ctx.globalAlpha = 1.0;
 
-            // Draw outline (Bright Cyan)
+            // Draw outline (Bright Cyan) - TOP edge
             ctx.strokeStyle = '#00d4ff';
             ctx.lineWidth = 1.5;
-            ctx.globalAlpha = 0.6;
+            ctx.globalAlpha = 0.7;
             ctx.beginPath();
 
             for (let i = 0; i < width; i++) {
@@ -16580,7 +17284,22 @@
                 if (i === 0) ctx.moveTo(i, y);
                 else ctx.lineTo(i, y);
             }
+            ctx.stroke();
 
+            // Draw outline (Bright Cyan) - BOTTOM edge (mirror)
+            ctx.beginPath();
+            for (let i = 0; i < width; i++) {
+                let max = 0;
+                for (let j = 0; j < step; j++) {
+                    const idx = i * step + j;
+                    if (idx < data.length) {
+                        max = Math.max(max, Math.abs(data[idx]));
+                    }
+                }
+                const y = centerY + (max * amp);
+                if (i === 0) ctx.moveTo(i, y);
+                else ctx.lineTo(i, y);
+            }
             ctx.stroke();
             ctx.globalAlpha = 1.0;
 
@@ -19317,38 +20036,23 @@
             window.abCompareMode = abCompareMode; // Sync global state
 
             if (abCompareMode) {
-                // Mode B: ORIGINAL - hear TRUE unprocessed audio (NO level matching!)
-                // Clients NEED to hear the loudness difference - that's what they're paying for!
+                // Mode B: ORIGINAL - play at TRUE original volume (no level-matching)
                 try {
                     // DISABLE Auto LUFS during A/B compare (prevents gain interference)
                     window.abCompareAutoLUFSWasEnabled = window.autoLUFSCompensation;
                     window.autoLUFSCompensation = false;
 
-                    // ALWAYS save current gains BEFORE switching (not just on first toggle)
-                    // This ensures we capture the latest mastered state
+                    // Save current gains for restoration when switching back to mastered
                     abCompareSavedGain = masterGain ? masterGain.gain.value : 1.0;
                     abCompareSavedMakeupGain = makeupGain ? makeupGain.gain.value : 1.0;
 
-                    // Switch to ORIGINAL audio path
+                    // Switch to ORIGINAL audio path at TRUE volume
                     // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                     const ac = window.audioContext || audioContext;
                     if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Original ON
+                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Original ON at true volume
                         window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Processed OFF
-
                     }
-
-                    // Calculate and display PRECISE dB difference
-                    let gainDiffDB = 0;
-                    if (abCompareSavedGain && abCompareSavedGain > 0) {
-                        gainDiffDB = 20 * Math.log10(abCompareSavedGain);
-                    }
-                    // Also add makeup gain contribution
-                    if (makeupGain && makeupGain.gain.value > 0) {
-                        gainDiffDB += 20 * Math.log10(makeupGain.gain.value);
-                    }
-
-                    const diffText = gainDiffDB !== 0 ? ` (${gainDiffDB > 0 ? '+' : ''}${gainDiffDB.toFixed(1)} dB)` : '';
                     btn.textContent = 'UNMASTERED';
                     btn.style.background = 'rgba(255,255,255,0.1)';
                     btn.style.color = '#ffffff';
@@ -19648,20 +20352,28 @@
                 // Handle genre preset changes
                 const genre = this.getAttribute('data-genre');
                 if (genre) {
+                    // Store selected genre for intensity system
+                    window.selectedPreMasterGenre = genre === 'edm' ? 'electronic' : genre;
+
                     // Show genre-specific EQ presets (always, even if audio not loaded)
                     showGenreEQPresets(genre);
 
                     // Genre display names and descriptions
                     const genreNames = {
-                        'hip-hop': 'Hip-Hop (Sub +3dB, Presence +1.5dB)',
-                        'pop': 'Pop (Balanced, Air +2dB)',
-                        'edm': 'EDM (Massive Sub +4dB)',
-                        'electronic': 'Electronic (Sub +4dB, Bright)',
-                        'rock': 'Rock (Body +1dB, Bite +2dB)',
-                        'jazz': 'Jazz (Natural, Dynamic)',
-                        'classical': 'Classical (Transparent)',
-                        'r&b': 'R&B (Warm, Smooth)',
-                        'rnb': 'R&B (Warm, Smooth)'
+                        'hip-hop': 'Hip-Hop',
+                        'pop': 'Pop',
+                        'edm': 'EDM',
+                        'electronic': 'Electronic',
+                        'rock': 'Rock',
+                        'rnb': 'R&B',
+                        'acoustic': 'Acoustic',
+                        'jazz': 'Jazz',
+                        'classical': 'Classical',
+                        'metal': 'Metal',
+                        'country': 'Country',
+                        'latin': 'Latin',
+                        'lofi': 'Lo-Fi',
+                        'neutral': 'Neutral'
                     };
 
                     // Apply the main genre preset if audio is loaded
@@ -19688,6 +20400,11 @@
                 }
             });
         });
+
+        // Auto-show presets for default genre (neutral) on load
+        if (typeof showGenreEQPresets === 'function') {
+            showGenreEQPresets('neutral');
+        }
 
         // Format button selection (only for format buttons, not bit depth)
         document.querySelectorAll('.export-format-btn[data-format]').forEach(btn => {
@@ -19841,7 +20558,7 @@
 
                 // Copy exact EQ settings from live context
                 offlineEQSub.type = 'lowshelf';
-                offlineEQSub.frequency.value = typeof eqSubFilter !== 'undefined' && eqSubFilter ? eqSubFilter.frequency.value : 60;
+                offlineEQSub.frequency.value = typeof eqSubFilter !== 'undefined' && eqSubFilter ? eqSubFilter.frequency.value : 40;
                 offlineEQSub.gain.value = typeof eqSubFilter !== 'undefined' && eqSubFilter ? eqSubFilter.gain.value : 0;
 
                 offlineEQBass.type = 'peaking';
@@ -19850,17 +20567,17 @@
                 offlineEQBass.gain.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.gain.value : 0;
 
                 offlineEQLowMid.type = 'peaking';
-                offlineEQLowMid.frequency.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.frequency.value : 500;
+                offlineEQLowMid.frequency.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.frequency.value : 350;
                 offlineEQLowMid.Q.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.Q.value : 0.7;
                 offlineEQLowMid.gain.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.gain.value : 0;
 
                 offlineEQMid.type = 'peaking';
-                offlineEQMid.frequency.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.frequency.value : 1500;
+                offlineEQMid.frequency.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.frequency.value : 1000;
                 offlineEQMid.Q.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.Q.value : 0.7;
                 offlineEQMid.gain.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.gain.value : 0;
 
                 offlineEQHighMid.type = 'peaking';
-                offlineEQHighMid.frequency.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.frequency.value : 4000;
+                offlineEQHighMid.frequency.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.frequency.value : 3500;
                 offlineEQHighMid.Q.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.Q.value : 0.7;
                 offlineEQHighMid.gain.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.gain.value : 0;
 
@@ -19870,7 +20587,7 @@
                 offlineEQHigh.gain.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.gain.value : 0;
 
                 offlineEQAir.type = 'highshelf';
-                offlineEQAir.frequency.value = typeof eqAirFilter !== 'undefined' && eqAirFilter ? eqAirFilter.frequency.value : 12000;
+                offlineEQAir.frequency.value = typeof eqAirFilter !== 'undefined' && eqAirFilter ? eqAirFilter.frequency.value : 16000;
                 offlineEQAir.gain.value = typeof eqAirFilter !== 'undefined' && eqAirFilter ? eqAirFilter.gain.value : 0;
 
                 // STAGE 3: GLUE COMPRESSOR (SSL-style bus compression)
@@ -19992,8 +20709,8 @@
             } catch (error) {
                 console.error('❌ Export error:', error);
                 showLuvLangToast('Export failed: ' + error.message);
-                document.getElementById('exportBtn').textContent = '💾 Export Master';
-                document.getElementById('exportBtn').disabled = false;
+                const expBtn = document.getElementById('exportBtn');
+                if (expBtn) { expBtn.textContent = 'Export Master'; expBtn.disabled = false; }
             }
         };
 
@@ -20058,7 +20775,7 @@
 
                 // Copy exact EQ settings from live context
                 offlineEQSub.type = 'lowshelf';
-                offlineEQSub.frequency.value = eqSubFilter ? eqSubFilter.frequency.value : 60;
+                offlineEQSub.frequency.value = eqSubFilter ? eqSubFilter.frequency.value : 40;
                 offlineEQSub.gain.value = eqSubFilter ? eqSubFilter.gain.value : 0;
 
                 offlineEQBass.type = 'peaking';
@@ -20067,17 +20784,17 @@
                 offlineEQBass.gain.value = eqBassFilter ? eqBassFilter.gain.value : 0;
 
                 offlineEQLowMid.type = 'peaking';
-                offlineEQLowMid.frequency.value = eqLowMidFilter ? eqLowMidFilter.frequency.value : 500;
+                offlineEQLowMid.frequency.value = eqLowMidFilter ? eqLowMidFilter.frequency.value : 350;
                 offlineEQLowMid.Q.value = eqLowMidFilter ? eqLowMidFilter.Q.value : 0.7;
                 offlineEQLowMid.gain.value = eqLowMidFilter ? eqLowMidFilter.gain.value : 0;
 
                 offlineEQMid.type = 'peaking';
-                offlineEQMid.frequency.value = eqMidFilter ? eqMidFilter.frequency.value : 1500;
+                offlineEQMid.frequency.value = eqMidFilter ? eqMidFilter.frequency.value : 1000;
                 offlineEQMid.Q.value = eqMidFilter ? eqMidFilter.Q.value : 0.7;
                 offlineEQMid.gain.value = eqMidFilter ? eqMidFilter.gain.value : 0;
 
                 offlineEQHighMid.type = 'peaking';
-                offlineEQHighMid.frequency.value = eqHighMidFilter ? eqHighMidFilter.frequency.value : 4000;
+                offlineEQHighMid.frequency.value = eqHighMidFilter ? eqHighMidFilter.frequency.value : 3500;
                 offlineEQHighMid.Q.value = eqHighMidFilter ? eqHighMidFilter.Q.value : 0.7;
                 offlineEQHighMid.gain.value = eqHighMidFilter ? eqHighMidFilter.gain.value : 0;
 
@@ -20087,7 +20804,7 @@
                 offlineEQHigh.gain.value = eqHighFilter ? eqHighFilter.gain.value : 0;
 
                 offlineEQAir.type = 'highshelf';
-                offlineEQAir.frequency.value = eqAirFilter ? eqAirFilter.frequency.value : 12000;
+                offlineEQAir.frequency.value = eqAirFilter ? eqAirFilter.frequency.value : 16000;
                 offlineEQAir.gain.value = eqAirFilter ? eqAirFilter.gain.value : 0;
 
                 // STAGE 3: GLUE COMPRESSOR (SSL-style bus compression)
@@ -21816,6 +22533,13 @@
             try {
                 // Get genre and intensity for display
                 const activeGenre = window.selectedPreMasterGenre || 'pop';
+
+                // Re-run AI corrections with final selected genre before mastering
+                if (window.aiTrackAnalysis) {
+                    window.aiTrackProfile = generateAICorrections(window.aiTrackAnalysis, activeGenre);
+                    console.log('🤖 AI corrections recalculated for final genre:', activeGenre);
+                }
+
                 const genreNameMap = {
                     pop: 'Pop', rock: 'Rock', hiphop: 'Hip-Hop', electronic: 'Electronic',
                     jazz: 'Jazz', classical: 'Classical', rnb: 'R&B', country: 'Country',
@@ -22325,15 +23049,16 @@
                 const intensityMult = intensityMultipliers[intensity] || 0.75;
 
                 // Headroom compensation - reduce input gain at higher intensities
-                // This prevents cumulative gain buildup from causing distortion
+                // Applied BEFORE limiter via makeup gain offset (not master gain)
+                // Kept minimal — the limiter is designed to handle peaks
                 const headroomCompensation = {
                     1: 0,      // No reduction needed
-                    2: -0.5,   // Slight reduction
-                    3: -1.0,   // Moderate reduction
-                    4: -1.5,   // More reduction for aggressive processing
-                    5: -2.5    // Maximum reduction to maintain headroom
+                    2: 0,      // No reduction needed
+                    3: 0,      // No reduction — limiter handles headroom
+                    4: -0.5,   // Slight reduction for aggressive processing
+                    5: -1.0    // Modest reduction at maximum intensity
                 };
-                const headroomDb = headroomCompensation[intensity] || -1.0;
+                const headroomDb = headroomCompensation[intensity] || 0;
 
                 // Apply headroom compensation to master gain before processing
                 if (window.masterGain) {
@@ -22380,57 +23105,58 @@
                     'rnb':        { sub: 1.5, bass: 1.0, lowmid: -1.0, mid: 0.3, highmid: 0.5, high: 0.3, air: 0.5 },  // Warm, smooth
                     'acoustic':   { sub: 0.0, bass: 0.3, lowmid: -0.5, mid: 0.3, highmid: 0.5, high: 0.5, air: 0.8 },  // Natural, airy
                     'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.3, mid: 0.0, highmid: 0.3, high: 0.3, air: 0.5 },  // Minimal, transparent
-                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 }   // Ultra-transparent
+                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },  // Ultra-transparent
+                    'metal':      { sub: 0.8, bass: 1.5, lowmid: -1.0, mid: 1.2, highmid: 1.5, high: 0.5, air: 0.3 },  // Aggressive mids, tight low
+                    'country':    { sub: 0.3, bass: 0.8, lowmid: -0.5, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.8 },  // Warm body, clear top
+                    'latin':      { sub: 1.8, bass: 1.5, lowmid: -1.2, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.5 },  // Deep bass, rhythmic
+                    'lofi':       { sub: 0.8, bass: 1.0, lowmid: 0.3, mid: -0.3, highmid: -0.3, high: -0.5, air: 0.0 }  // Warm, rolled-off top
                 };
                 const eq = eqCurves[genre] || eqCurves['pop'];
 
+                // AI adaptive EQ deltas — applied on top of genre preset
+                const aiProfile = window.aiTrackProfile;
+                const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
+
                 // 3. Sub Bass (40Hz) - Foundation
                 if (window.eqSubFilter) {
-                    const val = eq.sub * intensityMult;
+                    const val = (eq.sub + (aiEQ.sub || 0)) * intensityMult;
                     window.eqSubFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 4. Bass (100Hz) - Warmth & Body
                 if (window.eqBassFilter) {
-                    const val = eq.bass * intensityMult;
+                    const val = (eq.bass + (aiEQ.bass || 0)) * intensityMult;
                     window.eqBassFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 5. Low-Mids (300Hz) - Mud Control
                 if (window.eqLowMidFilter) {
-                    const val = eq.lowmid * intensityMult;
+                    const val = (eq.lowmid + (aiEQ.lowmid || 0)) * intensityMult;
                     window.eqLowMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 6. Mids (1kHz) - Body & Clarity
                 if (window.eqMidFilter) {
-                    const val = eq.mid * intensityMult;
+                    const val = (eq.mid + (aiEQ.mid || 0)) * intensityMult;
                     window.eqMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 7. High-Mids (3.5kHz) - Presence & Cut
                 if (window.eqHighMidFilter) {
-                    const val = eq.highmid * intensityMult;
+                    const val = (eq.highmid + (aiEQ.highmid || 0)) * intensityMult;
                     window.eqHighMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 8. Highs (8kHz) - Brilliance
                 if (window.eqHighFilter) {
-                    const val = eq.high * intensityMult;
+                    const val = (eq.high + (aiEQ.high || 0)) * intensityMult;
                     window.eqHighFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // 9. Air (14kHz) - Sparkle & Shimmer
                 if (window.eqAirFilter) {
-                    const val = eq.air * intensityMult;
+                    const val = (eq.air + (aiEQ.air || 0)) * intensityMult;
                     window.eqAirFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -22443,20 +23169,23 @@
                     // 10. Dynamic EQ - Professional intensity-adaptive thresholds
                     // Based on iZotope Ozone / FabFilter Pro-Q dynamic band standards
                     // Lower thresholds = more compression, higher intensity catches more peaks
+                    // Higher thresholds = less compression = more transparent
+                    // Dynamic EQ should only tame occasional problem frequencies
                     const dynEQThresholds = {
-                        1: { low: -20, mid: -18, high: -22 },  // Subtle - catches only extreme peaks
-                        2: { low: -22, mid: -20, high: -24 },  // Light - gentle problem-solving
-                        3: { low: -24, mid: -22, high: -26 },  // Balanced - standard mastering
-                        4: { low: -26, mid: -24, high: -28 },  // Aggressive - tight control
-                        5: { low: -28, mid: -26, high: -30 }   // Maximum - broadcast-style limiting
+                        1: { low: -12, mid: -10, high: -14 },  // Subtle - extreme peaks only
+                        2: { low: -14, mid: -12, high: -16 },  // Light - gentle correction
+                        3: { low: -16, mid: -14, high: -18 },  // Balanced - problem peaks only
+                        4: { low: -18, mid: -16, high: -20 },  // Aggressive - tighter
+                        5: { low: -20, mid: -18, high: -22 }   // Maximum - broadcast control
                     };
-                    // Intensity-adaptive ratios for more effective compression at higher levels
+                    // Intensity-adaptive ratios — transparent dynamic EQ (not multiband compression)
+                    // Pro dynamic EQs (FabFilter Pro-Q, iZotope) use 1.2-2.0 ratios
                     const dynEQRatios = {
-                        1: { low: 1.5, mid: 1.8, high: 2.0 },  // Subtle
-                        2: { low: 1.8, mid: 2.0, high: 2.5 },  // Light
-                        3: { low: 2.0, mid: 2.5, high: 3.0 },  // Balanced
-                        4: { low: 2.5, mid: 3.0, high: 3.5 },  // Aggressive
-                        5: { low: 3.0, mid: 3.5, high: 4.0 }   // Maximum
+                        1: { low: 1.1, mid: 1.2, high: 1.2 },  // Subtle - barely audible
+                        2: { low: 1.2, mid: 1.3, high: 1.5 },  // Light - gentle correction
+                        3: { low: 1.3, mid: 1.5, high: 1.8 },  // Balanced - transparent control
+                        4: { low: 1.5, mid: 1.8, high: 2.2 },  // Aggressive - noticeable
+                        5: { low: 1.8, mid: 2.2, high: 2.8 }   // Maximum - firm control
                     };
                     const dynThresh = dynEQThresholds[intensity] || dynEQThresholds[3];
                     const dynRatios = dynEQRatios[intensity] || dynEQRatios[3];
@@ -22471,6 +23200,12 @@
                         window.dynamicEQ.bands.mid.comp.ratio.value = dynRatios.mid;
                         window.dynamicEQ.bands.high.comp.ratio.value = dynRatios.high;
 
+                        // AI adaptive dynamic EQ offsets
+                        if (aiProfile && aiProfile.dynEQDeltas) {
+                            window.dynamicEQ.bands.low.comp.threshold.value += aiProfile.dynEQDeltas.lowThresholdOffset || 0;
+                            window.dynamicEQ.bands.mid.comp.threshold.value += aiProfile.dynEQDeltas.midThresholdOffset || 0;
+                            window.dynamicEQ.bands.high.comp.threshold.value += aiProfile.dynEQDeltas.highThresholdOffset || 0;
+                        }
                     }
                 }
 
@@ -22493,18 +23228,23 @@
                     'rnb':        { threshold: -22, ratio: 1.8, attack: 0.020, release: 0.22, knee: 10 },  // Gentle, warm
                     'acoustic':   { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 },  // Transparent
                     'jazz':       { threshold: -28, ratio: 1.3, attack: 0.030, release: 0.35, knee: 15 },  // Very gentle
-                    'classical':  { threshold: -32, ratio: 1.2, attack: 0.040, release: 0.50, knee: 20 }   // Nearly transparent
+                    'classical':  { threshold: -32, ratio: 1.2, attack: 0.040, release: 0.50, knee: 20 },  // Nearly transparent
+                    'metal':      { threshold: -16, ratio: 3.0, attack: 0.005, release: 0.10, knee: 4 },   // Aggressive, fast
+                    'country':    { threshold: -22, ratio: 1.8, attack: 0.018, release: 0.20, knee: 8 },   // Musical, warm
+                    'latin':      { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },   // Punchy, rhythmic
+                    'lofi':       { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 }   // Gentle, vintage
                 };
                 const comp = compSettings[genre] || compSettings['pop'];
 
                 // 11. Bus Compressor - SSL/API Style Glue
-                // Intensity-adaptive compression for professional results at all levels
+                // With dynamic EQ + multiband + HF limiter + 2 limiters in chain,
+                // the bus comp needs to be conservative to avoid over-processing
                 const compRatioMultipliers = {
-                    1: 0.65,  // Subtle - very gentle compression, preserve dynamics
-                    2: 0.80,  // Light - conservative compression
-                    3: 1.0,   // Balanced - standard professional ratio
-                    4: 1.15,  // Aggressive - punchy compression
-                    5: 1.25   // Maximum - heavy but still musical (not over-compressed)
+                    1: 0.40,  // Subtle - barely compressing
+                    2: 0.55,  // Light - gentle glue
+                    3: 0.70,  // Balanced - transparent glue (reduced: other stages add compression)
+                    4: 0.85,  // Aggressive - full genre ratio
+                    5: 1.0    // Maximum - heavy but musical
                 };
                 const compRatioMult = compRatioMultipliers[intensity] || 1.0;
 
@@ -22521,14 +23261,21 @@
                 if (window.compressor) {
                     // Intensity-adaptive threshold: lower at higher intensities for more gain reduction
                     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
-                    const adjustedThreshold = comp.threshold + (thresholdOffset[intensity] || 0);
+                    let adjustedThreshold = comp.threshold + (thresholdOffset[intensity] || 0);
+
+                    // AI adaptive compression offsets
+                    if (aiProfile && aiProfile.compDeltas) {
+                        adjustedThreshold += (aiProfile.compDeltas.thresholdOffset || 0);
+                    }
+                    const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
+                    const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
+                    const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
 
                     window.compressor.threshold.setTargetAtTime(adjustedThreshold, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(comp.ratio * compRatioMult, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(comp.attack * compAttackMult, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(comp.release, ac.currentTime, 0.1);
-                    window.compressor.knee.setTargetAtTime(6, ac.currentTime, 0.1);
-
+                    window.compressor.ratio.setTargetAtTime(comp.ratio * compRatioMult * aiRatioMult, ac.currentTime, 0.1);
+                    window.compressor.attack.setTargetAtTime(comp.attack * compAttackMult * aiAttackMult, ac.currentTime, 0.1);
+                    window.compressor.release.setTargetAtTime(comp.release * aiReleaseMult, ac.currentTime, 0.1);
+                    window.compressor.knee.setTargetAtTime(comp.knee, ac.currentTime, 0.1);
                 }
 
                 // 12a. Engage multiband crossover bypass → active
@@ -22583,26 +23330,42 @@
                 }
 
                 // 13. Transient Shaper - Intensity-adaptive Punch & Attack Control
+                // CRITICAL: Use proper PARALLEL MIX amounts (5-15% wet), NOT gain boosts
+                // High wet amounts cause comb filtering (dry + compressed = phase interference = "can" sound)
                 if (window.transientControls) {
-                    // 5-level transient attack multipliers
-                    const transientAttackMults = {
-                        1: 0.85,  // Subtle - softer attack
-                        2: 0.95,  // Light
-                        3: 1.0,   // Balanced
-                        4: 1.08,  // Aggressive - punchier
-                        5: 1.15   // Maximum - maximum punch
-                    };
-                    const transAttackMult = transientAttackMults[intensity] || 1.0;
+                    // Base mix amounts — professional parallel compression standard
+                    const baseAttackMix = 0.12;   // 12% attack (subtle punch)
+                    const baseSustainMix = 0.05;   // 5% sustain (subtle body)
 
-                    const attackBoost = genre === 'hiphop' || genre === 'rock' ? 1.25 : 1.15;
-                    const sustainBoost = genre === 'acoustic' || genre === 'jazz' ? 1.1 : 1.0;
-                    const finalAttack = attackBoost * transAttackMult;
+                    // Genre emphasis factors
+                    const attackEmphasis = genre === 'hiphop' || genre === 'rock' ? 1.3 :
+                                           genre === 'metal' ? 1.4 : 1.0;
+                    const sustainEmphasis = genre === 'acoustic' || genre === 'jazz' ? 1.3 : 1.0;
+
+                    // Intensity scaling — more transient processing at higher intensities
+                    const transientIntensityMults = {
+                        1: 0.4,   // Subtle - barely engaged
+                        2: 0.7,   // Light
+                        3: 1.0,   // Balanced
+                        4: 1.3,   // Aggressive
+                        5: 1.6    // Maximum
+                    };
+                    const transMult = transientIntensityMults[intensity] || 1.0;
+
+                    // Final mix amounts (capped for safety)
+                    const attackMix = Math.min(0.20, baseAttackMix * attackEmphasis * transMult);
+                    const sustainMix = Math.min(0.12, baseSustainMix * sustainEmphasis * transMult);
+                    // Reduce dry proportionally to maintain near-unity gain
+                    const dryMix = 1.0 - (attackMix + sustainMix) * 0.5;
 
                     if (window.transientControls.attack) {
-                        window.transientControls.attack.gain.setTargetAtTime(finalAttack, ac.currentTime, 0.1);
+                        window.transientControls.attack.gain.setTargetAtTime(attackMix, ac.currentTime, 0.1);
                     }
                     if (window.transientControls.sustain) {
-                        window.transientControls.sustain.gain.setTargetAtTime(sustainBoost, ac.currentTime, 0.1);
+                        window.transientControls.sustain.gain.setTargetAtTime(sustainMix, ac.currentTime, 0.1);
+                    }
+                    if (window.transientControls.dry) {
+                        window.transientControls.dry.gain.setTargetAtTime(dryMix, ac.currentTime, 0.1);
                     }
 
                 }
@@ -22614,25 +23377,32 @@
                 await new Promise(resolve => setTimeout(resolve, 80));
 
                 // 14. Analog Warmth / Tape Saturation - Intensity-adaptive
+                // Pro mastering: saturation should be felt, not heard. Max 8% wet at Balanced.
+                // Sterling Sound, Metropolis: "If you can hear the saturation, it's too much"
                 if (window.analogWarmth) {
-                    // Genre-based warmth amounts
-                    const baseWarmth = (genre === 'hiphop' || genre === 'rnb') ? 0.15 :
-                                       (genre === 'rock') ? 0.20 :
-                                       (genre === 'electronic') ? 0.10 : 0.12;
-                    // 5-level warmth multipliers - musical saturation at all levels
+                    // Genre-based warmth amounts (reduced for transparency)
+                    const baseWarmth = (genre === 'hiphop' || genre === 'rnb') ? 0.08 :
+                                       (genre === 'rock') ? 0.10 :
+                                       (genre === 'electronic') ? 0.05 :
+                                       (genre === 'lofi') ? 0.12 : 0.06;
+                    // 5-level warmth multipliers
                     const warmthMultipliers = {
-                        1: 0.5,   // Subtle - minimal saturation
-                        2: 0.75,  // Light - gentle warmth
-                        3: 1.0,   // Balanced - standard
-                        4: 1.25,  // Aggressive - enhanced warmth
-                        5: 1.5    // Maximum - rich analog character (still clean)
+                        1: 0.3,   // Subtle - barely perceptible
+                        2: 0.6,   // Light - gentle warmth
+                        3: 1.0,   // Balanced - subtle analog character
+                        4: 1.4,   // Aggressive - noticeable warmth
+                        5: 1.8    // Maximum - rich analog (still under 15%)
                     };
                     const warmthMult = warmthMultipliers[intensity] || 1.0;
-                    const finalWarmth = baseWarmth * warmthMult;
+                    let finalWarmth = baseWarmth * warmthMult;
+                    // AI adaptive warmth adjustment
+                    if (aiProfile && aiProfile.warmthDelta) {
+                        finalWarmth *= aiProfile.warmthDelta.multiplier;
+                    }
 
-                    // Engage warmth dry/wet mix
+                    // Engage warmth dry/wet mix (max 15% wet)
                     if (window.warmthControls) {
-                        const wetAmount = Math.min(finalWarmth, 0.2); // Max 20% wet
+                        const wetAmount = Math.min(finalWarmth, 0.15);
                         window.warmthControls.wet.gain.setTargetAtTime(wetAmount, ac.currentTime, 0.1);
                         window.warmthControls.dry.gain.setTargetAtTime(1.0 - wetAmount, ac.currentTime, 0.1);
                     }
@@ -22668,20 +23438,26 @@
                 await new Promise(resolve => setTimeout(resolve, 60));
 
                 // 16. Stereo Width Enhancement - Intensity-adaptive
+                // Pro mastering: width enhancement should be VERY subtle (1-5% max)
+                // Excessive width causes mono compatibility issues and sounds artificial
                 if (window.sideChannel) {
-                    const widthBoost = (genre === 'electronic') ? 1.20 :
-                                       (genre === 'pop' || genre === 'hiphop') ? 1.12 :
-                                       (genre === 'acoustic' || genre === 'jazz') ? 1.05 : 1.10;
+                    const widthBoost = (genre === 'electronic') ? 1.08 :
+                                       (genre === 'pop' || genre === 'hiphop') ? 1.05 :
+                                       (genre === 'acoustic' || genre === 'jazz') ? 1.02 : 1.04;
                     // 5-level stereo width multipliers
                     const widthMultipliers = {
-                        1: 0.95,  // Subtle - slightly narrower for safety
-                        2: 1.0,   // Light - no additional width modification
-                        3: 1.05,  // Balanced - slight enhancement
-                        4: 1.10,  // Aggressive - noticeable width
-                        5: 1.15   // Maximum - wide but still mono-compatible
+                        1: 0.98,  // Subtle - slightly narrower for safety
+                        2: 1.0,   // Light - no modification
+                        3: 1.0,   // Balanced - use genre width only
+                        4: 1.03,  // Aggressive - slight additional width
+                        5: 1.06   // Maximum - wider but mono-compatible
                     };
                     const widthMult = widthMultipliers[intensity] || 1.0;
-                    const finalWidth = widthBoost * widthMult;
+                    let finalWidth = widthBoost * widthMult;
+                    // AI adaptive stereo width adjustment
+                    if (aiProfile && aiProfile.stereoDeltas) {
+                        finalWidth *= aiProfile.stereoDeltas.widthMultiplier;
+                    }
                     window.sideChannel.gain.setTargetAtTime(finalWidth, ac.currentTime, 0.1);
 
                 }
@@ -22690,16 +23466,23 @@
                 await new Promise(resolve => setTimeout(resolve, 60));
 
                 // 17. M/S Processing - Intensity-adaptive Mid/Side EQ
+                // Pro mastering M/S: subtle adjustments only. Heavy M/S = artificial sound.
                 if (window.msEQ) {
-                    // 5-level M/S processing intensity
+                    // 5-level M/S processing intensity (conservative values)
                     const msSettings = {
-                        1: { midPresence: 0.3, sideAir: 0.5 },   // Subtle - minimal
-                        2: { midPresence: 0.5, sideAir: 0.8 },   // Light
-                        3: { midPresence: 0.8, sideAir: 1.0 },   // Balanced
-                        4: { midPresence: 1.0, sideAir: 1.2 },   // Aggressive
-                        5: { midPresence: 1.2, sideAir: 1.5 }    // Maximum
+                        1: { midPresence: 0.2, sideAir: 0.3 },   // Subtle - barely engaged
+                        2: { midPresence: 0.3, sideAir: 0.5 },   // Light
+                        3: { midPresence: 0.5, sideAir: 0.7 },   // Balanced - gentle enhancement
+                        4: { midPresence: 0.7, sideAir: 1.0 },   // Aggressive
+                        5: { midPresence: 1.0, sideAir: 1.2 }    // Maximum
                     };
                     const msSet = msSettings[intensity] || msSettings[3];
+
+                    // AI adaptive M/S adjustments
+                    if (aiProfile && aiProfile.msDeltas) {
+                        msSet.midPresence *= aiProfile.msDeltas.midPresenceMultiplier || 1.0;
+                        msSet.sideAir *= aiProfile.msDeltas.sideAirMultiplier || 1.0;
+                    }
 
                     if (window.msEQ.mid && window.msEQ.mid.presence) {
                         window.msEQ.mid.presence.gain.setTargetAtTime(msSet.midPresence, ac.currentTime, 0.1);
@@ -22707,7 +23490,6 @@
                     if (window.msEQ.side && window.msEQ.side.air) {
                         window.msEQ.side.air.gain.setTargetAtTime(msSet.sideAir, ac.currentTime, 0.1);
                     }
-
                 }
 
                 updateStageProgress(13, 'Applying de-esser...');
@@ -22733,28 +23515,22 @@
                 updateStageProgress(18, 'Setting up limiter...');
                 await new Promise(resolve => setTimeout(resolve, 80));
 
-                // 20. True Peak Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
-                // Ceiling at -1.0 dBTP prevents inter-sample peaks on all platforms
-                // Attack: 0.1-0.5ms for transparent limiting (look-ahead style)
-                // Release: Program-dependent, 50-300ms typical
+                // 20. Brickwall Safety Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
+                // NOTE: This is the SECOND limiter (after look-ahead limiter).
+                // The look-ahead does the main limiting work — this is a SAFETY NET only.
+                // Using a gentler ratio and slightly lower ceiling to catch escapees transparently.
                 if (window.limiter) {
-                    // ════════════════════════════════════════════════════════════════════════════
-                    // BROADCAST-SAFE LIMITER - All intensities use -1.0 dBTP ceiling
-                    // This prevents inter-sample peaks (ISP) on all streaming platforms
-                    // EBU R128 / ITU-R BS.1770-4 compliant
-                    // ════════════════════════════════════════════════════════════════════════════
                     const limiterSettings = {
-                        1: { threshold: -1.5, release: 0.30, knee: 6, attack: 0.0005 },  // Gentle - more headroom
-                        2: { threshold: -1.2, release: 0.25, knee: 5, attack: 0.0003 },  // Light - conservative
-                        3: { threshold: -1.0, release: 0.20, knee: 4, attack: 0.0002 },  // Balanced - broadcast standard
-                        4: { threshold: -1.0, release: 0.15, knee: 3, attack: 0.0001 },  // Aggressive - tighter
-                        5: { threshold: -1.0, release: 0.10, knee: 2, attack: 0.00005 }  // Maximum - brickwall
+                        1: { threshold: -1.2, release: 0.20, knee: 6, attack: 0.003 },   // Gentle safety net
+                        2: { threshold: -1.0, release: 0.15, knee: 5, attack: 0.002 },   // Light safety net
+                        3: { threshold: -0.8, release: 0.10, knee: 4, attack: 0.001 },   // Balanced - catches look-ahead escapees
+                        4: { threshold: -0.5, release: 0.08, knee: 3, attack: 0.0005 },  // Aggressive - tighter
+                        5: { threshold: -0.3, release: 0.05, knee: 2, attack: 0.0002 }   // Maximum - true brickwall
                     };
                     const limSet = limiterSettings[intensity] || limiterSettings[3];
 
-                    // True peak limiting ratio: brickwall limiting at all levels
-                    // Web Audio API DynamicsCompressor.ratio range is [1, 20]
-                    const limiterRatio = 20; // Maximum ratio = brickwall limiting
+                    // Safety limiter: ratio 12 (firm but not brickwall — look-ahead handles that)
+                    const limiterRatio = 12;
 
                     window.limiter.threshold.setTargetAtTime(limSet.threshold, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(limiterRatio, ac.currentTime, 0.1);
@@ -22884,6 +23660,12 @@
                     }
                 }
 
+                // Display AI corrections panel after mastering
+                if (aiProfile) {
+                    displayAICorrections(aiProfile);
+                    console.log('🤖 AI Adaptive Mastering applied:', aiProfile.issues.length, 'issues corrected, mix score:', aiProfile.mixScore);
+                }
+
                 // Get input LUFS from stored measurement (measured when file was loaded)
                 const currentLUFS = window.originalInputLUFS || integratedLUFS || -18;
 
@@ -22902,18 +23684,17 @@
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
                 // Fixed chain compensation ensures stable LUFS across all presets
                 // ════════════════════════════════════════════════════════════════════════════
-                const chainCompensationDB = 0.0; // No extra compensation - let the algorithm work cleanly
+                const chainCompensationDB = 4.0; // Compensate for bus comp, dynamic EQ, HF limiter, phase losses
                 const safetyMarginDB = 0.0;      // Target exactly -14 LUFS
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // PEAK PROTECTION - PROFESSIONAL MASTERING APPROACH
-                // Allow limiter to work - that's what it's for!
-                // Target peaks at +3 dB before limiter = ~3-4 dB of limiting (standard practice)
-                // Limiters are designed for 3-6 dB of gain reduction on peaks
+                // PEAK PROTECTION - LET THE LIMITER DO ITS JOB
+                // Look-ahead + brickwall limiters catch peaks at -1.0 dBTP
+                // Allow 4-6 dB of limiting (standard professional practice)
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 3.0; // Allow up to 4dB of limiting (professional standard)
+                const peakTargetBeforeLimiter = 6.0; // Allow 6-9 dB of limiting (limiter designed for this)
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
@@ -22926,12 +23707,11 @@
                         // Peak protection needed
                         gainAdjustmentDB = maxPeakSafeGainDB;
                         peakProtectionApplied = true;
-
                     }
                 }
 
-                // Conservative clamp range (-6 to +6 dB) for professional results
-                const clampedGainDB = Math.max(-6, Math.min(6, gainAdjustmentDB));
+                // Clamp range (-6 to +9 dB) — allows limiter to do its job on quiet tracks
+                const clampedGainDB = Math.max(-6, Math.min(9, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
@@ -22946,6 +23726,9 @@
                     window.appliedMakeupGainDB = clampedGainDB;
 
                 }
+
+                // Debug: LUFS targeting chain
+                console.log(`🎯 LUFS Targeting: input=${currentLUFS.toFixed(1)} target=${targetLUFS} compensation=${chainCompensationDB} needed=${lufsGainNeededDB.toFixed(1)} clamped=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)} peak=${originalPeakDB} peakProtection=${peakProtectionApplied}`);
 
                 // Store for LUFS preset switching and debugging
                 window.lufsTargetingInfo = {
@@ -23405,6 +24188,13 @@
                 window.showFloatingABCompare();
             }
 
+            // Enable and glow the Export button in left sidebar
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                exportBtn.disabled = false;
+                exportBtn.classList.add('ready-glow');
+            }
+
             // Show status text
             const statusText = document.getElementById('abStatusText');
             if (statusText) {
@@ -23643,9 +24433,9 @@
                 voiceTourSpotlight.style.display = 'none';
             }
 
-            // Voice prompt to guide user to pick a genre - use the global speakWithDucking function
+            // Voice prompt to guide user to pick a genre (skip if voice tour is active - tour handles this)
             setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
+                if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
                     window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 10 different presets tuned by pro engineers. Try a few and watch the EQ faders move in real-time - see what vibes with your sound.");
                 }
             }, 500);
@@ -23693,9 +24483,9 @@
                 rightSidebar.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // Voice prompt to direct user to the main interface
+            // Voice prompt to direct user to the main interface (skip if voice tour is active)
             setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
+                if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
                     window.speakWithDucking("Alright, here's your workspace. The spectrum shows everything happening in your mix. Those genre buttons on the left? Each one opens up 10 different styles to choose from. Play around with them - that's what they're there for. When you're happy with how it sounds, hit export and you're done.");
                 }
             }, 500);
@@ -25018,32 +25808,10 @@
             setTimeout(() => clearInterval(checkAudioElement), 30000);
         });
 
-        // Genre preview toggle handler (for genre selection overlay)
-        // During genre selection, user always hears original — toggle is inactive
-        // After mastering, the A/B toggle is handled by the main A/B system
+        // Genre preview toggle handler — no-op during pre-mastering genre selection
+        // A/B comparison is only available after processing via the main floating A/B toggle
         window.handleGenrePreviewToggle = function(isPreview) {
-            const labelOrig = document.getElementById('genreToggleLabelOrig');
-            const labelPreview = document.getElementById('genreToggleLabelPreview');
-            const toggle = document.getElementById('genrePreviewToggle');
-            const ac = window.audioContext;
-
-            const toggleLabel = toggle ? toggle.parentElement : null;
-            const toggleTrack = toggleLabel ? toggleLabel.querySelector('span') : null;
-            const toggleThumb = toggleTrack ? toggleTrack.querySelector('span') : null;
-
-            // During genre selection (before mastering), always stay on original
-            // User must hit PROCESS to hear the mastered version
-            if (labelOrig) { labelOrig.style.color = '#ffffff'; labelOrig.style.fontWeight = '700'; }
-            if (labelPreview) { labelPreview.style.color = 'rgba(255,255,255,0.5)'; labelPreview.style.fontWeight = '600'; }
-            if (toggleTrack) toggleTrack.style.background = 'rgba(255,255,255,0.3)';
-            if (toggleThumb) toggleThumb.style.transform = 'translateX(0)';
-            if (toggle) toggle.checked = false;
-
-            // Keep on dry/original path
-            if (window.dryGain && window.wetGain && ac) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
-            }
+            // No audio routing during genre selection — user always hears original
         };
 
         // Hide export bar
@@ -25171,6 +25939,9 @@
                 desc: 'Warm, mellow, vintage character'
             }
         };
+        // EDM alias → electronic
+        genrePresets.edm = genrePresets.electronic;
+        genrePresets['hip-hop'] = genrePresets.hiphop;
 
         // ═══════════════════════════════════════════════════════════════════════════
         // PRE-MASTERING GENRE SELECTION - Real-time preview functions
@@ -25178,21 +25949,135 @@
 
         let selectedPreMasterGenre = null;
 
-        // Select a genre for mastering (no processing applied — user hears original track)
-        // Full mastering chain only engages when user hits PROCESS
+        // Select a genre for mastering — NO audio processing until user clicks PROCESS MASTER NOW
+        // Shows a visual EQ curve preview and genre details for a premium selection experience
         window.previewGenre = function(genre) {
             selectedPreMasterGenre = genre;
-            window.selectedPreMasterGenre = genre; // Also set globally for cross-scope access
+            window.selectedPreMasterGenre = genre;
             const preset = genrePresets[genre];
             if (!preset) return;
 
-            // Keep user on ORIGINAL audio path — no wet chain during genre selection
-            // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
+            // Recalculate AI corrections for new genre target
+            if (window.aiTrackAnalysis) {
+                window.aiTrackProfile = generateAICorrections(window.aiTrackAnalysis, genre);
+                displayAICorrections(window.aiTrackProfile);
+            }
+
+            // Stay on dry path but apply lightweight EQ preview so user hears genre differences
             const ac = window.audioContext;
             if (ac && window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Original ON
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Processed OFF
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
             }
+
+            // Real-time EQ preview — insert lightweight filters into dry path
+            if (ac && window.dryGain && window.outputMixer) {
+                // Create preview filters on first use
+                if (!window._previewEqFilters) {
+                    const bandDefs = [
+                        { freq: 40, type: 'lowshelf' },
+                        { freq: 100, type: 'peaking', q: 0.8 },
+                        { freq: 400, type: 'peaking', q: 1.0 },
+                        { freq: 1000, type: 'peaking', q: 1.0 },
+                        { freq: 3000, type: 'peaking', q: 1.0 },
+                        { freq: 8000, type: 'peaking', q: 0.8 },
+                        { freq: 14000, type: 'highshelf' }
+                    ];
+                    window._previewEqFilters = bandDefs.map(b => {
+                        const f = ac.createBiquadFilter();
+                        f.type = b.type;
+                        f.frequency.value = b.freq;
+                        if (b.q) f.Q.value = b.q;
+                        f.gain.value = 0;
+                        return f;
+                    });
+                    // Insert into dry path: dryGain → [preview EQ] → outputMixer
+                    try {
+                        window.dryGain.disconnect(window.outputMixer);
+                    } catch (_) {}
+                    let prev = window.dryGain;
+                    window._previewEqFilters.forEach(f => { prev.connect(f); prev = f; });
+                    prev.connect(window.outputMixer);
+                }
+                // Apply genre EQ values to preview filters
+                // Use the same intensity multiplier the mastering chain uses
+                // so preview matches the actual mastered output
+                const intensityLevel = window.selectedIntensity || 3;
+                const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
+                const previewBoost = previewMults[intensityLevel] || 0.7;
+                const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
+                const now = ac.currentTime;
+                window._previewEqFilters.forEach((f, i) => {
+                    f.gain.setTargetAtTime(eqVals[i] * previewBoost, now, 0.08);
+                });
+                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => (v * previewBoost).toFixed(1) + 'dB').join(', ')})`);
+            }
+
+            // Show sub-genre presets in the overlay container
+            const genreKeyMap = {
+                'hiphop': 'hip-hop', 'electronic': 'electronic', 'pop': 'pop',
+                'rock': 'rock', 'rnb': 'rnb', 'acoustic': 'acoustic',
+                'jazz': 'jazz', 'classical': 'classical', 'metal': 'metal',
+                'country': 'country', 'latin': 'latin', 'lofi': 'lofi'
+            };
+            const subGenreKey = genreKeyMap[genre] || genre;
+            const overlayContainer = document.getElementById('overlaySubGenrePresets');
+            const overlayTitle = document.getElementById('overlayPresetsTitle');
+            const overlayGrid = document.getElementById('overlayPresetsGrid');
+            if (overlayContainer && overlayGrid && typeof genreEQPresets !== 'undefined') {
+                const subPresets = genreEQPresets[subGenreKey];
+                if (subPresets && subPresets.length > 0) {
+                    overlayGrid.innerHTML = '';
+                    const displayName = genre.charAt(0).toUpperCase() + genre.slice(1).replace(/([A-Z])/g, ' $1');
+                    if (overlayTitle) overlayTitle.textContent = displayName + ' Styles';
+                    subPresets.forEach((sp, idx) => {
+                        const btn = document.createElement('div');
+                        btn.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 10px; cursor: pointer; transition: all 0.2s;';
+                        btn.innerHTML = '<div style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 2px;">' + sp.name + '</div><div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); line-height: 1.3;">' + sp.description + '</div>';
+                        btn.addEventListener('mouseenter', function() { this.style.background = 'rgba(124,184,255,0.08)'; this.style.borderColor = 'rgba(124,184,255,0.2)'; });
+                        btn.addEventListener('mouseleave', function() { if (!this.classList.contains('active')) { this.style.background = 'rgba(255,255,255,0.03)'; this.style.borderColor = 'rgba(255,255,255,0.06)'; }});
+                        btn.addEventListener('click', function() {
+                            overlayGrid.querySelectorAll('div[data-preset]').forEach(b => { b.classList.remove('active'); b.style.background = 'rgba(255,255,255,0.03)'; b.style.borderColor = 'rgba(255,255,255,0.06)'; });
+                            this.classList.add('active'); this.style.background = 'rgba(124,184,255,0.12)'; this.style.borderColor = 'rgba(124,184,255,0.35)';
+
+                            // EQ values from this sub-genre preset
+                            const subEq = [sp.eq.sub, sp.eq.bass, sp.eq.lowmid || sp.eq.lowMid || 0, sp.eq.mid, sp.eq.highmid || sp.eq.highMid || 0, sp.eq.high, sp.eq.air];
+                            const intLevel = window.selectedIntensity || 3;
+                            const prevMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
+                            const previewBoost = prevMults[intLevel] || 0.7;
+
+                            // Apply to MASTERING CHAIN EQ filters directly (works before AND after mastering)
+                            const ac = window.audioContext;
+                            if (ac) {
+                                const now = ac.currentTime;
+                                const eqFilters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter, window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
+                                eqFilters.forEach((f, i) => {
+                                    if (f) f.gain.setTargetAtTime(subEq[i] * previewBoost, now, 0.08);
+                                });
+                                console.log(`🎛️ Sub-genre preset applied to chain EQ: [${subEq.map(v => v.toFixed(1)).join(', ')}] × ${previewBoost.toFixed(1)}`);
+                            }
+
+                            // Also apply to preview filters if they exist (pre-mastering preview path)
+                            if (window._previewEqFilters && ac) {
+                                const now = ac.currentTime;
+                                window._previewEqFilters.forEach((f, i) => { f.gain.setTargetAtTime(subEq[i] * previewBoost, now, 0.08); });
+                            }
+                            // Also update sidebar if visible
+                            if (typeof applyGenreEQPreset === 'function') { try { applyGenreEQPreset(subGenreKey, idx); } catch(_) {} }
+                        });
+                        btn.setAttribute('data-preset', idx);
+                        if (idx === 0) { btn.classList.add('active'); btn.style.background = 'rgba(124,184,255,0.12)'; btn.style.borderColor = 'rgba(124,184,255,0.35)'; }
+                        overlayGrid.appendChild(btn);
+                    });
+                    overlayContainer.style.display = 'block';
+                    overlayContainer.style.opacity = '0';
+                    setTimeout(() => { overlayContainer.style.transition = 'opacity 0.3s'; overlayContainer.style.opacity = '1'; }, 10);
+                } else {
+                    overlayContainer.style.display = 'none';
+                }
+            }
+            // Also populate sidebar version if accessible
+            if (typeof showGenreEQPresets === 'function') { try { showGenreEQPresets(subGenreKey); } catch(_) {} }
 
             // Update UI - highlight selected genre
             document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
@@ -25205,15 +26090,114 @@
             // Update status message
             const statusEl = document.getElementById('genrePreviewStatus');
             if (statusEl) {
-                statusEl.innerHTML = `Selected: <strong>${preset.name}</strong> - ${preset.desc}. Hit PROCESS to master.`;
+                statusEl.innerHTML = `<strong>${preset.name}</strong> — ${preset.desc}`;
                 statusEl.style.color = '#00d4ff';
             }
 
-            // Enable the Start Mastering button
+            // Show EQ curve preview
+            const eqPreview = document.getElementById('genreEqPreview');
+            if (eqPreview) {
+                eqPreview.style.display = 'block';
+                // Animate in
+                eqPreview.style.opacity = '0';
+                eqPreview.style.transform = 'translateY(6px)';
+                requestAnimationFrame(() => {
+                    eqPreview.style.transition = 'opacity 0.3s, transform 0.3s';
+                    eqPreview.style.opacity = '1';
+                    eqPreview.style.transform = 'translateY(0)';
+                });
+            }
+
+            // Update genre name
+            const nameEl = document.getElementById('eqPreviewGenreName');
+            if (nameEl) nameEl.textContent = preset.name.toUpperCase();
+
+            // Draw EQ bars
+            const barsContainer = document.getElementById('eqBarsContainer');
+            if (barsContainer) {
+                const bands = [
+                    { key: 'sub', val: preset.eq.sub },
+                    { key: 'bass', val: preset.eq.bass },
+                    { key: 'lowMid', val: preset.eq.lowMid },
+                    { key: 'mid', val: preset.eq.mid },
+                    { key: 'highMid', val: preset.eq.highMid },
+                    { key: 'high', val: preset.eq.high },
+                    { key: 'air', val: preset.eq.air }
+                ];
+                const maxVal = 3.0; // Scale: ±3 dB range
+                const midY = 30; // Center line at 50% of 60px height
+
+                // Clear previous bars but keep the center line
+                const centerLine = barsContainer.querySelector('div');
+                barsContainer.innerHTML = '';
+                if (centerLine) barsContainer.appendChild(centerLine);
+
+                bands.forEach((band, i) => {
+                    const bar = document.createElement('div');
+                    const pxPerDb = midY / maxVal;
+                    const barHeight = Math.abs(band.val) * pxPerDb;
+                    const isBoost = band.val >= 0;
+
+                    // Color gradient: blue for lows, cyan for mids, purple for highs
+                    const colors = ['#4a90d9', '#5a9fd4', '#00b4d8', '#00d4ff', '#48cae4', '#7b68ee', '#9370db'];
+                    const barColor = colors[i];
+
+                    bar.style.cssText = `
+                        flex: 1;
+                        height: ${Math.max(barHeight, 2)}px;
+                        background: linear-gradient(180deg, ${barColor} 0%, ${barColor}88 100%);
+                        border-radius: 3px 3px ${isBoost ? '0 0' : '3px 3px'};
+                        position: absolute;
+                        left: ${i * (100/7)}%;
+                        width: ${100/7 - 2}%;
+                        ${isBoost ? `bottom: ${midY}px;` : `top: ${midY}px;`}
+                        transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        box-shadow: 0 0 8px ${barColor}44;
+                    `;
+
+                    // Animate in with stagger
+                    bar.style.height = '0px';
+                    setTimeout(() => {
+                        bar.style.height = `${Math.max(barHeight, 2)}px`;
+                    }, 50 + i * 40);
+
+                    // dB label
+                    const label = document.createElement('div');
+                    label.style.cssText = `
+                        position: absolute;
+                        ${isBoost ? `bottom: ${midY + barHeight + 2}px;` : `top: ${midY + barHeight + 2}px;`}
+                        left: ${i * (100/7)}%;
+                        width: ${100/7 - 2}%;
+                        text-align: center;
+                        font-size: 0.4rem;
+                        font-weight: 600;
+                        color: ${barColor};
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    `;
+                    label.textContent = `${band.val > 0 ? '+' : ''}${band.val.toFixed(1)}`;
+                    setTimeout(() => { label.style.opacity = '1'; }, 200 + i * 40);
+
+                    barsContainer.appendChild(bar);
+                    barsContainer.appendChild(label);
+                });
+            }
+
+            // Update genre details
+            const lufsEl = document.getElementById('eqPreviewLUFS');
+            const widthEl = document.getElementById('eqPreviewWidth');
+            const ratioEl = document.getElementById('eqPreviewRatio');
+            if (lufsEl) lufsEl.textContent = `${preset.targetLUFS} LUFS`;
+            if (widthEl) widthEl.textContent = `${preset.stereoWidth}x`;
+            if (ratioEl) ratioEl.textContent = `${preset.compression.ratio}:1`;
+
+            // Enable the Process Master Now button
             const startBtn = document.getElementById('startMasteringBtn');
             if (startBtn) {
                 startBtn.disabled = false;
                 startBtn.style.opacity = '1';
+                startBtn.style.background = 'linear-gradient(180deg, rgba(92, 184, 92, 0.3) 0%, rgba(92, 184, 92, 0.15) 100%)';
+                startBtn.style.boxShadow = '0 0 20px rgba(92, 184, 92, 0.2)';
             }
 
         };
@@ -25224,11 +26208,15 @@
             if (!ac) return;
 
             // Switch to UNMASTERED audio path
-            // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
             if (window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Unmastered ON
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Mastered OFF
+                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+            }
 
+            // Reset preview EQ to flat
+            if (window._previewEqFilters) {
+                const now = ac.currentTime;
+                window._previewEqFilters.forEach(f => f.gain.setTargetAtTime(0, now, 0.05));
             }
 
             // Remove genre selection highlight
@@ -25245,8 +26233,9 @@
 
         };
 
-        // Processing intensity (1 = Light, 2 = Medium, 3 = Heavy)
-        let processingIntensity = 2;
+        // Processing intensity (1-5 scale: Subtle, Light, Balanced, Aggressive, Maximum)
+        let processingIntensity = 3;
+        window.selectedIntensity = 3; // Match default UI state (Balanced)
 
         // Update intensity slider
         window.updateIntensity = function(value) {
@@ -25278,22 +26267,43 @@
         window.selectIntensity = function(level) {
             processingIntensity = level;
             window.selectedIntensity = level;
+            console.log(`🎚️ selectIntensity(${level}) called — stored as window.selectedIntensity = ${level}`);
 
-            // Update button styles
+            // Color palette per intensity level
+            const colors = {
+                1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
+                2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
+                3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
+                4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
+                5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
+            };
+            const c = colors[level] || colors[3];
+
+            // Update ALL intensity buttons with strong visual feedback
             document.querySelectorAll('#intensityButtons .intensity-btn').forEach(btn => {
                 const btnLevel = parseInt(btn.getAttribute('data-level'));
                 if (btnLevel === level) {
                     btn.classList.add('selected');
-                    btn.style.background = `rgba(${btnLevel === 1 ? '67,233,123' : btnLevel === 2 ? '0,255,136' : btnLevel === 3 ? '0,212,255' : btnLevel === 4 ? '255,154,86' : '255,87,51'}, 0.3)`;
-                    btn.style.boxShadow = `0 0 20px rgba(${btnLevel === 1 ? '67,233,123' : btnLevel === 2 ? '0,255,136' : btnLevel === 3 ? '0,212,255' : btnLevel === 4 ? '255,154,86' : '255,87,51'}, 0.5)`;
+                    btn.style.background = `rgba(${c.r}, 0.3)`;
+                    btn.style.borderColor = c.hex;
+                    btn.style.boxShadow = `0 0 20px rgba(${c.r}, 0.5)`;
+                    // Update text colors inside the selected button
+                    const divs = btn.querySelectorAll('div');
+                    if (divs[0]) divs[0].style.color = c.hex;
+                    if (divs[1]) divs[1].style.color = c.hex;
                 } else {
                     btn.classList.remove('selected');
-                    btn.style.background = 'transparent';
+                    btn.style.background = 'rgba(255,255,255,0.03)';
+                    btn.style.borderColor = 'rgba(255,255,255,0.1)';
                     btn.style.boxShadow = 'none';
+                    // Reset text colors
+                    const divs = btn.querySelectorAll('div');
+                    if (divs[0]) divs[0].style.color = 'rgba(255,255,255,0.7)';
+                    if (divs[1]) divs[1].style.color = 'rgba(255,255,255,0.4)';
                 }
             });
 
-            // Update description
+            // Update description with color
             const descriptions = {
                 1: 'Subtle - Gentle polish, preserves original dynamics',
                 2: 'Light - Clean enhancement with minimal coloration',
@@ -25302,10 +26312,32 @@
                 5: 'Maximum - Full processing power, EDM/Hip-Hop ready'
             };
             const descEl = document.getElementById('intensityDescription');
-            if (descEl) descEl.textContent = descriptions[level];
+            if (descEl) {
+                descEl.textContent = descriptions[level];
+                descEl.style.color = c.hex;
+            }
 
-            // Intensity stored — only applied during actual mastering (PROCESS button)
-            // User hears original track while adjusting settings
+            // Apply intensity to the appropriate path
+            if (window.isMasteringApplied && window.applyIntensityToChain) {
+                // AFTER mastering: apply to the live mastering chain
+                window.applyIntensityToChain(level);
+                console.log(`🎚️ Intensity ${level} applied to MASTERED chain`);
+            } else if (window._previewEqFilters && window.audioContext && window.selectedPreMasterGenre) {
+                // BEFORE mastering: apply to preview EQ filters
+                const preset = genrePresets[window.selectedPreMasterGenre];
+                if (preset) {
+                    const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
+                    const boost = previewMults[level] || 0.7;
+                    const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
+                    const now = window.audioContext.currentTime;
+                    window._previewEqFilters.forEach((f, i) => {
+                        f.gain.setTargetAtTime(eqVals[i] * boost, now, 0.08);
+                    });
+                    console.log(`🎚️ Intensity ${level} applied to preview (×${boost})`);
+                }
+            } else {
+                console.log(`🎚️ Intensity ${level} stored (will apply when mastering runs)`);
+            }
         };
 
         // Apply intensity to the mastering chain in real-time
@@ -25329,13 +26361,20 @@
             const activePreset = genrePresets[window.selectedPreMasterGenre || 'pop'];
             if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(activePreset.eq.sub * mult.eq, now, 0.1);
             if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(activePreset.eq.bass * mult.eq, now, 0.1);
+            if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(activePreset.eq.lowMid * mult.eq, now, 0.1);
+            if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(activePreset.eq.mid * mult.eq, now, 0.1);
+            if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(activePreset.eq.highMid * mult.eq, now, 0.1);
             if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(activePreset.eq.high * mult.eq, now, 0.1);
             if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(activePreset.eq.air * mult.eq, now, 0.1);
 
-            // Apply to compressor
+            // Apply to compressor (genre-specific settings scaled by intensity)
             if (window.compressor) {
-                window.compressor.ratio.setTargetAtTime(2 + (2 * mult.comp), now, 0.1);
-                window.compressor.threshold.setTargetAtTime(-18 - (6 * mult.comp), now, 0.1);
+                const compPreset = activePreset.compression || { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 };
+                window.compressor.ratio.setTargetAtTime(compPreset.ratio * mult.comp, now, 0.1);
+                window.compressor.threshold.setTargetAtTime(compPreset.threshold, now, 0.1);
+                window.compressor.attack.setTargetAtTime(compPreset.attack, now, 0.1);
+                window.compressor.release.setTargetAtTime(compPreset.release, now, 0.1);
+                window.compressor.knee.setTargetAtTime(compPreset.knee, now, 0.1);
             }
 
             // Apply to transient shaper
@@ -25362,6 +26401,18 @@
         // PROCEED WITH MASTERING (ROBUST VERSION)
         // ═══════════════════════════════════════════════════════════════════
         window.proceedWithMastering = function() {
+
+            // Remove preview EQ filters from dry path — restore clean original signal
+            if (window._previewEqFilters && window.dryGain && window.outputMixer) {
+                try {
+                    // Disconnect the filter chain
+                    window.dryGain.disconnect();
+                    window._previewEqFilters.forEach(f => f.disconnect());
+                    // Restore direct connection: dryGain → outputMixer (clean original)
+                    window.dryGain.connect(window.outputMixer);
+                    window._previewEqFilters = null; // Mark as removed
+                } catch (_) {}
+            }
 
             // Ensure we have a genre selected (default to pop if not)
             if (!selectedPreMasterGenre && !window.selectedPreMasterGenre) {
@@ -25408,13 +26459,9 @@
 
         // Skip genre selection and use default
         window.skipGenreSelection = function() {
-            selectedPreMasterGenre = 'pop'; // Default to Pop
-            previewGenre('pop');
-
-            // Short delay so they hear it, then proceed
-            setTimeout(() => {
-                proceedWithMastering();
-            }, 500);
+            selectedPreMasterGenre = 'pop';
+            window.selectedPreMasterGenre = 'pop';
+            proceedWithMastering();
         };
 
         // Show the pre-mastering genre selection overlay (ROBUST VERSION)
@@ -25462,10 +26509,9 @@
                 btn.classList.remove('selected');
             });
 
-            // Voice prompt FIRST, then start music ducked underneath
-            // Don't auto-play audio until the voice has started
+            // Voice prompt FIRST, then start music ducked underneath (skip if tour is active)
             setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function') {
+                if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
                     window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
                 }
                 // Start audio playback ducked (low volume) after voice starts
@@ -25878,11 +26924,11 @@
         const tourTranslations = {
             en: {
                 steps: [
-                    { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Dorothy, and I\'ll be walking you through everything. Right, let\'s get started shall we? Just drag your track onto that glowing area there, or give it a click to browse your files. We handle all the usual suspects - WAV, MP3, FLAC, whatever you\'ve got. No stress.' },
+                    { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Chloe, and I\'ll be walking you through everything. Let\'s get started. Just drag your track onto that glowing area, or click to browse your files. We support WAV, MP3, FLAC, and more.' },
                     { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth. WAV, FLAC, MP3, or AAC - each has its purpose.', action: 'Check the format options on the right', voice: 'Lovely. Now before we work our magic, let\'s sort out your export settings. Quick rundown for you. WAV at 24-bit is your gold standard - that\'s what the pros use, completely lossless, pristine quality. FLAC gives you the same quality but half the file size, rather clever really. MP3 at 320 is brilliant for streaming, works absolutely everywhere. And AAC is what Apple uses, very efficient. For most people, I\'d say go with WAV 24-bit. Can\'t go wrong with that.' },
                     { title: 'Time to Master', desc: 'Hit that MASTER button and watch the magic happen. 24 studio-grade processors at your service.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll run your track through our full processing chain. We\'re talking 24 studio-grade processors - EQ, compression, limiting, stereo enhancement, the whole lot. It\'s like having a professional mastering engineer in your pocket. Go on, let\'s hear what you\'ve got.' },
-                    { title: 'Sounding Proper!', desc: 'Your track just got the professional treatment. Have a listen - notice the difference?', action: '', voice: 'Beautiful. Your master is sounding incredible. Now check out the genre options on the left to fine-tune your sound.' },
-                    { title: 'Make It Yours', desc: 'Pick a genre, tweak the EQ, and make it yours.', action: '', voice: 'Pick your genre, explore the presets, and make it yours. If you need me, tap the question mark. Enjoy.' }
+                    { title: 'Sounding Proper!', desc: 'Your track just got the professional treatment. Have a listen - notice the difference?', action: '', voice: 'Beautiful. Your master is sounding incredible. Use the A B toggle at the bottom of the screen to compare your original with the mastered version. Now check out the genre options on the left to fine-tune your sound.' },
+                    { title: 'Make It Yours', desc: 'Pick a genre, tweak the EQ, and make it yours.', action: '', voice: 'Pick your genre, explore the presets, and make it yours. When you\'re happy, scroll down on the left sidebar to find the Export button - it\'s right below the genre section, glowing for you. Enjoy.' }
                 ],
                 explore: { title: "You're All Set!", subtitle: 'Your track sounds brilliant. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
                 skip: 'Skip'
@@ -26880,14 +27926,14 @@
                     if (masterBtn) masterBtn.classList.remove('master-btn-tour-highlight');
                 }
 
-                // Cancel any current speech before advancing to next step
-                window.speechSynthesis.cancel();
+                // Stop ALL audio (Azure TTS, ElevenLabs, Web Speech API) before advancing
+                stopSpeaking();
 
                 setTimeout(() => {
                     currentStep++;
 
                     showStep(currentStep);
-                }, 800);
+                }, 300);
             }
         }
 
@@ -26901,8 +27947,8 @@
 
         function nextTourStep() {
             if (!tourActive) return;
-            // Always cancel current speech before advancing to next step
-            window.speechSynthesis.cancel();
+            // Stop ALL audio (Azure TTS, ElevenLabs, Web Speech API) before advancing
+            stopSpeaking();
             currentStep++;
             showStep(currentStep);
         }
