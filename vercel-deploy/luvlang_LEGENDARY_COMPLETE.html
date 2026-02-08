@@ -12864,119 +12864,147 @@
         // Generate AI correction deltas by comparing track analysis against genre reference
         function generateAICorrections(analysis, genre) {
             const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
-            const correctionStrength = 0.5; // Apply half the difference — mastering, not mixing
+            // Mastering-grade correction: very gentle nudges only
+            const correctionStrength = 0.2;
             const issues = [];
 
-            // 1. EQ Deltas — per-band dB adjustments
+            // ═══════════════════════════════════════════════════════════════
+            // 1. EQ Deltas — RELATIVE SPECTRAL SHAPE comparison
+            // Compare tonal balance (shape) not absolute levels
+            // This makes corrections independent of track loudness
+            // ═══════════════════════════════════════════════════════════════
+            const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+
+            // Normalize track spectrum to relative shape (subtract mean)
+            const trackValues = bandKeys.map(b => analysis.spectrumDB[b] || -60);
+            const trackMean = trackValues.reduce((a, b) => a + b, 0) / trackValues.length;
+            const trackShape = {};
+            bandKeys.forEach((b, i) => { trackShape[b] = trackValues[i] - trackMean; });
+
+            // Normalize reference spectrum to relative shape (subtract mean)
+            const refValues = bandKeys.map(b => ref.spectrum[b] || -20);
+            const refMean = refValues.reduce((a, b) => a + b, 0) / refValues.length;
+            const refShape = {};
+            bandKeys.forEach((b, i) => { refShape[b] = refValues[i] - refMean; });
+
+            // Delta = difference in shape × gentle correction strength
             const eqDeltas = {};
             let totalEQCorrection = 0;
-            const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             for (const band of bandKeys) {
-                const trackEnergy = analysis.spectrumDB[band] || -40;
-                const refEnergy = ref.spectrum[band] || -20;
-                let delta = (refEnergy - trackEnergy) * correctionStrength;
-                delta = Math.max(-4, Math.min(4, delta)); // Clamp ±4 dB per band
+                let delta = (refShape[band] - trackShape[band]) * correctionStrength;
+                delta = Math.max(-2, Math.min(2, delta)); // Clamp ±2 dB per band (mastering limit)
                 eqDeltas[band] = Math.round(delta * 100) / 100;
                 totalEQCorrection += Math.abs(delta);
             }
-            // Clamp total correction to ±8 dB
-            if (totalEQCorrection > 8) {
-                const scale = 8 / totalEQCorrection;
-                for (const band of bandKeys) eqDeltas[band] *= scale;
+            // Clamp total absolute correction to 5 dB (mastering should be subtle)
+            if (totalEQCorrection > 5) {
+                const scale = 5 / totalEQCorrection;
+                for (const band of bandKeys) {
+                    eqDeltas[band] = Math.round(eqDeltas[band] * scale * 100) / 100;
+                }
+                totalEQCorrection = 5;
             }
 
-            // Log issues for significant EQ corrections
+            console.log('🤖 AI EQ Shape Debug — track shape:', trackShape, 'ref shape:', refShape, 'deltas:', eqDeltas);
+
+            // Log issues for noticeable EQ corrections
             for (const band of bandKeys) {
-                if (Math.abs(eqDeltas[band]) > 1.5) {
+                if (Math.abs(eqDeltas[band]) > 1.0) {
                     const direction = eqDeltas[band] > 0 ? 'deficient' : 'excessive';
                     issues.push({
-                        type: 'eq', severity: Math.abs(eqDeltas[band]) > 3 ? 'critical' : 'warning',
+                        type: 'eq', severity: Math.abs(eqDeltas[band]) > 1.8 ? 'critical' : 'warning',
                         description: `${band.toUpperCase()} is ${direction} (${eqDeltas[band] > 0 ? '+' : ''}${eqDeltas[band].toFixed(1)} dB correction)`,
                         correction: `Applying ${eqDeltas[band].toFixed(1)} dB ${eqDeltas[band] > 0 ? 'boost' : 'cut'} to ${band}`
                     });
                 }
             }
 
-            // 2. Compression deltas
+            // ═══════════════════════════════════════════════════════════════
+            // 2. Compression deltas — conservative adjustments only
+            // ═══════════════════════════════════════════════════════════════
             const crestDiff = (analysis.overallCrest || 10) - (ref.dynamics.crestFactor || 10);
             const compDeltas = {
-                thresholdOffset: Math.max(-4, Math.min(4, crestDiff > 2 ? -crestDiff * 0.5 : crestDiff < -2 ? -crestDiff * 0.3 : 0)),
-                ratioMultiplier: crestDiff > 3 ? 1.15 : crestDiff < -3 ? 0.85 : 1.0,
-                attackMultiplier: analysis.spectralFlux > 0.02 ? 0.9 : analysis.spectralFlux < 0.005 ? 1.2 : 1.0,
-                releaseMultiplier: analysis.spectralFlux > 0.02 ? 0.85 : analysis.spectralFlux < 0.005 ? 1.15 : 1.0
+                thresholdOffset: Math.max(-2, Math.min(2, crestDiff > 3 ? -crestDiff * 0.2 : crestDiff < -3 ? -crestDiff * 0.15 : 0)),
+                ratioMultiplier: crestDiff > 5 ? 1.08 : crestDiff < -5 ? 0.92 : 1.0,
+                attackMultiplier: analysis.spectralFlux > 0.02 ? 0.95 : analysis.spectralFlux < 0.005 ? 1.08 : 1.0,
+                releaseMultiplier: analysis.spectralFlux > 0.02 ? 0.92 : analysis.spectralFlux < 0.005 ? 1.08 : 1.0
             };
-            if (Math.abs(crestDiff) > 3) {
+            if (Math.abs(crestDiff) > 4) {
                 issues.push({
-                    type: 'dynamics', severity: Math.abs(crestDiff) > 6 ? 'critical' : 'warning',
+                    type: 'dynamics', severity: Math.abs(crestDiff) > 8 ? 'critical' : 'warning',
                     description: crestDiff > 0 ? `Track is very dynamic (crest factor ${analysis.overallCrest.toFixed(1)} dB vs ${ref.dynamics.crestFactor} dB target)` :
                                                  `Track is over-compressed (crest factor ${analysis.overallCrest.toFixed(1)} dB vs ${ref.dynamics.crestFactor} dB target)`,
-                    correction: crestDiff > 0 ? 'Increasing compression to control dynamics' : 'Reducing compression to restore dynamics'
+                    correction: crestDiff > 0 ? 'Gentle compression increase' : 'Easing back compression'
                 });
             }
 
-            // 3. Dynamic EQ deltas
+            // ═══════════════════════════════════════════════════════════════
+            // 3. Dynamic EQ deltas — very conservative thresholds
+            // ═══════════════════════════════════════════════════════════════
             const dynEQDeltas = {
-                lowThresholdOffset: analysis.spectralTilt < -1.5 ? -3 : 0,
-                midThresholdOffset: analysis.resonances.filter(r => r.frequency > 400 && r.frequency < 4000).length > 2 ? -4 : 0,
-                highThresholdOffset: analysis.spectralTilt > 1.0 ? -3 : analysis.sibilanceExcessive ? -2 : 0
+                lowThresholdOffset: analysis.spectralTilt < -2.0 ? -1.5 : 0,
+                midThresholdOffset: analysis.resonances.filter(r => r.frequency > 400 && r.frequency < 4000).length > 3 ? -2 : 0,
+                highThresholdOffset: analysis.spectralTilt > 1.5 ? -1.5 : analysis.sibilanceExcessive ? -1 : 0
             };
-            if (analysis.spectralTilt < -1.5) {
-                issues.push({ type: 'tonal', severity: 'warning', description: `Track is muddy (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Tightening low-mid dynamic EQ' });
+            if (analysis.spectralTilt < -2.0) {
+                issues.push({ type: 'tonal', severity: 'warning', description: `Track is muddy (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Gentle low-mid dynamic EQ tightening' });
             }
-            if (analysis.spectralTilt > 1.0) {
-                issues.push({ type: 'tonal', severity: 'warning', description: `Track is harsh (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Tightening high-frequency dynamic EQ' });
+            if (analysis.spectralTilt > 1.5) {
+                issues.push({ type: 'tonal', severity: 'warning', description: `Track is harsh (spectral tilt: ${analysis.spectralTilt.toFixed(2)})`, correction: 'Gentle HF dynamic EQ tightening' });
             }
 
-            // 4. Stereo deltas
+            // ═══════════════════════════════════════════════════════════════
+            // 4. Stereo deltas — subtle width nudges
+            // ═══════════════════════════════════════════════════════════════
             const lowCorr = analysis.stereoCorrelation.bass || 1.0;
             const refWidth = ref.stereo.width || 0.45;
             const widthDiff = analysis.estimatedWidth - refWidth;
             const stereoDeltas = {
-                widthMultiplier: widthDiff > 0.1 ? 0.92 : widthDiff < -0.1 ? 1.08 : 1.0,
-                bassMonoThreshold: lowCorr < 0.9 ? 200 : 0 // Mono bass below 200Hz if phase issues
+                widthMultiplier: widthDiff > 0.15 ? 0.96 : widthDiff < -0.15 ? 1.04 : 1.0,
+                bassMonoThreshold: lowCorr < 0.85 ? 200 : 0
             };
-            if (lowCorr < 0.85) {
+            if (lowCorr < 0.8) {
                 issues.push({ type: 'stereo', severity: 'critical', description: `Low-frequency phase issues (bass correlation: ${lowCorr.toFixed(2)})`, correction: 'Increasing bass mono processing' });
             }
-            if (Math.abs(widthDiff) > 0.15) {
-                issues.push({ type: 'stereo', severity: 'warning', description: widthDiff > 0 ? 'Track is excessively wide' : 'Track is too narrow', correction: widthDiff > 0 ? 'Narrowing stereo image' : 'Widening stereo image' });
+            if (Math.abs(widthDiff) > 0.2) {
+                issues.push({ type: 'stereo', severity: 'warning', description: widthDiff > 0 ? 'Track is excessively wide' : 'Track is too narrow', correction: widthDiff > 0 ? 'Slightly narrowing stereo image' : 'Slightly widening stereo image' });
             }
 
             // 5. De-esser delta
             const deEsserDelta = {
-                thresholdOffset: analysis.sibilanceExcessive ? -4 : analysis.sibilanceRatio > 0.25 ? -2 : 0
+                thresholdOffset: analysis.sibilanceExcessive ? -2 : analysis.sibilanceRatio > 0.3 ? -1 : 0
             };
             if (analysis.sibilanceExcessive) {
-                issues.push({ type: 'sibilance', severity: 'warning', description: `Excessive sibilance detected (${(analysis.sibilanceRatio * 100).toFixed(0)}% HF energy)`, correction: 'Lowering de-esser threshold' });
+                issues.push({ type: 'sibilance', severity: 'warning', description: `Excessive sibilance detected (${(analysis.sibilanceRatio * 100).toFixed(0)}% HF energy)`, correction: 'Gentle de-esser threshold reduction' });
             }
 
-            // 6. Warmth/saturation delta
+            // 6. Warmth/saturation delta — very subtle
             const warmthDelta = {
-                multiplier: analysis.spectralTilt < -1.0 ? 0.7 : analysis.spectralTilt > 1.0 ? 1.2 :
-                            analysis.overallCrest < 6 ? 0.8 : 1.0
+                multiplier: analysis.spectralTilt < -1.5 ? 0.85 : analysis.spectralTilt > 1.5 ? 1.1 :
+                            analysis.overallCrest < 5 ? 0.9 : 1.0
             };
 
-            // 7. M/S deltas
+            // 7. M/S deltas — minimal adjustments
             const msDeltas = {
-                midPresenceMultiplier: analysis.spectralTilt < -0.5 ? 1.15 : analysis.spectralTilt > 0.5 ? 0.9 : 1.0,
-                sideAirMultiplier: analysis.estimatedWidth < 0.3 ? 1.2 : analysis.estimatedWidth > 0.6 ? 0.85 : 1.0
+                midPresenceMultiplier: analysis.spectralTilt < -1.0 ? 1.08 : analysis.spectralTilt > 1.0 ? 0.95 : 1.0,
+                sideAirMultiplier: analysis.estimatedWidth < 0.25 ? 1.1 : analysis.estimatedWidth > 0.65 ? 0.92 : 1.0
             };
 
             // Resonance-based issues
-            if (analysis.resonances.length > 3) {
+            if (analysis.resonances.length > 4) {
                 issues.push({ type: 'resonance', severity: 'warning', description: `${analysis.resonances.length} resonant peaks detected`, correction: 'Dynamic EQ targeting problem frequencies' });
             }
 
             // Mix score (0-100)
-            let mixScore = 80;
-            mixScore -= issues.filter(i => i.severity === 'critical').length * 12;
-            mixScore -= issues.filter(i => i.severity === 'warning').length * 5;
-            mixScore -= Math.min(15, totalEQCorrection * 2);
-            mixScore = Math.max(10, Math.min(100, Math.round(mixScore)));
+            let mixScore = 85;
+            mixScore -= issues.filter(i => i.severity === 'critical').length * 10;
+            mixScore -= issues.filter(i => i.severity === 'warning').length * 4;
+            mixScore -= Math.min(10, totalEQCorrection * 3);
+            mixScore = Math.max(15, Math.min(100, Math.round(mixScore)));
 
             const summary = issues.length === 0 ? 'Track is well-balanced — minimal corrections applied.' :
                             issues.length <= 2 ? `Minor adjustments: ${issues.map(i => i.description).join('; ')}` :
-                            `${issues.length} issues detected — AI corrections applied for optimal mastering.`;
+                            `${issues.length} issues detected — subtle AI corrections applied.`;
 
             const profile = {
                 eqDeltas, compDeltas, dynEQDeltas, stereoDeltas, deEsserDelta, warmthDelta, msDeltas,
