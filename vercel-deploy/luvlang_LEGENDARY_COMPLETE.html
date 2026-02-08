@@ -13005,15 +13005,37 @@
             mixScore -= Math.min(10, totalEQCorrection * 3);
             mixScore = Math.max(15, Math.min(100, Math.round(mixScore)));
 
-            const summary = issues.length === 0 ? 'Track is well-balanced — minimal corrections applied.' :
-                            issues.length <= 2 ? `Minor adjustments: ${issues.map(i => i.description).join('; ')}` :
-                            `${issues.length} issues detected — subtle AI corrections applied.`;
+            // ═══════════════════════════════════════════════════════════════
+            // PROCESSING SCALE — how much processing should the chain apply?
+            // Already-mastered tracks (high mix score, low total correction)
+            // should get MINIMAL processing to avoid degradation.
+            // Raw mixes get full processing.
+            // Scale: 0.1 (already perfect) → 1.0 (needs heavy work)
+            // ═══════════════════════════════════════════════════════════════
+            // totalEQCorrection ranges: 0 (perfect match) to 5 (max clamped)
+            // Map: 0-1 dB total correction → 0.15 scale (barely touch it)
+            //       1-2 dB → 0.3, 2-3 dB → 0.5, 3-4 dB → 0.7, 4-5 dB → 1.0
+            let processingScale;
+            if (totalEQCorrection < 1.0) {
+                processingScale = 0.15; // Track is already well-mastered
+            } else if (totalEQCorrection < 2.0) {
+                processingScale = 0.3;
+            } else if (totalEQCorrection < 3.0) {
+                processingScale = 0.5;
+            } else if (totalEQCorrection < 4.0) {
+                processingScale = 0.7;
+            } else {
+                processingScale = 1.0; // Track needs significant work
+            }
+
+            const summary = issues.length === 0 ? `Track is well-balanced — processing at ${Math.round(processingScale * 100)}% intensity.` :
+                            `${issues.length} issue${issues.length > 1 ? 's' : ''} detected — processing at ${Math.round(processingScale * 100)}% intensity.`;
 
             const profile = {
                 eqDeltas, compDeltas, dynEQDeltas, stereoDeltas, deEsserDelta, warmthDelta, msDeltas,
-                issues, mixScore, summary, genre
+                issues, mixScore, summary, genre, processingScale
             };
-            console.log('🤖 AI Corrections Generated:', profile);
+            console.log('🤖 AI Corrections Generated — processingScale:', processingScale, 'totalEQ:', totalEQCorrection.toFixed(2), profile);
             return profile;
         }
 
@@ -23089,7 +23111,15 @@
                     4: 0.90,  // Aggressive - punchy but clean
                     5: 1.0    // Maximum - full preset (NOT boosted to prevent distortion)
                 };
-                const intensityMult = intensityMultipliers[intensity] || 0.75;
+                let intensityMult = intensityMultipliers[intensity] || 0.75;
+
+                // AI PROCESSING SCALE — reduce all processing for already-mastered tracks
+                // Already-balanced tracks get minimal processing to avoid degradation
+                const aiScale = (aiProfile && aiProfile.processingScale != null) ? aiProfile.processingScale : 1.0;
+                intensityMult *= aiScale;
+                if (aiScale < 1.0) {
+                    console.log(`🤖 AI Processing Scale: ${(aiScale * 100).toFixed(0)}% — track is already well-balanced`);
+                }
 
                 // Headroom compensation - reduce input gain at higher intensities
                 // Applied BEFORE limiter via makeup gain offset (not master gain)
@@ -23732,7 +23762,14 @@
                 // roughly 0 dB or slight positive. NO extra compensation needed.
                 const chainCompensationDB = 0.0;
                 const safetyMarginDB = 0.5; // Stay 0.5 dB UNDER target for headroom
-                const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
+                let lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
+
+                // Scale LUFS gain by AI processingScale — already-mastered tracks
+                // are already near target LUFS and shouldn't be pushed harder
+                if (aiScale < 1.0) {
+                    lufsGainNeededDB *= aiScale;
+                    console.log(`🤖 LUFS gain scaled by ${(aiScale * 100).toFixed(0)}%: ${lufsGainNeededDB.toFixed(1)} dB`);
+                }
 
                 // ════════════════════════════════════════════════════════════════════════════
                 // PEAK PROTECTION - Professional transparent limiting
