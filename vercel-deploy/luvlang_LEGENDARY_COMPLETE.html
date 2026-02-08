@@ -19968,6 +19968,18 @@
             if (abToggle) abToggle.style.display = 'none';
             if (divider) divider.style.display = 'none';
 
+            // Re-enable the Process Master Now button so user can re-master
+            const startBtn = document.getElementById('startMasteringBtn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.style.background = 'linear-gradient(180deg, rgba(92, 184, 92, 0.3) 0%, rgba(92, 184, 92, 0.15) 100%)';
+                startBtn.style.boxShadow = '0 0 20px rgba(92, 184, 92, 0.2)';
+            }
+
+            // Reset mastering applied flag
+            window.isMasteringApplied = false;
+
             // Show toast
             if (typeof showToast === 'function') {
                 showToast('Mastering reset - Ready to master again!', 'info');
