@@ -12409,14 +12409,17 @@
 
                 // AI Deep Analysis — run spectral profiling and generate corrections
                 try {
+                    console.log('🤖 Starting AI deep spectral analysis...');
                     const aiAnalysis = await analyzeTrackForAI(audioBuffer);
-                    const aiGenre = window.selectedPreMasterGenre || analysisResults.genre?.toLowerCase() || 'pop';
+                    console.log('🤖 AI analysis complete, generating corrections...');
+                    const aiGenre = window.selectedPreMasterGenre || 'pop';
                     window.aiTrackAnalysis = aiAnalysis; // Store raw analysis for genre-change recalc
                     window.aiTrackProfile = generateAICorrections(aiAnalysis, aiGenre);
-                    console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore);
+                    console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore, 'genre:', aiGenre);
                 } catch (aiErr) {
-                    console.warn('⚠️ AI analysis skipped:', aiErr.message);
+                    console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                     window.aiTrackProfile = null;
+                    window.aiTrackAnalysis = null;
                 }
 
                 // UPDATE GLOBAL CURRENT VALUES from initial analysis
@@ -23722,19 +23725,21 @@
                 // ════════════════════════════════════════════════════════════════════════════
                 // STABLE LUFS TARGETING - Consistent loudness regardless of intensity
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
-                // Fixed chain compensation ensures stable LUFS across all presets
+                // Chain compensation accounts for net gain/loss from processing stages
                 // ════════════════════════════════════════════════════════════════════════════
-                const chainCompensationDB = 4.0; // Compensate for bus comp, dynamic EQ, HF limiter, phase losses
-                const safetyMarginDB = 0.0;      // Target exactly -14 LUFS
+                // Chain compensation: EQ boosts add ~1-2dB, compression reduces ~1-2dB,
+                // limiter catches peaks — net chain effect is roughly +1 dB, so compensate modestly
+                const chainCompensationDB = 1.5;
+                const safetyMarginDB = 0.0;
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // PEAK PROTECTION - LET THE LIMITER DO ITS JOB
-                // Look-ahead + brickwall limiters catch peaks at -1.0 dBTP
-                // Allow 4-6 dB of limiting (standard professional practice)
+                // PEAK PROTECTION - Professional transparent limiting
+                // Target 2-3 dB of limiting max for clean, transparent mastering
+                // Heavier limiting = audible pumping, distortion, "tin can" sound
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 6.0; // Allow 6-9 dB of limiting (limiter designed for this)
+                const peakTargetBeforeLimiter = 2.0; // Allow 2-3 dB of limiting (professional standard)
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
@@ -23744,14 +23749,14 @@
                 if (lufsGainNeededDB > 0) {
                     const expectedPeakAfterGain = originalPeakDB + lufsGainNeededDB;
                     if (expectedPeakAfterGain > peakTargetBeforeLimiter) {
-                        // Peak protection needed
+                        // Peak protection needed — cap gain to keep limiting under 3 dB
                         gainAdjustmentDB = maxPeakSafeGainDB;
                         peakProtectionApplied = true;
                     }
                 }
 
-                // Clamp range (-6 to +9 dB) — allows limiter to do its job on quiet tracks
-                const clampedGainDB = Math.max(-6, Math.min(9, gainAdjustmentDB));
+                // Clamp range (-4 to +6 dB) — professional mastering gain range
+                const clampedGainDB = Math.max(-4, Math.min(6, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
