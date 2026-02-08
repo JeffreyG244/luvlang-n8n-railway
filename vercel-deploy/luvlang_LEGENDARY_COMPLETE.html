@@ -12339,6 +12339,22 @@
                         }
                     }, 200);
 
+                    // AI Deep Analysis — run spectral profiling on upload
+                    try {
+                        console.log('🤖 Starting AI deep spectral analysis...');
+                        const aiAnalysis = await analyzeTrackForAI(audioBuffer);
+                        console.log('🤖 AI analysis complete, generating corrections...');
+                        const aiGenre = window.selectedPreMasterGenre || 'pop';
+                        window.aiTrackAnalysis = aiAnalysis;
+                        window.aiTrackProfile = generateAICorrections(aiAnalysis, aiGenre);
+                        console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore, 'processingScale:', window.aiTrackProfile.processingScale);
+                        displayAICorrections(window.aiTrackProfile);
+                    } catch (aiErr) {
+                        console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
+                        window.aiTrackProfile = null;
+                        window.aiTrackAnalysis = null;
+                    }
+
                 } catch (error) {
                     console.error('⚠️ Error decoding audio buffer:', error);
                 }
@@ -23117,8 +23133,12 @@
                 // Already-balanced tracks get minimal processing to avoid degradation
                 const aiScale = (aiProfile && aiProfile.processingScale != null) ? aiProfile.processingScale : 1.0;
                 intensityMult *= aiScale;
+
+                // Scale effective intensity for ALL lookup tables (compressor, warmth, exciter, stereo, M/S)
+                // This ensures an already-mastered track gets Subtle-level processing across the board
+                const effectiveIntensity = Math.max(1, Math.round(intensity * aiScale));
                 if (aiScale < 1.0) {
-                    console.log(`🤖 AI Processing Scale: ${(aiScale * 100).toFixed(0)}% — track is already well-balanced`);
+                    console.log(`🤖 AI Processing Scale: ${(aiScale * 100).toFixed(0)}% — user intensity ${intensity} → effective ${effectiveIntensity}`);
                 }
 
                 // Headroom compensation - reduce input gain at higher intensities
@@ -23131,7 +23151,7 @@
                     4: -0.5,   // Slight reduction for aggressive processing
                     5: -1.0    // Modest reduction at maximum intensity
                 };
-                const headroomDb = headroomCompensation[intensity] || 0;
+                const headroomDb = headroomCompensation[effectiveIntensity] || 0;
 
                 // Apply headroom compensation to master gain before processing
                 if (window.masterGain) {
@@ -23260,8 +23280,8 @@
                         4: { low: 1.5, mid: 1.8, high: 2.2 },  // Aggressive - noticeable
                         5: { low: 1.8, mid: 2.2, high: 2.8 }   // Maximum - firm control
                     };
-                    const dynThresh = dynEQThresholds[intensity] || dynEQThresholds[3];
-                    const dynRatios = dynEQRatios[intensity] || dynEQRatios[3];
+                    const dynThresh = dynEQThresholds[effectiveIntensity] || dynEQThresholds[3];
+                    const dynRatios = dynEQRatios[effectiveIntensity] || dynEQRatios[3];
 
                     if (window.dynamicEQ.bands) {
                         // Set thresholds
@@ -23319,7 +23339,7 @@
                     4: 0.85,  // Aggressive - full genre ratio
                     5: 1.0    // Maximum - heavy but musical
                 };
-                const compRatioMult = compRatioMultipliers[intensity] || 1.0;
+                const compRatioMult = compRatioMultipliers[effectiveIntensity] || 1.0;
 
                 // Intensity-adaptive attack/release for musical response
                 const compAttackMultipliers = {
@@ -23329,12 +23349,12 @@
                     4: 0.85,  // Faster attack
                     5: 0.70   // Fastest - more aggressive transient control
                 };
-                const compAttackMult = compAttackMultipliers[intensity] || 1.0;
+                const compAttackMult = compAttackMultipliers[effectiveIntensity] || 1.0;
 
                 if (window.compressor) {
                     // Intensity-adaptive threshold: lower at higher intensities for more gain reduction
                     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
-                    let adjustedThreshold = comp.threshold + (thresholdOffset[intensity] || 0);
+                    let adjustedThreshold = comp.threshold + (thresholdOffset[effectiveIntensity] || 0);
 
                     // AI adaptive compression offsets
                     if (aiProfile && aiProfile.compDeltas) {
@@ -23395,7 +23415,7 @@
                         4: -3,   // Aggressive - lower thresholds
                         5: -6    // Maximum - most compression
                     };
-                    const mbOffset = mbThresholdOffsets[intensity] || 0;
+                    const mbOffset = mbThresholdOffsets[effectiveIntensity] || 0;
                     if (window.multibandCompressor.adjustThresholds) {
                         window.multibandCompressor.adjustThresholds(mbOffset);
                     }
@@ -23423,7 +23443,7 @@
                         4: 1.3,   // Aggressive
                         5: 1.6    // Maximum
                     };
-                    const transMult = transientIntensityMults[intensity] || 1.0;
+                    const transMult = transientIntensityMults[effectiveIntensity] || 1.0;
 
                     // Final mix amounts (capped for safety)
                     const attackMix = Math.min(0.20, baseAttackMix * attackEmphasis * transMult);
@@ -23466,7 +23486,7 @@
                         4: 1.4,   // Aggressive - noticeable warmth
                         5: 1.8    // Maximum - rich analog (still under 15%)
                     };
-                    const warmthMult = warmthMultipliers[intensity] || 1.0;
+                    const warmthMult = warmthMultipliers[effectiveIntensity] || 1.0;
                     let finalWarmth = baseWarmth * warmthMult;
                     // AI adaptive warmth adjustment
                     if (aiProfile && aiProfile.warmthDelta) {
@@ -23497,7 +23517,7 @@
                         4: 32,   // Aggressive - enhanced presence
                         5: 40    // Maximum - full harmonic richness (still clean)
                     };
-                    const exciteAmount = exciteAmounts[intensity] || 25;
+                    const exciteAmount = exciteAmounts[effectiveIntensity] || 25;
                     window.harmonicExciter.setAmount(exciteAmount);
 
                 }
@@ -23525,7 +23545,7 @@
                         4: 1.03,  // Aggressive - slight additional width
                         5: 1.06   // Maximum - wider but mono-compatible
                     };
-                    const widthMult = widthMultipliers[intensity] || 1.0;
+                    const widthMult = widthMultipliers[effectiveIntensity] || 1.0;
                     let finalWidth = widthBoost * widthMult;
                     // AI adaptive stereo width adjustment
                     if (aiProfile && aiProfile.stereoDeltas) {
@@ -23549,7 +23569,7 @@
                         4: { midPresence: 0.7, sideAir: 1.0 },   // Aggressive
                         5: { midPresence: 1.0, sideAir: 1.2 }    // Maximum
                     };
-                    const msSet = msSettings[intensity] || msSettings[3];
+                    const msSet = msSettings[effectiveIntensity] || msSettings[3];
 
                     // AI adaptive M/S adjustments
                     if (aiProfile && aiProfile.msDeltas) {
@@ -23600,7 +23620,7 @@
                         4: { threshold: -0.5, release: 0.08, knee: 3, attack: 0.0005 },  // Aggressive - tighter
                         5: { threshold: -0.3, release: 0.05, knee: 2, attack: 0.0002 }   // Maximum - true brickwall
                     };
-                    const limSet = limiterSettings[intensity] || limiterSettings[3];
+                    const limSet = limiterSettings[effectiveIntensity] || limiterSettings[3];
 
                     // Safety limiter: ratio 12 (firm but not brickwall — look-ahead handles that)
                     const limiterRatio = 12;
@@ -23628,7 +23648,7 @@
                         4: -1.0,  // Aggressive - same ceiling, tighter limiting
                         5: -1.0   // Maximum - brickwall at -1dBTP
                     };
-                    const laThreshold = lookAheadThresholds[intensity] || -1.0;
+                    const laThreshold = lookAheadThresholds[effectiveIntensity] || -1.0;
                     window.lookAheadLimiter.setThreshold(laThreshold);
                     if (window.lookAheadLimiter.setLookahead) {
                         window.lookAheadLimiter.setLookahead(0.005); // 5ms look-ahead
@@ -23661,7 +23681,7 @@
                         4: -8,    // Aggressive
                         5: -10    // Maximum - tightest HF control
                     };
-                    const hfThresh = hfLimThresholds[intensity] || -12;
+                    const hfThresh = hfLimThresholds[effectiveIntensity] || -12;
                     window.hfLimiter.setThreshold(hfThresh);
 
                 } else {
