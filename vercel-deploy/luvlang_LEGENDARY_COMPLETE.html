@@ -12621,21 +12621,23 @@
         // Deep spectral analysis, reference comparison, and delta corrections
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-        // Professional reference spectral profiles — based on analysis of mastered tracks
-        // Spectrum values in dBFS, dynamics targets, stereo correlation expectations
+        // Professional reference targets — slope-based spectral comparison (dB/octave)
+        // Professional masters follow -3 to -4.5 dB/octave slope (pink to slightly steeper)
+        // Slope is loudness-independent — more accurate than absolute dB per band
+        // Spectrum kept for relative-shape anomaly detection (resonances, band imbalances)
         const GENRE_REFERENCE_TARGETS = {
-            'pop':        { spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
-            'hiphop':     { spectrum: { sub: -18, bass: -14, lowmid: -16, mid: -14, highmid: -17, high: -22, air: -32 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -12 }, stereo: { width: 0.50, lowCorrelation: 0.98, highCorrelation: 0.55 }, spectralTilt: -1.0 },
-            'electronic': { spectrum: { sub: -16, bass: -15, lowmid: -17, mid: -14, highmid: -16, high: -19, air: -28 }, dynamics: { crestFactor: 7, lra: 5, targetLUFS: -11 }, stereo: { width: 0.55, lowCorrelation: 0.95, highCorrelation: 0.50 }, spectralTilt: -0.3 },
-            'rock':       { spectrum: { sub: -26, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.42, lowCorrelation: 0.93, highCorrelation: 0.58 }, spectralTilt: 0.0 },
-            'rnb':        { spectrum: { sub: -20, bass: -15, lowmid: -15, mid: -13, highmid: -16, high: -21, air: -31 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -13 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.58 }, spectralTilt: -0.7 },
-            'acoustic':   { spectrum: { sub: -30, bass: -18, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 14, lra: 10, targetLUFS: -16 }, stereo: { width: 0.40, lowCorrelation: 0.92, highCorrelation: 0.65 }, spectralTilt: 0.2 },
-            'jazz':       { spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -15, high: -19, air: -28 }, dynamics: { crestFactor: 16, lra: 12, targetLUFS: -18 }, stereo: { width: 0.42, lowCorrelation: 0.90, highCorrelation: 0.60 }, spectralTilt: 0.1 },
-            'classical':  { spectrum: { sub: -30, bass: -20, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -28 }, dynamics: { crestFactor: 20, lra: 14, targetLUFS: -20 }, stereo: { width: 0.50, lowCorrelation: 0.88, highCorrelation: 0.55 }, spectralTilt: 0.3 },
-            'metal':      { spectrum: { sub: -24, bass: -15, lowmid: -14, mid: -11, highmid: -12, high: -18, air: -30 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -12 }, stereo: { width: 0.40, lowCorrelation: 0.95, highCorrelation: 0.55 }, spectralTilt: 0.5 },
-            'country':    { spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 12, lra: 8, targetLUFS: -14 }, stereo: { width: 0.43, lowCorrelation: 0.93, highCorrelation: 0.62 }, spectralTilt: -0.2 },
-            'latin':      { spectrum: { sub: -18, bass: -14, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -13 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.55 }, spectralTilt: -0.8 },
-            'lofi':       { spectrum: { sub: -22, bass: -15, lowmid: -13, mid: -14, highmid: -18, high: -24, air: -36 }, dynamics: { crestFactor: 11, lra: 8, targetLUFS: -15 }, stereo: { width: 0.38, lowCorrelation: 0.90, highCorrelation: 0.65 }, spectralTilt: -1.5 }
+            'pop':        { slopePerOctave: -4.5, spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
+            'hiphop':     { slopePerOctave: -5.0, spectrum: { sub: -18, bass: -14, lowmid: -16, mid: -14, highmid: -17, high: -22, air: -32 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.50, lowCorrelation: 0.98, highCorrelation: 0.55 }, spectralTilt: -1.0 },
+            'electronic': { slopePerOctave: -4.0, spectrum: { sub: -16, bass: -15, lowmid: -17, mid: -14, highmid: -16, high: -19, air: -28 }, dynamics: { crestFactor: 7, lra: 5, targetLUFS: -14 }, stereo: { width: 0.55, lowCorrelation: 0.95, highCorrelation: 0.50 }, spectralTilt: -0.3 },
+            'rock':       { slopePerOctave: -3.5, spectrum: { sub: -26, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -30 }, dynamics: { crestFactor: 12, lra: 7, targetLUFS: -14 }, stereo: { width: 0.42, lowCorrelation: 0.93, highCorrelation: 0.58 }, spectralTilt: 0.0 },
+            'rnb':        { slopePerOctave: -4.5, spectrum: { sub: -20, bass: -15, lowmid: -15, mid: -13, highmid: -16, high: -21, air: -31 }, dynamics: { crestFactor: 10, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.58 }, spectralTilt: -0.7 },
+            'acoustic':   { slopePerOctave: -3.0, spectrum: { sub: -30, bass: -18, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 14, lra: 10, targetLUFS: -16 }, stereo: { width: 0.40, lowCorrelation: 0.92, highCorrelation: 0.65 }, spectralTilt: 0.2 },
+            'jazz':       { slopePerOctave: -3.0, spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -15, high: -19, air: -28 }, dynamics: { crestFactor: 16, lra: 12, targetLUFS: -16 }, stereo: { width: 0.42, lowCorrelation: 0.90, highCorrelation: 0.60 }, spectralTilt: 0.1 },
+            'classical':  { slopePerOctave: -3.0, spectrum: { sub: -30, bass: -20, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -28 }, dynamics: { crestFactor: 20, lra: 14, targetLUFS: -18 }, stereo: { width: 0.50, lowCorrelation: 0.88, highCorrelation: 0.55 }, spectralTilt: 0.3 },
+            'metal':      { slopePerOctave: -3.0, spectrum: { sub: -24, bass: -15, lowmid: -14, mid: -11, highmid: -12, high: -18, air: -30 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.40, lowCorrelation: 0.95, highCorrelation: 0.55 }, spectralTilt: 0.5 },
+            'country':    { slopePerOctave: -3.5, spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 12, lra: 8, targetLUFS: -14 }, stereo: { width: 0.43, lowCorrelation: 0.93, highCorrelation: 0.62 }, spectralTilt: -0.2 },
+            'latin':      { slopePerOctave: -4.5, spectrum: { sub: -18, bass: -14, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.55 }, spectralTilt: -0.8 },
+            'lofi':       { slopePerOctave: -5.5, spectrum: { sub: -22, bass: -15, lowmid: -13, mid: -14, highmid: -18, high: -24, air: -36 }, dynamics: { crestFactor: 11, lra: 8, targetLUFS: -16 }, stereo: { width: 0.38, lowCorrelation: 0.90, highCorrelation: 0.65 }, spectralTilt: -1.5 }
         };
 
         // Deep spectral analysis for AI-adaptive mastering
@@ -12908,34 +12910,55 @@
             const issues = [];
 
             // ═══════════════════════════════════════════════════════════════
-            // 1. EQ Deltas — RELATIVE SPECTRAL SHAPE comparison
-            // Compare tonal balance (shape) not absolute levels
-            // This makes corrections independent of track loudness
+            // 1. EQ Deltas — SLOPE-BASED + RELATIVE SHAPE comparison
+            // Primary: compare spectral slope (dB/octave) — loudness-independent
+            // Secondary: detect individual band anomalies via relative shape
             // ═══════════════════════════════════════════════════════════════
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const bandCenterFreqs = [40, 100, 300, 1000, 3500, 8000, 14000]; // Hz
+            const bandOctaves = bandCenterFreqs.map(f => Math.log2(f / 40)); // octaves from sub
 
-            // Normalize track spectrum to relative shape (subtract mean)
+            // Compute track's spectral slope via linear regression
             const trackValues = bandKeys.map(b => analysis.spectrumDB[b] || -60);
             const trackMean = trackValues.reduce((a, b) => a + b, 0) / trackValues.length;
+            const octMean = bandOctaves.reduce((a, b) => a + b, 0) / bandOctaves.length;
+            let slopeNum = 0, slopeDen = 0;
+            for (let i = 0; i < bandKeys.length; i++) {
+                slopeNum += (bandOctaves[i] - octMean) * (trackValues[i] - trackMean);
+                slopeDen += (bandOctaves[i] - octMean) * (bandOctaves[i] - octMean);
+            }
+            const trackSlope = slopeDen > 0 ? slopeNum / slopeDen : -3.5; // dB/octave
+            const refSlope = ref.slopePerOctave || -3.5;
+            const slopeDiff = trackSlope - refSlope; // positive = brighter than reference
+
+            // Slope-based tilt correction: apply as shelf EQ across spectrum
+            // Max tilt correction: ±1.5 dB across the full spectrum
+            const tiltCorrection = Math.max(-1.5, Math.min(1.5, -slopeDiff * 0.3));
+
+            // Also compute relative shape for anomaly detection
             const trackShape = {};
             bandKeys.forEach((b, i) => { trackShape[b] = trackValues[i] - trackMean; });
-
-            // Normalize reference spectrum to relative shape (subtract mean)
             const refValues = bandKeys.map(b => ref.spectrum[b] || -20);
             const refMean = refValues.reduce((a, b) => a + b, 0) / refValues.length;
             const refShape = {};
             bandKeys.forEach((b, i) => { refShape[b] = refValues[i] - refMean; });
 
-            // Delta = difference in shape × gentle correction strength
+            // Combine slope tilt + per-band anomaly correction
             const eqDeltas = {};
             let totalEQCorrection = 0;
-            for (const band of bandKeys) {
-                let delta = (refShape[band] - trackShape[band]) * correctionStrength;
-                delta = Math.max(-2, Math.min(2, delta)); // Clamp ±2 dB per band (mastering limit)
+            for (let i = 0; i < bandKeys.length; i++) {
+                const band = bandKeys[i];
+                // Tilt component: distribute tilt across spectrum (low gets opposite of high)
+                const tiltFactor = (bandOctaves[i] - octMean) / (bandOctaves[bandOctaves.length - 1] - bandOctaves[0]);
+                const tiltDelta = tiltCorrection * tiltFactor * 2;
+                // Anomaly component: per-band shape difference (very gentle)
+                const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.5;
+                let delta = tiltDelta + anomalyDelta;
+                delta = Math.max(-2, Math.min(2, delta)); // Clamp ±2 dB per band
                 eqDeltas[band] = Math.round(delta * 100) / 100;
                 totalEQCorrection += Math.abs(delta);
             }
-            // Clamp total absolute correction to 5 dB (mastering should be subtle)
+            // Clamp total absolute correction to 5 dB
             if (totalEQCorrection > 5) {
                 const scale = 5 / totalEQCorrection;
                 for (const band of bandKeys) {
@@ -12944,6 +12967,7 @@
                 totalEQCorrection = 5;
             }
 
+            console.log('🤖 AI Slope Debug — track:', trackSlope.toFixed(2), 'dB/oct, ref:', refSlope, 'dB/oct, tilt correction:', tiltCorrection.toFixed(2), 'dB');
             console.log('🤖 AI EQ Shape Debug — track shape:', trackShape, 'ref shape:', refShape, 'deltas:', eqDeltas);
 
             // Log issues for noticeable EQ corrections
@@ -13067,11 +13091,53 @@
             const summary = issues.length === 0 ? `Track is well-balanced — processing at ${Math.round(processingScale * 100)}% intensity.` :
                             `${issues.length} issue${issues.length > 1 ? 's' : ''} detected — processing at ${Math.round(processingScale * 100)}% intensity.`;
 
+            // ═══════════════════════════════════════════════════════════════
+            // PER-STAGE BYPASS FLAGS — skip stages the track doesn't need
+            // true = SKIP this stage (track is already good here)
+            // ═══════════════════════════════════════════════════════════════
+            // widthDiff already computed above in stereo deltas section
+
+            const stageBypass = {
+                eq:            totalEQCorrection < 0.5,      // Spectrum already balanced
+                dynamicEQ:     analysis.resonances.length <= 1 && !analysis.sibilanceExcessive
+                               && Math.abs(analysis.spectralTilt) < 1.5,
+                compression:   Math.abs(crestDiff) < 3,       // Dynamics already healthy
+                multibandComp: Math.abs(crestDiff) < 4 && Math.abs(analysis.spectralTilt) < 1.0,
+                transient:     Math.abs(crestDiff) < 3,
+                warmth:        analysis.spectralTilt < -0.5 || analysis.overallCrest < 7,
+                exciter:       !(analysis.spectralTilt > 1.0 && analysis.spectrumDB.high < -25),
+                stereoWidth:   Math.abs(widthDiff) < 0.15,
+                msProcessing:  Math.abs(analysis.spectralTilt) < 1.0 && Math.abs(widthDiff) < 0.15,
+                hfLimiter:     !analysis.sibilanceExcessive && analysis.spectralTilt < 1.5,
+            };
+
+            // Per-stage intensity (0.0-1.0) — how aggressively to apply each stage
+            const stageIntensity = {
+                eq:            Math.min(1.0, totalEQCorrection / 3.0),
+                dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
+                compression:   Math.min(1.0, Math.abs(crestDiff) / 8),
+                multibandComp: Math.min(1.0, Math.abs(crestDiff) / 10),
+                transient:     Math.min(1.0, Math.abs(crestDiff) / 8),
+                warmth:        analysis.spectralTilt > 1.0 ? 0.6 : 0.2,
+                exciter:       0.15,  // Always very subtle
+                stereoWidth:   Math.min(1.0, Math.abs(widthDiff) / 0.3),
+                msProcessing:  0.3,   // Always subtle
+                hfLimiter:     analysis.sibilanceExcessive ? 0.7 : 0.3,
+            };
+
+            // Count bypassed stages for summary
+            const bypassed = Object.values(stageBypass).filter(v => v).length;
+            const active = Object.values(stageBypass).filter(v => !v).length;
+
             const profile = {
                 eqDeltas, compDeltas, dynEQDeltas, stereoDeltas, deEsserDelta, warmthDelta, msDeltas,
-                issues, mixScore, summary, genre, processingScale
+                issues, mixScore, summary, genre, processingScale,
+                stageBypass, stageIntensity, crestDiff, trackSlope, refSlope, totalEQCorrection,
+                bypassedCount: bypassed, activeCount: active
             };
-            console.log('🤖 AI Corrections Generated — processingScale:', processingScale, 'totalEQ:', totalEQCorrection.toFixed(2), profile);
+            console.log('🤖 AI Corrections Generated — processingScale:', processingScale, 'totalEQ:', totalEQCorrection.toFixed(2), 'bypassed:', bypassed, '/', bypassed + active, 'stages');
+            console.log('🤖 Stage bypass:', stageBypass);
+            console.log('🤖 Stage intensity:', stageIntensity);
             return profile;
         }
 
@@ -13120,6 +13186,39 @@
                 ? `Stereo width ${profile.stereoDeltas.widthMultiplier > 1 ? 'increased' : 'decreased'} by ${Math.abs((profile.stereoDeltas.widthMultiplier - 1) * 100).toFixed(0)}%`
                 : 'Stereo image is well-balanced';
 
+            // Stage bypass/active summary
+            const stageNames = {
+                eq: 'EQ', dynamicEQ: 'Dynamic EQ', compression: 'Compression',
+                multibandComp: 'Multiband', transient: 'Transient', warmth: 'Warmth',
+                exciter: 'Exciter', stereoWidth: 'Stereo Width', msProcessing: 'M/S', hfLimiter: 'HF Limiter'
+            };
+            const bypassReasons = {
+                eq: 'spectrum balanced', dynamicEQ: 'no resonances', compression: 'dynamics healthy',
+                multibandComp: 'dynamics balanced', transient: 'dynamics healthy', warmth: 'already warm',
+                exciter: 'HF sufficient', stereoWidth: 'image balanced', msProcessing: 'tonal/width OK', hfLimiter: 'no harshness'
+            };
+            let stagesHTML = '';
+            if (profile.stageBypass) {
+                const bypassed = Object.entries(profile.stageBypass).filter(([k,v]) => v);
+                const active = Object.entries(profile.stageBypass).filter(([k,v]) => !v);
+                if (active.length > 0) {
+                    stagesHTML += active.map(([key]) => {
+                        const pct = profile.stageIntensity ? Math.round((profile.stageIntensity[key] || 0) * 100) : 100;
+                        return `<span style="display:inline-block;background:rgba(0,230,118,0.15);border:1px solid rgba(0,230,118,0.3);border-radius:4px;padding:2px 6px;margin:2px;font-size:10px;color:#00e676">${stageNames[key] || key} ${pct}%</span>`;
+                    }).join('');
+                }
+                if (bypassed.length > 0) {
+                    stagesHTML += bypassed.map(([key]) =>
+                        `<span style="display:inline-block;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 6px;margin:2px;font-size:10px;color:#666;text-decoration:line-through">${stageNames[key] || key}</span>`
+                    ).join('');
+                }
+            }
+
+            // Spectral slope summary
+            const slopeSummary = profile.trackSlope !== undefined
+                ? `Track: ${profile.trackSlope.toFixed(1)} dB/oct | Ref: ${profile.refSlope} dB/oct`
+                : '';
+
             panel.innerHTML = `
                 <div style="background:linear-gradient(135deg,rgba(20,20,30,0.95),rgba(30,20,40,0.95));border:1px solid rgba(138,43,226,0.3);border-radius:12px;padding:16px;margin:12px 0;backdrop-filter:blur(10px)">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -13133,6 +13232,11 @@
                         </div>
                     </div>
                     <div style="font-size:11px;color:#aaa;margin-bottom:10px">${profile.summary}</div>
+                    ${stagesHTML ? `<div style="margin-bottom:10px">
+                        <div style="font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Processing Stages (${profile.activeCount || '?'} active, ${profile.bypassedCount || '?'} bypassed)</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:2px">${stagesHTML}</div>
+                    </div>` : ''}
+                    ${slopeSummary ? `<div style="font-size:10px;color:#888;margin-bottom:8px">Spectral Slope: ${slopeSummary}</div>` : ''}
                     <div style="margin-bottom:12px">
                         <div style="font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">EQ Corrections</div>
                         <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding:4px;background:rgba(0,0,0,0.2);border-radius:6px">${eqBars}</div>
@@ -23155,6 +23259,11 @@
                 const aiScale = (aiProfile && aiProfile.processingScale != null) ? aiProfile.processingScale : 1.0;
                 intensityMult *= aiScale;
 
+                // PER-STAGE BYPASS FLAGS — skip stages the track doesn't need
+                const bypass = (aiProfile && aiProfile.stageBypass) ? aiProfile.stageBypass : {};
+                const stageInt = (aiProfile && aiProfile.stageIntensity) ? aiProfile.stageIntensity : {};
+                const aiCrestDiff = (aiProfile && aiProfile.crestDiff) || 0;
+
                 // Scale effective intensity for ALL lookup tables (compressor, warmth, exciter, stereo, M/S)
                 // This ensures an already-mastered track gets Subtle-level processing across the board
                 const effectiveIntensity = Math.max(1, Math.round(intensity * aiScale));
@@ -23211,65 +23320,72 @@
                 // Genre-specific EQ curves - STERLING SOUND / BOB LUDWIG STANDARDS
                 // Conservative values that enhance without coloring - "first do no harm"
                 // All values in dB - scaled by intensity multiplier
+                // Professional mastering EQ: max ±1.2 dB per band, 0.25 dB increments
+                // "Mastering EQ is felt, not heard" — iZotope, Waves, MasteringTheMix
                 const eqCurves = {
-                    'hiphop':     { sub: 2.0, bass: 1.5, lowmid: -2.0, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.5 },  // Heavy low end, scooped mids
-                    'electronic': { sub: 1.8, bass: 1.0, lowmid: -1.5, mid: -0.3, highmid: 0.5, high: 0.3, air: 0.5 }, // Sub focus, controlled top
-                    'pop':        { sub: 0.8, bass: 0.5, lowmid: -1.0, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.8 },  // Balanced, radio-ready
-                    'rock':       { sub: 0.5, bass: 1.2, lowmid: -0.8, mid: 1.0, highmid: 1.2, high: 0.5, air: 0.3 },  // Punchy mids, presence
-                    'rnb':        { sub: 1.5, bass: 1.0, lowmid: -1.0, mid: 0.3, highmid: 0.5, high: 0.3, air: 0.5 },  // Warm, smooth
-                    'acoustic':   { sub: 0.0, bass: 0.3, lowmid: -0.5, mid: 0.3, highmid: 0.5, high: 0.5, air: 0.8 },  // Natural, airy
-                    'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.3, mid: 0.0, highmid: 0.3, high: 0.3, air: 0.5 },  // Minimal, transparent
-                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },  // Ultra-transparent
-                    'metal':      { sub: 0.8, bass: 1.5, lowmid: -1.0, mid: 1.2, highmid: 1.5, high: 0.5, air: 0.3 },  // Aggressive mids, tight low
-                    'country':    { sub: 0.3, bass: 0.8, lowmid: -0.5, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.8 },  // Warm body, clear top
-                    'latin':      { sub: 1.8, bass: 1.5, lowmid: -1.2, mid: 0.3, highmid: 0.8, high: 0.5, air: 0.5 },  // Deep bass, rhythmic
-                    'lofi':       { sub: 0.8, bass: 1.0, lowmid: 0.3, mid: -0.3, highmid: -0.3, high: -0.5, air: 0.0 }  // Warm, rolled-off top
+                    'hiphop':     { sub: 1.2, bass: 1.0, lowmid: -0.8, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },  // Warm low end, balanced mids
+                    'electronic': { sub: 1.0, bass: 0.6, lowmid: -0.6, mid: -0.2, highmid: 0.3, high: 0.2, air: 0.3 }, // Sub focus, controlled top
+                    'pop':        { sub: 0.5, bass: 0.3, lowmid: -0.4, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.5 },  // Balanced, radio-ready
+                    'rock':       { sub: 0.3, bass: 0.8, lowmid: -0.3, mid: 0.5, highmid: 0.5, high: 0.3, air: 0.2 },  // Full mids, presence
+                    'rnb':        { sub: 0.8, bass: 0.6, lowmid: -0.4, mid: 0.2, highmid: 0.3, high: 0.2, air: 0.3 },  // Warm, smooth
+                    'acoustic':   { sub: 0.0, bass: 0.2, lowmid: -0.2, mid: 0.2, highmid: 0.3, high: 0.3, air: 0.5 },  // Natural, airy
+                    'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },  // Minimal, transparent
+                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.1, mid: 0.0, highmid: 0.1, high: 0.1, air: 0.2 },  // Ultra-transparent
+                    'metal':      { sub: 0.5, bass: 1.0, lowmid: -0.4, mid: 0.6, highmid: 0.7, high: 0.3, air: 0.2 },  // Full mids, tight low
+                    'country':    { sub: 0.2, bass: 0.5, lowmid: -0.2, mid: 0.3, highmid: 0.4, high: 0.3, air: 0.5 },  // Warm body, clear top
+                    'latin':      { sub: 1.0, bass: 1.0, lowmid: -0.5, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },  // Deep bass, rhythmic
+                    'lofi':       { sub: 0.5, bass: 0.6, lowmid: 0.2, mid: -0.2, highmid: -0.2, high: -0.3, air: 0.0 }  // Warm, rolled-off top
                 };
                 const eq = eqCurves[genre] || eqCurves['pop'];
 
                 // AI adaptive EQ deltas — applied on top of genre preset
                 const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
 
-                // 3. Sub Bass (40Hz) - Foundation
-                if (window.eqSubFilter) {
-                    const val = (eq.sub + (aiEQ.sub || 0)) * intensityMult;
-                    window.eqSubFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
+                if (!bypass.eq) {
+                    const eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
 
-                // 4. Bass (100Hz) - Warmth & Body
-                if (window.eqBassFilter) {
-                    const val = (eq.bass + (aiEQ.bass || 0)) * intensityMult;
-                    window.eqBassFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
-
-                // 5. Low-Mids (300Hz) - Mud Control
-                if (window.eqLowMidFilter) {
-                    const val = (eq.lowmid + (aiEQ.lowmid || 0)) * intensityMult;
-                    window.eqLowMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
-
-                // 6. Mids (1kHz) - Body & Clarity
-                if (window.eqMidFilter) {
-                    const val = (eq.mid + (aiEQ.mid || 0)) * intensityMult;
-                    window.eqMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
-
-                // 7. High-Mids (3.5kHz) - Presence & Cut
-                if (window.eqHighMidFilter) {
-                    const val = (eq.highmid + (aiEQ.highmid || 0)) * intensityMult;
-                    window.eqHighMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
-
-                // 8. Highs (8kHz) - Brilliance
-                if (window.eqHighFilter) {
-                    const val = (eq.high + (aiEQ.high || 0)) * intensityMult;
-                    window.eqHighFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                }
-
-                // 9. Air (14kHz) - Sparkle & Shimmer
-                if (window.eqAirFilter) {
-                    const val = (eq.air + (aiEQ.air || 0)) * intensityMult;
-                    window.eqAirFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    // 3. Sub Bass (40Hz) - Foundation
+                    if (window.eqSubFilter) {
+                        const val = (eq.sub + (aiEQ.sub || 0)) * intensityMult * eqScale;
+                        window.eqSubFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 4. Bass (100Hz) - Warmth & Body
+                    if (window.eqBassFilter) {
+                        const val = (eq.bass + (aiEQ.bass || 0)) * intensityMult * eqScale;
+                        window.eqBassFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 5. Low-Mids (300Hz) - Mud Control
+                    if (window.eqLowMidFilter) {
+                        const val = (eq.lowmid + (aiEQ.lowmid || 0)) * intensityMult * eqScale;
+                        window.eqLowMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 6. Mids (1kHz) - Body & Clarity
+                    if (window.eqMidFilter) {
+                        const val = (eq.mid + (aiEQ.mid || 0)) * intensityMult * eqScale;
+                        window.eqMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 7. High-Mids (3.5kHz) - Presence & Cut
+                    if (window.eqHighMidFilter) {
+                        const val = (eq.highmid + (aiEQ.highmid || 0)) * intensityMult * eqScale;
+                        window.eqHighMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 8. Highs (8kHz) - Brilliance
+                    if (window.eqHighFilter) {
+                        const val = (eq.high + (aiEQ.high || 0)) * intensityMult * eqScale;
+                        window.eqHighFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                    // 9. Air (14kHz) - Sparkle & Shimmer
+                    if (window.eqAirFilter) {
+                        const val = (eq.air + (aiEQ.air || 0)) * intensityMult * eqScale;
+                        window.eqAirFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    }
+                } else {
+                    // Bypass: zero all EQ filter gains (transparent pass-through)
+                    console.log('AI bypass: EQ skipped — spectrum already balanced');
+                    [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter, window.eqMidFilter,
+                     window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter].forEach(f => {
+                        if (f) f.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                    });
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -23279,45 +23395,52 @@
                 await new Promise(resolve => setTimeout(resolve, 60));
 
                 if (window.dynamicEQ) {
-                    // 10. Dynamic EQ - Professional intensity-adaptive thresholds
-                    // Based on iZotope Ozone / FabFilter Pro-Q dynamic band standards
-                    // Lower thresholds = more compression, higher intensity catches more peaks
-                    // Higher thresholds = less compression = more transparent
-                    // Dynamic EQ should only tame occasional problem frequencies
-                    const dynEQThresholds = {
-                        1: { low: -12, mid: -10, high: -14 },  // Subtle - extreme peaks only
-                        2: { low: -14, mid: -12, high: -16 },  // Light - gentle correction
-                        3: { low: -16, mid: -14, high: -18 },  // Balanced - problem peaks only
-                        4: { low: -18, mid: -16, high: -20 },  // Aggressive - tighter
-                        5: { low: -20, mid: -18, high: -22 }   // Maximum - broadcast control
-                    };
-                    // Intensity-adaptive ratios — transparent dynamic EQ (not multiband compression)
-                    // Pro dynamic EQs (FabFilter Pro-Q, iZotope) use 1.2-2.0 ratios
-                    const dynEQRatios = {
-                        1: { low: 1.1, mid: 1.2, high: 1.2 },  // Subtle - barely audible
-                        2: { low: 1.2, mid: 1.3, high: 1.5 },  // Light - gentle correction
-                        3: { low: 1.3, mid: 1.5, high: 1.8 },  // Balanced - transparent control
-                        4: { low: 1.5, mid: 1.8, high: 2.2 },  // Aggressive - noticeable
-                        5: { low: 1.8, mid: 2.2, high: 2.8 }   // Maximum - firm control
-                    };
-                    const dynThresh = dynEQThresholds[effectiveIntensity] || dynEQThresholds[3];
-                    const dynRatios = dynEQRatios[effectiveIntensity] || dynEQRatios[3];
+                    if (!bypass.dynamicEQ) {
+                        const dynScale = stageInt.dynamicEQ !== undefined ? stageInt.dynamicEQ : 1.0;
+                        // 10. Dynamic EQ - Professional intensity-adaptive thresholds
+                        const dynEQThresholds = {
+                            1: { low: -12, mid: -10, high: -14 },
+                            2: { low: -14, mid: -12, high: -16 },
+                            3: { low: -16, mid: -14, high: -18 },
+                            4: { low: -18, mid: -16, high: -20 },
+                            5: { low: -20, mid: -18, high: -22 }
+                        };
+                        const dynEQRatios = {
+                            1: { low: 1.1, mid: 1.2, high: 1.2 },
+                            2: { low: 1.2, mid: 1.3, high: 1.5 },
+                            3: { low: 1.3, mid: 1.5, high: 1.8 },
+                            4: { low: 1.5, mid: 1.8, high: 2.2 },
+                            5: { low: 1.8, mid: 2.2, high: 2.8 }
+                        };
+                        const dynThresh = dynEQThresholds[effectiveIntensity] || dynEQThresholds[3];
+                        const dynRatios = dynEQRatios[effectiveIntensity] || dynEQRatios[3];
 
-                    if (window.dynamicEQ.bands) {
-                        // Set thresholds
-                        window.dynamicEQ.bands.low.comp.threshold.value = dynThresh.low;
-                        window.dynamicEQ.bands.mid.comp.threshold.value = dynThresh.mid;
-                        window.dynamicEQ.bands.high.comp.threshold.value = dynThresh.high;
-                        // Set ratios
-                        window.dynamicEQ.bands.low.comp.ratio.value = dynRatios.low;
-                        window.dynamicEQ.bands.mid.comp.ratio.value = dynRatios.mid;
-                        window.dynamicEQ.bands.high.comp.ratio.value = dynRatios.high;
+                        if (window.dynamicEQ.bands) {
+                            // Scale thresholds by stage intensity (higher threshold = less engaged)
+                            const dynIntOffset = (1.0 - dynScale) * 6; // up to +6 dB raise when low intensity
+                            window.dynamicEQ.bands.low.comp.threshold.value = dynThresh.low + dynIntOffset;
+                            window.dynamicEQ.bands.mid.comp.threshold.value = dynThresh.mid + dynIntOffset;
+                            window.dynamicEQ.bands.high.comp.threshold.value = dynThresh.high + dynIntOffset;
+                            window.dynamicEQ.bands.low.comp.ratio.value = dynRatios.low;
+                            window.dynamicEQ.bands.mid.comp.ratio.value = dynRatios.mid;
+                            window.dynamicEQ.bands.high.comp.ratio.value = dynRatios.high;
 
-                        // AI adaptive dynamic EQ offsets
-                        if (aiProfile && aiProfile.dynEQDeltas) {
-                            window.dynamicEQ.bands.low.comp.threshold.value += aiProfile.dynEQDeltas.lowThresholdOffset || 0;
-                            window.dynamicEQ.bands.mid.comp.threshold.value += aiProfile.dynEQDeltas.midThresholdOffset || 0;
-                            window.dynamicEQ.bands.high.comp.threshold.value += aiProfile.dynEQDeltas.highThresholdOffset || 0;
+                            if (aiProfile && aiProfile.dynEQDeltas) {
+                                window.dynamicEQ.bands.low.comp.threshold.value += aiProfile.dynEQDeltas.lowThresholdOffset || 0;
+                                window.dynamicEQ.bands.mid.comp.threshold.value += aiProfile.dynEQDeltas.midThresholdOffset || 0;
+                                window.dynamicEQ.bands.high.comp.threshold.value += aiProfile.dynEQDeltas.highThresholdOffset || 0;
+                            }
+                        }
+                    } else {
+                        // Bypass: set thresholds to 0 dB (no dynamic EQ engaged)
+                        console.log('AI bypass: Dynamic EQ skipped — no resonances or tonal issues');
+                        if (window.dynamicEQ.bands) {
+                            window.dynamicEQ.bands.low.comp.threshold.value = 0;
+                            window.dynamicEQ.bands.mid.comp.threshold.value = 0;
+                            window.dynamicEQ.bands.high.comp.threshold.value = 0;
+                            window.dynamicEQ.bands.low.comp.ratio.value = 1;
+                            window.dynamicEQ.bands.mid.comp.ratio.value = 1;
+                            window.dynamicEQ.bands.high.comp.ratio.value = 1;
                         }
                     }
                 }
@@ -23372,23 +23495,32 @@
                 const compAttackMult = compAttackMultipliers[effectiveIntensity] || 1.0;
 
                 if (window.compressor) {
-                    // Intensity-adaptive threshold: lower at higher intensities for more gain reduction
-                    const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
-                    let adjustedThreshold = comp.threshold + (thresholdOffset[effectiveIntensity] || 0);
+                    if (!bypass.compression) {
+                        const compScale = stageInt.compression !== undefined ? stageInt.compression : 1.0;
+                        // Intensity-adaptive threshold: lower at higher intensities for more gain reduction
+                        const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
+                        let adjustedThreshold = comp.threshold + (thresholdOffset[effectiveIntensity] || 0);
+                        // Scale threshold by AI stage intensity (raise threshold = less compression when intensity is low)
+                        adjustedThreshold += (1.0 - compScale) * 6;
 
-                    // AI adaptive compression offsets
-                    if (aiProfile && aiProfile.compDeltas) {
-                        adjustedThreshold += (aiProfile.compDeltas.thresholdOffset || 0);
+                        if (aiProfile && aiProfile.compDeltas) {
+                            adjustedThreshold += (aiProfile.compDeltas.thresholdOffset || 0);
+                        }
+                        const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
+                        const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
+                        const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
+
+                        window.compressor.threshold.setTargetAtTime(adjustedThreshold, ac.currentTime, 0.1);
+                        window.compressor.ratio.setTargetAtTime(comp.ratio * compRatioMult * aiRatioMult, ac.currentTime, 0.1);
+                        window.compressor.attack.setTargetAtTime(comp.attack * compAttackMult * aiAttackMult, ac.currentTime, 0.1);
+                        window.compressor.release.setTargetAtTime(comp.release * aiReleaseMult, ac.currentTime, 0.1);
+                        window.compressor.knee.setTargetAtTime(comp.knee, ac.currentTime, 0.1);
+                    } else {
+                        // Bypass: transparent pass-through
+                        console.log('AI bypass: Compression skipped — dynamics already healthy');
+                        window.compressor.threshold.setTargetAtTime(0, ac.currentTime, 0.1);
+                        window.compressor.ratio.setTargetAtTime(1, ac.currentTime, 0.1);
                     }
-                    const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
-                    const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
-                    const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
-
-                    window.compressor.threshold.setTargetAtTime(adjustedThreshold, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(comp.ratio * compRatioMult * aiRatioMult, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(comp.attack * compAttackMult * aiAttackMult, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(comp.release * aiReleaseMult, ac.currentTime, 0.1);
-                    window.compressor.knee.setTargetAtTime(comp.knee, ac.currentTime, 0.1);
                 }
 
                 // 12a. Engage multiband crossover bypass → active
@@ -23420,67 +23552,63 @@
 
                 // 12e. Multiband Compression - Intensity-adaptive
                 if (window.multibandCompressor && window.multibandCompressor.enable) {
-                    window.multibandCompressor.enable();
-                    // Select preset based on genre
-                    const mbPreset = (genre === 'hiphop' || genre === 'electronic') ? 'bass-heavy' :
-                                     (genre === 'rock') ? 'punchy' : 'balanced';
-                    if (window.multibandCompressor.loadPreset) {
-                        window.multibandCompressor.loadPreset(mbPreset);
+                    if (!bypass.multibandComp) {
+                        window.multibandCompressor.enable();
+                        const mbPreset = (genre === 'hiphop' || genre === 'electronic') ? 'bass-heavy' :
+                                         (genre === 'rock') ? 'punchy' : 'balanced';
+                        if (window.multibandCompressor.loadPreset) {
+                            window.multibandCompressor.loadPreset(mbPreset);
+                        }
+                        const mbThresholdOffsets = {
+                            1: 6, 2: 3, 3: 0, 4: -3, 5: -6
+                        };
+                        let mbOffset = mbThresholdOffsets[effectiveIntensity] || 0;
+                        // Scale by AI stage intensity
+                        const mbScale = stageInt.multibandComp !== undefined ? stageInt.multibandComp : 1.0;
+                        mbOffset += (1.0 - mbScale) * 4; // raise thresholds when low intensity
+                        if (window.multibandCompressor.adjustThresholds) {
+                            window.multibandCompressor.adjustThresholds(mbOffset);
+                        }
+                    } else {
+                        console.log('AI bypass: Multiband compression skipped — dynamics balanced');
+                        if (window.multibandCompressor.disable) {
+                            window.multibandCompressor.disable();
+                        }
                     }
-                    // Intensity-adaptive multiband threshold offset
-                    const mbThresholdOffsets = {
-                        1: 6,    // Subtle - raise thresholds for less compression
-                        2: 3,    // Light
-                        3: 0,    // Balanced - use preset as-is
-                        4: -3,   // Aggressive - lower thresholds
-                        5: -6    // Maximum - most compression
-                    };
-                    const mbOffset = mbThresholdOffsets[effectiveIntensity] || 0;
-                    if (window.multibandCompressor.adjustThresholds) {
-                        window.multibandCompressor.adjustThresholds(mbOffset);
-                    }
-
                 }
 
                 // 13. Transient Shaper - Intensity-adaptive Punch & Attack Control
-                // CRITICAL: Use proper PARALLEL MIX amounts (5-15% wet), NOT gain boosts
-                // High wet amounts cause comb filtering (dry + compressed = phase interference = "can" sound)
                 if (window.transientControls) {
-                    // Base mix amounts — professional parallel compression standard
-                    const baseAttackMix = 0.12;   // 12% attack (subtle punch)
-                    const baseSustainMix = 0.05;   // 5% sustain (subtle body)
+                    if (!bypass.transient) {
+                        const transScale = stageInt.transient !== undefined ? stageInt.transient : 1.0;
+                        const baseAttackMix = 0.12;
+                        const baseSustainMix = 0.05;
+                        const attackEmphasis = genre === 'hiphop' || genre === 'rock' ? 1.3 :
+                                               genre === 'metal' ? 1.4 : 1.0;
+                        const sustainEmphasis = genre === 'acoustic' || genre === 'jazz' ? 1.3 : 1.0;
+                        const transientIntensityMults = { 1: 0.4, 2: 0.7, 3: 1.0, 4: 1.3, 5: 1.6 };
+                        const transMult = transientIntensityMults[effectiveIntensity] || 1.0;
 
-                    // Genre emphasis factors
-                    const attackEmphasis = genre === 'hiphop' || genre === 'rock' ? 1.3 :
-                                           genre === 'metal' ? 1.4 : 1.0;
-                    const sustainEmphasis = genre === 'acoustic' || genre === 'jazz' ? 1.3 : 1.0;
+                        const attackMix = Math.min(0.20, baseAttackMix * attackEmphasis * transMult * transScale);
+                        const sustainMix = Math.min(0.12, baseSustainMix * sustainEmphasis * transMult * transScale);
+                        const dryMix = 1.0 - (attackMix + sustainMix) * 0.5;
 
-                    // Intensity scaling — more transient processing at higher intensities
-                    const transientIntensityMults = {
-                        1: 0.4,   // Subtle - barely engaged
-                        2: 0.7,   // Light
-                        3: 1.0,   // Balanced
-                        4: 1.3,   // Aggressive
-                        5: 1.6    // Maximum
-                    };
-                    const transMult = transientIntensityMults[effectiveIntensity] || 1.0;
-
-                    // Final mix amounts (capped for safety)
-                    const attackMix = Math.min(0.20, baseAttackMix * attackEmphasis * transMult);
-                    const sustainMix = Math.min(0.12, baseSustainMix * sustainEmphasis * transMult);
-                    // Reduce dry proportionally to maintain near-unity gain
-                    const dryMix = 1.0 - (attackMix + sustainMix) * 0.5;
-
-                    if (window.transientControls.attack) {
-                        window.transientControls.attack.gain.setTargetAtTime(attackMix, ac.currentTime, 0.1);
+                        if (window.transientControls.attack) {
+                            window.transientControls.attack.gain.setTargetAtTime(attackMix, ac.currentTime, 0.1);
+                        }
+                        if (window.transientControls.sustain) {
+                            window.transientControls.sustain.gain.setTargetAtTime(sustainMix, ac.currentTime, 0.1);
+                        }
+                        if (window.transientControls.dry) {
+                            window.transientControls.dry.gain.setTargetAtTime(dryMix, ac.currentTime, 0.1);
+                        }
+                    } else {
+                        // Bypass: set to full dry (no transient processing)
+                        console.log('AI bypass: Transient shaper skipped — dynamics already healthy');
+                        if (window.transientControls.attack) window.transientControls.attack.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                        if (window.transientControls.sustain) window.transientControls.sustain.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                        if (window.transientControls.dry) window.transientControls.dry.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
                     }
-                    if (window.transientControls.sustain) {
-                        window.transientControls.sustain.gain.setTargetAtTime(sustainMix, ac.currentTime, 0.1);
-                    }
-                    if (window.transientControls.dry) {
-                        window.transientControls.dry.gain.setTargetAtTime(dryMix, ac.currentTime, 0.1);
-                    }
-
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -23490,56 +23618,49 @@
                 await new Promise(resolve => setTimeout(resolve, 80));
 
                 // 14. Analog Warmth / Tape Saturation - Intensity-adaptive
-                // Pro mastering: saturation should be felt, not heard. Max 8% wet at Balanced.
-                // Sterling Sound, Metropolis: "If you can hear the saturation, it's too much"
                 if (window.analogWarmth) {
-                    // Genre-based warmth amounts (reduced for transparency)
-                    const baseWarmth = (genre === 'hiphop' || genre === 'rnb') ? 0.08 :
-                                       (genre === 'rock') ? 0.10 :
-                                       (genre === 'electronic') ? 0.05 :
-                                       (genre === 'lofi') ? 0.12 : 0.06;
-                    // 5-level warmth multipliers
-                    const warmthMultipliers = {
-                        1: 0.3,   // Subtle - barely perceptible
-                        2: 0.6,   // Light - gentle warmth
-                        3: 1.0,   // Balanced - subtle analog character
-                        4: 1.4,   // Aggressive - noticeable warmth
-                        5: 1.8    // Maximum - rich analog (still under 15%)
-                    };
-                    const warmthMult = warmthMultipliers[effectiveIntensity] || 1.0;
-                    let finalWarmth = baseWarmth * warmthMult;
-                    // AI adaptive warmth adjustment
-                    if (aiProfile && aiProfile.warmthDelta) {
-                        finalWarmth *= aiProfile.warmthDelta.multiplier;
-                    }
+                    if (!bypass.warmth) {
+                        const warmScale = stageInt.warmth !== undefined ? stageInt.warmth : 1.0;
+                        const baseWarmth = (genre === 'hiphop' || genre === 'rnb') ? 0.05 :
+                                           (genre === 'rock') ? 0.06 :
+                                           (genre === 'electronic') ? 0.03 :
+                                           (genre === 'lofi') ? 0.08 : 0.04;
+                        const warmthMultipliers = { 1: 0.0, 2: 0.3, 3: 0.6, 4: 1.0, 5: 1.3 };
+                        const warmthMult = warmthMultipliers[effectiveIntensity] || 1.0;
+                        let finalWarmth = baseWarmth * warmthMult * warmScale;
+                        if (aiProfile && aiProfile.warmthDelta) {
+                            finalWarmth *= aiProfile.warmthDelta.multiplier;
+                        }
 
-                    // Engage warmth dry/wet mix (max 15% wet)
-                    if (window.warmthControls) {
-                        const wetAmount = Math.min(finalWarmth, 0.15);
-                        window.warmthControls.wet.gain.setTargetAtTime(wetAmount, ac.currentTime, 0.1);
-                        window.warmthControls.dry.gain.setTargetAtTime(1.0 - wetAmount, ac.currentTime, 0.1);
+                        if (window.warmthControls) {
+                            const wetAmount = Math.min(finalWarmth, 0.15);
+                            window.warmthControls.wet.gain.setTargetAtTime(wetAmount, ac.currentTime, 0.1);
+                            window.warmthControls.dry.gain.setTargetAtTime(1.0 - wetAmount, ac.currentTime, 0.1);
+                        }
+                        if (window.analogWarmth.setDrive) {
+                            window.analogWarmth.setDrive(finalWarmth);
+                        }
+                    } else {
+                        // Bypass: full dry, no saturation
+                        console.log('AI bypass: Warmth skipped — track already warm or over-compressed');
+                        if (window.warmthControls) {
+                            window.warmthControls.wet.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                            window.warmthControls.dry.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                        }
                     }
-
-                    // If waveshaper drive is available, apply it
-                    if (window.analogWarmth.setDrive) {
-                        window.analogWarmth.setDrive(finalWarmth);
-                    }
-
                 }
 
                 // 15. Harmonic Exciter - Intensity-adaptive harmonic enhancement
                 if (window.harmonicExciter && window.harmonicExciter.setAmount) {
-                    // 5-level harmonic exciter amounts - musical at all levels
-                    const exciteAmounts = {
-                        1: 10,   // Subtle - minimal harmonics, very transparent
-                        2: 18,   // Light - gentle warmth
-                        3: 25,   // Balanced - professional standard
-                        4: 32,   // Aggressive - enhanced presence
-                        5: 40    // Maximum - full harmonic richness (still clean)
-                    };
-                    const exciteAmount = exciteAmounts[effectiveIntensity] || 25;
-                    window.harmonicExciter.setAmount(exciteAmount);
-
+                    if (!bypass.exciter) {
+                        const exciteAmounts = { 1: 5, 2: 8, 3: 12, 4: 18, 5: 25 };
+                        const exciteAmount = exciteAmounts[effectiveIntensity] || 12;
+                        window.harmonicExciter.setAmount(exciteAmount);
+                    } else {
+                        // Bypass: disable exciter
+                        console.log('AI bypass: Exciter skipped — HF content sufficient');
+                        window.harmonicExciter.setAmount(0);
+                    }
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -23551,57 +23672,63 @@
                 await new Promise(resolve => setTimeout(resolve, 60));
 
                 // 16. Stereo Width Enhancement - Intensity-adaptive
-                // Pro mastering: width enhancement should be VERY subtle (1-5% max)
-                // Excessive width causes mono compatibility issues and sounds artificial
                 if (window.sideChannel) {
-                    const widthBoost = (genre === 'electronic') ? 1.08 :
-                                       (genre === 'pop' || genre === 'hiphop') ? 1.05 :
-                                       (genre === 'acoustic' || genre === 'jazz') ? 1.02 : 1.04;
-                    // 5-level stereo width multipliers
-                    const widthMultipliers = {
-                        1: 0.98,  // Subtle - slightly narrower for safety
-                        2: 1.0,   // Light - no modification
-                        3: 1.0,   // Balanced - use genre width only
-                        4: 1.03,  // Aggressive - slight additional width
-                        5: 1.06   // Maximum - wider but mono-compatible
-                    };
-                    const widthMult = widthMultipliers[effectiveIntensity] || 1.0;
-                    let finalWidth = widthBoost * widthMult;
-                    // AI adaptive stereo width adjustment
-                    if (aiProfile && aiProfile.stereoDeltas) {
-                        finalWidth *= aiProfile.stereoDeltas.widthMultiplier;
+                    if (!bypass.stereoWidth) {
+                        const swScale = stageInt.stereoWidth !== undefined ? stageInt.stereoWidth : 1.0;
+                        const widthBoost = (genre === 'electronic') ? 1.08 :
+                                           (genre === 'pop' || genre === 'hiphop') ? 1.05 :
+                                           (genre === 'acoustic' || genre === 'jazz') ? 1.02 : 1.04;
+                        const widthMultipliers = { 1: 0.98, 2: 1.0, 3: 1.0, 4: 1.03, 5: 1.06 };
+                        const widthMult = widthMultipliers[effectiveIntensity] || 1.0;
+                        let finalWidth = 1.0 + (widthBoost * widthMult - 1.0) * swScale;
+                        if (aiProfile && aiProfile.stereoDeltas) {
+                            finalWidth *= aiProfile.stereoDeltas.widthMultiplier;
+                        }
+                        window.sideChannel.gain.setTargetAtTime(finalWidth, ac.currentTime, 0.1);
+                    } else {
+                        // Bypass: unity (no width modification)
+                        console.log('AI bypass: Stereo width skipped — image already balanced');
+                        window.sideChannel.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
                     }
-                    window.sideChannel.gain.setTargetAtTime(finalWidth, ac.currentTime, 0.1);
-
                 }
 
                 updateStageProgress(12, 'M/S processing...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
                 // 17. M/S Processing - Intensity-adaptive Mid/Side EQ
-                // Pro mastering M/S: subtle adjustments only. Heavy M/S = artificial sound.
                 if (window.msEQ) {
-                    // 5-level M/S processing intensity (conservative values)
-                    const msSettings = {
-                        1: { midPresence: 0.2, sideAir: 0.3 },   // Subtle - barely engaged
-                        2: { midPresence: 0.3, sideAir: 0.5 },   // Light
-                        3: { midPresence: 0.5, sideAir: 0.7 },   // Balanced - gentle enhancement
-                        4: { midPresence: 0.7, sideAir: 1.0 },   // Aggressive
-                        5: { midPresence: 1.0, sideAir: 1.2 }    // Maximum
-                    };
-                    const msSet = msSettings[effectiveIntensity] || msSettings[3];
+                    if (!bypass.msProcessing) {
+                        const msScale = stageInt.msProcessing !== undefined ? stageInt.msProcessing : 1.0;
+                        const msSettings = {
+                            1: { midPresence: 0.2, sideAir: 0.3 },
+                            2: { midPresence: 0.3, sideAir: 0.5 },
+                            3: { midPresence: 0.5, sideAir: 0.7 },
+                            4: { midPresence: 0.7, sideAir: 1.0 },
+                            5: { midPresence: 1.0, sideAir: 1.2 }
+                        };
+                        const msSet = msSettings[effectiveIntensity] || msSettings[3];
+                        if (aiProfile && aiProfile.msDeltas) {
+                            msSet.midPresence *= aiProfile.msDeltas.midPresenceMultiplier || 1.0;
+                            msSet.sideAir *= aiProfile.msDeltas.sideAirMultiplier || 1.0;
+                        }
+                        msSet.midPresence *= msScale;
+                        msSet.sideAir *= msScale;
 
-                    // AI adaptive M/S adjustments
-                    if (aiProfile && aiProfile.msDeltas) {
-                        msSet.midPresence *= aiProfile.msDeltas.midPresenceMultiplier || 1.0;
-                        msSet.sideAir *= aiProfile.msDeltas.sideAirMultiplier || 1.0;
-                    }
-
-                    if (window.msEQ.mid && window.msEQ.mid.presence) {
-                        window.msEQ.mid.presence.gain.setTargetAtTime(msSet.midPresence, ac.currentTime, 0.1);
-                    }
-                    if (window.msEQ.side && window.msEQ.side.air) {
-                        window.msEQ.side.air.gain.setTargetAtTime(msSet.sideAir, ac.currentTime, 0.1);
+                        if (window.msEQ.mid && window.msEQ.mid.presence) {
+                            window.msEQ.mid.presence.gain.setTargetAtTime(msSet.midPresence, ac.currentTime, 0.1);
+                        }
+                        if (window.msEQ.side && window.msEQ.side.air) {
+                            window.msEQ.side.air.gain.setTargetAtTime(msSet.sideAir, ac.currentTime, 0.1);
+                        }
+                    } else {
+                        // Bypass: zero M/S EQ adjustments
+                        console.log('AI bypass: M/S processing skipped — tonal balance and width OK');
+                        if (window.msEQ.mid && window.msEQ.mid.presence) {
+                            window.msEQ.mid.presence.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                        }
+                        if (window.msEQ.side && window.msEQ.side.air) {
+                            window.msEQ.side.air.gain.setTargetAtTime(0, ac.currentTime, 0.1);
+                        }
                     }
                 }
 
@@ -23686,24 +23813,25 @@
 
                 // 22. High-Frequency Limiter (De-Harsh) - Intensity-adaptive
                 if (window.hfLimiter && window.hfLimiter.setThreshold) {
-                    // Engage HF limiter: restore compression ratio and gain
-                    if (window.hfLimiterComp) {
-                        window.hfLimiterComp.ratio.value = 4;
+                    if (!bypass.hfLimiter) {
+                        const hfRatios = { 1: 1.5, 2: 1.8, 3: 2.0, 4: 2.5, 5: 3.0 };
+                        if (window.hfLimiterComp) {
+                            window.hfLimiterComp.ratio.value = hfRatios[effectiveIntensity] || 2.0;
+                        }
+                        if (window.hfLimiterGain) {
+                            window.hfLimiterGain.gain.value = 1.0;
+                        }
+                        const hfLimThresholds = { 1: -1, 2: -2, 3: -3, 4: -5, 5: -7 };
+                        const hfThresh = hfLimThresholds[effectiveIntensity] || -3;
+                        window.hfLimiter.setThreshold(hfThresh);
+                    } else {
+                        // Bypass: transparent HF pass-through
+                        console.log('AI bypass: HF limiter skipped — no sibilance or harshness');
+                        if (window.hfLimiterComp) {
+                            window.hfLimiterComp.threshold.value = 0;
+                            window.hfLimiterComp.ratio.value = 1;
+                        }
                     }
-                    if (window.hfLimiterGain) {
-                        window.hfLimiterGain.gain.value = 1.0;
-                    }
-                    // Raised thresholds - catches harsh peaks only, not reshaping spectrum
-                    const hfLimThresholds = {
-                        1: -2,    // Subtle - barely engaged
-                        2: -4,    // Light
-                        3: -6,    // Balanced - catches harsh peaks only
-                        4: -8,    // Aggressive
-                        5: -10    // Maximum - tightest HF control
-                    };
-                    const hfThresh = hfLimThresholds[effectiveIntensity] || -12;
-                    window.hfLimiter.setThreshold(hfThresh);
-
                 } else {
 
                 }
@@ -23804,12 +23932,9 @@
                 const safetyMarginDB = 0.5; // Stay 0.5 dB UNDER target for headroom
                 let lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
-                // Scale LUFS gain by AI processingScale — already-mastered tracks
-                // are already near target LUFS and shouldn't be pushed harder
-                if (aiScale < 1.0) {
-                    lufsGainNeededDB *= aiScale;
-                    console.log(`🤖 LUFS gain scaled by ${(aiScale * 100).toFixed(0)}%: ${lufsGainNeededDB.toFixed(1)} dB`);
-                }
+                // LUFS targeting ALWAYS applies at full strength — this is a loudness
+                // standard, not a character effect. The track must hit target LUFS.
+                // (aiScale only gates character effects like EQ, compression, warmth)
 
                 // ════════════════════════════════════════════════════════════════════════════
                 // PEAK PROTECTION - Professional transparent limiting
@@ -23875,7 +24000,7 @@
                 // ══════════════════════════════════════════════════════════════════════
                 if (window.advancedEngine) {
                     try {
-                        // IRC LIMITER: Balanced mode, Ceiling -1.0 dB, Release 100 ms
+                        // IRC LIMITER: Always apply — this is loudness standard, not character
                         if (typeof window.advancedEngine.setLimiterMode === 'function') {
                             window.advancedEngine.setLimiterMode('balanced');
                         }
@@ -23883,32 +24008,58 @@
                             window.advancedEngine.setLimiterCeiling(-1.0);
                         }
 
-                        // SOFT CLIPPER: Drive 0.0 dB, Mix 100%
-                        if (typeof window.advancedEngine.setSoftClipDrive === 'function') {
-                            window.advancedEngine.setSoftClipDrive(0.0);
-                        }
-                        if (typeof window.advancedEngine.setSoftClipMix === 'function') {
-                            window.advancedEngine.setSoftClipMix(100);
+                        // SOFT CLIPPER: Only if compression is not bypassed
+                        if (!bypass.compression) {
+                            if (typeof window.advancedEngine.setSoftClipDrive === 'function') {
+                                window.advancedEngine.setSoftClipDrive(0.0);
+                            }
+                            if (typeof window.advancedEngine.setSoftClipMix === 'function') {
+                                window.advancedEngine.setSoftClipMix(100);
+                            }
+                        } else {
+                            console.log('AI bypass: Soft clipper skipped — compression bypassed');
+                            if (typeof window.advancedEngine.setSoftClipMix === 'function') {
+                                window.advancedEngine.setSoftClipMix(0);
+                            }
                         }
 
-                        // UPWARD COMPRESSION: Threshold -40 dB, Ratio 2.0:1
-                        if (typeof window.advancedEngine.setUpwardThreshold === 'function') {
-                            window.advancedEngine.setUpwardThreshold(-40);
-                        }
-                        if (typeof window.advancedEngine.setUpwardRatio === 'function') {
-                            window.advancedEngine.setUpwardRatio(2.0);
+                        // UPWARD COMPRESSION: Only if compression needed AND intensity > 0.5
+                        if (!bypass.compression && (stageInt.compression || 0) > 0.5) {
+                            if (typeof window.advancedEngine.setUpwardThreshold === 'function') {
+                                window.advancedEngine.setUpwardThreshold(-40);
+                            }
+                            if (typeof window.advancedEngine.setUpwardRatio === 'function') {
+                                window.advancedEngine.setUpwardRatio(2.0);
+                            }
+                        } else {
+                            console.log('AI bypass: Upward compression skipped — dynamics healthy');
+                            if (typeof window.advancedEngine.setUpwardThreshold === 'function') {
+                                window.advancedEngine.setUpwardThreshold(0); // 0 dB = no engagement
+                            }
+                            if (typeof window.advancedEngine.setUpwardRatio === 'function') {
+                                window.advancedEngine.setUpwardRatio(1.0); // 1:1 = transparent
+                            }
                         }
 
-                        // UNLIMITER: Restoration 50%, Transient Boost +3 dB
-                        if (typeof window.advancedEngine.setUnlimiterAmount === 'function') {
-                            window.advancedEngine.setUnlimiterAmount(50);
-                        }
-                        if (typeof window.advancedEngine.setUnlimiterTransientBoost === 'function') {
-                            window.advancedEngine.setUnlimiterTransientBoost(3);
+                        // UNLIMITER: Only if transient not bypassed AND track is over-compressed
+                        if (!bypass.transient && aiCrestDiff < -3) {
+                            if (typeof window.advancedEngine.setUnlimiterAmount === 'function') {
+                                window.advancedEngine.setUnlimiterAmount(50);
+                            }
+                            if (typeof window.advancedEngine.setUnlimiterTransientBoost === 'function') {
+                                window.advancedEngine.setUnlimiterTransientBoost(3);
+                            }
+                        } else {
+                            console.log('AI bypass: Unlimiter skipped — track not over-compressed');
+                            if (typeof window.advancedEngine.setUnlimiterAmount === 'function') {
+                                window.advancedEngine.setUnlimiterAmount(0);
+                            }
+                            if (typeof window.advancedEngine.setUnlimiterTransientBoost === 'function') {
+                                window.advancedEngine.setUnlimiterTransientBoost(0);
+                            }
                         }
 
                         // Update UI sliders to reflect the applied values
-                        // IRC Limiter
                         const limiterModeSelect = document.getElementById('limiterModeSelect');
                         if (limiterModeSelect) limiterModeSelect.value = 'balanced';
                         const limiterCeiling = document.getElementById('limiterCeiling');
@@ -23920,40 +24071,57 @@
                         const limiterReleaseValue = document.getElementById('limiterReleaseValue');
                         if (limiterReleaseValue) limiterReleaseValue.textContent = '100 ms';
 
-                        // Soft Clipper
                         const softClipDrive = document.getElementById('softClipDrive');
                         if (softClipDrive) { softClipDrive.value = 0; }
                         const softClipDriveValue = document.getElementById('softClipDriveValue');
                         if (softClipDriveValue) softClipDriveValue.textContent = '0.0 dB';
                         const softClipMix = document.getElementById('softClipMix');
-                        if (softClipMix) { softClipMix.value = 100; }
                         const softClipMixValue = document.getElementById('softClipMixValue');
-                        if (softClipMixValue) softClipMixValue.textContent = '100%';
+                        if (!bypass.compression) {
+                            if (softClipMix) { softClipMix.value = 100; }
+                            if (softClipMixValue) softClipMixValue.textContent = '100%';
+                        } else {
+                            if (softClipMix) { softClipMix.value = 0; }
+                            if (softClipMixValue) softClipMixValue.textContent = '0%';
+                        }
 
-                        // Upward Compression
                         const upwardThreshold = document.getElementById('upwardThreshold');
-                        if (upwardThreshold) { upwardThreshold.value = -40; }
                         const upwardThresholdValue = document.getElementById('upwardThresholdValue');
-                        if (upwardThresholdValue) upwardThresholdValue.textContent = '-40 dB';
                         const upwardRatio = document.getElementById('upwardRatio');
-                        if (upwardRatio) { upwardRatio.value = 2; }
                         const upwardRatioValue = document.getElementById('upwardRatioValue');
-                        if (upwardRatioValue) upwardRatioValue.textContent = '2.0:1';
+                        if (!bypass.compression && (stageInt.compression || 0) > 0.5) {
+                            if (upwardThreshold) { upwardThreshold.value = -40; }
+                            if (upwardThresholdValue) upwardThresholdValue.textContent = '-40 dB';
+                            if (upwardRatio) { upwardRatio.value = 2; }
+                            if (upwardRatioValue) upwardRatioValue.textContent = '2.0:1';
+                        } else {
+                            if (upwardThreshold) { upwardThreshold.value = 0; }
+                            if (upwardThresholdValue) upwardThresholdValue.textContent = '0 dB';
+                            if (upwardRatio) { upwardRatio.value = 1; }
+                            if (upwardRatioValue) upwardRatioValue.textContent = '1.0:1';
+                        }
 
-                        // Unlimiter
                         const unlimiterAmount = document.getElementById('unlimiterAmount');
-                        if (unlimiterAmount) { unlimiterAmount.value = 50; }
                         const unlimiterAmountValue = document.getElementById('unlimiterAmountValue');
-                        if (unlimiterAmountValue) unlimiterAmountValue.textContent = '50%';
                         const unlimiterTransient = document.getElementById('unlimiterTransient');
-                        if (unlimiterTransient) { unlimiterTransient.value = 3; }
                         const unlimiterTransientValue = document.getElementById('unlimiterTransientValue');
-                        if (unlimiterTransientValue) unlimiterTransientValue.textContent = '+3 dB';
                         const unlimiterMeter = document.getElementById('unlimiterMeter');
-                        if (unlimiterMeter) unlimiterMeter.style.width = '50%';
+                        if (!bypass.transient && aiCrestDiff < -3) {
+                            if (unlimiterAmount) { unlimiterAmount.value = 50; }
+                            if (unlimiterAmountValue) unlimiterAmountValue.textContent = '50%';
+                            if (unlimiterTransient) { unlimiterTransient.value = 3; }
+                            if (unlimiterTransientValue) unlimiterTransientValue.textContent = '+3 dB';
+                            if (unlimiterMeter) unlimiterMeter.style.width = '50%';
+                        } else {
+                            if (unlimiterAmount) { unlimiterAmount.value = 0; }
+                            if (unlimiterAmountValue) unlimiterAmountValue.textContent = '0%';
+                            if (unlimiterTransient) { unlimiterTransient.value = 0; }
+                            if (unlimiterTransientValue) unlimiterTransientValue.textContent = '+0 dB';
+                            if (unlimiterMeter) unlimiterMeter.style.width = '0%';
+                        }
 
                     } catch (e) {
-                        console.warn('⚠️ Could not apply advanced engine settings:', e);
+                        console.warn('Could not apply advanced engine settings:', e);
                     }
                 }
 
