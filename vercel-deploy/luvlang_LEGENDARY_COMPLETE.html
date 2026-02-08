@@ -23727,36 +23727,37 @@
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
                 // Chain compensation accounts for net gain/loss from processing stages
                 // ════════════════════════════════════════════════════════════════════════════
-                // Chain compensation: EQ boosts add ~1-2dB, compression reduces ~1-2dB,
-                // limiter catches peaks — net chain effect is roughly +1 dB, so compensate modestly
-                const chainCompensationDB = 1.5;
-                const safetyMarginDB = 0.0;
+                // Chain compensation: the processing chain (EQ boosts, exciter, warmth)
+                // NET ADDS gain. Compression and limiting remove some, but net effect is
+                // roughly 0 dB or slight positive. NO extra compensation needed.
+                const chainCompensationDB = 0.0;
+                const safetyMarginDB = 0.5; // Stay 0.5 dB UNDER target for headroom
                 const lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 // ════════════════════════════════════════════════════════════════════════════
                 // PEAK PROTECTION - Professional transparent limiting
-                // Target 2-3 dB of limiting max for clean, transparent mastering
-                // Heavier limiting = audible pumping, distortion, "tin can" sound
+                // Max 1-2 dB of limiting for transparent mastering
+                // Bass peaks get clipped more than mids = "tinny" sound if over-limited
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 2.0; // Allow 2-3 dB of limiting (professional standard)
+                const peakTargetBeforeLimiter = 0.0; // Peaks should only barely exceed 0 dBFS
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
                 let peakProtectionApplied = false;
 
-                // Only limit gain when boosting (gain > 0) and peak would exceed target
+                // Peak protection: cap gain so peaks don't exceed 0 dBFS before limiter
+                // This keeps limiting to 1-2 dB max (limiter ceiling at -1 dBTP)
                 if (lufsGainNeededDB > 0) {
                     const expectedPeakAfterGain = originalPeakDB + lufsGainNeededDB;
                     if (expectedPeakAfterGain > peakTargetBeforeLimiter) {
-                        // Peak protection needed — cap gain to keep limiting under 3 dB
                         gainAdjustmentDB = maxPeakSafeGainDB;
                         peakProtectionApplied = true;
                     }
                 }
 
-                // Clamp range (-4 to +6 dB) — professional mastering gain range
-                const clampedGainDB = Math.max(-4, Math.min(6, gainAdjustmentDB));
+                // Clamp range (-3 to +4 dB) — gentle professional mastering gain range
+                const clampedGainDB = Math.max(-3, Math.min(4, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
