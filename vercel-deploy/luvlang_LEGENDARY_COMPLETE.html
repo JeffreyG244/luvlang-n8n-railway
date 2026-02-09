@@ -15230,7 +15230,9 @@
                 bands.forEach(band => {
                     const from = fromEQ[band] || 0;
                     const to = toEQ[band] || 0;
-                    const current = from + (to - from) * eased;
+                    // Clamp target to mastering-safe ±1.5 dB range
+                    const clampedTo = Math.max(-1.5, Math.min(1.5, to));
+                    const current = from + (clampedTo - from) * eased;
 
                     // Apply to audio nodes
                     switch(band) {
@@ -20054,6 +20056,21 @@
             // Clear mastering complete flag
             window.masteringComplete = false;
 
+            // CRITICAL: Reset mastering-in-progress flag so user can re-master
+            try { masteringInProgress = false; } catch(_) {}
+
+            // Reset dry/wet crossfade — restore original (dry) path
+            if (window.dryGain && window.wetGain && audioContext) {
+                window.dryGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.05);
+                window.wetGain.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.05);
+            }
+
+            // Clear AI track profile so fresh analysis runs on re-master
+            window.aiTrackProfile = null;
+
+            // Allow genre preset guide to show again on next master
+            window.genrePresetGuideShown = false;
+
             // Reset all audio processing to neutral
             if (makeupGain && audioContext) {
                 makeupGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.05);
@@ -23925,11 +23942,11 @@
                 // Intensity affects CHARACTER (compression, EQ), NOT final loudness
                 // Chain compensation accounts for net gain/loss from processing stages
                 // ════════════════════════════════════════════════════════════════════════════
-                // Chain compensation: the processing chain (EQ boosts, exciter, warmth)
-                // NET ADDS gain. Compression and limiting remove some, but net effect is
-                // roughly 0 dB or slight positive. NO extra compensation needed.
-                const chainCompensationDB = 0.0;
-                const safetyMarginDB = 0.5; // Stay 0.5 dB UNDER target for headroom
+                // Chain compensation: the processing chain (compression, multiband, limiting)
+                // NET REMOVES gain. EQ boosts and exciter add a bit back, but
+                // compressor + multiband + IRC limiter typically eat 2-3 dB of RMS.
+                const chainCompensationDB = 2.5;
+                const safetyMarginDB = 0.0; // Limiter ceiling at -1 dBTP handles headroom
                 let lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
                 // LUFS targeting ALWAYS applies at full strength — this is a loudness
@@ -23942,7 +23959,7 @@
                 // Bass peaks get clipped more than mids = "tinny" sound if over-limited
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 0.0; // Peaks should only barely exceed 0 dBFS
+                const peakTargetBeforeLimiter = 3.0; // Allow limiter to do up to 4 dB of work (it's designed for this)
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
@@ -23958,8 +23975,8 @@
                     }
                 }
 
-                // Clamp range (-3 to +4 dB) — gentle professional mastering gain range
-                const clampedGainDB = Math.max(-3, Math.min(4, gainAdjustmentDB));
+                // Clamp range (-3 to +8 dB) — allow enough makeup gain to hit LUFS target
+                const clampedGainDB = Math.max(-3, Math.min(8, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
@@ -26303,9 +26320,10 @@
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    f.gain.setTargetAtTime(eqVals[i] * previewBoost, now, 0.08);
+                    const clamped = Math.max(-1.5, Math.min(1.5, eqVals[i] * previewBoost));
+                    f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => (v * previewBoost).toFixed(1) + 'dB').join(', ')})`);
+                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-1.5, Math.min(1.5, v * previewBoost)).toFixed(1) + 'dB').join(', ')}) (clamped ±1.5dB)`);
             }
 
             // Show sub-genre presets in the overlay container
@@ -26342,20 +26360,27 @@
                             const previewBoost = prevMults[intLevel] || 0.7;
 
                             // Apply to MASTERING CHAIN EQ filters directly (works before AND after mastering)
+                            // CLAMP: Professional mastering max ±1.5 dB per band
                             const ac = window.audioContext;
                             if (ac) {
                                 const now = ac.currentTime;
                                 const eqFilters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter, window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
                                 eqFilters.forEach((f, i) => {
-                                    if (f) f.gain.setTargetAtTime(subEq[i] * previewBoost, now, 0.08);
+                                    if (f) {
+                                        const clamped = Math.max(-1.5, Math.min(1.5, subEq[i] * previewBoost));
+                                        f.gain.setTargetAtTime(clamped, now, 0.08);
+                                    }
                                 });
-                                console.log(`🎛️ Sub-genre preset applied to chain EQ: [${subEq.map(v => v.toFixed(1)).join(', ')}] × ${previewBoost.toFixed(1)}`);
+                                console.log(`🎛️ Sub-genre preset applied to chain EQ: [${subEq.map(v => Math.max(-1.5, Math.min(1.5, v * previewBoost)).toFixed(1)).join(', ')}] (clamped ±1.5dB)`);
                             }
 
                             // Also apply to preview filters if they exist (pre-mastering preview path)
                             if (window._previewEqFilters && ac) {
                                 const now = ac.currentTime;
-                                window._previewEqFilters.forEach((f, i) => { f.gain.setTargetAtTime(subEq[i] * previewBoost, now, 0.08); });
+                                window._previewEqFilters.forEach((f, i) => {
+                                    const clamped = Math.max(-1.5, Math.min(1.5, subEq[i] * previewBoost));
+                                    f.gain.setTargetAtTime(clamped, now, 0.08);
+                                });
                             }
                             // Also update sidebar if visible
                             if (typeof applyGenreEQPreset === 'function') { try { applyGenreEQPreset(subGenreKey, idx); } catch(_) {} }
@@ -27606,7 +27631,7 @@
                 if (success) return;
             }
 
-            // 3) Browser Web Speech API (last resort)
+            // 3) Browser Web Speech API (last resort — improved naturalness)
             if (!voiceSynth) return;
 
             window.speechSynthesis.cancel();
@@ -27618,18 +27643,36 @@
                 musicEl.volume = 0.12;
             }
 
+            // Split text into sentences for more natural pacing
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
             setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.voice = preferredVoice;
-                utterance.rate = 0.88;
-                utterance.pitch = 1.08;
-                utterance.volume = 0.95;
-                utterance.onend = () => {
-                    if (musicEl && savedVol !== null) {
-                        musicEl.volume = savedVol;
+                let sentenceIndex = 0;
+                function speakNext() {
+                    if (sentenceIndex >= sentences.length) {
+                        if (musicEl && savedVol !== null) {
+                            musicEl.volume = savedVol;
+                        }
+                        return;
                     }
-                };
-                window.speechSynthesis.speak(utterance);
+                    const utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex].trim());
+                    utterance.voice = preferredVoice;
+                    utterance.rate = 0.93;   // Slightly faster = more natural than 0.88
+                    utterance.pitch = 1.04;  // Subtle pitch lift = warmer, less robotic
+                    utterance.volume = 0.92;
+                    sentenceIndex++;
+                    utterance.onend = () => {
+                        // Brief pause between sentences for natural rhythm
+                        setTimeout(speakNext, 180);
+                    };
+                    utterance.onerror = () => {
+                        if (musicEl && savedVol !== null) {
+                            musicEl.volume = savedVol;
+                        }
+                    };
+                    window.speechSynthesis.speak(utterance);
+                }
+                speakNext();
             }, 50);
         }
         window.speak = speak;
