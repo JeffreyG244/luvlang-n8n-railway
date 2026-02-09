@@ -23270,23 +23270,18 @@
                 };
                 let intensityMult = intensityMultipliers[intensity] || 0.75;
 
-                // AI PROCESSING SCALE — reduce all processing for already-mastered tracks
-                // Already-balanced tracks get minimal processing to avoid degradation
+                // AI PROFILE — per-stage bypass and intensity already handle adaptation
+                // aiScale is NOT applied to intensityMult — that double-reduces user intensity
+                // The per-stage bypass + stageIntensity system provides granular AI control
                 const aiProfile = window.aiTrackProfile;
-                const aiScale = (aiProfile && aiProfile.processingScale != null) ? aiProfile.processingScale : 1.0;
-                intensityMult *= aiScale;
 
                 // PER-STAGE BYPASS FLAGS — skip stages the track doesn't need
                 const bypass = (aiProfile && aiProfile.stageBypass) ? aiProfile.stageBypass : {};
                 const stageInt = (aiProfile && aiProfile.stageIntensity) ? aiProfile.stageIntensity : {};
                 const aiCrestDiff = (aiProfile && aiProfile.crestDiff) || 0;
 
-                // Scale effective intensity for ALL lookup tables (compressor, warmth, exciter, stereo, M/S)
-                // This ensures an already-mastered track gets Subtle-level processing across the board
-                const effectiveIntensity = Math.max(1, Math.round(intensity * aiScale));
-                if (aiScale < 1.0) {
-                    console.log(`🤖 AI Processing Scale: ${(aiScale * 100).toFixed(0)}% — user intensity ${intensity} → effective ${effectiveIntensity}`);
-                }
+                // User's chosen intensity is respected directly — no aiScale override
+                const effectiveIntensity = intensity;
 
                 // Headroom compensation - reduce input gain at higher intensities
                 // Applied BEFORE limiter via makeup gain offset (not master gain)
@@ -23337,22 +23332,8 @@
                 // Genre-specific EQ curves - STERLING SOUND / BOB LUDWIG STANDARDS
                 // Conservative values that enhance without coloring - "first do no harm"
                 // All values in dB - scaled by intensity multiplier
-                // Professional mastering EQ: max ±1.2 dB per band, 0.25 dB increments
-                // "Mastering EQ is felt, not heard" — iZotope, Waves, MasteringTheMix
-                const eqCurves = {
-                    'hiphop':     { sub: 1.2, bass: 1.0, lowmid: -0.8, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },  // Warm low end, balanced mids
-                    'electronic': { sub: 1.0, bass: 0.6, lowmid: -0.6, mid: -0.2, highmid: 0.3, high: 0.2, air: 0.3 }, // Sub focus, controlled top
-                    'pop':        { sub: 0.5, bass: 0.3, lowmid: -0.4, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.5 },  // Balanced, radio-ready
-                    'rock':       { sub: 0.3, bass: 0.8, lowmid: -0.3, mid: 0.5, highmid: 0.5, high: 0.3, air: 0.2 },  // Full mids, presence
-                    'rnb':        { sub: 0.8, bass: 0.6, lowmid: -0.4, mid: 0.2, highmid: 0.3, high: 0.2, air: 0.3 },  // Warm, smooth
-                    'acoustic':   { sub: 0.0, bass: 0.2, lowmid: -0.2, mid: 0.2, highmid: 0.3, high: 0.3, air: 0.5 },  // Natural, airy
-                    'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },  // Minimal, transparent
-                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.1, mid: 0.0, highmid: 0.1, high: 0.1, air: 0.2 },  // Ultra-transparent
-                    'metal':      { sub: 0.5, bass: 1.0, lowmid: -0.4, mid: 0.6, highmid: 0.7, high: 0.3, air: 0.2 },  // Full mids, tight low
-                    'country':    { sub: 0.2, bass: 0.5, lowmid: -0.2, mid: 0.3, highmid: 0.4, high: 0.3, air: 0.5 },  // Warm body, clear top
-                    'latin':      { sub: 1.0, bass: 1.0, lowmid: -0.5, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },  // Deep bass, rhythmic
-                    'lofi':       { sub: 0.5, bass: 0.6, lowmid: 0.2, mid: -0.2, highmid: -0.2, high: -0.3, air: 0.0 }  // Warm, rolled-off top
-                };
+                // eqCurves is defined in shared scope (near genrePresets) so both
+                // runActualMastering and applyIntensityToChain use the same source of truth
                 const eq = eqCurves[genre] || eqCurves['pop'];
 
                 // AI adaptive EQ deltas — applied on top of genre preset
@@ -23360,42 +23341,17 @@
 
                 if (!bypass.eq) {
                     const eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
-
-                    // 3. Sub Bass (40Hz) - Foundation
-                    if (window.eqSubFilter) {
-                        const val = (eq.sub + (aiEQ.sub || 0)) * intensityMult * eqScale;
-                        window.eqSubFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 4. Bass (100Hz) - Warmth & Body
-                    if (window.eqBassFilter) {
-                        const val = (eq.bass + (aiEQ.bass || 0)) * intensityMult * eqScale;
-                        window.eqBassFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 5. Low-Mids (300Hz) - Mud Control
-                    if (window.eqLowMidFilter) {
-                        const val = (eq.lowmid + (aiEQ.lowmid || 0)) * intensityMult * eqScale;
-                        window.eqLowMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 6. Mids (1kHz) - Body & Clarity
-                    if (window.eqMidFilter) {
-                        const val = (eq.mid + (aiEQ.mid || 0)) * intensityMult * eqScale;
-                        window.eqMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 7. High-Mids (3.5kHz) - Presence & Cut
-                    if (window.eqHighMidFilter) {
-                        const val = (eq.highmid + (aiEQ.highmid || 0)) * intensityMult * eqScale;
-                        window.eqHighMidFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 8. Highs (8kHz) - Brilliance
-                    if (window.eqHighFilter) {
-                        const val = (eq.high + (aiEQ.high || 0)) * intensityMult * eqScale;
-                        window.eqHighFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
-                    // 9. Air (14kHz) - Sparkle & Shimmer
-                    if (window.eqAirFilter) {
-                        const val = (eq.air + (aiEQ.air || 0)) * intensityMult * eqScale;
-                        window.eqAirFilter.gain.setTargetAtTime(val, ac.currentTime, 0.1);
-                    }
+                    const subEQ = window._selectedSubGenreEQ || null;
+                    const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+                    const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
+                                     window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
+                    filters.forEach((f, i) => {
+                        if (!f) return;
+                        const band = bandKeys[i];
+                        const baseVal = subEQ ? subEQ[i] : eq[band];
+                        const val = (baseVal + (aiEQ[band] || 0)) * intensityMult * eqScale;
+                        f.gain.setTargetAtTime(val, ac.currentTime, 0.1);
+                    });
                 } else {
                     // Bypass: zero all EQ filter gains (transparent pass-through)
                     console.log('AI bypass: EQ skipped — spectrum already balanced');
@@ -23945,7 +23901,7 @@
                 // Chain compensation: the processing chain (compression, multiband, limiting)
                 // NET REMOVES gain. EQ boosts and exciter add a bit back, but
                 // compressor + multiband + IRC limiter typically eat 2-3 dB of RMS.
-                const chainCompensationDB = 2.5;
+                const chainCompensationDB = 6.0;
                 const safetyMarginDB = 0.0; // Limiter ceiling at -1 dBTP handles headroom
                 let lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
 
@@ -23959,7 +23915,7 @@
                 // Bass peaks get clipped more than mids = "tinny" sound if over-limited
                 // ════════════════════════════════════════════════════════════════════════════
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 3.0; // Allow limiter to do up to 4 dB of work (it's designed for this)
+                const peakTargetBeforeLimiter = 6.0; // Allow limiter to do up to 6 dB of work (designed for transparent limiting)
                 const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
                 let gainAdjustmentDB = lufsGainNeededDB;
@@ -23976,7 +23932,7 @@
                 }
 
                 // Clamp range (-3 to +8 dB) — allow enough makeup gain to hit LUFS target
-                const clampedGainDB = Math.max(-3, Math.min(8, gainAdjustmentDB));
+                const clampedGainDB = Math.max(-3, Math.min(14, gainAdjustmentDB));
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
                 // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
@@ -26138,6 +26094,24 @@
 
         let selectedGuideGenre = null;
 
+        // Professional mastering EQ: max ±1.2 dB per band, 0.25 dB increments
+        // "Mastering EQ is felt, not heard" — iZotope, Waves, MasteringTheMix
+        // Shared scope: used by both runActualMastering() and applyIntensityToChain()
+        const eqCurves = {
+            'hiphop':     { sub: 1.2, bass: 1.0, lowmid: -0.8, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },
+            'electronic': { sub: 1.0, bass: 0.6, lowmid: -0.6, mid: -0.2, highmid: 0.3, high: 0.2, air: 0.3 },
+            'pop':        { sub: 0.5, bass: 0.3, lowmid: -0.4, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.5 },
+            'rock':       { sub: 0.3, bass: 0.8, lowmid: -0.3, mid: 0.5, highmid: 0.5, high: 0.3, air: 0.2 },
+            'rnb':        { sub: 0.8, bass: 0.6, lowmid: -0.4, mid: 0.2, highmid: 0.3, high: 0.2, air: 0.3 },
+            'acoustic':   { sub: 0.0, bass: 0.2, lowmid: -0.2, mid: 0.2, highmid: 0.3, high: 0.3, air: 0.5 },
+            'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },
+            'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.1, mid: 0.0, highmid: 0.1, high: 0.1, air: 0.2 },
+            'metal':      { sub: 0.5, bass: 1.0, lowmid: -0.4, mid: 0.6, highmid: 0.7, high: 0.3, air: 0.2 },
+            'country':    { sub: 0.2, bass: 0.5, lowmid: -0.2, mid: 0.3, highmid: 0.4, high: 0.3, air: 0.5 },
+            'latin':      { sub: 1.0, bass: 1.0, lowmid: -0.5, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },
+            'lofi':       { sub: 0.5, bass: 0.6, lowmid: 0.2, mid: -0.2, highmid: -0.2, high: -0.3, air: 0.0 }
+        };
+
         // Genre presets - WORLD-CLASS MASTERING STANDARDS
         // Based on techniques from Sterling Sound, Abbey Road, Metropolis Studios
         // EQ values in dB, compression attack/release in seconds
@@ -26355,6 +26329,8 @@
 
                             // EQ values from this sub-genre preset
                             const subEq = [sp.eq.sub, sp.eq.bass, sp.eq.lowmid || sp.eq.lowMid || 0, sp.eq.mid, sp.eq.highmid || sp.eq.highMid || 0, sp.eq.high, sp.eq.air];
+                            // Persist sub-genre EQ so mastering and intensity changes can use it
+                            window._selectedSubGenreEQ = subEq;
                             const intLevel = window.selectedIntensity || 3;
                             const prevMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
                             const previewBoost = prevMults[intLevel] || 0.7;
@@ -26677,17 +26653,23 @@
             const mult = intensityMultipliers[level] || intensityMultipliers[3];
             const now = ac.currentTime;
 
-            // Apply to EQ (scale genre preset values by intensity multiplier)
-            const activePreset = genrePresets[window.selectedPreMasterGenre || 'pop'];
-            if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(activePreset.eq.sub * mult.eq, now, 0.1);
-            if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(activePreset.eq.bass * mult.eq, now, 0.1);
-            if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(activePreset.eq.lowMid * mult.eq, now, 0.1);
-            if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(activePreset.eq.mid * mult.eq, now, 0.1);
-            if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(activePreset.eq.highMid * mult.eq, now, 0.1);
-            if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(activePreset.eq.high * mult.eq, now, 0.1);
-            if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(activePreset.eq.air * mult.eq, now, 0.1);
+            // Apply to EQ — uses eqCurves (same source as mastering) + AI deltas + sub-genre override
+            const genre = window.selectedPreMasterGenre || 'pop';
+            const eq = eqCurves[genre] || eqCurves['pop'];
+            const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
+            const subEQ = window._selectedSubGenreEQ || null;
+            const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
+                             window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
+            filters.forEach((f, i) => {
+                if (!f) return;
+                const band = bandKeys[i];
+                const baseVal = subEQ ? subEQ[i] : (eq[band] + (aiEQ[band] || 0));
+                f.gain.setTargetAtTime(baseVal * mult.eq, now, 0.1);
+            });
 
             // Apply to compressor (genre-specific settings scaled by intensity)
+            const activePreset = genrePresets[genre];
             if (window.compressor) {
                 const compPreset = activePreset.compression || { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 };
                 window.compressor.ratio.setTargetAtTime(compPreset.ratio * mult.comp, now, 0.1);
