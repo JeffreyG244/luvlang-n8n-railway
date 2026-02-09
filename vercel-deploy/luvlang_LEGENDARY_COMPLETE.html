@@ -23332,9 +23332,9 @@
                 // Genre-specific EQ curves - STERLING SOUND / BOB LUDWIG STANDARDS
                 // Conservative values that enhance without coloring - "first do no harm"
                 // All values in dB - scaled by intensity multiplier
-                // eqCurves is defined in shared scope (near genrePresets) so both
-                // runActualMastering and applyIntensityToChain use the same source of truth
-                const eq = eqCurves[genre] || eqCurves['pop'];
+                // window.eqCurves is defined in the guided-experience script block
+                // so both runActualMastering and applyIntensityToChain use the same source of truth
+                const eq = window.eqCurves[genre] || window.eqCurves['pop'];
 
                 // AI adaptive EQ deltas — applied on top of genre preset
                 const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
@@ -26096,8 +26096,8 @@
 
         // Professional mastering EQ: max ±1.2 dB per band, 0.25 dB increments
         // "Mastering EQ is felt, not heard" — iZotope, Waves, MasteringTheMix
-        // Shared scope: used by both runActualMastering() and applyIntensityToChain()
-        const eqCurves = {
+        // On window so both script blocks (mastering + guided experience) can access it
+        window.eqCurves = {
             'hiphop':     { sub: 1.2, bass: 1.0, lowmid: -0.8, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },
             'electronic': { sub: 1.0, bass: 0.6, lowmid: -0.6, mid: -0.2, highmid: 0.3, high: 0.2, air: 0.3 },
             'pop':        { sub: 0.5, bass: 0.3, lowmid: -0.4, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.5 },
@@ -26655,7 +26655,7 @@
 
             // Apply to EQ — uses eqCurves (same source as mastering) + AI deltas + sub-genre override
             const genre = window.selectedPreMasterGenre || 'pop';
-            const eq = eqCurves[genre] || eqCurves['pop'];
+            const eq = window.eqCurves[genre] || window.eqCurves['pop'];
             const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
