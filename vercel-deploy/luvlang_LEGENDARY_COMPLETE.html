@@ -23334,7 +23334,21 @@
                 // All values in dB - scaled by intensity multiplier
                 // window.eqCurves is defined in the guided-experience script block
                 // so both runActualMastering and applyIntensityToChain use the same source of truth
-                const eq = window.eqCurves[genre] || window.eqCurves['pop'];
+                const _eqCurves = window.eqCurves || {
+                    'hiphop':     { sub: 1.2, bass: 1.0, lowmid: -0.8, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },
+                    'electronic': { sub: 1.0, bass: 0.6, lowmid: -0.6, mid: -0.2, highmid: 0.3, high: 0.2, air: 0.3 },
+                    'pop':        { sub: 0.5, bass: 0.3, lowmid: -0.4, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.5 },
+                    'rock':       { sub: 0.3, bass: 0.8, lowmid: -0.3, mid: 0.5, highmid: 0.5, high: 0.3, air: 0.2 },
+                    'rnb':        { sub: 0.8, bass: 0.6, lowmid: -0.4, mid: 0.2, highmid: 0.3, high: 0.2, air: 0.3 },
+                    'acoustic':   { sub: 0.0, bass: 0.2, lowmid: -0.2, mid: 0.2, highmid: 0.3, high: 0.3, air: 0.5 },
+                    'jazz':       { sub: 0.0, bass: 0.0, lowmid: -0.2, mid: 0.0, highmid: 0.2, high: 0.2, air: 0.3 },
+                    'classical':  { sub: 0.0, bass: 0.0, lowmid: -0.1, mid: 0.0, highmid: 0.1, high: 0.1, air: 0.2 },
+                    'metal':      { sub: 0.5, bass: 1.0, lowmid: -0.4, mid: 0.6, highmid: 0.7, high: 0.3, air: 0.2 },
+                    'country':    { sub: 0.2, bass: 0.5, lowmid: -0.2, mid: 0.3, highmid: 0.4, high: 0.3, air: 0.5 },
+                    'latin':      { sub: 1.0, bass: 1.0, lowmid: -0.5, mid: 0.2, highmid: 0.4, high: 0.3, air: 0.3 },
+                    'lofi':       { sub: 0.5, bass: 0.6, lowmid: 0.2, mid: -0.2, highmid: -0.2, high: -0.3, air: 0.0 }
+                };
+                const eq = _eqCurves[genre] || _eqCurves['pop'];
 
                 // AI adaptive EQ deltas — applied on top of genre preset
                 const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
