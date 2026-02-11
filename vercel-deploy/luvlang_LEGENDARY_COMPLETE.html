@@ -11939,7 +11939,7 @@
                 // ═══════════════════════════════════════════════════════════════════════════
                 // ⚡ PROFESSIONAL MASTERING SIGNAL CHAIN (WET PATH) — 20 STAGES
                 // Based on Bob Ludwig, Bernie Grundman, Randy Merrill, Chris Athens techniques
-                // Order: Cleanup → Corrective EQ → Dynamic EQ → Compression → Saturation → Limiting
+                // Order: Cleanup → Bass Mono → EQ → Dynamics → Harmonics → M/S → Limiting
                 // ═══════════════════════════════════════════════════════════════════════════
 
                 // STAGE 1: DC OFFSET REMOVAL
@@ -11948,8 +11948,11 @@
                 // STAGE 2: SUBSONIC FILTER (removes rumble < 25Hz)
                 dcOffsetFilter.connect(subsonicFilter);
 
-                // STAGE 3: 7-BAND PARAMETRIC EQ (corrective/tonal shaping)
-                subsonicFilter.connect(eqSubFilter);
+                // STAGE 3: BASS MONO CROSSOVER (mono < 150Hz — clean mono bass before compression)
+                subsonicFilter.connect(bassMonoInput);
+
+                // STAGE 4: 7-BAND PARAMETRIC EQ (corrective/tonal shaping)
+                bassMonoOutput.connect(eqSubFilter);
                 eqSubFilter.connect(eqBassFilter);
                 eqBassFilter.connect(eqLowMidFilter);
                 eqLowMidFilter.connect(eqMidFilter);
@@ -11957,14 +11960,11 @@
                 eqHighMidFilter.connect(eqHighFilter);
                 eqHighFilter.connect(eqAirFilter);
 
-                // STAGE 4: DYNAMIC EQ (frequency-dependent compression)
+                // STAGE 5: DYNAMIC EQ (frequency-dependent compression)
                 eqAirFilter.connect(dynEqInput);
 
-                // STAGE 5: DE-ESSER (sibilance control before compression)
-                dynEqOutput.connect(deEsserFilter);
-
                 // STAGE 6: MULTIBAND CROSSOVER (per-band gain control)
-                deEsserFilter.connect(mbInput);
+                dynEqOutput.connect(mbInput);
 
                 // STAGE 7: BUS COMPRESSOR (SSL-style glue)
                 mbOutput.connect(compressor);
@@ -11975,32 +11975,32 @@
                 // STAGE 9: TRANSIENT SHAPER (attack/sustain)
                 nyCompOutput.connect(transientInput);
 
-                // STAGE 10: M/S EQ (mid/side processing)
-                transientOutput.connect(msEQ_Input);
+                // STAGE 10: HARMONIC EXCITER (presence/air — harmonics caught by HF limiter downstream)
+                transientOutput.connect(exciterInput);
 
-                // STAGE 11: BASS MONO CROSSOVER (mono < 150Hz)
-                msEQ_Output.connect(bassMonoInput);
-
-                // STAGE 12: HF LIMITER (de-harsh > 6kHz)
-                bassMonoOutput.connect(hfLimiterInput);
-
-                // STAGE 13: HARMONIC EXCITER (presence/air)
-                hfLimiterMix.connect(exciterInput);
-
-                // STAGE 14: ANALOG WARMTH (tape saturation, 85/15 dry/wet)
+                // STAGE 11: ANALOG WARMTH (tape saturation — harmonics tamed by HF limiter)
                 exciterOutput.connect(warmthInput);
 
+                // STAGE 12: M/S EQ (mid/side shaping after all tonal coloring)
+                warmthOutput.connect(msEQ_Input);
+
+                // STAGE 13: DE-ESSER (catches sibilance raised by compression)
+                msEQ_Output.connect(deEsserFilter);
+
+                // STAGE 14: HF LIMITER (catches harmonics from exciter + warmth + sibilance)
+                deEsserFilter.connect(hfLimiterInput);
+
                 // STAGE 15: SOFT CLIPPER (pre-limiter saturation)
-                warmthOutput.connect(softClipInput);
+                hfLimiterMix.connect(softClipInput);
 
                 // STAGE 16: MAKEUP GAIN (LUFS targeting)
                 softClipOutput.connect(makeupGain);
 
-                // STAGE 17: LOOK-AHEAD LIMITER (5ms anticipation)
+                // STAGE 17: LOOK-AHEAD LIMITER (5ms anticipation — primary limiter)
                 makeupGain.connect(lookAheadDelay);
                 lookAheadDelay.connect(lookAheadLimiter);
 
-                // STAGE 18: BRICKWALL LIMITER (-1.0 dBTP ceiling)
+                // STAGE 18: BRICKWALL LIMITER (-1.0 dBTP ceiling — safety net)
                 lookAheadLimiter.connect(limiter);
 
                 // STAGE 19: TPDF DITHER (bit-depth conversion)
@@ -12565,6 +12565,142 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // 🎯 TWO-PASS CHAIN LOUDNESS MEASUREMENT
+        // Renders audio through key gain-affecting stages offline to measure
+        // actual chain output LUFS, replacing guesswork compensation constants.
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        async function measureChainLoudness(audioBuffer, chainParams) {
+            try {
+                const sampleRate = audioBuffer.sampleRate;
+                const analysisDuration = Math.min(15, audioBuffer.duration);
+                const analysisSamples = Math.floor(analysisDuration * sampleRate);
+
+                const offlineCtx = new OfflineAudioContext(
+                    audioBuffer.numberOfChannels,
+                    analysisSamples,
+                    sampleRate
+                );
+
+                // Create source (trimmed to analysis duration)
+                const source = offlineCtx.createBufferSource();
+                source.buffer = audioBuffer;
+
+                // Subsonic high-pass (same as live chain)
+                const subsonic = offlineCtx.createBiquadFilter();
+                subsonic.type = 'highpass';
+                subsonic.frequency.value = 25;
+                subsonic.Q.value = 0.707;
+
+                // 7-Band EQ (same gains as live chain)
+                const eqBands = [
+                    { freq: 40, type: 'peaking', gain: chainParams.eqGains?.sub || 0 },
+                    { freq: 100, type: 'peaking', gain: chainParams.eqGains?.bass || 0 },
+                    { freq: 300, type: 'peaking', gain: chainParams.eqGains?.lowmid || 0 },
+                    { freq: 1000, type: 'peaking', gain: chainParams.eqGains?.mid || 0 },
+                    { freq: 3500, type: 'peaking', gain: chainParams.eqGains?.highmid || 0 },
+                    { freq: 8000, type: 'peaking', gain: chainParams.eqGains?.high || 0 },
+                    { freq: 14000, type: 'peaking', gain: chainParams.eqGains?.air || 0 }
+                ];
+                const eqFilters = eqBands.map(band => {
+                    const f = offlineCtx.createBiquadFilter();
+                    f.type = band.type;
+                    f.frequency.value = band.freq;
+                    f.gain.value = band.gain;
+                    f.Q.value = 1.0;
+                    return f;
+                });
+
+                // Compressor (same settings as live chain)
+                const comp = offlineCtx.createDynamicsCompressor();
+                comp.threshold.value = chainParams.compThreshold || -20;
+                comp.knee.value = chainParams.compKnee || 8;
+                comp.ratio.value = chainParams.compRatio || 2.0;
+                comp.attack.value = chainParams.compAttack || 0.015;
+                comp.release.value = chainParams.compRelease || 0.18;
+
+                // Unity makeup gain (we measure chain output at unity to calculate correction)
+                const makeupGain = offlineCtx.createGain();
+                makeupGain.gain.value = 1.0;
+
+                // Limiter (same settings as live chain)
+                const lim = offlineCtx.createDynamicsCompressor();
+                lim.threshold.value = chainParams.limiterThreshold || -1.0;
+                lim.knee.value = chainParams.limiterKnee || 1.0;
+                lim.ratio.value = 20;
+                lim.attack.value = 0.0005;
+                lim.release.value = 0.15;
+
+                // Connect: Source → Subsonic → EQ chain → Compressor → Makeup → Limiter → Dest
+                source.connect(subsonic);
+                let lastNode = subsonic;
+                for (const eq of eqFilters) {
+                    lastNode.connect(eq);
+                    lastNode = eq;
+                }
+                lastNode.connect(comp);
+                comp.connect(makeupGain);
+                makeupGain.connect(lim);
+                lim.connect(offlineCtx.destination);
+
+                source.start(0, 0, analysisDuration);
+                const rendered = await offlineCtx.startRendering();
+
+                // Measure K-weighted gated LUFS on rendered output
+                const leftCh = rendered.getChannelData(0);
+                const rightCh = rendered.numberOfChannels > 1 ? rendered.getChannelData(1) : leftCh;
+                const leftK = applyKWeightingFilter(leftCh, sampleRate);
+                const rightK = applyKWeightingFilter(rightCh, sampleRate);
+
+                const blockSize = Math.floor(sampleRate * 0.4);
+                const overlapSize = Math.floor(blockSize * 0.75);
+                const sampleCount = leftK.length;
+                let loudnessBlocks = [];
+
+                for (let i = 0; i < sampleCount - blockSize; i += (blockSize - overlapSize)) {
+                    let sumSq = 0;
+                    for (let j = i; j < i + blockSize; j++) {
+                        sumSq += (leftK[j] * leftK[j] + rightK[j] * rightK[j]) / 2;
+                    }
+                    const ms = sumSq / blockSize;
+                    if (ms > 0) {
+                        const bLUFS = -0.691 + 10 * Math.log10(ms);
+                        if (bLUFS > -70) loudnessBlocks.push(bLUFS);
+                    }
+                }
+
+                let integratedLUFS = -70;
+                if (loudnessBlocks.length > 0) {
+                    let sumLin = 0;
+                    for (const l of loudnessBlocks) sumLin += Math.pow(10, l / 10);
+                    const ungated = 10 * Math.log10(sumLin / loudnessBlocks.length);
+                    const relGate = ungated - 10;
+                    const gated = loudnessBlocks.filter(l => l >= relGate);
+                    if (gated.length > 0) {
+                        sumLin = 0;
+                        for (const l of gated) sumLin += Math.pow(10, l / 10);
+                        integratedLUFS = 10 * Math.log10(sumLin / gated.length);
+                    }
+                }
+                integratedLUFS = Math.max(-70, Math.min(0, integratedLUFS));
+
+                // Measure true peak
+                let maxPeak = 0;
+                for (let i = 0; i < sampleCount; i++) {
+                    const p = Math.max(Math.abs(leftCh[i]), Math.abs(rightCh[i]));
+                    if (p > maxPeak) maxPeak = p;
+                }
+                const truePeakDB = maxPeak > 0 ? 20 * Math.log10(maxPeak) : -70;
+
+                console.log(`🎯 Two-pass chain measurement: LUFS=${integratedLUFS.toFixed(1)}, truePeak=${truePeakDB.toFixed(1)} dBTP`);
+                return { integratedLUFS, truePeakDB, maxPeak };
+
+            } catch (error) {
+                console.error('❌ Chain loudness measurement failed:', error);
+                return null;
+            }
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // AI-POWERED ADAPTIVE MASTERING ENGINE
         // Deep spectral analysis, reference comparison, and delta corrections
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -12853,8 +12989,8 @@
         // Generate AI correction deltas by comparing track analysis against genre reference
         function generateAICorrections(analysis, genre) {
             const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
-            // Mastering-grade correction: very gentle nudges only
-            const correctionStrength = 0.2;
+            // Mastering-grade correction: moderate nudges for audible improvement
+            const correctionStrength = 0.35;
             const issues = [];
 
             // ═══════════════════════════════════════════════════════════════
@@ -13021,19 +13157,18 @@
             // Scale: 0.1 (already perfect) → 1.0 (needs heavy work)
             // ═══════════════════════════════════════════════════════════════
             // totalEQCorrection ranges: 0 (perfect match) to 5 (max clamped)
-            // Map: 0-1 dB total correction → 0.15 scale (barely touch it)
-            //       1-2 dB → 0.3, 2-3 dB → 0.5, 3-4 dB → 0.7, 4-5 dB → 1.0
+            // Wider bands so more tracks get meaningful processing
             let processingScale;
-            if (totalEQCorrection < 1.0) {
-                processingScale = 0.15; // Track is already well-mastered
-            } else if (totalEQCorrection < 2.0) {
-                processingScale = 0.3;
-            } else if (totalEQCorrection < 3.0) {
-                processingScale = 0.5;
-            } else if (totalEQCorrection < 4.0) {
-                processingScale = 0.7;
+            if (totalEQCorrection < 0.5) {
+                processingScale = 0.2;  // Track is already well-mastered
+            } else if (totalEQCorrection < 1.5) {
+                processingScale = 0.4;
+            } else if (totalEQCorrection < 2.5) {
+                processingScale = 0.6;
+            } else if (totalEQCorrection < 3.5) {
+                processingScale = 0.8;
             } else {
-                processingScale = 1.0; // Track needs significant work
+                processingScale = 1.0;  // Track needs significant work
             }
 
             const summary = issues.length === 0 ? `Track is well-balanced — processing at ${Math.round(processingScale * 100)}% intensity.` :
@@ -13046,30 +13181,30 @@
             // widthDiff already computed above in stereo deltas section
 
             const stageBypass = {
-                eq:            totalEQCorrection < 0.5,      // Spectrum already balanced
+                eq:            totalEQCorrection < 0.3,       // Tighter — engage EQ more often
                 dynamicEQ:     analysis.resonances.length <= 1 && !analysis.sibilanceExcessive
                                && Math.abs(analysis.spectralTilt) < 1.5,
-                compression:   Math.abs(crestDiff) < 3,       // Dynamics already healthy
+                compression:   Math.abs(crestDiff) < 2,       // Tighter — engage compression more
                 multibandComp: Math.abs(crestDiff) < 4 && Math.abs(analysis.spectralTilt) < 1.0,
-                transient:     Math.abs(crestDiff) < 3,
+                transient:     Math.abs(crestDiff) < 2,       // Tighter — engage transient more
                 warmth:        analysis.spectralTilt < -0.5 || analysis.overallCrest < 7,
-                exciter:       !(analysis.spectralTilt > 1.0 && analysis.spectrumDB.high < -25),
-                stereoWidth:   Math.abs(widthDiff) < 0.15,
+                exciter:       false,                         // Never bypass — always subtle
+                stereoWidth:   Math.abs(widthDiff) < 0.10,    // Tighter
                 msProcessing:  Math.abs(analysis.spectralTilt) < 1.0 && Math.abs(widthDiff) < 0.15,
                 hfLimiter:     !analysis.sibilanceExcessive && analysis.spectralTilt < 1.5,
             };
 
             // Per-stage intensity (0.0-1.0) — how aggressively to apply each stage
             const stageIntensity = {
-                eq:            Math.min(1.0, totalEQCorrection / 3.0),
+                eq:            Math.min(1.0, totalEQCorrection / 2.0),
                 dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
-                compression:   Math.min(1.0, Math.abs(crestDiff) / 8),
-                multibandComp: Math.min(1.0, Math.abs(crestDiff) / 10),
-                transient:     Math.min(1.0, Math.abs(crestDiff) / 8),
-                warmth:        analysis.spectralTilt > 1.0 ? 0.6 : 0.2,
-                exciter:       0.15,  // Always very subtle
+                compression:   Math.min(1.0, Math.abs(crestDiff) / 6),
+                multibandComp: Math.min(1.0, Math.abs(crestDiff) / 8),
+                transient:     Math.min(1.0, Math.abs(crestDiff) / 6),
+                warmth:        analysis.spectralTilt > 1.0 ? 0.7 : 0.3,
+                exciter:       0.25,  // Subtle but present
                 stereoWidth:   Math.min(1.0, Math.abs(widthDiff) / 0.3),
-                msProcessing:  0.3,   // Always subtle
+                msProcessing:  0.4,   // Moderate
                 hfLimiter:     analysis.sibilanceExcessive ? 0.7 : 0.3,
             };
 
@@ -23233,15 +23368,15 @@
                 // These mirror settings used at Sterling Sound, Metropolis, Abbey Road
                 // Attack in seconds, release in seconds - musical "glue" compression
                 const compSettings = {
-                    'hiphop':     { threshold: -18, ratio: 2.5, attack: 0.010, release: 0.12, knee: 6 },   // Punchy, controlled
+                    'hiphop':     { threshold: -18, ratio: 2.5, attack: 0.012, release: 0.12, knee: 6 },   // Preserve 808 transients
                     'electronic': { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.08, knee: 4 },   // Fast, tight
                     'pop':        { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 },   // Smooth, musical
-                    'rock':       { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },   // Aggressive, punchy
+                    'rock':       { threshold: -18, ratio: 2.5, attack: 0.006, release: 0.12, knee: 6 },   // Faster for aggressive transients
                     'rnb':        { threshold: -22, ratio: 1.8, attack: 0.020, release: 0.22, knee: 10 },  // Gentle, warm
-                    'acoustic':   { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 },  // Transparent
-                    'jazz':       { threshold: -28, ratio: 1.3, attack: 0.030, release: 0.35, knee: 15 },  // Very gentle
-                    'classical':  { threshold: -32, ratio: 1.2, attack: 0.040, release: 0.50, knee: 20 },  // Nearly transparent
-                    'metal':      { threshold: -16, ratio: 3.0, attack: 0.005, release: 0.10, knee: 4 },   // Aggressive, fast
+                    'acoustic':   { threshold: -26, ratio: 1.5, attack: 0.030, release: 0.30, knee: 12 },  // More natural
+                    'jazz':       { threshold: -28, ratio: 1.3, attack: 0.035, release: 0.35, knee: 15 },  // Preserve dynamics
+                    'classical':  { threshold: -32, ratio: 1.2, attack: 0.050, release: 0.50, knee: 20 },  // Ultra-transparent
+                    'metal':      { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.10, knee: 4 },   // Tighter
                     'country':    { threshold: -22, ratio: 1.8, attack: 0.018, release: 0.20, knee: 8 },   // Musical, warm
                     'latin':      { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },   // Punchy, rhythmic
                     'lofi':       { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 }   // Gentle, vintage
@@ -23296,6 +23431,24 @@
                         console.log('AI bypass: Compression skipped — dynamics already healthy');
                         window.compressor.threshold.setTargetAtTime(0, ac.currentTime, 0.1);
                         window.compressor.ratio.setTargetAtTime(1, ac.currentTime, 0.1);
+                    }
+                }
+
+                // NY Parallel Compression guard — disable at low intensity, scale mix inversely with ratio
+                if (window.nyCompression) {
+                    if (effectiveIntensity <= 2 || bypass.compression) {
+                        // Disable NY compression at low intensity or when compression bypassed
+                        window.nyCompression.dry.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                        window.nyCompression.wet.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                        console.log('🎚️ NY Compression: disabled (intensity=' + effectiveIntensity + ')');
+                    } else {
+                        // Scale mix inversely with compressor ratio to prevent double-pumping
+                        const compRatioActual = window.compressor ? window.compressor.ratio.value : (comp.ratio || 2.0);
+                        const nyWetMax = 0.25; // Max 25% wet
+                        const nyWet = Math.max(0.05, nyWetMax * (1.0 - (compRatioActual - 1.5) / 4.0));
+                        window.nyCompression.dry.gain.setTargetAtTime(1.0 - nyWet * 0.3, ac.currentTime, 0.1);
+                        window.nyCompression.wet.gain.setTargetAtTime(nyWet, ac.currentTime, 0.1);
+                        console.log('🎚️ NY Compression: wet=' + nyWet.toFixed(3) + ' (ratio=' + compRatioActual.toFixed(1) + ')');
                     }
                 }
 
@@ -23534,22 +23687,21 @@
                 // 20. Brickwall Safety Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
                 // NOTE: This is the SECOND limiter (after look-ahead limiter).
                 // The look-ahead does the main limiting work — this is a SAFETY NET only.
-                // Using a gentler ratio and slightly lower ceiling to catch escapees transparently.
+                // Fixed -1.0 dBTP threshold (broadcast standard), ratio 20 (true brickwall),
+                // hard knee (0-1) since look-ahead handles musical limiting upstream.
                 if (window.limiter) {
                     const limiterSettings = {
-                        1: { threshold: -1.2, release: 0.20, knee: 6, attack: 0.003 },   // Gentle safety net
-                        2: { threshold: -1.0, release: 0.15, knee: 5, attack: 0.002 },   // Light safety net
-                        3: { threshold: -0.8, release: 0.10, knee: 4, attack: 0.001 },   // Balanced - catches look-ahead escapees
-                        4: { threshold: -0.5, release: 0.08, knee: 3, attack: 0.0005 },  // Aggressive - tighter
-                        5: { threshold: -0.3, release: 0.05, knee: 2, attack: 0.0002 }   // Maximum - true brickwall
+                        1: { release: 0.20, knee: 1.0, attack: 0.002 },   // Gentle safety net
+                        2: { release: 0.15, knee: 0.8, attack: 0.001 },   // Light safety net
+                        3: { release: 0.10, knee: 0.5, attack: 0.0008 },  // Balanced
+                        4: { release: 0.08, knee: 0.3, attack: 0.0005 },  // Aggressive
+                        5: { release: 0.05, knee: 0.0, attack: 0.0002 }   // Maximum - true brickwall
                     };
                     const limSet = limiterSettings[effectiveIntensity] || limiterSettings[3];
 
-                    // Safety limiter: ratio 12 (firm but not brickwall — look-ahead handles that)
-                    const limiterRatio = 12;
-
-                    window.limiter.threshold.setTargetAtTime(limSet.threshold, ac.currentTime, 0.1);
-                    window.limiter.ratio.setTargetAtTime(limiterRatio, ac.currentTime, 0.1);
+                    // True brickwall: ratio 20, fixed -1.0 dBTP all intensities
+                    window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
+                    window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
                     window.limiter.attack.setTargetAtTime(limSet.attack, ac.currentTime, 0.1);
                     window.limiter.release.setTargetAtTime(limSet.release, ac.currentTime, 0.1);
                     window.limiter.knee.setTargetAtTime(limSet.knee, ac.currentTime, 0.1);
@@ -23559,17 +23711,17 @@
                 updateStageProgress(19, 'Configuring look-ahead...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // 21. Look-Ahead Limiter - MASTERING GRADE (5ms look-ahead for zero overshoot)
-                // 5ms look-ahead allows limiter to "see" transients before they hit
-                // This enables truly transparent limiting without pumping artifacts
+                // 21. Look-Ahead Limiter - PRIMARY MASTERING LIMITER (5ms look-ahead)
+                // This is the PRIMARY limiter — does the musical limiting work transparently.
+                // At low intensity: gentle threshold, look-ahead does all work cleanly.
+                // At high intensity: lets more through for punchier brickwall action.
                 if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
-                    // Match main limiter but slightly lower to catch any escapees
                     const lookAheadThresholds = {
-                        1: -0.5,  // Subtle - safety margin
-                        2: -0.7,  // Light
-                        3: -1.0,  // Balanced - streaming standard
-                        4: -1.0,  // Aggressive - same ceiling, tighter limiting
-                        5: -1.0   // Maximum - brickwall at -1dBTP
+                        1: -1.5,  // Gentle — look-ahead does all the work
+                        2: -1.2,  // Light limiting
+                        3: -1.0,  // Balanced — streaming standard
+                        4: -0.8,  // Aggressive — lets more through to brickwall
+                        5: -0.5   // Maximum — brickwall handles most limiting
                     };
                     const laThreshold = lookAheadThresholds[effectiveIntensity] || -1.0;
                     window.lookAheadLimiter.setThreshold(laThreshold);
@@ -23691,76 +23843,68 @@
                 // targetLUFS is already set based on platform at line 15874
 
                 // ════════════════════════════════════════════════════════════════════════════
-                // GAIN ADJUSTMENT FOR LUFS TARGETING
-                // Calculate makeup gain to reach target LUFS
-                // Add compensation for processing chain losses (exciter, transient, saturation)
+                // TWO-PASS LUFS TARGETING — Measure actual chain output, then correct
+                // PASS 1: Render audio through key gain-affecting stages at unity makeup
+                // PASS 2: Calculate exact correction to hit target LUFS
                 // ════════════════════════════════════════════════════════════════════════════
 
-                // ════════════════════════════════════════════════════════════════════════════
-                // STABLE LUFS TARGETING - Consistent loudness regardless of intensity
-                // Intensity affects CHARACTER (compression, EQ), NOT final loudness
-                // Chain compensation accounts for net gain/loss from processing stages
-                // ════════════════════════════════════════════════════════════════════════════
-                // Chain compensation: the processing chain (compression, multiband, limiting)
-                // NET REMOVES gain. EQ boosts and exciter add a bit back, but
-                // compressor + multiband + IRC limiter typically eat 2-3 dB of RMS.
-                const chainCompensationDB = 6.0;
-                const safetyMarginDB = 0.0; // Limiter ceiling at -1 dBTP handles headroom
-                let lufsGainNeededDB = targetLUFS - currentLUFS + chainCompensationDB - safetyMarginDB;
+                // Gather current chain parameters for offline measurement
+                const chainParams = {
+                    eqGains: aiProfile ? aiProfile.eqDeltas : {},
+                    compThreshold: window.compressor ? window.compressor.threshold.value : (comp.threshold || -20),
+                    compKnee: comp.knee || 8,
+                    compRatio: window.compressor ? window.compressor.ratio.value : (comp.ratio || 2.0),
+                    compAttack: comp.attack || 0.015,
+                    compRelease: comp.release || 0.18,
+                    limiterThreshold: -1.0,
+                    limiterKnee: 1.0
+                };
 
-                // LUFS targeting ALWAYS applies at full strength — this is a loudness
-                // standard, not a character effect. The track must hit target LUFS.
-                // (aiScale only gates character effects like EQ, compression, warmth)
-
-                // ════════════════════════════════════════════════════════════════════════════
-                // PEAK PROTECTION - Professional transparent limiting
-                // Max 1-2 dB of limiting for transparent mastering
-                // Bass peaks get clipped more than mids = "tinny" sound if over-limited
-                // ════════════════════════════════════════════════════════════════════════════
+                let correctionDB;
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
-                const peakTargetBeforeLimiter = 6.0; // Allow limiter to do up to 6 dB of work (designed for transparent limiting)
-                const maxPeakSafeGainDB = peakTargetBeforeLimiter - originalPeakDB;
 
-                let gainAdjustmentDB = lufsGainNeededDB;
-                let peakProtectionApplied = false;
+                // PASS 1: measure chain output at unity makeup gain
+                const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
-                // Peak protection: cap gain so peaks don't exceed 0 dBFS before limiter
-                // This keeps limiting to 1-2 dB max (limiter ceiling at -1 dBTP)
-                if (lufsGainNeededDB > 0) {
-                    const expectedPeakAfterGain = originalPeakDB + lufsGainNeededDB;
-                    if (expectedPeakAfterGain > peakTargetBeforeLimiter) {
-                        gainAdjustmentDB = maxPeakSafeGainDB;
-                        peakProtectionApplied = true;
+                if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
+                    // PASS 2: calculate exact correction
+                    correctionDB = targetLUFS - pass1.integratedLUFS;
+
+                    // Peak safety: don't push peaks beyond +3 dB above limiter threshold
+                    if (pass1.truePeakDB + correctionDB > 3.0) {
+                        correctionDB = 3.0 - pass1.truePeakDB;
                     }
+                    correctionDB = Math.max(-6, Math.min(12, correctionDB));
+
+                    console.log(`🎯 Two-pass LUFS: measured=${pass1.integratedLUFS.toFixed(1)} target=${targetLUFS} correction=${correctionDB.toFixed(1)} truePeak=${pass1.truePeakDB.toFixed(1)}`);
+                } else {
+                    // Fallback: use input LUFS with conservative compensation
+                    correctionDB = targetLUFS - currentLUFS + 4.0;
+                    correctionDB = Math.max(-3, Math.min(12, correctionDB));
+                    console.log(`🎯 LUFS Fallback: input=${currentLUFS.toFixed(1)} target=${targetLUFS} correction=${correctionDB.toFixed(1)}`);
                 }
 
-                // Clamp range (-3 to +8 dB) — allow enough makeup gain to hit LUFS target
-                const clampedGainDB = Math.max(-3, Math.min(14, gainAdjustmentDB));
+                const clampedGainDB = correctionDB;
                 const newGainLinear = Math.pow(10, clampedGainDB / 20);
 
-                // Apply gain to MAKEUP GAIN (before limiter) - NOT master gain
+                // Apply to live makeup gain
                 const mkGain = window.makeupGain || makeupGain;
                 if (mkGain && ac) {
                     mkGain.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
 
-                    // CRITICAL: Store original makeup gain value for EQ preset compensation
-                    // This allows the EQ compensation system to maintain consistent LUFS
                     window.originalMakeupGainValue = newGainLinear;
                     window.appliedMakeupGainLinear = newGainLinear;
                     window.appliedMakeupGainDB = clampedGainDB;
-
                 }
 
-                // Debug: LUFS targeting chain
-                console.log(`🎯 LUFS Targeting: input=${currentLUFS.toFixed(1)} target=${targetLUFS} compensation=${chainCompensationDB} needed=${lufsGainNeededDB.toFixed(1)} clamped=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)} peak=${originalPeakDB} peakProtection=${peakProtectionApplied}`);
+                console.log(`🎯 LUFS Targeting: target=${targetLUFS} correction=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)}`);
 
                 // Store for LUFS preset switching and debugging
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
                     targetLUFS: targetLUFS,
                     originalPeakDB: originalPeakDB,
-                    lufsGainNeededDB: lufsGainNeededDB,
-                    peakProtectionApplied: peakProtectionApplied,
+                    twoPassMeasured: pass1 ? pass1.integratedLUFS : null,
                     makeupGainDB: clampedGainDB
                 };
 
