@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.4.3)
+ * Mastering Math Validation Harness (v7.4.5)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
 
 // ═══════════════════════════════════════════════════════════════════
-// Genre reference targets (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.3)
+// Genre reference targets (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 const GENRE_REFERENCE_TARGETS = {
     'pop':        { slopePerOctave: -4.5, spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -29 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
@@ -24,21 +24,21 @@ const GENRE_REFERENCE_TARGETS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// EQ curves (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.3)
+// EQ curves (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 const _eqCurves = {
-    'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 2.0, high: 1.5, air: 1.0 },
-    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.5, high: 2.5, air: 2.0 },
-    'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 3.0, high: 2.0, air: 1.5 },
-    'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 2.5, high: 3.0, air: 1.5 },
-    'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.5, high: 1.0, air: 0.5 },
-    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 1.5, air: 1.5 },
-    'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
-    'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 1.0, high: 0.5, air: 0.5 },
-    'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.5, high: 1.5, air: 1.0 },
-    'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 3.0, high: 2.5, air: 1.5 },
-    'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.5, air: 1.0 },
-    'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+    'hiphop':     { sub: 3.0, bass: 1.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
+    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.0, air: 2.0 },
+    'pop':        { sub: 0.5, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.8, high: 1.5, air: 1.5 },
+    'rock':       { sub: 1.0, bass: 1.5, lowmid: -1.5, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
+    'rnb':        { sub: 2.0, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 0.8, air: 0.5 },
+    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 0.8, highmid: 1.5, high: 1.2, air: 1.5 },
+    'jazz':       { sub: 0.5, bass: 0.8, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 0.8, air: 0.5 },
+    'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
+    'metal':      { sub: 1.5, bass: 1.5, lowmid: -1.5, mid: 1.2, highmid: 2.0, high: 1.5, air: 1.0 },
+    'country':    { sub: 0.5, bass: 1.2, lowmid: -1.0, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
+    'latin':      { sub: 2.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
+    'lofi':       { sub: 1.5, bass: 1.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -56,11 +56,11 @@ const TEST_ANALYSIS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Reproduce generateAICorrections math (v7.4.4)
+// Reproduce generateAICorrections math (v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 function generateAICorrections(analysis, genre) {
     const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
-    const correctionStrength = 0.30;
+    const correctionStrength = 0.22;
 
     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
     const bandCenterFreqs = [40, 100, 300, 1000, 3500, 8000, 14000];
@@ -95,18 +95,18 @@ function generateAICorrections(analysis, genre) {
         const band = bandKeys[i];
         const tiltFactor = (bandOctaves[i] - octMean) / (bandOctaves[bandOctaves.length - 1] - bandOctaves[0]);
         const tiltDelta = tiltCorrection * tiltFactor * 2;
-        const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.7;
+        const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.5;
         let delta = tiltDelta + anomalyDelta;
-        delta = Math.max(-3, Math.min(3, delta));
+        delta = Math.max(-2.5, Math.min(2.5, delta));
         eqDeltas[band] = Math.round(delta * 100) / 100;
         totalEQCorrection += Math.abs(delta);
     }
-    if (totalEQCorrection > 8) {
-        const scale = 8 / totalEQCorrection;
+    if (totalEQCorrection > 6) {
+        const scale = 6 / totalEQCorrection;
         for (const band of bandKeys) {
             eqDeltas[band] = Math.round(eqDeltas[band] * scale * 100) / 100;
         }
-        totalEQCorrection = 8;
+        totalEQCorrection = 6;
     }
 
     // Dynamics
@@ -116,7 +116,7 @@ function generateAICorrections(analysis, genre) {
     const refWidth = ref.stereo.width || 0.45;
     const widthDiff = analysis.estimatedWidth - refWidth;
 
-    // Processing scale (v7.4.3 — wider bands for higher totalEQ range)
+    // Processing scale (v7.4.5 — wider bands for higher totalEQ range)
     let processingScale;
     if (totalEQCorrection < 1.0) processingScale = 0.3;
     else if (totalEQCorrection < 2.5) processingScale = 0.5;
@@ -124,7 +124,7 @@ function generateAICorrections(analysis, genre) {
     else if (totalEQCorrection < 6.0) processingScale = 0.85;
     else processingScale = 1.0;
 
-    // Stage bypass (v7.4.3)
+    // Stage bypass (v7.4.5)
     const stageBypass = {
         eq:            totalEQCorrection < 0.5,
         dynamicEQ:     analysis.resonances.length <= 1 && !analysis.sibilanceExcessive
@@ -155,7 +155,7 @@ function generateAICorrections(analysis, genre) {
         }
     }
 
-    // Stage intensity (v7.4.3)
+    // Stage intensity (v7.4.5)
     const stageIntensity = {
         eq:            Math.min(1.0, totalEQCorrection / 3.0),
         dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
@@ -177,7 +177,7 @@ function generateAICorrections(analysis, genre) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute LUFS correction (v7.4.3)
+// Compute LUFS correction (v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS) {
     const chainLossCompensation = { 1: 1.5, 2: 2.0, 3: 2.5, 4: 3.0, 5: 3.5 };
@@ -195,18 +195,18 @@ function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLU
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute NY compression wet mix (v7.4.3)
+// Compute NY compression wet mix (v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 function computeNYWet(intensity, compRatioTarget, bypass) {
     if (intensity <= 2 || bypass) return 0;
-    const nyBaseMix = { 3: 0.04, 4: 0.06, 5: 0.10 };
-    const nyBase = nyBaseMix[intensity] || 0.04;
+    const nyBaseMix = { 3: 0.02, 4: 0.03, 5: 0.05 };
+    const nyBase = nyBaseMix[intensity] || 0.02;
     const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
     return nyBase * nyRatioScale;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute compressor threshold (v7.4.3)
+// Compute compressor threshold (v7.4.5)
 // ═══════════════════════════════════════════════════════════════════
 function computeCompThreshold(baseThreshold, intensity, compScale, aiThresholdOffset) {
     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
@@ -244,7 +244,7 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.4.4)');
+console.log('Mastering Math Validation (v7.4.5)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
@@ -258,9 +258,9 @@ for (const genre of GENRES) {
 
     // EQ checks — ±3 dB per band (v7.4.3 professional range)
     for (const band of bandKeys) {
-        check(`${genre}:eq:${band}`, result.eqDeltas[band], -3.0, 3.0);
+        check(`${genre}:eq:${band}`, result.eqDeltas[band], -2.5, 2.5);
     }
-    check(`${genre}:totalEQ`, result.totalEQCorrection, 0, 8.0);
+    check(`${genre}:totalEQ`, result.totalEQCorrection, 0, 6.0);
 
     // Dynamics stage bypass count
     const dynamicsStages = ['compression', 'multibandComp', 'dynamicEQ', 'transient'];
@@ -286,7 +286,7 @@ for (const genre of GENRES) {
     for (const intensity of [3, 4, 5]) {
         const compRatio = 2.5; // Typical mastering ratio
         const nyWet = computeNYWet(intensity, compRatio, result.stageBypass.compression);
-        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.10);
+        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.05);
     }
 
     // Compressor threshold checks
@@ -304,8 +304,8 @@ for (const genre of GENRES) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Cross-genre differentiation check (v7.4.3)
-// Signature bands should differ by >= 1.5 dB between contrasting genres
+// Cross-genre differentiation check (v7.4.5)
+// Signature bands should differ by >= 0.8 dB between contrasting genres (tighter values)
 // ═══════════════════════════════════════════════════════════════════
 console.log('--- CROSS-GENRE DIFFERENTIATION ---');
 const INTENSITY_MULT = 0.75; // Intensity 3 multiplier
@@ -323,7 +323,7 @@ for (const dc of diffChecks) {
     const v1 = _eqCurves[dc.g1][dc.band] * INTENSITY_MULT;
     const v2 = _eqCurves[dc.g2][dc.band] * INTENSITY_MULT;
     const diff = Math.abs(v1 - v2);
-    const pass = check(`diff:${dc.name}`, diff, 1.5, 10);
+    const pass = check(`diff:${dc.name}`, diff, 0.8, 10);
     if (!pass) {
         console.log(`    ${dc.g1}=${v1.toFixed(2)} dB, ${dc.g2}=${v2.toFixed(2)} dB, diff=${diff.toFixed(2)} dB`);
     } else {
