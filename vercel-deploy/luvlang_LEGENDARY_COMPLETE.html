@@ -12990,7 +12990,7 @@
         function generateAICorrections(analysis, genre) {
             const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
             // Mastering-grade correction: audible but controlled nudges
-            const correctionStrength = 0.22; // v7.4.5: pulled back for restraint (was 0.30)
+            const correctionStrength = 0.26; // v7.4.6: moderate (between 0.22 and 0.30)
             const issues = [];
 
             // ═══════════════════════════════════════════════════════════════
@@ -13036,19 +13036,19 @@
                 const tiltFactor = (bandOctaves[i] - octMean) / (bandOctaves[bandOctaves.length - 1] - bandOctaves[0]);
                 const tiltDelta = tiltCorrection * tiltFactor * 2;
                 // Anomaly component: per-band shape difference (very gentle)
-                const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.5;
+                const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.6;
                 let delta = tiltDelta + anomalyDelta;
                 delta = Math.max(-2.5, Math.min(2.5, delta)); // v7.4.5: tighter ±2.5 dB per band
                 eqDeltas[band] = Math.round(delta * 100) / 100;
                 totalEQCorrection += Math.abs(delta);
             }
-            // v7.4.5: tighter total clamp — 6 dB (7 bands × ±2.5 dB max)
-            if (totalEQCorrection > 6) {
-                const scale = 6 / totalEQCorrection;
+            // v7.4.6: moderate total clamp — 7 dB (7 bands × ±2.5 dB max)
+            if (totalEQCorrection > 7) {
+                const scale = 7 / totalEQCorrection;
                 for (const band of bandKeys) {
                     eqDeltas[band] = Math.round(eqDeltas[band] * scale * 100) / 100;
                 }
-                totalEQCorrection = 6;
+                totalEQCorrection = 7;
             }
 
             console.log('🤖 AI Slope Debug — track:', trackSlope.toFixed(2), 'dB/oct, ref:', refSlope, 'dB/oct, tilt correction:', tiltCorrection.toFixed(2), 'dB');
@@ -23291,24 +23291,24 @@
                 updateStageProgress(5, 'Applying dynamic EQ processing...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // Genre-specific EQ curves - PROFESSIONAL MASTERING GRADE (v7.4.5 "Restraint")
-                // Calibrated from professional mastering references (0.5-2.5 dB per band, highmid ≤2.0)
-                // At intensity 3 (0.75x multiplier), effective range is 0.375-1.875 dB — professional standard
+                // Genre-specific EQ curves - PROFESSIONAL MASTERING GRADE (v7.4.6)
+                // Surgical highmid reduction (≤2.0 dB) to fix walkie-talkie; bass/sub/high restored for body
+                // At intensity 3 (0.75x multiplier), effective range is 0.375-2.625 dB
                 // window.eqCurves is defined in the guided-experience script block
                 // so both runActualMastering and applyIntensityToChain use the same source of truth
                 const _eqCurves = window.eqCurves || {
-                    'hiphop':     { sub: 3.0, bass: 1.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
-                    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.0, air: 2.0 },
-                    'pop':        { sub: 0.5, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.8, high: 1.5, air: 1.5 },
-                    'rock':       { sub: 1.0, bass: 1.5, lowmid: -1.5, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
-                    'rnb':        { sub: 2.0, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 0.8, air: 0.5 },
-                    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 0.8, highmid: 1.5, high: 1.2, air: 1.5 },
-                    'jazz':       { sub: 0.5, bass: 0.8, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 0.8, air: 0.5 },
+                    'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+                    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+                    'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+                    'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+                    'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+                    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+                    'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
                     'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
-                    'metal':      { sub: 1.5, bass: 1.5, lowmid: -1.5, mid: 1.2, highmid: 2.0, high: 1.5, air: 1.0 },
-                    'country':    { sub: 0.5, bass: 1.2, lowmid: -1.0, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
-                    'latin':      { sub: 2.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
-                    'lofi':       { sub: 1.5, bass: 1.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+                    'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+                    'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+                    'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+                    'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
                 };
                 const eq = _eqCurves[genre] || _eqCurves['pop'];
 
@@ -23355,11 +23355,11 @@
                             5: { low: -20, mid: -18, high: -22 }
                         };
                         const dynEQRatios = {
-                            1: { low: 1.1, mid: 1.08, high: 1.1 },
-                            2: { low: 1.15, mid: 1.12, high: 1.3 },
-                            3: { low: 1.2, mid: 1.15, high: 1.5 },
-                            4: { low: 1.3, mid: 1.3, high: 1.8 },
-                            5: { low: 1.5, mid: 1.5, high: 2.2 }
+                            1: { low: 1.1, mid: 1.1, high: 1.15 },
+                            2: { low: 1.15, mid: 1.2, high: 1.4 },
+                            3: { low: 1.25, mid: 1.3, high: 1.6 },
+                            4: { low: 1.4, mid: 1.5, high: 2.0 },
+                            5: { low: 1.6, mid: 1.8, high: 2.5 }
                         };
                         const dynThresh = dynEQThresholds[effectiveIntensity] || dynEQThresholds[3];
                         const dynRatios = dynEQRatios[effectiveIntensity] || dynEQRatios[3];
@@ -23487,8 +23487,8 @@
                         const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
                         const compRatioTarget = comp.ratio * compRatioMult * aiRatioMult;
                         // Conservative wet mix: 5-15% range (mastering-grade parallel compression)
-                        const nyBaseMix = { 3: 0.02, 4: 0.03, 5: 0.05 }; // v7.4.5: halved — 2-5% wet max
-                        const nyBase = nyBaseMix[effectiveIntensity] || 0.03;
+                        const nyBaseMix = { 3: 0.03, 4: 0.05, 5: 0.08 }; // v7.4.6: moderate — 3-8% wet
+                        const nyBase = nyBaseMix[effectiveIntensity] || 0.04;
                         // Reduce when compressor ratio is high (already compressing enough)
                         const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
                         const nyWet = nyBase * nyRatioScale;
@@ -23628,8 +23628,8 @@
                 // 15. Harmonic Exciter - Intensity-adaptive harmonic enhancement
                 if (window.harmonicExciter && window.harmonicExciter.setAmount) {
                     if (!bypass.exciter) {
-                        const exciteAmounts = { 1: 2, 2: 4, 3: 6, 4: 9, 5: 12 };
-                        const exciteAmount = exciteAmounts[effectiveIntensity] || 6;
+                        const exciteAmounts = { 1: 3, 2: 6, 3: 8, 4: 12, 5: 18 };
+                        const exciteAmount = exciteAmounts[effectiveIntensity] || 8;
                         window.harmonicExciter.setAmount(exciteAmount);
                     } else {
                         // Bypass: disable exciter
@@ -23675,11 +23675,11 @@
                     if (!bypass.msProcessing) {
                         const msScale = stageInt.msProcessing !== undefined ? stageInt.msProcessing : 1.0;
                         const msSettings = {
-                            1: { midPresence: 0.1, sideAir: 0.2 },
-                            2: { midPresence: 0.15, sideAir: 0.35 },
-                            3: { midPresence: 0.2, sideAir: 0.5 },
-                            4: { midPresence: 0.35, sideAir: 0.75 },
-                            5: { midPresence: 0.5, sideAir: 1.0 }
+                            1: { midPresence: 0.15, sideAir: 0.25 },
+                            2: { midPresence: 0.25, sideAir: 0.4 },
+                            3: { midPresence: 0.35, sideAir: 0.6 },
+                            4: { midPresence: 0.5, sideAir: 0.85 },
+                            5: { midPresence: 0.7, sideAir: 1.1 }
                         };
                         const msSet = msSettings[effectiveIntensity] || msSettings[3];
                         if (aiProfile && aiProfile.msDeltas) {
@@ -26098,22 +26098,22 @@
 
         let selectedGuideGenre = null;
 
-        // Professional mastering EQ — calibrated from real mastering references (v7.4.5 "Restraint")
-        // Working range: 0.5-2.5 dB per band, highmid ≤2.0 — at intensity 3 (×0.75 = 0.375-1.875 dB)
+        // Professional mastering EQ — v7.4.6: surgical highmid fix, full body restored
+        // Highmid ≤2.0 dB (walkie-talkie fix), bass/sub/high at full v7.4.3 levels for body
         // On window so both script blocks (mastering + guided experience) can access it
         window.eqCurves = {
-            'hiphop':     { sub: 3.0, bass: 1.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
-            'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.0, air: 2.0 },
-            'pop':        { sub: 0.5, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.8, high: 1.5, air: 1.5 },
-            'rock':       { sub: 1.0, bass: 1.5, lowmid: -1.5, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
-            'rnb':        { sub: 2.0, bass: 1.2, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 0.8, air: 0.5 },
-            'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 0.8, highmid: 1.5, high: 1.2, air: 1.5 },
-            'jazz':       { sub: 0.5, bass: 0.8, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 0.8, air: 0.5 },
+            'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+            'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+            'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+            'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+            'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+            'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
             'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
-            'metal':      { sub: 1.5, bass: 1.5, lowmid: -1.5, mid: 1.2, highmid: 2.0, high: 1.5, air: 1.0 },
-            'country':    { sub: 0.5, bass: 1.2, lowmid: -1.0, mid: 0.8, highmid: 1.8, high: 2.0, air: 1.5 },
-            'latin':      { sub: 2.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.2, air: 1.0 },
-            'lofi':       { sub: 1.5, bass: 1.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+            'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+            'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+            'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+            'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
         };
 
         // Genre presets - WORLD-CLASS MASTERING STANDARDS
@@ -26122,7 +26122,7 @@
         const genrePresets = {
             hiphop: {
                 name: 'Hip-Hop',
-                eq: { sub: 3.0, bass: 1.5, lowMid: -2.5, mid: 0.5, highMid: 1.5, high: 1.2, air: 1.0 },
+                eq: { sub: 3.5, bass: 2.0, lowMid: -2.5, mid: 0.5, highMid: 1.5, high: 1.5, air: 1.0 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.15 },
                 stereoWidth: 1.12,
@@ -26131,7 +26131,7 @@
             },
             electronic: {
                 name: 'Electronic / EDM',
-                eq: { sub: 2.5, bass: 1.5, lowMid: -2.0, mid: -0.5, highMid: 1.2, high: 2.0, air: 2.0 },
+                eq: { sub: 2.5, bass: 1.5, lowMid: -2.0, mid: -0.5, highMid: 1.2, high: 2.5, air: 2.0 },
                 compression: { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.08, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.10 },
                 stereoWidth: 1.25,
@@ -26140,7 +26140,7 @@
             },
             pop: {
                 name: 'Pop',
-                eq: { sub: 0.5, bass: 1.2, lowMid: -1.5, mid: 0.5, highMid: 1.8, high: 1.5, air: 1.5 },
+                eq: { sub: 0.5, bass: 1.5, lowMid: -1.5, mid: 0.5, highMid: 2.0, high: 2.0, air: 1.5 },
                 compression: { threshold: -20, ratio: 2.0, attack: 0.012, release: 0.18, knee: 8 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.20 },
                 stereoWidth: 1.15,
@@ -26149,7 +26149,7 @@
             },
             rock: {
                 name: 'Rock',
-                eq: { sub: 1.0, bass: 1.5, lowMid: -1.5, mid: 0.8, highMid: 1.8, high: 2.0, air: 1.5 },
+                eq: { sub: 1.0, bass: 2.0, lowMid: -1.5, mid: 1.0, highMid: 1.8, high: 2.5, air: 1.5 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.006, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.12 },
                 stereoWidth: 1.08,
@@ -26158,7 +26158,7 @@
             },
             rnb: {
                 name: 'R&B / Soul',
-                eq: { sub: 2.0, bass: 1.2, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 0.8, air: 0.5 },
+                eq: { sub: 2.0, bass: 1.5, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 1.0, air: 0.5 },
                 compression: { threshold: -22, ratio: 1.8, attack: 0.018, release: 0.22, knee: 10 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.25 },
                 stereoWidth: 1.18,
@@ -26167,7 +26167,7 @@
             },
             acoustic: {
                 name: 'Acoustic / Folk',
-                eq: { sub: 0.5, bass: 1.0, lowMid: -1.0, mid: 0.8, highMid: 1.5, high: 1.2, air: 1.5 },
+                eq: { sub: 0.5, bass: 1.0, lowMid: -1.0, mid: 1.0, highMid: 1.5, high: 1.5, air: 1.5 },
                 compression: { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.05,
@@ -26176,7 +26176,7 @@
             },
             jazz: {
                 name: 'Jazz',
-                eq: { sub: 0.5, bass: 0.8, lowMid: -0.5, mid: 0.5, highMid: 1.2, high: 0.8, air: 0.5 },
+                eq: { sub: 0.5, bass: 1.0, lowMid: -0.5, mid: 0.5, highMid: 1.2, high: 1.0, air: 0.5 },
                 compression: { threshold: -28, ratio: 1.3, attack: 0.030, release: 0.35, knee: 15 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.35 },
                 stereoWidth: 1.03,
@@ -26194,7 +26194,7 @@
             },
             metal: {
                 name: 'Metal / Hard Rock',
-                eq: { sub: 1.5, bass: 1.5, lowMid: -1.5, mid: 1.2, highMid: 2.0, high: 1.5, air: 1.0 },
+                eq: { sub: 1.5, bass: 2.0, lowMid: -1.5, mid: 1.5, highMid: 2.0, high: 1.5, air: 1.0 },
                 compression: { threshold: -16, ratio: 3.0, attack: 0.004, release: 0.10, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0002, release: 0.08 },
                 stereoWidth: 1.1,
@@ -26203,7 +26203,7 @@
             },
             country: {
                 name: 'Country',
-                eq: { sub: 0.5, bass: 1.2, lowMid: -1.0, mid: 0.8, highMid: 1.8, high: 2.0, air: 1.5 },
+                eq: { sub: 0.5, bass: 1.5, lowMid: -1.0, mid: 1.0, highMid: 2.0, high: 2.5, air: 1.5 },
                 compression: { threshold: -22, ratio: 2.0, attack: 0.015, release: 0.20, knee: 10 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.20 },
                 stereoWidth: 1.1,
@@ -26212,7 +26212,7 @@
             },
             latin: {
                 name: 'Latin / Reggaeton',
-                eq: { sub: 2.5, bass: 1.5, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 1.2, air: 1.0 },
+                eq: { sub: 2.5, bass: 2.0, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 1.5, air: 1.0 },
                 compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0004, release: 0.12 },
                 stereoWidth: 1.15,
@@ -26221,7 +26221,7 @@
             },
             lofi: {
                 name: 'Lo-Fi / Chill',
-                eq: { sub: 1.5, bass: 1.5, lowMid: 1.0, mid: -0.5, highMid: -1.0, high: -2.0, air: -3.0 },
+                eq: { sub: 1.5, bass: 2.0, lowMid: 1.0, mid: -0.5, highMid: -1.0, high: -2.0, air: -3.0 },
                 compression: { threshold: -24, ratio: 2.0, attack: 0.020, release: 0.25, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.08,
