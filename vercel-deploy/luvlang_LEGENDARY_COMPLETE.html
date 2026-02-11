@@ -19698,7 +19698,7 @@
                 updateProgress(60, '🔊 Targeting Loudness', 'Optimizing for ' + targetLUFS + ' LUFS (' + platformName + ' standard)...');
                 await new Promise(r => setTimeout(r, 700));
 
-                updateProgress(68, '🛡️ Applying True Peak Limiter', 'Bob Ludwig-style limiting at -1.0 dBTP ceiling...');
+                updateProgress(68, '🛡️ Applying True Peak Limiter', 'Bob Ludwig-style limiting at -0.5 dBTP ceiling...');
                 await new Promise(r => setTimeout(r, 600));
 
                 updateProgress(75, '🎯 Fine-Tuning Output', 'Applying broadcast-grade final polish...');
@@ -19738,8 +19738,8 @@
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
                 // Calculate maximum gain that won't cause clipping
-                // BOB LUDWIG APPROACH: Let limiter handle peaks, target -1.5 dBTP before limiting
-                const peakTargetBeforeLimiter = -1.5;  // Trust the limiter to catch peaks
+                // v7.5.0: Let limiters work — look-ahead at -1.5 dBTP + brickwall at -0.5 dBTP
+                const peakTargetBeforeLimiter = 3.0;  // Allow peaks up to +3 dBTP — limiters catch them
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS gain and peak-based gain
@@ -23882,15 +23882,16 @@
                 // ════════════════════════════════════════════════════════════════════════════
 
                 // Gather current chain parameters for offline measurement
+                // v7.5.0: Sync limiter settings with actual brickwall (-0.5 dBTP, hard knee)
                 const chainParams = {
                     eqGains: aiProfile ? aiProfile.eqDeltas : {},
-                    compThreshold: window.compressor ? window.compressor.threshold.value : (comp.threshold || -20),
+                    compThreshold: window.compressor ? window.compressor.threshold.value : (comp.threshold || -16),
                     compKnee: comp.knee || 8,
-                    compRatio: window.compressor ? window.compressor.ratio.value : (comp.ratio || 2.0),
-                    compAttack: comp.attack || 0.015,
+                    compRatio: window.compressor ? window.compressor.ratio.value : (comp.ratio || 1.8),
+                    compAttack: comp.attack || 0.020,
                     compRelease: comp.release || 0.18,
-                    limiterThreshold: -1.0,
-                    limiterKnee: 1.0
+                    limiterThreshold: -0.5,
+                    limiterKnee: 0
                 };
 
                 let correctionDB;
@@ -23917,9 +23918,10 @@
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
 
-                    // Peak safety: don't push peaks beyond +3 dB above limiter threshold
-                    if (pass1.truePeakDB + correctionDB > 3.0) {
-                        correctionDB = 3.0 - pass1.truePeakDB;
+                    // Peak safety: don't push peaks beyond +6 dB above limiter threshold
+                    // v7.5.0: Relaxed from +3 — brickwall at -0.5 dBTP catches everything
+                    if (pass1.truePeakDB + correctionDB > 6.0) {
+                        correctionDB = 6.0 - pass1.truePeakDB;
                     }
                     correctionDB = Math.max(-6, Math.min(12, correctionDB));
 
