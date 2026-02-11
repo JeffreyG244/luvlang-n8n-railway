@@ -15185,8 +15185,8 @@
                 bands.forEach(band => {
                     const from = fromEQ[band] || 0;
                     const to = toEQ[band] || 0;
-                    // Clamp target to mastering-safe ±1.5 dB range
-                    const clampedTo = Math.max(-1.5, Math.min(1.5, to));
+                    // Clamp target to professional mastering range ±3.5 dB
+                    const clampedTo = Math.max(-3.5, Math.min(3.5, to));
                     const current = from + (clampedTo - from) * eased;
 
                     // Apply to audio nodes
@@ -23220,18 +23220,21 @@
                 };
                 let intensityMult = intensityMultipliers[intensity] || 0.75;
 
-                // AI PROFILE — per-stage bypass and intensity already handle adaptation
-                // aiScale is NOT applied to intensityMult — that double-reduces user intensity
-                // The per-stage bypass + stageIntensity system provides granular AI control
+                // AI PROFILE — processingScale modulates intensity for already-mastered tracks
                 const aiProfile = window.aiTrackProfile;
+                const aiScale = (aiProfile && aiProfile.processingScale !== undefined) ? aiProfile.processingScale : 1.0;
 
                 // PER-STAGE BYPASS FLAGS — skip stages the track doesn't need
                 const bypass = (aiProfile && aiProfile.stageBypass) ? aiProfile.stageBypass : {};
                 const stageInt = (aiProfile && aiProfile.stageIntensity) ? aiProfile.stageIntensity : {};
                 const aiCrestDiff = (aiProfile && aiProfile.crestDiff) || 0;
 
-                // User's chosen intensity is respected directly — no aiScale override
+                // Apply processingScale to intensity — already-mastered tracks get reduced processing
+                // processingScale: 0.3 (already mastered) → 1.0 (raw mix needs full work)
+                intensityMult *= aiScale;
+                window._processingScale = aiScale; // Store for applyIntensityToChain
                 const effectiveIntensity = intensity;
+                console.log(`🤖 Processing scale applied: aiScale=${aiScale.toFixed(2)}, effectiveIntensityMult=${intensityMult.toFixed(3)}`);
 
                 // Headroom compensation — baked into LUFS correction instead of modifying masterGain.
                 // Modifying masterGain AFTER LUFS targeting caused 0.5-1.0 dB quieter output.
@@ -26280,10 +26283,10 @@
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    const clamped = Math.max(-1.5, Math.min(1.5, eqVals[i] * previewBoost));
+                    const clamped = Math.max(-3.5, Math.min(3.5, eqVals[i] * previewBoost));
                     f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-1.5, Math.min(1.5, v * previewBoost)).toFixed(1) + 'dB').join(', ')}) (clamped ±1.5dB)`);
+                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-3.5, Math.min(3.5, v * previewBoost)).toFixed(1) + 'dB').join(', ')})`);
             }
 
             // Clear any previous sub-genre override — just the genre EQ is used
@@ -26567,6 +26570,9 @@
             const mult = intensityMultipliers[level] || intensityMultipliers[3];
             const now = ac.currentTime;
 
+            // Apply processingScale — already-mastered tracks get reduced processing
+            const aiScale = window._processingScale || 1.0;
+
             // Apply to EQ — uses eqCurves (same source as mastering) + AI deltas + sub-genre override
             const genre = window.selectedPreMasterGenre || 'pop';
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
@@ -26579,36 +26585,38 @@
                 if (!f) return;
                 const band = bandKeys[i];
                 const baseVal = subEQ ? subEQ[i] : (eq[band] + (aiEQ[band] || 0));
-                f.gain.setTargetAtTime(baseVal * mult.eq, now, 0.1);
+                f.gain.setTargetAtTime(baseVal * mult.eq * aiScale, now, 0.1);
             });
 
-            // Apply to compressor (genre-specific settings scaled by intensity)
+            // Apply to compressor (genre-specific settings scaled by intensity × processingScale)
             const activePreset = genrePresets[genre];
             if (window.compressor) {
                 const compPreset = activePreset.compression || { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 };
-                window.compressor.ratio.setTargetAtTime(compPreset.ratio * mult.comp, now, 0.1);
+                window.compressor.ratio.setTargetAtTime(1 + (compPreset.ratio - 1) * mult.comp * aiScale, now, 0.1);
                 window.compressor.threshold.setTargetAtTime(compPreset.threshold, now, 0.1);
                 window.compressor.attack.setTargetAtTime(compPreset.attack, now, 0.1);
                 window.compressor.release.setTargetAtTime(compPreset.release, now, 0.1);
                 window.compressor.knee.setTargetAtTime(compPreset.knee, now, 0.1);
             }
 
-            // Apply to transient shaper
+            // Apply to transient shaper (scaled by processingScale)
             if (window.transientControls) {
-                window.transientControls.attack.gain.setTargetAtTime(0.15 * mult.transient, now, 0.1);
-                window.transientControls.sustain.gain.setTargetAtTime(0.15 * mult.transient, now, 0.1);
-                window.transientControls.dry.gain.setTargetAtTime(1 - (0.3 * mult.transient), now, 0.1);
+                const tMult = mult.transient * aiScale;
+                window.transientControls.attack.gain.setTargetAtTime(0.15 * tMult, now, 0.1);
+                window.transientControls.sustain.gain.setTargetAtTime(0.15 * tMult, now, 0.1);
+                window.transientControls.dry.gain.setTargetAtTime(1 - (0.3 * tMult), now, 0.1);
             }
 
-            // Apply to stereo width
+            // Apply to stereo width (scaled by processingScale)
             if (window.stereoWidthGain) {
-                window.stereoWidthGain.gain.setTargetAtTime(1 + (0.3 * mult.width), now, 0.1);
+                window.stereoWidthGain.gain.setTargetAtTime(1 + (0.3 * mult.width * aiScale), now, 0.1);
             }
 
-            // Apply to exciter
+            // Apply to exciter (scaled by processingScale)
             if (window.exciterControls) {
-                window.exciterControls.wet.gain.setTargetAtTime(mult.exciter * 0.3, now, 0.1);
-                window.exciterControls.dry.gain.setTargetAtTime(1 - (mult.exciter * 0.3), now, 0.1);
+                const eMult = mult.exciter * aiScale;
+                window.exciterControls.wet.gain.setTargetAtTime(eMult * 0.3, now, 0.1);
+                window.exciterControls.dry.gain.setTargetAtTime(1 - (eMult * 0.3), now, 0.1);
             }
 
         };

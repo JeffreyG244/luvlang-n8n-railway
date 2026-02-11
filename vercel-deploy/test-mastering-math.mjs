@@ -56,7 +56,7 @@ const TEST_ANALYSIS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Reproduce generateAICorrections math (v7.4.3)
+// Reproduce generateAICorrections math (v7.4.4)
 // ═══════════════════════════════════════════════════════════════════
 function generateAICorrections(analysis, genre) {
     const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
@@ -244,7 +244,7 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.4.3)');
+console.log('Mastering Math Validation (v7.4.4)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
