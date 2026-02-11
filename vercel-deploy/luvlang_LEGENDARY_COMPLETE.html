@@ -13160,13 +13160,13 @@
             // Wider bands so not everything maxes out at 1.0
             let processingScale;
             if (totalEQCorrection < 1.0) {
-                processingScale = 0.3;  // Track is already well-mastered
+                processingScale = 0.6;  // v7.4.6: floor raised — still apply meaningful processing
             } else if (totalEQCorrection < 2.5) {
-                processingScale = 0.5;
-            } else if (totalEQCorrection < 4.0) {
                 processingScale = 0.7;
+            } else if (totalEQCorrection < 4.0) {
+                processingScale = 0.8;
             } else if (totalEQCorrection < 6.0) {
-                processingScale = 0.85;
+                processingScale = 0.9;
             } else {
                 processingScale = 1.0;  // Track needs significant work
             }
@@ -23234,20 +23234,8 @@
                 intensityMult *= aiScale;
                 window._processingScale = aiScale; // Store for applyIntensityToChain
 
-                // v7.4.5 "Restraint" — bypass color/dynamics stages for well-mastered tracks
-                if (aiScale < 0.5) {
-                    // Well-mastered: bypass color/dynamics stages entirely
-                    bypass.warmth = true;
-                    bypass.exciter = true;
-                    bypass.transient = true;
-                    bypass.msProcessing = true;
-                    bypass.multibandComp = true;
-                }
-                if (aiScale < 0.35) {
-                    // Near-perfect: only genre EQ + LUFS + limiters remain
-                    bypass.dynamicEQ = true;
-                    bypass.compression = true;
-                }
+                // v7.4.6: Rely on processingScale to modulate intensity rather than hard bypasses.
+                // The AI stageBypass already handles per-stage decisions based on analysis.
                 const effectiveIntensity = intensity;
                 console.log(`🤖 Processing scale applied: aiScale=${aiScale.toFixed(2)}, effectiveIntensityMult=${intensityMult.toFixed(3)}`);
 
