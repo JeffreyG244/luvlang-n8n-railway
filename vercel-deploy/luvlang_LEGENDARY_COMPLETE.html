@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.2 "Professional Grade" | Build: 2026-02-11 | Fix meters, presets, bass boost, compensation scoping -->
+<!-- VERSION 7.6.2b | Build: 2026-02-11 | Fix crooked waveform: draw entire audio file -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -17521,9 +17521,9 @@
             ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Get audio data with higher resolution sampling
+            // Get audio data — map entire file to full canvas width
             const data = audioBuffer.getChannelData(0);
-            const step = Math.max(1, Math.floor(data.length / (width * 2))); // Higher resolution
+            const step = Math.max(1, Math.floor(data.length / width));
             const centerY = height / 2;
             const amp = height / 2.2;
 
