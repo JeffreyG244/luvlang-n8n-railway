@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.1 "Professional Grade" | Build: 2026-02-11 | Fix LUFS targeting: restore compensation, verification panel -->
+<!-- VERSION 7.6.2 "Professional Grade" | Build: 2026-02-11 | Fix meters, presets, bass boost, compensation scoping -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8476,12 +8476,12 @@
                         <div style="
                             height: 6px;
                             background: linear-gradient(90deg,
-                                rgba(255, 0, 0, 0.3) 0%,
-                                rgba(255, 100, 0, 0.3) 20%,
-                                rgba(255, 200, 0, 0.3) 40%,
-                                rgba(0, 255, 136, 0.3) 60%,
-                                rgba(0, 212, 255, 0.3) 80%,
-                                rgba(102, 126, 234, 0.3) 100%
+                                rgba(102, 126, 234, 0.3) 0%,
+                                rgba(0, 212, 255, 0.3) 20%,
+                                rgba(0, 255, 136, 0.3) 40%,
+                                rgba(255, 200, 0, 0.3) 60%,
+                                rgba(255, 100, 0, 0.3) 80%,
+                                rgba(255, 0, 0, 0.3) 100%
                             );
                             border-radius: 3px;
                             position: relative;
@@ -8499,13 +8499,13 @@
                                 transition: left 0.1s ease-out;
                             "></div>
                         </div>
-                        <!-- Scale labels -->
+                        <!-- Scale labels (left=quiet, right=loud — matches needle direction) -->
                         <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                            <span style="font-size: 0.45rem; color: rgba(255, 100, 100, 0.7);">-6</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 200, 100, 0.7);">-10</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-14</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-18</span>
                             <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.7);">-24</span>
+                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-18</span>
+                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-14</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 200, 100, 0.7);">-10</span>
+                            <span style="font-size: 0.45rem; color: rgba(255, 100, 100, 0.7);">-6</span>
                         </div>
                     </div>
                 </div>
@@ -19041,11 +19041,13 @@
                     // UPDATE VISUAL ELEMENTS - LUFS bar indicator, LED status
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // LUFS Bar Indicator - maps -24 to -6 LUFS to 0-100% position
+                    // Uses smoothedLUFS for stability (not bouncy momentary)
+                    // Respects metersLocked to show stable reading after mastering
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
-                        // Clamp momentary LUFS between -24 and -6 for display
-                        const clampedLUFS = Math.max(-24, Math.min(-6, momentaryLUFS));
-                        // Map to percentage: -24 = 100% (right), -6 = 0% (left)
+                        const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
+                        const clampedLUFS = Math.max(-24, Math.min(-6, barLUFS));
+                        // -24 = 0% (left/quiet), -6 = 100% (right/loud)
                         const position = ((clampedLUFS + 24) / 18) * 100;
                         lufsBarIndicator.style.left = `${position}%`;
                     }
@@ -20662,26 +20664,37 @@
                     const masteringComplete = window.masteringComplete === true;
 
                     if (masteringComplete) {
-                        // ═══════════════════════════════════════════════════════════════════════
-                        // LUFS LOCKED AFTER MASTERING
-                        // User must click RESET to re-master at a different LUFS target
-                        // This ensures consistent, professional results
-                        // ═══════════════════════════════════════════════════════════════════════
+                        // v7.6.2: Allow platform switching after mastering — recalculate gain
+                        const mu = window.makeupGain || makeupGain;
+                        const ac = window.audioContext || audioContext;
+                        const prevTarget = window.autoLUFSTargetLevel || -14;
+                        const gainDiff = targetLUFS - prevTarget; // e.g., -16 - (-14) = -2
 
-                        // Revert the button selection to the current target
-                        this.classList.remove('active');
-                        const currentTarget = window.autoLUFSTargetLevel || -14;
-                        const currentPlatformMap = { '-14': 'streaming', '-16': 'apple' };
-                        const currentPlatformId = currentTarget === -16 ? 'apple' : 'streaming';
-                        const currentBtn = document.querySelector(`.selector-btn[data-platform="${currentPlatformId}"]`);
-                        if (currentBtn) currentBtn.classList.add('active');
+                        if (mu && ac) {
+                            const currentGainDB = window.appliedMakeupGainDB || 0;
+                            const newGainDB = Math.max(-6, Math.min(12, currentGainDB + gainDiff));
+                            const newGainLinear = Math.pow(10, newGainDB / 20);
 
-                        // Show toast explaining what to do
-                        if (typeof showToast === 'function') {
-                            showToast(`Click RESET to master at ${targetLUFS} LUFS`, 'warning');
+                            mu.gain.cancelScheduledValues(ac.currentTime);
+                            mu.gain.setTargetAtTime(newGainLinear, ac.currentTime, 0.1);
+
+                            window.appliedMakeupGainDB = newGainDB;
+                            window.appliedMakeupGainLinear = newGainLinear;
+                            window.originalMakeupGainValue = newGainLinear;
+                            window.autoLUFSGainApplied = newGainDB;
+                            window.autoLUFSTargetLevel = targetLUFS;
+                            window.selectedPlatform = platform;
+
+                            // Update locked LUFS display
+                            if (lockedLUFS !== null) {
+                                lockedLUFS = lockedLUFS + gainDiff;
+                            }
+
+                            if (typeof showToast === 'function') {
+                                showToast(`${platformName}: ${targetLUFS} LUFS (${gainDiff > 0 ? '+' : ''}${gainDiff} dB)`, 'success');
+                            }
                         }
-
-                        return; // Don't change anything - LUFS is locked after mastering
+                        return;
                     }
 
                     // BEFORE MASTERING: Configure limiter and apply LUFS targeting in real-time
@@ -23493,18 +23506,18 @@
                 // window.eqCurves is defined in the guided-experience script block
                 // so both runActualMastering and applyIntensityToChain use the same source of truth
                 const _eqCurves = window.eqCurves || {
-                    'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-                    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
-                    'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
-                    'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
-                    'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
-                    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
-                    'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
-                    'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
-                    'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
-                    'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
-                    'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-                    'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+                    'hiphop':     { sub: 3.5, bass: 3.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+                    'electronic': { sub: 2.5, bass: 2.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+                    'pop':        { sub: 0.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+                    'rock':       { sub: 1.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+                    'rnb':        { sub: 2.0, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+                    'acoustic':   { sub: 0.5, bass: 2.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+                    'jazz':       { sub: 0.5, bass: 2.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
+                    'classical':  { sub: -1.5, bass: 1.0, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
+                    'metal':      { sub: 1.5, bass: 3.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+                    'country':    { sub: 0.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+                    'latin':      { sub: 2.5, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+                    'lofi':       { sub: 1.5, bass: 3.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
                 };
                 const eq = _eqCurves[genre] || _eqCurves['pop'];
 
@@ -24092,6 +24105,7 @@
                 };
 
                 let correctionDB;
+                let compensation = 0; // Declared here so verification panel can access it
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
 
                 // PASS 1: measure chain output at unity makeup gain
@@ -24109,7 +24123,7 @@
                     chainLoss += 1.0 + (effectiveIntensity - 1) * 0.5;
                     // Brickwall safety
                     chainLoss += 0.3;
-                    const compensation = Math.min(chainLoss, 6.0);
+                    compensation = Math.min(chainLoss, 6.0);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
@@ -26445,18 +26459,18 @@
         // Highmid ≤2.0 dB (walkie-talkie fix), bass/sub/high at full v7.4.3 levels for body
         // On window so both script blocks (mastering + guided experience) can access it
         window.eqCurves = {
-            'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-            'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
-            'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
-            'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
-            'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
-            'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
-            'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
-            'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
-            'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
-            'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
-            'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-            'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+            'hiphop':     { sub: 3.5, bass: 3.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+            'electronic': { sub: 2.5, bass: 2.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+            'pop':        { sub: 0.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+            'rock':       { sub: 1.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+            'rnb':        { sub: 2.0, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'acoustic':   { sub: 0.5, bass: 2.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+            'jazz':       { sub: 0.5, bass: 2.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
+            'classical':  { sub: -1.5, bass: 1.0, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
+            'metal':      { sub: 1.5, bass: 3.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+            'country':    { sub: 0.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+            'latin':      { sub: 2.5, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+            'lofi':       { sub: 1.5, bass: 3.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
         };
 
         // Genre presets - WORLD-CLASS MASTERING STANDARDS

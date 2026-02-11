@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.6.1)
+ * Mastering Math Validation Harness (v7.6.2)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
@@ -42,21 +42,21 @@ const genrePresets = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// EQ curves (synced with v7.6.0)
+// EQ curves (synced with v7.6.2 — bass +1 dB boost)
 // ═══════════════════════════════════════════════════════════════════
 const _eqCurves = {
-    'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
-    'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
-    'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
-    'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
-    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
-    'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
-    'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
-    'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
-    'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
-    'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-    'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+    'hiphop':     { sub: 3.5, bass: 3.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+    'electronic': { sub: 2.5, bass: 2.5, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+    'pop':        { sub: 0.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+    'rock':       { sub: 1.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+    'rnb':        { sub: 2.0, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+    'acoustic':   { sub: 0.5, bass: 2.0, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+    'jazz':       { sub: 0.5, bass: 2.0, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
+    'classical':  { sub: -1.5, bass: 1.0, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
+    'metal':      { sub: 1.5, bass: 3.0, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+    'country':    { sub: 0.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+    'latin':      { sub: 2.5, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+    'lofi':       { sub: 1.5, bass: 3.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
 };
 
 // ═══════════════════════════════════════════════════════════════════
