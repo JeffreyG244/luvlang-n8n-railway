@@ -12989,8 +12989,8 @@
         // Generate AI correction deltas by comparing track analysis against genre reference
         function generateAICorrections(analysis, genre) {
             const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
-            // Mastering-grade correction: moderate nudges for audible improvement
-            const correctionStrength = 0.35;
+            // Mastering-grade correction: audible but controlled nudges
+            const correctionStrength = 0.25;
             const issues = [];
 
             // ═══════════════════════════════════════════════════════════════
@@ -13191,21 +13191,21 @@
                 exciter:       false,                         // Never bypass — always subtle
                 stereoWidth:   Math.abs(widthDiff) < 0.10,    // Tighter
                 msProcessing:  Math.abs(analysis.spectralTilt) < 1.0 && Math.abs(widthDiff) < 0.15,
-                hfLimiter:     !analysis.sibilanceExcessive && analysis.spectralTilt < 1.5,
+                hfLimiter:     false,                         // Never bypass — catches exciter + warmth harmonics
             };
 
             // Per-stage intensity (0.0-1.0) — how aggressively to apply each stage
             const stageIntensity = {
-                eq:            Math.min(1.0, totalEQCorrection / 2.0),
+                eq:            Math.min(1.0, totalEQCorrection / 2.5),
                 dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
-                compression:   Math.min(1.0, Math.abs(crestDiff) / 6),
+                compression:   Math.min(1.0, Math.abs(crestDiff) / 7),
                 multibandComp: Math.min(1.0, Math.abs(crestDiff) / 8),
-                transient:     Math.min(1.0, Math.abs(crestDiff) / 6),
+                transient:     Math.min(1.0, Math.abs(crestDiff) / 7),
                 warmth:        analysis.spectralTilt > 1.0 ? 0.7 : 0.3,
-                exciter:       0.25,  // Subtle but present
+                exciter:       0.20,  // Subtle presence
                 stereoWidth:   Math.min(1.0, Math.abs(widthDiff) / 0.3),
-                msProcessing:  0.4,   // Moderate
-                hfLimiter:     analysis.sibilanceExcessive ? 0.7 : 0.3,
+                msProcessing:  0.35,  // Subtle
+                hfLimiter:     analysis.sibilanceExcessive ? 0.7 : 0.4,
             };
 
             // Count bypassed stages for summary
@@ -23434,7 +23434,7 @@
                     }
                 }
 
-                // NY Parallel Compression guard — disable at low intensity, scale mix inversely with ratio
+                // NY Parallel Compression guard — disable at low intensity, conservative mix at higher
                 if (window.nyCompression) {
                     if (effectiveIntensity <= 2 || bypass.compression) {
                         // Disable NY compression at low intensity or when compression bypassed
@@ -23442,13 +23442,18 @@
                         window.nyCompression.wet.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
                         console.log('🎚️ NY Compression: disabled (intensity=' + effectiveIntensity + ')');
                     } else {
-                        // Scale mix inversely with compressor ratio to prevent double-pumping
-                        const compRatioActual = window.compressor ? window.compressor.ratio.value : (comp.ratio || 2.0);
-                        const nyWetMax = 0.25; // Max 25% wet
-                        const nyWet = Math.max(0.05, nyWetMax * (1.0 - (compRatioActual - 1.5) / 4.0));
+                        // Use computed TARGET ratio (AudioParam.value is stale during setTargetAtTime ramp)
+                        const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
+                        const compRatioTarget = comp.ratio * compRatioMult * aiRatioMult;
+                        // Conservative wet mix: 5-15% range (mastering-grade parallel compression)
+                        const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 };
+                        const nyBase = nyBaseMix[effectiveIntensity] || 0.06;
+                        // Reduce when compressor ratio is high (already compressing enough)
+                        const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
+                        const nyWet = nyBase * nyRatioScale;
                         window.nyCompression.dry.gain.setTargetAtTime(1.0 - nyWet * 0.3, ac.currentTime, 0.1);
                         window.nyCompression.wet.gain.setTargetAtTime(nyWet, ac.currentTime, 0.1);
-                        console.log('🎚️ NY Compression: wet=' + nyWet.toFixed(3) + ' (ratio=' + compRatioActual.toFixed(1) + ')');
+                        console.log('🎚️ NY Compression: wet=' + nyWet.toFixed(3) + ' (targetRatio=' + compRatioTarget.toFixed(2) + ')');
                     }
                 }
 
