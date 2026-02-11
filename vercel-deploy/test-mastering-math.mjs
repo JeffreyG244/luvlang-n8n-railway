@@ -116,11 +116,11 @@ function generateAICorrections(analysis, genre) {
     const refWidth = ref.stereo.width || 0.45;
     const widthDiff = analysis.estimatedWidth - refWidth;
 
-    // Processing scale (v7.4.6 — raised floor for meaningful processing)
+    // Processing scale (v7.4.6 — high floor for meaningful processing)
     let processingScale;
-    if (totalEQCorrection < 1.0) processingScale = 0.6;
-    else if (totalEQCorrection < 2.5) processingScale = 0.7;
-    else if (totalEQCorrection < 4.0) processingScale = 0.8;
+    if (totalEQCorrection < 1.0) processingScale = 0.75;
+    else if (totalEQCorrection < 2.5) processingScale = 0.8;
+    else if (totalEQCorrection < 4.0) processingScale = 0.85;
     else if (totalEQCorrection < 6.0) processingScale = 0.9;
     else processingScale = 1.0;
 

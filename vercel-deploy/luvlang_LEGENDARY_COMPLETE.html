@@ -13160,11 +13160,11 @@
             // Wider bands so not everything maxes out at 1.0
             let processingScale;
             if (totalEQCorrection < 1.0) {
-                processingScale = 0.6;  // v7.4.6: floor raised — still apply meaningful processing
+                processingScale = 0.75;  // v7.4.6: high floor — always apply meaningful processing
             } else if (totalEQCorrection < 2.5) {
-                processingScale = 0.7;
-            } else if (totalEQCorrection < 4.0) {
                 processingScale = 0.8;
+            } else if (totalEQCorrection < 4.0) {
+                processingScale = 0.85;
             } else if (totalEQCorrection < 6.0) {
                 processingScale = 0.9;
             } else {
@@ -19727,8 +19727,13 @@
                 }
 
                 // CRITICAL: Calculate gain needed to reach target LUFS
-                // SIMPLIFIED: No pre-compensation - let limiter handle peaks naturally
-                const lufsGainNeeded = targetLUFS - beforeLUFS;
+                // v7.4.6: Don't aggressively cut loud tracks — streaming platforms normalize anyway
+                let lufsGainNeeded = targetLUFS - beforeLUFS;
+                // Cap reduction at -1.5 dB — cutting more destroys perceived weight/body
+                if (lufsGainNeeded < -1.5) {
+                    console.log(`🎯 LUFS cap: need ${lufsGainNeeded.toFixed(1)} dB but capping at -1.5 dB (input ${beforeLUFS.toFixed(1)} > target ${targetLUFS})`);
+                    lufsGainNeeded = -1.5;
+                }
 
                 // Calculate current true peak in dBTP
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
@@ -23232,10 +23237,9 @@
                 // Apply processingScale to intensity — already-mastered tracks get reduced processing
                 // processingScale: 0.3 (already mastered) → 1.0 (raw mix needs full work)
                 intensityMult *= aiScale;
+                // v7.4.6: Floor intensityMult — never let processing become inaudible
+                intensityMult = Math.max(intensityMult, 0.5);
                 window._processingScale = aiScale; // Store for applyIntensityToChain
-
-                // v7.4.6: Rely on processingScale to modulate intensity rather than hard bypasses.
-                // The AI stageBypass already handles per-stage decisions based on analysis.
                 const effectiveIntensity = intensity;
                 console.log(`🤖 Processing scale applied: aiScale=${aiScale.toFixed(2)}, effectiveIntensityMult=${intensityMult.toFixed(3)}`);
 
