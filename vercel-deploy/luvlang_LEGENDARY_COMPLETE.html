@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.2b | Build: 2026-02-11 | Fix crooked waveform: draw entire audio file -->
+<!-- VERSION 7.6.3 | Build: 2026-02-11 | AI Mastering Console: unified professional flow -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4878,13 +4878,13 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
             box-shadow: 0 25px 80px rgba(0,0,0,0.8), 0 0 1px rgba(255,255,255,0.1) inset;
-            max-width: 680px;
+            max-width: 720px;
             width: 95%;
-            max-height: 85vh;
+            max-height: 90vh;
             overflow-y: auto;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
         ">
-            <!-- Header Bar - Plugin Style -->
+            <!-- Header Bar -->
             <div style="
                 background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
                 border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -4893,78 +4893,121 @@
                 justify-content: space-between;
                 align-items: center;
             ">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: linear-gradient(135deg, #7cb8ff 0%, #5a9fd4 100%); border-radius: 50%; font-size: 0.7rem; font-weight: 700; color: #fff;">3</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: linear-gradient(135deg, #00d4ff 0%, #b84fff 100%); border-radius: 50%; font-size: 0.65rem; font-weight: 700; color: #fff;">AI</div>
                     <div>
-                        <div style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.8); letter-spacing: 0.1em; text-transform: uppercase;">Step 3: Sound Profile</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;">Select your genre</div>
+                        <div style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: 0.1em; text-transform: uppercase;">AI Mastering Console</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;">Configure your master in one place</div>
                     </div>
                 </div>
-                <span style="font-size: 0.6rem; color: rgba(255,255,255,0.35); letter-spacing: 0.08em;">MASTERING ENGINE</span>
+                <span style="font-size: 0.55rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; font-weight: 600;">LUVLANG STUDIO</span>
             </div>
 
             <!-- Main Content -->
-            <div style="padding: 20px;">
-                <!-- Genre Grid - Premium Buttons -->
-                <div id="preMasterGenreGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px;">
-                    <button class="genre-btn" data-genre="hiphop" onclick="previewGenre('hiphop')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">HIP-HOP</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">808s • Punch</div>
-                    </button>
-                    <button class="genre-btn" data-genre="electronic" onclick="previewGenre('electronic')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ELECTRONIC</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Wide • Bright</div>
-                    </button>
-                    <button class="genre-btn" data-genre="pop" onclick="previewGenre('pop')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">POP</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Radio • Polish</div>
-                    </button>
-                    <button class="genre-btn" data-genre="rock" onclick="previewGenre('rock')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ROCK</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Power • Edge</div>
-                    </button>
-                    <button class="genre-btn" data-genre="rnb" onclick="previewGenre('rnb')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">R&B</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Warm • Smooth</div>
-                    </button>
-                    <button class="genre-btn" data-genre="acoustic" onclick="previewGenre('acoustic')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ACOUSTIC</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Natural • Air</div>
-                    </button>
-                    <button class="genre-btn" data-genre="jazz" onclick="previewGenre('jazz')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">JAZZ</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Dynamic • Clean</div>
-                    </button>
-                    <button class="genre-btn" data-genre="classical" onclick="previewGenre('classical')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">CLASSICAL</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Transparent</div>
-                    </button>
-                    <button class="genre-btn" data-genre="metal" onclick="previewGenre('metal')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">METAL</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Heavy • Tight</div>
-                    </button>
-                    <button class="genre-btn" data-genre="country" onclick="previewGenre('country')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">COUNTRY</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Warm • Clear</div>
-                    </button>
-                    <button class="genre-btn" data-genre="latin" onclick="previewGenre('latin')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">LATIN</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Bass • Energy</div>
-                    </button>
-                    <button class="genre-btn" data-genre="lofi" onclick="previewGenre('lofi')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">LO-FI</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Mellow • Vinyl</div>
-                    </button>
+            <div style="padding: 16px 20px;">
+
+                <!-- Section A: AI Analysis Banner -->
+                <div id="aiAnalysisBanner" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 80px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div id="consoleLufsValue" style="font-size: 1.1rem; font-weight: 700; color: #00ff88; font-variant-numeric: tabular-nums;">--</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">INPUT LUFS</div>
+                    </div>
+                    <div style="flex: 1; min-width: 80px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div id="consoleDynamicRange" style="font-size: 1.1rem; font-weight: 700; color: #00d4ff; font-variant-numeric: tabular-nums;">--</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">DYNAMIC RANGE</div>
+                    </div>
+                    <div style="flex: 1; min-width: 80px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div id="consoleTruePeak" style="font-size: 1.1rem; font-weight: 700; color: #ffd700; font-variant-numeric: tabular-nums;">--</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px;">TRUE PEAK</div>
+                    </div>
+                    <div style="flex: 1.3; min-width: 130px; background: linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(184,79,255,0.08) 100%); border: 1px solid rgba(0,212,255,0.2); border-radius: 8px; padding: 10px; text-align: center;">
+                        <div style="font-size: 0.5rem; color: rgba(0,212,255,0.8); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">AI DETECTED</div>
+                        <div id="consoleAiGenre" style="font-size: 1rem; font-weight: 700; color: #00d4ff;">--</div>
+                        <div id="consoleAiRunnerUp" style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">--</div>
+                    </div>
                 </div>
 
-                <!-- Status Display -->
-                <div id="genrePreviewStatus" style="text-align: center; padding: 8px; margin-bottom: 16px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.7rem; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;">
-                    SELECT A GENRE TO PREVIEW
+                <!-- Section B: Platform Target -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Platform Target</div>
+                    <div id="consolePlatformGrid" style="display: flex; gap: 8px;">
+                        <button type="button" class="console-platform-btn active" data-platform="streaming" onclick="selectConsolePlatform(this, 'streaming')" style="flex: 1; padding: 10px 8px; background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.4); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff;">Streaming -14</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Spotify / YouTube</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="apple" onclick="selectConsolePlatform(this, 'apple')" style="flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">Apple Music -16</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Higher Dynamics</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="podcast" onclick="selectConsolePlatform(this, 'podcast')" style="flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">Podcast -16</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Speech Optimized</div>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Intensity Control - Hardware Style -->
-                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 14px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.04);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <!-- Section C: Genre Grid with AI Badge -->
+                <div style="margin-bottom: 14px;">
+                    <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Genre Profile</div>
+                    <div id="preMasterGenreGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
+                        <button class="genre-btn" data-genre="hiphop" onclick="previewGenre('hiphop')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">HIP-HOP</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">808s / Punch</div>
+                        </button>
+                        <button class="genre-btn" data-genre="electronic" onclick="previewGenre('electronic')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ELECTRONIC</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Wide / Bright</div>
+                        </button>
+                        <button class="genre-btn" data-genre="pop" onclick="previewGenre('pop')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">POP</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Radio / Polish</div>
+                        </button>
+                        <button class="genre-btn" data-genre="rock" onclick="previewGenre('rock')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ROCK</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Power / Edge</div>
+                        </button>
+                        <button class="genre-btn" data-genre="rnb" onclick="previewGenre('rnb')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">R&B</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Warm / Smooth</div>
+                        </button>
+                        <button class="genre-btn" data-genre="acoustic" onclick="previewGenre('acoustic')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">ACOUSTIC</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Natural / Air</div>
+                        </button>
+                        <button class="genre-btn" data-genre="jazz" onclick="previewGenre('jazz')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">JAZZ</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Dynamic / Clean</div>
+                        </button>
+                        <button class="genre-btn" data-genre="classical" onclick="previewGenre('classical')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">CLASSICAL</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Transparent</div>
+                        </button>
+                        <button class="genre-btn" data-genre="metal" onclick="previewGenre('metal')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">METAL</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Heavy / Tight</div>
+                        </button>
+                        <button class="genre-btn" data-genre="country" onclick="previewGenre('country')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">COUNTRY</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Warm / Clear</div>
+                        </button>
+                        <button class="genre-btn" data-genre="latin" onclick="previewGenre('latin')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">LATIN</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Bass / Energy</div>
+                        </button>
+                        <button class="genre-btn" data-genre="lofi" onclick="previewGenre('lofi')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">LO-FI</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Mellow / Vinyl</div>
+                        </button>
+                    </div>
+                    <!-- Status Display -->
+                    <div id="genrePreviewStatus" style="text-align: center; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;">
+                        AI-DETECTED GENRE PRE-SELECTED
+                    </div>
+                </div>
+
+                <!-- Section D: Intensity Control -->
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase;">Processing Intensity</span>
                         <span id="intensityDescription" style="font-size: 0.6rem; color: #7cb8ff; font-weight: 500; letter-spacing: 0.05em;">BALANCED</span>
                     </div>
@@ -4992,7 +5035,41 @@
                     </div>
                 </div>
 
-                <!-- EQ Curve Preview -->
+                <!-- Section E: Export Format + Bit Depth -->
+                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Export Format</div>
+                    <div id="consoleFormatGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;">
+                        <button type="button" class="console-format-btn selected" data-format="wav" onclick="selectConsoleFormat(this, 'wav')" style="padding: 8px; background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.4); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff;">WAV</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 1px;">48kHz Lossless</div>
+                        </button>
+                        <button type="button" class="console-format-btn" data-format="mp3" onclick="selectConsoleFormat(this, 'mp3')" style="padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">MP3</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 1px;">320kbps</div>
+                        </button>
+                        <button type="button" class="console-format-btn" data-format="flac" onclick="selectConsoleFormat(this, 'flac')" style="padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">FLAC</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 1px;">Lossless</div>
+                        </button>
+                        <button type="button" class="console-format-btn" data-format="aac" onclick="selectConsoleFormat(this, 'aac')" style="padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">AAC</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 1px;">256kbps</div>
+                        </button>
+                    </div>
+                    <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;">Bit Depth</div>
+                    <div id="consoleBitDepthGrid" style="display: flex; gap: 8px;">
+                        <button type="button" class="console-bitdepth-btn selected" data-depth="24" onclick="selectConsoleBitDepth(this, 24)" style="flex: 1; padding: 8px; background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: #00ff88;">24-bit</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">Professional</div>
+                        </button>
+                        <button type="button" class="console-bitdepth-btn" data-depth="16" onclick="selectConsoleBitDepth(this, 16)" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">16-bit</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4);">CD Quality</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Section F: EQ Curve Preview -->
                 <div id="genreEqPreview" style="background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; margin-bottom: 12px; display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase;">EQ Curve Preview</span>
@@ -5027,27 +5104,31 @@
                     </div>
                 </div>
 
-                <!-- Process Button - Premium -->
+                <!-- Section G: MASTER NOW Button -->
                 <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="
                     width: 100%;
                     padding: 16px 28px;
-                    background: linear-gradient(180deg, rgba(92, 184, 92, 0.2) 0%, rgba(92, 184, 92, 0.1) 100%);
-                    border: 1px solid rgba(92, 184, 92, 0.4);
+                    background: linear-gradient(180deg, rgba(92, 184, 92, 0.3) 0%, rgba(92, 184, 92, 0.15) 100%);
+                    border: 1px solid rgba(92, 184, 92, 0.5);
                     border-radius: 8px;
                     color: #8fd98f;
                     cursor: pointer;
                     font-weight: 700;
-                    font-size: 0.75rem;
+                    font-size: 0.8rem;
                     letter-spacing: 0.12em;
                     text-transform: uppercase;
-                    opacity: 0.4;
+                    opacity: 1;
                     transition: all 0.3s;
-                " disabled>
-                    PROCESS MASTER NOW
+                    box-shadow: 0 0 20px rgba(92, 184, 92, 0.15);
+                ">
+                    MASTER NOW
                 </button>
+                <div id="consoleMasterSummary" style="text-align: center; margin-top: 6px; font-size: 0.6rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;">
+                    -- &rarr; Streaming (-14 LUFS) &rarr; WAV 24-bit
+                </div>
 
                 <!-- Skip Link -->
-                <div style="text-align: center; margin-top: 12px;">
+                <div style="text-align: center; margin-top: 10px;">
                     <button onclick="skipGenreSelection()" style="background: none; border: none; color: rgba(255,255,255,0.3); font-size: 0.6rem; cursor: pointer; letter-spacing: 0.5px; transition: color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">
                         SKIP — USE DEFAULT PRESET
                     </button>
@@ -12294,15 +12375,28 @@
                         console.log('🤖 Starting AI deep spectral analysis...');
                         const aiAnalysis = await analyzeTrackForAI(audioBuffer);
                         console.log('🤖 AI analysis complete, generating corrections...');
-                        const aiGenre = window.selectedPreMasterGenre || 'pop';
                         window.aiTrackAnalysis = aiAnalysis;
+
+                        // AI Genre Detection — auto-detect genre from spectral features
+                        window.aiDetectedGenre = detectGenreFromAnalysis(aiAnalysis);
+                        const aiGenre = window.aiDetectedGenre.top || 'pop';
+
                         window.aiTrackProfile = generateAICorrections(aiAnalysis, aiGenre);
-                        console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore, 'processingScale:', window.aiTrackProfile.processingScale);
+                        console.log('🤖 AI Track Profile ready — processingScale:', window.aiTrackProfile.processingScale);
                         displayAICorrections(window.aiTrackProfile);
+
+                        // Auto-populate and show AI Mastering Console
+                        if (typeof window.populateAIMasteringConsole === 'function') {
+                            window.populateAIMasteringConsole(aiAnalysis, window.aiDetectedGenre);
+                        }
+                        if (typeof window.previewGenre === 'function') {
+                            window.previewGenre(aiGenre); // Pre-select AI-detected genre
+                        }
                     } catch (aiErr) {
                         console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                         window.aiTrackProfile = null;
                         window.aiTrackAnalysis = null;
+                        window.aiDetectedGenre = null;
                     }
 
                 } catch (error) {
@@ -12378,10 +12472,22 @@
                     console.log('🤖 Starting AI deep spectral analysis...');
                     const aiAnalysis = await analyzeTrackForAI(audioBuffer);
                     console.log('🤖 AI analysis complete, generating corrections...');
-                    const aiGenre = window.selectedPreMasterGenre || 'pop';
                     window.aiTrackAnalysis = aiAnalysis; // Store raw analysis for genre-change recalc
+
+                    // AI Genre Detection
+                    window.aiDetectedGenre = detectGenreFromAnalysis(aiAnalysis);
+                    const aiGenre = window.aiDetectedGenre.top || 'pop';
+
                     window.aiTrackProfile = generateAICorrections(aiAnalysis, aiGenre);
-                    console.log('🤖 AI Track Profile ready — mix score:', window.aiTrackProfile.mixScore, 'genre:', aiGenre);
+                    console.log('🤖 AI Track Profile ready — genre:', aiGenre);
+
+                    // Auto-populate console if not already shown
+                    if (typeof window.populateAIMasteringConsole === 'function') {
+                        window.populateAIMasteringConsole(aiAnalysis, window.aiDetectedGenre);
+                    }
+                    if (typeof window.previewGenre === 'function') {
+                        window.previewGenre(aiGenre);
+                    }
                 } catch (aiErr) {
                     console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                     window.aiTrackProfile = null;
@@ -13153,6 +13259,72 @@
                 duration
             };
         }
+
+        // ═══════════════════════════════════════════════════════════════
+        // AI Genre Detection — Score track against spectral signatures
+        // Uses existing aiTrackAnalysis data, no new FFT work needed
+        // ═══════════════════════════════════════════════════════════════
+        function detectGenreFromAnalysis(analysis) {
+            if (!analysis) return { top: 'pop', confidence: 50, scores: [] };
+
+            // Genre spectral signatures: expected centers for 6 features
+            const signatures = {
+                hiphop:     { bass: -8,  tilt: -1.5, crest: 10, centroid: 800,  ms: 0.7, sib: 0.15 },
+                electronic: { bass: -10, tilt: -0.5, crest: 8,  centroid: 2500, ms: 0.4, sib: 0.20 },
+                pop:        { bass: -15, tilt: -0.3, crest: 9,  centroid: 2000, ms: 0.6, sib: 0.18 },
+                rock:       { bass: -14, tilt: 0.0,  crest: 10, centroid: 2800, ms: 0.5, sib: 0.25 },
+                rnb:        { bass: -10, tilt: -1.0, crest: 11, centroid: 1200, ms: 0.6, sib: 0.15 },
+                acoustic:   { bass: -18, tilt: -0.5, crest: 14, centroid: 1800, ms: 0.8, sib: 0.12 },
+                jazz:       { bass: -16, tilt: -0.3, crest: 15, centroid: 1500, ms: 0.7, sib: 0.10 },
+                classical:  { bass: -20, tilt: -0.8, crest: 18, centroid: 1200, ms: 0.9, sib: 0.08 },
+                metal:      { bass: -12, tilt: 0.3,  crest: 7,  centroid: 3500, ms: 0.5, sib: 0.30 },
+                country:    { bass: -15, tilt: -0.2, crest: 12, centroid: 2000, ms: 0.7, sib: 0.15 },
+                latin:      { bass: -12, tilt: -0.5, crest: 11, centroid: 1800, ms: 0.5, sib: 0.15 },
+                lofi:       { bass: -12, tilt: -2.0, crest: 10, centroid: 600,  ms: 0.8, sib: 0.08 }
+            };
+
+            // Feature weights (higher = more discriminative)
+            const weights = { bass: 1.0, tilt: 1.5, crest: 1.2, centroid: 1.0, ms: 0.8, sib: 0.8 };
+
+            // Normalization ranges for Gaussian distance
+            const ranges = { bass: 12, tilt: 2.5, crest: 12, centroid: 3000, ms: 0.5, sib: 0.25 };
+
+            // Extract track features from analysis
+            const bassEnergy = ((analysis.spectrumDB?.sub || -30) + (analysis.spectrumDB?.bass || -20)) / 2;
+            const trackFeatures = {
+                bass: bassEnergy,
+                tilt: analysis.spectralTilt || -1.0,
+                crest: analysis.overallCrest || 10,
+                centroid: analysis.spectralCentroid || 1500,
+                ms: analysis.msEnergyRatio || 0.6,
+                sib: analysis.sibilanceRatio || 0.15
+            };
+
+            // Score each genre via weighted Gaussian distance
+            const scores = [];
+            for (const [genre, sig] of Object.entries(signatures)) {
+                let totalDist = 0;
+                let totalWeight = 0;
+                for (const feat of Object.keys(sig)) {
+                    const diff = (trackFeatures[feat] - sig[feat]) / ranges[feat];
+                    const gaussianScore = Math.exp(-0.5 * diff * diff);
+                    totalDist += gaussianScore * weights[feat];
+                    totalWeight += weights[feat];
+                }
+                const score = (totalDist / totalWeight) * 100;
+                scores.push({ genre, score: Math.round(score * 10) / 10 });
+            }
+
+            // Sort by score descending
+            scores.sort((a, b) => b.score - a.score);
+            const topScore = scores[0].score;
+            const confidence = Math.round(Math.min(99, topScore));
+
+            console.log(`🎯 AI Genre Detection: ${scores[0].genre} (${confidence}%) | Runner-up: ${scores[1].genre} (${scores[1].score.toFixed(0)}%), ${scores[2].genre} (${scores[2].score.toFixed(0)}%)`);
+
+            return { top: scores[0].genre, confidence, scores };
+        }
+        window.detectGenreFromAnalysis = detectGenreFromAnalysis;
 
         // Generate AI correction deltas by comparing track analysis against genre reference
         function generateAICorrections(analysis, genre) {
@@ -19040,15 +19212,24 @@
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // UPDATE VISUAL ELEMENTS - LUFS bar indicator, LED status
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    // LUFS Bar Indicator - maps -24 to -6 LUFS to 0-100% position
+                    // LUFS Bar Indicator - piecewise linear mapping to match label positions
+                    // Labels: -24(0%), -18(25%), -14(50%), -10(75%), -6(100%)
                     // Uses smoothedLUFS for stability (not bouncy momentary)
                     // Respects metersLocked to show stable reading after mastering
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
                         const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
                         const clampedLUFS = Math.max(-24, Math.min(-6, barLUFS));
-                        // -24 = 0% (left/quiet), -6 = 100% (right/loud)
-                        const position = ((clampedLUFS + 24) / 18) * 100;
+                        // Piecewise linear interpolation matching label positions
+                        const _bkpts = [[-24,0],[-18,25],[-14,50],[-10,75],[-6,100]];
+                        let position = 0;
+                        for (let i = 1; i < _bkpts.length; i++) {
+                            if (clampedLUFS <= _bkpts[i][0]) {
+                                const [l0,p0] = _bkpts[i-1], [l1,p1] = _bkpts[i];
+                                position = p0 + (clampedLUFS - l0) / (l1 - l0) * (p1 - p0);
+                                break;
+                            }
+                        }
                         lufsBarIndicator.style.left = `${position}%`;
                     }
 
@@ -24186,6 +24367,10 @@
 
                 console.log(`🎯 LUFS Targeting: target=${targetLUFS} correction=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)}`);
 
+                // Read platform from UI selector
+                const _platformBtn = document.querySelector('.selector-btn[data-platform].active');
+                const platform = _platformBtn ? _platformBtn.getAttribute('data-platform') : 'streaming';
+
                 // Store for LUFS preset switching, debugging, and verification panel
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
@@ -26787,6 +26972,10 @@
                 startBtn.style.boxShadow = '0 0 20px rgba(92, 184, 92, 0.2)';
             }
 
+            // Sync console summary and sidebar
+            if (typeof updateConsoleSummary === 'function') updateConsoleSummary();
+            if (typeof syncSidebarWithConsole === 'function') syncSidebarWithConsole();
+
         };
 
         // Preview original (unprocessed) audio
@@ -26996,6 +27185,201 @@
         };
 
         // ═══════════════════════════════════════════════════════════════════
+        // AI MASTERING CONSOLE — Interaction Handlers
+        // ═══════════════════════════════════════════════════════════════════
+
+        // Populate AI Mastering Console with analysis data and auto-show
+        window.populateAIMasteringConsole = function(analysis, detectedGenre) {
+            // Populate analysis banner values
+            const lufsEl = document.getElementById('consoleLufsValue');
+            const drEl = document.getElementById('consoleDynamicRange');
+            const tpEl = document.getElementById('consoleTruePeak');
+            const aiGenreEl = document.getElementById('consoleAiGenre');
+            const aiRunnerEl = document.getElementById('consoleAiRunnerUp');
+
+            if (lufsEl && window.originalInputLUFS && isFinite(window.originalInputLUFS)) {
+                lufsEl.textContent = window.originalInputLUFS.toFixed(1);
+            } else if (lufsEl) {
+                lufsEl.textContent = '--';
+            }
+
+            if (drEl && analysis && analysis.overallCrest) {
+                drEl.textContent = analysis.overallCrest.toFixed(1) + ' dB';
+            }
+
+            if (tpEl && currentTruePeak && isFinite(currentTruePeak)) {
+                tpEl.textContent = currentTruePeak.toFixed(1) + ' dBTP';
+            } else if (tpEl) {
+                tpEl.textContent = '--';
+            }
+
+            if (detectedGenre && aiGenreEl) {
+                const genreNames = {
+                    hiphop: 'Hip-Hop', electronic: 'Electronic', pop: 'Pop', rock: 'Rock',
+                    rnb: 'R&B', acoustic: 'Acoustic', jazz: 'Jazz', classical: 'Classical',
+                    metal: 'Metal', country: 'Country', latin: 'Latin', lofi: 'Lo-Fi'
+                };
+                aiGenreEl.textContent = (genreNames[detectedGenre.top] || detectedGenre.top) + ' ' + detectedGenre.confidence + '%';
+
+                // Show runners-up
+                if (aiRunnerEl && detectedGenre.scores && detectedGenre.scores.length >= 3) {
+                    const r1 = genreNames[detectedGenre.scores[1].genre] || detectedGenre.scores[1].genre;
+                    const r2 = genreNames[detectedGenre.scores[2].genre] || detectedGenre.scores[2].genre;
+                    aiRunnerEl.textContent = 'Also: ' + r1 + ', ' + r2;
+                }
+
+                // Add AI PICK badge to the detected genre button
+                document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
+                    // Remove existing AI badges
+                    const existing = btn.querySelector('.ai-pick-badge');
+                    if (existing) existing.remove();
+                    btn.style.borderColor = 'rgba(255,255,255,0.08)';
+                    btn.style.animation = '';
+
+                    if (btn.dataset.genre === detectedGenre.top) {
+                        btn.style.borderColor = 'rgba(0,212,255,0.5)';
+                        btn.style.boxShadow = '0 0 12px rgba(0,212,255,0.2)';
+                        const badge = document.createElement('div');
+                        badge.className = 'ai-pick-badge';
+                        badge.style.cssText = 'position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,#00d4ff,#b84fff);color:#fff;font-size:0.45rem;font-weight:700;padding:2px 5px;border-radius:8px;letter-spacing:0.05em;z-index:1;';
+                        badge.textContent = 'AI PICK';
+                        btn.appendChild(badge);
+                    }
+                });
+            }
+
+            // Update summary line
+            updateConsoleSummary();
+
+            // Enable the MASTER NOW button immediately (AI pre-selects genre)
+            const startBtn = document.getElementById('startMasteringBtn');
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.style.opacity = '1';
+                startBtn.style.background = 'linear-gradient(180deg, rgba(92, 184, 92, 0.3) 0%, rgba(92, 184, 92, 0.15) 100%)';
+                startBtn.style.boxShadow = '0 0 20px rgba(92, 184, 92, 0.2)';
+            }
+        };
+
+        // Console Platform selector
+        window.selectConsolePlatform = function(btn, platform) {
+            document.querySelectorAll('.console-platform-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                b.querySelector('div').style.color = 'rgba(255,255,255,0.7)';
+            });
+            btn.classList.add('active');
+            btn.style.background = 'rgba(0,212,255,0.12)';
+            btn.style.borderColor = 'rgba(0,212,255,0.4)';
+            btn.querySelector('div').style.color = '#00d4ff';
+            window.selectedPlatform = platform;
+
+            // Sync with sidebar
+            syncSidebarWithConsole();
+            updateConsoleSummary();
+        };
+
+        // Console Format selector
+        window.selectConsoleFormat = function(btn, format) {
+            document.querySelectorAll('.console-format-btn').forEach(b => {
+                b.classList.remove('selected');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                b.querySelector('div').style.color = 'rgba(255,255,255,0.7)';
+            });
+            btn.classList.add('selected');
+            btn.style.background = 'rgba(0,212,255,0.12)';
+            btn.style.borderColor = 'rgba(0,212,255,0.4)';
+            btn.querySelector('div').style.color = '#00d4ff';
+            window.tourSelectedFormat = format;
+
+            // Sync with sidebar export format buttons
+            const formatBtns = document.querySelectorAll('.export-format-btn[data-format]');
+            formatBtns.forEach(b => {
+                b.classList.remove('active');
+                if (b.dataset.format === format) b.classList.add('active');
+            });
+            updateConsoleSummary();
+        };
+
+        // Console Bit Depth selector
+        window.selectConsoleBitDepth = function(btn, depth) {
+            document.querySelectorAll('.console-bitdepth-btn').forEach(b => {
+                b.classList.remove('selected');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                b.querySelector('div').style.color = 'rgba(255,255,255,0.7)';
+            });
+            btn.classList.add('selected');
+            btn.style.background = depth === 24 ? 'rgba(0,255,136,0.1)' : 'rgba(0,212,255,0.12)';
+            btn.style.borderColor = depth === 24 ? 'rgba(0,255,136,0.3)' : 'rgba(0,212,255,0.4)';
+            btn.querySelector('div').style.color = depth === 24 ? '#00ff88' : '#00d4ff';
+            window.tourSelectedBitDepth = depth;
+
+            // Sync with sidebar bit depth
+            if (depth === 24) {
+                document.getElementById('bitDepth24Btn')?.classList.add('active');
+                document.getElementById('bitDepth16Btn')?.classList.remove('active');
+            } else {
+                document.getElementById('bitDepth16Btn')?.classList.add('active');
+                document.getElementById('bitDepth24Btn')?.classList.remove('active');
+            }
+            const bitDepthInput = document.getElementById('bitDepthSelector');
+            if (bitDepthInput) bitDepthInput.value = depth;
+            updateConsoleSummary();
+        };
+
+        // Update MASTER NOW summary line
+        function updateConsoleSummary() {
+            const summaryEl = document.getElementById('consoleMasterSummary');
+            if (!summaryEl) return;
+
+            const genreNames = {
+                hiphop: 'Hip-Hop', electronic: 'Electronic', pop: 'Pop', rock: 'Rock',
+                rnb: 'R&B', acoustic: 'Acoustic', jazz: 'Jazz', classical: 'Classical',
+                metal: 'Metal', country: 'Country', latin: 'Latin', lofi: 'Lo-Fi'
+            };
+            const genre = window.selectedPreMasterGenre || (window.aiDetectedGenre && window.aiDetectedGenre.top) || 'pop';
+            const genreName = genreNames[genre] || genre;
+
+            const platformBtn = document.querySelector('.console-platform-btn.active');
+            const platform = platformBtn ? platformBtn.dataset.platform : 'streaming';
+            const lufsMap = { streaming: '-14 LUFS', apple: '-16 LUFS', podcast: '-16 LUFS' };
+            const platformNames = { streaming: 'Streaming', apple: 'Apple Music', podcast: 'Podcast' };
+
+            const formatBtn = document.querySelector('.console-format-btn.selected');
+            const format = formatBtn ? formatBtn.dataset.format : 'wav';
+            const depth = window.tourSelectedBitDepth || 24;
+
+            summaryEl.textContent = genreName + ' \u2192 ' + platformNames[platform] + ' (' + lufsMap[platform] + ') \u2192 ' + format.toUpperCase() + ' ' + depth + '-bit';
+        }
+        window.updateConsoleSummary = updateConsoleSummary;
+
+        // Sync sidebar with console selections
+        function syncSidebarWithConsole() {
+            // Sync platform
+            const platform = window.selectedPlatform || 'streaming';
+            document.querySelectorAll('.selector-btn[data-platform]').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.platform === platform) btn.classList.add('active');
+            });
+
+            // Sync genre
+            const genre = window.selectedPreMasterGenre;
+            if (genre) {
+                // Map console genre names to sidebar genre names (sidebar uses 'hip-hop', console uses 'hiphop')
+                const sidebarGenreMap = { hiphop: 'hip-hop', electronic: 'edm' };
+                const sidebarGenre = sidebarGenreMap[genre] || genre;
+                document.querySelectorAll('.selector-btn[data-genre]').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.genre === sidebarGenre) btn.classList.add('active');
+                });
+            }
+        }
+        window.syncSidebarWithConsole = syncSidebarWithConsole;
+
+        // ═══════════════════════════════════════════════════════════════════
         // PROCEED WITH MASTERING (ROBUST VERSION)
         // ═══════════════════════════════════════════════════════════════════
         window.proceedWithMastering = function() {
@@ -27015,16 +27399,22 @@
                 } catch (_) {}
             }
 
-            // Ensure we have a genre selected (default to pop if not)
+            // Ensure we have a genre selected (default to AI-detected or pop)
             if (!selectedPreMasterGenre && !window.selectedPreMasterGenre) {
-                console.warn('⚠️ No genre selected, defaulting to Pop');
-                selectedPreMasterGenre = 'pop';
-                window.selectedPreMasterGenre = 'pop';
+                const fallback = (window.aiDetectedGenre && window.aiDetectedGenre.top) || 'pop';
+                console.warn('⚠️ No genre selected, defaulting to', fallback);
+                selectedPreMasterGenre = fallback;
+                window.selectedPreMasterGenre = fallback;
             }
 
             // Ensure intensity is set
             if (!window.selectedIntensity) {
                 window.selectedIntensity = processingIntensity || 3;
+            }
+
+            // Sync console platform selection to sidebar (mastering reads from sidebar)
+            if (typeof syncSidebarWithConsole === 'function') {
+                syncSidebarWithConsole();
             }
 
             // Hide the genre selection overlay
@@ -27072,7 +27462,6 @@
             if (!overlay) {
                 console.error('❌ Genre selection overlay not found!');
                 // Fallback: go directly to mastering with default settings
-
                 window.selectedPreMasterGenre = 'pop';
                 window.selectedIntensity = 3;
                 runActualMastering();
@@ -27089,31 +27478,40 @@
                 console.warn('⚠️ Could not capture before spectrum:', err);
             }
 
-            // Reset state
-            selectedPreMasterGenre = null;
-            window.selectedPreMasterGenre = null;
+            // If AI detected a genre, pre-select it; otherwise require user selection
+            if (window.aiDetectedGenre && window.aiDetectedGenre.top) {
+                const aiGenre = window.aiDetectedGenre.top;
+                previewGenre(aiGenre);
+                populateAIMasteringConsole(window.aiTrackAnalysis, window.aiDetectedGenre);
+            } else {
+                // No AI detection available — require manual selection
+                selectedPreMasterGenre = null;
+                window.selectedPreMasterGenre = null;
 
-            const startBtn = document.getElementById('startMasteringBtn');
-            if (startBtn) {
-                startBtn.disabled = true;
-                startBtn.style.opacity = '0.5';
+                const startBtn = document.getElementById('startMasteringBtn');
+                if (startBtn) {
+                    startBtn.disabled = true;
+                    startBtn.style.opacity = '0.5';
+                }
+
+                const statusEl = document.getElementById('genrePreviewStatus');
+                if (statusEl) {
+                    statusEl.innerHTML = 'SELECT A GENRE TO PREVIEW';
+                    statusEl.style.color = 'rgba(255,255,255,0.5)';
+                }
+
+                document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
             }
-
-            const statusEl = document.getElementById('genrePreviewStatus');
-            if (statusEl) {
-                statusEl.innerHTML = '👆 Click a genre to preview';
-                statusEl.style.color = '#00d4ff';
-            }
-
-            // Remove any previous selection
-            document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
 
             // Voice prompt FIRST, then start music ducked underneath (skip if tour is active)
             setTimeout(() => {
                 if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
-                    window.speakWithDucking("Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.");
+                    const msg = window.aiDetectedGenre
+                        ? "I've analyzed your track and detected the genre. Confirm or change it, then hit Master Now."
+                        : "Pick your genre and we'll dial in the processing for you. Tap one to hear the difference.";
+                    window.speakWithDucking(msg);
                 }
                 // Start audio playback ducked (low volume) after voice starts
                 setTimeout(() => {
@@ -27528,8 +27926,7 @@
             en: {
                 steps: [
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Chloe, and I\'ll be walking you through everything. Let\'s get started. Just drag your track onto that glowing area, or click to browse your files. We support WAV, MP3, FLAC, and more.' },
-                    { title: 'Choose Your Export Format', desc: 'Pick your format and bit depth. WAV, FLAC, MP3, or AAC - each has its purpose.', action: 'Check the format options on the right', voice: 'Lovely. Now before we work our magic, let\'s sort out your export settings. Quick rundown for you. WAV at 24-bit is your gold standard - that\'s what the pros use, completely lossless, pristine quality. FLAC gives you the same quality but half the file size, rather clever really. MP3 at 320 is brilliant for streaming, works absolutely everywhere. And AAC is what Apple uses, very efficient. For most people, I\'d say go with WAV 24-bit. Can\'t go wrong with that.' },
-                    { title: 'Time to Master', desc: 'Hit that MASTER button and watch the magic happen. 24 studio-grade processors at your service.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll run your track through our full processing chain. We\'re talking 24 studio-grade processors - EQ, compression, limiting, stereo enhancement, the whole lot. It\'s like having a professional mastering engineer in your pocket. Go on, let\'s hear what you\'ve got.' },
+                    { title: 'Time to Master', desc: 'Hit that MASTER button and the AI console will configure everything for you. Review and click MASTER NOW.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and our AI will analyze your track, detect the genre, and set up all the processing for you. You can tweak anything in the console, then hit Master Now. Go on, let\'s hear what you\'ve got.' },
                     { title: 'Sounding Proper!', desc: 'Your track just got the professional treatment. Have a listen - notice the difference?', action: '', voice: 'Beautiful. Your master is sounding incredible. Use the A B toggle at the bottom of the screen to compare your original with the mastered version. Now check out the genre options on the left to fine-tune your sound.' },
                     { title: 'Make It Yours', desc: 'Pick a genre, tweak the EQ, and make it yours.', action: '', voice: 'Pick your genre, explore the presets, and make it yours. When you\'re happy, scroll down on the left sidebar to find the Export button - it\'s right below the genre section, glowing for you. Enjoy.' }
                 ],
@@ -27539,8 +27936,7 @@
             es: {
                 steps: [
                     { title: 'Sube Tu Pista', desc: 'Arrastra tu archivo de audio al área resaltada o haz clic para buscar.', action: 'Haz clic en el área de carga brillante', voice: 'Bienvenido a LuvLang Mastering Profesional. Primero, sube tu pista de audio haciendo clic en el área de carga o arrastrando un archivo. Soportamos WAV, MP3, FLAC y muchos más formatos.' },
-                    { title: 'Elige Tu Formato', desc: 'Selecciona formato y profundidad. WAV, FLAC, MP3 o AAC - cada uno tiene su propósito.', action: 'Revisa las opciones a la derecha', voice: 'Antes de masterizar, déjame explicar las opciones. WAV es el estándar de oro - sin pérdida, máxima calidad, perfecto para uso profesional. FLAC también es sin pérdida pero comprimido a la mitad del tamaño - excelente cuando necesitas calidad pero quieres ahorrar espacio. MP3 a 320 kilobits es el formato universal - funciona en todos lados y suena genial para streaming. AAC es similar a MP3 pero más eficiente - es lo que usa Apple, suena mejor al mismo bitrate. Para profundidad de bits, 24 bits te da máximo rango dinámico - es lo que usan los profesionales. 16 bits es calidad CD, perfecto para streaming. La mayoría elige WAV 24 bits.' },
-                    { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER para procesar tu audio con 24 procesadores profesionales.', action: 'Haz clic en el botón MASTER', voice: 'Ahora masterizemos tu pista. Haz clic en el botón Master arriba. Tenemos 24 procesadores profesionales - EQ, compresión, limitación, todo lo necesario.' },
+                    { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER y la IA configurará todo. Revisa y haz clic en MASTER NOW.', action: 'Haz clic en el botón MASTER', voice: 'Ahora masterizemos tu pista. Haz clic en el botón Master arriba. La IA analizará tu pista, detectará el género y configurará el procesamiento.' },
                     { title: 'Masterización Completa', desc: 'Tu pista está masterizada profesionalmente. ¡Escucha la diferencia!', action: '', voice: 'Excelente trabajo. Tu pista pasó por toda la cadena de masterización. Dale play y escucha la diferencia. Luego elige un género a la izquierda.' },
                     { title: 'Explora y Personaliza', desc: 'Afina tu master usando selección de género, presets y controles de EQ manual.', action: '', voice: 'Ahora tienes tres herramientas poderosas. Selección de Género, Presets de Género con curvas EQ, y EQ Manual para control de 7 bandas. ¡Encuentra tu sonido perfecto!' }
                 ],
@@ -27550,8 +27946,7 @@
             fr: {
                 steps: [
                     { title: 'Téléchargez Votre Piste', desc: 'Glissez votre fichier audio sur la zone en surbrillance ou cliquez pour parcourir.', action: 'Cliquez sur la zone de téléchargement', voice: 'Bienvenue sur LuvLang Mastering Professionnel. Premièrement, téléchargez votre piste audio en cliquant sur la zone ou en faisant glisser un fichier. Nous supportons WAV, MP3, FLAC et bien plus.' },
-                    { title: 'Choisissez Votre Format', desc: 'Sélectionnez format et profondeur. WAV, FLAC, MP3 ou AAC - chacun a son usage.', action: 'Vérifiez les options à droite', voice: 'Avant de masteriser, laissez-moi expliquer les options. WAV est la référence - sans perte, qualité maximale, parfait pour usage professionnel. FLAC est aussi sans perte mais compressé de moitié - excellent quand vous voulez la qualité avec moins d\'espace. MP3 à 320 kilobits est le format universel - fonctionne partout, sonne bien pour le streaming. AAC est similaire au MP3 mais plus efficace - c\'est ce qu\'utilise Apple, meilleur son au même débit. Pour la profondeur, 24 bits offre le maximum de dynamique - c\'est ce qu\'utilisent les pros. 16 bits est qualité CD, parfait pour le streaming. La plupart choisissent WAV 24 bits.' },
-                    { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER pour traiter votre audio avec 24 processeurs professionnels.', action: 'Cliquez sur le bouton MASTER', voice: 'Maintenant masterisons votre piste. Cliquez sur le bouton Master en haut. Nous avons 24 processeurs professionnels - EQ, compression, limitation, tout ce qu\'il faut.' },
+                    { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER et l\'IA configurera tout. Vérifiez et cliquez MASTER NOW.', action: 'Cliquez sur le bouton MASTER', voice: 'Maintenant masterisons votre piste. Cliquez sur le bouton Master en haut. L\'IA analysera votre piste, détectera le genre et configurera le traitement.' },
                     { title: 'Mastering Terminé', desc: 'Votre piste est masterisée professionnellement. Écoutez la différence!', action: '', voice: 'Excellent travail. Votre piste a traversé toute la chaîne de mastering. Appuyez sur play et écoutez la différence. Puis choisissez un genre à gauche.' },
                     { title: 'Explorez et Personnalisez', desc: 'Affinez votre master avec la sélection de genre, les préréglages et les contrôles EQ.', action: '', voice: 'Vous avez trois outils puissants. Sélection de Genre, Préréglages de Genre avec courbes EQ, et EQ Manuel pour contrôle 7 bandes. Trouvez votre son parfait!' }
                 ],
@@ -27561,8 +27956,7 @@
             de: {
                 steps: [
                     { title: 'Track Hochladen', desc: 'Ziehen Sie Ihre Audiodatei auf den markierten Bereich oder klicken Sie zum Durchsuchen.', action: 'Klicken Sie auf den Upload-Bereich', voice: 'Willkommen bei LuvLang Professional Mastering. Laden Sie zuerst Ihren Audio-Track hoch, indem Sie auf den Upload-Bereich klicken oder eine Datei hineinziehen. Wir unterstützen WAV, MP3, FLAC und viele weitere Formate.' },
-                    { title: 'Format Wählen', desc: 'Wählen Sie Format und Bittiefe. WAV, FLAC, MP3 oder AAC - jedes hat seinen Zweck.', action: 'Überprüfen Sie die Optionen rechts', voice: 'Bevor wir mastern, erkläre ich die Optionen. WAV ist der Goldstandard - verlustfrei, höchste Qualität, perfekt für professionelle Nutzung. FLAC ist auch verlustfrei aber auf halbe Größe komprimiert - super wenn Sie Qualität mit weniger Speicher wollen. MP3 mit 320 Kilobit ist das universelle Format - funktioniert überall, klingt toll für Streaming. AAC ist ähnlich wie MP3 aber effizienter - das nutzt Apple, besserer Klang bei gleicher Bitrate. Für die Bittiefe bietet 24 Bit maximale Dynamik - das nutzen die Profis. 16 Bit ist CD-Qualität, perfekt für Streaming. Die meisten wählen WAV 24 Bit.' },
-                    { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER um Ihr Audio mit 24 professionellen Prozessoren zu verarbeiten.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Jetzt mastern wir Ihren Track. Klicken Sie auf den Master-Button oben. Wir haben 24 professionelle Prozessoren - EQ, Kompression, Limiting, alles dabei.' },
+                    { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER und die KI konfiguriert alles. Prüfen und MASTER NOW klicken.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Jetzt mastern wir Ihren Track. Klicken Sie auf den Master-Button oben. Die KI analysiert Ihren Track, erkennt das Genre und konfiguriert die Verarbeitung.' },
                     { title: 'Mastering Abgeschlossen', desc: 'Ihr Track ist professionell gemastert. Hören Sie den Unterschied!', action: '', voice: 'Ausgezeichnete Arbeit. Ihr Track durchlief die komplette Mastering-Kette. Drücken Sie Play und hören Sie den Unterschied. Dann wählen Sie links ein Genre.' },
                     { title: 'Erkunden & Anpassen', desc: 'Verfeinern Sie Ihren Master mit Genre-Auswahl, Presets und EQ-Kontrollen.', action: '', voice: 'Sie haben drei leistungsstarke Werkzeuge. Genre-Auswahl, Genre-Presets mit EQ-Kurven, und Manueller EQ für 7-Band-Kontrolle. Finden Sie Ihren perfekten Sound!' }
                 ],
@@ -27572,8 +27966,7 @@
             pt: {
                 steps: [
                     { title: 'Envie Sua Faixa', desc: 'Arraste seu arquivo de áudio para a área destacada ou clique para procurar.', action: 'Clique na área de upload brilhante', voice: 'Bem-vindo ao LuvLang Mastering Profissional. Primeiro, envie sua faixa de áudio clicando na área de upload ou arrastando um arquivo. Suportamos WAV, MP3, FLAC e muitos outros formatos.' },
-                    { title: 'Escolha Seu Formato', desc: 'Selecione formato e profundidade. WAV, FLAC, MP3 ou AAC - cada um tem seu propósito.', action: 'Verifique as opções à direita', voice: 'Antes de masterizar, deixe-me explicar as opções. WAV é o padrão ouro - sem perdas, máxima qualidade, perfeito para uso profissional. FLAC também é sem perdas mas comprimido pela metade - ótimo quando você quer qualidade com menos espaço. MP3 a 320 kilobits é o formato universal - funciona em todo lugar, som excelente para streaming. AAC é similar ao MP3 mas mais eficiente - é o que a Apple usa, melhor som na mesma taxa de bits. Para profundidade, 24 bits oferece máxima dinâmica - é o que os profissionais usam. 16 bits é qualidade CD, perfeito para streaming. A maioria escolhe WAV 24 bits.' },
-                    { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER para processar seu áudio com 24 processadores profissionais.', action: 'Clique no botão MASTER', voice: 'Agora vamos masterizar sua faixa. Clique no botão Master acima. Temos 24 processadores profissionais - EQ, compressão, limitação, tudo que você precisa.' },
+                    { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER e a IA configurará tudo. Revise e clique MASTER NOW.', action: 'Clique no botão MASTER', voice: 'Agora vamos masterizar sua faixa. Clique no botão Master acima. A IA analisará sua faixa, detectará o gênero e configurará o processamento.' },
                     { title: 'Masterização Completa', desc: 'Sua faixa está masterizada profissionalmente. Ouça a diferença!', action: '', voice: 'Excelente trabalho. Sua faixa passou por toda a cadeia de masterização. Aperte play e ouça a diferença. Depois escolha um gênero à esquerda.' },
                     { title: 'Explore e Personalize', desc: 'Refine seu master usando seleção de gênero, presets e controles de EQ.', action: '', voice: 'Você tem três ferramentas poderosas. Seleção de Gênero, Presets de Gênero com curvas EQ, e EQ Manual para controle de 7 bandas. Encontre seu som perfeito!' }
                 ],
@@ -27583,8 +27976,7 @@
             ja: {
                 steps: [
                     { title: 'トラックをアップロード', desc: 'ハイライトされたエリアにオーディオファイルをドラッグするか、クリックして参照します。', action: '光っているアップロードエリアをクリック', voice: 'LuvLangプロフェッショナルマスタリングへようこそ。まず、アップロードエリアをクリックするか、ファイルをドラッグしてオーディオトラックをアップロードしてください。WAV、MP3、FLACなど多くのフォーマットをサポートしています。' },
-                    { title: 'フォーマットを選択', desc: 'フォーマットとビット深度を選択。WAV、FLAC、MP3、AAC - それぞれに用途があります。', action: '右側のオプションを確認', voice: 'マスタリングの前に、オプションを説明します。WAVはゴールドスタンダード - ロスレスで最高品質、プロフェッショナル用途に最適です。FLACもロスレスですが半分のサイズに圧縮されます - 品質を保ちながらスペースを節約したい時に最適。MP3は320キロビットでユニバーサルフォーマット - どこでも再生でき、ストリーミングに最適です。AACはMP3に似ていますがより効率的 - Appleが使用しており、同じビットレートでより良い音質です。ビット深度は、24ビットが最大のダイナミックレンジを提供します - プロが使うのはこれです。16ビットはCD品質で、ストリーミングに最適です。多くの方がWAV 24ビットを選びます。' },
-                    { title: 'トラックをマスター', desc: 'MASTERボタンをクリックして24のプロセッサでオーディオを処理します。', action: 'MASTERボタンをクリック', voice: 'では、トラックをマスタリングしましょう。上部のマスターボタンをクリックしてください。24のプロフェッショナルプロセッサがあります。EQ、コンプレッション、リミッティング、すべて揃っています。' },
+                    { title: 'トラックをマスター', desc: 'MASTERボタンをクリックするとAIがすべて設定します。確認してMASTER NOWをクリック。', action: 'MASTERボタンをクリック', voice: 'では、トラックをマスタリングしましょう。上部のマスターボタンをクリックしてください。AIがトラックを分析し、ジャンルを検出して処理を設定します。' },
                     { title: 'マスタリング完了', desc: 'トラックがプロフェッショナルにマスタリングされました。違いを聴いてください！', action: '', voice: '素晴らしい。トラックが完全なマスタリングチェーンを通過しました。再生して違いを聴いてください。左側でジャンルを選んでください。' },
                     { title: '探索とカスタマイズ', desc: 'ジャンル選択、プリセット、EQコントロールでマスターを調整します。', action: '', voice: '3つの強力なツールがあります。ジャンル選択、EQカーブ付きジャンルプリセット、7バンドのマニュアルEQ。完璧なサウンドを見つけてください！' }
                 ],
@@ -27594,8 +27986,7 @@
             ko: {
                 steps: [
                     { title: '트랙 업로드', desc: '강조 표시된 영역에 오디오 파일을 드래그하거나 클릭하여 찾아보세요.', action: '빛나는 업로드 영역을 클릭', voice: 'LuvLang 프로페셔널 마스터링에 오신 것을 환영합니다. 먼저 업로드 영역을 클릭하거나 파일을 드래그하여 오디오 트랙을 업로드하세요. WAV, MP3, FLAC 등 다양한 형식을 지원합니다.' },
-                    { title: '포맷 선택', desc: '포맷과 비트 심도를 선택하세요. WAV, FLAC, MP3, AAC - 각각의 용도가 있습니다.', action: '오른쪽 옵션을 확인하세요', voice: '마스터링 전에 옵션을 설명해 드리겠습니다. WAV는 골드 스탠다드입니다 - 무손실, 최고 품질, 전문가용으로 완벽합니다. FLAC도 무손실이지만 절반 크기로 압축됩니다 - 품질은 유지하면서 공간을 절약하고 싶을 때 좋습니다. MP3 320킬로비트는 유니버설 포맷입니다 - 어디서나 재생되고 스트리밍에 좋습니다. AAC는 MP3와 비슷하지만 더 효율적입니다 - Apple이 사용하며 같은 비트레이트에서 더 좋은 소리를 냅니다. 비트 심도는 24비트가 최대 다이내믹 레인지를 제공합니다 - 프로들이 사용합니다. 16비트는 CD 품질로 스트리밍에 완벽합니다. 대부분 WAV 24비트를 선택합니다.' },
-                    { title: '트랙 마스터링', desc: 'MASTER 버튼을 클릭하여 24개의 프로세서로 오디오를 처리합니다.', action: 'MASTER 버튼을 클릭', voice: '이제 트랙을 마스터링해 봅시다. 상단의 마스터 버튼을 클릭하세요. 24개의 전문 프로세서가 있습니다. EQ, 컴프레션, 리미팅, 모두 갖추고 있습니다.' },
+                    { title: '트랙 마스터링', desc: 'MASTER 버튼을 클릭하면 AI가 모든 것을 설정합니다. 확인하고 MASTER NOW를 클릭.', action: 'MASTER 버튼을 클릭', voice: '이제 트랙을 마스터링해 봅시다. 상단의 마스터 버튼을 클릭하세요. AI가 트랙을 분석하고 장르를 감지하여 처리를 설정합니다.' },
                     { title: '마스터링 완료', desc: '트랙이 전문적으로 마스터링되었습니다. 차이를 들어보세요!', action: '', voice: '훌륭합니다. 트랙이 전체 마스터링 체인을 통과했습니다. 재생하여 차이를 들어보세요. 왼쪽에서 장르를 선택하세요.' },
                     { title: '탐색 및 커스터마이즈', desc: '장르 선택, 프리셋, EQ 컨트롤로 마스터를 조정하세요.', action: '', voice: '세 가지 강력한 도구가 있습니다. 장르 선택, EQ 커브가 있는 장르 프리셋, 7밴드 수동 EQ. 완벽한 사운드를 찾아보세요!' }
                 ],
@@ -27605,8 +27996,7 @@
             zh: {
                 steps: [
                     { title: '上传您的曲目', desc: '将音频文件拖放到高亮区域或点击浏览。', action: '点击发光的上传区域', voice: '欢迎来到LuvLang专业母带处理。首先，点击上传区域或拖放文件来上传您的音频曲目。我们支持WAV、MP3、FLAC等多种格式。' },
-                    { title: '选择格式', desc: '选择格式和位深度。WAV、FLAC、MP3或AAC - 各有用途。', action: '查看右侧选项', voice: '在处理之前，让我解释各个选项。WAV是黄金标准 - 无损、最高品质，专业使用的完美选择。FLAC也是无损的但压缩到一半大小 - 当你想要品质又想节省空间时很棒。MP3 320千比特是通用格式 - 到处都能播放，流媒体效果很好。AAC类似MP3但更高效 - 这是Apple使用的格式，相同比特率下音质更好。位深度方面，24位提供最大动态范围 - 专业人士的选择。16位是CD品质，流媒体平台的完美选择。大多数人选择WAV 24位。' },
-                    { title: '母带处理', desc: '点击MASTER按钮用24个专业处理器处理您的音频。', action: '点击MASTER按钮', voice: '现在让我们处理您的曲目。点击顶部的Master按钮。我们有24个专业处理器：均衡器、压缩、限制，应有尽有。' },
+                    { title: '母带处理', desc: '点击MASTER按钮，AI将配置一切。确认后点击MASTER NOW。', action: '点击MASTER按钮', voice: '现在让我们处理您的曲目。点击顶部的Master按钮。AI将分析您的曲目，检测流派并配置处理。' },
                     { title: '母带处理完成', desc: '您的曲目已专业处理。听听区别！', action: '', voice: '做得好。您的曲目已通过完整的母带处理链。按播放键听听区别。然后在左侧选择一个流派。' },
                     { title: '探索和自定义', desc: '使用流派选择、预设和EQ控制来调整您的母带。', action: '', voice: '您有三个强大的工具。流派选择、带EQ曲线的流派预设、以及7段手动EQ。找到您完美的声音！' }
                 ],
@@ -27620,7 +28010,7 @@
         // Tour Steps Configuration (will be updated based on language)
         const voiceTourSteps = [
             { id: 'upload', target: '#uploadArea', waitFor: 'fileUploaded', position: 'right' },
-            { id: 'format', target: null, waitFor: 'formatSelected', position: 'center', useFormatZone: true },
+            // Format step removed in v7.6.3 — format selection merged into AI Mastering Console
             { id: 'master', target: '#aiMasterBtnFloating', waitFor: 'masteringComplete', position: 'bottom' },
             { id: 'complete', target: '#genreSection', waitFor: null, position: 'right', showNext: true },
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
@@ -28115,17 +28505,9 @@
                 }
             }
 
-            // Show/hide centered format zone for step 2
+            // Format zone removed in v7.6.3 — format selection now in AI Mastering Console
             const formatZone = document.getElementById('tourFormatZone');
-            if (formatZone) {
-                if (step.id === 'format' || step.useFormatZone) {
-                    formatZone.style.display = 'block';
-                    // Hide spotlight for format step
-                    if (spotlight) spotlight.style.display = 'none';
-                } else {
-                    formatZone.style.display = 'none';
-                }
-            }
+            if (formatZone) formatZone.style.display = 'none';
 
             // Show/hide Master button instruction and glow for step 3
             const masterInstruction = document.getElementById('tourMasterInstruction');
@@ -28302,7 +28684,7 @@
         function showExploreModal() {
             // Get translated content
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
-            const stepTrans = tourTranslations[currentLang]?.steps[4] || tourTranslations.en.steps[4];
+            const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
 
             // Speak the final step voice
             if (stepTrans && stepTrans.voice) {

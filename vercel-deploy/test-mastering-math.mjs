@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.6.2)
- * Validates generateAICorrections() math against professional mastering ranges.
+ * Mastering Math Validation Harness (v7.6.3)
+ * Validates generateAICorrections() math and detectGenreFromAnalysis() against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
 
@@ -286,7 +286,7 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.6.0)');
+console.log('Mastering Math Validation (v7.6.3)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
@@ -411,6 +411,119 @@ for (const dc of diffChecks) {
         console.log(`  PASS: ${dc.name} — diff=${diff.toFixed(2)} dB (${dc.g1}=${v1.toFixed(2)}, ${dc.g2}=${v2.toFixed(2)})`);
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.6.3: AI Genre Detection Tests
+// Validates detectGenreFromAnalysis() against known spectral profiles
+// ═══════════════════════════════════════════════════════════════════
+
+function detectGenreFromAnalysis(analysis) {
+    if (!analysis) return { top: 'pop', confidence: 50, scores: [] };
+
+    const signatures = {
+        hiphop:     { bass: -8,  tilt: -1.5, crest: 10, centroid: 800,  ms: 0.7, sib: 0.15 },
+        electronic: { bass: -10, tilt: -0.5, crest: 8,  centroid: 2500, ms: 0.4, sib: 0.20 },
+        pop:        { bass: -15, tilt: -0.3, crest: 9,  centroid: 2000, ms: 0.6, sib: 0.18 },
+        rock:       { bass: -14, tilt: 0.0,  crest: 10, centroid: 2800, ms: 0.5, sib: 0.25 },
+        rnb:        { bass: -10, tilt: -1.0, crest: 11, centroid: 1200, ms: 0.6, sib: 0.15 },
+        acoustic:   { bass: -18, tilt: -0.5, crest: 14, centroid: 1800, ms: 0.8, sib: 0.12 },
+        jazz:       { bass: -16, tilt: -0.3, crest: 15, centroid: 1500, ms: 0.7, sib: 0.10 },
+        classical:  { bass: -20, tilt: -0.8, crest: 18, centroid: 1200, ms: 0.9, sib: 0.08 },
+        metal:      { bass: -12, tilt: 0.3,  crest: 7,  centroid: 3500, ms: 0.5, sib: 0.30 },
+        country:    { bass: -15, tilt: -0.2, crest: 12, centroid: 2000, ms: 0.7, sib: 0.15 },
+        latin:      { bass: -12, tilt: -0.5, crest: 11, centroid: 1800, ms: 0.5, sib: 0.15 },
+        lofi:       { bass: -12, tilt: -2.0, crest: 10, centroid: 600,  ms: 0.8, sib: 0.08 }
+    };
+
+    const weights = { bass: 1.0, tilt: 1.5, crest: 1.2, centroid: 1.0, ms: 0.8, sib: 0.8 };
+    const ranges = { bass: 12, tilt: 2.5, crest: 12, centroid: 3000, ms: 0.5, sib: 0.25 };
+
+    const bassEnergy = ((analysis.spectrumDB?.sub || -30) + (analysis.spectrumDB?.bass || -20)) / 2;
+    const trackFeatures = {
+        bass: bassEnergy,
+        tilt: analysis.spectralTilt || -1.0,
+        crest: analysis.overallCrest || 10,
+        centroid: analysis.spectralCentroid || 1500,
+        ms: analysis.msEnergyRatio || 0.6,
+        sib: analysis.sibilanceRatio || 0.15
+    };
+
+    const scores = [];
+    for (const [genre, sig] of Object.entries(signatures)) {
+        let totalDist = 0;
+        let totalWeight = 0;
+        for (const feat of Object.keys(sig)) {
+            const diff = (trackFeatures[feat] - sig[feat]) / ranges[feat];
+            const gaussianScore = Math.exp(-0.5 * diff * diff);
+            totalDist += gaussianScore * weights[feat];
+            totalWeight += weights[feat];
+        }
+        const score = (totalDist / totalWeight) * 100;
+        scores.push({ genre, score: Math.round(score * 10) / 10 });
+    }
+
+    scores.sort((a, b) => b.score - a.score);
+    const confidence = Math.round(Math.min(99, scores[0].score));
+    return { top: scores[0].genre, confidence, scores };
+}
+
+console.log('--- AI GENRE DETECTION ---');
+
+// Test 1: Hip-hop-like track (heavy bass, low centroid)
+const hiphopTrack = {
+    spectrumDB: { sub: -10, bass: -8, lowmid: -18, mid: -15, highmid: -16, high: -22, air: -33 },
+    spectralTilt: -1.5, overallCrest: 10, spectralCentroid: 800, msEnergyRatio: 0.7, sibilanceRatio: 0.15
+};
+const hiphopResult = detectGenreFromAnalysis(hiphopTrack);
+check('genreDetect:hiphop:top', hiphopResult.top === 'hiphop' ? 1 : 0, 1, 1);
+check('genreDetect:hiphop:confidence', hiphopResult.confidence, 70, 99);
+console.log(`  Hip-Hop track → detected: ${hiphopResult.top} (${hiphopResult.confidence}%)`);
+
+// Test 2: Classical-like track (high crest, high M/S ratio)
+const classicalTrack = {
+    spectrumDB: { sub: -30, bass: -20, lowmid: -14, mid: -12, highmid: -14, high: -19, air: -27 },
+    spectralTilt: -0.8, overallCrest: 18, spectralCentroid: 1200, msEnergyRatio: 0.9, sibilanceRatio: 0.08
+};
+const classicalResult = detectGenreFromAnalysis(classicalTrack);
+check('genreDetect:classical:top', classicalResult.top === 'classical' ? 1 : 0, 1, 1);
+check('genreDetect:classical:confidence', classicalResult.confidence, 70, 99);
+console.log(`  Classical track → detected: ${classicalResult.top} (${classicalResult.confidence}%)`);
+
+// Test 3: Metal-like track (low crest, high centroid, high sibilance)
+const metalTrack = {
+    spectrumDB: { sub: -18, bass: -12, lowmid: -14, mid: -10, highmid: -11, high: -17, air: -29 },
+    spectralTilt: 0.3, overallCrest: 7, spectralCentroid: 3500, msEnergyRatio: 0.5, sibilanceRatio: 0.30
+};
+const metalResult = detectGenreFromAnalysis(metalTrack);
+check('genreDetect:metal:top', metalResult.top === 'metal' ? 1 : 0, 1, 1);
+check('genreDetect:metal:confidence', metalResult.confidence, 70, 99);
+console.log(`  Metal track → detected: ${metalResult.top} (${metalResult.confidence}%)`);
+
+// Test 4: Lo-Fi-like track (low centroid, steep tilt)
+const lofiTrack = {
+    spectrumDB: { sub: -16, bass: -12, lowmid: -12, mid: -14, highmid: -20, high: -28, air: -40 },
+    spectralTilt: -2.0, overallCrest: 10, spectralCentroid: 600, msEnergyRatio: 0.8, sibilanceRatio: 0.08
+};
+const lofiResult = detectGenreFromAnalysis(lofiTrack);
+check('genreDetect:lofi:top', lofiResult.top === 'lofi' ? 1 : 0, 1, 1);
+check('genreDetect:lofi:confidence', lofiResult.confidence, 70, 99);
+console.log(`  Lo-Fi track → detected: ${lofiResult.top} (${lofiResult.confidence}%)`);
+
+// Test 5: Scores array has all 12 genres
+check('genreDetect:scoreCount', hiphopResult.scores.length, 12, 12);
+console.log(`  Score array length: ${hiphopResult.scores.length} genres`);
+
+// Test 6: Top score is always highest
+const topScore = hiphopResult.scores[0].score;
+const secondScore = hiphopResult.scores[1].score;
+check('genreDetect:sorted', topScore >= secondScore ? 1 : 0, 1, 1);
+console.log(`  Scores sorted: top=${topScore.toFixed(1)} >= second=${secondScore.toFixed(1)}`);
+
+// Test 7: Null/empty analysis returns default
+const nullResult = detectGenreFromAnalysis(null);
+check('genreDetect:null', nullResult.top === 'pop' ? 1 : 0, 1, 1);
+console.log(`  Null analysis → default: ${nullResult.top} (${nullResult.confidence}%)`);
+console.log('');
 
 // Summary
 console.log('\n========================================');
