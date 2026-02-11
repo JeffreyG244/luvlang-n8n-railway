@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.4.6)
+ * Mastering Math Validation Harness (v7.5.0)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
@@ -56,7 +56,7 @@ const TEST_ANALYSIS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Reproduce generateAICorrections math (v7.4.6)
+// Reproduce generateAICorrections math (v7.5.0)
 // ═══════════════════════════════════════════════════════════════════
 function generateAICorrections(analysis, genre) {
     const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
@@ -177,11 +177,18 @@ function generateAICorrections(analysis, genre) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute LUFS correction (v7.4.6)
+// Compute LUFS correction (v7.5.0 — dynamic chain loss compensation)
 // ═══════════════════════════════════════════════════════════════════
-function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS) {
-    const chainLossCompensation = { 1: 1.5, 2: 2.0, 3: 2.5, 4: 3.0, 5: 3.5 };
-    const compensation = chainLossCompensation[intensity] || 2.5;
+function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS, bypass) {
+    // v7.5.0: Dynamic chain loss calculation based on active stages
+    let chainLoss = 0;
+    if (!bypass || !bypass.dynamicEQ)    chainLoss += 0.5;
+    if (!bypass || !bypass.compression)  chainLoss += 1.0 + (intensity - 1) * 0.3;
+    if (!bypass || !bypass.multibandComp) chainLoss += 0.5 + (intensity - 1) * 0.2;
+    if (!bypass || !bypass.transient)    chainLoss += 0.3;
+    chainLoss += 1.0 + (intensity - 1) * 0.5;  // Look-ahead limiter
+    chainLoss += 0.3;  // Brickwall safety
+    const compensation = Math.min(chainLoss, 6.0);
 
     let correctionDB;
     if (measuredChainLUFS !== null && isFinite(measuredChainLUFS) && measuredChainLUFS > -60) {
@@ -195,18 +202,18 @@ function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLU
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute NY compression wet mix (v7.4.6)
+// Compute NY compression wet mix (v7.5.0)
 // ═══════════════════════════════════════════════════════════════════
 function computeNYWet(intensity, compRatioTarget, bypass) {
     if (intensity <= 2 || bypass) return 0;
-    const nyBaseMix = { 3: 0.03, 4: 0.05, 5: 0.08 };
-    const nyBase = nyBaseMix[intensity] || 0.03;
+    const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 }; // v7.5.0: gentler compressor = can blend more
+    const nyBase = nyBaseMix[intensity] || 0.06;
     const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
     return nyBase * nyRatioScale;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute compressor threshold (v7.4.6)
+// Compute compressor threshold (v7.5.0)
 // ═══════════════════════════════════════════════════════════════════
 function computeCompThreshold(baseThreshold, intensity, compScale, aiThresholdOffset) {
     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
@@ -244,7 +251,7 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.4.6)');
+console.log('Mastering Math Validation (v7.5.0)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
@@ -256,7 +263,7 @@ for (const genre of GENRES) {
     console.log(`--- ${genre.toUpperCase()} ---`);
     console.log(`  totalEQ=${result.totalEQCorrection.toFixed(2)}, processingScale=${result.processingScale}, crestDiff=${result.crestDiff.toFixed(1)}, trackSlope=${result.trackSlope.toFixed(2)}`);
 
-    // EQ checks — ±3 dB per band (v7.4.3 professional range)
+    // EQ checks — ±2.5 dB per band (professional range)
     for (const band of bandKeys) {
         check(`${genre}:eq:${band}`, result.eqDeltas[band], -2.5, 2.5);
     }
@@ -278,20 +285,20 @@ for (const genre of GENRES) {
         const targetLUFS = ref.dynamics.targetLUFS || -14;
         // Simulate a chain measurement that reads ~2-4 dB louder than target (typical)
         const simulatedChainLUFS = targetLUFS + 2;
-        const correction = computeLUFSCorrection(-20, targetLUFS, intensity, simulatedChainLUFS);
+        const correction = computeLUFSCorrection(-20, targetLUFS, intensity, simulatedChainLUFS, result.stageBypass);
         check(`${genre}:lufs:i${intensity}`, correction, -6, 12);
     }
 
-    // NY compression wet checks
+    // NY compression wet checks (v7.5.0: higher wet OK with gentler compressor)
     for (const intensity of [3, 4, 5]) {
-        const compRatio = 2.5; // Typical mastering ratio
+        const compRatio = 2.0; // v7.5.0: typical mastering ratio (was 2.5)
         const nyWet = computeNYWet(intensity, compRatio, result.stageBypass.compression);
-        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.08);
+        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.15);
     }
 
-    // Compressor threshold checks
+    // Compressor threshold checks (v7.5.0: raised genre thresholds)
     for (const intensity of [3, 4, 5]) {
-        const baseThreshold = -18; // Typical genre default
+        const baseThreshold = -16; // v7.5.0: pop default (was -18)
         const compScale = result.stageIntensity.compression;
         const threshold = computeCompThreshold(baseThreshold, intensity, compScale, 0);
         check(`${genre}:compThresh:i${intensity}`, threshold, -24, 0);
@@ -304,7 +311,7 @@ for (const genre of GENRES) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Cross-genre differentiation check (v7.4.6)
+// Cross-genre differentiation check (v7.5.0)
 // Signature bands should differ by >= 1.5 dB between contrasting genres
 // ═══════════════════════════════════════════════════════════════════
 console.log('--- CROSS-GENRE DIFFERENTIATION ---');

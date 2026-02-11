@@ -9699,8 +9699,8 @@
                 dynEqLowFilter.frequency.value = 120;
                 dynEqLowFilter.Q.value = 0.707;     // Butterworth for smooth rolloff
                 dynEqLowFilter.gain.value = 0;
-                dynEqLowComp.threshold.value = -24;  // Pro threshold for bass control
-                dynEqLowComp.ratio.value = 2.0;      // Moderate ratio - controls boom without killing punch
+                dynEqLowComp.threshold.value = -10;  // Only catches bass boom peaks (was -24)
+                dynEqLowComp.ratio.value = 1.5;      // Gentle ratio — subtle control (was 2.0)
                 dynEqLowComp.attack.value = 0.020;   // 20ms - preserves transient attack
                 dynEqLowComp.release.value = 0.200;  // 200ms - musical release, no pumping
                 dynEqLowComp.knee.value = 6;         // Medium knee for natural response
@@ -9715,8 +9715,8 @@
                 dynEqMidFilter.frequency.value = 2500;  // Presence/harshness sweet spot
                 dynEqMidFilter.Q.value = 0.8;           // Wide Q covers 1-5kHz harshness range
                 dynEqMidFilter.gain.value = 0;
-                dynEqMidComp.threshold.value = -22;  // Catches harsh peaks effectively
-                dynEqMidComp.ratio.value = 2.5;      // Moderate-firm ratio for harshness taming
+                dynEqMidComp.threshold.value = -8;   // Only catches harsh peaks (was -22)
+                dynEqMidComp.ratio.value = 2.0;      // Moderate ratio (was 2.5)
                 dynEqMidComp.attack.value = 0.010;   // 10ms - fast enough for transient harshness
                 dynEqMidComp.release.value = 0.150;  // 150ms - responsive but smooth
                 dynEqMidComp.knee.value = 4;         // Medium-hard knee for precise control
@@ -9731,8 +9731,8 @@
                 dynEqHighFilter.frequency.value = 7000;
                 dynEqHighFilter.Q.value = 0.707;     // Butterworth for smooth response
                 dynEqHighFilter.gain.value = 0;
-                dynEqHighComp.threshold.value = -26;  // Catches sibilance spikes
-                dynEqHighComp.ratio.value = 3.0;      // Firm ratio - sibilance needs control
+                dynEqHighComp.threshold.value = -12;  // Only catches sibilance spikes (was -26)
+                dynEqHighComp.ratio.value = 2.5;      // Firm for sibilance (was 3.0)
                 dynEqHighComp.attack.value = 0.003;   // 3ms - FAST for catching sibilance "s" sounds
                 dynEqHighComp.release.value = 0.100;  // 100ms - fast release for consonants
                 dynEqHighComp.knee.value = 3;         // Harder knee for precise de-essing
@@ -9795,13 +9795,13 @@
                         }
                     },
                     enable: () => {
-                        // Professional parallel compression mix
-                        // 60% dry + 40% wet for effective but transparent dynamic EQ
-                        // Gain staging: 0.60 + 0.15 + 0.13 + 0.12 = 1.0
-                        dynEqDry.gain.value = 0.60;      // 60% original signal
-                        dynEqLowGain.gain.value = 0.15;  // Bass control (loudest band)
-                        dynEqMidGain.gain.value = 0.13;  // Harshness control
-                        dynEqHighGain.gain.value = 0.12; // De-essing
+                        // Professional parallel dynamic EQ mix (v7.5.0)
+                        // 85% dry + 15% wet — compressed bands ADD subtle control, not replace signal
+                        // Gain staging: 0.85 + 0.06 + 0.05 + 0.04 = 1.0
+                        dynEqDry.gain.value = 0.85;      // 85% original signal (was 0.60 — 40% loss!)
+                        dynEqLowGain.gain.value = 0.06;  // Bass control (was 0.15)
+                        dynEqMidGain.gain.value = 0.05;  // Harshness control (was 0.13)
+                        dynEqHighGain.gain.value = 0.04; // De-essing (was 0.12)
                         window.dynamicEQ.enabled = true;
 
                     },
@@ -9862,16 +9862,16 @@
                 // Fast attack path (for transient punch)
                 // FIX: Attack was 0.1ms causing robotic/clicking artifacts!
                 const transientAttackComp = audioContext.createDynamicsCompressor();
-                transientAttackComp.threshold.value = -24;  // Higher threshold = less aggressive
-                transientAttackComp.ratio.value = 3;        // Gentler ratio
-                transientAttackComp.attack.value = 0.003;   // Musical 3ms (was 0.1ms - too fast!)
+                transientAttackComp.threshold.value = -14;  // Only shape prominent transients (was -24)
+                transientAttackComp.ratio.value = 2.0;      // Moderate ratio (was 3)
+                transientAttackComp.attack.value = 0.001;   // 1ms for transient catch
                 transientAttackComp.release.value = 0.08;   // Smoother 80ms
                 transientAttackComp.knee.value = 6;         // Softer knee
 
                 // Slow sustain path (for body)
                 const transientSustainComp = audioContext.createDynamicsCompressor();
-                transientSustainComp.threshold.value = -25;
-                transientSustainComp.ratio.value = 2;
+                transientSustainComp.threshold.value = -8;  // Gentler sustain shaping (was -25)
+                transientSustainComp.ratio.value = 1.3;     // Gentler ratio (was 2)
                 transientSustainComp.attack.value = 0.03;   // Slower 30ms
                 transientSustainComp.release.value = 0.3;   // Longer 300ms
                 transientSustainComp.knee.value = 6;
@@ -9940,14 +9940,13 @@
                 // ⚡ LIMITER - Bob Ludwig Style True Peak Protection
                 // Brick-wall limiting - prevents clipping with hard knee
                 limiter = audioContext.createDynamicsCompressor();
-                // WORLD-CLASS LIMITER SETTINGS (FabFilter Pro-L / Waves L2 style)
-                // Goal: 3-4dB gain reduction MAXIMUM - beyond this, artifacts become audible
-                // Threshold at -1dBTP for streaming platform compliance
-                limiter.threshold.value = -1.0;     // -1.0 dBTP (Apple Music / Spotify standard)
-                limiter.knee.value = 6;             // Medium-soft knee for musical limiting
-                limiter.ratio.value = 20;           // Brick-wall ratio (true limiting)
-                limiter.attack.value = 0.005;       // 5ms attack - simulates lookahead, preserves transients
-                limiter.release.value = 0.100;      // 100ms release - fast enough for punch, no pumping
+                // BRICKWALL SAFETY LIMITER (v7.5.0) — only catches what look-ahead misses
+                // Look-ahead limiter at -1.5 dBTP does the musical work; this is the safety net
+                limiter.threshold.value = -0.5;     // -0.5 dBTP — safety only (was -1.0, same as look-ahead!)
+                limiter.knee.value = 0;             // Hard knee = true brickwall (was 6)
+                limiter.ratio.value = 20;           // Brick-wall ratio
+                limiter.attack.value = 0.001;       // 1ms attack (was 5ms)
+                limiter.release.value = 0.050;      // 50ms fast release (was 100ms)
 
                 // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
@@ -10663,17 +10662,17 @@
                 nyCompWet.gain.value = 0.0;  // 0% wet (enable via window.nyCompression.presets.punchy())
                 nyCompOutput.gain.value = 1.0;
 
-                // The "crush" compressor - aggressive settings
+                // Professional NY compressor (v7.5.0) — moderate compression, not brick-wall
                 const nyCompressor = audioContext.createDynamicsCompressor();
-                nyCompressor.threshold.value = -30;  // Very low threshold
-                nyCompressor.knee.value = 0;         // Hard knee
-                nyCompressor.ratio.value = 12;       // High ratio
-                nyCompressor.attack.value = 0.001;   // Fast attack (1ms)
-                nyCompressor.release.value = 0.05;   // Fast release (50ms)
+                nyCompressor.threshold.value = -18;  // Only compress peaks (was -30)
+                nyCompressor.knee.value = 6;         // Soft knee for musical response (was 0)
+                nyCompressor.ratio.value = 4;        // Moderate ratio (was 12)
+                nyCompressor.attack.value = 0.010;   // 10ms — lets transients through (was 1ms)
+                nyCompressor.release.value = 0.100;  // 100ms — musical release (was 50ms)
 
                 // Makeup gain for compressed signal
                 const nyMakeupGain = audioContext.createGain();
-                nyMakeupGain.gain.value = 2.0; // +6dB makeup
+                nyMakeupGain.gain.value = 1.5; // +3.5dB makeup (was +6dB)
 
                 // High-pass filter on compressed signal (remove pumping bass)
                 const nyHighPass = audioContext.createBiquadFilter();
@@ -10704,24 +10703,24 @@
                     // Presets
                     presets: {
                         subtle: () => {
-                            nyCompDry.gain.value = 0.85;
-                            nyCompWet.gain.value = 0.15;
-                            nyCompressor.threshold.value = -24;
-                            nyCompressor.ratio.value = 8;
+                            nyCompDry.gain.value = 0.90;
+                            nyCompWet.gain.value = 0.10;
+                            nyCompressor.threshold.value = -16;
+                            nyCompressor.ratio.value = 3;
 
                         },
                         punchy: () => {
-                            nyCompDry.gain.value = 0.7;
-                            nyCompWet.gain.value = 0.3;
-                            nyCompressor.threshold.value = -30;
-                            nyCompressor.ratio.value = 12;
+                            nyCompDry.gain.value = 0.85;
+                            nyCompWet.gain.value = 0.15;
+                            nyCompressor.threshold.value = -18;
+                            nyCompressor.ratio.value = 4;
 
                         },
                         aggressive: () => {
-                            nyCompDry.gain.value = 0.5;
-                            nyCompWet.gain.value = 0.5;
-                            nyCompressor.threshold.value = -35;
-                            nyCompressor.ratio.value = 20;
+                            nyCompDry.gain.value = 0.75;
+                            nyCompWet.gain.value = 0.25;
+                            nyCompressor.threshold.value = -22;
+                            nyCompressor.ratio.value = 6;
 
                         }
                     }
@@ -10870,13 +10869,13 @@
                 lookAheadDetectFilter.frequency.value = 3000;
                 lookAheadDetectFilter.gain.value = 1; // Gentle HF emphasis for transient detection
 
-                // The actual limiter (now with look-ahead)
+                // The actual limiter (now with look-ahead) — PRIMARY musical limiter (v7.5.0)
                 const lookAheadLimiter = audioContext.createDynamicsCompressor();
-                lookAheadLimiter.threshold.value = -1.0;  // -1dBTP ceiling
-                lookAheadLimiter.knee.value = 0;         // Brick wall
-                lookAheadLimiter.ratio.value = 20;       // Limiting ratio
-                lookAheadLimiter.attack.value = 0.0005;  // 0.5ms (effectively instant with look-ahead)
-                lookAheadLimiter.release.value = 0.05;   // 50ms release
+                lookAheadLimiter.threshold.value = -1.5;  // -1.5dBTP — gives brickwall 0.5dB headroom (was -1.0)
+                lookAheadLimiter.knee.value = 0;         // Hard knee for limiting
+                lookAheadLimiter.ratio.value = 12;       // Musical limiting ratio (was 20 — brick wall)
+                lookAheadLimiter.attack.value = 0.001;   // 1ms (was 0.5ms)
+                lookAheadLimiter.release.value = 0.080;  // 80ms — more musical (was 50ms)
 
                 window.lookAheadLimiter = {
                     enabled: true,
@@ -23339,19 +23338,21 @@
                     if (!bypass.dynamicEQ) {
                         const dynScale = stageInt.dynamicEQ !== undefined ? stageInt.dynamicEQ : 1.0;
                         // 10. Dynamic EQ - Professional intensity-adaptive thresholds
+                        // v7.5.0: Raised thresholds by ~8-10 dB — only catch problem peaks
                         const dynEQThresholds = {
-                            1: { low: -12, mid: -10, high: -14 },
-                            2: { low: -14, mid: -12, high: -16 },
-                            3: { low: -16, mid: -14, high: -18 },
-                            4: { low: -18, mid: -16, high: -20 },
-                            5: { low: -20, mid: -18, high: -22 }
+                            1: { low: -4,  mid: -2,  high: -6  },
+                            2: { low: -6,  mid: -4,  high: -8  },
+                            3: { low: -8,  mid: -6,  high: -10 },
+                            4: { low: -10, mid: -8,  high: -12 },
+                            5: { low: -12, mid: -10, high: -14 }
                         };
+                        // v7.5.0: Reduced ratios — near-transparent at low intensity
                         const dynEQRatios = {
-                            1: { low: 1.1, mid: 1.1, high: 1.15 },
-                            2: { low: 1.15, mid: 1.2, high: 1.4 },
-                            3: { low: 1.25, mid: 1.3, high: 1.6 },
-                            4: { low: 1.4, mid: 1.5, high: 2.0 },
-                            5: { low: 1.6, mid: 1.8, high: 2.5 }
+                            1: { low: 1.05, mid: 1.05, high: 1.1 },
+                            2: { low: 1.1,  mid: 1.1,  high: 1.2 },
+                            3: { low: 1.15, mid: 1.15, high: 1.3 },
+                            4: { low: 1.2,  mid: 1.2,  high: 1.5 },
+                            5: { low: 1.3,  mid: 1.3,  high: 1.8 }
                         };
                         const dynThresh = dynEQThresholds[effectiveIntensity] || dynEQThresholds[3];
                         const dynRatios = dynEQRatios[effectiveIntensity] || dynEQRatios[3];
@@ -23397,19 +23398,20 @@
                 // Genre-specific compression settings - SSL G-BUS / API 2500 STANDARDS
                 // These mirror settings used at Sterling Sound, Metropolis, Abbey Road
                 // Attack in seconds, release in seconds - musical "glue" compression
+                // v7.5.0: Raised thresholds 4-6 dB, reduced ratios — target 2-3 dB GR max
                 const compSettings = {
-                    'hiphop':     { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },   // Fast attack for 808 transients
-                    'electronic': { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.08, knee: 4 },   // Fast, tight
-                    'pop':        { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 },   // Smooth, musical
-                    'rock':       { threshold: -18, ratio: 2.5, attack: 0.020, release: 0.12, knee: 6 },   // Slower attack — let transients punch through
-                    'rnb':        { threshold: -22, ratio: 1.8, attack: 0.020, release: 0.22, knee: 10 },  // Gentle, warm
-                    'acoustic':   { threshold: -26, ratio: 1.5, attack: 0.030, release: 0.30, knee: 12 },  // More natural
-                    'jazz':       { threshold: -28, ratio: 1.3, attack: 0.035, release: 0.35, knee: 15 },  // Preserve dynamics
-                    'classical':  { threshold: -32, ratio: 1.2, attack: 0.050, release: 0.50, knee: 20 },  // Ultra-transparent
-                    'metal':      { threshold: -14, ratio: 3.0, attack: 0.003, release: 0.10, knee: 4 },   // More aggressive — metal hits harder
-                    'country':    { threshold: -22, ratio: 2.0, attack: 0.018, release: 0.20, knee: 8 },   // Nashville polish glue
-                    'latin':      { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },   // Punchy, rhythmic
-                    'lofi':       { threshold: -20, ratio: 2.5, attack: 0.025, release: 0.30, knee: 12 }   // Audible pumping for lo-fi warmth
+                    'hiphop':     { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   // Punchy but controlled
+                    'electronic': { threshold: -12, ratio: 2.5, attack: 0.005, release: 0.08, knee: 4 },   // Fast, tight
+                    'pop':        { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 },   // Smooth, musical
+                    'rock':       { threshold: -14, ratio: 2.0, attack: 0.025, release: 0.12, knee: 6 },   // Let transients punch through
+                    'rnb':        { threshold: -18, ratio: 1.5, attack: 0.025, release: 0.22, knee: 10 },  // Gentle, warm
+                    'acoustic':   { threshold: -20, ratio: 1.3, attack: 0.035, release: 0.30, knee: 12 },  // More natural
+                    'jazz':       { threshold: -22, ratio: 1.2, attack: 0.040, release: 0.35, knee: 15 },  // Preserve dynamics
+                    'classical':  { threshold: -26, ratio: 1.1, attack: 0.050, release: 0.50, knee: 20 },  // Ultra-transparent
+                    'metal':      { threshold: -10, ratio: 2.5, attack: 0.005, release: 0.10, knee: 4 },   // Aggressive — metal hits harder
+                    'country':    { threshold: -18, ratio: 1.8, attack: 0.020, release: 0.20, knee: 8 },   // Nashville polish glue
+                    'latin':      { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   // Punchy, rhythmic
+                    'lofi':       { threshold: -16, ratio: 2.0, attack: 0.030, release: 0.30, knee: 12 }   // Warm, gentle pump
                 };
                 const comp = compSettings[genre] || compSettings['pop'];
 
@@ -23479,7 +23481,7 @@
                         const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
                         const compRatioTarget = comp.ratio * compRatioMult * aiRatioMult;
                         // Conservative wet mix: 5-15% range (mastering-grade parallel compression)
-                        const nyBaseMix = { 3: 0.03, 4: 0.05, 5: 0.08 }; // v7.4.6: moderate — 3-8% wet
+                        const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 }; // v7.5.0: gentler compressor = can blend more
                         const nyBase = nyBaseMix[effectiveIntensity] || 0.04;
                         // Reduce when compressor ratio is high (already compressing enough)
                         const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
@@ -23728,21 +23730,13 @@
                 // Fixed -1.0 dBTP threshold (broadcast standard), ratio 20 (true brickwall),
                 // hard knee (0-1) since look-ahead handles musical limiting upstream.
                 if (window.limiter) {
-                    const limiterSettings = {
-                        1: { release: 0.20, knee: 1.0, attack: 0.002 },   // Gentle safety net
-                        2: { release: 0.15, knee: 0.8, attack: 0.001 },   // Light safety net
-                        3: { release: 0.10, knee: 0.5, attack: 0.0008 },  // Balanced
-                        4: { release: 0.08, knee: 0.3, attack: 0.0005 },  // Aggressive
-                        5: { release: 0.05, knee: 0.0, attack: 0.0002 }   // Maximum - true brickwall
-                    };
-                    const limSet = limiterSettings[effectiveIntensity] || limiterSettings[3];
-
-                    // True brickwall: ratio 20, fixed -1.0 dBTP all intensities
-                    window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
+                    // v7.5.0: Brickwall is SAFETY ONLY — fixed -0.5 dBTP, hard knee, all intensities
+                    // Look-ahead limiter does the musical work upstream
+                    window.limiter.threshold.setTargetAtTime(-0.5, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(limSet.attack, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(limSet.release, ac.currentTime, 0.1);
-                    window.limiter.knee.setTargetAtTime(limSet.knee, ac.currentTime, 0.1);
+                    window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);  // Hard knee = true safety
+                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.050, ac.currentTime, 0.1);
 
                 }
 
@@ -23754,12 +23748,13 @@
                 // At low intensity: gentle threshold, look-ahead does all work cleanly.
                 // At high intensity: lets more through for punchier brickwall action.
                 if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
+                    // v7.5.0: Look-ahead is PRIMARY musical limiter, brickwall is safety only
                     const lookAheadThresholds = {
-                        1: -1.5,  // Gentle — look-ahead does all the work
-                        2: -1.2,  // Light limiting
-                        3: -1.0,  // Balanced — streaming standard
-                        4: -0.8,  // Aggressive — lets more through to brickwall
-                        5: -0.5   // Maximum — brickwall handles most limiting
+                        1: -2.0,  // Gentle — lets brickwall do more
+                        2: -1.8,  // Light limiting
+                        3: -1.5,  // Primary limiter at -1.5 dBTP
+                        4: -1.2,  // Aggressive
+                        5: -1.0   // Maximum — look-ahead does all the work
                     };
                     const laThreshold = lookAheadThresholds[effectiveIntensity] || -1.0;
                     window.lookAheadLimiter.setThreshold(laThreshold);
@@ -23905,13 +23900,19 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // Chain loss compensation for stages NOT in the offline render:
-                    // multiband comp (-1 to -2 dB), dynamic EQ (-0.5 to -1), NY comp (+0.3),
-                    // transient (+0.1), exciter (+0.3), warmth (+0.1), de-esser (-0.2),
-                    // HF limiter (-0.3), look-ahead limiter (-1 to -2 dB)
-                    // Net: roughly -1.5 to -3.5 dB depending on intensity
-                    const chainLossCompensation = { 1: 1.5, 2: 2.0, 3: 2.5, 4: 3.0, 5: 3.5 };
-                    const compensation = chainLossCompensation[effectiveIntensity] || 2.5;
+                    // Dynamic chain loss compensation (v7.5.0)
+                    // Calculates based on which stages are actually active and their settings
+                    let chainLoss = 0;
+                    if (!bypass.dynamicEQ)    chainLoss += 0.5;  // Minimal with 85% dry mix
+                    if (!bypass.compression)  chainLoss += 1.0 + (effectiveIntensity - 1) * 0.3;
+                    if (!bypass.multibandComp) chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
+                    if (!bypass.transient)    chainLoss += 0.3;
+                    // NY adds energy, doesn't subtract
+                    // Look-ahead limiter: -1 to -3 dB depending on how loud signal is
+                    chainLoss += 1.0 + (effectiveIntensity - 1) * 0.5;
+                    // Brickwall: safety only, minimal
+                    chainLoss += 0.3;
+                    const compensation = Math.min(chainLoss, 6.0);  // Cap at 6 dB
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;

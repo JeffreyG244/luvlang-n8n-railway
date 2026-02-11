@@ -320,13 +320,15 @@ window.drawGoniometer = function(canvas, leftSamples, rightSamples) {
         const l = leftSamples[i] || 0;
         const r = rightSamples[i] || 0;
 
-        // Lissajous calculation (rotated 45°)
-        const x = cx + (r - l) * radius * 0.9;
-        const y = cy - (r + l) * radius * 0.65;
+        // M/S decomposition with proper √2 normalization (iZotope/NUGEN standard)
+        const S = (r - l) / Math.SQRT2;  // Side (horizontal axis)
+        const M = (l + r) / Math.SQRT2;  // Mid (vertical axis)
+        const x = cx + S * radius * 0.7;
+        const y = cy - M * radius * 0.7;
 
         // Intensity based on amplitude
         const amp = Math.sqrt(l * l + r * r);
-        alpha = Math.min(1, amp * 3 + 0.2);
+        alpha = Math.min(1, amp * 2 + 0.15);
 
         // Draw glowing dot
         const dotSize = 1.5 + amp * 2;
