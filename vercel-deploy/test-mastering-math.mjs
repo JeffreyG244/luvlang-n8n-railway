@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.6.0)
+ * Mastering Math Validation Harness (v7.6.1)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
@@ -198,15 +198,16 @@ function generateAICorrections(analysis, genre) {
 // Compute LUFS correction (v7.6.0 — extended chain measurement)
 // ═══════════════════════════════════════════════════════════════════
 function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS, bypass) {
-    // v7.6.0: Reduced heuristic compensation — extended chain measurement is more accurate
+    // v7.6.1: Restored heuristic compensation — live 24-stage chain loses more
+    // than the offline approximation can model. Keep generous compensation.
     let chainLoss = 0;
-    if (!bypass || !bypass.dynamicEQ)    chainLoss += 0.3;  // Reduced: now modeled in chain
-    if (!bypass || !bypass.compression)  chainLoss += 0.5 + (intensity - 1) * 0.2;  // Reduced
-    if (!bypass || !bypass.multibandComp) chainLoss += 0.3 + (intensity - 1) * 0.1;  // Reduced
-    if (!bypass || !bypass.transient)    chainLoss += 0.2;
-    chainLoss += 0.8 + (intensity - 1) * 0.4;  // Look-ahead limiter
-    chainLoss += 0.2;  // Brickwall safety
-    const compensation = Math.min(chainLoss, 5.0);  // Lower cap since chain is more accurate
+    if (!bypass || !bypass.dynamicEQ)    chainLoss += 0.5;
+    if (!bypass || !bypass.compression)  chainLoss += 1.0 + (intensity - 1) * 0.3;
+    if (!bypass || !bypass.multibandComp) chainLoss += 0.5 + (intensity - 1) * 0.2;
+    if (!bypass || !bypass.transient)    chainLoss += 0.3;
+    chainLoss += 1.0 + (intensity - 1) * 0.5;  // Look-ahead limiter + saturation
+    chainLoss += 0.3;  // Brickwall safety
+    const compensation = Math.min(chainLoss, 6.0);
 
     let correctionDB;
     if (measuredChainLUFS !== null && isFinite(measuredChainLUFS) && measuredChainLUFS > -60) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.0 "AI Professional" | Build: 2026-02-11 | Multi-pass analysis & genre-aware mastering -->
+<!-- VERSION 7.6.1 "Professional Grade" | Build: 2026-02-11 | Fix LUFS targeting: restore compensation, verification panel -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8028,8 +8028,8 @@
             <div class="viz-panel waveform-panel-viz">
                 <div class="panel-title">WAVEFORM • Click or Drag to Seek</div>
                 <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
-                    <canvas id="waveformCanvasStatic" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
-                    <canvas id="waveformCanvasPlayhead" width="2400" height="240" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <canvas id="waveformCanvasStatic" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
+                    <canvas id="waveformCanvasPlayhead" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
                     <!-- VISIBLE SCRUBBER HANDLE -->
                     <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 20; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
                         <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
@@ -17757,6 +17757,23 @@
 
         }
 
+        // v7.6.1: ResizeObserver — redraw waveform when container resizes to prevent crooked display
+        try {
+            const _wfContainer = document.getElementById('waveformContainer');
+            if (_wfContainer && typeof ResizeObserver !== 'undefined') {
+                let _wfResizeTimer = null;
+                const _wfObserver = new ResizeObserver(() => {
+                    if (_wfResizeTimer) clearTimeout(_wfResizeTimer);
+                    _wfResizeTimer = setTimeout(() => {
+                        if (window.audioBuffer) {
+                            drawWaveformFromBuffer(window.audioBuffer);
+                        }
+                    }, 150);
+                });
+                _wfObserver.observe(_wfContainer);
+            }
+        } catch (e) { /* ResizeObserver not supported */ }
+
         function startVisualization() {
 
             // Set up canvases
@@ -24081,18 +24098,18 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // v7.6.0: Reduced heuristic compensation — extended chain measurement is more accurate
-                    // Dynamic EQ, NY compression, and multiband are now modeled in measureChainLoudness
+                    // v7.6.1: Restored heuristic compensation — live 24-stage chain loses more
+                    // than the offline approximation can model. Keep generous compensation.
                     let chainLoss = 0;
-                    if (!bypass.dynamicEQ)    chainLoss += 0.3;  // Reduced: now modeled in chain
-                    if (!bypass.compression)  chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
-                    if (!bypass.multibandComp) chainLoss += 0.3 + (effectiveIntensity - 1) * 0.1;
-                    if (!bypass.transient)    chainLoss += 0.2;
-                    // Look-ahead limiter: still heuristic (not in offline chain)
-                    chainLoss += 0.8 + (effectiveIntensity - 1) * 0.4;
-                    // Brickwall: safety only
-                    chainLoss += 0.2;
-                    const compensation = Math.min(chainLoss, 5.0);  // Lower cap since chain is more accurate
+                    if (!bypass.dynamicEQ)    chainLoss += 0.5;
+                    if (!bypass.compression)  chainLoss += 1.0 + (effectiveIntensity - 1) * 0.3;
+                    if (!bypass.multibandComp) chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
+                    if (!bypass.transient)    chainLoss += 0.3;
+                    // Look-ahead limiter + saturation stages
+                    chainLoss += 1.0 + (effectiveIntensity - 1) * 0.5;
+                    // Brickwall safety
+                    chainLoss += 0.3;
+                    const compensation = Math.min(chainLoss, 6.0);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
@@ -24123,13 +24140,16 @@
                     const pass3 = await measureChainLoudness(window.audioBuffer, pass3Params);
                     if (pass3 && isFinite(pass3.integratedLUFS) && pass3.integratedLUFS > -60) {
                         const deviation = pass3.integratedLUFS - targetLUFS;
-                        if (Math.abs(deviation) > 0.5) {
-                            const microCorrection = -deviation * 0.8; // 80% correction to avoid oscillation
+                        // v7.6.1: Only correct UPWARD (deviation < -0.5 means offline shows below target).
+                        // Never reduce gain based on offline model — it's missing many lossy live stages,
+                        // so it overestimates output LUFS. The heuristic compensation handles that gap.
+                        if (deviation < -0.5) {
+                            const microCorrection = -deviation * 0.6; // 60% upward correction
                             correctionDB += microCorrection;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                            console.log(`🎯 Pass 3 micro-correction: deviation=${deviation.toFixed(2)} LU, applied=${microCorrection.toFixed(2)} dB, final=${correctionDB.toFixed(1)} dB`);
+                            console.log(`🎯 Pass 3 boost: offline shows ${deviation.toFixed(2)} LU below target, adding +${microCorrection.toFixed(2)} dB → final=${correctionDB.toFixed(1)} dB`);
                         } else {
-                            console.log(`✅ Pass 3 verified: ${pass3.integratedLUFS.toFixed(1)} LUFS (target ${targetLUFS}, deviation ${deviation.toFixed(2)} LU — within ±0.5 tolerance)`);
+                            console.log(`✅ Pass 3 check: offline predicts ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS}) — trusting heuristic compensation`);
                         }
                     }
                 }
@@ -24152,13 +24172,18 @@
 
                 console.log(`🎯 LUFS Targeting: target=${targetLUFS} correction=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)}`);
 
-                // Store for LUFS preset switching and debugging
+                // Store for LUFS preset switching, debugging, and verification panel
                 window.lufsTargetingInfo = {
                     inputLUFS: currentLUFS,
                     targetLUFS: targetLUFS,
                     originalPeakDB: originalPeakDB,
                     twoPassMeasured: pass1 ? pass1.integratedLUFS : null,
-                    makeupGainDB: clampedGainDB
+                    truePeakDB: pass1 ? pass1.truePeakDB : null,
+                    makeupGainDB: clampedGainDB,
+                    compensation: compensation || 0,
+                    genre: genre,
+                    intensity: effectiveIntensity,
+                    platform: platform
                 };
 
                 // CRITICAL: Store values for platform preset switching
@@ -24166,6 +24191,128 @@
                 window.autoLUFSGainApplied = clampedGainDB;
                 window.autoLUFSTargetLevel = targetLUFS;
                 window.originalInputPeakDB = originalPeakDB;
+
+                // ══════════════════════════════════════════════════════════════════════
+                // MASTERING VERIFICATION PANEL — Show professional measurements to user
+                // ══════════════════════════════════════════════════════════════════════
+                try {
+                    // Final verification: re-measure with applied makeup gain
+                    let verifiedLUFS = null;
+                    let verifiedTruePeak = null;
+                    if (pass1 && window.audioBuffer) {
+                        const verifyParams = Object.assign({}, chainParams, {
+                            makeupGainLinear: newGainLinear
+                        });
+                        const verifyResult = await measureChainLoudness(window.audioBuffer, verifyParams);
+                        if (verifyResult && isFinite(verifyResult.integratedLUFS) && verifyResult.integratedLUFS > -60) {
+                            verifiedLUFS = verifyResult.integratedLUFS;
+                            verifiedTruePeak = verifyResult.truePeakDB;
+                        }
+                    }
+
+                    const info = window.lufsTargetingInfo;
+                    const deviation = verifiedLUFS !== null ? (verifiedLUFS - targetLUFS) : null;
+                    const withinTolerance = deviation !== null && Math.abs(deviation) <= 1.0;
+                    const statusIcon = withinTolerance ? '✅' : (deviation !== null ? '⚠️' : '—');
+                    const statusText = withinTolerance ? 'ON TARGET' : (deviation !== null ? `${deviation > 0 ? '+' : ''}${deviation.toFixed(1)} LU OFF` : 'UNVERIFIED');
+                    const statusColor = withinTolerance ? '#00e676' : '#ffc107';
+
+                    // Store verification for external access
+                    window.masteringVerification = {
+                        inputLUFS: info.inputLUFS,
+                        targetLUFS: targetLUFS,
+                        pass1LUFS: info.twoPassMeasured,
+                        makeupGainDB: clampedGainDB,
+                        verifiedLUFS: verifiedLUFS,
+                        verifiedTruePeak: verifiedTruePeak,
+                        deviation: deviation,
+                        withinTolerance: withinTolerance,
+                        genre: genre,
+                        intensity: effectiveIntensity,
+                        platform: platform,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    console.log(`📊 MASTERING VERIFICATION:
+  Genre: ${genre} | Intensity: ${effectiveIntensity} | Platform: ${platform}
+  Input: ${info.inputLUFS.toFixed(1)} LUFS | Target: ${targetLUFS} LUFS
+  Pass 1 (chain at unity): ${info.twoPassMeasured ? info.twoPassMeasured.toFixed(1) : 'N/A'} LUFS
+  Compensation: +${(compensation || 0).toFixed(1)} dB | Makeup Gain: ${clampedGainDB > 0 ? '+' : ''}${clampedGainDB.toFixed(1)} dB
+  Verified Output: ${verifiedLUFS !== null ? verifiedLUFS.toFixed(1) : 'N/A'} LUFS | True Peak: ${verifiedTruePeak !== null ? verifiedTruePeak.toFixed(1) : 'N/A'} dBTP
+  Status: ${statusText} (${deviation !== null ? (deviation > 0 ? '+' : '') + deviation.toFixed(1) + ' LU' : 'N/A'})`);
+
+                    // Display verification panel in the UI
+                    const existingVerify = document.getElementById('masteringVerificationPanel');
+                    if (existingVerify) existingVerify.remove();
+
+                    const verifyPanel = document.createElement('div');
+                    verifyPanel.id = 'masteringVerificationPanel';
+                    verifyPanel.style.cssText = `
+                        background: linear-gradient(135deg, rgba(10,10,20,0.95), rgba(20,20,35,0.95));
+                        border: 1px solid ${statusColor}40;
+                        border-radius: 12px;
+                        padding: 16px 20px;
+                        margin: 12px 0;
+                        font-family: 'SF Mono', 'Fira Code', monospace;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+                    `;
+
+                    const fmtLUFS = (v) => v !== null && isFinite(v) ? v.toFixed(1) : '—';
+                    const fmtDB = (v) => v !== null && isFinite(v) ? ((v > 0 ? '+' : '') + v.toFixed(1)) : '—';
+
+                    verifyPanel.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1)">
+                            <span style="color:#fff;font-size:13px;font-weight:600;letter-spacing:1px">MASTERING VERIFICATION</span>
+                            <span style="color:${statusColor};font-size:12px;font-weight:700;padding:3px 10px;border-radius:4px;background:${statusColor}20">${statusIcon} ${statusText}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px">
+                            <div style="text-align:center">
+                                <div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Input</div>
+                                <div style="color:#aaa;font-size:18px;font-weight:600">${fmtLUFS(info.inputLUFS)}</div>
+                                <div style="color:#666;font-size:10px">LUFS</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Target</div>
+                                <div style="color:#00bcd4;font-size:18px;font-weight:600">${fmtLUFS(targetLUFS)}</div>
+                                <div style="color:#666;font-size:10px">LUFS</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="color:#888;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Output</div>
+                                <div style="color:${statusColor};font-size:18px;font-weight:600">${fmtLUFS(verifiedLUFS)}</div>
+                                <div style="color:#666;font-size:10px">LUFS</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05)">
+                            <div style="text-align:center">
+                                <div style="color:#666;font-size:9px;text-transform:uppercase">Makeup</div>
+                                <div style="color:#ccc;font-size:12px">${fmtDB(clampedGainDB)} dB</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="color:#666;font-size:9px;text-transform:uppercase">True Peak</div>
+                                <div style="color:${verifiedTruePeak !== null && verifiedTruePeak > -1.0 ? '#ff5252' : '#ccc'};font-size:12px">${fmtDB(verifiedTruePeak)} dBTP</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="color:#666;font-size:9px;text-transform:uppercase">Genre</div>
+                                <div style="color:#ccc;font-size:12px;text-transform:capitalize">${genre}</div>
+                            </div>
+                            <div style="text-align:center">
+                                <div style="color:#666;font-size:9px;text-transform:uppercase">Intensity</div>
+                                <div style="color:#ccc;font-size:12px">${effectiveIntensity}/5</div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Insert after AI corrections panel or before the analysis panel
+                    const aiPanel = document.getElementById('aiCorrectionsPanel');
+                    const analysisPanel = document.getElementById('analysisPanel');
+                    if (aiPanel && aiPanel.parentNode) {
+                        aiPanel.parentNode.insertBefore(verifyPanel, aiPanel.nextSibling);
+                    } else if (analysisPanel && analysisPanel.parentNode) {
+                        analysisPanel.parentNode.insertBefore(verifyPanel, analysisPanel);
+                    }
+                } catch (verifyErr) {
+                    console.warn('Verification panel error:', verifyErr);
+                }
 
                 // ══════════════════════════════════════════════════════════════════════
                 // APPLY ADVANCED ENGINE DEFAULTS - AI Mastering Premium Plugin Settings
