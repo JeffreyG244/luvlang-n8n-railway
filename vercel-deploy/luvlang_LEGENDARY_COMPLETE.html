@@ -12990,7 +12990,7 @@
         function generateAICorrections(analysis, genre) {
             const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
             // Mastering-grade correction: audible but controlled nudges
-            const correctionStrength = 0.25;
+            const correctionStrength = 0.20; // Mastering EQ should be subtle (was 0.25)
             const issues = [];
 
             // ═══════════════════════════════════════════════════════════════
@@ -13181,31 +13181,52 @@
             // widthDiff already computed above in stereo deltas section
 
             const stageBypass = {
-                eq:            totalEQCorrection < 0.3,       // Tighter — engage EQ more often
+                eq:            totalEQCorrection < 0.5,       // Conservative — only engage when meaningful correction needed
                 dynamicEQ:     analysis.resonances.length <= 1 && !analysis.sibilanceExcessive
                                && Math.abs(analysis.spectralTilt) < 1.5,
-                compression:   Math.abs(crestDiff) < 2,       // Tighter — engage compression more
+                compression:   Math.abs(crestDiff) < 3,       // Mastering needs headroom before engaging
                 multibandComp: Math.abs(crestDiff) < 4 && Math.abs(analysis.spectralTilt) < 1.0,
-                transient:     Math.abs(crestDiff) < 2,       // Tighter — engage transient more
+                transient:     Math.abs(crestDiff) < 4,       // Transient shaping is aggressive — higher threshold
                 warmth:        analysis.spectralTilt < -0.5 || analysis.overallCrest < 7,
-                exciter:       false,                         // Never bypass — always subtle
-                stereoWidth:   Math.abs(widthDiff) < 0.10,    // Tighter
+                exciter:       !(analysis.spectralTilt > 0.5 && analysis.spectrumDB.high < -22), // Bypass when HF is healthy
+                stereoWidth:   Math.abs(widthDiff) < 0.10,
                 msProcessing:  Math.abs(analysis.spectralTilt) < 1.0 && Math.abs(widthDiff) < 0.15,
-                hfLimiter:     false,                         // Never bypass — catches exciter + warmth harmonics
+                hfLimiter:     false,                         // Always on — catches exciter + warmth harmonics
             };
+
+            // Dynamics budget: max 3 active dynamics stages to prevent stacking
+            // Professional mastering uses 1-2 dynamics stages; 3 is our ceiling
+            const dynamicsStages = ['compression', 'multibandComp', 'dynamicEQ', 'transient'];
+            const activeDynamics = dynamicsStages.filter(s => !stageBypass[s]);
+            if (activeDynamics.length > 3) {
+                // Build a rough intensity score per stage to decide which to bypass
+                const dynScore = {
+                    compression:   Math.abs(crestDiff) / 7,
+                    multibandComp: Math.abs(crestDiff) / 8,
+                    dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
+                    transient:     Math.abs(crestDiff) / 10,
+                };
+                // Sort by score ascending (weakest first) and bypass the weakest
+                activeDynamics.sort((a, b) => (dynScore[a] || 0) - (dynScore[b] || 0));
+                for (let i = 0; i < activeDynamics.length - 3; i++) {
+                    stageBypass[activeDynamics[i]] = true;
+                }
+                console.log('🎚️ Dynamics budget: bypassed', activeDynamics.slice(0, activeDynamics.length - 3).join(', '),
+                    '— kept', activeDynamics.slice(activeDynamics.length - 3).join(', '));
+            }
 
             // Per-stage intensity (0.0-1.0) — how aggressively to apply each stage
             const stageIntensity = {
-                eq:            Math.min(1.0, totalEQCorrection / 2.5),
+                eq:            Math.min(1.0, totalEQCorrection / 3.0),  // Gentler scaling (was /2.5)
                 dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
-                compression:   Math.min(1.0, Math.abs(crestDiff) / 7),
+                compression:   Math.min(1.0, Math.abs(crestDiff) / 8),  // Gentler (was /7)
                 multibandComp: Math.min(1.0, Math.abs(crestDiff) / 8),
-                transient:     Math.min(1.0, Math.abs(crestDiff) / 7),
-                warmth:        analysis.spectralTilt > 1.0 ? 0.7 : 0.3,
-                exciter:       0.20,  // Subtle presence
+                transient:     Math.min(1.0, Math.abs(crestDiff) / 10), // Much gentler (was /7)
+                warmth:        analysis.spectralTilt > 1.0 ? 0.5 : 0.15, // Reduced (was 0.7/0.3)
+                exciter:       0.15,  // Subtle (was 0.20)
                 stereoWidth:   Math.min(1.0, Math.abs(widthDiff) / 0.3),
-                msProcessing:  0.35,  // Subtle
-                hfLimiter:     analysis.sibilanceExcessive ? 0.7 : 0.4,
+                msProcessing:  0.25,  // Subtle (was 0.35)
+                hfLimiter:     analysis.sibilanceExcessive ? 0.6 : 0.3, // Reduced (was 0.7/0.4)
             };
 
             // Count bypassed stages for summary
@@ -15068,9 +15089,11 @@
         function applyEQGainCompensation(eqPreset) {
             const ac = window.audioContext;
             if (!ac || !window.makeupGain) {
-
                 return;
             }
+
+            // Don't override LUFS targeting — the two-pass correction is authoritative
+            if (window._lufsGainLocked) return;
 
             // Get the ACTUAL target LUFS from stored value or derive from platform
             const targetLUFS = window.autoLUFSTargetLevel ||
@@ -20463,6 +20486,9 @@
 
                     if (mu && ac && inputLUFS !== undefined && inputLUFS !== null) {
 
+                        // User changed platform — unlock LUFS gain and re-target
+                        window._lufsGainLocked = false;
+
                         // Direct LUFS targeting - no compensation needed
                         // The mastering chain and limiter handle everything
                         const gainNeeded = targetLUFS - inputLUFS;
@@ -23207,9 +23233,9 @@
                 // User's chosen intensity is respected directly — no aiScale override
                 const effectiveIntensity = intensity;
 
-                // Headroom compensation - reduce input gain at higher intensities
-                // Applied BEFORE limiter via makeup gain offset (not master gain)
-                // Kept minimal — the limiter is designed to handle peaks
+                // Headroom compensation — baked into LUFS correction instead of modifying masterGain.
+                // Modifying masterGain AFTER LUFS targeting caused 0.5-1.0 dB quieter output.
+                // The chainLossCompensation in the LUFS targeting block now accounts for this.
                 const headroomCompensation = {
                     1: 0,      // No reduction needed
                     2: 0,      // No reduction needed
@@ -23218,13 +23244,7 @@
                     5: -1.0    // Modest reduction at maximum intensity
                 };
                 const headroomDb = headroomCompensation[effectiveIntensity] || 0;
-
-                // Apply headroom compensation to master gain before processing
-                if (window.masterGain) {
-                    const headroomLinear = Math.pow(10, headroomDb / 20);
-                    window.masterGain.gain.setTargetAtTime(headroomLinear, ac.currentTime, 0.05);
-
-                }
+                // Note: headroomDb is still available for reference but NOT applied to masterGain
 
                 // Get target platform LUFS
                 const platformSelect = document.querySelector('input[name="platformPreset"]:checked');
@@ -23417,6 +23437,9 @@
                         if (aiProfile && aiProfile.compDeltas) {
                             adjustedThreshold += (aiProfile.compDeltas.thresholdOffset || 0);
                         }
+                        // Cap: mastering compressor should do 2-4 dB GR max
+                        // Threshold floor prevents excessive gain reduction
+                        adjustedThreshold = Math.max(adjustedThreshold, -24);
                         const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
                         const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
                         const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
@@ -23446,7 +23469,7 @@
                         const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
                         const compRatioTarget = comp.ratio * compRatioMult * aiRatioMult;
                         // Conservative wet mix: 5-15% range (mastering-grade parallel compression)
-                        const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 };
+                        const nyBaseMix = { 3: 0.04, 4: 0.06, 5: 0.10 }; // Mastering-grade: 3-10% wet max (was 6/10/15)
                         const nyBase = nyBaseMix[effectiveIntensity] || 0.06;
                         // Reduce when compressor ratio is high (already compressing enough)
                         const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
@@ -23872,8 +23895,16 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // PASS 2: calculate exact correction
-                    correctionDB = targetLUFS - pass1.integratedLUFS;
+                    // Chain loss compensation for stages NOT in the offline render:
+                    // multiband comp (-1 to -2 dB), dynamic EQ (-0.5 to -1), NY comp (+0.3),
+                    // transient (+0.1), exciter (+0.3), warmth (+0.1), de-esser (-0.2),
+                    // HF limiter (-0.3), look-ahead limiter (-1 to -2 dB)
+                    // Net: roughly -1.5 to -3.5 dB depending on intensity
+                    const chainLossCompensation = { 1: 1.5, 2: 2.0, 3: 2.5, 4: 3.0, 5: 3.5 };
+                    const compensation = chainLossCompensation[effectiveIntensity] || 2.5;
+
+                    // PASS 2: calculate exact correction with chain loss compensation
+                    correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
 
                     // Peak safety: don't push peaks beyond +3 dB above limiter threshold
                     if (pass1.truePeakDB + correctionDB > 3.0) {
@@ -23881,7 +23912,7 @@
                     }
                     correctionDB = Math.max(-6, Math.min(12, correctionDB));
 
-                    console.log(`🎯 Two-pass LUFS: measured=${pass1.integratedLUFS.toFixed(1)} target=${targetLUFS} correction=${correctionDB.toFixed(1)} truePeak=${pass1.truePeakDB.toFixed(1)}`);
+                    console.log(`🎯 Two-pass LUFS: measured=${pass1.integratedLUFS.toFixed(1)} target=${targetLUFS} correction=${correctionDB.toFixed(1)} compensation=${compensation} truePeak=${pass1.truePeakDB.toFixed(1)}`);
                 } else {
                     // Fallback: use input LUFS with conservative compensation
                     correctionDB = targetLUFS - currentLUFS + 4.0;
@@ -23900,6 +23931,9 @@
                     window.originalMakeupGainValue = newGainLinear;
                     window.appliedMakeupGainLinear = newGainLinear;
                     window.appliedMakeupGainDB = clampedGainDB;
+
+                    // Lock makeup gain — prevent EQ compensation and preset changes from overriding
+                    window._lufsGainLocked = true;
                 }
 
                 console.log(`🎯 LUFS Targeting: target=${targetLUFS} correction=${clampedGainDB.toFixed(1)} linear=${newGainLinear.toFixed(3)}`);
@@ -26584,6 +26618,9 @@
         // ═══════════════════════════════════════════════════════════════════
         window.proceedWithMastering = function() {
 
+            // Reset LUFS gain lock — new mastering pass will re-lock after targeting
+            window._lufsGainLocked = false;
+
             // Remove preview EQ filters from dry path — restore clean original signal
             if (window._previewEqFilters && window.dryGain && window.outputMixer) {
                 try {
@@ -26955,15 +26992,17 @@
                 if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, ac.currentTime, 0.1);
 
                 // AUTO-GAIN COMPENSATION - Prevent clipping from EQ boosts
-                const eqValues = Object.values(preset.eq);
-                const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
-                const avgBoost = totalBoost / 3;
-                const compensationDB = Math.min(avgBoost * 0.7, 4);
-                const compensationLinear = Math.pow(10, -compensationDB / 20);
-                if (window.makeupGain && window.originalMakeupGainValue !== undefined) {
-                    const compensatedGain = window.originalMakeupGainValue * compensationLinear;
-                    window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
-
+                // Skip if LUFS targeting has locked the makeup gain
+                if (!window._lufsGainLocked) {
+                    const eqValues = Object.values(preset.eq);
+                    const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
+                    const avgBoost = totalBoost / 3;
+                    const compensationDB = Math.min(avgBoost * 0.7, 4);
+                    const compensationLinear = Math.pow(10, -compensationDB / 20);
+                    if (window.makeupGain && window.originalMakeupGainValue !== undefined) {
+                        const compensatedGain = window.originalMakeupGainValue * compensationLinear;
+                        window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
+                    }
                 }
 
                 // Apply compression
