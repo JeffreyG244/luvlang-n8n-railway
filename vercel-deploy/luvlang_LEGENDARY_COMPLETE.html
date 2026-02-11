@@ -2001,30 +2001,26 @@
            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
         .left-sidebar::-webkit-scrollbar,
         .center-main::-webkit-scrollbar,
-        .right-sidebar::-webkit-scrollbar,
-        #genrePresetsGrid::-webkit-scrollbar {
+        .right-sidebar::-webkit-scrollbar {
             width: 8px;
         }
 
         .left-sidebar::-webkit-scrollbar-track,
         .center-main::-webkit-scrollbar-track,
-        .right-sidebar::-webkit-scrollbar-track,
-        #genrePresetsGrid::-webkit-scrollbar-track {
+        .right-sidebar::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.2);
         }
 
         .left-sidebar::-webkit-scrollbar-thumb,
         .center-main::-webkit-scrollbar-thumb,
-        .right-sidebar::-webkit-scrollbar-thumb,
-        #genrePresetsGrid::-webkit-scrollbar-thumb {
+        .right-sidebar::-webkit-scrollbar-thumb {
             background: rgba(0, 212, 255, 0.3);
             border-radius: 10px;
         }
 
         .left-sidebar::-webkit-scrollbar-thumb:hover,
         .center-main::-webkit-scrollbar-thumb:hover,
-        .right-sidebar::-webkit-scrollbar-thumb:hover,
-        #genrePresetsGrid::-webkit-scrollbar-thumb:hover {
+        .right-sidebar::-webkit-scrollbar-thumb:hover {
             background: rgba(0, 212, 255, 0.5);
         }
 
@@ -5031,18 +5027,6 @@
                     </div>
                 </div>
 
-                <!-- Sub-Genre Presets (populated when genre is selected) -->
-                <div id="overlaySubGenrePresets" style="display: none; margin-bottom: 14px;">
-                    <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 12px;">
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span id="overlayPresetsTitle" style="color: #7cb8ff; font-weight: 600;">Sub-Genre Presets</span>
-                            <span style="font-size: 0.5rem; color: rgba(255,255,255,0.35);">Select style</span>
-                        </div>
-                        <div id="overlayPresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; padding-right: 4px;">
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Process Button - Premium -->
                 <button class="guide-btn-primary" id="startMasteringBtn" onclick="proceedWithMastering()" style="
                     width: 100%;
@@ -7551,42 +7535,6 @@
                     </div>
                 </div>
 
-                <!-- SUB-GENRE PRESETS - Visible below genre buttons -->
-                <div id="genreEQPresetsContainer" style="display: none; margin-top: 10px;">
-                    <div style="background: linear-gradient(180deg, rgba(124, 184, 255, 0.06) 0%, rgba(124, 184, 255, 0.02) 100%); border: 1px solid rgba(124, 184, 255, 0.15); border-radius: 8px; padding: 12px;">
-                        <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <span id="genrePresetsTitle" style="color: #7cb8ff; font-weight: 600;">Presets</span>
-                            <span style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select style</span>
-                        </div>
-
-                        <!-- EQ Curve Visualization -->
-                        <div id="presetEQViz" style="position: relative; background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(15,20,35,0.95) 100%); border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(0,212,255,0.2); overflow: hidden; box-shadow: inset 0 2px 15px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.05);">
-                            <div style="position: absolute; inset: 0; opacity: 0.06; pointer-events: none; background-image:
-                                linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
-                                background-size: 14.28% 33.33%;
-                            "></div>
-                            <div style="position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.2); box-shadow: 0 0 4px rgba(255,255,255,0.1); z-index: 2;"></div>
-                            <div style="position: absolute; right: 6px; top: 8px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">+6dB</div>
-                            <div style="position: absolute; right: 6px; top: 47%; font-size: 0.5rem; color: rgba(255,255,255,0.4); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">0dB</div>
-                            <div style="position: absolute; right: 6px; bottom: 22px; font-size: 0.5rem; color: rgba(0,212,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">-6dB</div>
-                            <canvas id="eqCurveCanvas" width="600" height="160" style="width: 100%; height: 80px; display: block;"></canvas>
-                            <div style="display: flex; justify-content: space-between; padding: 5px 10px 7px; background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)); border-top: 1px solid rgba(255,255,255,0.05);">
-                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">40Hz</span>
-                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">120Hz</span>
-                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">400Hz</span>
-                                <span style="font-size: 0.55rem; color: rgba(255,255,255,0.5); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 600;">1kHz</span>
-                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">3.5kHz</span>
-                                <span style="font-size: 0.55rem; color: rgba(0,212,255,0.6); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">8kHz</span>
-                                <span style="font-size: 0.55rem; color: rgba(184,79,255,0.7); font-family: 'SF Mono', 'Monaco', monospace; font-weight: 500;">16kHz</span>
-                            </div>
-                        </div>
-
-                        <div id="genrePresetsGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 4px;">
-                            <!-- Preset buttons populated by showGenreEQPresets() -->
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- EXPORT SECTION (below genre for easy workflow) -->
@@ -14645,157 +14593,6 @@
         };
 
         /**
-         * Show genre-specific EQ presets in the auto-expanding container
-         */
-        function showGenreEQPresets(genreName) {
-            const container = document.getElementById('genreEQPresetsContainer');
-            const titleElement = document.getElementById('genrePresetsTitle');
-            const gridElement = document.getElementById('genrePresetsGrid');
-
-            if (!container || !titleElement || !gridElement) {
-                console.warn('⚠️ Genre EQ presets UI elements not found');
-                return;
-            }
-
-            // Get presets for this genre
-            const presets = genreEQPresets[genreName.toLowerCase()];
-            if (!presets) {
-                console.warn(`⚠️ No EQ presets found for genre: ${genreName}`);
-                container.style.display = 'none';
-                return;
-            }
-
-            // Update title
-            const genreDisplayName = genreName.charAt(0).toUpperCase() + genreName.slice(1).replace('-', ' ');
-            titleElement.textContent = `${genreDisplayName} Presets`;
-
-            // Clear existing presets
-            gridElement.innerHTML = '';
-
-            // Create preset buttons - Premium Style
-            presets.forEach((preset, index) => {
-                const presetBtn = document.createElement('div');
-                presetBtn.className = 'genre-eq-preset-btn';
-                if (index === 0) presetBtn.classList.add('active'); // First preset active by default
-
-                presetBtn.style.cssText = `
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
-                    border-radius: 4px;
-                    padding: 10px 12px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                `;
-
-                presetBtn.innerHTML = `
-                    <div style="font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 3px; letter-spacing: 0.02em;">${preset.name}</div>
-                    <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); line-height: 1.3;">${preset.description}</div>
-                `;
-
-                // Hover effects
-                presetBtn.addEventListener('mouseenter', function() {
-                    if (!this.classList.contains('active')) {
-                        this.style.background = 'rgba(124, 184, 255, 0.08)';
-                        this.style.borderColor = 'rgba(124, 184, 255, 0.2)';
-                    }
-                });
-                presetBtn.addEventListener('mouseleave', function() {
-                    if (!this.classList.contains('active')) {
-                        this.style.background = 'rgba(255, 255, 255, 0.03)';
-                        this.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                    }
-                });
-
-                // Click handler
-                presetBtn.addEventListener('click', function() {
-                    // Remove active from all preset buttons
-                    gridElement.querySelectorAll('.genre-eq-preset-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                        btn.style.background = 'rgba(255, 255, 255, 0.03)';
-                        btn.style.borderColor = 'rgba(255, 255, 255, 0.06)';
-                    });
-
-                    // Mark this as active
-                    this.classList.add('active');
-                    this.style.background = 'rgba(124, 184, 255, 0.12)';
-                    this.style.borderColor = 'rgba(124, 184, 255, 0.35)';
-
-                    // Apply the EQ preset
-                    applyGenreEQPreset(genreName, index);
-
-                    // SCROLL TO 7-BAND EQ so user can see the changes
-                    const eqSection = document.getElementById('eqSection');
-                    if (eqSection) {
-                        setTimeout(() => {
-                            eqSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            // Highlight effect
-                            eqSection.style.transition = 'box-shadow 0.3s ease';
-                            eqSection.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.4), 0 0 60px rgba(0, 212, 255, 0.2)';
-                            setTimeout(() => {
-                                eqSection.style.boxShadow = '';
-                            }, 1500);
-                        }, 150);
-                    }
-                });
-
-                // Set initial active styling for first preset
-                if (index === 0) {
-                    presetBtn.style.background = 'rgba(124, 184, 255, 0.12)';
-                    presetBtn.style.borderColor = 'rgba(124, 184, 255, 0.35)';
-                }
-
-                gridElement.appendChild(presetBtn);
-            });
-
-            // Show container with smooth animation
-            container.style.display = 'block';
-            container.style.opacity = '0';
-            setTimeout(() => {
-                container.style.transition = 'opacity 0.3s ease';
-                container.style.opacity = '1';
-            }, 10);
-
-            // Apply first preset by default
-            applyGenreEQPreset(genreName, 0);
-
-        }
-
-        /**
-         * Apply a specific genre EQ preset variation
-         */
-        function applyGenreEQPreset(genreName, presetIndex) {
-            const presets = genreEQPresets[genreName.toLowerCase()];
-            if (!presets || !presets[presetIndex]) {
-                console.error(`❌ Invalid preset: ${genreName} #${presetIndex}`);
-                return;
-            }
-
-            const preset = presets[presetIndex];
-            const eqValues = preset.eq;
-
-            // Only apply to audio if audio engine is ready
-            if (!window.audioContext || !eqSubFilter) {
-                console.warn('⚠️ Audio engine not ready for EQ preset');
-                return;
-            }
-
-            // Store original values for animation
-            const originalEQ = {
-                sub: eqSubFilter ? eqSubFilter.gain.value : 0,
-                bass: eqBassFilter ? eqBassFilter.gain.value : 0,
-                lowmid: eqLowMidFilter ? eqLowMidFilter.gain.value : 0,
-                mid: eqMidFilter ? eqMidFilter.gain.value : 0,
-                highmid: eqHighMidFilter ? eqHighMidFilter.gain.value : 0,
-                high: eqHighFilter ? eqHighFilter.gain.value : 0,
-                air: eqAirFilter ? eqAirFilter.gain.value : 0
-            };
-
-            // Animate EQ transition (smooth 400ms transition)
-            animateEQTransition(originalEQ, eqValues, 400);
-
-        }
-
-        /**
          * Genre Preset Mapping (The Tonal Character)
          * Configures EQ, compression, and effects based on genre
          */
@@ -20577,9 +20374,6 @@
                     // Store selected genre for intensity system
                     window.selectedPreMasterGenre = genre === 'edm' ? 'electronic' : genre;
 
-                    // Show genre-specific EQ presets (always, even if audio not loaded)
-                    showGenreEQPresets(genre);
-
                     // Genre display names and descriptions
                     const genreNames = {
                         'hip-hop': 'Hip-Hop',
@@ -20622,11 +20416,6 @@
                 }
             });
         });
-
-        // Auto-show presets for default genre (neutral) on load
-        if (typeof showGenreEQPresets === 'function') {
-            showGenreEQPresets('neutral');
-        }
 
         // Format button selection (only for format buttons, not bit depth)
         document.querySelectorAll('.export-format-btn[data-format]').forEach(btn => {
@@ -26314,80 +26103,8 @@
                 console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-1.5, Math.min(1.5, v * previewBoost)).toFixed(1) + 'dB').join(', ')}) (clamped ±1.5dB)`);
             }
 
-            // Show sub-genre presets in the overlay container
-            const genreKeyMap = {
-                'hiphop': 'hip-hop', 'electronic': 'electronic', 'pop': 'pop',
-                'rock': 'rock', 'rnb': 'rnb', 'acoustic': 'acoustic',
-                'jazz': 'jazz', 'classical': 'classical', 'metal': 'metal',
-                'country': 'country', 'latin': 'latin', 'lofi': 'lofi'
-            };
-            const subGenreKey = genreKeyMap[genre] || genre;
-            const overlayContainer = document.getElementById('overlaySubGenrePresets');
-            const overlayTitle = document.getElementById('overlayPresetsTitle');
-            const overlayGrid = document.getElementById('overlayPresetsGrid');
-            if (overlayContainer && overlayGrid && typeof genreEQPresets !== 'undefined') {
-                const subPresets = genreEQPresets[subGenreKey];
-                if (subPresets && subPresets.length > 0) {
-                    overlayGrid.innerHTML = '';
-                    const displayName = genre.charAt(0).toUpperCase() + genre.slice(1).replace(/([A-Z])/g, ' $1');
-                    if (overlayTitle) overlayTitle.textContent = displayName + ' Styles';
-                    subPresets.forEach((sp, idx) => {
-                        const btn = document.createElement('div');
-                        btn.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 8px 10px; cursor: pointer; transition: all 0.2s;';
-                        btn.innerHTML = '<div style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 2px;">' + sp.name + '</div><div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); line-height: 1.3;">' + sp.description + '</div>';
-                        btn.addEventListener('mouseenter', function() { this.style.background = 'rgba(124,184,255,0.08)'; this.style.borderColor = 'rgba(124,184,255,0.2)'; });
-                        btn.addEventListener('mouseleave', function() { if (!this.classList.contains('active')) { this.style.background = 'rgba(255,255,255,0.03)'; this.style.borderColor = 'rgba(255,255,255,0.06)'; }});
-                        btn.addEventListener('click', function() {
-                            overlayGrid.querySelectorAll('div[data-preset]').forEach(b => { b.classList.remove('active'); b.style.background = 'rgba(255,255,255,0.03)'; b.style.borderColor = 'rgba(255,255,255,0.06)'; });
-                            this.classList.add('active'); this.style.background = 'rgba(124,184,255,0.12)'; this.style.borderColor = 'rgba(124,184,255,0.35)';
-
-                            // EQ values from this sub-genre preset
-                            const subEq = [sp.eq.sub, sp.eq.bass, sp.eq.lowmid || sp.eq.lowMid || 0, sp.eq.mid, sp.eq.highmid || sp.eq.highMid || 0, sp.eq.high, sp.eq.air];
-                            // Persist sub-genre EQ so mastering and intensity changes can use it
-                            window._selectedSubGenreEQ = subEq;
-                            const intLevel = window.selectedIntensity || 3;
-                            const prevMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
-                            const previewBoost = prevMults[intLevel] || 0.7;
-
-                            // Apply to MASTERING CHAIN EQ filters directly (works before AND after mastering)
-                            // CLAMP: Professional mastering max ±1.5 dB per band
-                            const ac = window.audioContext;
-                            if (ac) {
-                                const now = ac.currentTime;
-                                const eqFilters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter, window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
-                                eqFilters.forEach((f, i) => {
-                                    if (f) {
-                                        const clamped = Math.max(-1.5, Math.min(1.5, subEq[i] * previewBoost));
-                                        f.gain.setTargetAtTime(clamped, now, 0.08);
-                                    }
-                                });
-                                console.log(`🎛️ Sub-genre preset applied to chain EQ: [${subEq.map(v => Math.max(-1.5, Math.min(1.5, v * previewBoost)).toFixed(1)).join(', ')}] (clamped ±1.5dB)`);
-                            }
-
-                            // Also apply to preview filters if they exist (pre-mastering preview path)
-                            if (window._previewEqFilters && ac) {
-                                const now = ac.currentTime;
-                                window._previewEqFilters.forEach((f, i) => {
-                                    const clamped = Math.max(-1.5, Math.min(1.5, subEq[i] * previewBoost));
-                                    f.gain.setTargetAtTime(clamped, now, 0.08);
-                                });
-                            }
-                            // Also update sidebar if visible
-                            if (typeof applyGenreEQPreset === 'function') { try { applyGenreEQPreset(subGenreKey, idx); } catch(_) {} }
-                        });
-                        btn.setAttribute('data-preset', idx);
-                        if (idx === 0) { btn.classList.add('active'); btn.style.background = 'rgba(124,184,255,0.12)'; btn.style.borderColor = 'rgba(124,184,255,0.35)'; }
-                        overlayGrid.appendChild(btn);
-                    });
-                    overlayContainer.style.display = 'block';
-                    overlayContainer.style.opacity = '0';
-                    setTimeout(() => { overlayContainer.style.transition = 'opacity 0.3s'; overlayContainer.style.opacity = '1'; }, 10);
-                } else {
-                    overlayContainer.style.display = 'none';
-                }
-            }
-            // Also populate sidebar version if accessible
-            if (typeof showGenreEQPresets === 'function') { try { showGenreEQPresets(subGenreKey); } catch(_) {} }
+            // Clear any previous sub-genre override — just the genre EQ is used
+            window._selectedSubGenreEQ = null;
 
             // Update UI - highlight selected genre
             document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
