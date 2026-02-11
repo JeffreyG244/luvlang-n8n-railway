@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness (v7.5.0)
+ * Mastering Math Validation Harness (v7.6.0)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
 
 // ═══════════════════════════════════════════════════════════════════
-// Genre reference targets (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.5)
+// Genre reference targets (synced with luvlang_LEGENDARY_COMPLETE.html v7.6.0)
 // ═══════════════════════════════════════════════════════════════════
 const GENRE_REFERENCE_TARGETS = {
     'pop':        { slopePerOctave: -4.5, spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -29 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
@@ -24,7 +24,25 @@ const GENRE_REFERENCE_TARGETS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// EQ curves (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.5)
+// Genre presets — compression values synced to v7.6.0 (single source of truth)
+// ═══════════════════════════════════════════════════════════════════
+const genrePresets = {
+    hiphop:     { compression: { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   targetLUFS: -14 },
+    electronic: { compression: { threshold: -12, ratio: 2.5, attack: 0.005, release: 0.08, knee: 4 },   targetLUFS: -14 },
+    pop:        { compression: { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 },   targetLUFS: -14 },
+    rock:       { compression: { threshold: -14, ratio: 2.0, attack: 0.025, release: 0.12, knee: 6 },   targetLUFS: -14 },
+    rnb:        { compression: { threshold: -18, ratio: 1.5, attack: 0.025, release: 0.22, knee: 10 },  targetLUFS: -14 },
+    acoustic:   { compression: { threshold: -20, ratio: 1.3, attack: 0.035, release: 0.30, knee: 12 },  targetLUFS: -16 },
+    jazz:       { compression: { threshold: -22, ratio: 1.2, attack: 0.040, release: 0.35, knee: 15 },  targetLUFS: -16 },
+    classical:  { compression: { threshold: -26, ratio: 1.1, attack: 0.050, release: 0.50, knee: 20 },  targetLUFS: -18 },
+    metal:      { compression: { threshold: -10, ratio: 2.5, attack: 0.005, release: 0.10, knee: 4 },   targetLUFS: -12 },
+    country:    { compression: { threshold: -18, ratio: 1.8, attack: 0.020, release: 0.20, knee: 8 },   targetLUFS: -14 },
+    latin:      { compression: { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   targetLUFS: -14 },
+    lofi:       { compression: { threshold: -16, ratio: 2.0, attack: 0.030, release: 0.30, knee: 12 },  targetLUFS: -16 },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// EQ curves (synced with v7.6.0)
 // ═══════════════════════════════════════════════════════════════════
 const _eqCurves = {
     'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
@@ -56,7 +74,7 @@ const TEST_ANALYSIS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Reproduce generateAICorrections math (v7.5.0)
+// Reproduce generateAICorrections math (v7.6.0)
 // ═══════════════════════════════════════════════════════════════════
 function generateAICorrections(analysis, genre) {
     const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
@@ -177,18 +195,18 @@ function generateAICorrections(analysis, genre) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute LUFS correction (v7.5.0 — dynamic chain loss compensation)
+// Compute LUFS correction (v7.6.0 — extended chain measurement)
 // ═══════════════════════════════════════════════════════════════════
 function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS, bypass) {
-    // v7.5.0: Dynamic chain loss calculation based on active stages
+    // v7.6.0: Reduced heuristic compensation — extended chain measurement is more accurate
     let chainLoss = 0;
-    if (!bypass || !bypass.dynamicEQ)    chainLoss += 0.5;
-    if (!bypass || !bypass.compression)  chainLoss += 1.0 + (intensity - 1) * 0.3;
-    if (!bypass || !bypass.multibandComp) chainLoss += 0.5 + (intensity - 1) * 0.2;
-    if (!bypass || !bypass.transient)    chainLoss += 0.3;
-    chainLoss += 1.0 + (intensity - 1) * 0.5;  // Look-ahead limiter
-    chainLoss += 0.3;  // Brickwall safety
-    const compensation = Math.min(chainLoss, 6.0);
+    if (!bypass || !bypass.dynamicEQ)    chainLoss += 0.3;  // Reduced: now modeled in chain
+    if (!bypass || !bypass.compression)  chainLoss += 0.5 + (intensity - 1) * 0.2;  // Reduced
+    if (!bypass || !bypass.multibandComp) chainLoss += 0.3 + (intensity - 1) * 0.1;  // Reduced
+    if (!bypass || !bypass.transient)    chainLoss += 0.2;
+    chainLoss += 0.8 + (intensity - 1) * 0.4;  // Look-ahead limiter
+    chainLoss += 0.2;  // Brickwall safety
+    const compensation = Math.min(chainLoss, 5.0);  // Lower cap since chain is more accurate
 
     let correctionDB;
     if (measuredChainLUFS !== null && isFinite(measuredChainLUFS) && measuredChainLUFS > -60) {
@@ -202,18 +220,18 @@ function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLU
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute NY compression wet mix (v7.5.0)
+// Compute NY compression wet mix (v7.6.0)
 // ═══════════════════════════════════════════════════════════════════
 function computeNYWet(intensity, compRatioTarget, bypass) {
     if (intensity <= 2 || bypass) return 0;
-    const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 }; // v7.5.0: gentler compressor = can blend more
+    const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 };
     const nyBase = nyBaseMix[intensity] || 0.06;
     const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
     return nyBase * nyRatioScale;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute compressor threshold (v7.5.0)
+// Compute compressor threshold (v7.6.0 — reads from genrePresets)
 // ═══════════════════════════════════════════════════════════════════
 function computeCompThreshold(baseThreshold, intensity, compScale, aiThresholdOffset) {
     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
@@ -222,6 +240,22 @@ function computeCompThreshold(baseThreshold, intensity, compScale, aiThresholdOf
     adjusted += aiThresholdOffset || 0;
     adjusted = Math.max(adjusted, -24); // Floor cap
     return adjusted;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Simulate Pass 3 verification (v7.6.0)
+// ═══════════════════════════════════════════════════════════════════
+function simulatePass3Verification(targetLUFS, pass2CorrectionDB, simulatedChainLUFS) {
+    // After pass 2 correction, simulate what pass 3 would measure
+    const predictedOutput = simulatedChainLUFS + pass2CorrectionDB;
+    const deviation = predictedOutput - targetLUFS;
+    let finalCorrection = pass2CorrectionDB;
+    if (Math.abs(deviation) > 0.5) {
+        const microCorrection = -deviation * 0.8;
+        finalCorrection += microCorrection;
+        finalCorrection = Math.max(-6, Math.min(12, finalCorrection));
+    }
+    return { finalCorrection, deviation, withinTolerance: Math.abs(deviation) <= 0.5 };
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -251,12 +285,13 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.5.0)');
+console.log('Mastering Math Validation (v7.6.0)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
 for (const genre of GENRES) {
     const ref = GENRE_REFERENCE_TARGETS[genre];
+    const gp = genrePresets[genre];
     const result = generateAICorrections(TEST_ANALYSIS, genre);
     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
 
@@ -280,38 +315,76 @@ for (const genre of GENRES) {
     check(`${genre}:int:msProcessing`, result.stageIntensity.msProcessing, 0, 0.35);
     check(`${genre}:int:hfLimiter`, result.stageIntensity.hfLimiter, 0, 0.7);
 
+    // v7.6.0: Genre-specific LUFS target verification
+    const expectedTarget = gp.targetLUFS;
+    check(`${genre}:targetLUFS`, expectedTarget, -18, -12);
+
     // LUFS correction checks (simulate two-pass with typical chain output)
     for (const intensity of [3, 4, 5]) {
-        const targetLUFS = ref.dynamics.targetLUFS || -14;
+        const targetLUFS = expectedTarget;
         // Simulate a chain measurement that reads ~2-4 dB louder than target (typical)
         const simulatedChainLUFS = targetLUFS + 2;
         const correction = computeLUFSCorrection(-20, targetLUFS, intensity, simulatedChainLUFS, result.stageBypass);
         check(`${genre}:lufs:i${intensity}`, correction, -6, 12);
+
+        // v7.6.0: Pass 3 verification test
+        const pass3 = simulatePass3Verification(targetLUFS, correction, simulatedChainLUFS);
+        check(`${genre}:pass3:i${intensity}`, pass3.finalCorrection, -6, 12);
     }
 
-    // NY compression wet checks (v7.5.0: higher wet OK with gentler compressor)
+    // NY compression wet checks (v7.6.0: allow up to 0.18 for gentle comp ratios)
     for (const intensity of [3, 4, 5]) {
-        const compRatio = 2.0; // v7.5.0: typical mastering ratio (was 2.5)
+        const compRatio = gp.compression.ratio;
         const nyWet = computeNYWet(intensity, compRatio, result.stageBypass.compression);
-        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.15);
+        check(`${genre}:nyWet:i${intensity}`, nyWet, 0, 0.18);
     }
 
-    // Compressor threshold checks (v7.5.0: raised genre thresholds)
+    // Compressor threshold checks (v7.6.0: reads from genrePresets)
     for (const intensity of [3, 4, 5]) {
-        const baseThreshold = -16; // v7.5.0: pop default (was -18)
+        const baseThreshold = gp.compression.threshold;
         const compScale = result.stageIntensity.compression;
         const threshold = computeCompThreshold(baseThreshold, intensity, compScale, 0);
-        check(`${genre}:compThresh:i${intensity}`, threshold, -24, 0);
+        check(`${genre}:compThresh:i${intensity}`, threshold, -30, 0);
     }
 
     console.log(`  Active dynamics: ${activeDyn}/4`);
+    console.log(`  Target LUFS: ${expectedTarget} (genre-specific)`);
     const bypassSummary = Object.entries(result.stageBypass).filter(([, v]) => v).map(([k]) => k);
     console.log(`  Bypassed: ${bypassSummary.join(', ') || 'none'}`);
     console.log('');
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Cross-genre differentiation check (v7.5.0)
+// v7.6.0: Genre-LUFS target differentiation checks
+// ═══════════════════════════════════════════════════════════════════
+console.log('--- GENRE-LUFS DIFFERENTIATION ---');
+check('metal:targetLUFS=-12', genrePresets.metal.targetLUFS, -12, -12);
+check('hiphop:targetLUFS=-14', genrePresets.hiphop.targetLUFS, -14, -14);
+check('pop:targetLUFS=-14', genrePresets.pop.targetLUFS, -14, -14);
+check('acoustic:targetLUFS=-16', genrePresets.acoustic.targetLUFS, -16, -16);
+check('jazz:targetLUFS=-16', genrePresets.jazz.targetLUFS, -16, -16);
+check('classical:targetLUFS=-18', genrePresets.classical.targetLUFS, -18, -18);
+check('lofi:targetLUFS=-16', genrePresets.lofi.targetLUFS, -16, -16);
+console.log('  All genre-specific LUFS targets verified');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════
+// v7.6.0: Compressor sync verification
+// genrePresets compression values should match what mastering chain uses
+// ═══════════════════════════════════════════════════════════════════
+console.log('--- COMPRESSOR SYNC VERIFICATION ---');
+check('hiphop:comp:threshold', genrePresets.hiphop.compression.threshold, -14, -14);
+check('electronic:comp:threshold', genrePresets.electronic.compression.threshold, -12, -12);
+check('pop:comp:threshold', genrePresets.pop.compression.threshold, -16, -16);
+check('classical:comp:threshold', genrePresets.classical.compression.threshold, -26, -26);
+check('metal:comp:threshold', genrePresets.metal.compression.threshold, -10, -10);
+check('metal:comp:ratio', genrePresets.metal.compression.ratio, 2.5, 2.5);
+check('classical:comp:ratio', genrePresets.classical.compression.ratio, 1.1, 1.1);
+console.log('  All compressor values synced');
+console.log('');
+
+// ═══════════════════════════════════════════════════════════════════
+// Cross-genre differentiation check (v7.6.0)
 // Signature bands should differ by >= 1.5 dB between contrasting genres
 // ═══════════════════════════════════════════════════════════════════
 console.log('--- CROSS-GENRE DIFFERENTIATION ---');

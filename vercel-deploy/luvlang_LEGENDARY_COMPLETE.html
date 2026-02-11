@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 4.2.0 | Build: 2026-02-05 | Cache-bust update -->
+<!-- VERSION 7.6.0 "AI Professional" | Build: 2026-02-11 | Multi-pass analysis & genre-aware mastering -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9305,6 +9305,9 @@
         let lraMin = 0;
         let lraMax = -70;
         let lra = 0; // Loudness Range (global for Auto Master)
+        // v7.6.0: Ring buffer for EBU R128 percentile-based LRA
+        const lraShortTermBuffer = [];
+        const LRA_BUFFER_MAX = 600; // ~10 min at 1 value/sec
 
         // CURRENT MEASURED VALUES (Updated after analysis and mastering)
         let currentIntegratedLUFS = -70; // Current measured integrated LUFS
@@ -12564,6 +12567,40 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // v7.6.0: 4x OVERSAMPLED TRUE PEAK (ITU-R BS.1770-4)
+        // Catmull-Rom cubic interpolation between samples catches inter-sample peaks
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function measure4xTruePeak(channelData) {
+            let maxPeak = 0;
+            const len = channelData.length;
+            for (let i = 0; i < len; i++) {
+                const absVal = Math.abs(channelData[i]);
+                if (absVal > maxPeak) maxPeak = absVal;
+            }
+            // 4x oversampling with Catmull-Rom interpolation
+            // For each pair of samples, check 3 intermediate points (t=0.25, 0.5, 0.75)
+            for (let i = 1; i < len - 2; i++) {
+                const p0 = channelData[i - 1];
+                const p1 = channelData[i];
+                const p2 = channelData[i + 1];
+                const p3 = channelData[i + 2];
+                for (let s = 1; s <= 3; s++) {
+                    const t = s * 0.25;
+                    const t2 = t * t;
+                    const t3 = t2 * t;
+                    // Catmull-Rom: 0.5 * ((2*p1) + (-p0+p2)*t + (2p0-5p1+4p2-p3)*t² + (-p0+3p1-3p2+p3)*t³)
+                    const v = 0.5 * ((2 * p1) +
+                        (-p0 + p2) * t +
+                        (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+                        (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+                    const absV = Math.abs(v);
+                    if (absV > maxPeak) maxPeak = absV;
+                }
+            }
+            return maxPeak;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // 🎯 TWO-PASS CHAIN LOUDNESS MEASUREMENT
         // Renders audio through key gain-affecting stages offline to measure
         // actual chain output LUFS, replacing guesswork compensation constants.
@@ -12617,9 +12654,53 @@
                 comp.attack.value = chainParams.compAttack || 0.015;
                 comp.release.value = chainParams.compRelease || 0.18;
 
-                // Unity makeup gain (we measure chain output at unity to calculate correction)
+                // v7.6.0: Dynamic EQ approximation (parallel comp at 85/15 dry/wet when active)
+                let dynEQDry = null, dynEQWet = null, dynEQComp = null, dynEQMerge = null;
+                if (chainParams.dynamicEQActive) {
+                    dynEQDry = offlineCtx.createGain();
+                    dynEQDry.gain.value = 0.85;
+                    dynEQWet = offlineCtx.createGain();
+                    dynEQWet.gain.value = 0.15;
+                    dynEQComp = offlineCtx.createDynamicsCompressor();
+                    dynEQComp.threshold.value = -8;
+                    dynEQComp.ratio.value = 1.3;
+                    dynEQComp.attack.value = 0.005;
+                    dynEQComp.release.value = 0.05;
+                    dynEQMerge = offlineCtx.createGain();
+                    dynEQMerge.gain.value = 1.0;
+                }
+
+                // v7.6.0: NY Parallel Compression approximation (when active)
+                let nyDry = null, nyWet = null, nyComp = null, nyMerge = null;
+                const nyWetMix = chainParams.nyActive ? (chainParams.nyWetMix || 0.06) : 0;
+                if (chainParams.nyActive && nyWetMix > 0) {
+                    nyDry = offlineCtx.createGain();
+                    nyDry.gain.value = 1.0 - nyWetMix * 0.3;
+                    nyWet = offlineCtx.createGain();
+                    nyWet.gain.value = nyWetMix;
+                    nyComp = offlineCtx.createDynamicsCompressor();
+                    nyComp.threshold.value = (chainParams.compThreshold || -16) - 6;
+                    nyComp.ratio.value = 4.0;
+                    nyComp.attack.value = 0.003;
+                    nyComp.release.value = 0.08;
+                    nyMerge = offlineCtx.createGain();
+                    nyMerge.gain.value = 1.0;
+                }
+
+                // v7.6.0: Multiband approximation (additional gentle comp when active)
+                let mbComp = null;
+                if (chainParams.multibandActive) {
+                    mbComp = offlineCtx.createDynamicsCompressor();
+                    mbComp.threshold.value = -18;
+                    mbComp.ratio.value = 1.5;
+                    mbComp.attack.value = 0.010;
+                    mbComp.release.value = 0.15;
+                    mbComp.knee.value = 10;
+                }
+
+                // Makeup gain (unity by default, or provided for Pass 3 verification)
                 const makeupGain = offlineCtx.createGain();
-                makeupGain.gain.value = 1.0;
+                makeupGain.gain.value = chainParams.makeupGainLinear || 1.0;
 
                 // Limiter (same settings as live chain)
                 const lim = offlineCtx.createDynamicsCompressor();
@@ -12629,15 +12710,44 @@
                 lim.attack.value = 0.0005;
                 lim.release.value = 0.15;
 
-                // Connect: Source → Subsonic → EQ chain → Compressor → Makeup → Limiter → Dest
+                // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Limiter → Dest
                 source.connect(subsonic);
                 let lastNode = subsonic;
                 for (const eq of eqFilters) {
                     lastNode.connect(eq);
                     lastNode = eq;
                 }
+
+                // Dynamic EQ insertion (parallel: dry + wet comp)
+                if (dynEQDry && dynEQComp && dynEQMerge) {
+                    lastNode.connect(dynEQDry);
+                    lastNode.connect(dynEQComp);
+                    dynEQComp.connect(dynEQWet);
+                    dynEQDry.connect(dynEQMerge);
+                    dynEQWet.connect(dynEQMerge);
+                    lastNode = dynEQMerge;
+                }
+
                 lastNode.connect(comp);
-                comp.connect(makeupGain);
+                lastNode = comp;
+
+                // NY compression insertion (parallel: dry + wet comp)
+                if (nyDry && nyComp && nyMerge) {
+                    lastNode.connect(nyDry);
+                    lastNode.connect(nyComp);
+                    nyComp.connect(nyWet);
+                    nyDry.connect(nyMerge);
+                    nyWet.connect(nyMerge);
+                    lastNode = nyMerge;
+                }
+
+                // Multiband compression approximation
+                if (mbComp) {
+                    lastNode.connect(mbComp);
+                    lastNode = mbComp;
+                }
+
+                lastNode.connect(makeupGain);
                 makeupGain.connect(lim);
                 lim.connect(offlineCtx.destination);
 
@@ -12682,12 +12792,8 @@
                 }
                 integratedLUFS = Math.max(-70, Math.min(0, integratedLUFS));
 
-                // Measure true peak
-                let maxPeak = 0;
-                for (let i = 0; i < sampleCount; i++) {
-                    const p = Math.max(Math.abs(leftCh[i]), Math.abs(rightCh[i]));
-                    if (p > maxPeak) maxPeak = p;
-                }
+                // v7.6.0: 4x oversampled true peak (ITU-R BS.1770-4)
+                const maxPeak = Math.max(measure4xTruePeak(leftCh), measure4xTruePeak(rightCh));
                 const truePeakDB = maxPeak > 0 ? 20 * Math.log10(maxPeak) : -70;
 
                 console.log(`🎯 Two-pass chain measurement: LUFS=${integratedLUFS.toFixed(1)}, truePeak=${truePeakDB.toFixed(1)} dBTP`);
@@ -12784,35 +12890,19 @@
                 bandCrestRMS[name] = 0;
             }
 
+            // v7.6.0: M/S energy accumulators
+            let midEnergy = 0, sideEnergy = 0;
+
             // Spectral flux tracking
             let prevMagnitudes = null;
             let fluxSum = 0;
             let fluxFrames = 0;
 
-            // Process frames (yield to main thread between frames to prevent UI hang)
-            for (let f = 0; f < numFrames; f++) {
-                const offset = f * frameStep;
-                if (offset + fftSize > totalSamples) break;
+            // v7.6.0: Accumulate magnitudes across ALL frames for resonance detection
+            const avgMagnitudes = new Float32Array(halfFFT);
 
-                // Yield to main thread every 2 frames to keep UI responsive
-                if (f > 0 && f % 2 === 0) {
-                    await new Promise(r => setTimeout(r, 0));
-                }
-
-                // Windowed mono signal for FFT
-                const mono = new Float32Array(fftSize);
-                const leftSeg = new Float32Array(fftSize);
-                const rightSeg = new Float32Array(fftSize);
-                for (let i = 0; i < fftSize; i++) {
-                    leftSeg[i] = leftChannel[offset + i];
-                    rightSeg[i] = rightChannel[offset + i];
-                    mono[i] = (leftSeg[i] + rightSeg[i]) * 0.5 * hannWindow[i];
-                }
-
-                // Radix-2 Cooley-Tukey FFT with precomputed twiddle factors
-                const re = new Float32Array(fftSize);
-                const im = new Float32Array(fftSize);
-                for (let i = 0; i < fftSize; i++) { re[i] = mono[i]; im[i] = 0; }
+            // v7.6.0: Reusable in-place FFT using precomputed twiddle factors
+            function fftInPlace(re, im) {
                 // Bit-reversal permutation
                 for (let i = 1, j = 0; i < fftSize; i++) {
                     let bit = fftSize >> 1;
@@ -12820,7 +12910,7 @@
                     j ^= bit;
                     if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; }
                 }
-                // Butterfly stages — uses precomputed cos/sin (zero trig calls here)
+                // Butterfly stages
                 for (let len = 2; len <= fftSize; len <<= 1) {
                     const halfLen = len >> 1;
                     const twRe = twiddleRe[len];
@@ -12837,10 +12927,52 @@
                         }
                     }
                 }
+            }
+
+            // Process frames (yield to main thread between frames to prevent UI hang)
+            for (let f = 0; f < numFrames; f++) {
+                const offset = f * frameStep;
+                if (offset + fftSize > totalSamples) break;
+
+                // Yield to main thread every 2 frames to keep UI responsive
+                if (f > 0 && f % 2 === 0) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
+
+                // Extract L/R segments and windowed signals
+                const leftSeg = new Float32Array(fftSize);
+                const rightSeg = new Float32Array(fftSize);
+                const monoWindowed = new Float32Array(fftSize);
+                const leftWindowed = new Float32Array(fftSize);
+                const rightWindowed = new Float32Array(fftSize);
+                for (let i = 0; i < fftSize; i++) {
+                    leftSeg[i] = leftChannel[offset + i];
+                    rightSeg[i] = rightChannel[offset + i];
+                    monoWindowed[i] = (leftSeg[i] + rightSeg[i]) * 0.5 * hannWindow[i];
+                    leftWindowed[i] = leftSeg[i] * hannWindow[i];
+                    rightWindowed[i] = rightSeg[i] * hannWindow[i];
+                }
+
+                // FFT on mono (for spectral analysis, energy, flux)
+                const re = new Float32Array(fftSize);
+                const im = new Float32Array(fftSize);
+                for (let i = 0; i < fftSize; i++) { re[i] = monoWindowed[i]; im[i] = 0; }
+                fftInPlace(re, im);
                 const magnitudes = new Float32Array(halfFFT);
                 for (let k = 0; k < halfFFT; k++) {
                     magnitudes[k] = Math.sqrt(re[k] * re[k] + im[k] * im[k]) / fftSize;
+                    avgMagnitudes[k] += magnitudes[k];
                 }
+
+                // v7.6.0: FFT on L and R channels for per-band frequency-domain stereo correlation
+                const reL = new Float32Array(fftSize), imL = new Float32Array(fftSize);
+                const reR = new Float32Array(fftSize), imR = new Float32Array(fftSize);
+                for (let i = 0; i < fftSize; i++) {
+                    reL[i] = leftWindowed[i]; imL[i] = 0;
+                    reR[i] = rightWindowed[i]; imR[i] = 0;
+                }
+                fftInPlace(reL, imL);
+                fftInPlace(reR, imR);
 
                 // Spectral flux
                 if (prevMagnitudes) {
@@ -12854,42 +12986,56 @@
                 }
                 prevMagnitudes = magnitudes.slice();
 
-                // Accumulate per-band energy and stereo correlation
+                // Accumulate per-band energy, stereo correlation, and crest factor
                 for (const [name, range] of Object.entries(bands)) {
                     const lowBin = Math.max(1, Math.floor(range.low / binWidth));
                     const highBin = Math.min(halfFFT - 1, Math.ceil(range.high / binWidth));
                     let bandPower = 0;
                     let segPeakL = 0, segRmsL = 0, segPeakR = 0, segRmsR = 0;
-                    let sumLR = 0, sumLL = 0, sumRR = 0;
 
                     for (let k = lowBin; k <= highBin; k++) {
                         bandPower += magnitudes[k] * magnitudes[k];
                     }
                     bandEnergy[name] += bandPower / numFrames;
 
-                    // Per-band stereo correlation (time domain within segment)
+                    // v7.6.0: Per-band stereo correlation in frequency domain (cross-spectrum)
+                    // Correlation = Re(sum(L*conj(R))) / sqrt(sum(|L|^2) * sum(|R|^2))
+                    let crossRe = 0, powerL = 0, powerR = 0;
+                    for (let k = lowBin; k <= highBin; k++) {
+                        // L * conj(R) = (reL + i*imL) * (reR - i*imR)
+                        crossRe += reL[k] * reR[k] + imL[k] * imR[k];
+                        powerL += reL[k] * reL[k] + imL[k] * imL[k];
+                        powerR += reR[k] * reR[k] + imR[k] * imR[k];
+                    }
+                    bandStereoCorr[name].sumLR += crossRe;
+                    bandStereoCorr[name].sumLL += powerL;
+                    bandStereoCorr[name].sumRR += powerR;
+
+                    // Crest factor from time-domain segments
                     for (let i = 0; i < fftSize; i++) {
-                        const l = leftSeg[i], r = rightSeg[i];
-                        sumLR += l * r;
-                        sumLL += l * l;
-                        sumRR += r * r;
-                        const absL = Math.abs(l), absR = Math.abs(r);
+                        const absL = Math.abs(leftSeg[i]), absR = Math.abs(rightSeg[i]);
                         if (absL > segPeakL) segPeakL = absL;
                         if (absR > segPeakR) segPeakR = absR;
-                        segRmsL += l * l;
-                        segRmsR += r * r;
+                        segRmsL += leftSeg[i] * leftSeg[i];
+                        segRmsR += rightSeg[i] * rightSeg[i];
                     }
-                    bandStereoCorr[name].sumLR += sumLR;
-                    bandStereoCorr[name].sumLL += sumLL;
-                    bandStereoCorr[name].sumRR += sumRR;
-
-                    // Crest factor accumulation
                     const segPeak = Math.max(segPeakL, segPeakR);
                     const segRms = Math.sqrt((segRmsL + segRmsR) / (2 * fftSize));
                     if (segPeak > bandCrestPeak[name]) bandCrestPeak[name] = segPeak;
                     bandCrestRMS[name] += segRms / numFrames;
                 }
+
+                // v7.6.0: M/S energy accumulation per frame
+                for (let i = 0; i < fftSize; i++) {
+                    const m = (leftSeg[i] + rightSeg[i]) * 0.5;
+                    const s = (leftSeg[i] - rightSeg[i]) * 0.5;
+                    midEnergy += m * m;
+                    sideEnergy += s * s;
+                }
             }
+
+            // v7.6.0: M/S energy ratio
+            const msEnergyRatio = midEnergy > 0 ? sideEnergy / midEnergy : 0;
 
             // Compute final band energy in dB
             const spectrumDB = {};
@@ -12932,19 +13078,29 @@
             // Spectral flux average
             const avgFlux = fluxFrames > 0 ? fluxSum / fluxFrames : 0;
 
-            // Resonance detection: find bins >6dB above local average
+            // v7.6.0: Average magnitudes across all frames before resonance detection
+            // This prevents transient events (drum hits) in the last frame from being flagged
+            // and catches persistent room modes that appear across multiple frames
+            const actualFrames = Math.min(numFrames, Math.floor((totalSamples - fftSize) / frameStep) + 1);
+            if (actualFrames > 0) {
+                for (let k = 0; k < halfFFT; k++) {
+                    avgMagnitudes[k] /= actualFrames;
+                }
+            }
+
+            // Resonance detection: find bins >6dB above local average (using averaged spectrum)
             const resonances = [];
-            if (prevMagnitudes) {
+            if (actualFrames > 0) {
                 const smoothWindow = 20; // bins for local average
                 for (let k = smoothWindow; k < halfFFT - smoothWindow; k++) {
                     let localSum = 0;
                     for (let j = k - smoothWindow; j <= k + smoothWindow; j++) {
-                        localSum += prevMagnitudes[j];
+                        localSum += avgMagnitudes[j];
                     }
                     const localAvg = localSum / (2 * smoothWindow + 1);
-                    if (localAvg > 0 && prevMagnitudes[k] / localAvg > 2.0) { // >6dB above average
+                    if (localAvg > 0 && avgMagnitudes[k] / localAvg > 2.0) { // >6dB above average
                         const freq = k * binWidth;
-                        const magnitudeDB = 20 * Math.log10(prevMagnitudes[k] / localAvg);
+                        const magnitudeDB = 20 * Math.log10(avgMagnitudes[k] / localAvg);
                         if (freq > 80 && freq < 16000 && magnitudeDB > 6) {
                             resonances.push({ frequency: Math.round(freq), magnitude: magnitudeDB, Q: 12 });
                         }
@@ -12963,11 +13119,22 @@
             const overallCorr = stereoCorrelation.mid || 1.0;
             const estimatedWidth = 1.0 - overallCorr;
 
+            // v7.6.0: Spectral centroid — weighted average frequency (Hz)
+            // Uses averaged magnitudes across all frames for stability
+            let weightedFreqSum = 0, magSum = 0;
+            for (let k = 1; k < halfFFT; k++) {
+                const freq = k * binWidth;
+                weightedFreqSum += freq * avgMagnitudes[k];
+                magSum += avgMagnitudes[k];
+            }
+            const spectralCentroid = magSum > 0 ? weightedFreqSum / magSum : 1000;
+
             console.log('🤖 AI Track Analysis Complete:', {
                 spectrumDB, spectralTilt: spectralTilt.toFixed(2),
                 overallCrest: overallCrest.toFixed(1), avgFlux: avgFlux.toFixed(4),
                 resonances: resonances.length, sibilanceRatio: sibilanceRatio.toFixed(3),
-                stereoCorrelation
+                stereoCorrelation, spectralCentroid: Math.round(spectralCentroid),
+                msEnergyRatio: msEnergyRatio.toFixed(3)
             });
 
             return {
@@ -12981,6 +13148,8 @@
                 sibilanceRatio,
                 sibilanceExcessive,
                 estimatedWidth,
+                spectralCentroid,
+                msEnergyRatio,
                 duration
             };
         }
@@ -13525,22 +13694,38 @@
             const midRatio = totalEnergy > 0 ? (midEnergy / totalEnergy) : 0.3;
             const highRatio = totalEnergy > 0 ? (highEnergy / totalEnergy) : 0.25;
 
-            // 3. DYNAMIC RANGE ANALYSIS
-            let peaks = [];
-            const windowSize = Math.floor(sampleRate * 0.4); // 400ms windows
-            for (let i = 0; i < sampleCount; i += windowSize) {
-                let windowMax = 0;
-                for (let j = i; j < Math.min(i + windowSize, sampleCount); j++) {
-                    const peak = Math.max(Math.abs(leftChannel[j]), Math.abs(rightChannel[j]));
-                    if (peak > windowMax) windowMax = peak;
+            // 3. DYNAMIC RANGE ANALYSIS (v7.6.0: EBU R128 LRA with 3-second short-term blocks)
+            // Uses K-weighted short-term LUFS with 10th-95th percentile gating
+            const stBlockSize = Math.floor(sampleRate * 3.0); // 3-second blocks
+            const stStep = Math.floor(sampleRate * 1.0); // 1-second hop
+            const shortTermValues = [];
+            for (let i = 0; i + stBlockSize <= sampleCount; i += stStep) {
+                let sumSq = 0;
+                for (let j = i; j < i + stBlockSize; j++) {
+                    sumSq += (leftKWeighted[j] * leftKWeighted[j] + rightKWeighted[j] * rightKWeighted[j]) / 2;
                 }
-                if (windowMax > 0.01) peaks.push(20 * Math.log10(windowMax));
+                const ms = sumSq / stBlockSize;
+                if (ms > 0) {
+                    const stLUFS = -0.691 + 10 * Math.log10(ms);
+                    if (stLUFS > -70) shortTermValues.push(stLUFS);
+                }
             }
-            peaks.sort((a, b) => a - b);
-            // Safety check: Ensure we have enough peaks for LRA calculation
-            const lra = peaks.length > 10
-                ? (peaks[Math.floor(peaks.length * 0.95)] - peaks[Math.floor(peaks.length * 0.10)])
-                : 8;
+            let lra = 8; // default
+            if (shortTermValues.length >= 4) {
+                // Absolute gate at -70 LUFS already applied above
+                // Relative gate: ungated mean - 20 LU
+                let sumLin = 0;
+                for (const v of shortTermValues) sumLin += Math.pow(10, v / 10);
+                const ungatedMean = 10 * Math.log10(sumLin / shortTermValues.length);
+                const relGate = ungatedMean - 20;
+                const gated = shortTermValues.filter(v => v >= relGate);
+                if (gated.length >= 2) {
+                    const sorted = gated.slice().sort((a, b) => a - b);
+                    const p10 = sorted[Math.floor(sorted.length * 0.10)];
+                    const p95 = sorted[Math.floor(sorted.length * 0.95)];
+                    lra = p95 - p10;
+                }
+            }
 
             // 4. STEREO WIDTH ANALYSIS
             let correlation = 0;
@@ -19121,10 +19306,29 @@
             // DERIVED METRICS - Skip if meters locked (values calculated once after mastering)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             if (!metersLocked) {
-                // Loudness Range (LRA)
+                // v7.6.0: EBU R128 LRA — collect short-term LUFS, compute 10th-95th percentile
+                if (shortTermLUFS > -70) {
+                    lraShortTermBuffer.push(shortTermLUFS);
+                    if (lraShortTermBuffer.length > LRA_BUFFER_MAX) lraShortTermBuffer.shift();
+                }
+                if (lraShortTermBuffer.length >= 4) {
+                    // Absolute gate at -70 LUFS (already filtered above)
+                    // Relative gate: ungated mean - 20 LU
+                    let sumLin = 0;
+                    for (const v of lraShortTermBuffer) sumLin += Math.pow(10, v / 10);
+                    const ungatedMean = 10 * Math.log10(sumLin / lraShortTermBuffer.length);
+                    const relGate = ungatedMean - 20;
+                    const gated = lraShortTermBuffer.filter(v => v >= relGate);
+                    if (gated.length >= 2) {
+                        const sorted = gated.slice().sort((a, b) => a - b);
+                        const p10 = sorted[Math.floor(sorted.length * 0.10)];
+                        const p95 = sorted[Math.floor(sorted.length * 0.95)];
+                        lra = p95 - p10;
+                    }
+                }
+                // Keep min/max tracking for backward compat
                 lraMin = Math.min(lraMin, integratedLUFS);
                 lraMax = Math.max(lraMax, integratedLUFS);
-                lra = lraMax - lraMin; // Update global lra variable
                 document.getElementById('lraValue').textContent = lra.toFixed(1) + ' LU';
 
                 // Crest Factor
@@ -19640,42 +19844,25 @@
                 if (!analysisResults.platformTarget) analysisResults.platformTarget = -14;
                 if (!analysisResults.integratedLUFS) analysisResults.integratedLUFS = -20;
 
-                // CRITICAL FIX: Get CURRENT platform selection from UI BEFORE showing progress messages
-                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
-                let targetLUFS = -14; // Default Spotify
-                let limiterThreshold = -2.0; // Default
-                let platformName = 'Spotify';
+                // v7.6.0: Genre-aware LUFS targeting — read from genrePresets (single source of truth)
+                const _gpAuto = window.genrePresets || {};
+                const autoGenre = window.selectedPreMasterGenre || 'pop';
+                const autoGpEntry = _gpAuto[autoGenre] || {};
+                let targetLUFS = (autoGpEntry.targetLUFS) || -14;
+                let limiterThreshold = -1.5;
+                let platformName = 'Genre-Optimized';
 
+                // Platform override: if user selected Apple/Podcast, cap at -16
+                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
                 if (selectedPlatformBtn) {
                     const platform = selectedPlatformBtn.getAttribute('data-platform');
-
-                    switch(platform.toLowerCase()) {
-                        case 'streaming':
-                        case 'spotify':
-                        case 'youtube':
-                        case 'tidal':
-                            targetLUFS = -14;
-                            platformName = 'Streaming';
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
-                            break;
-                        case 'apple':
-                            targetLUFS = -16;
-                            platformName = 'Apple Music';
-                            limiterThreshold = -2.0; // Slightly more conservative for Apple
-                            break;
-                        case 'podcast':
-                            targetLUFS = -16;
-                            platformName = 'Podcast';
-                            limiterThreshold = -2.0; // Conservative for speech
-                            break;
-                        default:
-                            targetLUFS = -14;
-                            platformName = 'Streaming';
-                            limiterThreshold = -1.5; // Broadcast safe - allows proper loudness
+                    if (platform === 'apple' || platform === 'podcast') {
+                        targetLUFS = Math.min(targetLUFS, -16);
+                        limiterThreshold = -2.0;
+                        platformName = platform === 'apple' ? 'Apple Music' : 'Podcast';
+                    } else {
+                        platformName = 'Streaming';
                     }
-
-                } else {
-
                 }
 
                 // Update analysisResults with current platform target
@@ -23255,10 +23442,11 @@
                 const headroomDb = headroomCompensation[effectiveIntensity] || 0;
                 // Note: headroomDb is still available for reference but NOT applied to masterGain
 
-                // Get target platform LUFS
-                const platformSelect = document.querySelector('input[name="platformPreset"]:checked');
-                const platform = platformSelect ? platformSelect.value : 'streaming';
-                const targetLUFS = (platform === 'apple' || platform === 'podcast') ? -16 : -14;
+                // Get target LUFS — genre-aware (v7.6.0)
+                // genrePresets define per-genre targets: metal=-12, pop/rock/hiphop=-14, acoustic/jazz=-16, classical=-18
+                const _gpLufs = window.genrePresets || {};
+                const genreTarget = (_gpLufs[genre] && _gpLufs[genre].targetLUFS) || -14;
+                const targetLUFS = genreTarget;
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 1: INPUT ANALYSIS & CORRECTION
@@ -23395,25 +23583,11 @@
                 updateStageProgress(8, 'Shaping transients...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // Genre-specific compression settings - SSL G-BUS / API 2500 STANDARDS
-                // These mirror settings used at Sterling Sound, Metropolis, Abbey Road
-                // Attack in seconds, release in seconds - musical "glue" compression
-                // v7.5.0: Raised thresholds 4-6 dB, reduced ratios — target 2-3 dB GR max
-                const compSettings = {
-                    'hiphop':     { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   // Punchy but controlled
-                    'electronic': { threshold: -12, ratio: 2.5, attack: 0.005, release: 0.08, knee: 4 },   // Fast, tight
-                    'pop':        { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 },   // Smooth, musical
-                    'rock':       { threshold: -14, ratio: 2.0, attack: 0.025, release: 0.12, knee: 6 },   // Let transients punch through
-                    'rnb':        { threshold: -18, ratio: 1.5, attack: 0.025, release: 0.22, knee: 10 },  // Gentle, warm
-                    'acoustic':   { threshold: -20, ratio: 1.3, attack: 0.035, release: 0.30, knee: 12 },  // More natural
-                    'jazz':       { threshold: -22, ratio: 1.2, attack: 0.040, release: 0.35, knee: 15 },  // Preserve dynamics
-                    'classical':  { threshold: -26, ratio: 1.1, attack: 0.050, release: 0.50, knee: 20 },  // Ultra-transparent
-                    'metal':      { threshold: -10, ratio: 2.5, attack: 0.005, release: 0.10, knee: 4 },   // Aggressive — metal hits harder
-                    'country':    { threshold: -18, ratio: 1.8, attack: 0.020, release: 0.20, knee: 8 },   // Nashville polish glue
-                    'latin':      { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },   // Punchy, rhythmic
-                    'lofi':       { threshold: -16, ratio: 2.0, attack: 0.030, release: 0.30, knee: 12 }   // Warm, gentle pump
-                };
-                const comp = compSettings[genre] || compSettings['pop'];
+                // Genre-specific compression settings — read from genrePresets (single source of truth)
+                // v7.6.0: Eliminated duplicate compSettings — genrePresets now synced to v7.5.0 values
+                const _gp = window.genrePresets || {};
+                const gpEntry = _gp[genre] || _gp['pop'] || {};
+                const comp = gpEntry.compression || { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 };
 
                 // 11. Bus Compressor - SSL/API Style Glue
                 // With dynamic EQ + multiband + HF limiter + 2 limiters in chain,
@@ -23882,7 +24056,9 @@
                 // ════════════════════════════════════════════════════════════════════════════
 
                 // Gather current chain parameters for offline measurement
-                // v7.5.0: Sync limiter settings with actual brickwall (-0.5 dBTP, hard knee)
+                // v7.6.0: Extended chain — includes dynamic EQ, NY compression, multiband flags
+                const _nyActive = !!(window.nyCompression && effectiveIntensity > 2 && !bypass.compression);
+                const _nyWetMix = _nyActive ? (window.nyCompression.wet ? window.nyCompression.wet.gain.value : 0.06) : 0;
                 const chainParams = {
                     eqGains: aiProfile ? aiProfile.eqDeltas : {},
                     compThreshold: window.compressor ? window.compressor.threshold.value : (comp.threshold || -16),
@@ -23891,7 +24067,11 @@
                     compAttack: comp.attack || 0.020,
                     compRelease: comp.release || 0.18,
                     limiterThreshold: -0.5,
-                    limiterKnee: 0
+                    limiterKnee: 0,
+                    dynamicEQActive: !bypass.dynamicEQ && !!window.dynamicEQ,
+                    nyActive: _nyActive,
+                    nyWetMix: _nyWetMix,
+                    multibandActive: !bypass.multibandComp && !!(window.multibandCompressor && window.multibandCompressor.enable)
                 };
 
                 let correctionDB;
@@ -23901,19 +24081,18 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // Dynamic chain loss compensation (v7.5.0)
-                    // Calculates based on which stages are actually active and their settings
+                    // v7.6.0: Reduced heuristic compensation — extended chain measurement is more accurate
+                    // Dynamic EQ, NY compression, and multiband are now modeled in measureChainLoudness
                     let chainLoss = 0;
-                    if (!bypass.dynamicEQ)    chainLoss += 0.5;  // Minimal with 85% dry mix
-                    if (!bypass.compression)  chainLoss += 1.0 + (effectiveIntensity - 1) * 0.3;
-                    if (!bypass.multibandComp) chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
-                    if (!bypass.transient)    chainLoss += 0.3;
-                    // NY adds energy, doesn't subtract
-                    // Look-ahead limiter: -1 to -3 dB depending on how loud signal is
-                    chainLoss += 1.0 + (effectiveIntensity - 1) * 0.5;
-                    // Brickwall: safety only, minimal
-                    chainLoss += 0.3;
-                    const compensation = Math.min(chainLoss, 6.0);  // Cap at 6 dB
+                    if (!bypass.dynamicEQ)    chainLoss += 0.3;  // Reduced: now modeled in chain
+                    if (!bypass.compression)  chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
+                    if (!bypass.multibandComp) chainLoss += 0.3 + (effectiveIntensity - 1) * 0.1;
+                    if (!bypass.transient)    chainLoss += 0.2;
+                    // Look-ahead limiter: still heuristic (not in offline chain)
+                    chainLoss += 0.8 + (effectiveIntensity - 1) * 0.4;
+                    // Brickwall: safety only
+                    chainLoss += 0.2;
+                    const compensation = Math.min(chainLoss, 5.0);  // Lower cap since chain is more accurate
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
@@ -23931,6 +24110,28 @@
                     correctionDB = targetLUFS - currentLUFS + 4.0;
                     correctionDB = Math.max(-3, Math.min(12, correctionDB));
                     console.log(`🎯 LUFS Fallback: input=${currentLUFS.toFixed(1)} target=${targetLUFS} correction=${correctionDB.toFixed(1)}`);
+                }
+
+                // ════════════════════════════════════════════════════════════════════════════
+                // PASS 3: VERIFICATION — Re-measure with applied makeup gain, micro-correct
+                // Professional standard: ±0.5 LU tolerance
+                // ════════════════════════════════════════════════════════════════════════════
+                if (pass1 && window.audioBuffer && isFinite(correctionDB)) {
+                    const pass3Params = Object.assign({}, chainParams, {
+                        makeupGainLinear: Math.pow(10, correctionDB / 20)
+                    });
+                    const pass3 = await measureChainLoudness(window.audioBuffer, pass3Params);
+                    if (pass3 && isFinite(pass3.integratedLUFS) && pass3.integratedLUFS > -60) {
+                        const deviation = pass3.integratedLUFS - targetLUFS;
+                        if (Math.abs(deviation) > 0.5) {
+                            const microCorrection = -deviation * 0.8; // 80% correction to avoid oscillation
+                            correctionDB += microCorrection;
+                            correctionDB = Math.max(-6, Math.min(12, correctionDB));
+                            console.log(`🎯 Pass 3 micro-correction: deviation=${deviation.toFixed(2)} LU, applied=${microCorrection.toFixed(2)} dB, final=${correctionDB.toFixed(1)} dB`);
+                        } else {
+                            console.log(`✅ Pass 3 verified: ${pass3.integratedLUFS.toFixed(1)} LUFS (target ${targetLUFS}, deviation ${deviation.toFixed(2)} LU — within ±0.5 tolerance)`);
+                        }
+                    }
                 }
 
                 const clampedGainDB = correctionDB;
@@ -26118,7 +26319,7 @@
             hiphop: {
                 name: 'Hip-Hop',
                 eq: { sub: 3.5, bass: 2.0, lowMid: -2.5, mid: 0.5, highMid: 1.5, high: 1.5, air: 1.0 },
-                compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
+                compression: { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.15 },
                 stereoWidth: 1.12,
                 targetLUFS: -14,
@@ -26127,7 +26328,7 @@
             electronic: {
                 name: 'Electronic / EDM',
                 eq: { sub: 2.5, bass: 1.5, lowMid: -2.0, mid: -0.5, highMid: 1.2, high: 2.5, air: 2.0 },
-                compression: { threshold: -16, ratio: 3.0, attack: 0.003, release: 0.08, knee: 4 },
+                compression: { threshold: -12, ratio: 2.5, attack: 0.005, release: 0.08, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.10 },
                 stereoWidth: 1.25,
                 targetLUFS: -14,
@@ -26136,7 +26337,7 @@
             pop: {
                 name: 'Pop',
                 eq: { sub: 0.5, bass: 1.5, lowMid: -1.5, mid: 0.5, highMid: 2.0, high: 2.0, air: 1.5 },
-                compression: { threshold: -20, ratio: 2.0, attack: 0.012, release: 0.18, knee: 8 },
+                compression: { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 },
                 limiter: { threshold: -1.0, attack: 0.0005, release: 0.20 },
                 stereoWidth: 1.15,
                 targetLUFS: -14,
@@ -26145,7 +26346,7 @@
             rock: {
                 name: 'Rock',
                 eq: { sub: 1.0, bass: 2.0, lowMid: -1.5, mid: 1.0, highMid: 1.8, high: 2.5, air: 1.5 },
-                compression: { threshold: -18, ratio: 2.5, attack: 0.006, release: 0.12, knee: 6 },
+                compression: { threshold: -14, ratio: 2.0, attack: 0.025, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0003, release: 0.12 },
                 stereoWidth: 1.08,
                 targetLUFS: -14,
@@ -26154,7 +26355,7 @@
             rnb: {
                 name: 'R&B / Soul',
                 eq: { sub: 2.0, bass: 1.5, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 1.0, air: 0.5 },
-                compression: { threshold: -22, ratio: 1.8, attack: 0.018, release: 0.22, knee: 10 },
+                compression: { threshold: -18, ratio: 1.5, attack: 0.025, release: 0.22, knee: 10 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.25 },
                 stereoWidth: 1.18,
                 targetLUFS: -14,
@@ -26163,7 +26364,7 @@
             acoustic: {
                 name: 'Acoustic / Folk',
                 eq: { sub: 0.5, bass: 1.0, lowMid: -1.0, mid: 1.0, highMid: 1.5, high: 1.5, air: 1.5 },
-                compression: { threshold: -26, ratio: 1.5, attack: 0.025, release: 0.30, knee: 12 },
+                compression: { threshold: -20, ratio: 1.3, attack: 0.035, release: 0.30, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.05,
                 targetLUFS: -16,
@@ -26172,7 +26373,7 @@
             jazz: {
                 name: 'Jazz',
                 eq: { sub: 0.5, bass: 1.0, lowMid: -0.5, mid: 0.5, highMid: 1.2, high: 1.0, air: 0.5 },
-                compression: { threshold: -28, ratio: 1.3, attack: 0.030, release: 0.35, knee: 15 },
+                compression: { threshold: -22, ratio: 1.2, attack: 0.040, release: 0.35, knee: 15 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.35 },
                 stereoWidth: 1.03,
                 targetLUFS: -16,
@@ -26181,7 +26382,7 @@
             classical: {
                 name: 'Classical / Orchestral',
                 eq: { sub: -1.5, bass: 0.5, lowMid: 0.0, mid: 0.5, highMid: 0.8, high: 0.5, air: 0.5 },
-                compression: { threshold: -32, ratio: 1.2, attack: 0.040, release: 0.50, knee: 20 },
+                compression: { threshold: -26, ratio: 1.1, attack: 0.050, release: 0.50, knee: 20 },
                 limiter: { threshold: -1.0, attack: 0.002, release: 0.50 },
                 stereoWidth: 1.0,
                 targetLUFS: -18,
@@ -26190,7 +26391,7 @@
             metal: {
                 name: 'Metal / Hard Rock',
                 eq: { sub: 1.5, bass: 2.0, lowMid: -1.5, mid: 1.5, highMid: 2.0, high: 1.5, air: 1.0 },
-                compression: { threshold: -16, ratio: 3.0, attack: 0.004, release: 0.10, knee: 4 },
+                compression: { threshold: -10, ratio: 2.5, attack: 0.005, release: 0.10, knee: 4 },
                 limiter: { threshold: -1.0, attack: 0.0002, release: 0.08 },
                 stereoWidth: 1.1,
                 targetLUFS: -12,
@@ -26199,7 +26400,7 @@
             country: {
                 name: 'Country',
                 eq: { sub: 0.5, bass: 1.5, lowMid: -1.0, mid: 1.0, highMid: 2.0, high: 2.5, air: 1.5 },
-                compression: { threshold: -22, ratio: 2.0, attack: 0.015, release: 0.20, knee: 10 },
+                compression: { threshold: -18, ratio: 1.8, attack: 0.020, release: 0.20, knee: 8 },
                 limiter: { threshold: -1.0, attack: 0.0008, release: 0.20 },
                 stereoWidth: 1.1,
                 targetLUFS: -14,
@@ -26208,7 +26409,7 @@
             latin: {
                 name: 'Latin / Reggaeton',
                 eq: { sub: 2.5, bass: 2.0, lowMid: -1.5, mid: 0.5, highMid: 1.5, high: 1.5, air: 1.0 },
-                compression: { threshold: -18, ratio: 2.5, attack: 0.008, release: 0.12, knee: 6 },
+                compression: { threshold: -14, ratio: 2.0, attack: 0.010, release: 0.12, knee: 6 },
                 limiter: { threshold: -1.0, attack: 0.0004, release: 0.12 },
                 stereoWidth: 1.15,
                 targetLUFS: -14,
@@ -26217,7 +26418,7 @@
             lofi: {
                 name: 'Lo-Fi / Chill',
                 eq: { sub: 1.5, bass: 2.0, lowMid: 1.0, mid: -0.5, highMid: -1.0, high: -2.0, air: -3.0 },
-                compression: { threshold: -24, ratio: 2.0, attack: 0.020, release: 0.25, knee: 12 },
+                compression: { threshold: -16, ratio: 2.0, attack: 0.030, release: 0.30, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.08,
                 targetLUFS: -16,
@@ -26227,6 +26428,8 @@
         // EDM alias → electronic
         genrePresets.edm = genrePresets.electronic;
         genrePresets['hip-hop'] = genrePresets.hiphop;
+        // Expose for LUFS targeting and other modules
+        window.genrePresets = genrePresets;
 
         // ═══════════════════════════════════════════════════════════════════════════
         // PRE-MASTERING GENRE SELECTION - Real-time preview functions
