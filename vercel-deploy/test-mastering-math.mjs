@@ -1,26 +1,44 @@
 #!/usr/bin/env node
 /**
- * Mastering Math Validation Harness
+ * Mastering Math Validation Harness (v7.4.3)
  * Validates generateAICorrections() math against professional mastering ranges.
  * Run: node vercel-deploy/test-mastering-math.mjs
  */
 
 // ═══════════════════════════════════════════════════════════════════
-// Genre reference targets (exact copy from luvlang_LEGENDARY_COMPLETE.html)
+// Genre reference targets (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.3)
 // ═══════════════════════════════════════════════════════════════════
 const GENRE_REFERENCE_TARGETS = {
-    'pop':        { slopePerOctave: -4.5, spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
-    'hiphop':     { slopePerOctave: -5.0, spectrum: { sub: -18, bass: -14, lowmid: -16, mid: -14, highmid: -17, high: -22, air: -32 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.50, lowCorrelation: 0.98, highCorrelation: 0.55 }, spectralTilt: -1.0 },
-    'electronic': { slopePerOctave: -4.0, spectrum: { sub: -16, bass: -15, lowmid: -17, mid: -14, highmid: -16, high: -19, air: -28 }, dynamics: { crestFactor: 7, lra: 5, targetLUFS: -14 }, stereo: { width: 0.55, lowCorrelation: 0.95, highCorrelation: 0.50 }, spectralTilt: -0.3 },
-    'rock':       { slopePerOctave: -3.5, spectrum: { sub: -26, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -30 }, dynamics: { crestFactor: 12, lra: 7, targetLUFS: -14 }, stereo: { width: 0.42, lowCorrelation: 0.93, highCorrelation: 0.58 }, spectralTilt: 0.0 },
-    'rnb':        { slopePerOctave: -4.5, spectrum: { sub: -20, bass: -15, lowmid: -15, mid: -13, highmid: -16, high: -21, air: -31 }, dynamics: { crestFactor: 10, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.58 }, spectralTilt: -0.7 },
-    'acoustic':   { slopePerOctave: -3.0, spectrum: { sub: -30, bass: -18, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 14, lra: 10, targetLUFS: -16 }, stereo: { width: 0.40, lowCorrelation: 0.92, highCorrelation: 0.65 }, spectralTilt: 0.2 },
-    'jazz':       { slopePerOctave: -3.0, spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -15, high: -19, air: -28 }, dynamics: { crestFactor: 16, lra: 12, targetLUFS: -16 }, stereo: { width: 0.42, lowCorrelation: 0.90, highCorrelation: 0.60 }, spectralTilt: 0.1 },
-    'classical':  { slopePerOctave: -3.0, spectrum: { sub: -30, bass: -20, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -28 }, dynamics: { crestFactor: 20, lra: 14, targetLUFS: -18 }, stereo: { width: 0.50, lowCorrelation: 0.88, highCorrelation: 0.55 }, spectralTilt: 0.3 },
-    'metal':      { slopePerOctave: -3.0, spectrum: { sub: -24, bass: -15, lowmid: -14, mid: -11, highmid: -12, high: -18, air: -30 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.40, lowCorrelation: 0.95, highCorrelation: 0.55 }, spectralTilt: 0.5 },
-    'country':    { slopePerOctave: -3.5, spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -12, highmid: -14, high: -18, air: -27 }, dynamics: { crestFactor: 12, lra: 8, targetLUFS: -14 }, stereo: { width: 0.43, lowCorrelation: 0.93, highCorrelation: 0.62 }, spectralTilt: -0.2 },
-    'latin':      { slopePerOctave: -4.5, spectrum: { sub: -18, bass: -14, lowmid: -15, mid: -13, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.55 }, spectralTilt: -0.8 },
-    'lofi':       { slopePerOctave: -5.5, spectrum: { sub: -22, bass: -15, lowmid: -13, mid: -14, highmid: -18, high: -24, air: -36 }, dynamics: { crestFactor: 11, lra: 8, targetLUFS: -16 }, stereo: { width: 0.38, lowCorrelation: 0.90, highCorrelation: 0.65 }, spectralTilt: -1.5 }
+    'pop':        { slopePerOctave: -4.5, spectrum: { sub: -24, bass: -16, lowmid: -14, mid: -12, highmid: -13, high: -19, air: -29 }, dynamics: { crestFactor: 10, lra: 7, targetLUFS: -14 }, stereo: { width: 0.45, lowCorrelation: 0.95, highCorrelation: 0.6 }, spectralTilt: -0.5 },
+    'hiphop':     { slopePerOctave: -5.5, spectrum: { sub: -14, bass: -13, lowmid: -18, mid: -15, highmid: -16, high: -22, air: -33 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.50, lowCorrelation: 0.98, highCorrelation: 0.55 }, spectralTilt: -1.5 },
+    'electronic': { slopePerOctave: -3.5, spectrum: { sub: -14, bass: -14, lowmid: -18, mid: -15, highmid: -15, high: -18, air: -24 }, dynamics: { crestFactor: 7, lra: 5, targetLUFS: -14 }, stereo: { width: 0.55, lowCorrelation: 0.95, highCorrelation: 0.50 }, spectralTilt: 0.0 },
+    'rock':       { slopePerOctave: -3.0, spectrum: { sub: -28, bass: -15, lowmid: -14, mid: -11, highmid: -11, high: -17, air: -28 }, dynamics: { crestFactor: 12, lra: 7, targetLUFS: -14 }, stereo: { width: 0.42, lowCorrelation: 0.93, highCorrelation: 0.58 }, spectralTilt: 0.3 },
+    'rnb':        { slopePerOctave: -4.8, spectrum: { sub: -18, bass: -14, lowmid: -16, mid: -13, highmid: -15, high: -21, air: -31 }, dynamics: { crestFactor: 10, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.58 }, spectralTilt: -1.0 },
+    'acoustic':   { slopePerOctave: -2.8, spectrum: { sub: -32, bass: -18, lowmid: -13, mid: -11, highmid: -13, high: -17, air: -26 }, dynamics: { crestFactor: 14, lra: 10, targetLUFS: -16 }, stereo: { width: 0.40, lowCorrelation: 0.92, highCorrelation: 0.65 }, spectralTilt: 0.5 },
+    'jazz':       { slopePerOctave: -2.8, spectrum: { sub: -30, bass: -17, lowmid: -13, mid: -11, highmid: -14, high: -19, air: -28 }, dynamics: { crestFactor: 16, lra: 12, targetLUFS: -16 }, stereo: { width: 0.42, lowCorrelation: 0.90, highCorrelation: 0.60 }, spectralTilt: 0.3 },
+    'classical':  { slopePerOctave: -2.5, spectrum: { sub: -34, bass: -20, lowmid: -14, mid: -12, highmid: -14, high: -19, air: -27 }, dynamics: { crestFactor: 20, lra: 14, targetLUFS: -18 }, stereo: { width: 0.50, lowCorrelation: 0.88, highCorrelation: 0.55 }, spectralTilt: 0.5 },
+    'metal':      { slopePerOctave: -2.5, spectrum: { sub: -24, bass: -14, lowmid: -14, mid: -10, highmid: -11, high: -17, air: -29 }, dynamics: { crestFactor: 8, lra: 5, targetLUFS: -14 }, stereo: { width: 0.40, lowCorrelation: 0.95, highCorrelation: 0.55 }, spectralTilt: 0.8 },
+    'country':    { slopePerOctave: -3.5, spectrum: { sub: -28, bass: -17, lowmid: -14, mid: -11, highmid: -12, high: -17, air: -26 }, dynamics: { crestFactor: 12, lra: 8, targetLUFS: -14 }, stereo: { width: 0.43, lowCorrelation: 0.93, highCorrelation: 0.62 }, spectralTilt: -0.2 },
+    'latin':      { slopePerOctave: -5.0, spectrum: { sub: -15, bass: -13, lowmid: -16, mid: -14, highmid: -15, high: -20, air: -30 }, dynamics: { crestFactor: 9, lra: 6, targetLUFS: -14 }, stereo: { width: 0.48, lowCorrelation: 0.96, highCorrelation: 0.55 }, spectralTilt: -1.2 },
+    'lofi':       { slopePerOctave: -6.5, spectrum: { sub: -20, bass: -14, lowmid: -12, mid: -14, highmid: -20, high: -28, air: -40 }, dynamics: { crestFactor: 11, lra: 8, targetLUFS: -16 }, stereo: { width: 0.38, lowCorrelation: 0.90, highCorrelation: 0.65 }, spectralTilt: -2.5 }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// EQ curves (exact copy from luvlang_LEGENDARY_COMPLETE.html v7.4.3)
+// ═══════════════════════════════════════════════════════════════════
+const _eqCurves = {
+    'hiphop':     { sub: 3.5, bass: 2.0, lowmid: -2.5, mid: 0.5, highmid: 2.0, high: 1.5, air: 1.0 },
+    'electronic': { sub: 2.5, bass: 1.5, lowmid: -2.0, mid: -0.5, highmid: 1.5, high: 2.5, air: 2.0 },
+    'pop':        { sub: 0.5, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 3.0, high: 2.0, air: 1.5 },
+    'rock':       { sub: 1.0, bass: 2.0, lowmid: -1.5, mid: 1.0, highmid: 2.5, high: 3.0, air: 1.5 },
+    'rnb':        { sub: 2.0, bass: 1.5, lowmid: -1.5, mid: 0.5, highmid: 2.5, high: 1.0, air: 0.5 },
+    'acoustic':   { sub: 0.5, bass: 1.0, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 1.5, air: 1.5 },
+    'jazz':       { sub: 0.5, bass: 1.0, lowmid: -0.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+    'classical':  { sub: -1.5, bass: 0.5, lowmid: 0.0, mid: 0.5, highmid: 1.0, high: 0.5, air: 0.5 },
+    'metal':      { sub: 1.5, bass: 2.0, lowmid: -1.5, mid: 1.5, highmid: 2.5, high: 1.5, air: 1.0 },
+    'country':    { sub: 0.5, bass: 1.5, lowmid: -1.0, mid: 1.0, highmid: 3.0, high: 2.5, air: 1.5 },
+    'latin':      { sub: 2.5, bass: 2.0, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.5, air: 1.0 },
+    'lofi':       { sub: 1.5, bass: 2.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -38,11 +56,11 @@ const TEST_ANALYSIS = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Reproduce generateAICorrections math (v7.4.2)
+// Reproduce generateAICorrections math (v7.4.3)
 // ═══════════════════════════════════════════════════════════════════
 function generateAICorrections(analysis, genre) {
     const ref = GENRE_REFERENCE_TARGETS[genre] || GENRE_REFERENCE_TARGETS['pop'];
-    const correctionStrength = 0.20;
+    const correctionStrength = 0.30;
 
     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
     const bandCenterFreqs = [40, 100, 300, 1000, 3500, 8000, 14000];
@@ -77,18 +95,18 @@ function generateAICorrections(analysis, genre) {
         const band = bandKeys[i];
         const tiltFactor = (bandOctaves[i] - octMean) / (bandOctaves[bandOctaves.length - 1] - bandOctaves[0]);
         const tiltDelta = tiltCorrection * tiltFactor * 2;
-        const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.5;
+        const anomalyDelta = (refShape[band] - trackShape[band]) * correctionStrength * 0.7;
         let delta = tiltDelta + anomalyDelta;
-        delta = Math.max(-2, Math.min(2, delta));
+        delta = Math.max(-3, Math.min(3, delta));
         eqDeltas[band] = Math.round(delta * 100) / 100;
         totalEQCorrection += Math.abs(delta);
     }
-    if (totalEQCorrection > 5) {
-        const scale = 5 / totalEQCorrection;
+    if (totalEQCorrection > 8) {
+        const scale = 8 / totalEQCorrection;
         for (const band of bandKeys) {
             eqDeltas[band] = Math.round(eqDeltas[band] * scale * 100) / 100;
         }
-        totalEQCorrection = 5;
+        totalEQCorrection = 8;
     }
 
     // Dynamics
@@ -98,15 +116,15 @@ function generateAICorrections(analysis, genre) {
     const refWidth = ref.stereo.width || 0.45;
     const widthDiff = analysis.estimatedWidth - refWidth;
 
-    // Processing scale
+    // Processing scale (v7.4.3 — wider bands for higher totalEQ range)
     let processingScale;
-    if (totalEQCorrection < 0.5) processingScale = 0.2;
-    else if (totalEQCorrection < 1.5) processingScale = 0.4;
-    else if (totalEQCorrection < 2.5) processingScale = 0.6;
-    else if (totalEQCorrection < 3.5) processingScale = 0.8;
+    if (totalEQCorrection < 1.0) processingScale = 0.3;
+    else if (totalEQCorrection < 2.5) processingScale = 0.5;
+    else if (totalEQCorrection < 4.0) processingScale = 0.7;
+    else if (totalEQCorrection < 6.0) processingScale = 0.85;
     else processingScale = 1.0;
 
-    // Stage bypass (v7.4.2 — conservative thresholds)
+    // Stage bypass (v7.4.3)
     const stageBypass = {
         eq:            totalEQCorrection < 0.5,
         dynamicEQ:     analysis.resonances.length <= 1 && !analysis.sibilanceExcessive
@@ -137,7 +155,7 @@ function generateAICorrections(analysis, genre) {
         }
     }
 
-    // Stage intensity (v7.4.2 — conservative values)
+    // Stage intensity (v7.4.3)
     const stageIntensity = {
         eq:            Math.min(1.0, totalEQCorrection / 3.0),
         dynamicEQ:     analysis.resonances.length > 3 ? 0.8 : analysis.resonances.length > 1 ? 0.5 : 0.2,
@@ -159,7 +177,7 @@ function generateAICorrections(analysis, genre) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute LUFS correction (v7.4.2)
+// Compute LUFS correction (v7.4.3)
 // ═══════════════════════════════════════════════════════════════════
 function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLUFS) {
     const chainLossCompensation = { 1: 1.5, 2: 2.0, 3: 2.5, 4: 3.0, 5: 3.5 };
@@ -177,7 +195,7 @@ function computeLUFSCorrection(inputLUFS, targetLUFS, intensity, measuredChainLU
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute NY compression wet mix (v7.4.2)
+// Compute NY compression wet mix (v7.4.3)
 // ═══════════════════════════════════════════════════════════════════
 function computeNYWet(intensity, compRatioTarget, bypass) {
     if (intensity <= 2 || bypass) return 0;
@@ -188,7 +206,7 @@ function computeNYWet(intensity, compRatioTarget, bypass) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Compute compressor threshold (v7.4.2)
+// Compute compressor threshold (v7.4.3)
 // ═══════════════════════════════════════════════════════════════════
 function computeCompThreshold(baseThreshold, intensity, compScale, aiThresholdOffset) {
     const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
@@ -226,7 +244,7 @@ function check(label, value, min, max) {
 }
 
 console.log('========================================');
-console.log('Mastering Math Validation (v7.4.2)');
+console.log('Mastering Math Validation (v7.4.3)');
 console.log('========================================');
 console.log(`Test track: spectralTilt=${TEST_ANALYSIS.spectralTilt}, crest=${TEST_ANALYSIS.overallCrest}, resonances=${TEST_ANALYSIS.resonances.length}\n`);
 
@@ -238,11 +256,11 @@ for (const genre of GENRES) {
     console.log(`--- ${genre.toUpperCase()} ---`);
     console.log(`  totalEQ=${result.totalEQCorrection.toFixed(2)}, processingScale=${result.processingScale}, crestDiff=${result.crestDiff.toFixed(1)}, trackSlope=${result.trackSlope.toFixed(2)}`);
 
-    // EQ checks
+    // EQ checks — ±3 dB per band (v7.4.3 professional range)
     for (const band of bandKeys) {
-        check(`${genre}:eq:${band}`, result.eqDeltas[band], -2.0, 2.0);
+        check(`${genre}:eq:${band}`, result.eqDeltas[band], -3.0, 3.0);
     }
-    check(`${genre}:totalEQ`, result.totalEQCorrection, 0, 5.0);
+    check(`${genre}:totalEQ`, result.totalEQCorrection, 0, 8.0);
 
     // Dynamics stage bypass count
     const dynamicsStages = ['compression', 'multibandComp', 'dynamicEQ', 'transient'];
@@ -285,8 +303,36 @@ for (const genre of GENRES) {
     console.log('');
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// Cross-genre differentiation check (v7.4.3)
+// Signature bands should differ by >= 1.5 dB between contrasting genres
+// ═══════════════════════════════════════════════════════════════════
+console.log('--- CROSS-GENRE DIFFERENTIATION ---');
+const INTENSITY_MULT = 0.75; // Intensity 3 multiplier
+
+const diffChecks = [
+    { name: 'Hip-Hop vs Classical (sub)',     g1: 'hiphop',     g2: 'classical',  band: 'sub' },
+    { name: 'Lo-Fi vs Electronic (air)',      g1: 'lofi',       g2: 'electronic', band: 'air' },
+    { name: 'Pop vs Lo-Fi (highmid)',         g1: 'pop',        g2: 'lofi',       band: 'highmid' },
+    { name: 'Metal vs Electronic (mid)',      g1: 'metal',      g2: 'electronic', band: 'mid' },
+    { name: 'Hip-Hop vs Classical (lowmid)',  g1: 'hiphop',     g2: 'classical',  band: 'lowmid' },
+    { name: 'Lo-Fi vs Pop (high)',            g1: 'lofi',       g2: 'pop',        band: 'high' },
+];
+
+for (const dc of diffChecks) {
+    const v1 = _eqCurves[dc.g1][dc.band] * INTENSITY_MULT;
+    const v2 = _eqCurves[dc.g2][dc.band] * INTENSITY_MULT;
+    const diff = Math.abs(v1 - v2);
+    const pass = check(`diff:${dc.name}`, diff, 1.5, 10);
+    if (!pass) {
+        console.log(`    ${dc.g1}=${v1.toFixed(2)} dB, ${dc.g2}=${v2.toFixed(2)} dB, diff=${diff.toFixed(2)} dB`);
+    } else {
+        console.log(`  PASS: ${dc.name} — diff=${diff.toFixed(2)} dB (${dc.g1}=${v1.toFixed(2)}, ${dc.g2}=${v2.toFixed(2)})`);
+    }
+}
+
 // Summary
-console.log('========================================');
+console.log('\n========================================');
 console.log(`RESULTS: ${passedChecks}/${totalChecks} checks passed, ${failedChecks} failed`);
 if (failures.length > 0) {
     console.log('\nFAILURES:');
