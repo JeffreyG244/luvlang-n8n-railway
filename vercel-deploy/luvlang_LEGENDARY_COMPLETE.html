@@ -8588,6 +8588,7 @@
                         </div>
                         <!-- Scale labels (left=quiet, right=loud — matches needle direction) -->
                         <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.5);">-40</span>
                             <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.7);">-24</span>
                             <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-18</span>
                             <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-14</span>
@@ -19228,9 +19229,9 @@
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
                         const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
-                        const clampedLUFS = Math.max(-24, Math.min(-6, barLUFS));
-                        // Piecewise linear interpolation matching label positions
-                        const _bkpts = [[-24,0],[-18,25],[-14,50],[-10,75],[-6,100]];
+                        const clampedLUFS = Math.max(-40, Math.min(-6, barLUFS));
+                        // Piecewise linear interpolation — extended range for pre-mastering levels
+                        const _bkpts = [[-40,0],[-24,15],[-18,32],[-14,50],[-10,75],[-6,100]];
                         let position = 0;
                         for (let i = 1; i < _bkpts.length; i++) {
                             if (clampedLUFS <= _bkpts[i][0]) {
@@ -20343,8 +20344,8 @@
                 // Force LUFS bar update immediately (don't wait for animation frame)
                 const lufsBarIndicatorLock = document.getElementById('lufsBarIndicator');
                 if (lufsBarIndicatorLock && lockedLUFS !== null) {
-                    const clampedLock = Math.max(-24, Math.min(-6, lockedLUFS));
-                    const _bkptsLock = [[-24,0],[-18,25],[-14,50],[-10,75],[-6,100]];
+                    const clampedLock = Math.max(-40, Math.min(-6, lockedLUFS));
+                    const _bkptsLock = [[-40,0],[-24,15],[-18,32],[-14,50],[-10,75],[-6,100]];
                     let posLock = 0;
                     for (let i = 1; i < _bkptsLock.length; i++) {
                         if (clampedLock <= _bkptsLock[i][0]) {
