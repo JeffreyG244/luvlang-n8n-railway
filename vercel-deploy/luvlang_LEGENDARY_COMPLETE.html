@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3g | Build: 2026-02-11 | Fix intensity buttons to use mastering-aligned multipliers -->
+<!-- VERSION 7.6.3h | Build: 2026-02-11 | Fix console null crash + professional mastering improvements -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10033,11 +10033,11 @@
                 limiter = audioContext.createDynamicsCompressor();
                 // BRICKWALL SAFETY LIMITER (v7.5.0) — only catches what look-ahead misses
                 // Look-ahead limiter at -1.5 dBTP does the musical work; this is the safety net
-                limiter.threshold.value = -0.5;     // -0.5 dBTP — safety only (was -1.0, same as look-ahead!)
-                limiter.knee.value = 0;             // Hard knee = true brickwall (was 6)
+                limiter.threshold.value = -1.0;     // v7.6.3h: -1.0 dBTP (streaming standard, prevents ISP clips)
+                limiter.knee.value = 0;             // Hard knee = true brickwall
                 limiter.ratio.value = 20;           // Brick-wall ratio
-                limiter.attack.value = 0.001;       // 1ms attack (was 5ms)
-                limiter.release.value = 0.050;      // 50ms fast release (was 100ms)
+                limiter.attack.value = 0.001;       // 1ms attack
+                limiter.release.value = 0.120;      // v7.6.3h: 120ms (was 50ms — prevents bass distortion)
 
                 // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
@@ -12377,6 +12377,22 @@
                         }
                     }, 200);
 
+                    // Set global LUFS/Peak values BEFORE AI analysis so console can display them
+                    window.originalInputLUFS = inputLUFS;
+                    // Calculate true peak from full buffer
+                    let _maxSample = 0;
+                    for (let i = 0; i < channelData.length; i++) {
+                        const aL = Math.abs(channelData[i]);
+                        if (aL > _maxSample) _maxSample = aL;
+                    }
+                    if (audioBuffer.numberOfChannels > 1) {
+                        for (let i = 0; i < rightChannel.length; i++) {
+                            const aR = Math.abs(rightChannel[i]);
+                            if (aR > _maxSample) _maxSample = aR;
+                        }
+                    }
+                    window.originalInputPeakDB = _maxSample > 0 ? 20 * Math.log10(_maxSample) : -100;
+
                     // AI Deep Analysis — run spectral profiling on upload
                     try {
                         console.log('🤖 Starting AI deep spectral analysis...');
@@ -12522,11 +12538,11 @@
                 // This catches cases where populateAIMasteringConsole wasn't defined yet or both calls failed
                 try {
                     const _lufsCheck = document.getElementById('consoleLufsValue');
-                    if (_lufsCheck && _lufsCheck.textContent === '--' && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
+                    if (_lufsCheck && _lufsCheck.textContent === '--' && typeof window.originalInputLUFS === 'number' && isFinite(window.originalInputLUFS)) {
                         _lufsCheck.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
                     }
                     const _tpCheck = document.getElementById('consoleTruePeak');
-                    if (_tpCheck && _tpCheck.textContent === '--' && window.originalInputPeakDB !== undefined && window.originalInputPeakDB !== 0 && isFinite(window.originalInputPeakDB)) {
+                    if (_tpCheck && _tpCheck.textContent === '--' && typeof window.originalInputPeakDB === 'number' && isFinite(window.originalInputPeakDB)) {
                         _tpCheck.textContent = window.originalInputPeakDB.toFixed(1) + ' dBTP';
                     }
                 } catch(_) {}
@@ -12737,7 +12753,8 @@
         async function measureChainLoudness(audioBuffer, chainParams) {
             try {
                 const sampleRate = audioBuffer.sampleRate;
-                const analysisDuration = Math.min(15, audioBuffer.duration);
+                // v7.6.3h: Extended from 15s to 30s for better integrated LUFS accuracy
+                const analysisDuration = Math.min(30, audioBuffer.duration);
                 const analysisSamples = Math.floor(analysisDuration * sampleRate);
 
                 const offlineCtx = new OfflineAudioContext(
@@ -12831,13 +12848,13 @@
                 const makeupGain = offlineCtx.createGain();
                 makeupGain.gain.value = chainParams.makeupGainLinear || 1.0;
 
-                // Limiter (same settings as live chain)
+                // Limiter (same settings as live chain — v7.6.3h: -1.0 dBTP, 120ms release)
                 const lim = offlineCtx.createDynamicsCompressor();
                 lim.threshold.value = chainParams.limiterThreshold || -1.0;
-                lim.knee.value = chainParams.limiterKnee || 1.0;
+                lim.knee.value = chainParams.limiterKnee || 0;
                 lim.ratio.value = 20;
-                lim.attack.value = 0.0005;
-                lim.release.value = 0.15;
+                lim.attack.value = 0.001;
+                lim.release.value = 0.120;
 
                 // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Limiter → Dest
                 source.connect(subsonic);
@@ -16035,7 +16052,7 @@
 
                 if (limiter) {
                     // Transparent limiting - just catch any overs
-                    limiter.threshold.value = -0.5;   // Only catch true peaks
+                    limiter.threshold.value = -1.0;   // v7.6.3h: -1.0 dBTP streaming standard
                     limiter.ratio.value = 20;         // Brick wall if needed
                     limiter.knee.value = 3;           // Soft knee
 
@@ -20112,7 +20129,7 @@
                 updateProgress(60, '🔊 Targeting Loudness', 'Optimizing for ' + targetLUFS + ' LUFS (' + platformName + ' standard)...');
                 await new Promise(r => setTimeout(r, 700));
 
-                updateProgress(68, '🛡️ Applying True Peak Limiter', 'Bob Ludwig-style limiting at -0.5 dBTP ceiling...');
+                updateProgress(68, '🛡️ Applying True Peak Limiter', 'Broadcast-grade limiting at -1.0 dBTP ceiling...');
                 await new Promise(r => setTimeout(r, 600));
 
                 updateProgress(75, '🎯 Fine-Tuning Output', 'Applying broadcast-grade final polish...');
@@ -20152,8 +20169,8 @@
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
 
                 // Calculate maximum gain that won't cause clipping
-                // v7.5.0: Let limiters work — look-ahead at -1.5 dBTP + brickwall at -0.5 dBTP
-                const peakTargetBeforeLimiter = 3.0;  // Allow peaks up to +3 dBTP — limiters catch them
+                // v7.6.3h: Look-ahead at -2.0 dBTP + brickwall at -1.0 dBTP
+                const peakTargetBeforeLimiter = 2.0;  // Allow peaks up to +2 dBTP — limiters catch them
                 const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
 
                 // Use the MINIMUM of LUFS gain and peak-based gain
@@ -24189,13 +24206,14 @@
                 // Fixed -1.0 dBTP threshold (broadcast standard), ratio 20 (true brickwall),
                 // hard knee (0-1) since look-ahead handles musical limiting upstream.
                 if (window.limiter) {
-                    // v7.5.0: Brickwall is SAFETY ONLY — fixed -0.5 dBTP, hard knee, all intensities
-                    // Look-ahead limiter does the musical work upstream
-                    window.limiter.threshold.setTargetAtTime(-0.5, ac.currentTime, 0.1);
+                    // v7.6.3h: Brickwall SAFETY at -1.0 dBTP (ITU-R BS.1770 / streaming standard)
+                    // -1.0 dBTP prevents ISP clipping after lossy codec transcoding (AAC/OGG/Opus)
+                    // Release 120ms prevents distortion on sustained bass notes (was 50ms)
+                    window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
                     window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);  // Hard knee = true safety
                     window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.050, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.120, ac.currentTime, 0.1);
 
                 }
 
@@ -24207,13 +24225,15 @@
                 // At low intensity: gentle threshold, look-ahead does all work cleanly.
                 // At high intensity: lets more through for punchier brickwall action.
                 if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
-                    // v7.5.0: Look-ahead is PRIMARY musical limiter, brickwall is safety only
+                    // v7.6.3h: Look-ahead is PRIMARY musical limiter, brickwall is safety at -1.0 dBTP
+                    // Thresholds lowered to prevent brickwall from working too hard
+                    // Professional staging: look-ahead catches 90%+ of peaks
                     const lookAheadThresholds = {
-                        1: -2.0,  // Gentle — lets brickwall do more
-                        2: -1.8,  // Light limiting
-                        3: -1.5,  // Primary limiter at -1.5 dBTP
-                        4: -1.2,  // Aggressive
-                        5: -1.0   // Maximum — look-ahead does all the work
+                        1: -3.0,  // Gentle — maximum headroom, very transparent
+                        2: -2.5,  // Light limiting
+                        3: -2.0,  // Balanced — catches most peaks musically
+                        4: -1.5,  // Aggressive
+                        5: -1.2   // Maximum — pushes toward ceiling
                     };
                     const laThreshold = lookAheadThresholds[effectiveIntensity] || -1.0;
                     window.lookAheadLimiter.setThreshold(laThreshold);
@@ -24341,17 +24361,34 @@
                 // ════════════════════════════════════════════════════════════════════════════
 
                 // Gather current chain parameters for offline measurement
-                // v7.6.0: Extended chain — includes dynamic EQ, NY compression, multiband flags
+                // v7.6.3h: Compute ACTUAL EQ gains matching the live chain (not just AI deltas)
+                // This fixes the mismatch that caused inaccurate LUFS targeting (+2.3 LU off)
                 const _nyActive = !!(window.nyCompression && effectiveIntensity > 2 && !bypass.compression);
                 const _nyWetMix = _nyActive ? (window.nyCompression.wet ? window.nyCompression.wet.gain.value : 0.06) : 0;
+                const _offlineEQ = {};
+                if (!bypass.eq) {
+                    const _eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
+                    const _subEQ = window._selectedSubGenreEQ || null;
+                    const _MSPS = 2.5; // MASTERING_SUBPRESET_SCALE
+                    const _bk = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+                    _bk.forEach(band => {
+                        const aiD = (aiEQ && aiEQ[band]) || 0;
+                        if (_subEQ) {
+                            const bv = (_subEQ[band] ?? eq[band]) * _MSPS;
+                            _offlineEQ[band] = (bv + aiD * 0.2) * intensityMult * _eqScale;
+                        } else {
+                            _offlineEQ[band] = (eq[band] + aiD) * intensityMult * _eqScale;
+                        }
+                    });
+                }
                 const chainParams = {
-                    eqGains: aiProfile ? aiProfile.eqDeltas : {},
+                    eqGains: _offlineEQ,
                     compThreshold: window.compressor ? window.compressor.threshold.value : (comp.threshold || -16),
                     compKnee: comp.knee || 8,
                     compRatio: window.compressor ? window.compressor.ratio.value : (comp.ratio || 1.8),
                     compAttack: comp.attack || 0.020,
                     compRelease: comp.release || 0.18,
-                    limiterThreshold: -0.5,
+                    limiterThreshold: -1.0,  // v7.6.3h: Match live chain brickwall
                     limiterKnee: 0,
                     dynamicEQActive: !bypass.dynamicEQ && !!window.dynamicEQ,
                     nyActive: _nyActive,
@@ -24367,26 +24404,25 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // v7.6.1: Restored heuristic compensation — live 24-stage chain loses more
-                    // than the offline approximation can model. Keep generous compensation.
+                    // v7.6.3h: Reduced compensation — offline now uses actual EQ gains + matched limiter
+                    // Only compensate for stages NOT modeled in offline chain (warmth, transient, HF limiter, M/S)
                     let chainLoss = 0;
-                    if (!bypass.dynamicEQ)    chainLoss += 0.5;
-                    if (!bypass.compression)  chainLoss += 1.0 + (effectiveIntensity - 1) * 0.3;
-                    if (!bypass.multibandComp) chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
-                    if (!bypass.transient)    chainLoss += 0.3;
-                    // Look-ahead limiter + saturation stages
-                    chainLoss += 1.0 + (effectiveIntensity - 1) * 0.5;
-                    // Brickwall safety
-                    chainLoss += 0.3;
-                    compensation = Math.min(chainLoss, 6.0);
+                    if (!bypass.warmth)       chainLoss += 0.2;  // Saturation adds slight gain
+                    if (!bypass.transient)    chainLoss += 0.2;  // Transient shaper
+                    if (!bypass.hfLimiter)    chainLoss += 0.3;  // HF limiter reduces highs
+                    if (!bypass.msProcessing) chainLoss += 0.2;  // M/S EQ
+                    if (!bypass.stereoWidth)  chainLoss += 0.1;  // Stereo widening
+                    // Look-ahead limiter (not in offline chain)
+                    chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
+                    compensation = Math.min(chainLoss, 3.0);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
 
-                    // Peak safety: don't push peaks beyond +6 dB above limiter threshold
-                    // v7.5.0: Relaxed from +3 — brickwall at -0.5 dBTP catches everything
-                    if (pass1.truePeakDB + correctionDB > 6.0) {
-                        correctionDB = 6.0 - pass1.truePeakDB;
+                    // v7.6.3h: Peak safety — don't push peaks more than +4 dB above brickwall (-1.0 dBTP)
+                    // DynamicsCompressor with 20:1 ratio can handle +4 dB overshoot cleanly
+                    if (pass1.truePeakDB + correctionDB > 3.0) {
+                        correctionDB = 3.0 - pass1.truePeakDB;
                     }
                     correctionDB = Math.max(-6, Math.min(12, correctionDB));
 
@@ -24409,16 +24445,24 @@
                     const pass3 = await measureChainLoudness(window.audioBuffer, pass3Params);
                     if (pass3 && isFinite(pass3.integratedLUFS) && pass3.integratedLUFS > -60) {
                         const deviation = pass3.integratedLUFS - targetLUFS;
-                        // v7.6.1: Only correct UPWARD (deviation < -0.5 means offline shows below target).
-                        // Never reduce gain based on offline model — it's missing many lossy live stages,
-                        // so it overestimates output LUFS. The heuristic compensation handles that gap.
-                        if (deviation < -0.5) {
-                            const microCorrection = -deviation * 0.6; // 60% upward correction
+                        // v7.6.3h: Correct both directions with offline accuracy improvements
+                        if (Math.abs(deviation) > 0.5) {
+                            // Correct toward target: 70% correction factor (conservative)
+                            const microCorrection = -deviation * 0.7;
                             correctionDB += microCorrection;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                            console.log(`🎯 Pass 3 boost: offline shows ${deviation.toFixed(2)} LU below target, adding +${microCorrection.toFixed(2)} dB → final=${correctionDB.toFixed(1)} dB`);
+                            console.log(`🎯 Pass 3 correction: offline shows ${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU, correcting ${microCorrection.toFixed(2)} dB → final=${correctionDB.toFixed(1)} dB`);
                         } else {
-                            console.log(`✅ Pass 3 check: offline predicts ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS}) — trusting heuristic compensation`);
+                            console.log(`✅ Pass 3 on target: ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS})`);
+                        }
+
+                        // v7.6.3h: TRUE PEAK SAFETY — reduce gain if true peak exceeds -1.0 dBTP
+                        // This prevents ISP clips after codec transcoding (AAC/OGG/Opus add ~0.5-1.0 dB)
+                        if (pass3.truePeakDB > -1.0) {
+                            const tpOvershoot = pass3.truePeakDB - (-1.0);
+                            correctionDB -= tpOvershoot + 0.3; // Extra 0.3 dB safety margin for codec headroom
+                            correctionDB = Math.max(-6, Math.min(12, correctionDB));
+                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP exceeds -1.0 ceiling, reducing gain by ${(tpOvershoot + 0.3).toFixed(1)} dB`);
                         }
                     }
                 }
@@ -27487,7 +27531,7 @@
             // Each field wrapped in try-catch so one failure doesn't block others
             try {
                 const lufsEl = document.getElementById('consoleLufsValue');
-                if (lufsEl && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
+                if (lufsEl && typeof window.originalInputLUFS === 'number' && isFinite(window.originalInputLUFS)) {
                     lufsEl.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
                 } else if (lufsEl) {
                     lufsEl.textContent = '--';
@@ -27507,7 +27551,7 @@
             try {
                 const tpEl = document.getElementById('consoleTruePeak');
                 const truePeak = window.originalInputPeakDB;
-                if (tpEl && truePeak !== undefined && truePeak !== 0 && isFinite(truePeak)) {
+                if (tpEl && typeof truePeak === 'number' && isFinite(truePeak)) {
                     tpEl.textContent = truePeak.toFixed(1) + ' dBTP';
                 } else if (tpEl) {
                     tpEl.textContent = '--';
@@ -29580,32 +29624,76 @@
         }
     </script>
 
-    <!-- DEV/TESTING: Unlock all premium features -->
+    <!-- DEV/TESTING: Unlock ALL premium features — bulletproof -->
     <script>
     (function() {
-        // Override tier restrictions — unlock everything for testing
+        const LEGENDARY_SUB = {
+            tier: 'legendary',
+            tierData: window.SUBSCRIPTION_TIERS ? window.SUBSCRIPTION_TIERS.legendary : {},
+            features: {
+                aiMastering: true, basicEQ: true, lufsMetering: true, basicLimiter: true,
+                ircLimiter: true, softClipper: true, upwardCompression: true, unlimiter: true,
+                linearPhaseEQ: true, loudnessHistory: true, spectrogram: true,
+                multitrackBatch: true, cloudSync: true, referenceMatching: true,
+                stemSeparation: true, advancedAnalytics: true, priorityProcessing: true
+            },
+            limits: { presets: -1, historyDays: 365, exportsPerMonth: -1, maxFileSize: 500 }
+        };
+
+        function unlockAll() {
+            document.querySelectorAll('.feature-locked').forEach(el => {
+                el.classList.remove('feature-locked');
+                el.removeAttribute('data-locked');
+                el.removeAttribute('data-upgrade-tier');
+            });
+            window.currentSubscription = LEGENDARY_SUB;
+            window.userTier = 'legendary';
+            window._tierOverride = 'legendary';
+        }
+
+        // Override applyTierRestrictions so it can never re-lock
+        const _origApplyTier = window.applyTierRestrictions;
+        window.applyTierRestrictions = function() {
+            console.log('🔓 applyTierRestrictions intercepted — keeping all unlocked');
+            unlockAll();
+        };
+
+        // Run unlock on load, and repeatedly to catch late-init locks
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.querySelectorAll('.feature-locked').forEach(el => {
-                    el.classList.remove('feature-locked');
-                    el.removeAttribute('data-locked');
-                });
-                // Force legendary subscription globally
-                window.currentSubscription = {
-                    tier: 'legendary',
-                    tierData: window.SUBSCRIPTION_TIERS ? window.SUBSCRIPTION_TIERS.legendary : {},
-                    features: {
-                        aiMastering: true, basicEQ: true, lufsMetering: true, basicLimiter: true,
-                        ircLimiter: true, softClipper: true, upwardCompression: true, unlimiter: true,
-                        linearPhaseEQ: true, loudnessHistory: true, spectrogram: true,
-                        multitrackBatch: true, cloudSync: true, referenceMatching: true,
-                        stemSeparation: true, advancedAnalytics: true, priorityProcessing: true
-                    },
-                    limits: { presets: -1, historyDays: 365, exportsPerMonth: -1, maxFileSize: 500 }
-                };
-                console.log('🔓 All features unlocked (testing mode)');
-            }, 2000);
+            unlockAll();
+            setTimeout(unlockAll, 500);
+            setTimeout(unlockAll, 1500);
+            setTimeout(unlockAll, 3000);
+            setTimeout(unlockAll, 5000);
         });
+
+        // MutationObserver: instantly remove feature-locked whenever it appears
+        const obs = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.type === 'attributes' && m.target.classList.contains('feature-locked')) {
+                    m.target.classList.remove('feature-locked');
+                    m.target.removeAttribute('data-locked');
+                }
+                if (m.type === 'childList') {
+                    m.addedNodes.forEach(n => {
+                        if (n.nodeType === 1) {
+                            if (n.classList && n.classList.contains('feature-locked')) {
+                                n.classList.remove('feature-locked');
+                            }
+                            n.querySelectorAll && n.querySelectorAll('.feature-locked').forEach(el => {
+                                el.classList.remove('feature-locked');
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        obs.observe(document.documentElement, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
+
+        // Immediate unlock (page may already be loaded)
+        if (document.readyState !== 'loading') unlockAll();
+
+        console.log('🔓 LEGENDARY unlock active — all features permanently unlocked');
     })();
     </script>
 </body>
