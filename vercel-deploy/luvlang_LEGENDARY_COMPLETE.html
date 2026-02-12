@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3d | Build: 2026-02-11 | Fix cross-block ReferenceError crashing console displays -->
+<!-- VERSION 7.6.3e | Build: 2026-02-11 | Align preview and mastering EQ for consistent sound -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23753,7 +23753,7 @@
                 if (!bypass.eq) {
                     const eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
                     const subEQ = window._selectedSubGenreEQ || null;
-                    const MASTERING_SUBPRESET_SCALE = 2.0; // Amplify sub-preset EQ for audible genre shaping
+                    const MASTERING_SUBPRESET_SCALE = 2.5; // Must match preview SUBPRESET_SCALE for WYSIWYG
                     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
                     const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                                      window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
@@ -26895,15 +26895,16 @@
                 // Use the same intensity multiplier the mastering chain uses
                 // so preview matches the actual mastered output
                 const intensityLevel = window.selectedIntensity || 3;
-                const previewMults = { 1: 0.8, 2: 1.0, 3: 1.5, 4: 1.8, 5: 2.0 };
-                const previewBoost = previewMults[intensityLevel] || 1.5;
+                // Use SAME multipliers as mastering chain for accurate preview
+                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+                const intensityBoost = masteringMults[intensityLevel] || 0.85;
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    const clamped = Math.max(-12, Math.min(12, eqVals[i] * previewBoost));
+                    const clamped = Math.max(-12, Math.min(12, eqVals[i] * intensityBoost));
                     f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-12, Math.min(12, v * previewBoost)).toFixed(1) + 'dB').join(', ')})`);
+                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-12, Math.min(12, v * intensityBoost)).toFixed(1) + 'dB').join(', ')})`);
             }
 
             // Clear any previous sub-genre override — just the genre EQ is used
@@ -27138,21 +27139,23 @@
             window._selectedSubGenreEQ = preset.eq;
 
             // Apply sub-preset EQ to the 7 preview filters
-            // Sub-presets use 2.5x scale for audible tonal differentiation
+            // CRITICAL: Preview must match mastering chain so WYSIWYG
+            // Uses same SUBPRESET_SCALE (2.5) and same intensity multipliers as mastering
             const ac = window.audioContext;
             const SUBPRESET_SCALE = 2.5;
             if (ac && window._previewEqFilters) {
                 const intensityLevel = window.selectedIntensity || 3;
-                const previewMults = { 1: 0.8, 2: 1.0, 3: 1.5, 4: 1.8, 5: 2.0 };
-                const previewBoost = previewMults[intensityLevel] || 1.5;
+                // Use SAME multipliers as mastering chain (intensityMultipliers in runActualMastering)
+                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+                const intensityBoost = masteringMults[intensityLevel] || 0.85;
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    const scaled = eqVals[i] * SUBPRESET_SCALE * previewBoost;
+                    const scaled = eqVals[i] * SUBPRESET_SCALE * intensityBoost;
                     const clamped = Math.max(-12, Math.min(12, scaled));
                     f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + (v * SUBPRESET_SCALE).toFixed(1) + 'dB').join(', ')})`);
+                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + (v * SUBPRESET_SCALE * intensityBoost).toFixed(1) + 'dB').join(', ')})`);
             }
 
             // Update the EQ bars preview if visible
@@ -27384,7 +27387,7 @@
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
             const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
-            const INTENSITY_SUBPRESET_SCALE = 2.0; // Match mastering chain sub-preset amplification
+            const INTENSITY_SUBPRESET_SCALE = 2.5; // Must match SUBPRESET_SCALE in preview and mastering
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
