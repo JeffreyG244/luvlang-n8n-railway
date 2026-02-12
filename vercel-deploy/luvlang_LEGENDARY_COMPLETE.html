@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3b | Build: 2026-02-11 | Fix 5 post-mastering regressions: sub-genre presets, LUFS displays, bar needle, L/R meters, waveform -->
+<!-- VERSION 7.6.3c | Build: 2026-02-11 | Fix console displays, dramatically boost genre/sub-preset audibility -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12474,6 +12474,19 @@
 
                 const analysisResults = await comprehensiveAnalysis(audioBuffer);
 
+                // UPDATE GLOBAL CURRENT VALUES from initial analysis
+                // (MUST happen before populateAIMasteringConsole so INPUT LUFS and TRUE PEAK display correctly)
+                if (analysisResults.integratedLUFS && isFinite(analysisResults.integratedLUFS)) {
+                    currentIntegratedLUFS = analysisResults.integratedLUFS;
+                    originalInputLUFS = analysisResults.integratedLUFS;
+                    window.originalInputLUFS = analysisResults.integratedLUFS;
+                }
+                if (analysisResults.maxPeak && isFinite(analysisResults.maxPeak)) {
+                    currentTruePeak = 20 * Math.log10(analysisResults.maxPeak);
+                    originalInputPeakDB = currentTruePeak;
+                    window.originalInputPeakDB = currentTruePeak;
+                }
+
                 // AI Deep Analysis — run spectral profiling and generate corrections
                 try {
                     console.log('🤖 Starting AI deep spectral analysis...');
@@ -12499,20 +12512,6 @@
                     console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                     window.aiTrackProfile = null;
                     window.aiTrackAnalysis = null;
-                }
-
-                // UPDATE GLOBAL CURRENT VALUES from initial analysis
-                if (analysisResults.integratedLUFS && isFinite(analysisResults.integratedLUFS)) {
-                    currentIntegratedLUFS = analysisResults.integratedLUFS;
-                    // Store original input LUFS for accurate loudness matching
-                    originalInputLUFS = analysisResults.integratedLUFS;
-                    window.originalInputLUFS = analysisResults.integratedLUFS; // Expose globally for overlay
-                }
-                if (analysisResults.maxPeak && isFinite(analysisResults.maxPeak)) {
-                    currentTruePeak = 20 * Math.log10(analysisResults.maxPeak);
-                    // Store original peak for peak protection during LUFS targeting
-                    originalInputPeakDB = currentTruePeak;
-                    window.originalInputPeakDB = currentTruePeak;
                 }
 
                 // Display results in UI (analysis only, no fixes)
@@ -23754,6 +23753,7 @@
                 if (!bypass.eq) {
                     const eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
                     const subEQ = window._selectedSubGenreEQ || null;
+                    const MASTERING_SUBPRESET_SCALE = 2.0; // Amplify sub-preset EQ for audible genre shaping
                     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
                     const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                                      window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
@@ -23764,9 +23764,9 @@
                         let baseVal, val;
                         if (subEQ) {
                             // Sub-preset active — user explicitly chose this EQ profile
-                            // Use sub-preset values directly; reduce AI delta to 20%
-                            // (keeps minor track-specific fixes, doesn't fight the preset)
-                            baseVal = subEQ[band] ?? eq[band];
+                            // Scale sub-preset values for impactful genre tonal shaping
+                            // Reduce AI delta to 20% (keeps minor fixes, doesn't fight the preset)
+                            baseVal = (subEQ[band] ?? eq[band]) * MASTERING_SUBPRESET_SCALE;
                             val = (baseVal + aiDelta * 0.2) * intensityMult * eqScale;
                         } else {
                             // No sub-preset — use genre EQ + full AI corrections
@@ -26868,11 +26868,11 @@
                 if (!window._previewEqFilters) {
                     const bandDefs = [
                         { freq: 40, type: 'lowshelf' },
-                        { freq: 100, type: 'peaking', q: 0.8 },
-                        { freq: 400, type: 'peaking', q: 1.0 },
-                        { freq: 1000, type: 'peaking', q: 1.0 },
-                        { freq: 3000, type: 'peaking', q: 1.0 },
-                        { freq: 8000, type: 'peaking', q: 0.8 },
+                        { freq: 100, type: 'peaking', q: 0.6 },
+                        { freq: 400, type: 'peaking', q: 0.7 },
+                        { freq: 1000, type: 'peaking', q: 0.7 },
+                        { freq: 3000, type: 'peaking', q: 0.7 },
+                        { freq: 8000, type: 'peaking', q: 0.6 },
                         { freq: 14000, type: 'highshelf' }
                     ];
                     window._previewEqFilters = bandDefs.map(b => {
@@ -26895,15 +26895,15 @@
                 // Use the same intensity multiplier the mastering chain uses
                 // so preview matches the actual mastered output
                 const intensityLevel = window.selectedIntensity || 3;
-                const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
-                const previewBoost = previewMults[intensityLevel] || 0.7;
+                const previewMults = { 1: 0.8, 2: 1.0, 3: 1.5, 4: 1.8, 5: 2.0 };
+                const previewBoost = previewMults[intensityLevel] || 1.5;
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    const clamped = Math.max(-3.5, Math.min(3.5, eqVals[i] * previewBoost));
+                    const clamped = Math.max(-12, Math.min(12, eqVals[i] * previewBoost));
                     f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-3.5, Math.min(3.5, v * previewBoost)).toFixed(1) + 'dB').join(', ')})`);
+                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-12, Math.min(12, v * previewBoost)).toFixed(1) + 'dB').join(', ')})`);
             }
 
             // Clear any previous sub-genre override — just the genre EQ is used
@@ -27138,33 +27138,36 @@
             window._selectedSubGenreEQ = preset.eq;
 
             // Apply sub-preset EQ to the 7 preview filters
+            // Sub-presets use 2.5x scale for audible tonal differentiation
             const ac = window.audioContext;
+            const SUBPRESET_SCALE = 2.5;
             if (ac && window._previewEqFilters) {
                 const intensityLevel = window.selectedIntensity || 3;
-                const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
-                const previewBoost = previewMults[intensityLevel] || 0.7;
+                const previewMults = { 1: 0.8, 2: 1.0, 3: 1.5, 4: 1.8, 5: 2.0 };
+                const previewBoost = previewMults[intensityLevel] || 1.5;
                 const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
                 const now = ac.currentTime;
                 window._previewEqFilters.forEach((f, i) => {
-                    const clamped = Math.max(-3.5, Math.min(3.5, eqVals[i] * previewBoost));
+                    const scaled = eqVals[i] * SUBPRESET_SCALE * previewBoost;
+                    const clamped = Math.max(-12, Math.min(12, scaled));
                     f.gain.setTargetAtTime(clamped, now, 0.08);
                 });
-                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + v.toFixed(1) + 'dB').join(', ')})`);
+                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + (v * SUBPRESET_SCALE).toFixed(1) + 'dB').join(', ')})`);
             }
 
             // Update the EQ bars preview if visible
             const barsContainer = document.getElementById('eqBarsContainer');
             if (barsContainer) {
                 const bands = [
-                    { key: 'sub', val: preset.eq.sub },
-                    { key: 'bass', val: preset.eq.bass },
-                    { key: 'lowmid', val: preset.eq.lowmid },
-                    { key: 'mid', val: preset.eq.mid },
-                    { key: 'highmid', val: preset.eq.highmid },
-                    { key: 'high', val: preset.eq.high },
-                    { key: 'air', val: preset.eq.air }
+                    { key: 'sub', val: preset.eq.sub * SUBPRESET_SCALE },
+                    { key: 'bass', val: preset.eq.bass * SUBPRESET_SCALE },
+                    { key: 'lowmid', val: preset.eq.lowmid * SUBPRESET_SCALE },
+                    { key: 'mid', val: preset.eq.mid * SUBPRESET_SCALE },
+                    { key: 'highmid', val: preset.eq.highmid * SUBPRESET_SCALE },
+                    { key: 'high', val: preset.eq.high * SUBPRESET_SCALE },
+                    { key: 'air', val: preset.eq.air * SUBPRESET_SCALE }
                 ];
-                const maxVal = 3.0;
+                const maxVal = 8.0;
                 const midY = 30;
 
                 barsContainer.innerHTML = '';
@@ -27381,6 +27384,7 @@
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
             const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
+            const INTENSITY_SUBPRESET_SCALE = 2.0; // Match mastering chain sub-preset amplification
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
@@ -27389,8 +27393,8 @@
                 const band = bandKeys[i];
                 let baseVal;
                 if (subEQ) {
-                    // Sub-preset active — use sub-preset values with minimal AI delta (20%)
-                    baseVal = (subEQ[band] ?? eq[band]) + (aiEQ[band] || 0) * 0.2;
+                    // Sub-preset active — scale for audible genre shaping + minimal AI delta (20%)
+                    baseVal = (subEQ[band] ?? eq[band]) * INTENSITY_SUBPRESET_SCALE + (aiEQ[band] || 0) * 0.2;
                 } else {
                     baseVal = eq[band] + (aiEQ[band] || 0);
                 }
@@ -27443,17 +27447,20 @@
             const aiGenreEl = document.getElementById('consoleAiGenre');
             const aiRunnerEl = document.getElementById('consoleAiRunnerUp');
 
-            if (lufsEl && window.originalInputLUFS && isFinite(window.originalInputLUFS)) {
-                lufsEl.textContent = window.originalInputLUFS.toFixed(1);
+            if (lufsEl && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
+                lufsEl.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
             } else if (lufsEl) {
                 lufsEl.textContent = '--';
             }
 
-            if (drEl && analysis && analysis.overallCrest) {
-                drEl.textContent = analysis.overallCrest.toFixed(1) + ' dB';
+            if (drEl && analysis && analysis.overallCrest !== undefined) {
+                const crest = typeof analysis.overallCrest === 'string' ? parseFloat(analysis.overallCrest) : analysis.overallCrest;
+                drEl.textContent = isFinite(crest) ? crest.toFixed(1) + ' dB' : '--';
+            } else if (drEl) {
+                drEl.textContent = '--';
             }
 
-            if (tpEl && currentTruePeak && isFinite(currentTruePeak)) {
+            if (tpEl && currentTruePeak !== undefined && currentTruePeak !== 0 && isFinite(currentTruePeak)) {
                 tpEl.textContent = currentTruePeak.toFixed(1) + ' dBTP';
             } else if (tpEl) {
                 tpEl.textContent = '--';
