@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3 | Build: 2026-02-11 | AI Mastering Console: unified professional flow -->
+<!-- VERSION 7.6.3b | Build: 2026-02-11 | Fix 5 post-mastering regressions: sub-genre presets, LUFS displays, bar needle, L/R meters, waveform -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -5002,6 +5002,12 @@
                     <!-- Status Display -->
                     <div id="genrePreviewStatus" style="text-align: center; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;">
                         AI-DETECTED GENRE PRE-SELECTED
+                    </div>
+
+                    <!-- Sub-Genre Presets (populated dynamically from genreEQPresets) -->
+                    <div id="consoleSubPresets" style="display: none; margin-top: 10px; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 10px; border: 1px solid rgba(255,255,255,0.04);">
+                        <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; text-align: center;">SUB-GENRE PRESETS</div>
+                        <div id="subPresetGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;"></div>
                     </div>
                 </div>
 
@@ -19165,8 +19171,9 @@
                     // Update LIVE LUFS indicator (momentary - real-time fluctuating)
                     const liveLufsValue = document.getElementById('liveLufsValue');
                     if (liveLufsValue) {
-                        liveLufsValue.textContent = momentaryLUFS.toFixed(1);
-                        const diff = Math.abs(momentaryLUFS - platformTarget);
+                        const liveDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : momentaryLUFS;
+                        liveLufsValue.textContent = liveDisplay.toFixed(1);
+                        const diff = Math.abs(liveDisplay - platformTarget);
                         if (diff <= 1) {
                             liveLufsValue.style.color = '#00ff88';
                             liveLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
@@ -19200,13 +19207,15 @@
                     // Update SHORT-TERM LUFS display (3-second window)
                     const shortLufsEl = document.getElementById('shortLufsValue');
                     if (shortLufsEl) {
-                        shortLufsEl.textContent = shortTermLUFS.toFixed(1);
+                        const shortDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : shortTermLUFS;
+                        shortLufsEl.textContent = shortDisplay.toFixed(1);
                     }
 
                     // Update MOMENTARY LUFS display (400ms window)
                     const momentaryLufsEl = document.getElementById('momentaryLufsValue');
                     if (momentaryLufsEl) {
-                        momentaryLufsEl.textContent = momentaryLUFS.toFixed(1);
+                        const momDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : momentaryLUFS;
+                        momentaryLufsEl.textContent = momDisplay.toFixed(1);
                     }
 
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -19230,6 +19239,7 @@
                                 break;
                             }
                         }
+                        if (clampedLUFS >= -6) position = 100; // Handle right edge
                         lufsBarIndicator.style.left = `${position}%`;
                     }
 
@@ -20313,10 +20323,39 @@
                 // This is the theoretical result: original LUFS + gain boost
                 const calculatedIntegratedLUFS = beforeLUFS + safeGain;
 
+                // Switch to mastered audio path IMMEDIATELY (before locking meters)
+                // so L/R analysers read the mastered signal when we lock
+                if (window.dryGain && window.wetGain && window.audioContext) {
+                    const ac = window.audioContext;
+                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    window.isMasteringApplied = true;
+                }
+
+                // Wait for crossfade to settle before locking
+                await new Promise(r => setTimeout(r, 100));
+
                 // Lock LUFS meter to stable calculated value
                 lockedLUFS = calculatedIntegratedLUFS;
                 lockedPeak = limitedPeakDB;
                 metersLocked = true;
+
+                // Force LUFS bar update immediately (don't wait for animation frame)
+                const lufsBarIndicatorLock = document.getElementById('lufsBarIndicator');
+                if (lufsBarIndicatorLock && lockedLUFS !== null) {
+                    const clampedLock = Math.max(-24, Math.min(-6, lockedLUFS));
+                    const _bkptsLock = [[-24,0],[-18,25],[-14,50],[-10,75],[-6,100]];
+                    let posLock = 0;
+                    for (let i = 1; i < _bkptsLock.length; i++) {
+                        if (clampedLock <= _bkptsLock[i][0]) {
+                            const [l0,p0] = _bkptsLock[i-1], [l1,p1] = _bkptsLock[i];
+                            posLock = p0 + (clampedLock - l0) / (l1 - l0) * (p1 - p0);
+                            break;
+                        }
+                    }
+                    if (clampedLock >= -6) posLock = 100;
+                    lufsBarIndicatorLock.style.left = `${posLock}%`;
+                }
 
                 // Update MEASURED LUFS indicator (top right) - reuse existing reference
                 const measuredLufsEl = document.getElementById('measuredLufsValue');
@@ -20329,6 +20368,12 @@
                 if (liveLufsStatusEl) {
                     liveLufsStatusEl.textContent = 'MASTERED ✓';
                     liveLufsStatusEl.style.background = 'rgba(0, 255, 136, 0.3)';
+                }
+
+                // Redraw waveform with mastered audio (shows post-processing waveform)
+                if (window.masteredAudioBuffer && typeof drawWaveformFromBuffer === 'function') {
+                    window.audioBuffer = window.masteredAudioBuffer;
+                    drawWaveformFromBuffer(window.masteredAudioBuffer, true);
                 }
 
                 // SUPER VISIBLE SUMMARY
@@ -24965,14 +25010,12 @@
             window.lastMasteredLUFS = afterLUFS;
 
             // ═══════════════════════════════════════════════════════════════════════════
-            // CRITICAL: Switch to MASTERED audio so user hears the difference!
+            // Ensure mastered audio path is active (may already be set from mastering flow)
             // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
             // ═══════════════════════════════════════════════════════════════════════════
             if (window.dryGain && window.wetGain && window.audioContext) {
-                const ac = window.audioContext;
-                // Smooth crossfade to mastered audio
-                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Original path OFF
-                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Processed path ON
+                window.dryGain.gain.value = 0.0;
+                window.wetGain.gain.value = 1.0;
                 window.isMasteringApplied = true;
                 window.abCompareMode = false;  // Ensure A/B state is MASTERED mode
 
@@ -25654,6 +25697,9 @@
             source.start(0);
 
             const masteredBuffer = await offlineContext.startRendering();
+
+            // Store mastered buffer globally for waveform redraw
+            window.masteredAudioBuffer = masteredBuffer;
 
             // Convert to WAV blob
             const wavBlob = audioBufferToWavExport(masteredBuffer);
@@ -26972,11 +27018,193 @@
                 startBtn.style.boxShadow = '0 0 20px rgba(92, 184, 92, 0.2)';
             }
 
+            // Show sub-genre presets for this genre
+            if (typeof showSubPresets === 'function') showSubPresets(genre);
+
             // Sync console summary and sidebar
             if (typeof updateConsoleSummary === 'function') updateConsoleSummary();
             if (typeof syncSidebarWithConsole === 'function') syncSidebarWithConsole();
 
         };
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SUB-GENRE PRESETS — Wire genreEQPresets (60 sub-presets) into the UI
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function showSubPresets(genre) {
+            const container = document.getElementById('consoleSubPresets');
+            const grid = document.getElementById('subPresetGrid');
+            if (!container || !grid) return;
+
+            // Map UI genre keys to genreEQPresets keys
+            const keyMap = {
+                'hiphop': 'hip-hop',
+                'rnb': 'rnb',
+                'electronic': 'electronic',
+                'edm': 'edm',
+                'pop': 'pop',
+                'rock': 'rock',
+                'acoustic': 'acoustic',
+                'jazz': 'jazz',
+                'classical': 'classical',
+                'metal': 'metal',
+                'country': 'country',
+                'latin': 'latin',
+                'lofi': 'lofi'
+            };
+
+            const genreKey = keyMap[genre] || genre;
+            const subPresets = genreEQPresets[genreKey];
+
+            if (!subPresets || subPresets.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            // Clear grid and populate
+            grid.innerHTML = '';
+            container.style.display = 'block';
+
+            subPresets.forEach((preset, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sub-preset-btn';
+                btn.dataset.index = index;
+                btn.style.cssText = `
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 5px;
+                    padding: 8px 6px;
+                    cursor: pointer;
+                    transition: all 0.15s;
+                    text-align: left;
+                `;
+                btn.innerHTML = `
+                    <div style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 2px; line-height: 1.2;">${preset.name}</div>
+                    <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); line-height: 1.2;">${preset.description}</div>
+                `;
+
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = 'rgba(0,212,255,0.1)';
+                    btn.style.borderColor = 'rgba(0,212,255,0.3)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    if (!btn.classList.contains('selected')) {
+                        btn.style.background = 'rgba(255,255,255,0.03)';
+                        btn.style.borderColor = 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                btn.addEventListener('click', () => {
+                    applySubPreset(genreKey, index);
+                    // Highlight selected
+                    grid.querySelectorAll('.sub-preset-btn').forEach(b => {
+                        b.classList.remove('selected');
+                        b.style.background = 'rgba(255,255,255,0.03)';
+                        b.style.borderColor = 'rgba(255,255,255,0.08)';
+                    });
+                    btn.classList.add('selected');
+                    btn.style.background = 'rgba(0,212,255,0.15)';
+                    btn.style.borderColor = 'rgba(0,212,255,0.5)';
+                });
+
+                grid.appendChild(btn);
+            });
+
+            // Auto-select first sub-preset
+            const firstBtn = grid.querySelector('.sub-preset-btn');
+            if (firstBtn) {
+                firstBtn.click();
+            }
+        }
+
+        function applySubPreset(genreKey, index) {
+            const subPresets = genreEQPresets[genreKey];
+            if (!subPresets || !subPresets[index]) return;
+
+            const preset = subPresets[index];
+            window.selectedSubPreset = index;
+            window._selectedSubGenreEQ = preset.eq;
+
+            // Apply sub-preset EQ to the 7 preview filters
+            const ac = window.audioContext;
+            if (ac && window._previewEqFilters) {
+                const intensityLevel = window.selectedIntensity || 3;
+                const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
+                const previewBoost = previewMults[intensityLevel] || 0.7;
+                const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
+                const now = ac.currentTime;
+                window._previewEqFilters.forEach((f, i) => {
+                    const clamped = Math.max(-3.5, Math.min(3.5, eqVals[i] * previewBoost));
+                    f.gain.setTargetAtTime(clamped, now, 0.08);
+                });
+                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + v.toFixed(1) + 'dB').join(', ')})`);
+            }
+
+            // Update the EQ bars preview if visible
+            const barsContainer = document.getElementById('eqBarsContainer');
+            if (barsContainer) {
+                const bands = [
+                    { key: 'sub', val: preset.eq.sub },
+                    { key: 'bass', val: preset.eq.bass },
+                    { key: 'lowmid', val: preset.eq.lowmid },
+                    { key: 'mid', val: preset.eq.mid },
+                    { key: 'highmid', val: preset.eq.highmid },
+                    { key: 'high', val: preset.eq.high },
+                    { key: 'air', val: preset.eq.air }
+                ];
+                const maxVal = 3.0;
+                const midY = 30;
+
+                barsContainer.innerHTML = '';
+
+                bands.forEach((band, i) => {
+                    const bar = document.createElement('div');
+                    const pxPerDb = midY / maxVal;
+                    const barHeight = Math.abs(band.val) * pxPerDb;
+                    const isBoost = band.val >= 0;
+                    const colors = ['#4a90d9', '#5a9fd4', '#00b4d8', '#00d4ff', '#48cae4', '#7b68ee', '#9370db'];
+                    const barColor = colors[i];
+
+                    bar.style.cssText = `
+                        flex: 1;
+                        height: ${Math.max(barHeight, 2)}px;
+                        background: linear-gradient(180deg, ${barColor} 0%, ${barColor}88 100%);
+                        border-radius: 3px 3px ${isBoost ? '0 0' : '3px 3px'};
+                        position: absolute;
+                        left: ${i * (100/7)}%;
+                        width: ${100/7 - 2}%;
+                        ${isBoost ? `bottom: ${midY}px;` : `top: ${midY}px;`}
+                        transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        box-shadow: 0 0 8px ${barColor}44;
+                    `;
+                    bar.style.height = '0px';
+                    setTimeout(() => { bar.style.height = `${Math.max(barHeight, 2)}px`; }, 50 + i * 40);
+
+                    const label = document.createElement('div');
+                    label.style.cssText = `
+                        position: absolute;
+                        ${isBoost ? `bottom: ${midY + barHeight + 2}px;` : `top: ${midY + barHeight + 2}px;`}
+                        left: ${i * (100/7)}%;
+                        width: ${100/7 - 2}%;
+                        text-align: center;
+                        font-size: 0.4rem;
+                        font-weight: 600;
+                        color: ${barColor};
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    `;
+                    label.textContent = `${band.val > 0 ? '+' : ''}${band.val.toFixed(1)}`;
+                    setTimeout(() => { label.style.opacity = '1'; }, 200 + i * 40);
+
+                    barsContainer.appendChild(bar);
+                    barsContainer.appendChild(label);
+                });
+            }
+
+            // Update genre name display to show sub-preset
+            const nameEl = document.getElementById('eqPreviewGenreName');
+            if (nameEl) nameEl.textContent = preset.name.toUpperCase();
+        }
 
         // Preview original (unprocessed) audio
         window.previewOriginal = function() {
