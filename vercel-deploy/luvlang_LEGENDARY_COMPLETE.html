@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.4 | Build: 2026-02-12 | Professional Grade: complete export chain, real resonance/reference analysis, per-channel LUFS -->
+<!-- VERSION 7.6.5 | Build: 2026-02-12 | Platform Presets: 10 streaming platforms, quality scorecard, tonal balance meter -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -4930,19 +4930,60 @@
                 <!-- Section B: Platform Target -->
                 <div style="margin-bottom: 14px;">
                     <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Platform Target</div>
-                    <div id="consolePlatformGrid" style="display: flex; gap: 8px;">
-                        <button type="button" class="console-platform-btn active" data-platform="streaming" onclick="selectConsolePlatform(this, 'streaming')" style="flex: 1; padding: 10px 8px; background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.4); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
-                            <div style="font-size: 0.75rem; font-weight: 700; color: #00d4ff;">Streaming -14</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Spotify / YouTube</div>
+                    <div id="consolePlatformGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                        <button type="button" class="console-platform-btn active" data-platform="spotify" onclick="selectConsolePlatform(this, 'spotify')" style="padding: 8px 4px; background: rgba(29,185,84,0.15); border: 1px solid rgba(29,185,84,0.4); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🟢</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: #1DB954;">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Spotify</div>
                         </button>
-                        <button type="button" class="console-platform-btn" data-platform="apple" onclick="selectConsolePlatform(this, 'apple')" style="flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
-                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">Apple Music -16</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Higher Dynamics</div>
+                        <button type="button" class="console-platform-btn" data-platform="apple" onclick="selectConsolePlatform(this, 'apple')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🍎</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-16</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Apple</div>
                         </button>
-                        <button type="button" class="console-platform-btn" data-platform="podcast" onclick="selectConsolePlatform(this, 'podcast')" style="flex: 1; padding: 10px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
-                            <div style="font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.7);">Podcast -16</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">Speech Optimized</div>
+                        <button type="button" class="console-platform-btn" data-platform="youtube" onclick="selectConsolePlatform(this, 'youtube')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🔴</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">YouTube</div>
                         </button>
+                        <button type="button" class="console-platform-btn" data-platform="tidal" onclick="selectConsolePlatform(this, 'tidal')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🔵</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Tidal</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="amazon" onclick="selectConsolePlatform(this, 'amazon')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🟠</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Amazon</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="soundcloud" onclick="selectConsolePlatform(this, 'soundcloud')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🟧</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">SoundCloud</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="tiktok" onclick="selectConsolePlatform(this, 'tiktok')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🎵</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-14</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">TikTok</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="podcast" onclick="selectConsolePlatform(this, 'podcast')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🎙️</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-16</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Podcast</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="cd" onclick="selectConsolePlatform(this, 'cd')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">💿</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-9</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">CD</div>
+                        </button>
+                        <button type="button" class="console-platform-btn" data-platform="club" onclick="selectConsolePlatform(this, 'club')" style="padding: 8px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                            <div style="font-size: 0.85rem; margin-bottom: 2px;">🎛️</div>
+                            <div style="font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.7);">-8</div>
+                            <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Club</div>
+                        </button>
+                    </div>
+                    <div id="platformInfoBanner" style="margin-top: 8px; padding: 8px 10px; background: rgba(29,185,84,0.08); border: 1px solid rgba(29,185,84,0.2); border-radius: 6px; font-size: 0.6rem; color: rgba(255,255,255,0.6); line-height: 1.4; display: block;">
+                        Spotify normalizes to -14 LUFS. Tracks louder than -14 are turned DOWN.
                     </div>
                 </div>
 
@@ -7712,6 +7753,67 @@
                             <span style="font-size: 0.5rem; color: rgba(184, 79, 255, 0.6);">◆ EQ CURVE</span>
                             <span style="font-size: 0.5rem; color: rgba(0, 255, 136, 0.6);">◆ PEAKS</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 TONAL BALANCE METER — Real-time frequency band energy vs. genre target
+                 ═══════════════════════════════════════════════════════════════════════════ -->
+            <div class="viz-panel" id="tonalBalancePanel" style="padding: 12px 16px; min-height: auto;">
+                <div class="panel-title" style="margin-bottom: 8px;">
+                    <span style="display: flex; align-items: center;">TONAL BALANCE</span>
+                    <span id="tonalBalanceGenre" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(184,79,255,0.15); border: 1px solid rgba(184,79,255,0.3); border-radius: 6px; color: #b84fff;">--</span>
+                </div>
+                <div id="tonalBalanceBars" style="display: flex; gap: 4px; align-items: flex-end; height: 50px;">
+                    <div class="tonal-band" data-band="sub" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #b84fff, #b84fffaa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">SUB</span>
+                    </div>
+                    <div class="tonal-band" data-band="bass" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #ff6b6b, #ff6b6baa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">BASS</span>
+                    </div>
+                    <div class="tonal-band" data-band="lowmid" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #ff9a56, #ff9a56aa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">LOW-M</span>
+                    </div>
+                    <div class="tonal-band" data-band="mid" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #ffd700, #ffd700aa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">MID</span>
+                    </div>
+                    <div class="tonal-band" data-band="highmid" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #00d4ff, #00d4ffaa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">HI-M</span>
+                    </div>
+                    <div class="tonal-band" data-band="high" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #00ff88, #00ff88aa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">HIGH</span>
+                    </div>
+                    <div class="tonal-band" data-band="air" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div style="width:100%; flex:1; position:relative; background:rgba(255,255,255,0.03); border-radius:3px; overflow:hidden;">
+                            <div class="tonal-bar" style="position:absolute; bottom:0; width:100%; height:0%; background:linear-gradient(0deg, #e0e0ff, #e0e0ffaa); border-radius:3px; transition: height 0.15s;"></div>
+                            <div class="tonal-target" style="position:absolute; width:100%; height:2px; background:#ffd700; opacity:0.6; bottom:50%;"></div>
+                        </div>
+                        <span style="font-size:0.4rem; color:rgba(255,255,255,0.35); font-weight:600;">AIR</span>
                     </div>
                 </div>
             </div>
@@ -13877,29 +13979,27 @@
                 stereoWidth
             });
 
-            // 6. PLATFORM OPTIMIZATION - Read from UI selector (MUST COME BEFORE PROBLEM DETECTION)
-            const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
-            let userSelectedPlatform = 'streaming'; // Default
+            // 6. PLATFORM OPTIMIZATION - Read from console platform selector or sidebar fallback
+            // Priority: window.selectedPlatformPreset (console) > sidebar button > default
+            let userSelectedPlatform = window.selectedPlatform || 'spotify';
             let platformTarget = -14; // Default
+            let truePeakCeiling = -1.0; // Default
 
-            if (selectedPlatformBtn) {
-                userSelectedPlatform = selectedPlatformBtn.getAttribute('data-platform');
-
-                // Set correct LUFS target for each platform
-                switch(userSelectedPlatform.toLowerCase()) {
-                    case 'streaming':
-                        platformTarget = -14; // Spotify, YouTube, Tidal, Amazon, Deezer
-                        break;
-                    case 'apple':
-                        platformTarget = -16; // Apple Music - higher dynamic range
-                        break;
-                    case 'podcast':
-                        platformTarget = -16; // Podcasts - speech optimized
-                        break;
-                    default:
-                        platformTarget = -14;
+            if (window.selectedPlatformPreset) {
+                // Use detailed platform preset from console selector
+                platformTarget = window.selectedPlatformPreset.targetLUFS;
+                truePeakCeiling = window.selectedPlatformPreset.truePeakCeiling;
+            } else {
+                // Fallback: read from sidebar buttons
+                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
+                if (selectedPlatformBtn) {
+                    userSelectedPlatform = selectedPlatformBtn.getAttribute('data-platform');
+                    switch(userSelectedPlatform.toLowerCase()) {
+                        case 'apple': platformTarget = -16; break;
+                        case 'podcast': platformTarget = -16; break;
+                        default: platformTarget = -14;
+                    }
                 }
-
             }
 
             // 7. PROBLEM DETECTION (now has access to platformTarget)
@@ -17933,6 +18033,109 @@
             let lastDrawTime = 0;
             const DRAW_INTERVAL = 33; // ~30fps (1000ms / 30 = 33ms)
 
+            // ═══════════════════════════════════════════════════════════════════════════
+            // TONAL BALANCE METER — Analyses FFT data into 7 bands with smoothing
+            // Bands: Sub(20-60), Bass(60-250), LowMid(250-500), Mid(500-2k),
+            //        HiMid(2k-6k), High(6k-12k), Air(12k-20k)
+            // ═══════════════════════════════════════════════════════════════════════════
+            const _tonalSmoothed = new Float32Array(7);
+            const _tonalBandRanges = [
+                [20, 60],      // Sub
+                [60, 250],     // Bass
+                [250, 500],    // Low-Mid
+                [500, 2000],   // Mid
+                [2000, 6000],  // Hi-Mid
+                [6000, 12000], // High
+                [12000, 20000] // Air
+            ];
+            // Genre-appropriate tonal targets (relative dB offset from flat)
+            // Positive = expect more energy in this band; used for target line position
+            const _tonalTargets = {
+                hiphop:     [4, 3, -2, 0, 1, 1, 0],
+                electronic: [3, 2, -1, 0, 1, 2, 1],
+                pop:        [1, 2, 0, 1, 2, 2, 1],
+                rock:       [2, 3, 0, 1, 2, 1, 0],
+                rnb:        [2, 2, 0, 1, 1, 1, 0],
+                acoustic:   [0, 1, 0, 1, 1, 2, 1],
+                jazz:       [0, 1, 0, 1, 0, 1, 1],
+                classical:  [0, 0, 0, 1, 0, 1, 1],
+                metal:      [3, 3, -1, 1, 2, 1, 0],
+                country:    [1, 2, 0, 1, 2, 2, 1],
+                latin:      [3, 3, -1, 0, 1, 1, 0],
+                lofi:       [2, 3, 1, 0, -1, -2, -3]
+            };
+            let _lastTonalUpdate = 0;
+
+            function updateTonalBalance(dataArray, analyser, ac) {
+                // Throttle: update at 10Hz (every 100ms)
+                const now = performance.now();
+                if (now - _lastTonalUpdate < 100) return;
+                _lastTonalUpdate = now;
+
+                const sr = ac.sampleRate;
+                const binCount = analyser.frequencyBinCount;
+                const binWidth = sr / (binCount * 2); // Hz per bin
+
+                // Calculate average energy in each band
+                for (let b = 0; b < 7; b++) {
+                    const [fLow, fHigh] = _tonalBandRanges[b];
+                    const binLow = Math.max(1, Math.floor(fLow / binWidth));
+                    const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binWidth));
+
+                    let sum = 0;
+                    let count = 0;
+                    for (let i = binLow; i <= binHigh; i++) {
+                        sum += dataArray[i]; // dB values (negative)
+                        count++;
+                    }
+                    const avgDb = count > 0 ? sum / count : -90;
+                    // Smooth: fast attack, slow release
+                    if (avgDb > _tonalSmoothed[b]) {
+                        _tonalSmoothed[b] = _tonalSmoothed[b] + 0.4 * (avgDb - _tonalSmoothed[b]);
+                    } else {
+                        _tonalSmoothed[b] = _tonalSmoothed[b] + 0.1 * (avgDb - _tonalSmoothed[b]);
+                    }
+                }
+
+                // Map dB range to bar height (0-100%)
+                // Range: -60dB = 0%, -10dB = 100%
+                const bars = document.querySelectorAll('#tonalBalanceBars .tonal-bar');
+                const targets = document.querySelectorAll('#tonalBalanceBars .tonal-target');
+                if (bars.length !== 7) return;
+
+                const genre = window.selectedPreMasterGenre || detectedGenre || 'pop';
+                const genreTargets = _tonalTargets[genre] || _tonalTargets.pop;
+
+                // Update genre badge
+                const genreLabel = document.getElementById('tonalBalanceGenre');
+                if (genreLabel) genreLabel.textContent = genre.toUpperCase();
+
+                for (let b = 0; b < 7; b++) {
+                    const db = _tonalSmoothed[b];
+                    // Map -60...-10 to 0...100%
+                    const pct = Math.max(0, Math.min(100, ((db + 60) / 50) * 100));
+                    bars[b].style.height = `${pct}%`;
+
+                    // Color: green if close to target, yellow/red if off
+                    const targetDb = genreTargets[b]; // relative offset
+                    const normalizedTarget = -30 + targetDb; // absolute target center
+                    const deviation = Math.abs(db - normalizedTarget);
+                    if (deviation < 4) {
+                        bars[b].style.opacity = '1';
+                    } else if (deviation < 8) {
+                        bars[b].style.opacity = '0.7';
+                    } else {
+                        bars[b].style.opacity = '0.5';
+                    }
+
+                    // Position target line (50% = on-target, adjusted by genre offset)
+                    if (targets[b]) {
+                        const targetPct = 50 + (targetDb * 3); // 3% per dB offset
+                        targets[b].style.bottom = `${Math.max(10, Math.min(90, targetPct))}%`;
+                    }
+                }
+            }
+
             function draw() {
                 // THROTTLE: Skip frames to maintain 30fps max
                 const now = performance.now();
@@ -18063,6 +18266,11 @@
                 // if (!window.PERFORMANCE_MODE && drawDataArray) {
                 //     updateReactiveEQFaders(drawDataArray);
                 // }
+
+                // ═══ TONAL BALANCE METER — Real-time 7-band energy bars ═══
+                if (!window.PERFORMANCE_MODE && drawDataArray && analyser && audioContext) {
+                    updateTonalBalance(drawDataArray, analyser, audioContext);
+                }
 
                 // ═══ PANEL 2: STEREO METERS ═══
                 if (!window.PERFORMANCE_MODE && window.drawStereoMeter && leftAnalyser && rightAnalyser) {
@@ -18931,6 +19139,17 @@
             return gainDb;
         }
 
+        // Helper: Get current platform target LUFS from PLATFORM_PRESETS or sidebar fallback
+        function getPlatformTarget() {
+            if (window.selectedPlatformPreset) return window.selectedPlatformPreset.targetLUFS;
+            const btn = document.querySelector('.selector-btn[data-platform].active');
+            if (btn) {
+                const p = btn.getAttribute('data-platform');
+                if (p === 'apple' || p === 'podcast') return -16;
+            }
+            return -14;
+        }
+
         function updateMeters(dataArray) {
             // PROFESSIONAL METERING: LUFS locked to stable integrated value (no fluctuation)
             // Peak and Phase meters stay REAL-TIME (should fluctuate with audio)
@@ -18942,14 +19161,7 @@
                 }
 
                 // Color based on target
-                const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
-                let platformTarget = -14;
-                if (selectedPlatform) {
-                    const platform = selectedPlatform.getAttribute('data-platform');
-                    if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
-                    else platformTarget = -14; // youtube, tidal, spotify, etc.
-                }
-
+                const platformTarget = getPlatformTarget();
                 const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
 
                 // Color the measured LUFS value based on target proximity
@@ -19114,12 +19326,7 @@
                     lastMeterUpdate = currentTime;
 
                     // Get platform target for color coding
-                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
-                    let platformTarget = -14;
-                    if (selectedPlatform) {
-                        const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
-                    }
+                    const platformTarget = getPlatformTarget();
 
                     // Update LIVE LUFS indicator (momentary - real-time fluctuating)
                     const liveLufsValue = document.getElementById('liveLufsValue');
@@ -19362,13 +19569,7 @@
                     complianceValue.textContent = displayPeak.toFixed(1) + ' dBTP';
 
                     // Get platform target for LUFS validation
-                    const selectedPlatform = document.querySelector('.selector-btn[data-platform].active');
-                    let platformTarget = -14; // Default Spotify
-                    if (selectedPlatform) {
-                        const platform = selectedPlatform.getAttribute('data-platform');
-                        if (platform === 'apple' || platform === 'podcast') platformTarget = -16;
-                        else platformTarget = -14; // youtube, tidal, spotify
-                    }
+                    const platformTarget = getPlatformTarget();
 
                     // Calculate LUFS deviation from target (use smoothed LUFS for stability)
                     const lufsDeviation = Math.abs(smoothedLUFS - platformTarget);
@@ -20015,16 +20216,23 @@
                 let limiterThreshold = -1.5;
                 let platformName = 'Genre-Optimized';
 
-                // Platform override: if user selected Apple/Podcast, cap at -16
-                const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
-                if (selectedPlatformBtn) {
-                    const platform = selectedPlatformBtn.getAttribute('data-platform');
-                    if (platform === 'apple' || platform === 'podcast') {
-                        targetLUFS = Math.min(targetLUFS, -16);
-                        limiterThreshold = -2.0;
-                        platformName = platform === 'apple' ? 'Apple Music' : 'Podcast';
-                    } else {
-                        platformName = 'Streaming';
+                // Platform override: use PLATFORM_PRESETS for precise targeting
+                if (window.selectedPlatformPreset) {
+                    const pp = window.selectedPlatformPreset;
+                    targetLUFS = pp.targetLUFS;
+                    limiterThreshold = pp.truePeakCeiling;
+                    platformName = pp.name;
+                } else {
+                    const selectedPlatformBtn = document.querySelector('.selector-btn[data-platform].active');
+                    if (selectedPlatformBtn) {
+                        const platform = selectedPlatformBtn.getAttribute('data-platform');
+                        if (platform === 'apple' || platform === 'podcast') {
+                            targetLUFS = Math.min(targetLUFS, -16);
+                            limiterThreshold = -2.0;
+                            platformName = platform === 'apple' ? 'Apple Music' : 'Podcast';
+                        } else {
+                            platformName = 'Streaming';
+                        }
                     }
                 }
 
@@ -22535,10 +22743,7 @@
                 toggleBtn.textContent = 'AUTO';
 
                 // Get current platform target
-                const platformBtn = document.querySelector('.selector-btn[data-platform].active');
-                const platform = platformBtn ? platformBtn.dataset.platform : 'Streaming';
-                let targetLUFS = -14;
-                if (platform === 'apple' || platform === 'podcast') targetLUFS = -16;
+                let targetLUFS = getPlatformTarget();
 
             } else {
                 // Disable auto compensation
@@ -26943,6 +27148,115 @@
             'lofi':       { sub: 1.5, bass: 3.0, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
         };
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PLATFORM-SPECIFIC EXPORT PRESETS — Industry-standard loudness targets
+        // Sources: AES TD1004, Spotify Loudness Normalization, Apple Sound Check,
+        //          YouTube R128, EBU R128, ITU-R BS.1770-5
+        // ═══════════════════════════════════════════════════════════════════════════
+        const PLATFORM_PRESETS = {
+            spotify: {
+                name: 'Spotify',
+                icon: '🟢',
+                targetLUFS: -14,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Normalized to -14 LUFS (OGG Vorbis ~320kbps)',
+                color: '#1DB954',
+                normalization: 'Spotify uses volume normalization. Tracks louder than -14 LUFS are turned DOWN. Target -14 for optimal playback.',
+                recommended: true
+            },
+            apple: {
+                name: 'Apple Music',
+                icon: '🍎',
+                targetLUFS: -16,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Sound Check targets -16 LUFS (AAC 256kbps)',
+                color: '#FA2D48',
+                normalization: 'Apple Sound Check normalizes to -16 LUFS. Higher dynamic range preserved. Best for quality-focused listeners.'
+            },
+            youtube: {
+                name: 'YouTube',
+                icon: '🔴',
+                targetLUFS: -14,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Normalized to -14 LUFS (AAC/Opus)',
+                color: '#FF0000',
+                normalization: 'YouTube normalizes to -14 LUFS. Louder tracks are reduced. Quieter tracks are NOT boosted.'
+            },
+            tidal: {
+                name: 'Tidal',
+                icon: '🔵',
+                targetLUFS: -14,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Normalized to -14 LUFS (FLAC/MQA lossless)',
+                color: '#00FFFF',
+                normalization: 'Tidal normalizes to -14 LUFS. HiFi/Masters tier preserves full quality. Best for audiophile listeners.'
+            },
+            amazon: {
+                name: 'Amazon',
+                icon: '🟠',
+                targetLUFS: -14,
+                truePeakCeiling: -2.0,
+                sampleRate: 48000,
+                description: 'Normalized to -14 LUFS (HD: FLAC, Ultra HD: up to 24/192)',
+                color: '#FF9900',
+                normalization: 'Amazon Music normalizes to -14 LUFS. -2 dBTP recommended for Ultra HD transcoding safety.'
+            },
+            soundcloud: {
+                name: 'SoundCloud',
+                icon: '🟧',
+                targetLUFS: -14,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'No normalization — louder = louder (MP3 128kbps free / 256kbps Go+)',
+                color: '#FF5500',
+                normalization: 'SoundCloud does NOT normalize. Louder masters play louder. Target -14 for balanced sound, or go louder for impact.'
+            },
+            tiktok: {
+                name: 'TikTok',
+                icon: '🎵',
+                targetLUFS: -14,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Normalized to ~-14 LUFS (AAC)',
+                color: '#FE2C55',
+                normalization: 'TikTok normalizes audio. Target -14 LUFS for consistent playback across devices.'
+            },
+            podcast: {
+                name: 'Podcast',
+                icon: '🎙️',
+                targetLUFS: -16,
+                truePeakCeiling: -1.0,
+                sampleRate: 48000,
+                description: 'Apple Podcasts / Spotify: -16 LUFS mono/-19 stereo',
+                color: '#9B59B6',
+                normalization: 'Podcast platforms normalize to -16 LUFS (mono). Speech benefits from wider dynamic range and lower loudness.'
+            },
+            cd: {
+                name: 'CD / Vinyl',
+                icon: '💿',
+                targetLUFS: -9,
+                truePeakCeiling: -0.3,
+                sampleRate: 44100,
+                description: 'No normalization — 44.1kHz/16-bit Red Book standard',
+                color: '#C0C0C0',
+                normalization: 'Physical media has no normalization. Target -9 to -12 LUFS for competitive loudness with good dynamics.'
+            },
+            club: {
+                name: 'Club / DJ',
+                icon: '🎛️',
+                targetLUFS: -8,
+                truePeakCeiling: -0.5,
+                sampleRate: 48000,
+                description: 'Maximum impact for club PA systems',
+                color: '#B84FFF',
+                normalization: 'Club systems play WAV at full level. Target -6 to -9 LUFS for maximum impact on large sound systems.'
+            }
+        };
+
         // Genre presets - WORLD-CLASS MASTERING STANDARDS
         // Based on techniques from Sterling Sound, Abbey Road, Metropolis Studios
         // EQ values in dB, compression attack/release in seconds
@@ -27900,22 +28214,65 @@
 
         // Console Platform selector
         window.selectConsolePlatform = function(btn, platform) {
+            // Look up platform preset
+            const preset = (typeof PLATFORM_PRESETS !== 'undefined' && PLATFORM_PRESETS[platform]) || null;
+            const accentColor = preset ? preset.color : '#00d4ff';
+
             document.querySelectorAll('.console-platform-btn').forEach(b => {
                 b.classList.remove('active');
                 b.style.background = 'rgba(255,255,255,0.03)';
                 b.style.borderColor = 'rgba(255,255,255,0.1)';
-                b.querySelector('div').style.color = 'rgba(255,255,255,0.7)';
+                const labels = b.querySelectorAll('div');
+                if (labels[1]) labels[1].style.color = 'rgba(255,255,255,0.7)';
             });
             btn.classList.add('active');
-            btn.style.background = 'rgba(0,212,255,0.12)';
-            btn.style.borderColor = 'rgba(0,212,255,0.4)';
-            btn.querySelector('div').style.color = '#00d4ff';
+            btn.style.background = `${accentColor}15`;
+            btn.style.borderColor = `${accentColor}66`;
+            const activeLabels = btn.querySelectorAll('div');
+            if (activeLabels[1]) activeLabels[1].style.color = accentColor;
+
             window.selectedPlatform = platform;
+
+            // Store full platform config for mastering engine
+            if (preset) {
+                window.selectedPlatformPreset = preset;
+                window.targetLUFS = preset.targetLUFS;
+                window.truePeakCeiling = preset.truePeakCeiling;
+            }
+
+            // Update info banner
+            const infoBanner = document.getElementById('platformInfoBanner');
+            if (infoBanner && preset) {
+                infoBanner.textContent = preset.normalization;
+                infoBanner.style.borderColor = `${accentColor}33`;
+                infoBanner.style.background = `${accentColor}0d`;
+            }
+
+            // Sync with sidebar platform buttons
+            const sidebarPlatformBtns = document.querySelectorAll('.selector-btn[data-platform]');
+            sidebarPlatformBtns.forEach(b => b.classList.remove('active'));
+            // Map new platform names to sidebar's simpler categories
+            const sidebarMap = {
+                spotify: 'streaming', youtube: 'streaming', tidal: 'streaming',
+                amazon: 'streaming', soundcloud: 'streaming', tiktok: 'streaming',
+                apple: 'apple', podcast: 'podcast', cd: 'streaming', club: 'streaming'
+            };
+            const sidebarKey = sidebarMap[platform] || 'streaming';
+            const sidebarMatch = document.querySelector(`.selector-btn[data-platform="${sidebarKey}"]`);
+            if (sidebarMatch) sidebarMatch.classList.add('active');
 
             // Sync with sidebar
             syncSidebarWithConsole();
             updateConsoleSummary();
         };
+
+        // Initialize default platform preset (Spotify) on load
+        if (typeof PLATFORM_PRESETS !== 'undefined' && PLATFORM_PRESETS.spotify) {
+            window.selectedPlatformPreset = PLATFORM_PRESETS.spotify;
+            window.selectedPlatform = 'spotify';
+            window.targetLUFS = -14;
+            window.truePeakCeiling = -1.0;
+        }
 
         // Console Format selector
         window.selectConsoleFormat = function(btn, format) {
@@ -28200,33 +28557,99 @@
         }
 
         // Calculate quality grade based on metrics
+        // ═══════════════════════════════════════════════════════════════════════════
+        // PROFESSIONAL QUALITY SCORECARD — Multi-dimensional mastering evaluation
+        // Based on: EBU R128, AES TD1004, ITU-R BS.1770-5, Bob Katz K-System
+        // ═══════════════════════════════════════════════════════════════════════════
         function calculateQualityGrade(loudnessGain, clarity, width) {
-            let score = 0;
+            const platformPreset = window.selectedPlatformPreset || { targetLUFS: -14, truePeakCeiling: -1.0 };
+            const targetLUFS = platformPreset.targetLUFS;
+            const peakCeiling = platformPreset.truePeakCeiling;
 
-            // Loudness improvement (0-30 points)
-            if (loudnessGain >= 3) score += 30;
-            else if (loudnessGain >= 2) score += 25;
-            else if (loudnessGain >= 1) score += 20;
-            else score += 10;
+            // Get real measured values
+            const measuredLUFS = afterLUFS || -14;
+            const measuredPeak = lockedPeak || -1.0;
+            const lra = window.aiTrackAnalysis ? (window.aiTrackAnalysis.lra || 8) : 8;
+            const stereoCorrelation = window.aiTrackAnalysis ? (window.aiTrackAnalysis.stereoWidth || 0.5) : 0.5;
 
-            // Clarity improvement (0-35 points)
-            if (clarity >= 15) score += 35;
-            else if (clarity >= 10) score += 28;
-            else if (clarity >= 5) score += 20;
-            else score += 12;
+            const scores = {};
 
-            // Stereo width (0-35 points)
-            if (width >= 10) score += 35;
-            else if (width >= 5) score += 28;
-            else if (width >= 0) score += 20;
-            else score += 10;
+            // 1. LUFS ACCURACY (0-25): How close to target?
+            const lufsDeviation = Math.abs(measuredLUFS - targetLUFS);
+            if (lufsDeviation <= 0.5) scores.lufs = 25;
+            else if (lufsDeviation <= 1.0) scores.lufs = 22;
+            else if (lufsDeviation <= 1.5) scores.lufs = 18;
+            else if (lufsDeviation <= 2.5) scores.lufs = 14;
+            else if (lufsDeviation <= 4.0) scores.lufs = 8;
+            else scores.lufs = 4;
+
+            // 2. TRUE PEAK SAFETY (0-25): Below ceiling without excessive headroom waste
+            const peakMargin = peakCeiling - measuredPeak; // positive = safe
+            if (peakMargin >= 0 && peakMargin <= 2.0) scores.peak = 25; // Perfect: safe but not wasting headroom
+            else if (peakMargin >= 0 && peakMargin <= 4.0) scores.peak = 20; // Good
+            else if (peakMargin >= 0) scores.peak = 15; // Too much headroom wasted
+            else if (peakMargin >= -0.5) scores.peak = 10; // Slightly over ceiling
+            else scores.peak = 3; // Clipping over ceiling
+
+            // 3. DYNAMIC RANGE (0-25): LRA should be genre-appropriate
+            // Pro targets: Pop 5-8 LU, Rock 6-10 LU, Classical 10-20 LU, Hip-Hop 4-7 LU
+            const genre = window.selectedPreMasterGenre || 'pop';
+            const lraTargets = {
+                hiphop: [4, 8], electronic: [4, 7], pop: [5, 9], rock: [6, 10],
+                rnb: [5, 8], acoustic: [8, 14], jazz: [10, 18], classical: [12, 20],
+                metal: [4, 7], country: [6, 10], latin: [5, 8], lofi: [5, 9]
+            };
+            const [lraMin, lraMax] = lraTargets[genre] || [5, 10];
+            if (lra >= lraMin && lra <= lraMax) scores.dynamics = 25;
+            else if (lra >= lraMin - 1 && lra <= lraMax + 2) scores.dynamics = 20;
+            else if (lra >= lraMin - 2 && lra <= lraMax + 4) scores.dynamics = 14;
+            else if (lra < lraMin - 2) scores.dynamics = 8; // Over-compressed
+            else scores.dynamics = 10; // Under-compressed for genre
+
+            // 4. TONAL BALANCE & PROCESSING (0-25): Combined clarity + width + processing quality
+            let processingScore = 0;
+            // Clarity contribution (0-10)
+            if (clarity >= 10) processingScore += 10;
+            else if (clarity >= 5) processingScore += 8;
+            else processingScore += 5;
+            // Width contribution (0-8)
+            if (width >= 5 && width <= 25) processingScore += 8; // Subtle enhancement
+            else if (width >= 0) processingScore += 6;
+            else processingScore += 3;
+            // Loudness gain appropriateness (0-7)
+            if (loudnessGain >= 1 && loudnessGain <= 8) processingScore += 7;
+            else if (loudnessGain >= 0) processingScore += 5;
+            else processingScore += 2;
+            scores.tonal = processingScore;
+
+            // Total score
+            const total = scores.lufs + scores.peak + scores.dynamics + scores.tonal;
 
             // Determine grade
-            if (score >= 90) return { grade: 'A+', color: '#ffd700' };
-            if (score >= 80) return { grade: 'A', color: '#00ff88' };
-            if (score >= 70) return { grade: 'A-', color: '#00d4ff' };
-            if (score >= 60) return { grade: 'B+', color: '#b84fff' };
-            return { grade: 'B', color: '#ff9a56' };
+            let grade, color;
+            if (total >= 90) { grade = 'A+'; color = '#ffd700'; }
+            else if (total >= 80) { grade = 'A'; color = '#00ff88'; }
+            else if (total >= 70) { grade = 'A-'; color = '#00d4ff'; }
+            else if (total >= 60) { grade = 'B+'; color = '#b84fff'; }
+            else if (total >= 50) { grade = 'B'; color = '#ff9a56'; }
+            else { grade = 'B-'; color = '#ff6b6b'; }
+
+            return {
+                grade, color, total,
+                scores,
+                details: {
+                    lufsTarget: targetLUFS,
+                    lufsActual: measuredLUFS,
+                    lufsDeviation,
+                    peakCeiling,
+                    peakActual: measuredPeak,
+                    peakMargin,
+                    lra,
+                    lraTarget: `${lraMin}-${lraMax} LU`,
+                    genre,
+                    platformName: platformPreset.name || 'Streaming'
+                }
+            };
         }
 
         // Draw before/after spectrum comparison
@@ -28319,22 +28742,21 @@
 
             // Calculate clarity (sum of high frequency boosts)
             const clarityBoost = (preset.eq.high + preset.eq.air + preset.eq.highMid) / 3;
-            const clarityPercent = Math.round(clarityBoost * 6); // Scale to percentage
+            const clarityPercent = Math.round(clarityBoost * 6);
 
             // Calculate width improvement
             const widthPercent = Math.round((preset.stereoWidth - 1.0) * 100);
 
-            // Get quality grade
+            // Get quality grade (now returns detailed scorecard)
             const grade = calculateQualityGrade(loudnessGain, clarityPercent, widthPercent);
 
-            // Update the results dashboard
+            // Update the results dashboard (existing elements)
             const gradeBadge = document.getElementById('qualityGradeBadge');
             if (gradeBadge) {
-                gradeBadge.textContent = `🏆 MASTER GRADE: ${grade.grade}`;
+                gradeBadge.textContent = `MASTER GRADE: ${grade.grade} (${grade.total}/100)`;
                 gradeBadge.style.background = `linear-gradient(135deg, ${grade.color}, ${grade.color}aa)`;
             }
 
-            // Update metrics
             const metricLoudness = document.getElementById('metricLoudnessGain');
             if (metricLoudness) metricLoudness.textContent = `+${loudnessGain.toFixed(1)} dB`;
 
@@ -28347,26 +28769,109 @@
             const metricFinalLUFS = document.getElementById('metricFinalLUFS');
             if (metricFinalLUFS) metricFinalLUFS.textContent = afterLUFS.toFixed(1);
 
-            // Update genre badge
             const genreBadge = document.getElementById('genreBadge');
             if (genreBadge && preset) {
-                genreBadge.textContent = `🎵 ${preset.name}`;
+                genreBadge.textContent = `${preset.name}`;
             }
+
+            // ═══════════════════════════════════════════════════════════════════
+            // DETAILED QUALITY SCORECARD — Show breakdown in persistent export bar area
+            // ═══════════════════════════════════════════════════════════════════
+            showDetailedScorecard(grade);
 
             // Draw spectrum comparison
             setTimeout(() => {
                 drawSpectrumComparison();
             }, 100);
 
-            // Skip overlay - go straight to interface with export bar and genre presets
-            // Show toast notification instead
+            // Show toast with platform-specific context
+            const pName = grade.details ? grade.details.platformName : 'Streaming';
             if (typeof showToast === 'function') {
-                showToast(`✨ Master complete! ${grade.grade} Grade • ${afterLUFS.toFixed(1)} LUFS`, 'success');
+                showToast(`Master complete! ${grade.grade} (${grade.total}/100) for ${pName} at ${afterLUFS.toFixed(1)} LUFS`, 'success');
             }
 
             // Show the export bar
             closeMasteringComplete();
         };
+
+        // Show detailed quality scorecard overlay
+        function showDetailedScorecard(grade) {
+            let scorecardEl = document.getElementById('qualityScorecard');
+            if (!scorecardEl) {
+                scorecardEl = document.createElement('div');
+                scorecardEl.id = 'qualityScorecard';
+                scorecardEl.style.cssText = `
+                    position: fixed; bottom: 70px; right: 20px; width: 320px;
+                    background: linear-gradient(135deg, rgba(15,15,30,0.97), rgba(20,25,45,0.97));
+                    border: 1px solid rgba(0,212,255,0.2); border-radius: 14px;
+                    padding: 18px; z-index: 50000; backdrop-filter: blur(20px);
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    transition: opacity 0.3s, transform 0.3s;
+                `;
+                document.body.appendChild(scorecardEl);
+            }
+
+            const s = grade.scores || {};
+            const d = grade.details || {};
+            const barColor = (score, max) => {
+                const pct = score / max;
+                if (pct >= 0.85) return '#00ff88';
+                if (pct >= 0.7) return '#00d4ff';
+                if (pct >= 0.55) return '#ffd700';
+                return '#ff6b6b';
+            };
+            const scoreBar = (label, score, max, detail) => `
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;">${label}</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: ${barColor(score, max)};">${score}/${max}</span>
+                    </div>
+                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
+                        <div style="height: 100%; width: ${(score/max)*100}%; background: ${barColor(score, max)}; border-radius: 2px; transition: width 0.8s ease;"></div>
+                    </div>
+                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35); margin-top: 2px;">${detail}</div>
+                </div>`;
+
+            scorecardEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                    <div>
+                        <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">Quality Score</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: ${grade.color}; line-height: 1;">${grade.grade}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: ${grade.color}; line-height: 1;">${grade.total}</div>
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">/ 100</div>
+                    </div>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 16px;">
+                    <div style="height: 100%; width: ${grade.total}%; background: linear-gradient(90deg, ${grade.color}, ${grade.color}88); border-radius: 3px; transition: width 1s ease;"></div>
+                </div>
+                ${scoreBar('LUFS Accuracy', s.lufs || 0, 25, `${(d.lufsActual||0).toFixed(1)} LUFS vs ${d.lufsTarget||'-14'} target (${d.platformName||'Streaming'})`)}
+                ${scoreBar('True Peak Safety', s.peak || 0, 25, `${(d.peakActual||0).toFixed(1)} dBTP (ceiling: ${d.peakCeiling||'-1.0'} dBTP)`)}
+                ${scoreBar('Dynamic Range', s.dynamics || 0, 25, `LRA: ${(d.lra||0).toFixed(1)} LU (${d.genre||'pop'} target: ${d.lraTarget||'5-10 LU'})`)}
+                ${scoreBar('Tonal Balance', s.tonal || 0, 25, `Clarity, width, and processing quality`)}
+                <div style="text-align: center; margin-top: 8px;">
+                    <button onclick="document.getElementById('qualityScorecard').style.display='none'" style="background: none; border: none; color: rgba(255,255,255,0.3); font-size: 0.6rem; cursor: pointer;">Dismiss</button>
+                </div>
+            `;
+            scorecardEl.style.display = 'block';
+            scorecardEl.style.opacity = '0';
+            scorecardEl.style.transform = 'translateY(10px)';
+            requestAnimationFrame(() => {
+                scorecardEl.style.opacity = '1';
+                scorecardEl.style.transform = 'translateY(0)';
+            });
+
+            // Auto-hide after 15 seconds
+            setTimeout(() => {
+                if (scorecardEl.style.display !== 'none') {
+                    scorecardEl.style.opacity = '0';
+                    scorecardEl.style.transform = 'translateY(10px)';
+                    setTimeout(() => { scorecardEl.style.display = 'none'; }, 300);
+                }
+            }, 15000);
+        }
 
         // v7.6.3j: Guide steps removed — genre selection now lives in sidebar only
         window.showGuideStep = function() {};
