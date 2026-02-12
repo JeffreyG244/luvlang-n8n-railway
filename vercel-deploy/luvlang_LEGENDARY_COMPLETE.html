@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3c | Build: 2026-02-11 | Fix console displays, dramatically boost genre/sub-preset audibility -->
+<!-- VERSION 7.6.3d | Build: 2026-02-11 | Fix cross-block ReferenceError crashing console displays -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27460,8 +27460,9 @@
                 drEl.textContent = '--';
             }
 
-            if (tpEl && currentTruePeak !== undefined && currentTruePeak !== 0 && isFinite(currentTruePeak)) {
-                tpEl.textContent = currentTruePeak.toFixed(1) + ' dBTP';
+            const truePeak = window.originalInputPeakDB;
+            if (tpEl && truePeak !== undefined && truePeak !== 0 && isFinite(truePeak)) {
+                tpEl.textContent = truePeak.toFixed(1) + ' dBTP';
             } else if (tpEl) {
                 tpEl.textContent = '--';
             }
