@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3h | Build: 2026-02-11 | Fix console null crash + professional mastering improvements -->
+<!-- VERSION 7.6.3i | Build: 2026-02-11 | Unlock all presets at every stage + sidebar sub-genre presets -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7620,6 +7620,12 @@
                     <div class="selector-btn active" data-genre="neutral" style="position: relative; padding: 8px 4px;">
                         <div style="font-size: 0.7rem;">Neutral</div>
                     </div>
+                </div>
+
+                <!-- Sub-Genre Presets (10 per genre) -->
+                <div id="sidebarSubPresets" style="display: none; margin-top: 8px; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                    <div style="font-size: 0.55rem; font-weight: 600; color: rgba(0,212,255,0.7); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Sub-Genre Presets</div>
+                    <div id="sidebarSubPresetGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; max-height: 200px; overflow-y: auto;"></div>
                 </div>
 
             </div>
@@ -21041,6 +21047,11 @@
                         showToast(`🎵 ${displayName}`, 'success');
                     }
 
+                    // Show sub-genre presets in sidebar
+                    if (typeof showSidebarSubPresets === 'function') {
+                        showSidebarSubPresets(genre);
+                    }
+
                     // SCROLL TO 7-BAND EQ so user can see changes in real-time
                     const eqSection = document.getElementById('eqSection');
                     if (eqSection) {
@@ -25504,13 +25515,13 @@
                                 <div style="font-size: 2rem; margin-bottom: 8px;">💎</div>
                                 <div style="font-weight: 700; color: #fff; font-size: 1rem;">WAV</div>
                                 <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">48kHz / 24-bit Lossless</div>
-                                <div style="font-size: 0.75rem; color: #00d4ff; margin-top: 8px; font-weight: 600;">$4.99</div>
+                                <div style="font-size: 0.65rem; color: #00d4ff; margin-top: 8px; font-weight: 600;">Included</div>
                             </button>
                             <button class="format-option-btn" data-format="mp3" onclick="selectExportFormat('mp3')" style="padding: 20px; background: rgba(0, 255, 136, 0.1); border: 2px solid rgba(0, 255, 136, 0.3); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center;">
                                 <div style="font-size: 2rem; margin-bottom: 8px;">🎵</div>
                                 <div style="font-weight: 700; color: #fff; font-size: 1rem;">MP3</div>
                                 <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">320kbps High Quality</div>
-                                <div style="font-size: 0.75rem; color: #00ff88; margin-top: 8px; font-weight: 600;">$2.99</div>
+                                <div style="font-size: 0.65rem; color: #00ff88; margin-top: 8px; font-weight: 600;">Included</div>
                             </button>
                         </div>
 
@@ -25518,15 +25529,15 @@
                             <button class="format-option-btn" data-format="both" onclick="selectExportFormat('both')" style="width: 100%; padding: 20px; background: linear-gradient(135deg, rgba(184, 79, 255, 0.15), rgba(0, 212, 255, 0.15)); border: 2px solid rgba(184, 79, 255, 0.4); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center;">
                                 <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
                                 <div style="font-weight: 700; color: #fff; font-size: 1rem;">BUNDLE (WAV + MP3)</div>
-                                <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">Best value - Both formats included</div>
-                                <div style="font-size: 0.75rem; color: #b84fff; margin-top: 8px; font-weight: 600;">$5.99 <span style="text-decoration: line-through; opacity: 0.5;">$7.98</span></div>
+                                <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">Both formats included</div>
+                                <div style="font-size: 0.65rem; color: #b84fff; margin-top: 8px; font-weight: 600;">Included</div>
                             </button>
                         </div>
 
                         <div id="selectedFormatInfo" style="text-align: center; margin-bottom: 20px; min-height: 30px; color: #00d4ff; font-size: 0.85rem;"></div>
 
                         <button id="proceedToPaymentBtn" onclick="proceedToPayment()" disabled style="width: 100%; padding: 14px; background: linear-gradient(135deg, #00d4ff, #b84fff); border: none; border-radius: 10px; color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
-                            💳 Proceed to Payment
+                            📥 Export Now
                         </button>
 
                         <button onclick="closeExportFormatOverlay()" style="width: 100%; padding: 10px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 0.8rem; cursor: pointer; margin-top: 12px;">
@@ -25581,10 +25592,9 @@
 
             // Update info text
             const infoEl = document.getElementById('selectedFormatInfo');
-            const prices = { wav: '$4.99', mp3: '$2.99', both: '$5.99' };
             const names = { wav: 'WAV (48kHz/24-bit)', mp3: 'MP3 (320kbps)', both: 'Bundle (WAV + MP3)' };
             if (infoEl) {
-                infoEl.innerHTML = `✓ Selected: <strong>${names[format]}</strong> - ${prices[format]}`;
+                infoEl.innerHTML = `✓ Selected: <strong>${names[format]}</strong>`;
             }
 
             // Enable proceed button
@@ -25602,11 +25612,19 @@
                 return;
             }
 
-            // Store selected format globally for payment system
+            // Store selected format globally
             window.exportFormat = window.selectedExportFormat;
 
             // Close format overlay
             closeExportFormatOverlay();
+
+            // Legendary tier: export directly without payment gate
+            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                    return;
+                }
+            }
 
             // Use existing Stripe payment system (downloadMaster from STRIPE_PAYMENT_INTEGRATION.js)
             if (typeof downloadMaster === 'function') {
@@ -25614,19 +25632,12 @@
             } else if (typeof window.downloadMaster === 'function') {
                 window.downloadMaster();
             } else {
-                // Stripe not loaded yet - show message
-                console.warn('⚠️ Payment system loading...');
-                if (typeof showToast === 'function') {
-                    showToast('Connecting to payment system...', 'info');
+                // Fallback: try direct export
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                } else {
+                    showLuvLangToast('Export system loading. Please try again.');
                 }
-                // Retry after a moment
-                setTimeout(() => {
-                    if (typeof downloadMaster === 'function') {
-                        downloadMaster();
-                    } else {
-                        showLuvLangToast('Payment system is loading. Please try again.');
-                    }
-                }, 1000);
             }
         };
 
@@ -27284,6 +27295,132 @@
             const nameEl = document.getElementById('eqPreviewGenreName');
             if (nameEl) nameEl.textContent = preset.name.toUpperCase();
         }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // SIDEBAR SUB-GENRE PRESETS — Available at all stages (pre & post mastering)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function showSidebarSubPresets(genre) {
+            const container = document.getElementById('sidebarSubPresets');
+            const grid = document.getElementById('sidebarSubPresetGrid');
+            if (!container || !grid) return;
+
+            const subPresets = genreEQPresets[genre];
+            if (!subPresets || subPresets.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            grid.innerHTML = '';
+            container.style.display = 'block';
+
+            subPresets.forEach((preset, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sidebar-sub-preset-btn';
+                btn.dataset.index = index;
+                btn.style.cssText = `
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 4px;
+                    padding: 6px 5px;
+                    cursor: pointer;
+                    transition: all 0.15s;
+                    text-align: left;
+                `;
+                btn.innerHTML = `
+                    <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.85); line-height: 1.2;">${preset.name}</div>
+                    <div style="font-size: 0.45rem; color: rgba(255,255,255,0.4); line-height: 1.2; margin-top: 1px;">${preset.description}</div>
+                `;
+
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = 'rgba(0,212,255,0.1)';
+                    btn.style.borderColor = 'rgba(0,212,255,0.3)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    if (!btn.classList.contains('selected')) {
+                        btn.style.background = 'rgba(255,255,255,0.03)';
+                        btn.style.borderColor = 'rgba(255,255,255,0.08)';
+                    }
+                });
+
+                btn.addEventListener('click', () => {
+                    applySidebarSubPreset(genre, index);
+                    grid.querySelectorAll('.sidebar-sub-preset-btn').forEach(b => {
+                        b.classList.remove('selected');
+                        b.style.background = 'rgba(255,255,255,0.03)';
+                        b.style.borderColor = 'rgba(255,255,255,0.08)';
+                    });
+                    btn.classList.add('selected');
+                    btn.style.background = 'rgba(0,212,255,0.15)';
+                    btn.style.borderColor = 'rgba(0,212,255,0.5)';
+                });
+
+                grid.appendChild(btn);
+            });
+        }
+        window.showSidebarSubPresets = showSidebarSubPresets;
+
+        function applySidebarSubPreset(genre, index) {
+            const subPresets = genreEQPresets[genre];
+            if (!subPresets || !subPresets[index]) return;
+
+            const preset = subPresets[index];
+            window.selectedSubPreset = index;
+            window._selectedSubGenreEQ = preset.eq;
+
+            const ac = window.audioContext;
+            if (!ac) return;
+
+            const SUBPRESET_SCALE = 2.5;
+            const intensityLevel = window.selectedIntensity || 3;
+            const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+            const intensityBoost = masteringMults[intensityLevel] || 0.85;
+            const now = ac.currentTime;
+
+            // Apply to LIVE EQ filters (works both pre and post mastering)
+            const filters = [
+                window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
+                window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter
+            ];
+            const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
+
+            filters.forEach((f, i) => {
+                if (f) {
+                    const scaled = eqVals[i] * SUBPRESET_SCALE * intensityBoost;
+                    const clamped = Math.max(-12, Math.min(12, scaled));
+                    f.gain.setTargetAtTime(clamped, now, 0.08);
+                }
+            });
+
+            // Also apply to preview EQ filters if they exist (pre-mastering console)
+            if (window._previewEqFilters) {
+                window._previewEqFilters.forEach((f, i) => {
+                    const scaled = eqVals[i] * SUBPRESET_SCALE * intensityBoost;
+                    const clamped = Math.max(-12, Math.min(12, scaled));
+                    f.gain.setTargetAtTime(clamped, now, 0.08);
+                });
+            }
+
+            // Update EQ fader UI
+            if (typeof updateEQFaderDisplay === 'function') {
+                updateEQFaderDisplay();
+            }
+
+            // Auto-gain compensation to prevent clipping
+            if (!window._lufsGainLocked && window.makeupGain && window.originalMakeupGainValue !== undefined) {
+                const totalBoost = eqVals.reduce((sum, val) => sum + Math.max(0, val * SUBPRESET_SCALE * intensityBoost), 0);
+                const avgBoost = totalBoost / 3;
+                const compensationDB = Math.min(avgBoost * 0.7, 4);
+                const compensationLinear = Math.pow(10, -compensationDB / 20);
+                const compensatedGain = window.originalMakeupGainValue * compensationLinear;
+                window.makeupGain.gain.setTargetAtTime(compensatedGain, now, 0.1);
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(`🎵 ${preset.name}`, 'success');
+            }
+        }
+        window.applySidebarSubPreset = applySidebarSubPreset;
 
         // Preview original (unprocessed) audio
         window.previewOriginal = function() {
@@ -29641,48 +29778,117 @@
         };
 
         function unlockAll() {
-            document.querySelectorAll('.feature-locked').forEach(el => {
-                el.classList.remove('feature-locked');
+            // Remove ALL lock classes: feature-locked (CSS overlay), module-locked (TIER_SYSTEM)
+            document.querySelectorAll('.feature-locked, .module-locked').forEach(el => {
+                el.classList.remove('feature-locked', 'module-locked');
                 el.removeAttribute('data-locked');
                 el.removeAttribute('data-upgrade-tier');
+                el.style.pointerEvents = '';
+                el.style.opacity = '';
             });
             window.currentSubscription = LEGENDARY_SUB;
             window.userTier = 'legendary';
             window._tierOverride = 'legendary';
+
+            // Set tier system to premium if available
+            if (typeof currentTier !== 'undefined') {
+                currentTier = 'premium';
+            }
+            if (window.TierSystem) {
+                window.TierSystem.getCurrentTier = () => 'premium';
+            }
         }
 
         // Override applyTierRestrictions so it can never re-lock
-        const _origApplyTier = window.applyTierRestrictions;
         window.applyTierRestrictions = function() {
-            console.log('🔓 applyTierRestrictions intercepted — keeping all unlocked');
             unlockAll();
         };
+
+        // Override switchTier to prevent TIER_SYSTEM.js from re-locking modules
+        const _origSwitchTier = window.switchTier;
+        window.switchTier = function() {
+            unlockAll();
+        };
+
+        // Override updateModuleStates to prevent module locking
+        window.updateModuleStates = function() {
+            unlockAll();
+        };
+
+        // Restore export button to work directly (bypass pricing modals)
+        function restoreExportButton() {
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) {
+                // Remove all existing click listeners by cloning
+                const newBtn = exportBtn.cloneNode(true);
+                exportBtn.parentNode.replaceChild(newBtn, exportBtn);
+                // Attach direct export handler
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window.performExport === 'function') {
+                        window.performExport();
+                    } else if (typeof window.showExportFormatOverlay === 'function') {
+                        window.showExportFormatOverlay();
+                    }
+                });
+                newBtn.disabled = false;
+                newBtn.classList.remove('disabled');
+            }
+
+            // Also fix exportWavBtn and exportMp3Btn if they exist
+            ['exportWavBtn', 'exportMp3Btn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    const newB = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newB, btn);
+                    newB.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof window.performExport === 'function') {
+                            window.performExport();
+                        }
+                    });
+                }
+            });
+
+            // Override openPricingModal to go direct to export
+            window.openPricingModal = function() {
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                }
+            };
+        }
 
         // Run unlock on load, and repeatedly to catch late-init locks
         window.addEventListener('load', () => {
             unlockAll();
-            setTimeout(unlockAll, 500);
-            setTimeout(unlockAll, 1500);
-            setTimeout(unlockAll, 3000);
-            setTimeout(unlockAll, 5000);
+            restoreExportButton();
+            setTimeout(() => { unlockAll(); restoreExportButton(); }, 500);
+            setTimeout(() => { unlockAll(); restoreExportButton(); }, 1500);
+            setTimeout(() => { unlockAll(); restoreExportButton(); }, 3000);
+            setTimeout(() => { unlockAll(); restoreExportButton(); }, 5000);
         });
 
-        // MutationObserver: instantly remove feature-locked whenever it appears
+        // MutationObserver: instantly remove ALL lock classes whenever they appear
         const obs = new MutationObserver((mutations) => {
             for (const m of mutations) {
-                if (m.type === 'attributes' && m.target.classList.contains('feature-locked')) {
-                    m.target.classList.remove('feature-locked');
+                if (m.type === 'attributes' && m.target.classList &&
+                    (m.target.classList.contains('feature-locked') || m.target.classList.contains('module-locked'))) {
+                    m.target.classList.remove('feature-locked', 'module-locked');
                     m.target.removeAttribute('data-locked');
                 }
                 if (m.type === 'childList') {
                     m.addedNodes.forEach(n => {
                         if (n.nodeType === 1) {
-                            if (n.classList && n.classList.contains('feature-locked')) {
-                                n.classList.remove('feature-locked');
+                            if (n.classList) {
+                                n.classList.remove('feature-locked', 'module-locked');
                             }
-                            n.querySelectorAll && n.querySelectorAll('.feature-locked').forEach(el => {
-                                el.classList.remove('feature-locked');
-                            });
+                            if (n.querySelectorAll) {
+                                n.querySelectorAll('.feature-locked, .module-locked').forEach(el => {
+                                    el.classList.remove('feature-locked', 'module-locked');
+                                });
+                            }
                         }
                     });
                 }
@@ -29693,7 +29899,7 @@
         // Immediate unlock (page may already be loaded)
         if (document.readyState !== 'loading') unlockAll();
 
-        console.log('🔓 LEGENDARY unlock active — all features permanently unlocked');
+        console.log('🔓 LEGENDARY unlock active — all features & presets permanently unlocked');
     })();
     </script>
 </body>
