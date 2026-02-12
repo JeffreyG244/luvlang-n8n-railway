@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3f | Build: 2026-02-11 | Bulletproof console displays with fallback + debug logging -->
+<!-- VERSION 7.6.3g | Build: 2026-02-11 | Fix intensity buttons to use mastering-aligned multipliers -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27363,16 +27363,32 @@
                 console.log(`🎚️ Intensity ${level} applied to MASTERED chain`);
             } else if (window._previewEqFilters && window.audioContext && window.selectedPreMasterGenre) {
                 // BEFORE mastering: apply to preview EQ filters
-                const preset = genrePresets[window.selectedPreMasterGenre];
-                if (preset) {
-                    const previewMults = { 1: 0.3, 2: 0.5, 3: 0.7, 4: 0.9, 5: 1.0 };
-                    const boost = previewMults[level] || 0.7;
-                    const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
-                    const now = window.audioContext.currentTime;
+                // Use SAME multipliers as mastering chain for WYSIWYG
+                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+                const boost = masteringMults[level] || 0.85;
+                const subEQ = window._selectedSubGenreEQ;
+                const SCALE = 2.5;
+                const now = window.audioContext.currentTime;
+
+                if (subEQ) {
+                    // Sub-preset active — use sub-preset EQ with SUBPRESET_SCALE
+                    const eqVals = [subEQ.sub, subEQ.bass, subEQ.lowmid, subEQ.mid, subEQ.highmid, subEQ.high, subEQ.air];
                     window._previewEqFilters.forEach((f, i) => {
-                        f.gain.setTargetAtTime(eqVals[i] * boost, now, 0.08);
+                        const clamped = Math.max(-12, Math.min(12, eqVals[i] * SCALE * boost));
+                        f.gain.setTargetAtTime(clamped, now, 0.08);
                     });
-                    console.log(`🎚️ Intensity ${level} applied to preview (×${boost})`);
+                    console.log(`🎚️ Intensity ${level} applied to sub-preset preview (×${(SCALE * boost).toFixed(2)})`);
+                } else {
+                    // Genre preset only (no sub-preset)
+                    const preset = genrePresets[window.selectedPreMasterGenre];
+                    if (preset) {
+                        const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
+                        window._previewEqFilters.forEach((f, i) => {
+                            const clamped = Math.max(-12, Math.min(12, eqVals[i] * boost));
+                            f.gain.setTargetAtTime(clamped, now, 0.08);
+                        });
+                        console.log(`🎚️ Intensity ${level} applied to genre preview (×${boost})`);
+                    }
                 }
             } else {
                 console.log(`🎚️ Intensity ${level} stored (will apply when mastering runs)`);
