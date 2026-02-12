@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3i | Build: 2026-02-11 | Unlock all presets at every stage + sidebar sub-genre presets -->
+<!-- VERSION 7.6.3j | Build: 2026-02-11 | Fix mastering quality, remove duplicate genre UI, sidebar sub-presets -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -5143,142 +5143,7 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-         GUIDED EXPERIENCE - Step 2: Genre Selection - Premium Plugin Aesthetic
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="guide-overlay" id="guideStep2" style="display: none;">
-        <div class="guide-card">
-            <!-- Premium Header Bar -->
-            <div class="guide-card-header">
-                <div class="guide-card-header-left">
-                    <div class="guide-status-led"></div>
-                    <span class="guide-card-title">Sound Profile</span>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1);"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1);"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.08);"></div>
-                </div>
-            </div>
-
-            <div class="guide-card-body">
-                <h2 class="guide-title">Select Genre Profile</h2>
-                <p class="guide-desc">Choose a sound profile for genre-optimized processing curves.</p>
-
-                <div class="genre-grid" id="guideGenreGrid">
-                    <button class="genre-btn" data-genre="hiphop" onclick="selectGuideGenre('hiphop')">
-                        <span class="genre-name">Hip-Hop</span>
-                        <span class="genre-desc">Punchy, heavy low-end</span>
-                    </button>
-                    <button class="genre-btn" data-genre="electronic" onclick="selectGuideGenre('electronic')">
-                        <span class="genre-name">Electronic</span>
-                        <span class="genre-desc">Wide stereo, crisp</span>
-                    </button>
-                    <button class="genre-btn" data-genre="pop" onclick="selectGuideGenre('pop')">
-                        <span class="genre-name">Pop</span>
-                        <span class="genre-desc">Balanced, radio-ready</span>
-                    </button>
-                    <button class="genre-btn" data-genre="rock" onclick="selectGuideGenre('rock')">
-                        <span class="genre-name">Rock</span>
-                        <span class="genre-desc">Powerful mids, drive</span>
-                    </button>
-                    <button class="genre-btn" data-genre="rnb" onclick="selectGuideGenre('rnb')">
-                        <span class="genre-name">R&B / Soul</span>
-                        <span class="genre-desc">Warm, smooth</span>
-                    </button>
-                    <button class="genre-btn" data-genre="acoustic" onclick="selectGuideGenre('acoustic')">
-                        <span class="genre-name">Acoustic</span>
-                        <span class="genre-desc">Natural, dynamic</span>
-                    </button>
-                </div>
-
-                <button onclick="skipGuide()" style="
-                    background: none;
-                    border: none;
-                    color: rgba(255,255,255,0.35);
-                    font-size: 0.7rem;
-                    letter-spacing: 0.05em;
-                    cursor: pointer;
-                    padding: 8px 16px;
-                    transition: color 0.2s;
-                " onmouseover="this.style.color='rgba(255,255,255,0.6)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">
-                    SKIP TO DEFAULT SETTINGS
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════════
-         GUIDED EXPERIENCE - Step 3: Export - Premium Plugin Aesthetic
-         ═══════════════════════════════════════════════════════════════════════════ -->
-    <div class="guide-overlay" id="guideStep3" style="display: none;">
-        <div class="guide-card">
-            <!-- Premium Header Bar -->
-            <div class="guide-card-header">
-                <div class="guide-card-header-left">
-                    <div class="guide-status-led" style="background: #5cb85c; box-shadow: 0 0 6px rgba(92, 184, 92, 0.8);"></div>
-                    <span class="guide-card-title">Master Complete</span>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(92, 184, 92, 0.3);"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(92, 184, 92, 0.3);"></div>
-                    <div style="width: 10px; height: 10px; border-radius: 50%; background: rgba(92, 184, 92, 0.2);"></div>
-                </div>
-            </div>
-
-            <div class="guide-card-body">
-                <h2 class="guide-title">Processing Complete</h2>
-                <p class="guide-desc">Master finalized with <strong id="guideGenreName" style="color: rgba(255,255,255,0.8);">genre</strong> optimization applied.</p>
-
-                <div class="guide-final-stats">
-                    <div class="final-stat">
-                        <span class="final-stat-label">Integrated</span>
-                        <span class="final-stat-value" id="guideFinalLUFS">-14 LUFS</span>
-                    </div>
-                    <div class="final-stat">
-                        <span class="final-stat-label">Profile</span>
-                        <span class="final-stat-value" id="guideFinalGenre">Electronic</span>
-                    </div>
-                    <div class="final-stat">
-                        <span class="final-stat-label">Bit Depth</span>
-                        <span class="final-stat-value">24-bit</span>
-                    </div>
-                </div>
-
-                <button onclick="openPricingModal(); closeAllGuides();" style="
-                    width: 100%;
-                    padding: 14px 24px;
-                    background: linear-gradient(180deg, rgba(92, 184, 92, 0.2) 0%, rgba(92, 184, 92, 0.1) 100%);
-                    border: 1px solid rgba(92, 184, 92, 0.4);
-                    border-radius: 6px;
-                    color: #8fd98f;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    letter-spacing: 0.12em;
-                    text-transform: uppercase;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 10px;
-                " onmouseover="this.style.background='linear-gradient(180deg, rgba(92, 184, 92, 0.3) 0%, rgba(92, 184, 92, 0.15) 100%)'; this.style.borderColor='rgba(92, 184, 92, 0.6)';"
-                   onmouseout="this.style.background='linear-gradient(180deg, rgba(92, 184, 92, 0.2) 0%, rgba(92, 184, 92, 0.1) 100%)'; this.style.borderColor='rgba(92, 184, 92, 0.4)';">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Export Master
-                </button>
-
-                <div class="guide-actions">
-                    <button class="guide-action-btn" onclick="toggleABCompare()">A/B Compare</button>
-                    <button class="guide-action-btn" onclick="closeAllGuides()">Fine-Tune</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Guide Steps 2 & 3 removed in v7.6.3j — consolidated into sidebar genre presets -->
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
          PERSISTENT EXPORT BAR - Premium High-End Plugin Aesthetic
@@ -10039,11 +9904,11 @@
                 limiter = audioContext.createDynamicsCompressor();
                 // BRICKWALL SAFETY LIMITER (v7.5.0) — only catches what look-ahead misses
                 // Look-ahead limiter at -1.5 dBTP does the musical work; this is the safety net
-                limiter.threshold.value = -1.0;     // v7.6.3h: -1.0 dBTP (streaming standard, prevents ISP clips)
+                limiter.threshold.value = -1.0;     // -1.0 dBTP (streaming standard, prevents ISP clips)
                 limiter.knee.value = 0;             // Hard knee = true brickwall
                 limiter.ratio.value = 20;           // Brick-wall ratio
                 limiter.attack.value = 0.001;       // 1ms attack
-                limiter.release.value = 0.120;      // v7.6.3h: 120ms (was 50ms — prevents bass distortion)
+                limiter.release.value = 0.080;      // v7.6.3j: 80ms (balanced: fast enough for transients, no bass distortion)
 
                 // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
                 const safetyClipper = audioContext.createWaveShaper();
@@ -12779,22 +12644,23 @@
                 subsonic.frequency.value = 25;
                 subsonic.Q.value = 0.707;
 
-                // 7-Band EQ (same gains as live chain)
+                // 7-Band EQ — v7.6.3j: MUST match live chain types, freqs, and Q values
+                // Live chain: lowshelf @ 40, peaking @ 120/350/1000/3500/8000, highshelf @ 16000
                 const eqBands = [
-                    { freq: 40, type: 'peaking', gain: chainParams.eqGains?.sub || 0 },
-                    { freq: 100, type: 'peaking', gain: chainParams.eqGains?.bass || 0 },
-                    { freq: 300, type: 'peaking', gain: chainParams.eqGains?.lowmid || 0 },
-                    { freq: 1000, type: 'peaking', gain: chainParams.eqGains?.mid || 0 },
-                    { freq: 3500, type: 'peaking', gain: chainParams.eqGains?.highmid || 0 },
-                    { freq: 8000, type: 'peaking', gain: chainParams.eqGains?.high || 0 },
-                    { freq: 14000, type: 'peaking', gain: chainParams.eqGains?.air || 0 }
+                    { freq: 40,    type: 'lowshelf',  gain: chainParams.eqGains?.sub || 0, q: 0.7 },
+                    { freq: 120,   type: 'peaking',   gain: chainParams.eqGains?.bass || 0, q: 0.7 },
+                    { freq: 350,   type: 'peaking',   gain: chainParams.eqGains?.lowmid || 0, q: 0.7 },
+                    { freq: 1000,  type: 'peaking',   gain: chainParams.eqGains?.mid || 0, q: 0.7 },
+                    { freq: 3500,  type: 'peaking',   gain: chainParams.eqGains?.highmid || 0, q: 0.7 },
+                    { freq: 8000,  type: 'peaking',   gain: chainParams.eqGains?.high || 0, q: 0.7 },
+                    { freq: 16000, type: 'highshelf',  gain: chainParams.eqGains?.air || 0, q: 0.7 }
                 ];
                 const eqFilters = eqBands.map(band => {
                     const f = offlineCtx.createBiquadFilter();
                     f.type = band.type;
                     f.frequency.value = band.freq;
                     f.gain.value = band.gain;
-                    f.Q.value = 1.0;
+                    f.Q.value = band.q;
                     return f;
                 });
 
@@ -12854,13 +12720,13 @@
                 const makeupGain = offlineCtx.createGain();
                 makeupGain.gain.value = chainParams.makeupGainLinear || 1.0;
 
-                // Limiter (same settings as live chain — v7.6.3h: -1.0 dBTP, 120ms release)
+                // Limiter (same settings as live chain — v7.6.3j: -1.0 dBTP, 80ms release)
                 const lim = offlineCtx.createDynamicsCompressor();
                 lim.threshold.value = chainParams.limiterThreshold || -1.0;
                 lim.knee.value = chainParams.limiterKnee || 0;
                 lim.ratio.value = 20;
                 lim.attack.value = 0.001;
-                lim.release.value = 0.120;
+                lim.release.value = 0.080;
 
                 // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Limiter → Dest
                 source.connect(subsonic);
@@ -14419,7 +14285,7 @@
          * - Chris Athens (Sterling Sound)
          * All values in dB, designed for transparency and musicality
          */
-        const genreEQPresets = {
+        const genreEQPresets = window.genreEQPresets = {
             'hip-hop': [
                 {
                     name: 'Classic Boom Bap',
@@ -21048,8 +20914,8 @@
                     }
 
                     // Show sub-genre presets in sidebar
-                    if (typeof showSidebarSubPresets === 'function') {
-                        showSidebarSubPresets(genre);
+                    if (typeof window.showSidebarSubPresets === 'function') {
+                        window.showSidebarSubPresets(genre);
                     }
 
                     // SCROLL TO 7-BAND EQ so user can see changes in real-time
@@ -24222,9 +24088,9 @@
                     // Release 120ms prevents distortion on sustained bass notes (was 50ms)
                     window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);  // Hard knee = true safety
+                    window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);
                     window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.120, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.080, ac.currentTime, 0.1);
 
                 }
 
@@ -24415,25 +24281,27 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // v7.6.3h: Reduced compensation — offline now uses actual EQ gains + matched limiter
-                    // Only compensate for stages NOT modeled in offline chain (warmth, transient, HF limiter, M/S)
+                    // v7.6.3j: Compensate for stages NOT modeled in offline chain
+                    // Offline chain models: subsonic, EQ, comp, dynEQ, NY, multiband, limiter
+                    // NOT modeled: warmth, transient, HF limiter, M/S, stereo width, look-ahead limiter, exciter
                     let chainLoss = 0;
-                    if (!bypass.warmth)       chainLoss += 0.2;  // Saturation adds slight gain
-                    if (!bypass.transient)    chainLoss += 0.2;  // Transient shaper
-                    if (!bypass.hfLimiter)    chainLoss += 0.3;  // HF limiter reduces highs
-                    if (!bypass.msProcessing) chainLoss += 0.2;  // M/S EQ
-                    if (!bypass.stereoWidth)  chainLoss += 0.1;  // Stereo widening
-                    // Look-ahead limiter (not in offline chain)
-                    chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
-                    compensation = Math.min(chainLoss, 3.0);
+                    if (!bypass.warmth)       chainLoss += 0.3;  // Tape saturation slightly reduces RMS
+                    if (!bypass.transient)    chainLoss += 0.3;  // Transient shaper reshapes dynamics
+                    if (!bypass.hfLimiter)    chainLoss += 0.5;  // HF limiter reduces high-frequency energy
+                    if (!bypass.msProcessing) chainLoss += 0.3;  // M/S processing alters stereo balance
+                    if (!bypass.stereoWidth)  chainLoss += 0.2;  // Stereo widening distributes energy
+                    // Look-ahead limiter (primary limiter, not in offline chain) — catches peaks
+                    // that the brickwall DynamicsCompressor doesn't model accurately
+                    chainLoss += 1.0 + (effectiveIntensity - 1) * 0.3;
+                    compensation = Math.min(chainLoss, 5.0);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
 
-                    // v7.6.3h: Peak safety — don't push peaks more than +4 dB above brickwall (-1.0 dBTP)
-                    // DynamicsCompressor with 20:1 ratio can handle +4 dB overshoot cleanly
-                    if (pass1.truePeakDB + correctionDB > 3.0) {
-                        correctionDB = 3.0 - pass1.truePeakDB;
+                    // v7.6.3j: Peak safety — don't push peaks more than +6 dB above brickwall
+                    // The live chain has look-ahead + brickwall limiters so can handle overshoot
+                    if (pass1.truePeakDB + correctionDB > 5.0) {
+                        correctionDB = 5.0 - pass1.truePeakDB;
                     }
                     correctionDB = Math.max(-6, Math.min(12, correctionDB));
 
@@ -24467,13 +24335,14 @@
                             console.log(`✅ Pass 3 on target: ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS})`);
                         }
 
-                        // v7.6.3h: TRUE PEAK SAFETY — reduce gain if true peak exceeds -1.0 dBTP
-                        // This prevents ISP clips after codec transcoding (AAC/OGG/Opus add ~0.5-1.0 dB)
-                        if (pass3.truePeakDB > -1.0) {
-                            const tpOvershoot = pass3.truePeakDB - (-1.0);
-                            correctionDB -= tpOvershoot + 0.3; // Extra 0.3 dB safety margin for codec headroom
+                        // v7.6.3j: True peak check — only reduce if significantly over ceiling
+                        // The live chain has look-ahead + brickwall limiters that catch peaks better
+                        // than the offline DynamicsCompressor, so don't over-correct here
+                        if (pass3.truePeakDB > 0.0) {
+                            const tpOvershoot = pass3.truePeakDB;
+                            correctionDB -= tpOvershoot + 0.1;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP exceeds -1.0 ceiling, reducing gain by ${(tpOvershoot + 0.3).toFixed(1)} dB`);
+                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP over 0, reducing gain by ${(tpOvershoot + 0.1).toFixed(1)} dB`);
                         }
                     }
                 }
@@ -25163,6 +25032,10 @@
 
             if (overlay) overlay.style.display = 'none';
 
+            // Hide the pre-mastering genre overlay if still visible
+            const genreOverlay = document.getElementById('preMasteringGenreSelect');
+            if (genreOverlay) genreOverlay.style.display = 'none';
+
             if (exportBar) {
                 exportBar.style.display = 'block';
                 const lufsEl = document.getElementById('exportBarLUFS');
@@ -25171,23 +25044,40 @@
                 }
             }
 
-            // Show genre preset guide tooltip after a short delay
+            // v7.6.3j: Go straight to interface — user uses sidebar genre/sub-presets directly
+            // Scroll to show the genre section in the sidebar
             setTimeout(() => {
-                showGenrePresetGuide();
+                const genreSection = document.getElementById('genreSection');
+                const leftSidebar = document.querySelector('.left-sidebar');
+                if (genreSection && leftSidebar) {
+                    const genreTop = genreSection.offsetTop;
+                    leftSidebar.scrollTo({ top: Math.max(0, genreTop - 150), behavior: 'smooth' });
+                    // Brief highlight to draw attention
+                    genreSection.style.transition = 'box-shadow 0.3s ease';
+                    genreSection.style.boxShadow = '0 0 0 2px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.2)';
+                    setTimeout(() => { genreSection.style.boxShadow = 'none'; }, 3000);
+                }
             }, 300);
 
         };
 
-        // Show guide tooltip for genre EQ presets
+        // v7.6.3j: Guide removed — user goes straight to interface after mastering
+        window.showGenrePresetGuide = function() { /* removed */ };
+
+        // Keep as no-op for backwards compatibility
+        window.closeGenrePresetGuide = function() {
+            const tooltip = document.getElementById('genrePresetGuideTooltip');
+            if (tooltip) tooltip.remove();
+        };
+
+        /* ═══ REMOVED: showGenrePresetGuide body ═══
         window.showGenrePresetGuide = function() {
-            // Check if guide was already shown this session
             if (window.genrePresetGuideShown) return;
             window.genrePresetGuideShown = true;
 
             const genreSection = document.getElementById('genreSection');
             if (!genreSection) return;
 
-            // Highlight the genre section
             genreSection.style.transition = 'all 0.3s ease';
             genreSection.style.boxShadow = '0 0 0 2px rgba(124, 184, 255, 0.5), 0 0 20px rgba(124, 184, 255, 0.2)';
             genreSection.style.borderRadius = '8px';
@@ -25469,6 +25359,7 @@
             }
 
         };
+        ═══ END REMOVED ═══ */
 
         // Go to export - shows format selection then payment
         window.goToExport = function() {
@@ -27304,7 +27195,7 @@
             const grid = document.getElementById('sidebarSubPresetGrid');
             if (!container || !grid) return;
 
-            const subPresets = genreEQPresets[genre];
+            const subPresets = window.genreEQPresets ? window.genreEQPresets[genre] : null;
             if (!subPresets || subPresets.length === 0) {
                 container.style.display = 'none';
                 return;
@@ -27361,7 +27252,7 @@
         window.showSidebarSubPresets = showSidebarSubPresets;
 
         function applySidebarSubPreset(genre, index) {
-            const subPresets = genreEQPresets[genre];
+            const subPresets = window.genreEQPresets ? window.genreEQPresets[genre] : null;
             if (!subPresets || !subPresets[index]) return;
 
             const preset = subPresets[index];
@@ -28213,107 +28104,13 @@
             closeMasteringComplete();
         };
 
-        // Show guide step
-        window.showGuideStep = function(step) {
-            // Hide all overlays first
-            document.getElementById('masteringCompleteOverlay').style.display = 'none';
-            const step2 = document.getElementById('guideStep2');
-            const step3 = document.getElementById('guideStep3');
-
-            if (step === 2 && step2) {
-                step2.style.display = 'flex';
-            } else if (step === 3 && step3) {
-                step3.style.display = 'flex';
-            }
-        };
-
-        // Select genre in guide
-        window.selectGuideGenre = function(genre) {
-            selectedGuideGenre = genre;
-            const preset = genrePresets[genre];
-
-            // Visual feedback - highlight selected
-            document.querySelectorAll('.genre-btn').forEach(btn => {
-                btn.classList.remove('selected');
-                if (btn.dataset.genre === genre) {
-                    btn.classList.add('selected');
-                }
-            });
-
-            // Apply the genre preset to audio processing
-            const ac = window.audioContext;
-            if (ac && preset) {
-
-                // Apply EQ
-                if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub, ac.currentTime, 0.1);
-                if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass, ac.currentTime, 0.1);
-                if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid, ac.currentTime, 0.1);
-                if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid, ac.currentTime, 0.1);
-                if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid, ac.currentTime, 0.1);
-                if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high, ac.currentTime, 0.1);
-                if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, ac.currentTime, 0.1);
-
-                // AUTO-GAIN COMPENSATION - Prevent clipping from EQ boosts
-                // Skip if LUFS targeting has locked the makeup gain
-                if (!window._lufsGainLocked) {
-                    const eqValues = Object.values(preset.eq);
-                    const totalBoost = eqValues.reduce((sum, val) => sum + Math.max(0, val), 0);
-                    const avgBoost = totalBoost / 3;
-                    const compensationDB = Math.min(avgBoost * 0.7, 4);
-                    const compensationLinear = Math.pow(10, -compensationDB / 20);
-                    if (window.makeupGain && window.originalMakeupGainValue !== undefined) {
-                        const compensatedGain = window.originalMakeupGainValue * compensationLinear;
-                        window.makeupGain.gain.setTargetAtTime(compensatedGain, ac.currentTime, 0.1);
-                    }
-                }
-
-                // Apply compression
-                if (window.compressor) {
-                    window.compressor.threshold.setTargetAtTime(preset.compression.threshold, ac.currentTime, 0.1);
-                    window.compressor.ratio.setTargetAtTime(preset.compression.ratio, ac.currentTime, 0.1);
-                    window.compressor.attack.setTargetAtTime(preset.compression.attack, ac.currentTime, 0.1);
-                    window.compressor.release.setTargetAtTime(preset.compression.release, ac.currentTime, 0.1);
-                }
-
-                // Apply stereo width
-                if (window.sideChannel) {
-                    window.sideChannel.gain.setTargetAtTime(preset.stereoWidth, ac.currentTime, 0.1);
-                }
-
-            }
-
-            // Short delay then go to step 3
-            setTimeout(() => {
-                // Update step 3 with genre info
-                const genreNameEl = document.getElementById('guideGenreName');
-                const finalGenreEl = document.getElementById('guideFinalGenre');
-                if (genreNameEl) genreNameEl.textContent = preset.name;
-                if (finalGenreEl) finalGenreEl.textContent = preset.name;
-
-                const finalLufsEl = document.getElementById('guideFinalLUFS');
-                if (finalLufsEl && window.lastMasteredLUFS) {
-                    finalLufsEl.textContent = window.lastMasteredLUFS.toFixed(1) + ' LUFS';
-                }
-
-                showGuideStep(3);
-            }, 800);
-        };
-
-        // Skip guide and go directly to interface
-        window.skipGuide = function() {
-            closeAllGuides();
-            closeMasteringComplete();
-        };
-
-        // Close all guide overlays
+        // v7.6.3j: Guide steps removed — genre selection now lives in sidebar only
+        window.showGuideStep = function() {};
+        window.selectGuideGenre = function() {};
+        window.skipGuide = function() { if (typeof closeMasteringComplete === 'function') closeMasteringComplete(); };
         window.closeAllGuides = function() {
-            document.getElementById('masteringCompleteOverlay').style.display = 'none';
-            const step2 = document.getElementById('guideStep2');
-            const step3 = document.getElementById('guideStep3');
-            if (step2) step2.style.display = 'none';
-            if (step3) step3.style.display = 'none';
-
-            // Show persistent export bar
+            const overlay = document.getElementById('masteringCompleteOverlay');
+            if (overlay) overlay.style.display = 'none';
             const exportBar = document.getElementById('persistentExportBar');
             if (exportBar) {
                 exportBar.style.display = 'block';
