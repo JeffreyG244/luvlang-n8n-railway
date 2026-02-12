@@ -5007,7 +5007,7 @@
                     <!-- Sub-Genre Presets (populated dynamically from genreEQPresets) -->
                     <div id="consoleSubPresets" style="display: none; margin-top: 10px; background: rgba(0,0,0,0.25); border-radius: 6px; padding: 10px; border: 1px solid rgba(255,255,255,0.04);">
                         <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; text-align: center;">SUB-GENRE PRESETS</div>
-                        <div id="subPresetGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;"></div>
+                        <div id="subPresetGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 160px; overflow-y: auto;"></div>
                     </div>
                 </div>
 
@@ -23660,10 +23660,10 @@
 
                 // Safe intensity multipliers - prevents distortion at all levels
                 const intensityMultipliers = {
-                    1: 0.35,  // Subtle - very gentle processing
-                    2: 0.55,  // Light - noticeable but conservative
-                    3: 0.75,  // Balanced - professional standard
-                    4: 0.90,  // Aggressive - punchy but clean
+                    1: 0.40,  // Subtle - gentle processing
+                    2: 0.60,  // Light - noticeable but conservative
+                    3: 0.85,  // Balanced - professional standard (was 0.75, boosted for fuller sound)
+                    4: 0.95,  // Aggressive - punchy but clean
                     5: 1.0    // Maximum - full preset (NOT boosted to prevent distortion)
                 };
                 let intensityMult = intensityMultipliers[intensity] || 0.75;
@@ -23760,8 +23760,19 @@
                     filters.forEach((f, i) => {
                         if (!f) return;
                         const band = bandKeys[i];
-                        const baseVal = subEQ ? (subEQ[band] ?? eq[band]) : eq[band];
-                        const val = (baseVal + (aiEQ[band] || 0)) * intensityMult * eqScale;
+                        const aiDelta = aiEQ[band] || 0;
+                        let baseVal, val;
+                        if (subEQ) {
+                            // Sub-preset active — user explicitly chose this EQ profile
+                            // Use sub-preset values directly; reduce AI delta to 20%
+                            // (keeps minor track-specific fixes, doesn't fight the preset)
+                            baseVal = subEQ[band] ?? eq[band];
+                            val = (baseVal + aiDelta * 0.2) * intensityMult * eqScale;
+                        } else {
+                            // No sub-preset — use genre EQ + full AI corrections
+                            baseVal = eq[band];
+                            val = (baseVal + aiDelta) * intensityMult * eqScale;
+                        }
                         f.gain.setTargetAtTime(val, ac.currentTime, 0.1);
                     });
                 } else {
@@ -27376,7 +27387,13 @@
             filters.forEach((f, i) => {
                 if (!f) return;
                 const band = bandKeys[i];
-                const baseVal = subEQ ? (subEQ[band] ?? eq[band]) : (eq[band] + (aiEQ[band] || 0));
+                let baseVal;
+                if (subEQ) {
+                    // Sub-preset active — use sub-preset values with minimal AI delta (20%)
+                    baseVal = (subEQ[band] ?? eq[band]) + (aiEQ[band] || 0) * 0.2;
+                } else {
+                    baseVal = eq[band] + (aiEQ[band] || 0);
+                }
                 f.gain.setTargetAtTime(baseVal * mult.eq * aiScale, now, 0.1);
             });
 
@@ -29506,6 +29523,35 @@
                 navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
+    </script>
+
+    <!-- DEV/TESTING: Unlock all premium features -->
+    <script>
+    (function() {
+        // Override tier restrictions — unlock everything for testing
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.feature-locked').forEach(el => {
+                    el.classList.remove('feature-locked');
+                    el.removeAttribute('data-locked');
+                });
+                // Force legendary subscription globally
+                window.currentSubscription = {
+                    tier: 'legendary',
+                    tierData: window.SUBSCRIPTION_TIERS ? window.SUBSCRIPTION_TIERS.legendary : {},
+                    features: {
+                        aiMastering: true, basicEQ: true, lufsMetering: true, basicLimiter: true,
+                        ircLimiter: true, softClipper: true, upwardCompression: true, unlimiter: true,
+                        linearPhaseEQ: true, loudnessHistory: true, spectrogram: true,
+                        multitrackBatch: true, cloudSync: true, referenceMatching: true,
+                        stemSeparation: true, advancedAnalytics: true, priorityProcessing: true
+                    },
+                    limits: { presets: -1, historyDays: 365, exportsPerMonth: -1, maxFileSize: 500 }
+                };
+                console.log('🔓 All features unlocked (testing mode)');
+            }, 2000);
+        });
+    })();
     </script>
 </body>
 </html>
