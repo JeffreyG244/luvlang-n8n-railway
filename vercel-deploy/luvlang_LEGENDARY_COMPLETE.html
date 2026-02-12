@@ -23759,7 +23759,7 @@
                     filters.forEach((f, i) => {
                         if (!f) return;
                         const band = bandKeys[i];
-                        const baseVal = subEQ ? subEQ[i] : eq[band];
+                        const baseVal = subEQ ? (subEQ[band] ?? eq[band]) : eq[band];
                         const val = (baseVal + (aiEQ[band] || 0)) * intensityMult * eqScale;
                         f.gain.setTargetAtTime(val, ac.currentTime, 0.1);
                     });
@@ -27375,7 +27375,7 @@
             filters.forEach((f, i) => {
                 if (!f) return;
                 const band = bandKeys[i];
-                const baseVal = subEQ ? subEQ[i] : (eq[band] + (aiEQ[band] || 0));
+                const baseVal = subEQ ? (subEQ[band] ?? eq[band]) : (eq[band] + (aiEQ[band] || 0));
                 f.gain.setTargetAtTime(baseVal * mult.eq * aiScale, now, 0.1);
             });
 
