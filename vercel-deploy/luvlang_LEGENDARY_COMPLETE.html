@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.3e | Build: 2026-02-11 | Align preview and mastering EQ for consistent sound -->
+<!-- VERSION 7.6.3f | Build: 2026-02-11 | Bulletproof console displays with fallback + debug logging -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12512,7 +12512,24 @@
                     console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                     window.aiTrackProfile = null;
                     window.aiTrackAnalysis = null;
+                    // FALLBACK: populate console with whatever data we have even if AI fails
+                    if (typeof window.populateAIMasteringConsole === 'function') {
+                        try { window.populateAIMasteringConsole(null, null); } catch(_) {}
+                    }
                 }
+
+                // GUARANTEED FALLBACK: If console still shows defaults, force-populate now
+                // This catches cases where populateAIMasteringConsole wasn't defined yet or both calls failed
+                try {
+                    const _lufsCheck = document.getElementById('consoleLufsValue');
+                    if (_lufsCheck && _lufsCheck.textContent === '--' && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
+                        _lufsCheck.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
+                    }
+                    const _tpCheck = document.getElementById('consoleTruePeak');
+                    if (_tpCheck && _tpCheck.textContent === '--' && window.originalInputPeakDB !== undefined && window.originalInputPeakDB !== 0 && isFinite(window.originalInputPeakDB)) {
+                        _tpCheck.textContent = window.originalInputPeakDB.toFixed(1) + ' dBTP';
+                    }
+                } catch(_) {}
 
                 // Display results in UI (analysis only, no fixes)
                 displayAnalysisResults(analysisResults);
@@ -27443,32 +27460,43 @@
 
         // Populate AI Mastering Console with analysis data and auto-show
         window.populateAIMasteringConsole = function(analysis, detectedGenre) {
-            // Populate analysis banner values
-            const lufsEl = document.getElementById('consoleLufsValue');
-            const drEl = document.getElementById('consoleDynamicRange');
-            const tpEl = document.getElementById('consoleTruePeak');
-            const aiGenreEl = document.getElementById('consoleAiGenre');
-            const aiRunnerEl = document.getElementById('consoleAiRunnerUp');
+            console.log('📊 populateAIMasteringConsole called:', {
+                hasAnalysis: !!analysis,
+                hasGenre: !!detectedGenre,
+                inputLUFS: window.originalInputLUFS,
+                inputPeak: window.originalInputPeakDB,
+                overallCrest: analysis ? analysis.overallCrest : 'N/A'
+            });
 
-            if (lufsEl && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
-                lufsEl.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
-            } else if (lufsEl) {
-                lufsEl.textContent = '--';
-            }
+            // Each field wrapped in try-catch so one failure doesn't block others
+            try {
+                const lufsEl = document.getElementById('consoleLufsValue');
+                if (lufsEl && window.originalInputLUFS !== undefined && isFinite(window.originalInputLUFS)) {
+                    lufsEl.textContent = window.originalInputLUFS.toFixed(1) + ' LUFS';
+                } else if (lufsEl) {
+                    lufsEl.textContent = '--';
+                }
+            } catch(e) { console.error('Console LUFS error:', e); }
 
-            if (drEl && analysis && analysis.overallCrest !== undefined) {
-                const crest = typeof analysis.overallCrest === 'string' ? parseFloat(analysis.overallCrest) : analysis.overallCrest;
-                drEl.textContent = isFinite(crest) ? crest.toFixed(1) + ' dB' : '--';
-            } else if (drEl) {
-                drEl.textContent = '--';
-            }
+            try {
+                const drEl = document.getElementById('consoleDynamicRange');
+                if (drEl && analysis && analysis.overallCrest !== undefined) {
+                    const crest = typeof analysis.overallCrest === 'string' ? parseFloat(analysis.overallCrest) : analysis.overallCrest;
+                    drEl.textContent = isFinite(crest) ? crest.toFixed(1) + ' dB' : '--';
+                } else if (drEl) {
+                    drEl.textContent = '--';
+                }
+            } catch(e) { console.error('Console DR error:', e); }
 
-            const truePeak = window.originalInputPeakDB;
-            if (tpEl && truePeak !== undefined && truePeak !== 0 && isFinite(truePeak)) {
-                tpEl.textContent = truePeak.toFixed(1) + ' dBTP';
-            } else if (tpEl) {
-                tpEl.textContent = '--';
-            }
+            try {
+                const tpEl = document.getElementById('consoleTruePeak');
+                const truePeak = window.originalInputPeakDB;
+                if (tpEl && truePeak !== undefined && truePeak !== 0 && isFinite(truePeak)) {
+                    tpEl.textContent = truePeak.toFixed(1) + ' dBTP';
+                } else if (tpEl) {
+                    tpEl.textContent = '--';
+                }
+            } catch(e) { console.error('Console TP error:', e); }
 
             if (detectedGenre && aiGenreEl) {
                 const genreNames = {
