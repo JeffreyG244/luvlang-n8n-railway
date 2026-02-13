@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.7 | Build: 2026-02-12 | Reference overlay, codec preview, album mastering, split-screen A/B, module delta, custom tonal curves -->
+<!-- VERSION 7.6.8c5 | Build: 2026-02-13 | Simplified mastering chain — EQ + compression + LUFS + limiter only -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23976,6 +23976,25 @@
                 const stageInt = (aiProfile && aiProfile.stageIntensity) ? aiProfile.stageIntensity : {};
                 const aiCrestDiff = (aiProfile && aiProfile.crestDiff) || 0;
 
+                // v7.6.8c5: SIMPLIFIED MASTERING CHAIN
+                // Problem: 7+ dynamics stages stacked (dynamic EQ, bus comp, NY comp, multiband,
+                // HF limiter, look-ahead limiter, brickwall) eat 3-5 dB of bass and over-saturate.
+                // Solution: Keep ONLY what makes a master sound good:
+                //   1. Genre EQ (7-band) — the preset sound the user chose
+                //   2. Gentle bus compression — just glue, not squash
+                //   3. LUFS-targeted makeup gain — hit the loudness target
+                //   4. Brickwall limiter at -1.0 dBTP — safety ceiling
+                // Everything else is bypassed — cleaner, punchier, more dynamic masters.
+                bypass.dynamicEQ    = true;  // Was stacking compression on low end
+                bypass.multibandComp = true; // Was eating bass with -18 dB threshold
+                bypass.transient    = true;  // Was reshaping dynamics unnecessarily
+                bypass.warmth       = true;  // Saturation adds artifacts at scale
+                bypass.exciter      = true;  // Was adding HF harshness
+                bypass.hfLimiter    = true;  // Extra limiting = extra bass loss
+                bypass.msProcessing = true;  // M/S EQ alters tonal balance
+                bypass.stereoWidth  = true;  // Stereo widening distributes energy
+                console.log('🎛️ v7.6.8c5: Simplified chain — EQ + compression + LUFS + limiter only');
+
                 // Apply processingScale to intensity — already-mastered tracks get reduced processing
                 // processingScale: 0.3 (already mastered) → 1.0 (raw mix needs full work)
                 intensityMult *= aiScale;
@@ -24196,49 +24215,43 @@
                     }
                 }
 
-                // NY Parallel Compression guard — disable at low intensity, conservative mix at higher
+                // NY Parallel Compression — v7.6.8c5: ALWAYS disabled
+                // NY comp has a 100Hz highpass that removes bass from the compressed signal,
+                // contributing to the "thin mastered sound" problem. Disabled entirely.
                 if (window.nyCompression) {
-                    if (effectiveIntensity <= 2 || bypass.compression) {
-                        // Disable NY compression at low intensity or when compression bypassed
-                        window.nyCompression.dry.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
-                        window.nyCompression.wet.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
-                        console.log('🎚️ NY Compression: disabled (intensity=' + effectiveIntensity + ')');
-                    } else {
-                        // Use computed TARGET ratio (AudioParam.value is stale during setTargetAtTime ramp)
-                        const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
-                        const compRatioTarget = comp.ratio * compRatioMult * aiRatioMult;
-                        // Conservative wet mix: 5-15% range (mastering-grade parallel compression)
-                        const nyBaseMix = { 3: 0.06, 4: 0.10, 5: 0.15 }; // v7.5.0: gentler compressor = can blend more
-                        const nyBase = nyBaseMix[effectiveIntensity] || 0.04;
-                        // Reduce when compressor ratio is high (already compressing enough)
-                        const nyRatioScale = Math.max(0.3, 1.0 - (compRatioTarget - 1.5) / 6.0);
-                        const nyWet = nyBase * nyRatioScale;
-                        window.nyCompression.dry.gain.setTargetAtTime(1.0 - nyWet * 0.3, ac.currentTime, 0.1);
-                        window.nyCompression.wet.gain.setTargetAtTime(nyWet, ac.currentTime, 0.1);
-                        console.log('🎚️ NY Compression: wet=' + nyWet.toFixed(3) + ' (targetRatio=' + compRatioTarget.toFixed(2) + ')');
-                    }
+                    window.nyCompression.dry.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    window.nyCompression.wet.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    console.log('🎚️ NY Compression: disabled (v7.6.8c5 simplified chain)');
                 }
 
-                // 12a. Engage multiband crossover bypass → active
+                // 12a. Multiband crossover — v7.6.8c5: Keep on bypass path
+                // Routing through crossover filters (even at unity) causes phase artifacts.
+                // With multiband compression bypassed, keep the bypass gain at 1.0 (straight through).
                 if (window.mbBypass && window.multibandControls) {
-                    window.mbBypass.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
-                    window.multibandControls.low.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
-                    window.multibandControls.mid.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
-                    window.multibandControls.high.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    window.mbBypass.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    window.multibandControls.low.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    window.multibandControls.mid.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    window.multibandControls.high.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    console.log('🔊 Multiband crossover: bypassed (v7.6.8c5 — avoiding phase artifacts)');
                 }
 
-                // 12b. Engage M/S EQ bypass → active
+                // 12b. M/S EQ — v7.6.8c5: Keep on bypass path (msProcessing is bypassed)
+                // No need to engage M/S matrix when we're not doing M/S processing.
                 if (window.msEQ_Bypass) {
-                    window.msEQ_Bypass.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
-                    if (window.msEQ_MidL) window.msEQ_MidL.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
-                    if (window.msEQ_MidR) window.msEQ_MidR.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
-                    if (window.msEQ_SideL) window.msEQ_SideL.gain.setTargetAtTime(0.5, ac.currentTime, 0.1);
-                    if (window.msEQ_SideR) window.msEQ_SideR.gain.setTargetAtTime(-0.5, ac.currentTime, 0.1);
+                    window.msEQ_Bypass.gain.setTargetAtTime(1.0, ac.currentTime, 0.1);
+                    if (window.msEQ_MidL) window.msEQ_MidL.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    if (window.msEQ_MidR) window.msEQ_MidR.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    if (window.msEQ_SideL) window.msEQ_SideL.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    if (window.msEQ_SideR) window.msEQ_SideR.gain.setTargetAtTime(0.0, ac.currentTime, 0.1);
+                    console.log('🔊 M/S EQ: bypassed (v7.6.8c5 — simplified chain)');
                 }
 
-                // 12c. Engage bass mono
-                if (window.bassMonoControls) {
-                    window.bassMonoControls.enable();
+                // 12c. Bass mono — v7.6.8c5: DISABLED
+                // Bass mono crossover at 150Hz with 0.5x gain sum was reducing low-end energy.
+                // Mono bass is a mixing technique, not needed in mastering.
+                if (window.bassMonoControls && window.bassMonoControls.disable) {
+                    window.bassMonoControls.disable();
+                    console.log('🔊 Bass mono: disabled (v7.6.8c5 — preserving low-end energy)');
                 }
 
                 // 12d. Engage HF limiter to active compression
@@ -24453,50 +24466,29 @@
                 updateStageProgress(18, 'Setting up limiter...');
                 await new Promise(resolve => setTimeout(resolve, 80));
 
-                // 20. Brickwall Safety Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
-                // NOTE: This is the SECOND limiter (after look-ahead limiter).
-                // The look-ahead does the main limiting work — this is a SAFETY NET only.
-                // Fixed -1.0 dBTP threshold (broadcast standard), ratio 20 (true brickwall),
-                // hard knee (0-1) since look-ahead handles musical limiting upstream.
+                // 20. Brickwall Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
+                // v7.6.8c5: Now the SOLE limiter (look-ahead disabled).
+                // -1.0 dBTP prevents ISP clipping after lossy codec transcoding (AAC/OGG/Opus).
+                // Soft knee (6 dB) for more musical limiting as the only limiter in chain.
+                // Longer release (150ms) to prevent bass pumping on sustained low notes.
                 if (window.limiter) {
-                    // v7.6.3h: Brickwall SAFETY at -1.0 dBTP (ITU-R BS.1770 / streaming standard)
-                    // -1.0 dBTP prevents ISP clipping after lossy codec transcoding (AAC/OGG/Opus)
-                    // Release 120ms prevents distortion on sustained bass notes (was 50ms)
                     window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.080, ac.currentTime, 0.1);
-
+                    window.limiter.knee.setTargetAtTime(6, ac.currentTime, 0.1);
+                    window.limiter.attack.setTargetAtTime(0.003, ac.currentTime, 0.1);
+                    window.limiter.release.setTargetAtTime(0.150, ac.currentTime, 0.1);
                 }
 
                 updateStageProgress(19, 'Configuring look-ahead...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // 21. Look-Ahead Limiter - PRIMARY MASTERING LIMITER (5ms look-ahead)
-                // This is the PRIMARY limiter — does the musical limiting work transparently.
-                // At low intensity: gentle threshold, look-ahead does all work cleanly.
-                // At high intensity: lets more through for punchier brickwall action.
+                // 21. Look-Ahead Limiter — v7.6.8c5: DISABLED
+                // Two stacked limiters (look-ahead + brickwall) cause cumulative bass pumping.
+                // The brickwall at -1.0 dBTP is sufficient as the sole limiter.
+                // Setting threshold to 0 dBTP effectively disables it (nothing to limit).
                 if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
-                    // v7.6.3h: Look-ahead is PRIMARY musical limiter, brickwall is safety at -1.0 dBTP
-                    // Thresholds lowered to prevent brickwall from working too hard
-                    // Professional staging: look-ahead catches 90%+ of peaks
-                    // v7.6.8c: Raised thresholds — more headroom before limiting kicks in
-                    const lookAheadThresholds = {
-                        1: -2.0,  // Gentle — maximum headroom, very transparent
-                        2: -1.8,  // Light limiting
-                        3: -1.5,  // Balanced — catches peaks musically
-                        4: -1.2,  // Moderate
-                        5: -1.0   // Maximum — pushes toward ceiling
-                    };
-                    const laThreshold = lookAheadThresholds[effectiveIntensity] || -1.0;
-                    window.lookAheadLimiter.setThreshold(laThreshold);
-                    if (window.lookAheadLimiter.setLookahead) {
-                        window.lookAheadLimiter.setLookahead(0.005); // 5ms look-ahead
-                    }
-
-                } else {
-
+                    window.lookAheadLimiter.setThreshold(0);
+                    console.log('🔊 Look-ahead limiter: disabled (v7.6.8c5 — brickwall only)');
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -24644,11 +24636,11 @@
                     compAttack: comp.attack || 0.020,
                     compRelease: comp.release || 0.18,
                     limiterThreshold: -1.0,  // v7.6.3h: Match live chain brickwall
-                    limiterKnee: 0,
-                    dynamicEQActive: !bypass.dynamicEQ && !!window.dynamicEQ,
-                    nyActive: _nyActive,
-                    nyWetMix: _nyWetMix,
-                    multibandActive: !bypass.multibandComp && !!(window.multibandCompressor && window.multibandCompressor.enable)
+                    limiterKnee: 6,         // v7.6.8c5: Soft knee — sole limiter, more musical
+                    dynamicEQActive: false,  // v7.6.8c5: Bypassed in simplified chain
+                    nyActive: false,         // v7.6.8c5: Disabled — 100Hz HPF eats bass
+                    nyWetMix: 0,
+                    multibandActive: false   // v7.6.8c5: Bypassed in simplified chain
                 };
 
                 let correctionDB;
@@ -24661,18 +24653,12 @@
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
                     // v7.6.3j: Compensate for stages NOT modeled in offline chain
                     // Offline chain models: subsonic, EQ, comp, dynEQ, NY, multiband, limiter
-                    // NOT modeled: warmth, transient, HF limiter, M/S, stereo width, look-ahead limiter, exciter
-                    // v7.6.8c2: Moderate compensation — balanced between old (too aggressive 5 dB)
-                    // and v7.6.8c (too conservative 1 dB). Target: ~1.5-2.5 dB total.
-                    let chainLoss = 0;
-                    if (!bypass.warmth)       chainLoss += 0.2;  // Tape saturation reduces RMS
-                    if (!bypass.transient)    chainLoss += 0.2;  // Transient shaper reshapes dynamics
-                    if (!bypass.hfLimiter)    chainLoss += 0.3;  // HF limiter reduces high-frequency energy
-                    if (!bypass.msProcessing) chainLoss += 0.2;  // M/S processing alters stereo balance
-                    if (!bypass.stereoWidth)  chainLoss += 0.1;  // Stereo widening distributes energy
-                    // Look-ahead limiter — catches peaks the offline chain doesn't model
-                    chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
-                    compensation = Math.min(chainLoss, 3.5);
+                    // v7.6.8c5: Simplified chain — most stages bypassed, minimal compensation needed.
+                    // Only the brickwall limiter (-1.0 dBTP) + bus compression are active.
+                    // The offline chain already models EQ + compression + limiter, so very little
+                    // unmodeled loss remains. Just account for the brickwall limiter catching peaks.
+                    let chainLoss = 0.3 + (effectiveIntensity - 1) * 0.1; // 0.3–0.7 dB for limiter
+                    compensation = Math.min(chainLoss, 1.5);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
