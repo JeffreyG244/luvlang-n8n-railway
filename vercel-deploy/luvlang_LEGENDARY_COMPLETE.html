@@ -13001,15 +13001,24 @@
                 const makeupGain = offlineCtx.createGain();
                 makeupGain.gain.value = chainParams.makeupGainLinear || 1.0;
 
-                // Limiter (same settings as live chain — v7.6.3j: -1.0 dBTP, 80ms release)
-                const lim = offlineCtx.createDynamicsCompressor();
-                lim.threshold.value = chainParams.limiterThreshold || -1.0;
-                lim.knee.value = chainParams.limiterKnee || 0;
-                lim.ratio.value = 20;
-                lim.attack.value = 0.001;
-                lim.release.value = 0.080;
+                // v7.6.8c8: Two-stage limiting to match live chain
+                // Stage 1: Look-ahead limiter simulation (-1.5 dBTP, catches most peaks)
+                const lim1 = offlineCtx.createDynamicsCompressor();
+                lim1.threshold.value = chainParams.limiter2Threshold || -1.5;
+                lim1.knee.value = 0;        // Hard knee
+                lim1.ratio.value = 20;
+                lim1.attack.value = 0.001;
+                lim1.release.value = 0.100;
 
-                // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Limiter → Dest
+                // Stage 2: Brickwall safety limiter (-1.0 dBTP, catches anything that slips through)
+                const lim2 = offlineCtx.createDynamicsCompressor();
+                lim2.threshold.value = chainParams.limiterThreshold || -1.0;
+                lim2.knee.value = chainParams.limiterKnee || 0;
+                lim2.ratio.value = 20;
+                lim2.attack.value = 0.001;
+                lim2.release.value = 0.080;
+
+                // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Lim1 → Lim2 → Dest
                 source.connect(subsonic);
                 let lastNode = subsonic;
                 for (const eq of eqFilters) {
@@ -13047,8 +13056,9 @@
                 }
 
                 lastNode.connect(makeupGain);
-                makeupGain.connect(lim);
-                lim.connect(offlineCtx.destination);
+                makeupGain.connect(lim1);
+                lim1.connect(lim2);
+                lim2.connect(offlineCtx.destination);
 
                 source.start(0, 0, analysisDuration);
                 const rendered = await offlineCtx.startRendering();
@@ -24638,7 +24648,8 @@
                     compAttack: comp.attack || 0.020,
                     compRelease: comp.release || 0.18,
                     limiterThreshold: -1.0,  // v7.6.3h: Match live chain brickwall
-                    limiterKnee: 6,         // v7.6.8c5: Soft knee — sole limiter, more musical
+                    limiterKnee: 0,         // v7.6.8c8: Hard knee — must match live brickwall (knee=0)
+                    limiter2Threshold: -1.5, // v7.6.8c8: Simulates live look-ahead limiter upstream
                     dynamicEQActive: false,  // v7.6.8c5: Bypassed in simplified chain
                     nyActive: false,         // v7.6.8c5: Disabled — 100Hz HPF eats bass
                     nyWetMix: 0,
@@ -24653,14 +24664,12 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // v7.6.3j: Compensate for stages NOT modeled in offline chain
-                    // Offline chain models: subsonic, EQ, comp, dynEQ, NY, multiband, limiter
-                    // v7.6.8c5b: Simplified chain — most stages bypassed, minimal compensation.
-                    // Active: EQ + bus comp + look-ahead limiter (-1.5 dBTP) + brickwall (-1.0 dBTP).
-                    // Offline chain models EQ + comp + limiter. Compensate for the look-ahead
-                    // limiter which isn't in the offline model — it catches ~0.5-1.0 dB of peaks.
-                    let chainLoss = 0.5 + (effectiveIntensity - 1) * 0.15; // 0.5–1.1 dB
-                    compensation = Math.min(chainLoss, 2.0);
+                    // v7.6.8c8: Compensate for offline/live chain differences.
+                    // Offline chain now has two-stage limiting (matching live chain), so the
+                    // main compensation is for the live chain's continuous feedback limiters
+                    // being slightly more transparent than the offline DynamicsCompressors.
+                    let chainLoss = 0.8 + (effectiveIntensity - 1) * 0.2; // 0.8–1.6 dB
+                    compensation = Math.min(chainLoss, 2.5);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
@@ -24702,14 +24711,16 @@
                             console.log(`✅ Pass 3 on target: ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS})`);
                         }
 
-                        // v7.6.3j: True peak check — only reduce if significantly over ceiling
-                        // The live chain has look-ahead + brickwall limiters that catch peaks better
-                        // than the offline DynamicsCompressor, so don't over-correct here
-                        if (pass3.truePeakDB > 0.0) {
-                            const tpOvershoot = pass3.truePeakDB;
-                            correctionDB -= tpOvershoot + 0.1;
+                        // v7.6.8c8: True peak check — only reduce if well above ceiling
+                        // The offline chain now has two-stage limiting (lim1 -1.5 + lim2 -1.0),
+                        // matching the live look-ahead + brickwall. Small overshoots (< 1.5 dBTP)
+                        // are caught by the live limiters with their continuous feedback loop,
+                        // which offline DynamicsCompressor nodes can't perfectly replicate.
+                        if (pass3.truePeakDB > 1.5) {
+                            const tpOvershoot = pass3.truePeakDB - 1.0; // Allow 1.0 dBTP headroom for live limiters
+                            correctionDB -= tpOvershoot;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP over 0, reducing gain by ${(tpOvershoot + 0.1).toFixed(1)} dB`);
+                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP over ceiling, reducing gain by ${tpOvershoot.toFixed(1)} dB`);
                         }
                     }
                 }
