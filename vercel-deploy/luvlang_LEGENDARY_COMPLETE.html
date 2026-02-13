@@ -15845,6 +15845,7 @@
                 }, 800);
             }
         }
+        window.updateEQUI = updateEQUI;
 
         // Professional EQ curve visualization - FabFilter/Ozone style
         // Draws a smooth interpolated curve through the EQ band points
@@ -28053,9 +28054,14 @@
                 });
             }
 
-            // Update EQ fader UI
-            if (typeof updateEQFaderDisplay === 'function') {
-                updateEQFaderDisplay();
+            // Update sidebar EQ faders + value displays + visualization
+            const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+            const scaledEQ = {};
+            bands.forEach((b, i) => {
+                scaledEQ[b] = Math.max(-12, Math.min(12, eqVals[i] * SUBPRESET_SCALE * intensityBoost));
+            });
+            if (typeof window.updateEQUI === 'function') {
+                window.updateEQUI(scaledEQ);
             }
 
             // Auto-gain compensation to prevent clipping
