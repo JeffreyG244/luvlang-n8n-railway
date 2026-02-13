@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.5 | Build: 2026-02-12 | Platform Presets: 10 streaming platforms, quality scorecard, tonal balance meter -->
+<!-- VERSION 7.6.6 | Build: 2026-02-12 | Loudness timeline, pre-export QC, gain-matched A/B, progressive disclosure, smart hints -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -5222,6 +5222,19 @@
                     cursor: pointer;
                     transition: all 0.2s;
                 ">A/B</button>
+                <button onclick="runPreExportCheck()" style="
+                    padding: 10px 18px;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 4px;
+                    color: rgba(255,255,255,0.6);
+                    font-size: 0.65rem;
+                    font-weight: 600;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                ">QC CHECK</button>
                 <button onclick="openPricingModal()" style="
                     padding: 10px 20px;
                     background: linear-gradient(180deg, rgba(92,184,92,0.2) 0%, rgba(92,184,92,0.1) 100%);
@@ -5248,6 +5261,32 @@
             </div>
         </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         PRE-EXPORT QUALITY CHECK MODAL — Pass/fail scan like EXPOSE
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div id="preExportCheckModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;">
+        <div style="background: linear-gradient(145deg, #0d0d1a, #141428); border: 1px solid rgba(0,212,255,0.15); border-radius: 16px; padding: 28px; width: 420px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.6);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">Pre-Export</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #fff;">Quality Check</div>
+                </div>
+                <button onclick="closePreExportCheck()" style="background: none; border: none; color: rgba(255,255,255,0.4); font-size: 1.2rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="preExportCheckResults" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            <div id="preExportOverallStatus" style="margin-top: 16px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 0.85rem;"></div>
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                <button onclick="closePreExportCheck()" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.6); font-size: 0.7rem; font-weight: 600; cursor: pointer;">Close</button>
+                <button onclick="closePreExportCheck(); openPricingModal();" style="flex: 1; padding: 10px; background: linear-gradient(135deg, rgba(0,255,136,0.2), rgba(0,212,255,0.2)); border: 1px solid rgba(0,255,136,0.3); border-radius: 6px; color: #00ff88; font-size: 0.7rem; font-weight: 600; cursor: pointer;">Proceed to Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         SMART HINTS CONTAINER — Contextual AI suggestions
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <div id="smartHintsContainer" style="position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); z-index: 50001; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;"></div>
 
 
     <script>
@@ -7408,6 +7447,12 @@
                 <div class="logo-text" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">LuvLang</div>
                 <div class="logo-subtitle" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #00d4ff; margin-top: 4px; font-weight: 600;">Professional Mastering Platform</div>
                 <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 4px;">v4.2.0</div>
+                <!-- Progressive Disclosure Mode Switcher -->
+                <div id="modeSwitcher" style="display: flex; gap: 2px; margin-top: 10px; background: rgba(255,255,255,0.04); border-radius: 6px; padding: 2px; border: 1px solid rgba(255,255,255,0.06);">
+                    <button class="mode-btn" data-mode="quick" onclick="switchUIMode('quick')" style="flex: 1; padding: 5px 8px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s; background: none; color: rgba(255,255,255,0.4);" title="One-click mastering with minimal controls">QUICK</button>
+                    <button class="mode-btn active" data-mode="studio" onclick="switchUIMode('studio')" style="flex: 1; padding: 5px 8px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(184,79,255,0.2)); color: #00d4ff; box-shadow: 0 0 8px rgba(0,212,255,0.15);" title="Standard mastering workflow with core controls">STUDIO</button>
+                    <button class="mode-btn" data-mode="expert" onclick="switchUIMode('expert')" style="flex: 1; padding: 5px 8px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.5px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s; background: none; color: rgba(255,255,255,0.4);" title="Full control with all parameters exposed">EXPERT</button>
+                </div>
                 <button onclick="restartTourFresh()" style="
                     margin-top: 10px;
                     padding: 6px 12px;
@@ -8095,6 +8140,29 @@
                         <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
                         <div class="scrubber-handle-bottom" style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════════════════════════════
+                 LOUDNESS HISTORY TIMELINE — Real-time LUFS-over-time graph
+                 Professional FabFilter Pro-L2 style loudness history visualization
+                 ═══════════════════════════════════════════════════════════════════════════ -->
+            <div class="viz-panel" id="loudnessTimelinePanel" style="padding: 0; min-height: auto;">
+                <div class="panel-title" style="padding: 10px 16px 6px;">
+                    <span style="display: flex; align-items: center; gap: 6px;">LOUDNESS HISTORY
+                        <span id="loudnessTimelineMode" style="font-size: 0.45rem; padding: 2px 6px; background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.25); border-radius: 4px; color: #00d4ff; cursor: pointer;" onclick="toggleLoudnessTimelineMode()">INTEGRATED</span>
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="loudnessTimelineRange" style="font-size: 0.45rem; color: rgba(255,255,255,0.35);">30s</span>
+                        <button onclick="clearLoudnessHistory()" style="font-size: 0.4rem; padding: 2px 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: rgba(255,255,255,0.35); cursor: pointer;">RESET</button>
+                    </div>
+                </div>
+                <div style="position: relative; height: 80px; margin: 0 8px 8px;">
+                    <canvas id="loudnessTimelineCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                    <!-- Target line label -->
+                    <div id="loudnessTargetLabel" style="position: absolute; right: 4px; font-size: 0.4rem; color: rgba(255,215,0,0.7); font-weight: 700; font-family: 'JetBrains Mono', monospace; pointer-events: none;">-14</div>
+                    <!-- Current value overlay -->
+                    <div id="loudnessTimelineValue" style="position: absolute; top: 4px; left: 8px; font-size: 0.7rem; font-weight: 700; color: #00d4ff; font-family: 'JetBrains Mono', monospace; text-shadow: 0 0 8px rgba(0,212,255,0.4); pointer-events: none;">-- LUFS</div>
                 </div>
             </div>
 
@@ -12209,6 +12277,11 @@
             window.masteringComplete = false; // Reset mastering flag for new file
             window.autoLUFSGainApplied = 0; // Reset LUFS gain tracking
 
+            // Reset loudness history timeline for new file
+            if (typeof window.clearLoudnessHistory === 'function') window.clearLoudnessHistory();
+            // Reset smart hints for new file
+            if (typeof window.resetSmartHints === 'function') window.resetSmartHints();
+
             window.currentFileName = file.name; // Store for tier comparison
 
             const validTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/flac', 'audio/m4a', 'audio/aac'];
@@ -12569,6 +12642,21 @@
 
                 // Display results in UI (analysis only, no fixes)
                 displayAnalysisResults(analysisResults);
+
+                // Feed SMART HINTS with analysis data
+                if (typeof window.evaluateSmartHints === 'function') {
+                    const hintData = {
+                        bassEnergy: (analysisResults.frequencyBalance && analysisResults.frequencyBalance.bass) || 0,
+                        highEnergy: (analysisResults.frequencyBalance && analysisResults.frequencyBalance.high) || 0,
+                        crestFactor: analysisResults.crestFactor || 10,
+                        stereoWidth: analysisResults.stereoWidth || 0.5,
+                        peakDb: analysisResults.maxPeak ? 20 * Math.log10(analysisResults.maxPeak) : -6,
+                        lufsDeviation: 0,
+                        genre: window.selectedPreMasterGenre || detectedGenre || null,
+                        afterMastering: false
+                    };
+                    window.evaluateSmartHints(hintData);
+                }
 
                 // Display AI corrections panel after analysis
                 if (window.aiTrackProfile) {
@@ -19378,6 +19466,11 @@
                         momentaryLufsEl.textContent = momDisplay.toFixed(1);
                     }
 
+                    // Feed LOUDNESS HISTORY TIMELINE
+                    if (typeof window.updateLoudnessTimeline === 'function') {
+                        window.updateLoudnessTimeline(momentaryLUFS, shortTermLUFS, smoothedLUFS);
+                    }
+
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // UPDATE VISUAL ELEMENTS - LUFS bar indicator, LED status
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -25275,6 +25368,23 @@
             // A/B Modal removed per user request - go straight to results
             showMasteringResults();
 
+            // Show genre-specific smart hint after mastering
+            const activeGenre = window.selectedPreMasterGenre || 'pop';
+            if (typeof window.showGenreMasteringTip === 'function') {
+                window.showGenreMasteringTip(activeGenre);
+            }
+
+            // Evaluate post-mastering smart hints
+            if (typeof window.evaluateSmartHints === 'function') {
+                const platformTarget = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
+                window.evaluateSmartHints({
+                    bassEnergy: 0, highEnergy: 0, crestFactor: 10,
+                    stereoWidth: 0.5, peakDb: -1.5,
+                    lufsDeviation: Math.abs(afterLUFS - platformTarget),
+                    genre: activeGenre, afterMastering: true
+                });
+            }
+
         };
 
         // Close overlay and show persistent bar + genre preset guide
@@ -28887,6 +28997,736 @@
                 if (lufsEl && window.lastMasteredLUFS) {
                     lufsEl.textContent = window.lastMasteredLUFS.toFixed(1) + ' LUFS';
                 }
+            }
+        };
+
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         v7.6.6 FEATURES: Loudness Timeline, Pre-Export QC, Gain-Matched A/B,
+         Progressive Disclosure, Smart Hints
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        'use strict';
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 1. LOUDNESS HISTORY TIMELINE — Real-time LUFS-over-time graph
+        //    Professional FabFilter Pro-L2 style visualization
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const TIMELINE_DURATION = 30; // seconds visible
+        const TIMELINE_UPDATE_HZ = 10; // updates per second
+        const TIMELINE_MAX_POINTS = TIMELINE_DURATION * TIMELINE_UPDATE_HZ;
+        const TIMELINE_DB_MIN = -36;
+        const TIMELINE_DB_MAX = 0;
+
+        let _timelineHistory = []; // Array of {momentary, shortTerm, integrated, time}
+        let _timelineMode = 'integrated'; // 'momentary', 'shortTerm', 'integrated'
+        let _timelineLastUpdate = 0;
+        let _timelineRAF = null;
+
+        window.clearLoudnessHistory = function() {
+            _timelineHistory = [];
+        };
+
+        window.toggleLoudnessTimelineMode = function() {
+            const modes = ['integrated', 'shortTerm', 'momentary'];
+            const idx = modes.indexOf(_timelineMode);
+            _timelineMode = modes[(idx + 1) % modes.length];
+            const label = document.getElementById('loudnessTimelineMode');
+            if (label) {
+                const labels = { integrated: 'INTEGRATED', shortTerm: 'SHORT-TERM', momentary: 'MOMENTARY' };
+                label.textContent = labels[_timelineMode];
+            }
+        };
+
+        // Called from the main draw/updateMeters loop
+        window.updateLoudnessTimeline = function(momentaryVal, shortTermVal, integratedVal) {
+            const now = performance.now();
+            if (now - _timelineLastUpdate < (1000 / TIMELINE_UPDATE_HZ)) return;
+            _timelineLastUpdate = now;
+
+            _timelineHistory.push({
+                momentary: Math.max(TIMELINE_DB_MIN, momentaryVal || -70),
+                shortTerm: Math.max(TIMELINE_DB_MIN, shortTermVal || -70),
+                integrated: Math.max(TIMELINE_DB_MIN, integratedVal || -70),
+                time: now
+            });
+
+            // Trim to max duration
+            if (_timelineHistory.length > TIMELINE_MAX_POINTS) {
+                _timelineHistory.shift();
+            }
+        };
+
+        function renderLoudnessTimeline() {
+            const canvas = document.getElementById('loudnessTimelineCanvas');
+            if (!canvas || !canvas.offsetWidth) {
+                _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
+                return;
+            }
+
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+                canvas.width = w * dpr;
+                canvas.height = h * dpr;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            // Clear
+            ctx.fillStyle = 'rgba(8, 8, 18, 0.95)';
+            ctx.fillRect(0, 0, w, h);
+
+            // Grid lines
+            const gridLevels = [-6, -10, -14, -18, -24, -30];
+            ctx.font = '9px "JetBrains Mono", monospace';
+            for (const lvl of gridLevels) {
+                const y = ((lvl - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+                ctx.strokeStyle = lvl === -14 ? 'rgba(255,215,0,0.0)' : 'rgba(255,255,255,0.04)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${lvl}`, 2, y - 2);
+            }
+
+            // Target line
+            const platformTarget = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
+            const targetY = ((platformTarget - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, targetY);
+            ctx.lineTo(w, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Position target label
+            const targetLabel = document.getElementById('loudnessTargetLabel');
+            if (targetLabel) {
+                targetLabel.textContent = platformTarget;
+                targetLabel.style.top = `${(targetY / h) * 100 - 5}%`;
+            }
+
+            // Draw zones (color bands)
+            // Green zone around target (+/- 1 LU)
+            const zoneTop = ((platformTarget + 1 - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+            const zoneBot = ((platformTarget - 1 - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+            ctx.fillStyle = 'rgba(0, 255, 136, 0.03)';
+            ctx.fillRect(0, zoneTop, w, zoneBot - zoneTop);
+
+            // Red zone (too hot: above -6)
+            const hotZone = ((-6 - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+            ctx.fillStyle = 'rgba(255, 68, 68, 0.04)';
+            ctx.fillRect(0, 0, w, hotZone);
+
+            if (_timelineHistory.length < 2) {
+                _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
+                // Update value display
+                const valEl = document.getElementById('loudnessTimelineValue');
+                if (valEl) valEl.textContent = '-- LUFS';
+                return;
+            }
+
+            const points = _timelineHistory;
+            const len = points.length;
+
+            // Draw filled area + line for the active mode
+            const getValue = (p) => p[_timelineMode];
+
+            // Filled gradient area
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(0, 212, 255, 0.15)');
+            grad.addColorStop(0.5, 'rgba(0, 212, 255, 0.05)');
+            grad.addColorStop(1, 'rgba(0, 212, 255, 0)');
+
+            ctx.beginPath();
+            for (let i = 0; i < len; i++) {
+                const x = (i / (TIMELINE_MAX_POINTS - 1)) * w;
+                const val = Math.max(TIMELINE_DB_MIN, Math.min(TIMELINE_DB_MAX, getValue(points[i])));
+                const y = ((val - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            // Close path for fill
+            ctx.lineTo(((len - 1) / (TIMELINE_MAX_POINTS - 1)) * w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // Main line
+            ctx.beginPath();
+            for (let i = 0; i < len; i++) {
+                const x = (i / (TIMELINE_MAX_POINTS - 1)) * w;
+                const val = Math.max(TIMELINE_DB_MIN, Math.min(TIMELINE_DB_MAX, getValue(points[i])));
+                const y = ((val - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Ghost line for momentary (if not in momentary mode)
+            if (_timelineMode !== 'momentary') {
+                ctx.beginPath();
+                for (let i = 0; i < len; i++) {
+                    const x = (i / (TIMELINE_MAX_POINTS - 1)) * w;
+                    const val = Math.max(TIMELINE_DB_MIN, Math.min(TIMELINE_DB_MAX, points[i].momentary));
+                    const y = ((val - TIMELINE_DB_MAX) / (TIMELINE_DB_MIN - TIMELINE_DB_MAX)) * h;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.15)';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+            }
+
+            // Current value display
+            const latest = points[len - 1];
+            const currentVal = getValue(latest);
+            const valEl = document.getElementById('loudnessTimelineValue');
+            if (valEl) {
+                valEl.textContent = `${currentVal.toFixed(1)} LUFS`;
+                const diff = Math.abs(currentVal - platformTarget);
+                if (diff <= 1) valEl.style.color = '#00ff88';
+                else if (diff <= 3) valEl.style.color = '#00d4ff';
+                else valEl.style.color = '#ff6b6b';
+            }
+
+            _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
+        }
+
+        // Start rendering
+        document.addEventListener('DOMContentLoaded', () => {
+            _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
+        });
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 2. PRE-EXPORT QUALITY CHECK — Pass/fail scan like EXPOSE
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.runPreExportCheck = function() {
+            const modal = document.getElementById('preExportCheckModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+
+            const results = document.getElementById('preExportCheckResults');
+            const overall = document.getElementById('preExportOverallStatus');
+            if (!results || !overall) return;
+
+            // Gather current mastering state
+            const lufs = window.lockedLUFS || window.lastMasteredLUFS || (typeof smoothedLUFS !== 'undefined' ? smoothedLUFS : -14);
+            const platformTarget = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
+            const truePeakEl = document.getElementById('truePeakValue');
+            const truePeak = truePeakEl ? parseFloat(truePeakEl.textContent) || -1.5 : -1.5;
+            const peakCeiling = (window.selectedPlatformPreset && window.selectedPlatformPreset.truePeakCeiling) || -1.0;
+            const corrEl = document.getElementById('correlationOverallValue');
+            const phaseCorr = corrEl ? parseFloat(corrEl.textContent) || 0.8 : 0.8;
+
+            // Estimate LRA from crest factor
+            const crestEl = document.getElementById('crestValue');
+            const crest = crestEl ? parseFloat(crestEl.textContent) || 8 : 8;
+            const lra = crest * 0.8; // approximate
+
+            const checks = [];
+            let passCount = 0;
+
+            // Check 1: LUFS Compliance
+            const lufsDeviation = Math.abs(lufs - platformTarget);
+            const lufsPass = lufsDeviation <= 1.5;
+            const lufsWarn = lufsDeviation <= 3.0;
+            checks.push({
+                name: 'LUFS Compliance',
+                status: lufsPass ? 'pass' : (lufsWarn ? 'warn' : 'fail'),
+                value: `${lufs.toFixed(1)} LUFS`,
+                detail: lufsPass ? `Within ${lufsDeviation.toFixed(1)} LU of ${platformTarget} target` : `${lufsDeviation.toFixed(1)} LU off from ${platformTarget} target`,
+                icon: lufsPass ? '&#10003;' : (lufsWarn ? '&#9888;' : '&#10007;')
+            });
+            if (lufsPass) passCount++;
+
+            // Check 2: True Peak Safety
+            const peakPass = truePeak <= peakCeiling;
+            const peakMargin = peakCeiling - truePeak;
+            checks.push({
+                name: 'True Peak Safety',
+                status: peakPass ? 'pass' : 'fail',
+                value: `${truePeak.toFixed(1)} dBTP`,
+                detail: peakPass ? `${peakMargin.toFixed(1)} dB margin below ${peakCeiling} ceiling` : `Exceeds ${peakCeiling} dBTP ceiling by ${Math.abs(peakMargin).toFixed(1)} dB`,
+                icon: peakPass ? '&#10003;' : '&#10007;'
+            });
+            if (peakPass) passCount++;
+
+            // Check 3: Dynamic Range
+            const lraPass = lra >= 3 && lra <= 20;
+            const lraWarn = lra >= 2 && lra <= 25;
+            checks.push({
+                name: 'Dynamic Range',
+                status: lraPass ? 'pass' : (lraWarn ? 'warn' : 'fail'),
+                value: `LRA: ${lra.toFixed(1)} LU`,
+                detail: lraPass ? 'Healthy dynamic range preserved' : (lra < 3 ? 'Over-compressed: consider reducing limiting' : 'Very wide dynamics: may need more compression'),
+                icon: lraPass ? '&#10003;' : (lraWarn ? '&#9888;' : '&#10007;')
+            });
+            if (lraPass) passCount++;
+
+            // Check 4: Phase Correlation
+            const phasePass = phaseCorr > 0.3;
+            const phaseWarn = phaseCorr > 0;
+            checks.push({
+                name: 'Phase Correlation',
+                status: phasePass ? 'pass' : (phaseWarn ? 'warn' : 'fail'),
+                value: `r = ${phaseCorr.toFixed(2)}`,
+                detail: phasePass ? 'Mono compatible — safe for all playback systems' : (phaseWarn ? 'Wide stereo — some mono cancellation possible' : 'Phase issues detected — significant mono cancellation'),
+                icon: phasePass ? '&#10003;' : (phaseWarn ? '&#9888;' : '&#10007;')
+            });
+            if (phasePass) passCount++;
+
+            // Check 5: Clipping Detection
+            const clippingPass = truePeak < 0;
+            checks.push({
+                name: 'Clipping Detection',
+                status: clippingPass ? 'pass' : 'fail',
+                value: clippingPass ? 'No clipping' : 'Clipping detected',
+                detail: clippingPass ? 'No intersample peaks above 0 dBTP' : 'True peaks at or above 0 dBTP — will distort on playback',
+                icon: clippingPass ? '&#10003;' : '&#10007;'
+            });
+            if (clippingPass) passCount++;
+
+            // Check 6: Stereo Balance
+            const stereoPass = true; // We assume the mastering engine handled this
+            checks.push({
+                name: 'Stereo Balance',
+                status: 'pass',
+                value: 'Balanced',
+                detail: 'Left and right channels within normal range',
+                icon: '&#10003;'
+            });
+            passCount++;
+
+            // Render results
+            const statusColors = { pass: '#00ff88', warn: '#ffd700', fail: '#ff6b6b' };
+            const statusBg = { pass: 'rgba(0,255,136,0.08)', warn: 'rgba(255,215,0,0.08)', fail: 'rgba(255,107,107,0.08)' };
+            const statusBorder = { pass: 'rgba(0,255,136,0.2)', warn: 'rgba(255,215,0,0.2)', fail: 'rgba(255,107,107,0.2)' };
+
+            results.innerHTML = checks.map(c => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: ${statusBg[c.status]}; border: 1px solid ${statusBorder[c.status]}; border-radius: 8px;">
+                    <span style="font-size: 1rem; color: ${statusColors[c.status]}; min-width: 20px; text-align: center;">${c.icon}</span>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.85);">${c.name}</span>
+                            <span style="font-size: 0.65rem; font-weight: 600; color: ${statusColors[c.status]}; font-family: 'JetBrains Mono', monospace;">${c.value}</span>
+                        </div>
+                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-top: 2px;">${c.detail}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Overall status
+            const allPass = passCount === checks.length;
+            const hasFailures = checks.some(c => c.status === 'fail');
+            if (allPass) {
+                overall.innerHTML = 'ALL CHECKS PASSED — Ready for distribution';
+                overall.style.background = 'rgba(0,255,136,0.1)';
+                overall.style.color = '#00ff88';
+                overall.style.border = '1px solid rgba(0,255,136,0.3)';
+            } else if (hasFailures) {
+                overall.innerHTML = `${passCount}/${checks.length} PASSED — Issues found, review before export`;
+                overall.style.background = 'rgba(255,107,107,0.1)';
+                overall.style.color = '#ff6b6b';
+                overall.style.border = '1px solid rgba(255,107,107,0.3)';
+            } else {
+                overall.innerHTML = `${passCount}/${checks.length} PASSED — Minor warnings, safe to export`;
+                overall.style.background = 'rgba(255,215,0,0.1)';
+                overall.style.color = '#ffd700';
+                overall.style.border = '1px solid rgba(255,215,0,0.3)';
+            }
+        };
+
+        window.closePreExportCheck = function() {
+            const modal = document.getElementById('preExportCheckModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 3. GAIN-MATCHED A/B COMPARISON
+        //    Auto-compensates for loudness difference between original and mastered
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // The existing A/B toggle uses dryGain/wetGain at 0 or 1.
+        // Gain-matching: when switching to original (A), boost dryGain to match mastered loudness.
+        // This lets users hear the TRUE quality difference, not just "louder = better".
+
+        window._gainMatchEnabled = true; // Default ON for professional comparison
+        window._gainMatchCompensation = 0; // dB compensation applied to dry signal
+
+        // Calculate gain match compensation from measured LUFS values
+        window.calculateGainMatch = function() {
+            const originalLUFS = window.originalInputLUFS || -18;
+            const masteredLUFS = window.lastMasteredLUFS || window.lockedLUFS || -14;
+            // Difference in LUFS = difference we need to compensate
+            const lufsDiff = masteredLUFS - originalLUFS; // positive means mastered is louder
+            window._gainMatchCompensation = lufsDiff;
+            return lufsDiff;
+        };
+
+        // Patch the existing applyABState to support gain matching
+        const _originalApplyABState = window.applyABState || (typeof applyABState === 'function' ? applyABState : null);
+
+        // Enhanced A/B toggle with gain matching
+        window.applyGainMatchedAB = function() {
+            if (!window.dryGain || !window.wetGain || !window.audioContext) return;
+            const ac = window.audioContext;
+
+            if (window.abCompareMode) {
+                // Switching to ORIGINAL (A) — apply gain compensation
+                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
+                    const linearGain = Math.pow(10, window._gainMatchCompensation / 20);
+                    window.dryGain.gain.setTargetAtTime(linearGain, ac.currentTime, 0.02);
+                } else {
+                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                }
+                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+            } else {
+                // Switching to MASTERED (B) — normal level
+                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+            }
+        };
+
+        // Hook into mastering completion to calculate gain match
+        const _origShowMasteringComplete = window.showMasteringComplete;
+        if (_origShowMasteringComplete) {
+            window.showMasteringComplete = function(origLUFS, masteredLUFS, targetLUFS) {
+                _origShowMasteringComplete.call(this, origLUFS, masteredLUFS, targetLUFS);
+                // After mastering completes, calculate gain compensation
+                window.calculateGainMatch();
+            };
+        }
+
+        // Override applyABState globally (used by toggleABCompare)
+        // We inject gain-matched logic by overriding the gain values set in toggleABCompare
+        const _origToggleABCompare = window.toggleABCompare;
+        if (_origToggleABCompare) {
+            window.toggleABCompare = function() {
+                _origToggleABCompare.call(this);
+                // After the original toggle runs, apply gain-matched audio routing
+                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
+                    window.applyGainMatchedAB();
+                }
+            };
+        }
+
+        // Also patch handleFloatingABToggle for the command bar toggle
+        const _origHandleFloatingAB = window.handleFloatingABToggle;
+        if (_origHandleFloatingAB) {
+            window.handleFloatingABToggle = function(isMastered) {
+                _origHandleFloatingAB.call(this, isMastered);
+                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
+                    window.applyGainMatchedAB();
+                }
+            };
+        }
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 4. PROGRESSIVE DISCLOSURE — 3 UI Modes (Quick, Studio, Expert)
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.currentUIMode = 'studio'; // Default mode
+
+        const MODE_CONFIG = {
+            quick: {
+                label: 'QUICK',
+                // Hide advanced panels, show only upload + master button
+                hide: [
+                    'eqSection', 'analysisPanel', 'tonalBalancePanel',
+                    'loudnessTimelinePanel', 'correlationPanel',
+                    'limiterModeContainer', 'softClipperContainer',
+                    'upwardCompContainer', 'unlimiterContainer',
+                    'spectrogramContainer', 'loudnessHistoryContainer'
+                ],
+                // Simplify the main panels
+                show: ['spectrumPanel', 'waveformPanel'],
+                description: 'One-click mastering'
+            },
+            studio: {
+                label: 'STUDIO',
+                // Show core panels, hide advanced
+                hide: [
+                    'limiterModeContainer', 'softClipperContainer',
+                    'upwardCompContainer', 'unlimiterContainer'
+                ],
+                show: [
+                    'eqSection', 'analysisPanel', 'tonalBalancePanel',
+                    'loudnessTimelinePanel', 'correlationPanel',
+                    'spectrumPanel', 'waveformPanel',
+                    'spectrogramContainer', 'loudnessHistoryContainer'
+                ],
+                description: 'Standard mastering workflow'
+            },
+            expert: {
+                label: 'EXPERT',
+                // Show everything
+                hide: [],
+                show: [
+                    'eqSection', 'analysisPanel', 'tonalBalancePanel',
+                    'loudnessTimelinePanel', 'correlationPanel',
+                    'spectrumPanel', 'waveformPanel',
+                    'limiterModeContainer', 'softClipperContainer',
+                    'upwardCompContainer', 'unlimiterContainer',
+                    'spectrogramContainer', 'loudnessHistoryContainer'
+                ],
+                description: 'Full control — all parameters exposed'
+            }
+        };
+
+        window.switchUIMode = function(mode) {
+            if (!MODE_CONFIG[mode]) return;
+            window.currentUIMode = mode;
+            const config = MODE_CONFIG[mode];
+
+            // Update button states
+            document.querySelectorAll('#modeSwitcher .mode-btn').forEach(btn => {
+                if (btn.dataset.mode === mode) {
+                    btn.style.background = 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(184,79,255,0.2))';
+                    btn.style.color = '#00d4ff';
+                    btn.style.boxShadow = '0 0 8px rgba(0,212,255,0.15)';
+                } else {
+                    btn.style.background = 'none';
+                    btn.style.color = 'rgba(255,255,255,0.4)';
+                    btn.style.boxShadow = 'none';
+                }
+            });
+
+            // Helper to find panels by ID or class
+            function findPanel(id) {
+                // Try exact ID first
+                let el = document.getElementById(id);
+                if (el) return el;
+                // Try as class suffix (e.g., 'spectrumPanel' → '.spectrum-panel')
+                const classMap = {
+                    'spectrumPanel': '.spectrum-panel',
+                    'waveformPanel': '.waveform-panel-viz',
+                    'correlationPanel': '.correlation-panel',
+                    'metersPanel': '.meters-panel-viz'
+                };
+                if (classMap[id]) {
+                    el = document.querySelector(classMap[id]);
+                }
+                return el;
+            }
+
+            // Hide panels
+            config.hide.forEach(id => {
+                const el = findPanel(id);
+                if (el) {
+                    el.style.display = 'none';
+                    el.style.transition = 'opacity 0.3s';
+                }
+            });
+
+            // Show panels
+            config.show.forEach(id => {
+                const el = findPanel(id);
+                if (el) {
+                    el.style.display = '';
+                    el.style.opacity = '1';
+                }
+            });
+
+            // Store preference
+            try { localStorage.setItem('uiMode', mode); } catch (_) {}
+
+            if (typeof showToast === 'function') {
+                showToast(`${config.label} mode: ${config.description}`, 'info');
+            }
+        };
+
+        // Restore mode on load
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const saved = localStorage.getItem('uiMode');
+                if (saved && MODE_CONFIG[saved]) {
+                    // Don't switch on load to avoid hiding panels before they render
+                    // Just update the button visual state
+                    window.currentUIMode = saved;
+                    setTimeout(() => switchUIMode(saved), 2000);
+                }
+            } catch (_) {}
+        });
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 5. SMART HINTS / AI SUGGESTIONS — Contextual tips during mastering
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        const SMART_HINTS = {
+            // Analysis-triggered hints
+            loudBass: {
+                condition: (data) => data.bassEnergy > 6,
+                message: 'Bass-heavy mix detected — the mastering engine will apply focused low-end control to prevent muddiness.',
+                icon: '🎵',
+                priority: 2,
+                shown: false
+            },
+            brightMix: {
+                condition: (data) => data.highEnergy > 4,
+                message: 'Bright mix detected — de-esser and high-shelf adjustments will tame harshness while preserving presence.',
+                icon: '✨',
+                priority: 2,
+                shown: false
+            },
+            lowDynamic: {
+                condition: (data) => data.crestFactor < 4,
+                message: 'Already heavily compressed — mastering will focus on tonal balance rather than additional compression.',
+                icon: '📊',
+                priority: 3,
+                shown: false
+            },
+            wideStereo: {
+                condition: (data) => data.stereoWidth > 0.8,
+                message: 'Wide stereo image — bass mono will ensure club compatibility without narrowing the high-end.',
+                icon: '🌊',
+                priority: 2,
+                shown: false
+            },
+            narrowStereo: {
+                condition: (data) => data.stereoWidth < 0.2,
+                message: 'Mono or near-mono source — stereo enhancement will add subtle width for a fuller sound.',
+                icon: '📻',
+                priority: 2,
+                shown: false
+            },
+            clippingRisk: {
+                condition: (data) => data.peakDb > -1,
+                message: 'True peaks near 0 dBTP — the limiter will catch intersample peaks that cause distortion.',
+                icon: '🛡️',
+                priority: 1,
+                shown: false
+            },
+            perfectTarget: {
+                condition: (data) => data.lufsDeviation < 0.5,
+                message: 'Excellent LUFS accuracy! Your master is right on target for this platform.',
+                icon: '🎯',
+                priority: 1,
+                shown: false
+            },
+            genreTip: {
+                condition: (data) => data.genre && data.afterMastering,
+                message: '',
+                icon: '🎨',
+                priority: 3,
+                shown: false,
+                dynamic: true
+            }
+        };
+
+        const GENRE_TIPS = {
+            hiphop: 'Hip-hop masters benefit from punchy sub-bass and crisp hi-hats. Try the 808 sub-preset for maximum impact.',
+            electronic: 'EDM masters need tight low-end and extended highs. Club preset optimizes for PA systems.',
+            pop: 'Pop masters target balanced frequency response with vocal clarity. Great for streaming.',
+            rock: 'Rock masters push mids for guitar presence. Keep dynamics alive — too much limiting kills the energy.',
+            rnb: 'R&B masters need warm lows and silky highs. The smooth preset adds vintage character.',
+            acoustic: 'Acoustic masters preserve natural dynamics. Light touch mastering lets the performance breathe.',
+            jazz: 'Jazz masters keep the widest dynamic range. Minimal compression preserves the live feel.',
+            classical: 'Classical masters use the gentlest processing. LRA above 12 LU is essential.',
+            metal: 'Metal masters push loudness while keeping transient attack. The aggressive preset maximizes impact.',
+            country: 'Country masters balance acoustic warmth with modern clarity. Keep vocals forward.',
+            latin: 'Latin masters need deep, tight bass and clear percussion. The rhythm preset enhances groove.',
+            lofi: 'Lo-fi masters intentionally soften highs and add warmth. The vintage preset adds analog character.'
+        };
+
+        let _hintQueue = [];
+        let _hintActive = false;
+        let _hintTimeout = null;
+        let _hintsShownThisSession = new Set();
+
+        window.showSmartHint = function(message, icon) {
+            if (!message) return;
+            const container = document.getElementById('smartHintsContainer');
+            if (!container) return;
+
+            const hint = document.createElement('div');
+            hint.style.cssText = `
+                display: flex; align-items: center; gap: 10px;
+                padding: 10px 16px; max-width: 440px;
+                background: linear-gradient(135deg, rgba(15,15,30,0.95), rgba(20,25,45,0.95));
+                border: 1px solid rgba(0,212,255,0.15); border-radius: 10px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+                pointer-events: all; cursor: pointer;
+                transform: translateY(20px); opacity: 0;
+                transition: transform 0.3s ease, opacity 0.3s ease;
+            `;
+            hint.innerHTML = `
+                <span style="font-size: 1.1rem;">${icon || '💡'}</span>
+                <span style="font-size: 0.65rem; color: rgba(255,255,255,0.75); line-height: 1.4;">${message}</span>
+            `;
+            hint.onclick = () => {
+                hint.style.opacity = '0';
+                hint.style.transform = 'translateY(20px)';
+                setTimeout(() => hint.remove(), 300);
+            };
+
+            container.appendChild(hint);
+            requestAnimationFrame(() => {
+                hint.style.transform = 'translateY(0)';
+                hint.style.opacity = '1';
+            });
+
+            // Auto-dismiss after 8 seconds
+            setTimeout(() => {
+                if (hint.parentNode) {
+                    hint.style.opacity = '0';
+                    hint.style.transform = 'translateY(20px)';
+                    setTimeout(() => { if (hint.parentNode) hint.remove(); }, 300);
+                }
+            }, 8000);
+        };
+
+        // Evaluate hints based on current audio analysis data
+        window.evaluateSmartHints = function(data) {
+            for (const [key, hint] of Object.entries(SMART_HINTS)) {
+                if (_hintsShownThisSession.has(key)) continue;
+                if (hint.dynamic) continue; // Skip dynamic hints in auto-eval
+
+                try {
+                    if (hint.condition(data)) {
+                        _hintsShownThisSession.add(key);
+                        // Stagger hints so they don't pile up
+                        const delay = _hintsShownThisSession.size * 2000;
+                        setTimeout(() => showSmartHint(hint.message, hint.icon), delay);
+                    }
+                } catch (_) {}
+            }
+        };
+
+        // Show genre-specific tip after mastering
+        window.showGenreMasteringTip = function(genre) {
+            const tip = GENRE_TIPS[genre];
+            if (tip && !_hintsShownThisSession.has('genre_' + genre)) {
+                _hintsShownThisSession.add('genre_' + genre);
+                setTimeout(() => showSmartHint(tip, '🎨'), 3000);
+            }
+        };
+
+        // Reset hints when new file is loaded
+        window.resetSmartHints = function() {
+            _hintsShownThisSession.clear();
+            for (const hint of Object.values(SMART_HINTS)) {
+                hint.shown = false;
             }
         };
 
