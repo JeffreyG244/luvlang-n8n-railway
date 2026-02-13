@@ -25306,6 +25306,12 @@
     <script src="PROFESSIONAL_PRICING_MODAL.js"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         💳 STRIPE PAYMENT INTEGRATION - Secure payment & file delivery
+         Defines downloadMaster() for payment-gated export
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script src="STRIPE_PAYMENT_INTEGRATION.js"></script>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          ✓ MASTERING COMPLETE OVERLAY - Post-processing user guidance
          Shows clear next steps after mastering completes
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
@@ -25882,6 +25888,11 @@
 
         };
 
+        // openPricingModal — entry point from QC Check "Proceed to Export" and Export button
+        window.openPricingModal = function() {
+            showExportFormatOverlay();
+        };
+
         window.proceedToPayment = function() {
             if (!window.selectedExportFormat) {
                 showLuvLangToast('Please select a format first');
@@ -25902,18 +25913,15 @@
                 }
             }
 
-            // Use existing Stripe payment system (downloadMaster from STRIPE_PAYMENT_INTEGRATION.js)
+            // Use Stripe payment system (downloadMaster from STRIPE_PAYMENT_INTEGRATION.js)
             if (typeof downloadMaster === 'function') {
                 downloadMaster();
             } else if (typeof window.downloadMaster === 'function') {
                 window.downloadMaster();
             } else {
-                // Fallback: try direct export
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                } else {
-                    showLuvLangToast('Export system loading. Please try again.');
-                }
+                // Payment system not loaded — do NOT fall through to free export
+                showLuvLangToast('Payment system is loading. Please try again in a moment.');
+                console.error('downloadMaster() not available — STRIPE_PAYMENT_INTEGRATION.js may not be loaded');
             }
         };
 
