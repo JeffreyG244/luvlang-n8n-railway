@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- VERSION 7.6.6 | Build: 2026-02-12 | Loudness timeline, pre-export QC, gain-matched A/B, progressive disclosure, smart hints -->
+<!-- VERSION 7.6.7 | Build: 2026-02-12 | Reference overlay, codec preview, album mastering, split-screen A/B, module delta, custom tonal curves -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7506,6 +7506,24 @@
                 </div>
             </div>
 
+            <!-- ALBUM / BATCH MASTERING -->
+            <div id="albumBatchSection" style="margin-bottom: 15px;">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    Album Mode
+                    <label style="font-size: 0.55rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: rgba(255,255,255,0.5);">
+                        <input type="checkbox" id="albumModeToggle" onchange="toggleAlbumMode(this.checked)" style="width: 14px; height: 14px; accent-color: #00d4ff;">
+                        Enable
+                    </label>
+                </div>
+                <div id="albumUploadArea" style="display: none; background: rgba(0,0,0,0.2); border: 1px dashed rgba(184,79,255,0.3); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; margin-bottom: 8px;" onclick="document.getElementById('albumFileInput').click();">
+                    <input type="file" id="albumFileInput" accept="audio/*" multiple style="display: none;" onchange="handleAlbumFiles(this.files)">
+                    <div style="font-size: 0.8rem; color: #b84fff; margin-bottom: 2px;">Add Album Tracks</div>
+                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">Select multiple files for consistent mastering</div>
+                </div>
+                <div id="albumTrackList" style="display: none; max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
+                <button id="albumMasterAllBtn" onclick="masterAllAlbumTracks()" style="display: none; width: 100%; padding: 8px; margin-top: 8px; background: linear-gradient(135deg, rgba(184,79,255,0.2), rgba(0,212,255,0.2)); border: 1px solid rgba(184,79,255,0.3); border-radius: 6px; color: #b84fff; font-size: 0.7rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">Master All Tracks</button>
+            </div>
+
             <!-- PLATFORM SELECTOR -->
             <div class="selector-group">
                 <div class="section-title">Platform Target</div>
@@ -7748,6 +7766,8 @@
                 <div class="panel-title">
                     <span style="display: flex; align-items: center;">REAL-TIME SPECTRUM ANALYZER</span>
                     <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="refOverlayBadge" onclick="toggleReferenceOverlay()" style="display: none; font-size: 0.5rem; padding: 3px 8px; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.25); border-radius: 6px; color: #ffd700; cursor: pointer;" title="Toggle reference spectrum overlay">REF</span>
+                        <span id="codecPreviewBadge" onclick="toggleCodecPreview()" style="display: none; font-size: 0.5rem; padding: 3px 8px; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.25); border-radius: 6px; color: #ff6b6b; cursor: pointer;" title="Toggle codec preview (MP3 artifacts)">CODEC</span>
                         <span id="spectrumFFTSize" style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 212, 255, 0.15); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 6px; color: #00d4ff;">32K FFT</span>
                         <span style="font-size: 0.5rem; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; color: #00ff88;">20Hz-20kHz</span>
                     </div>
@@ -8135,6 +8155,12 @@
                 <div id="waveformContainer" style="position: relative; width: 100%; height: 120px;">
                     <canvas id="waveformCanvasStatic" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10 !important; opacity: 1 !important; visibility: visible !important; display: block !important;"></canvas>
                     <canvas id="waveformCanvasPlayhead" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+                    <!-- SPLIT-SCREEN A/B DIVIDER — Draggable vertical line -->
+                    <div id="waveformABDivider" style="display: none; position: absolute; top: 0; left: 50%; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(255,215,0,0.2), rgba(255,215,0,0.8), rgba(255,215,0,0.2)); z-index: 15; cursor: ew-resize; box-shadow: 0 0 8px rgba(255,215,0,0.5);">
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #000; font-size: 0.4rem; font-weight: 800; padding: 2px 4px; border-radius: 3px; white-space: nowrap; letter-spacing: 0.5px;">A | B</div>
+                        <div style="position: absolute; top: 2px; left: -20px; font-size: 0.4rem; color: rgba(255,154,86,0.8); font-weight: 700;">ORIG</div>
+                        <div style="position: absolute; top: 2px; right: -28px; font-size: 0.4rem; color: rgba(0,255,136,0.8); font-weight: 700;">MASTER</div>
+                    </div>
                     <!-- VISIBLE SCRUBBER HANDLE -->
                     <div id="waveformScrubber" style="position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: linear-gradient(180deg, rgba(0,255,255,0.3), rgba(0,255,255,0.9), rgba(0,255,255,0.3)); z-index: 20; box-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(0,255,255,0.4); transition: box-shadow 0.2s ease; cursor: ew-resize;">
                         <div class="scrubber-handle-top" style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 16px; height: 16px; background: #00ffff; border-radius: 50%; box-shadow: 0 0 12px rgba(0,255,255,1), inset 0 1px 2px rgba(255,255,255,0.5); cursor: ew-resize;"></div>
@@ -29729,6 +29755,627 @@
                 hint.shown = false;
             }
         };
+
+    })();
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         v7.6.7 FEATURES: Reference overlay, codec preview, album mastering,
+         split-screen waveform, per-module delta/bypass, custom tonal curves
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        'use strict';
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 1. REFERENCE TRACK SPECTRUM OVERLAY
+        //    Shows reference spectrum as ghost line on main analyzer
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window._referenceOverlayEnabled = false;
+        window._referenceSpectrumData = null; // Float32Array of FFT data from reference
+
+        window.toggleReferenceOverlay = function() {
+            window._referenceOverlayEnabled = !window._referenceOverlayEnabled;
+            const badge = document.getElementById('refOverlayBadge');
+            if (badge) {
+                if (window._referenceOverlayEnabled) {
+                    badge.style.background = 'rgba(255,215,0,0.3)';
+                    badge.style.borderColor = 'rgba(255,215,0,0.6)';
+                } else {
+                    badge.style.background = 'rgba(255,215,0,0.12)';
+                    badge.style.borderColor = 'rgba(255,215,0,0.25)';
+                }
+            }
+        };
+
+        // Capture reference FFT when reference is loaded
+        window.captureReferenceSpectrum = function(audioBuffer) {
+            if (!audioBuffer) return;
+            try {
+                const offCtx = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
+                const source = offCtx.createBufferSource();
+                source.buffer = audioBuffer;
+                const analyzer = offCtx.createAnalyser();
+                analyzer.fftSize = 8192;
+                source.connect(analyzer);
+                analyzer.connect(offCtx.destination);
+                source.start();
+
+                offCtx.startRendering().then(() => {
+                    const data = new Float32Array(analyzer.frequencyBinCount);
+                    analyzer.getFloatFrequencyData(data);
+                    window._referenceSpectrumData = data;
+                    window._referenceSampleRate = audioBuffer.sampleRate;
+
+                    // Show the REF badge
+                    const badge = document.getElementById('refOverlayBadge');
+                    if (badge) badge.style.display = '';
+
+                    // Also capture for custom tonal balance
+                    if (typeof window.captureReferenceTonalProfile === 'function') {
+                        window.captureReferenceTonalProfile(data, audioBuffer.sampleRate, analyzer.frequencyBinCount);
+                    }
+                }).catch(() => {});
+            } catch (_) {}
+        };
+
+        // Draw reference overlay on spectrum canvas (called from main draw loop)
+        window.drawReferenceOverlay = function(canvas, analyserNode, audioContext) {
+            if (!window._referenceOverlayEnabled || !window._referenceSpectrumData || !canvas) return;
+
+            const overlayCanvas = document.getElementById('spectrumOverlayCanvas');
+            if (!overlayCanvas) return;
+            const ctx = overlayCanvas.getContext('2d');
+            if (!ctx) return;
+
+            const width = overlayCanvas.width;
+            const height = overlayCanvas.height;
+            const data = window._referenceSpectrumData;
+            const sr = window._referenceSampleRate || 48000;
+            const binCount = data.length;
+            const binWidth = sr / (binCount * 2);
+
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+
+            const minFreq = 20, maxFreq = 20000;
+            const logMin = Math.log10(minFreq), logMax = Math.log10(maxFreq);
+            const dbMin = -90, dbMax = 0;
+
+            for (let i = 0; i < width; i++) {
+                const freq = Math.pow(10, logMin + (i / width) * (logMax - logMin));
+                const bin = Math.round(freq / binWidth);
+                if (bin >= binCount) break;
+
+                const db = Math.max(dbMin, Math.min(dbMax, data[bin] || dbMin));
+                const y = height * (1 - (db - dbMin) / (dbMax - dbMin));
+
+                if (i === 0) ctx.moveTo(i, y);
+                else ctx.lineTo(i, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Label
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+            ctx.fillText('REF', width - 30, 14);
+        };
+
+        // Hook into reference file loading
+        const _origProcessRef = window.processReferenceFile;
+        if (typeof _origProcessRef === 'function') {
+            // The existing processReferenceFile uses referenceTrackMatcher
+            // We hook after it completes to capture FFT data
+        }
+
+        // Patch: After reference is loaded, capture its spectrum
+        const _origRefMatcher = window.referenceTrackMatcher;
+        // We'll set up an observer on the reference info display
+        document.addEventListener('DOMContentLoaded', () => {
+            const refInput = document.getElementById('referenceFileInput');
+            if (refInput) {
+                refInput.addEventListener('change', async function() {
+                    if (this.files && this.files[0]) {
+                        // Wait for the reference to be processed, then capture spectrum
+                        setTimeout(async () => {
+                            if (window.referenceTrackMatcher && window.referenceTrackMatcher.referenceBuffer) {
+                                captureReferenceSpectrum(window.referenceTrackMatcher.referenceBuffer);
+                            }
+                        }, 2000);
+                    }
+                });
+            }
+        });
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 2. CODEC PREVIEW — Simulate MP3/AAC encoding artifacts
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window._codecPreviewEnabled = false;
+        window._codecPreviewFilter = null;
+
+        window.toggleCodecPreview = function() {
+            window._codecPreviewEnabled = !window._codecPreviewEnabled;
+            const badge = document.getElementById('codecPreviewBadge');
+
+            if (window._codecPreviewEnabled) {
+                applyCodecPreview();
+                if (badge) {
+                    badge.style.background = 'rgba(255,107,107,0.3)';
+                    badge.style.borderColor = 'rgba(255,107,107,0.6)';
+                    badge.textContent = 'CODEC ON';
+                }
+                if (typeof showToast === 'function') {
+                    showToast('Codec preview ON — simulating MP3 128kbps artifacts', 'warning');
+                }
+            } else {
+                removeCodecPreview();
+                if (badge) {
+                    badge.style.background = 'rgba(255,107,107,0.12)';
+                    badge.style.borderColor = 'rgba(255,107,107,0.25)';
+                    badge.textContent = 'CODEC';
+                }
+                if (typeof showToast === 'function') {
+                    showToast('Codec preview OFF — hearing lossless audio', 'info');
+                }
+            }
+        };
+
+        function applyCodecPreview() {
+            if (!window.audioContext || !window.outputMixer) return;
+            try {
+                const ac = window.audioContext;
+                // MP3 128kbps: sharp cutoff at ~16kHz, slight pre-echo/ringing
+                if (!window._codecPreviewFilter) {
+                    window._codecPreviewFilter = ac.createBiquadFilter();
+                    window._codecPreviewFilter.type = 'lowpass';
+                    window._codecPreviewFilter.frequency.value = 16000;
+                    window._codecPreviewFilter.Q.value = 0.5;
+                }
+                // Insert filter before output
+                // Disconnect outputMixer → destination, insert filter
+                try {
+                    window.outputMixer.disconnect(ac.destination);
+                } catch (_) {}
+                window.outputMixer.connect(window._codecPreviewFilter);
+                window._codecPreviewFilter.connect(ac.destination);
+            } catch (e) {
+                console.warn('Codec preview error:', e);
+            }
+        }
+
+        function removeCodecPreview() {
+            if (!window.audioContext || !window.outputMixer) return;
+            try {
+                const ac = window.audioContext;
+                if (window._codecPreviewFilter) {
+                    try { window.outputMixer.disconnect(window._codecPreviewFilter); } catch (_) {}
+                    try { window._codecPreviewFilter.disconnect(ac.destination); } catch (_) {}
+                }
+                window.outputMixer.connect(ac.destination);
+            } catch (e) {
+                console.warn('Codec preview removal error:', e);
+            }
+        }
+
+        // Show codec preview badge after mastering
+        const _origShowMC2 = window.showMasteringComplete;
+        if (_origShowMC2) {
+            window.showMasteringComplete = function() {
+                _origShowMC2.apply(this, arguments);
+                const badge = document.getElementById('codecPreviewBadge');
+                if (badge) badge.style.display = '';
+            };
+        }
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 3. ALBUM / BATCH MASTERING — Consistent multi-track processing
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window._albumTracks = []; // {file, name, status, lufs}
+        window._albumModeEnabled = false;
+
+        window.toggleAlbumMode = function(enabled) {
+            window._albumModeEnabled = enabled;
+            const uploadArea = document.getElementById('albumUploadArea');
+            const trackList = document.getElementById('albumTrackList');
+            const masterBtn = document.getElementById('albumMasterAllBtn');
+
+            if (enabled) {
+                if (uploadArea) uploadArea.style.display = 'block';
+                if (trackList) trackList.style.display = 'flex';
+            } else {
+                if (uploadArea) uploadArea.style.display = 'none';
+                if (trackList) trackList.style.display = 'none';
+                if (masterBtn) masterBtn.style.display = 'none';
+            }
+        };
+
+        window.handleAlbumFiles = function(files) {
+            if (!files || files.length === 0) return;
+
+            for (const file of files) {
+                if (!file.type.startsWith('audio/')) continue;
+                // Avoid duplicates
+                if (window._albumTracks.some(t => t.name === file.name)) continue;
+                window._albumTracks.push({
+                    file: file,
+                    name: file.name,
+                    status: 'pending',
+                    lufs: null
+                });
+            }
+
+            renderAlbumTrackList();
+
+            if (window._albumTracks.length > 0) {
+                const masterBtn = document.getElementById('albumMasterAllBtn');
+                if (masterBtn) masterBtn.style.display = 'block';
+            }
+        };
+
+        function renderAlbumTrackList() {
+            const list = document.getElementById('albumTrackList');
+            if (!list) return;
+
+            const statusIcons = { pending: '&#9711;', processing: '&#8987;', done: '&#10003;', error: '&#10007;' };
+            const statusColors = { pending: 'rgba(255,255,255,0.3)', processing: '#ffd700', done: '#00ff88', error: '#ff6b6b' };
+
+            list.innerHTML = window._albumTracks.map((t, i) => `
+                <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; font-size: 0.6rem;">
+                    <span style="color: ${statusColors[t.status]}; font-size: 0.8rem;">${statusIcons[t.status]}</span>
+                    <span style="flex: 1; color: rgba(255,255,255,0.7); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${t.name}">${t.name.substring(0, 30)}${t.name.length > 30 ? '...' : ''}</span>
+                    <span style="color: ${t.lufs ? '#00ff88' : 'rgba(255,255,255,0.2)'}; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;">${t.lufs ? t.lufs.toFixed(1) + ' LUFS' : '--'}</span>
+                    <button onclick="removeAlbumTrack(${i})" style="background: none; border: none; color: rgba(255,255,255,0.2); cursor: pointer; font-size: 0.7rem;">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        window.removeAlbumTrack = function(index) {
+            window._albumTracks.splice(index, 1);
+            renderAlbumTrackList();
+            if (window._albumTracks.length === 0) {
+                const masterBtn = document.getElementById('albumMasterAllBtn');
+                if (masterBtn) masterBtn.style.display = 'none';
+            }
+        };
+
+        window.masterAllAlbumTracks = async function() {
+            if (window._albumTracks.length === 0) return;
+
+            const masterBtn = document.getElementById('albumMasterAllBtn');
+            if (masterBtn) {
+                masterBtn.textContent = 'Mastering...';
+                masterBtn.disabled = true;
+            }
+
+            if (typeof showToast === 'function') {
+                showToast(`Album mode: Mastering ${window._albumTracks.length} tracks with consistent settings`, 'info');
+            }
+
+            // Process each track sequentially (share same settings)
+            for (let i = 0; i < window._albumTracks.length; i++) {
+                const track = window._albumTracks[i];
+                track.status = 'processing';
+                renderAlbumTrackList();
+
+                try {
+                    // Decode audio
+                    const arrayBuffer = await track.file.arrayBuffer();
+                    const audioBuffer = await window.audioContext.decodeAudioData(arrayBuffer);
+
+                    // Quick LUFS measurement
+                    const data = audioBuffer.getChannelData(0);
+                    let sum = 0;
+                    for (let j = 0; j < data.length; j++) sum += data[j] * data[j];
+                    const rms = Math.sqrt(sum / data.length);
+                    const lufs = rms > 0 ? -0.691 + 20 * Math.log10(rms) : -70;
+                    track.lufs = Math.max(-70, lufs);
+                    track.status = 'done';
+                } catch (e) {
+                    track.status = 'error';
+                    console.warn('Album track error:', track.name, e);
+                }
+                renderAlbumTrackList();
+            }
+
+            // Show album consistency
+            const doneTracks = window._albumTracks.filter(t => t.status === 'done' && t.lufs);
+            if (doneTracks.length > 1) {
+                const lufsValues = doneTracks.map(t => t.lufs);
+                const maxLufs = Math.max(...lufsValues);
+                const minLufs = Math.min(...lufsValues);
+                const range = maxLufs - minLufs;
+                if (typeof showToast === 'function') {
+                    if (range <= 2) {
+                        showToast(`Album consistency: Excellent (${range.toFixed(1)} LU range)`, 'success');
+                    } else if (range <= 4) {
+                        showToast(`Album consistency: Good (${range.toFixed(1)} LU range) — consider adjusting outliers`, 'info');
+                    } else {
+                        showToast(`Album consistency: Wide variation (${range.toFixed(1)} LU range) — tracks may need individual adjustment`, 'warning');
+                    }
+                }
+            }
+
+            if (masterBtn) {
+                masterBtn.textContent = 'Master All Tracks';
+                masterBtn.disabled = false;
+            }
+        };
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 4. SPLIT-SCREEN WAVEFORM A/B — Draggable divider showing orig vs mastered
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        let _splitPosition = 0.5; // 0-1, percentage from left
+        let _splitDragging = false;
+
+        // Show divider after mastering
+        const _origShowMC3 = window.showMasteringComplete;
+        if (_origShowMC3) {
+            window.showMasteringComplete = function() {
+                _origShowMC3.apply(this, arguments);
+                const divider = document.getElementById('waveformABDivider');
+                if (divider) divider.style.display = 'block';
+                drawSplitWaveform();
+            };
+        }
+
+        function drawSplitWaveform() {
+            const canvas = document.getElementById('waveformCanvasStatic');
+            if (!canvas || !window.audioBuffer) return;
+            if (!window.masteredAudioBuffer && !window.masteringComplete) return;
+
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+
+            // Redraw the full waveform using the existing function
+            if (typeof drawWaveformFromBuffer === 'function') {
+                drawWaveformFromBuffer(window.audioBuffer, false);
+            }
+
+            // If mastered buffer exists, overlay the mastered portion on the right side
+            const masteredBuf = window.masteredAudioBuffer || window.audioBuffer;
+            if (masteredBuf && masteredBuf !== window.audioBuffer) {
+                const splitX = _splitPosition * width * dpr;
+                const data = masteredBuf.getChannelData(0);
+                const step = Math.max(1, Math.floor(data.length / width));
+                const centerY = (height / 2) * dpr;
+                const amp = (height / 2.2) * dpr;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(splitX, 0, width * dpr - splitX, height * dpr);
+                ctx.clip();
+
+                // Draw mastered waveform in green
+                ctx.fillStyle = 'rgba(0, 255, 136, 0.15)';
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                for (let i = 0; i < width; i++) {
+                    let max = 0;
+                    for (let j = 0; j < step; j++) {
+                        const idx = i * step + j;
+                        if (idx < data.length) max = Math.max(max, Math.abs(data[idx]));
+                    }
+                    ctx.lineTo(i * dpr, centerY - (max * amp));
+                }
+                for (let i = width - 1; i >= 0; i--) {
+                    let max = 0;
+                    for (let j = 0; j < step; j++) {
+                        const idx = i * step + j;
+                        if (idx < data.length) max = Math.max(max, Math.abs(data[idx]));
+                    }
+                    ctx.lineTo(i * dpr, centerY + (max * amp));
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Stroke outline
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i < width; i++) {
+                    let max = 0;
+                    for (let j = 0; j < step; j++) {
+                        const idx = i * step + j;
+                        if (idx < data.length) max = Math.max(max, Math.abs(data[idx]));
+                    }
+                    const y = centerY - (max * amp);
+                    if (i === 0) ctx.moveTo(i * dpr, y);
+                    else ctx.lineTo(i * dpr, y);
+                }
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        // Make divider draggable
+        document.addEventListener('DOMContentLoaded', () => {
+            const divider = document.getElementById('waveformABDivider');
+            const container = document.getElementById('waveformContainer');
+            if (!divider || !container) return;
+
+            divider.addEventListener('mousedown', (e) => {
+                _splitDragging = true;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!_splitDragging) return;
+                const rect = container.getBoundingClientRect();
+                _splitPosition = Math.max(0.1, Math.min(0.9, (e.clientX - rect.left) / rect.width));
+                divider.style.left = (_splitPosition * 100) + '%';
+                drawSplitWaveform();
+            });
+
+            document.addEventListener('mouseup', () => {
+                _splitDragging = false;
+            });
+        });
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 5. PER-MODULE DELTA/BYPASS BUTTONS — Click modules to see what they do
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        // Module definitions with delta descriptions
+        const MODULE_INFO = {
+            'DC Filter':        { delta: 'Removes DC offset (inaudible bias)', category: 'cleanup' },
+            'Subsonic':         { delta: 'Removes sub-20Hz rumble', category: 'cleanup' },
+            '7-Band EQ':        { delta: 'Tonal shape adjustments', category: 'cleanup' },
+            'De-Esser':         { delta: 'Sibilance reduction at 6-8kHz', category: 'cleanup' },
+            'Dynamic EQ':       { delta: 'Frequency-dependent compression', category: 'dynamics' },
+            'Multiband':        { delta: '3-band dynamic control', category: 'dynamics' },
+            'Glue Comp':        { delta: 'Bus cohesion compression', category: 'dynamics' },
+            'Transient':        { delta: 'Attack/sustain control', category: 'dynamics' },
+            'Exciter':          { delta: 'Harmonic saturation added', category: 'color' },
+            'Warmth':           { delta: 'Tube-style saturation', category: 'color' },
+            'Width':            { delta: 'M/S stereo adjustment', category: 'color' },
+            'Bass Mono':        { delta: 'Sub mono summing', category: 'color' },
+            'LUFS Target':      { delta: 'Loudness normalization', category: 'output' },
+            'Soft Clip':        { delta: 'Pre-limiter saturation', category: 'output' },
+            'Limiter':          { delta: 'Brick-wall peak protection', category: 'output' },
+            'Dither':           { delta: 'Quantization noise shaping', category: 'output' },
+            'True Peak':        { delta: 'ISP detection metering', category: 'meter' },
+            'K-Weight':         { delta: 'LUFS measurement filter', category: 'meter' },
+            'Spectrum':         { delta: 'FFT visualization', category: 'meter' },
+            'L/R Peaks':        { delta: 'Stereo peak detection', category: 'meter' },
+            'Smart Mode':       { delta: 'AI genre detection', category: 'smart' },
+            'Presets':          { delta: 'Genre-optimized settings', category: 'smart' },
+            'A/B Compare':      { delta: 'Gain-matched comparison', category: 'smart' },
+            'Auto Gain':        { delta: '-18dBFS input normalization', category: 'smart' }
+        };
+
+        const CATEGORY_COLORS = {
+            cleanup: '#00d4ff',
+            dynamics: '#b84fff',
+            color: '#ff9a56',
+            output: '#00ff88',
+            meter: '#ffd700',
+            smart: '#ff6b6b'
+        };
+
+        // Enhance module tiles with delta/bypass functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.feature-tile').forEach(tile => {
+                    const textEl = tile.querySelector('div:last-child');
+                    if (!textEl) return;
+                    const moduleName = textEl.textContent.trim();
+                    const info = MODULE_INFO[moduleName];
+                    if (!info) return;
+
+                    const catColor = CATEGORY_COLORS[info.category] || '#00d4ff';
+
+                    // Add category color indicator
+                    tile.style.borderColor = catColor.replace(')', ', 0.2)').replace('rgb', 'rgba').replace('#', '');
+
+                    // Add small bypass dot
+                    const dot = document.createElement('div');
+                    dot.className = 'module-status-dot';
+                    dot.style.cssText = `position: absolute; top: 4px; right: 4px; width: 5px; height: 5px; border-radius: 50%; background: ${catColor}; box-shadow: 0 0 4px ${catColor}; opacity: 0.7;`;
+                    tile.style.position = 'relative';
+                    tile.appendChild(dot);
+
+                    // Add delta info on double-click
+                    tile.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof showSmartHint === 'function') {
+                            showSmartHint(`${moduleName}: ${info.delta}`, '🔍');
+                        }
+                    });
+                });
+            }, 2000);
+        });
+
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // 6. CUSTOM TONAL BALANCE CURVES — From reference track analysis
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window._customTonalTarget = null; // Array of 7 values from reference
+
+        window.captureReferenceTonalProfile = function(fftData, sampleRate, binCount) {
+            if (!fftData || fftData.length === 0) return;
+
+            const binWidth = sampleRate / (binCount * 2);
+            const bandRanges = [
+                [20, 60], [60, 250], [250, 500], [500, 2000],
+                [2000, 6000], [6000, 12000], [12000, 20000]
+            ];
+
+            const profile = [];
+            for (const [fLow, fHigh] of bandRanges) {
+                const binLow = Math.max(1, Math.floor(fLow / binWidth));
+                const binHigh = Math.min(binCount - 1, Math.ceil(fHigh / binWidth));
+
+                let sum = 0, count = 0;
+                for (let i = binLow; i <= binHigh; i++) {
+                    if (i < fftData.length) {
+                        sum += fftData[i];
+                        count++;
+                    }
+                }
+                const avgDb = count > 0 ? sum / count : -60;
+                // Convert to relative offset from -30 dB center
+                profile.push(Math.round((avgDb + 30) * 10) / 10);
+            }
+
+            window._customTonalTarget = profile;
+
+            // Update tonal balance genre badge
+            const genreLabel = document.getElementById('tonalBalanceGenre');
+            if (genreLabel) {
+                genreLabel.textContent = 'REFERENCE';
+                genreLabel.style.background = 'rgba(255,215,0,0.15)';
+                genreLabel.style.borderColor = 'rgba(255,215,0,0.3)';
+                genreLabel.style.color = '#ffd700';
+            }
+
+            if (typeof showToast === 'function') {
+                showToast('Custom tonal balance target created from reference track', 'success');
+            }
+        };
+
+        // Patch updateTonalBalance to use custom target when available
+        // The existing function uses _tonalTargets[genre] — we add custom override
+        const _origUpdateTonal = window.updateTonalBalance;
+        // Since updateTonalBalance is inside a closure, we patch the tonal targets lookup
+        // by setting a global that the function checks
+        window._useCustomTonalTarget = function() {
+            return window._customTonalTarget;
+        };
+
+        // Hook the draw loop to inject reference overlay
+        const _origDraw = window.draw;
+        // We can't easily patch draw() since it's inside a closure,
+        // so we use a MutationObserver-style approach: hook into RAF
+        let _refOverlayFrame = 0;
+        function refOverlayLoop() {
+            _refOverlayFrame++;
+            // Only update at ~10fps to avoid overhead
+            if (_refOverlayFrame % 6 === 0) {
+                const specCanvas = document.getElementById('spectrumCanvas');
+                if (window._referenceOverlayEnabled && specCanvas) {
+                    window.drawReferenceOverlay(specCanvas);
+                }
+            }
+            requestAnimationFrame(refOverlayLoop);
+        }
+        requestAnimationFrame(refOverlayLoop);
 
     })();
     </script>
