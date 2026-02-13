@@ -28357,13 +28357,17 @@
                 }
             } catch(e) { console.error('Console TP error:', e); }
 
-            if (detectedGenre && aiGenreEl) {
+            if (detectedGenre) {
+                const aiGenreEl = document.getElementById('consoleAiGenre');
+                const aiRunnerEl = document.getElementById('consoleAiRunnerUp');
                 const genreNames = {
                     hiphop: 'Hip-Hop', electronic: 'Electronic', pop: 'Pop', rock: 'Rock',
                     rnb: 'R&B', acoustic: 'Acoustic', jazz: 'Jazz', classical: 'Classical',
                     metal: 'Metal', country: 'Country', latin: 'Latin', lofi: 'Lo-Fi'
                 };
-                aiGenreEl.textContent = (genreNames[detectedGenre.top] || detectedGenre.top) + ' ' + detectedGenre.confidence + '%';
+                if (aiGenreEl) {
+                    aiGenreEl.textContent = (genreNames[detectedGenre.top] || detectedGenre.top) + ' ' + detectedGenre.confidence + '%';
+                }
 
                 // Show runners-up
                 if (aiRunnerEl && detectedGenre.scores && detectedGenre.scores.length >= 3) {
