@@ -4760,14 +4760,19 @@
             return;
         }
 
-        const currentTime = ac.currentTime;
+        // Glitch-free crossfade: anchor current value then linear ramp
+        const now = ac.currentTime;
+        const fade = 0.035; // 35ms crossfade — inaudible gap, no click
+
+        dryGain.gain.cancelScheduledValues(now);
+        wetGain.gain.cancelScheduledValues(now);
+        dryGain.gain.setValueAtTime(dryGain.gain.value, now);
+        wetGain.gain.setValueAtTime(wetGain.gain.value, now);
 
         if (isMastered) {
             // Play MASTERED (B)
-            dryGain.gain.cancelScheduledValues(currentTime);
-            wetGain.gain.cancelScheduledValues(currentTime);
-            dryGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
-            wetGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
+            dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+            wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
 
             if (labelA) { labelA.style.color = 'rgba(255,255,255,0.4)'; labelA.style.fontWeight = '600'; }
             if (labelB) { labelB.style.color = '#00ff88'; labelB.style.fontWeight = '700'; labelB.style.textShadow = '0 0 8px rgba(0, 255, 136, 0.5)'; }
@@ -4778,10 +4783,8 @@
 
         } else {
             // Play ORIGINAL (A)
-            dryGain.gain.cancelScheduledValues(currentTime);
-            wetGain.gain.cancelScheduledValues(currentTime);
-            dryGain.gain.setTargetAtTime(1.0, currentTime, 0.02);
-            wetGain.gain.setTargetAtTime(0.0, currentTime, 0.02);
+            dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+            wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
 
             if (labelA) { labelA.style.color = '#ff9a56'; labelA.style.fontWeight = '700'; }
             if (labelB) { labelB.style.color = 'rgba(255,255,255,0.4)'; labelB.style.fontWeight = '600'; labelB.style.textShadow = 'none'; }
@@ -20361,10 +20364,12 @@
                     if (selectedPlatformBtn) {
                         const platform = selectedPlatformBtn.getAttribute('data-platform');
                         if (platform === 'apple' || platform === 'podcast') {
-                            targetLUFS = Math.min(targetLUFS, -16);
+                            targetLUFS = -16;
                             limiterThreshold = -2.0;
                             platformName = platform === 'apple' ? 'Apple Music' : 'Podcast';
                         } else {
+                            // Streaming: always -14 LUFS regardless of genre
+                            targetLUFS = -14;
                             platformName = 'Streaming';
                         }
                     }
@@ -20958,8 +20963,14 @@
                     // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                     const ac = window.audioContext || audioContext;
                     if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Original ON at true volume
-                        window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Processed OFF
+                        const now = ac.currentTime;
+                        const fade = 0.035;
+                        window.dryGain.gain.cancelScheduledValues(now);
+                        window.wetGain.gain.cancelScheduledValues(now);
+                        window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                        window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                        window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                        window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
                     }
                     btn.textContent = 'UNMASTERED';
                     btn.style.background = 'rgba(255,255,255,0.1)';
@@ -20995,9 +21006,14 @@
                     // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                     const ac = window.audioContext || audioContext;
                     if (window.dryGain && window.wetGain && ac) {
-                        window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Original OFF
-                        window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Processed ON
-
+                        const now = ac.currentTime;
+                        const fade = 0.035;
+                        window.dryGain.gain.cancelScheduledValues(now);
+                        window.wetGain.gain.cancelScheduledValues(now);
+                        window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                        window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                        window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                        window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
                     }
 
                     // Restore MASTERED gains (both master and makeup)
