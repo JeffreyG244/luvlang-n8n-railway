@@ -30788,6 +30788,29 @@
             });
         }
 
+        // ── Pre-fetch next step's TTS audio so it's instant when needed ──
+        function prefetchNextStepAudio(currentStepIndex) {
+            const nextIndex = currentStepIndex + 1;
+            const trans = tourTranslations[currentLang]?.steps?.[nextIndex] || tourTranslations['en']?.steps?.[nextIndex];
+            if (!trans || !trans.voice) return;
+
+            const text = trans.voice;
+
+            // Azure pre-fetch (fire-and-forget, populates ttsClientCache)
+            if (AZURE_TTS_CONFIG.enabled) {
+                const ck = ttsCacheKey(text, AZURE_TTS_CONFIG.voice);
+                if (!ttsClientCache.has(ck)) {
+                    fetch(AZURE_TTS_CONFIG.endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text, voice: AZURE_TTS_CONFIG.voice })
+                    }).then(r => r.ok ? r.blob() : null)
+                      .then(blob => { if (blob) ttsClientCache.set(ck, blob); })
+                      .catch(() => {});
+                }
+            }
+        }
+
         // ── Azure Neural TTS — FREE (500K chars/month) with client cache ──
         async function speakWithAzure(text) {
             if (!AZURE_TTS_CONFIG.enabled || !text) return false;
@@ -31064,6 +31087,10 @@
             initVoiceEngine();
             showStep(0);
 
+            // Pre-fetch ALL step audio at tour start so every transition is instant
+            for (let i = 1; i < (tourTranslations[currentLang]?.steps?.length || 4); i++) {
+                prefetchNextStepAudio(i - 1);
+            }
         }
         window.startTourAfterLanguage = startTourAfterLanguage;
 
@@ -31273,6 +31300,10 @@
 
             // Start voice immediately
             speak(trans.voice);
+
+            // Pre-fetch the NEXT step's TTS audio while this one plays
+            // This eliminates the network delay when advancing to the next step
+            prefetchNextStepAudio(stepIndex);
 
             // Fade in content as voice starts playing
             setTimeout(() => {
