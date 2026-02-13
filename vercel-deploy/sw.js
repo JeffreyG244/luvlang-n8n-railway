@@ -1,4 +1,4 @@
-// LuvLang Mastering Studio - Service Worker v7.6.4
+// LuvLang Mastering Studio - Service Worker v7.6.7
 const CACHE_VERSION = 'luvlang-v7.6.7';
 
 // Static assets to pre-cache on install
