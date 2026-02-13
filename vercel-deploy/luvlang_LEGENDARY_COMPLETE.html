@@ -29528,6 +29528,10 @@
         const _origHandleFloatingAB = window.handleFloatingABToggle;
         if (_origHandleFloatingAB) {
             window.handleFloatingABToggle = function(isMastered) {
+                // v7.6.8c: Sync abCompareMode so applyGainMatchedAB uses correct state
+                // isMastered=true → MASTERED (B) → abCompareMode=false
+                // isMastered=false → ORIGINAL (A) → abCompareMode=true
+                window.abCompareMode = !isMastered;
                 _origHandleFloatingAB.call(this, isMastered);
                 if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
                     window.applyGainMatchedAB();
