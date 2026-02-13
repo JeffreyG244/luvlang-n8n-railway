@@ -4726,26 +4726,17 @@
             const labelA = document.getElementById('floatingABLabelOriginal');
             const labelB = document.getElementById('floatingABLabelMastered');
             if (window._previewEqFilters && window.audioContext) {
-                const now = window.audioContext.currentTime;
                 if (isMastered) {
-                    // "B" = preview ON — re-apply genre EQ
-                    const genre = window.selectedPreMasterGenre;
-                    const preset = genre && genrePresets ? genrePresets[genre] : null;
-                    if (preset) {
-                        const intensityLevel = window.selectedIntensity || 3;
-                        const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
-                        const boost = masteringMults[intensityLevel] || 0.85;
-                        const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
-                        window._previewEqFilters.forEach((f, i) => {
-                            const clamped = Math.max(-12, Math.min(12, eqVals[i] * boost));
-                            f.gain.setTargetAtTime(clamped, now, 0.05);
-                        });
+                    // "B" = preview ON — re-apply genre EQ via previewGenre
+                    if (window.selectedPreMasterGenre && typeof window.previewGenre === 'function') {
+                        window.previewGenre(window.selectedPreMasterGenre);
                     }
                     if (labelA) { labelA.style.color = 'rgba(255,255,255,0.4)'; labelA.style.fontWeight = '600'; }
                     if (labelB) { labelB.style.color = '#00d4ff'; labelB.style.fontWeight = '700'; labelB.style.textShadow = '0 0 8px rgba(0, 212, 255, 0.5)'; }
                     if (statusPill) { statusPill.textContent = 'PREVIEW ON'; statusPill.className = 'ai-status-pill mastered'; }
                 } else {
                     // "A" = preview OFF — flatten EQ (original sound)
+                    const now = window.audioContext.currentTime;
                     window._previewEqFilters.forEach(f => {
                         f.gain.setTargetAtTime(0, now, 0.05);
                     });
