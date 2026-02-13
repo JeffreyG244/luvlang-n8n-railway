@@ -4721,7 +4721,39 @@
     // Integrated A/B Toggle Handler - State of the art control
     function handleFloatingABToggle(isMastered) {
         if (!window.isMasteringApplied) {
-            document.getElementById('floatingABSwitch').checked = true;
+            // Pre-mastering A/B: toggle preview EQ on/off
+            const statusPill = document.getElementById('aiStatusPill');
+            const labelA = document.getElementById('floatingABLabelOriginal');
+            const labelB = document.getElementById('floatingABLabelMastered');
+            if (window._previewEqFilters && window.audioContext) {
+                const now = window.audioContext.currentTime;
+                if (isMastered) {
+                    // "B" = preview ON — re-apply genre EQ
+                    const genre = window.selectedPreMasterGenre;
+                    const preset = genre && genrePresets ? genrePresets[genre] : null;
+                    if (preset) {
+                        const intensityLevel = window.selectedIntensity || 3;
+                        const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+                        const boost = masteringMults[intensityLevel] || 0.85;
+                        const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
+                        window._previewEqFilters.forEach((f, i) => {
+                            const clamped = Math.max(-12, Math.min(12, eqVals[i] * boost));
+                            f.gain.setTargetAtTime(clamped, now, 0.05);
+                        });
+                    }
+                    if (labelA) { labelA.style.color = 'rgba(255,255,255,0.4)'; labelA.style.fontWeight = '600'; }
+                    if (labelB) { labelB.style.color = '#00d4ff'; labelB.style.fontWeight = '700'; labelB.style.textShadow = '0 0 8px rgba(0, 212, 255, 0.5)'; }
+                    if (statusPill) { statusPill.textContent = 'PREVIEW ON'; statusPill.className = 'ai-status-pill mastered'; }
+                } else {
+                    // "A" = preview OFF — flatten EQ (original sound)
+                    window._previewEqFilters.forEach(f => {
+                        f.gain.setTargetAtTime(0, now, 0.05);
+                    });
+                    if (labelA) { labelA.style.color = '#ff9a56'; labelA.style.fontWeight = '700'; }
+                    if (labelB) { labelB.style.color = 'rgba(255,255,255,0.4)'; labelB.style.fontWeight = '600'; labelB.style.textShadow = 'none'; }
+                    if (statusPill) { statusPill.textContent = 'ORIGINAL'; statusPill.className = 'ai-status-pill original'; }
+                }
+            }
             return;
         }
 
@@ -27719,6 +27751,36 @@
             if (typeof updateConsoleSummary === 'function') updateConsoleSummary();
             if (typeof syncSidebarWithConsole === 'function') syncSidebarWithConsole();
 
+            // Show A/B toggle so user can compare preview vs original before mastering
+            if (!window.isMasteringApplied) {
+                const abToggle = document.getElementById('integratedABToggle');
+                const divider = document.getElementById('commandBarDivider');
+                const labelA = document.getElementById('floatingABLabelOriginal');
+                const labelB = document.getElementById('floatingABLabelMastered');
+                const statusPill = document.getElementById('aiStatusPill');
+                if (abToggle) {
+                    abToggle.style.display = 'flex';
+                    abToggle.classList.add('visible');
+                }
+                if (divider) divider.style.display = 'block';
+                // Update labels for preview mode
+                if (labelB) {
+                    labelB.textContent = 'B';
+                    labelB.style.color = '#00d4ff';
+                    labelB.style.textShadow = '0 0 8px rgba(0, 212, 255, 0.5)';
+                }
+                if (labelA) {
+                    labelA.textContent = 'A';
+                }
+                if (statusPill) {
+                    statusPill.textContent = 'PREVIEW ON';
+                    statusPill.className = 'ai-status-pill mastered';
+                }
+                // Ensure switch is checked (B = preview ON)
+                const sw = document.getElementById('floatingABSwitch');
+                if (sw) sw.checked = true;
+            }
+
         };
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -28337,6 +28399,11 @@
                         btn.appendChild(badge);
                     }
                 });
+
+                // Auto-activate the AI-detected genre for live preview + intensity control
+                if (detectedGenre.top && typeof previewGenre === 'function') {
+                    previewGenre(detectedGenre.top);
+                }
             }
 
             // Update summary line
@@ -29783,6 +29850,8 @@
     </script>
 
     <!-- ═══════════════════════════════════════════════════════════════════════════
+         v7.6.8b FIX: Processing intensity now works (auto-previewGenre on AI detect),
+         A/B toggle works pre-mastering (preview vs original), A/B visible on genre select
          v7.6.8 FIX: Rebalanced EQ curves (warmer low-end), reduced exciter/sideAir/subsonic for full body
          v7.6.7 FEATURES: Reference overlay, codec preview, album mastering,
          split-screen waveform, per-module delta/bypass, custom tonal curves
