@@ -204,7 +204,7 @@
             background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 24px 16px;
+            padding: 24px 16px 80px;
             border-left: 1px solid rgba(184, 79, 255, 0.08);
             min-width: 0;
         }
@@ -19518,16 +19518,15 @@
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // UPDATE VISUAL ELEMENTS - LUFS bar indicator, LED status
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    // LUFS Bar Indicator - piecewise linear mapping to match label positions
-                    // Labels: -24(0%), -18(25%), -14(50%), -10(75%), -6(100%)
-                    // Uses smoothedLUFS for stability (not bouncy momentary)
-                    // Respects metersLocked to show stable reading after mastering
+                    // LUFS Bar Indicator - piecewise linear mapping calibrated to label positions
+                    // Labels are evenly spaced: -40(0%), -24(20%), -18(40%), -14(60%), -10(80%), -6(100%)
+                    // v7.6.8c5b: Fixed calibration — breakpoints now match label positions exactly
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
                         const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
                         const clampedLUFS = Math.max(-40, Math.min(-6, barLUFS));
-                        // Piecewise linear interpolation — extended range for pre-mastering levels
-                        const _bkpts = [[-40,0],[-24,15],[-18,32],[-14,50],[-10,75],[-6,100]];
+                        // Piecewise linear: breakpoints aligned to evenly-spaced labels
+                        const _bkpts = [[-40,0],[-24,20],[-18,40],[-14,60],[-10,80],[-6,100]];
                         let position = 0;
                         for (let i = 1; i < _bkpts.length; i++) {
                             if (clampedLUFS <= _bkpts[i][0]) {
@@ -19536,7 +19535,7 @@
                                 break;
                             }
                         }
-                        if (clampedLUFS >= -6) position = 100; // Handle right edge
+                        if (clampedLUFS >= -6) position = 100;
                         lufsBarIndicator.style.left = `${position}%`;
                     }
 
@@ -20642,7 +20641,7 @@
                 const lufsBarIndicatorLock = document.getElementById('lufsBarIndicator');
                 if (lufsBarIndicatorLock && lockedLUFS !== null) {
                     const clampedLock = Math.max(-40, Math.min(-6, lockedLUFS));
-                    const _bkptsLock = [[-40,0],[-24,15],[-18,32],[-14,50],[-10,75],[-6,100]];
+                    const _bkptsLock = [[-40,0],[-24,20],[-18,40],[-14,60],[-10,80],[-6,100]];
                     let posLock = 0;
                     for (let i = 1; i < _bkptsLock.length; i++) {
                         if (clampedLock <= _bkptsLock[i][0]) {

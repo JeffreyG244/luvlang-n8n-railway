@@ -72,17 +72,20 @@
                     </div>
                     <div style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.2); border-radius: 10px; padding: 12px; text-align: center;">
                         <div style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Target</div>
-                        <div style="font-size: 1.4rem; font-weight: 800; color: #ffd700; font-family: 'JetBrains Mono', monospace;">-14.0 LUFS</div>
+                        <div id="loudnessTarget" style="font-size: 1.4rem; font-weight: 800; color: #ffd700; font-family: 'JetBrains Mono', monospace;">-14.0 LUFS</div>
                     </div>
                 </div>
 
                 <!-- Canvas Container -->
                 <div style="position: relative; height: 140px; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
                     <canvas id="loudnessHistoryCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
-                    <!-- Scale labels -->
-                    <div style="position: absolute; top: 5px; left: 5px; font-size: 9px; color: rgba(255,255,255,0.3); font-family: monospace;">0 dB</div>
-                    <div style="position: absolute; top: 33%; left: 5px; font-size: 9px; color: rgba(255,215,0,0.5); font-family: monospace;">-14</div>
-                    <div style="position: absolute; bottom: 5px; left: 5px; font-size: 9px; color: rgba(255,255,255,0.3); font-family: monospace;">-60</div>
+                    <!-- Scale labels — positions match lufsToY: abs(lufs)/60 * 100% -->
+                    <div style="position: absolute; top: 2px; left: 5px; font-size: 9px; color: rgba(255,255,255,0.3); font-family: monospace;">0</div>
+                    <div style="position: absolute; top: 10%; left: 5px; font-size: 9px; color: rgba(255,255,255,0.25); font-family: monospace;">-6</div>
+                    <div style="position: absolute; top: 23.3%; left: 5px; font-size: 9px; color: rgba(255,215,0,0.6); font-family: monospace; font-weight: bold;">-14</div>
+                    <div style="position: absolute; top: 40%; left: 5px; font-size: 9px; color: rgba(255,255,255,0.25); font-family: monospace;">-24</div>
+                    <div style="position: absolute; top: 60%; left: 5px; font-size: 9px; color: rgba(255,255,255,0.2); font-family: monospace;">-36</div>
+                    <div style="position: absolute; bottom: 2px; left: 5px; font-size: 9px; color: rgba(255,255,255,0.15); font-family: monospace;">-60</div>
                 </div>
 
                 <!-- Legend -->
