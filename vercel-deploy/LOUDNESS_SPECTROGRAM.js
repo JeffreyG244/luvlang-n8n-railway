@@ -242,6 +242,15 @@
     }
 
     window.updateLoudnessHistory = function(shortTerm, integrated) {
+        // Re-init canvas if it's zero-sized (was hidden when first created)
+        if (loudnessCanvas && (loudnessCanvas.width === 0 || loudnessCanvas.height === 0)) {
+            initLoudnessCanvas();
+        }
+        // Also init if canvas context was never created
+        if (!loudnessCtx && document.getElementById('loudnessHistoryCanvas')) {
+            initLoudnessCanvas();
+        }
+
         if (typeof shortTerm === 'number' && isFinite(shortTerm)) {
             loudnessData.shortTerm.push(shortTerm);
             if (loudnessData.shortTerm.length > loudnessData.maxPoints) {
@@ -415,7 +424,14 @@
     }
 
     window.updateSpectrogram = function(frequencyData) {
-        if (!spectrogramCtx || !spectrogramCanvas || !frequencyData || !spectrogramImageData) return;
+        if (!frequencyData) return;
+        // Re-init canvas if it's zero-sized or context missing
+        if (!spectrogramCtx || !spectrogramCanvas || !spectrogramImageData) {
+            if (document.getElementById('spectrogramCanvas')) {
+                initSpectrogramCanvas();
+            }
+            if (!spectrogramCtx || !spectrogramCanvas || !spectrogramImageData) return;
+        }
 
         const width = spectrogramCanvas.width;
         const height = spectrogramCanvas.height;
