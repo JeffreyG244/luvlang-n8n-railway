@@ -24466,29 +24466,32 @@
                 updateStageProgress(18, 'Setting up limiter...');
                 await new Promise(resolve => setTimeout(resolve, 80));
 
-                // 20. Brickwall Limiter - BROADCAST STANDARD (ITU-R BS.1770-4 / EBU R128)
-                // v7.6.8c5: Now the SOLE limiter (look-ahead disabled).
-                // -1.0 dBTP prevents ISP clipping after lossy codec transcoding (AAC/OGG/Opus).
-                // Soft knee (6 dB) for more musical limiting as the only limiter in chain.
-                // Longer release (150ms) to prevent bass pumping on sustained low notes.
+                // 20. Brickwall Safety Limiter — BROADCAST STANDARD (ITU-R BS.1770-4)
+                // Hard safety net at -1.0 dBTP. The look-ahead limiter does the musical work
+                // upstream — this only catches anything that slips through.
                 if (window.limiter) {
                     window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
-                    window.limiter.knee.setTargetAtTime(6, ac.currentTime, 0.1);
-                    window.limiter.attack.setTargetAtTime(0.003, ac.currentTime, 0.1);
-                    window.limiter.release.setTargetAtTime(0.150, ac.currentTime, 0.1);
+                    window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);   // Hard knee — true brickwall
+                    window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1); // Fastest attack
+                    window.limiter.release.setTargetAtTime(0.100, ac.currentTime, 0.1);
                 }
 
                 updateStageProgress(19, 'Configuring look-ahead...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // 21. Look-Ahead Limiter — v7.6.8c5: DISABLED
-                // Two stacked limiters (look-ahead + brickwall) cause cumulative bass pumping.
-                // The brickwall at -1.0 dBTP is sufficient as the sole limiter.
-                // Setting threshold to 0 dBTP effectively disables it (nothing to limit).
+                // 21. Look-Ahead Limiter — PRIMARY peak catcher (5ms anticipation)
+                // v7.6.8c5b: Re-enabled to prevent ISP clipping. The DynamicsCompressorNode
+                // (brickwall above) has NO true look-ahead — fast transients slip past before
+                // it reacts, causing inter-sample peaks. This limiter has 5ms look-ahead that
+                // sees peaks coming and catches them cleanly. Set to -1.5 dBTP so it does the
+                // musical limiting gently, with the brickwall at -1.0 as safety behind it.
                 if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
-                    window.lookAheadLimiter.setThreshold(0);
-                    console.log('🔊 Look-ahead limiter: disabled (v7.6.8c5 — brickwall only)');
+                    window.lookAheadLimiter.setThreshold(-1.5);
+                    if (window.lookAheadLimiter.setLookahead) {
+                        window.lookAheadLimiter.setLookahead(0.005); // 5ms look-ahead
+                    }
+                    console.log('🔊 Look-ahead limiter: -1.5 dBTP (ISP protection)');
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════════
@@ -24653,12 +24656,12 @@
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
                     // v7.6.3j: Compensate for stages NOT modeled in offline chain
                     // Offline chain models: subsonic, EQ, comp, dynEQ, NY, multiband, limiter
-                    // v7.6.8c5: Simplified chain — most stages bypassed, minimal compensation needed.
-                    // Only the brickwall limiter (-1.0 dBTP) + bus compression are active.
-                    // The offline chain already models EQ + compression + limiter, so very little
-                    // unmodeled loss remains. Just account for the brickwall limiter catching peaks.
-                    let chainLoss = 0.3 + (effectiveIntensity - 1) * 0.1; // 0.3–0.7 dB for limiter
-                    compensation = Math.min(chainLoss, 1.5);
+                    // v7.6.8c5b: Simplified chain — most stages bypassed, minimal compensation.
+                    // Active: EQ + bus comp + look-ahead limiter (-1.5 dBTP) + brickwall (-1.0 dBTP).
+                    // Offline chain models EQ + comp + limiter. Compensate for the look-ahead
+                    // limiter which isn't in the offline model — it catches ~0.5-1.0 dB of peaks.
+                    let chainLoss = 0.5 + (effectiveIntensity - 1) * 0.15; // 0.5–1.1 dB
+                    compensation = Math.min(chainLoss, 2.0);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
