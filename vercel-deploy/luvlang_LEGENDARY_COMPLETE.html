@@ -24031,15 +24031,11 @@
                 updateStageProgress(5, 'Applying dynamic EQ processing...');
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                // v7.6.8c: Unified EQ — use genrePresets (same values as preview) via window.eqCurves
-                // Preview sounds great; mastering was over-processing with separate higher values
-                const _gpPreset = window.genrePresets && window.genrePresets[genre];
-                const _gpEQ = _gpPreset ? _gpPreset.eq : null;
+                // v7.6.8c2: Mastering EQ curves — tuned for full chain (compression/limiting eat bass)
+                // These are intentionally higher in sub/bass than genrePresets preview values
+                // because the mastering chain's dynamics stages reduce ~1-2 dB of low-end energy
                 const _eqCurves = window.eqCurves || {};
-                const eq = _eqCurves[genre] || (_gpEQ ? {
-                    sub: _gpEQ.sub, bass: _gpEQ.bass, lowmid: _gpEQ.lowMid,
-                    mid: _gpEQ.mid, highmid: _gpEQ.highMid, high: _gpEQ.high, air: _gpEQ.air
-                } : { sub: 0.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 });
+                const eq = _eqCurves[genre] || _eqCurves['pop'] || { sub: 1.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.2, air: 0.8 };
 
                 // AI adaptive EQ deltas — applied on top of genre preset
                 const aiEQ = (aiProfile && aiProfile.eqDeltas) ? aiProfile.eqDeltas : {};
@@ -24047,7 +24043,7 @@
                 if (!bypass.eq) {
                     const eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
                     const subEQ = window._selectedSubGenreEQ || null;
-                    const MASTERING_SUBPRESET_SCALE = 1.5; // v7.6.8c: Reduced from 2.5 — was causing 10 dB boosts
+                    const MASTERING_SUBPRESET_SCALE = 2.0; // v7.6.8c2: Middle ground (was 2.5 → 1.5 → 2.0)
                     const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
                     const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                                      window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
@@ -24633,7 +24629,7 @@
                 if (!bypass.eq) {
                     const _eqScale = stageInt.eq !== undefined ? stageInt.eq : 1.0;
                     const _subEQ = window._selectedSubGenreEQ || null;
-                    const _MSPS = 1.5; // v7.6.8c: Reduced from 2.5 to match mastering
+                    const _MSPS = 2.0; // v7.6.8c2: Match mastering SUBPRESET_SCALE
                     const _bk = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
                     _bk.forEach(band => {
                         const aiD = (aiEQ && aiEQ[band]) || 0;
@@ -24671,17 +24667,17 @@
                     // v7.6.3j: Compensate for stages NOT modeled in offline chain
                     // Offline chain models: subsonic, EQ, comp, dynEQ, NY, multiband, limiter
                     // NOT modeled: warmth, transient, HF limiter, M/S, stereo width, look-ahead limiter, exciter
-                    // v7.6.8c: Conservative compensation — old values over-compensated by 2-5 dB,
-                    // pushing signal into limiters and causing distortion
+                    // v7.6.8c2: Moderate compensation — balanced between old (too aggressive 5 dB)
+                    // and v7.6.8c (too conservative 1 dB). Target: ~1.5-2.5 dB total.
                     let chainLoss = 0;
-                    if (!bypass.warmth)       chainLoss += 0.1;  // Tape saturation — minimal RMS change
-                    if (!bypass.transient)    chainLoss += 0.1;  // Transient shaper — subtle reshaping
-                    if (!bypass.hfLimiter)    chainLoss += 0.2;  // HF limiter — reduced HF energy
-                    if (!bypass.msProcessing) chainLoss += 0.1;  // M/S processing — stereo rebalance
-                    if (!bypass.stereoWidth)  chainLoss += 0.1;  // Stereo widening — energy distribution
-                    // Look-ahead limiter — conservative estimate of peak catching
-                    chainLoss += 0.3 + (effectiveIntensity - 1) * 0.1;
-                    compensation = Math.min(chainLoss, 3.0);
+                    if (!bypass.warmth)       chainLoss += 0.2;  // Tape saturation reduces RMS
+                    if (!bypass.transient)    chainLoss += 0.2;  // Transient shaper reshapes dynamics
+                    if (!bypass.hfLimiter)    chainLoss += 0.3;  // HF limiter reduces high-frequency energy
+                    if (!bypass.msProcessing) chainLoss += 0.2;  // M/S processing alters stereo balance
+                    if (!bypass.stereoWidth)  chainLoss += 0.1;  // Stereo widening distributes energy
+                    // Look-ahead limiter — catches peaks the offline chain doesn't model
+                    chainLoss += 0.5 + (effectiveIntensity - 1) * 0.2;
+                    compensation = Math.min(chainLoss, 3.5);
 
                     // PASS 2: calculate exact correction with chain loss compensation
                     correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
@@ -27512,17 +27508,24 @@
         // Expose for LUFS targeting and other modules
         window.genrePresets = genrePresets;
 
-        // v7.6.8c: Unified mastering EQ — derived from genrePresets so preview and mastering match
-        // Preview sounds great, mastering was over-processing because _eqCurves had 60-75% higher values
-        // Now both use the same source of truth (genrePresets[genre].eq)
-        window.eqCurves = {};
-        for (const [key, preset] of Object.entries(genrePresets)) {
-            const e = preset.eq;
-            window.eqCurves[key] = {
-                sub: e.sub, bass: e.bass, lowmid: e.lowMid,
-                mid: e.mid, highmid: e.highMid, high: e.high, air: e.air
-            };
-        }
+        // v7.6.8c2: Mastering-specific EQ curves — tuned for full chain (higher sub/bass)
+        // Compression, limiting, and dynamics stages eat ~1-2 dB of low-end energy,
+        // so mastering EQ needs higher sub/bass than the lightweight preview EQ.
+        // Preview uses genrePresets.eq directly (lighter, great on dry path).
+        window.eqCurves = {
+            'hiphop':     { sub: 4.0, bass: 3.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'electronic': { sub: 3.5, bass: 3.0, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 1.5, air: 1.0 },
+            'pop':        { sub: 1.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.2, air: 0.8 },
+            'rock':       { sub: 2.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 1.5, air: 0.8 },
+            'rnb':        { sub: 3.0, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 0.8, air: 0.3 },
+            'acoustic':   { sub: 1.0, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.0, air: 0.8 },
+            'jazz':       { sub: 1.0, bass: 2.5, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 0.8, air: 0.3 },
+            'classical':  { sub: 0.0, bass: 1.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.4, air: 0.3 },
+            'metal':      { sub: 2.5, bass: 3.5, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.2, air: 0.5 },
+            'country':    { sub: 1.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 1.5, air: 0.8 },
+            'latin':      { sub: 3.5, bass: 3.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'lofi':       { sub: 2.0, bass: 3.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+        };
 
         // ═══════════════════════════════════════════════════════════════════════════
         // PRE-MASTERING GENRE SELECTION - Real-time preview functions
@@ -27861,7 +27864,7 @@
             // CRITICAL: Preview must match mastering chain so WYSIWYG
             // v7.6.8c: Reduced from 2.5 to 1.5 — was causing extreme EQ boosts
             const ac = window.audioContext;
-            const SUBPRESET_SCALE = 1.5;
+            const SUBPRESET_SCALE = 2.0;
             if (ac && window._previewEqFilters) {
                 const intensityLevel = window.selectedIntensity || 3;
                 // Use SAME multipliers as mastering chain (intensityMultipliers in runActualMastering)
@@ -28018,7 +28021,7 @@
             const ac = window.audioContext;
             if (!ac) return;
 
-            const SUBPRESET_SCALE = 1.5; // v7.6.8c: Reduced from 2.5
+            const SUBPRESET_SCALE = 2.0; // v7.6.8c: Reduced from 2.5
             const intensityLevel = window.selectedIntensity || 3;
             const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
             const intensityBoost = masteringMults[intensityLevel] || 0.85;
@@ -28248,7 +28251,7 @@
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
             const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
-            const INTENSITY_SUBPRESET_SCALE = 1.5; // v7.6.8c: Reduced from 2.5 to match preview and mastering
+            const INTENSITY_SUBPRESET_SCALE = 2.0; // v7.6.8c2: Match preview and mastering
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
