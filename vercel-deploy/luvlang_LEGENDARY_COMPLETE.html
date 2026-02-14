@@ -16841,7 +16841,7 @@
                     // Transparent limiting - just catch any overs
                     limiter.threshold.value = -1.0;   // v7.6.3h: -1.0 dBTP streaming standard
                     limiter.ratio.value = 20;         // Brick wall if needed
-                    limiter.knee.value = 3;           // Soft knee
+                    limiter.knee.value = 0;           // v7.6.13: Hard knee = true brickwall
 
                     // Update UI
                     document.getElementById('limiterValue').textContent = '-0.5 dB';
@@ -17010,7 +17010,7 @@
                 if (oldThreshold > -1.0) {
                     limiter.threshold.value = -1.5;  // Broadcast-safe threshold (allows proper loudness)
                     limiter.ratio.value = 20;        // Brick-wall limiting
-                    limiter.knee.value = 0.5;        // Tight knee for precise limiting
+                    limiter.knee.value = 0;          // v7.6.13: Hard knee = true brickwall
 
                     changes.push(`Limiter: ${oldThreshold.toFixed(1)}dB → -1.5dB (Broadcast Safe)`);
 
@@ -17555,15 +17555,17 @@
             // Check true peak — tighten limiter if needed
             const peakEl = document.getElementById('peakValue');
             const currentPeak = peakEl ? parseFloat(peakEl.textContent) : -1.5;
-            if (currentPeak > -0.5 && window.limiter) {
-                window.limiter.threshold.value = Math.min(window.limiter.threshold.value, -1.5);
+            // v7.6.13: Check at -1.0 ceiling, not -0.5 (was allowing peaks through)
+            if (currentPeak > -1.0 && window.limiter) {
+                window.limiter.threshold.value = Math.min(window.limiter.threshold.value, -2.0);
+                window.limiter.knee.value = 0; // Hard knee for true brickwall
                 corrections.push(`Peak limiter tightened: ${currentPeak.toFixed(1)} dBTP → -1.0 dBTP ceiling`);
             }
 
-            // Update locked LUFS to target
+            // v7.6.13: Don't lock meters to target — let real-time meters run
+            // Only update the integrated display to show the corrected value
             const newLUFS = targetLUFS;
             window.lockedLUFS = newLUFS;
-            window.metersLocked = true;
             window.currentIntegratedLUFS = newLUFS;
 
             // Update display
@@ -18651,6 +18653,11 @@
             if (masterGain) {
                 masterGain.gain.value = Math.pow(10, value / 20);
             }
+
+            // v7.6.13: Unlock meters when user manually adjusts gain
+            // (locked values are now stale since signal changed)
+            metersLocked = false;
+            window._lufsGainLocked = false;
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -20289,9 +20296,10 @@
                     const platformTarget = getPlatformTarget();
 
                     // Update LIVE LUFS indicator (momentary - real-time fluctuating)
+                    // v7.6.13: Live LUFS ALWAYS shows real-time momentary (never locked)
                     const liveLufsValue = document.getElementById('liveLufsValue');
                     if (liveLufsValue) {
-                        const liveDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : momentaryLUFS;
+                        const liveDisplay = momentaryLUFS;
                         liveLufsValue.textContent = liveDisplay.toFixed(1);
                         const diff = Math.abs(liveDisplay - platformTarget);
                         if (diff <= 1) {
@@ -20307,6 +20315,7 @@
                     }
 
                     // Update MEASURED/MONITORING LUFS (integrated - stable)
+                    // v7.6.13: This is the only meter that locks — shows final mastered LUFS
                     const measuredLufsDisplay = document.getElementById('measuredLufsValue');
                     if (measuredLufsDisplay) {
                         const displayValue = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
@@ -20325,16 +20334,18 @@
                     }
 
                     // Update SHORT-TERM LUFS display (3-second window)
+                    // v7.6.13: Short-term ALWAYS real-time (never locked)
                     const shortLufsEl = document.getElementById('shortLufsValue');
                     if (shortLufsEl) {
-                        const shortDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : shortTermLUFS;
+                        const shortDisplay = shortTermLUFS;
                         shortLufsEl.textContent = shortDisplay.toFixed(1);
                     }
 
                     // Update MOMENTARY LUFS display (400ms window)
+                    // v7.6.13: Momentary ALWAYS real-time (never locked)
                     const momentaryLufsEl = document.getElementById('momentaryLufsValue');
                     if (momentaryLufsEl) {
-                        const momDisplay = (metersLocked && lockedLUFS !== null) ? lockedLUFS : momentaryLUFS;
+                        const momDisplay = momentaryLUFS;
                         momentaryLufsEl.textContent = momDisplay.toFixed(1);
                     }
 
@@ -20349,9 +20360,10 @@
                     // LUFS Bar Indicator - piecewise linear mapping calibrated to label positions
                     // Labels are evenly spaced: -40(0%), -24(20%), -18(40%), -14(60%), -10(80%), -6(100%)
                     // v7.6.8c5b: Fixed calibration — breakpoints now match label positions exactly
+                    // v7.6.13: Bar indicator always tracks real-time smoothed LUFS
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
-                        const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
+                        const barLUFS = smoothedLUFS;
                         const clampedLUFS = Math.max(-40, Math.min(-6, barLUFS));
                         // Piecewise linear: breakpoints aligned to evenly-spaced labels
                         const _bkpts = [[-40,0],[-24,20],[-18,40],[-14,60],[-10,80],[-6,100]];
@@ -21245,7 +21257,7 @@
                     limiter.ratio.value = 20;  // Brick-wall limiting for true peak control
                     limiter.attack.value = 0.0005;  // 0.5ms attack (fast but not harsh)
                     limiter.release.value = 0.150;  // 150ms release (musical, Bob Ludwig style)
-                    limiter.knee.value = 3;  // Soft knee for transparency
+                    limiter.knee.value = 0;  // v7.6.13: Hard knee = true brickwall
 
                 }
 
@@ -22293,8 +22305,9 @@
                 offlineWarmth.oversample = '4x';
 
                 // STAGE 5: MAKEUP GAIN (LUFS targeting)
+                // v7.6.13: Use stored TARGET value, not live node (which may be mid-ramp)
                 const offlineMakeupGain = offlineContext.createGain();
-                offlineMakeupGain.gain.value = typeof makeupGain !== 'undefined' && makeupGain ? makeupGain.gain.value : 1.0;
+                offlineMakeupGain.gain.value = window.appliedMakeupGainLinear || (typeof makeupGain !== 'undefined' && makeupGain ? makeupGain.gain.value : 1.0);
 
                 // STAGE 6: PRO LIMITER (musical peak protection)
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
@@ -22302,7 +22315,8 @@
                 offlineLimiter.ratio.value = 20;
                 offlineLimiter.attack.value = typeof limiter !== 'undefined' && limiter ? limiter.attack.value : 0.001;
                 offlineLimiter.release.value = typeof limiter !== 'undefined' && limiter ? limiter.release.value : 0.15;
-                offlineLimiter.knee.value = 2.0; // Soft knee for musical transparency
+                // v7.6.13: Match live limiter knee (hard knee = true brickwall)
+                offlineLimiter.knee.value = typeof limiter !== 'undefined' && limiter ? limiter.knee.value : 0;
 
                 // STAGE 7: SAFETY CLIPPER (gentle soft clip for any remaining peaks)
                 const offlineSafetyClipper = offlineContext.createWaveShaper();
@@ -25479,8 +25493,8 @@
                             console.log(`✅ Pass 3 on target: ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS})`);
                         }
 
-                        // v7.6.12: Tighter true peak check — broadcast safe at -1.0 dBTP
-                        if (pass3.truePeakDB > -0.5) {
+                        // v7.6.13: True peak check at EXACT ceiling — broadcast safe at -1.0 dBTP
+                        if (pass3.truePeakDB > -1.0) {
                             const tpOvershoot = pass3.truePeakDB - (-1.0);
                             correctionDB -= tpOvershoot;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
@@ -25498,7 +25512,7 @@
                             const finalDeviation = pass4.integratedLUFS - targetLUFS;
 
                             // Check true peak FIRST — ceiling takes priority over LUFS target
-                            if (pass4.truePeakDB > -0.5) {
+                            if (pass4.truePeakDB > -1.0) {
                                 const tp4Overshoot = pass4.truePeakDB - (-1.0);
                                 correctionDB -= tp4Overshoot;
                                 correctionDB = Math.max(-6, Math.min(12, correctionDB));
@@ -30339,13 +30353,24 @@
         window._gainMatchCompensation = 0; // dB compensation applied to dry signal
 
         // Calculate gain match compensation from measured LUFS values
+        // v7.6.13: NaN protection — use stored gain DB if available, guard against null
         window.calculateGainMatch = function() {
-            const originalLUFS = window.originalInputLUFS || -18;
-            const masteredLUFS = window.lastMasteredLUFS || window.lockedLUFS || -14;
-            // Difference in LUFS = difference we need to compensate
-            const lufsDiff = masteredLUFS - originalLUFS; // positive means mastered is louder
-            window._gainMatchCompensation = lufsDiff;
-            return lufsDiff;
+            // Prefer stored gain from LUFS targeting (most accurate)
+            if (typeof window.appliedMakeupGainDB === 'number' && isFinite(window.appliedMakeupGainDB)) {
+                window._gainMatchCompensation = window.appliedMakeupGainDB;
+                return window.appliedMakeupGainDB;
+            }
+            const originalLUFS = window.originalInputLUFS;
+            const masteredLUFS = window.lastMasteredLUFS || window.lockedLUFS;
+            // Guard against null/undefined/NaN
+            if (typeof originalLUFS !== 'number' || !isFinite(originalLUFS) ||
+                typeof masteredLUFS !== 'number' || !isFinite(masteredLUFS)) {
+                window._gainMatchCompensation = 0;
+                return 0;
+            }
+            const lufsDiff = masteredLUFS - originalLUFS;
+            window._gainMatchCompensation = isFinite(lufsDiff) ? lufsDiff : 0;
+            return window._gainMatchCompensation;
         };
 
         // Patch the existing applyABState to support gain matching
