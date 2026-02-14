@@ -17532,12 +17532,19 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // FIX ALL ISSUES - Post-mastering correction function
-        // Adjusts makeup gain to hit target LUFS and tightens limiter if peaks are hot
+        // FIX ALL ISSUES - Comprehensive post-mastering correction
+        // Reads detected issues from AI profile and applies real corrections:
+        // LUFS targeting, peak limiting, EQ (muddiness/harshness), stereo,
+        // dynamics, sibilance/de-esser, and resonance fixes.
         // ═══════════════════════════════════════════════════════════════════════════
         function fixRemainingIssues() {
+            // Update both possible button IDs (report panel + transport bar)
             const btn = document.getElementById('fixAllIssuesBtn');
+            const btn2 = document.getElementById('fixAllBtn');
             if (btn) { btn.textContent = 'FIXING...'; btn.disabled = true; }
+            if (btn2) { btn2.textContent = '⏳ Fixing...'; btn2.disabled = true; }
+
+            const ct = window.audioContext ? window.audioContext.currentTime : 0;
 
             // Determine target LUFS from platform selection
             const platformBtn = document.querySelector('.selector-btn[data-platform].active');
@@ -17551,20 +17558,21 @@
             if (currentLUFS === null || !window.makeupGain || !window.audioContext) {
                 if (typeof showLuvLangToast === 'function') showLuvLangToast('Please master a track first', 'warning');
                 if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
+                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
                 return;
             }
 
             const corrections = [];
-            const lufsDiff = currentLUFS - targetLUFS; // positive = too loud, negative = too quiet
-            let gainAdjustDB = 0;
+            const profile = window.aiTrackProfile || null;
+            const issues = profile ? (profile.issues || []) : [];
 
-            // LUFS correction
+            // ─── 1. LUFS CORRECTION ───────────────────────────────────────────
+            const lufsDiff = currentLUFS - targetLUFS;
+            let gainAdjustDB = 0;
             if (Math.abs(lufsDiff) > 0.3) {
-                // Correct by the exact difference
                 gainAdjustDB = -lufsDiff;
-                // Safety cap: max 3dB adjustment either way
-                gainAdjustDB = Math.max(-3, Math.min(3, gainAdjustDB));
-                corrections.push(`LUFS: ${currentLUFS.toFixed(1)} → ${(currentLUFS + gainAdjustDB).toFixed(1)} (target: ${targetLUFS})`);
+                gainAdjustDB = Math.max(-4, Math.min(4, gainAdjustDB));
+                corrections.push(`LUFS ${currentLUFS.toFixed(1)} → ${targetLUFS} target`);
             }
 
             // Apply gain correction
@@ -17573,33 +17581,140 @@
                 const currentGainDB = 20 * Math.log10(Math.max(currentGainLinear, 0.0001));
                 const newGainDB = currentGainDB + gainAdjustDB;
                 const newGainLinear = Math.pow(10, newGainDB / 20);
-
-                const ct = window.audioContext.currentTime;
                 window.makeupGain.gain.cancelScheduledValues(ct);
                 window.makeupGain.gain.setValueAtTime(window.makeupGain.gain.value, ct);
-                window.makeupGain.gain.linearRampToValueAtTime(newGainLinear, ct + 0.05);
-
+                window.makeupGain.gain.linearRampToValueAtTime(newGainLinear, ct + 0.1);
                 window.appliedMakeupGainLinear = newGainLinear;
                 window.appliedMakeupGainDB = newGainDB;
             }
 
-            // Check true peak — tighten limiter if needed
+            // ─── 2. PEAK LIMITER ──────────────────────────────────────────────
             const peakEl = document.getElementById('peakValue');
             const currentPeak = peakEl ? parseFloat(peakEl.textContent) : -1.5;
-            // v7.6.13: Check at -1.0 ceiling, not -0.5 (was allowing peaks through)
             if (currentPeak > -1.0 && window.limiter) {
                 window.limiter.threshold.value = Math.min(window.limiter.threshold.value, -2.0);
-                window.limiter.knee.value = 0; // Hard knee for true brickwall
-                corrections.push(`Peak limiter tightened: ${currentPeak.toFixed(1)} dBTP → -1.0 dBTP ceiling`);
+                window.limiter.knee.value = 0;
+                corrections.push(`Peaks ${currentPeak.toFixed(1)} → ≤-1.0 dBTP`);
             }
 
-            // v7.6.13: Don't lock meters to target — let real-time meters run
-            // Only update the integrated display to show the corrected value
+            // ─── 3. LOW-MID MUDDINESS (cut 200-500 Hz) ───────────────────────
+            const hasMuddy = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('muddy'));
+            if (hasMuddy && window.eqLowMidFilter) {
+                const currentGain = window.eqLowMidFilter.gain.value;
+                const cut = Math.min(currentGain, -1.5); // At least -1.5 dB cut
+                window.eqLowMidFilter.gain.setTargetAtTime(cut, ct, 0.05);
+                corrections.push(`Low-mids cut to ${cut.toFixed(1)} dB (muddiness)`);
+                // Also update the UI fader if available
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('lowmid', cut, true);
+            }
+
+            // ─── 4. HIGH-MID HARSHNESS (tame 2-5 kHz) ────────────────────────
+            const hasHarsh = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('harsh'));
+            if (hasHarsh && window.eqHighMidFilter) {
+                const currentGain = window.eqHighMidFilter.gain.value;
+                const cut = Math.min(currentGain, -1.5);
+                window.eqHighMidFilter.gain.setTargetAtTime(cut, ct, 0.05);
+                corrections.push(`High-mids cut to ${cut.toFixed(1)} dB (harshness)`);
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('highmid', cut, true);
+            }
+
+            // ─── 5. EQ CORRECTIONS FROM PROFILE ──────────────────────────────
+            if (profile && profile.eqDeltas) {
+                const eqMap = {
+                    sub: window.eqSubFilter,
+                    bass: window.eqBassFilter,
+                    lowmid: window.eqLowMidFilter,
+                    mid: window.eqMidFilter,
+                    highmid: window.eqHighMidFilter,
+                    high: window.eqHighFilter,
+                    air: window.eqAirFilter
+                };
+                for (const [band, delta] of Object.entries(profile.eqDeltas)) {
+                    if (Math.abs(delta) > 0.5 && eqMap[band]) {
+                        const filter = eqMap[band];
+                        const newGain = filter.gain.value + delta * 0.5; // Apply 50% of remaining correction
+                        const clamped = Math.max(-6, Math.min(6, newGain));
+                        filter.gain.setTargetAtTime(clamped, ct, 0.05);
+                        if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition(band, clamped, true);
+                    }
+                }
+            }
+
+            // ─── 6. STEREO BALANCE (bass mono + width) ───────────────────────
+            const hasStereoIssue = issues.some(i => i.type === 'stereo');
+            if (hasStereoIssue && profile && profile.stereoDeltas) {
+                // Bass mono — tighten low-end to mono if phase issues detected
+                if (profile.stereoDeltas.bassMonoThreshold > 0 && window.bassMonoFilter) {
+                    window.bassMonoFilter.frequency.setTargetAtTime(
+                        Math.max(window.bassMonoFilter.frequency.value, profile.stereoDeltas.bassMonoThreshold),
+                        ct, 0.05
+                    );
+                    corrections.push('Bass mono tightened (phase fix)');
+                }
+                // Stereo width — narrow or widen
+                if (profile.stereoDeltas.widthMultiplier !== 1.0 && window.stereoWidthGain) {
+                    const currentWidth = window.stereoWidth || 1.0;
+                    const newWidth = currentWidth * profile.stereoDeltas.widthMultiplier;
+                    window.stereoWidthGain.gain.setTargetAtTime(newWidth, ct, 0.05);
+                    window.stereoWidth = newWidth;
+                    corrections.push(`Stereo width ${profile.stereoDeltas.widthMultiplier < 1 ? 'narrowed' : 'widened'}`);
+                }
+            }
+
+            // ─── 7. DYNAMICS / COMPRESSION ────────────────────────────────────
+            const hasDynamicsIssue = issues.some(i => i.type === 'dynamics');
+            if (hasDynamicsIssue && profile && profile.compDeltas && window.compressor) {
+                const comp = window.compressor;
+                if (profile.compDeltas.thresholdOffset) {
+                    comp.threshold.setTargetAtTime(
+                        comp.threshold.value + profile.compDeltas.thresholdOffset, ct, 0.05
+                    );
+                }
+                if (profile.compDeltas.ratioMultiplier && profile.compDeltas.ratioMultiplier !== 1.0) {
+                    comp.ratio.setTargetAtTime(
+                        Math.max(1.5, Math.min(8, comp.ratio.value * profile.compDeltas.ratioMultiplier)), ct, 0.05
+                    );
+                }
+                corrections.push('Dynamics rebalanced');
+            }
+
+            // ─── 8. SIBILANCE / DE-ESSER ─────────────────────────────────────
+            const hasSibilance = issues.some(i => i.type === 'sibilance');
+            if (hasSibilance && window.deEsserControls) {
+                // Enable and tighten de-esser
+                if (typeof window.deEsserControls.enable === 'function') {
+                    window.deEsserControls.enable();
+                }
+                if (window.deEsserFilter) {
+                    window.deEsserFilter.gain.setTargetAtTime(
+                        Math.min(window.deEsserFilter.gain.value, -3), ct, 0.05
+                    );
+                }
+                corrections.push('De-esser engaged (sibilance)');
+            }
+
+            // ─── 9. DYNAMIC EQ (for resonances + tonal issues) ───────────────
+            const hasResonance = issues.some(i => i.type === 'resonance');
+            const hasTonal = hasMuddy || hasHarsh;
+            if ((hasResonance || hasTonal) && window.dynamicEQ && !window.dynamicEQ.enabled) {
+                window.dynamicEQ.enable();
+                // Sync toggle UI
+                const dynToggle = document.getElementById('dynamicEQToggle');
+                if (dynToggle) {
+                    dynToggle.checked = true;
+                    const track = dynToggle.parentElement ? dynToggle.parentElement.querySelector('span') : null;
+                    const thumb = track ? track.querySelector('span') : null;
+                    if (track) track.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
+                    if (thumb) thumb.style.transform = 'translateX(20px)';
+                }
+                corrections.push('Dynamic EQ enabled (resonance/tonal fix)');
+            }
+
+            // ─── UPDATE DISPLAYS ──────────────────────────────────────────────
             const newLUFS = targetLUFS;
             window.lockedLUFS = newLUFS;
             window.currentIntegratedLUFS = newLUFS;
 
-            // Update display
             const lufsEl = document.getElementById('measuredLufsValue');
             if (lufsEl) {
                 lufsEl.textContent = newLUFS.toFixed(1);
@@ -17607,7 +17722,6 @@
                 lufsEl.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
             }
 
-            // Update bar indicator
             const barIndicator = document.getElementById('lufsBarIndicatorLock');
             if (barIndicator) {
                 const clamped = Math.max(-40, Math.min(-6, newLUFS));
@@ -17616,28 +17730,32 @@
                 barIndicator.style.display = 'block';
             }
 
-            // Show results
+            // ─── TOAST RESULTS ────────────────────────────────────────────────
             if (corrections.length > 0) {
                 if (typeof showLuvLangToast === 'function') {
                     showLuvLangToast(`Fixed ${corrections.length} issue(s): ${corrections.join(' | ')}`, 'success');
                 }
             } else {
                 if (typeof showLuvLangToast === 'function') {
-                    showLuvLangToast('All specs already on target!', 'success');
+                    showLuvLangToast('All specs already on target — no fixes needed!', 'success');
                 }
             }
 
-            if (btn) {
-                btn.textContent = 'ALL ISSUES FIXED ✓';
-                btn.style.background = 'linear-gradient(135deg, #00ff88, #00d4ff)';
+            // ─── RESET BUTTONS ────────────────────────────────────────────────
+            const resetBtn = (b, label) => {
+                if (!b) return;
+                b.textContent = corrections.length > 0 ? '✓ All Fixed' : '✓ On Target';
+                b.style.background = 'linear-gradient(135deg, #00ff88, #00d4ff)';
                 setTimeout(() => {
-                    btn.textContent = 'FIX ALL ISSUES';
-                    btn.disabled = false;
-                    btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%)';
+                    b.textContent = label;
+                    b.disabled = false;
+                    b.style.background = '';
                 }, 3000);
-            }
+            };
+            resetBtn(btn, 'FIX ALL REMAINING ISSUES');
+            resetBtn(btn2, '🔧 Fix All');
 
-            console.log('🔧 Fix All Issues:', corrections);
+            console.log('🔧 Fix All Issues — applied', corrections.length, 'corrections:', corrections);
         }
 
         // Helper function to update EQ fader UI positions with animation
