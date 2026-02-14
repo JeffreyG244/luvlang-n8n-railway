@@ -25866,7 +25866,16 @@
                             }
                         </style>`;
 
-                    analysisPanel.innerHTML = html;
+                    // v7.6.12b: DON'T overwrite the mastering report if it's already showing
+                    // The mastering report contains the Fix All Issues button and dynamics data
+                    // Only show the AI feature grid if no mastering report is displayed
+                    const existingReport = analysisPanel.querySelector('.analysis-results h4');
+                    const hasMasteringReport = existingReport && existingReport.textContent.includes('MASTERING REPORT');
+                    if (!hasMasteringReport) {
+                        analysisPanel.innerHTML = html;
+                    } else {
+                        console.log('📊 Keeping mastering report visible (not replacing with feature grid)');
+                    }
                     window.lastAIResults = results;
 
                     // Update floating status pill to COMPLETE
