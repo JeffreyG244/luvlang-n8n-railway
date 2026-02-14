@@ -10146,28 +10146,41 @@
                         }
                     },
                     enable: () => {
-                        // v7.6.12b: Balanced dynamic EQ — audible but musical
-                        // Moderate thresholds so compressors engage on louder passages
-                        dynEqLowComp.threshold.value = -14;  // Bass taming on louder passages
-                        dynEqMidComp.threshold.value = -12;  // Harshness control
-                        dynEqHighComp.threshold.value = -16;  // Sibilance/de-ess
-                        dynEqLowComp.ratio.value = 2.0;      // Moderate bass control
-                        dynEqMidComp.ratio.value = 2.5;      // Mid harshness taming
-                        dynEqHighComp.ratio.value = 3.0;     // De-essing
-                        // 75% dry + 25% wet — clearly audible without destroying the mix
-                        dynEqDry.gain.value = 0.75;
-                        dynEqLowGain.gain.value = 0.10;   // Bass band
-                        dynEqMidGain.gain.value = 0.08;   // Mid band
-                        dynEqHighGain.gain.value = 0.07;   // High band
+                        // v7.6.12d: Dynamic EQ — frequency-targeted compression
+                        // Uses filter + compressor per band to tame problem frequencies
+                        // Filters boost the target freq so the compressor "hears" it more
+                        dynEqLowFilter.gain.value = 6;       // Boost bass for detection
+                        dynEqMidFilter.gain.value = 6;       // Boost mids for detection
+                        dynEqHighFilter.gain.value = 6;      // Boost highs for detection
+                        dynEqLowComp.threshold.value = -14;  // Engages on moderate bass
+                        dynEqMidComp.threshold.value = -12;  // Catches mid harshness
+                        dynEqHighComp.threshold.value = -16; // Catches sibilance
+                        dynEqLowComp.ratio.value = 2.0;
+                        dynEqMidComp.ratio.value = 2.5;
+                        dynEqHighComp.ratio.value = 3.0;
+                        // 85% dry + 15% wet — subtle frequency taming without volume loss
+                        dynEqDry.gain.value = 0.85;
+                        dynEqLowGain.gain.value = 0.06;
+                        dynEqMidGain.gain.value = 0.05;
+                        dynEqHighGain.gain.value = 0.04;
+                        // OUTPUT MAKEUP: compensate for the parallel mix volume reduction
+                        // Without this, enabling Dynamic EQ drops volume ~1-2 dB
+                        dynEqOutput.gain.value = 1.12;       // +1 dB makeup
                         window.dynamicEQ.enabled = true;
-                        console.log('🎛️ Dynamic EQ ENABLED: 75/25 mix, thresholds -14/-12/-16');
+                        console.log('🎛️ Dynamic EQ ENABLED: 85/15 mix with +1dB makeup, filter boost +6dB for detection');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
                         dynEqLowGain.gain.value = 0;
                         dynEqMidGain.gain.value = 0;
                         dynEqHighGain.gain.value = 0;
-                        // Restore bypass defaults
+                        // Reset filter gains
+                        dynEqLowFilter.gain.value = 0;
+                        dynEqMidFilter.gain.value = 0;
+                        dynEqHighFilter.gain.value = 0;
+                        // Reset output makeup
+                        dynEqOutput.gain.value = 1.0;
+                        // Restore defaults
                         dynEqLowComp.threshold.value = -14;
                         dynEqMidComp.threshold.value = -12;
                         dynEqHighComp.threshold.value = -16;
@@ -16951,21 +16964,41 @@
 
             // APPLY PROFESSIONAL BROADCAST STANDARDS (Even if no problems detected)
 
-            // Professional Compression (Broadcast Standard)
+            // Professional Compression — GENRE-AWARE
+            // v7.6.12d: Classical, jazz, acoustic need TRANSPARENT compression to preserve LRA
+            // Heavy compression (4:1 @ -18dB) destroys dynamic range for these genres
+            const genre = (results.genre || '').toLowerCase();
+            const isDelicateGenre = genre.includes('classical') || genre.includes('jazz') ||
+                                    genre.includes('acoustic') || genre.includes('orchestra') ||
+                                    genre.includes('chamber') || genre.includes('ambient');
+            const aiBypassedCompression = window.aiProfile && window.aiProfile.stageBypass &&
+                                          window.aiProfile.stageBypass.compression;
+
             if (compressor && !results.problems.some(p => p.type === 'over_compressed')) {
                 const oldThreshold = compressor.threshold.value;
                 const oldRatio = compressor.ratio.value;
 
-                compressor.threshold.value = -18;
-                compressor.ratio.value = 4;
-                compressor.attack.value = 0.003;
-                compressor.release.value = 0.15;
-                compressor.knee.value = 6;
-
-                changes.push(`Compression: ${oldRatio.toFixed(1)}:1 @ ${oldThreshold.toFixed(0)}dB → 4:1 @ -18dB (Broadcast Standard)`);
-
-                document.getElementById('compValue').textContent = '40%';
-                document.getElementById('compSlider').value = 40;
+                if (isDelicateGenre || aiBypassedCompression) {
+                    // Transparent compression for classical/jazz — preserve dynamics
+                    compressor.threshold.value = -6;   // Only catch peaks
+                    compressor.ratio.value = 1.5;      // Gentle ratio
+                    compressor.attack.value = 0.020;   // Slow attack preserves transients
+                    compressor.release.value = 0.3;    // Natural release
+                    compressor.knee.value = 20;        // Very soft knee
+                    changes.push(`Compression: ${oldRatio.toFixed(1)}:1 → 1.5:1 @ -6dB (Transparent — preserving dynamics for ${results.genre || 'delicate genre'})`);
+                    document.getElementById('compValue').textContent = '15%';
+                    document.getElementById('compSlider').value = 15;
+                } else {
+                    // Standard broadcast compression for pop/rock/electronic
+                    compressor.threshold.value = -18;
+                    compressor.ratio.value = 4;
+                    compressor.attack.value = 0.003;
+                    compressor.release.value = 0.15;
+                    compressor.knee.value = 6;
+                    changes.push(`Compression: ${oldRatio.toFixed(1)}:1 @ ${oldThreshold.toFixed(0)}dB → 4:1 @ -18dB (Broadcast Standard)`);
+                    document.getElementById('compValue').textContent = '40%';
+                    document.getElementById('compSlider').value = 40;
+                }
             }
 
             // Professional Limiter (True-Peak Ceiling)
@@ -25455,18 +25488,36 @@
                         }
 
                         // PASS 4: Final verification — re-measure with corrected gain
+                        // CRITICAL: Must also enforce true peak ceiling (don't let LUFS
+                        // correction undo the peak safety from Pass 3)
                         const pass4Params = Object.assign({}, chainParams, {
                             makeupGainLinear: Math.pow(10, correctionDB / 20)
                         });
                         const pass4 = await measureChainLoudness(window.audioBuffer, pass4Params);
                         if (pass4 && isFinite(pass4.integratedLUFS) && pass4.integratedLUFS > -60) {
                             const finalDeviation = pass4.integratedLUFS - targetLUFS;
-                            if (Math.abs(finalDeviation) > 0.2) {
-                                correctionDB -= finalDeviation * 0.98;
+
+                            // Check true peak FIRST — ceiling takes priority over LUFS target
+                            if (pass4.truePeakDB > -0.5) {
+                                const tp4Overshoot = pass4.truePeakDB - (-1.0);
+                                correctionDB -= tp4Overshoot;
                                 correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                                console.log(`🎯 Pass 4 fine-tune: ${finalDeviation > 0 ? '+' : ''}${finalDeviation.toFixed(2)} LU off → corrected to ${correctionDB.toFixed(1)} dB`);
+                                console.log(`⚠️ Pass 4 true peak ${pass4.truePeakDB.toFixed(1)} dBTP — reducing gain by ${tp4Overshoot.toFixed(1)} dB (peak ceiling takes priority)`);
+                            } else if (Math.abs(finalDeviation) > 0.2) {
+                                // Only correct LUFS if peaks are safe
+                                const maxBoost = pass4.truePeakDB < -2.0 ? Math.abs(finalDeviation) * 0.98
+                                    : Math.min(Math.abs(finalDeviation) * 0.98, Math.abs(pass4.truePeakDB + 1.0));
+                                if (finalDeviation < 0) {
+                                    // Too quiet — can boost, but cap at peak headroom
+                                    correctionDB += Math.min(maxBoost, -finalDeviation * 0.98);
+                                } else {
+                                    // Too loud — always safe to reduce
+                                    correctionDB -= finalDeviation * 0.98;
+                                }
+                                correctionDB = Math.max(-6, Math.min(12, correctionDB));
+                                console.log(`🎯 Pass 4 fine-tune: ${finalDeviation > 0 ? '+' : ''}${finalDeviation.toFixed(2)} LU off, peak headroom: ${(-1.0 - pass4.truePeakDB).toFixed(1)} dB → corrected to ${correctionDB.toFixed(1)} dB`);
                             } else {
-                                console.log(`✅ Pass 4 verified on target: ${pass4.integratedLUFS.toFixed(1)} LUFS (±${Math.abs(finalDeviation).toFixed(2)} LU)`);
+                                console.log(`✅ Pass 4 verified on target: ${pass4.integratedLUFS.toFixed(1)} LUFS (±${Math.abs(finalDeviation).toFixed(2)} LU), peak: ${pass4.truePeakDB.toFixed(1)} dBTP`);
                             }
                         }
                     }
