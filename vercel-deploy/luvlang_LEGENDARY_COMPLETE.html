@@ -6473,10 +6473,10 @@
         }
 
         // NUCLEAR FALLBACK: Force remove loading screen after 5 seconds NO MATTER WHAT
-        setInterval(function() {
+        // v7.6.16c: Changed to setTimeout (was setInterval running forever after removal)
+        setTimeout(function() {
             var postLogin = document.getElementById('postLoginLoading');
             if (postLogin) {
-
                 postLogin.remove();
                 // Go straight to language selection
                 var langModal = document.getElementById('tourLanguageModal');
@@ -13022,7 +13022,7 @@
 
             try {
                 // Create offline context for fast processing (no real-time constraints)
-                const offlineContext = new OfflineAudioContext(
+                const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                     audioBuffer.numberOfChannels,
                     audioBuffer.length,
                     audioBuffer.sampleRate
@@ -13201,7 +13201,7 @@
                 const analysisDuration = Math.min(30, audioBuffer.duration);
                 const analysisSamples = Math.floor(analysisDuration * sampleRate);
 
-                const offlineCtx = new OfflineAudioContext(
+                const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                     audioBuffer.numberOfChannels,
                     analysisSamples,
                     sampleRate
@@ -22647,7 +22647,7 @@
          * Uses proper anti-aliasing to prevent artifacts
          */
         async function downsampleBuffer(buffer, targetSampleRate) {
-            const offlineCtx = new OfflineAudioContext(
+            const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                 buffer.numberOfChannels,
                 Math.ceil(buffer.length * targetSampleRate / buffer.sampleRate),
                 targetSampleRate
@@ -22696,7 +22696,7 @@
                 }
 
                 // Create offline context for rendering (at oversampled rate if enabled)
-                const offlineContext = new OfflineAudioContext(
+                const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                     numberOfChannels,
                     renderSampleRate * duration,
                     renderSampleRate
@@ -22732,27 +22732,27 @@
 
                 offlineEQBass.type = 'peaking';
                 offlineEQBass.frequency.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.frequency.value : 120;
-                offlineEQBass.Q.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.Q.value : 0.7;
+                offlineEQBass.Q.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.Q.value : 1.0;
                 offlineEQBass.gain.value = typeof eqBassFilter !== 'undefined' && eqBassFilter ? eqBassFilter.gain.value : 0;
 
                 offlineEQLowMid.type = 'peaking';
                 offlineEQLowMid.frequency.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.frequency.value : 350;
-                offlineEQLowMid.Q.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.Q.value : 0.7;
+                offlineEQLowMid.Q.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.Q.value : 1.4;
                 offlineEQLowMid.gain.value = typeof eqLowMidFilter !== 'undefined' && eqLowMidFilter ? eqLowMidFilter.gain.value : 0;
 
                 offlineEQMid.type = 'peaking';
                 offlineEQMid.frequency.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.frequency.value : 1000;
-                offlineEQMid.Q.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.Q.value : 0.7;
+                offlineEQMid.Q.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.Q.value : 1.0;
                 offlineEQMid.gain.value = typeof eqMidFilter !== 'undefined' && eqMidFilter ? eqMidFilter.gain.value : 0;
 
                 offlineEQHighMid.type = 'peaking';
                 offlineEQHighMid.frequency.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.frequency.value : 3500;
-                offlineEQHighMid.Q.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.Q.value : 0.7;
+                offlineEQHighMid.Q.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.Q.value : 1.2;
                 offlineEQHighMid.gain.value = typeof eqHighMidFilter !== 'undefined' && eqHighMidFilter ? eqHighMidFilter.gain.value : 0;
 
                 offlineEQHigh.type = 'peaking';
                 offlineEQHigh.frequency.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.frequency.value : 8000;
-                offlineEQHigh.Q.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.Q.value : 0.7;
+                offlineEQHigh.Q.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.Q.value : 0.9;
                 offlineEQHigh.gain.value = typeof eqHighFilter !== 'undefined' && eqHighFilter ? eqHighFilter.gain.value : 0;
 
                 offlineEQAir.type = 'highshelf';
@@ -22984,7 +22984,7 @@
                 const numberOfChannels = audioBuffer.numberOfChannels;
 
                 // Create offline context for rendering
-                const offlineContext = new OfflineAudioContext(
+                const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                     numberOfChannels,
                     sampleRate * duration,
                     sampleRate
@@ -31960,7 +31960,7 @@
         window.captureReferenceSpectrum = function(audioBuffer) {
             if (!audioBuffer) return;
             try {
-                const offCtx = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
+                const offCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, audioBuffer.length, audioBuffer.sampleRate);
                 const source = offCtx.createBufferSource();
                 source.buffer = audioBuffer;
                 const analyzer = offCtx.createAnalyser();
@@ -32285,7 +32285,7 @@
                     const gainLinear = Math.pow(10, safeGainDB / 20);
 
                     // Apply gain via OfflineAudioContext
-                    const offlineCtx = new OfflineAudioContext(
+                    const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
                         numChannels,
                         totalSamples,
                         sampleRate
