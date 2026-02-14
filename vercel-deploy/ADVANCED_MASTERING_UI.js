@@ -65,10 +65,12 @@ function createLimiterModeUI(containerId) {
             }
 
             // Also apply to look-ahead limiter if it exists
-            const la = window.lookAheadLimiter;
-            if (la) {
-                la.attack.value = Math.max(0.0001, params.attack * 0.5);
-                la.release.value = params.release * 1.2;
+            // Note: window.lookAheadLimiter is a wrapper object — the actual node is .limiter
+            const laObj = window.lookAheadLimiter;
+            const laNode = laObj && laObj.limiter ? laObj.limiter : null;
+            if (laNode) {
+                laNode.attack.value = Math.max(0.0001, params.attack * 0.5);
+                laNode.release.value = params.release * 1.2;
             }
 
             // Update release slider to match mode
@@ -368,12 +370,12 @@ function createUnlimiterUI(containerId) {
         const amount = parseFloat(document.getElementById('unlimiterAmount')?.value || 50) / 100;
         const transientBoost = parseFloat(document.getElementById('unlimiterTransient')?.value || 3);
 
-        // Raise limiter threshold proportionally (0-100% → 0 to +6 dB above normal)
-        lim.threshold.value = _savedLimiterThreshold + (amount * 6);
-        // Softer knee for more dynamic range
-        lim.knee.value = amount * 10;
-        // Lower ratio for less aggressive limiting
-        lim.ratio.value = 20 - (amount * 15); // 20:1 → 5:1
+        // Raise limiter threshold proportionally — clamp to 0 max (DynamicsCompressor range: -100 to 0)
+        lim.threshold.value = Math.min(0, _savedLimiterThreshold + (amount * 6));
+        // Softer knee for more dynamic range (max 10)
+        lim.knee.value = Math.min(10, amount * 10);
+        // Lower ratio for less aggressive limiting (min 2:1)
+        lim.ratio.value = Math.max(2, 20 - (amount * 15)); // 20:1 → 5:1
 
         // Transient boost: shorter attack lets transients through
         lim.attack.value = 0.001 + (transientBoost / 6) * 0.009; // 1ms → 10ms
