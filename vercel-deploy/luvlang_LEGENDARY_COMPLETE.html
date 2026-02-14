@@ -5161,6 +5161,22 @@
                             <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">LO-FI</div>
                             <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Mellow / Vinyl</div>
                         </button>
+                        <button class="genre-btn" data-genre="reggae" onclick="previewGenre('reggae')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">REGGAE</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Bass / Groove</div>
+                        </button>
+                        <button class="genre-btn" data-genre="gospel" onclick="previewGenre('gospel')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">GOSPEL</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Vocal / Worship</div>
+                        </button>
+                        <button class="genre-btn" data-genre="afrobeats" onclick="previewGenre('afrobeats')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">AFROBEATS</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Rhythmic / Percussive</div>
+                        </button>
+                        <button class="genre-btn" data-genre="phonk" onclick="previewGenre('phonk')" style="background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 8px; cursor: pointer; transition: all 0.2s; position: relative;">
+                            <div style="font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.9); margin-bottom: 2px;">PHONK</div>
+                            <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4);">Dark / Aggressive</div>
+                        </button>
                     </div>
                     <!-- Status Display -->
                     <div id="genrePreviewStatus" style="text-align: center; padding: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; font-size: 0.65rem; color: rgba(255,255,255,0.5); letter-spacing: 0.5px;">
@@ -5379,10 +5395,10 @@
             <div style="display: flex; align-items: center; gap: 10px;">
                 <button onclick="runPreExportCheck()" style="
                     padding: 10px 18px;
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 4px;
-                    color: rgba(255,255,255,0.6);
+                    background: linear-gradient(180deg, rgba(184,79,255,0.15) 0%, rgba(184,79,255,0.06) 100%);
+                    border: 1px solid rgba(184,79,255,0.3);
+                    border-radius: 6px;
+                    color: rgba(184,79,255,0.9);
                     font-size: 0.65rem;
                     font-weight: 600;
                     letter-spacing: 0.1em;
@@ -5392,10 +5408,10 @@
                 ">QC CHECK</button>
                 <button id="scorecardTabBtn" onclick="toggleScorecardPanel()" style="
                     padding: 10px 18px;
-                    background: rgba(255,255,255,0.04);
-                    border: 1px solid rgba(255,255,255,0.08);
-                    border-radius: 4px;
-                    color: rgba(255,255,255,0.6);
+                    background: linear-gradient(180deg, rgba(0,212,255,0.15) 0%, rgba(0,212,255,0.06) 100%);
+                    border: 1px solid rgba(0,212,255,0.3);
+                    border-radius: 6px;
+                    color: rgba(0,212,255,0.9);
                     font-size: 0.65rem;
                     font-weight: 600;
                     letter-spacing: 0.1em;
@@ -5403,13 +5419,15 @@
                     cursor: pointer;
                     transition: all 0.2s;
                     display: none;
-                ">SCORE <span id="scorecardTabGrade" style="color: #00d4ff; font-weight: 800;"></span></button>
+                    align-items: center;
+                    gap: 6px;
+                ">SCORE <span id="scorecardTabGrade" style="color: #00ff88; font-weight: 800;"></span></button>
                 <button onclick="openPricingModal()" style="
                     padding: 10px 20px;
-                    background: linear-gradient(180deg, rgba(92,184,92,0.2) 0%, rgba(92,184,92,0.1) 100%);
-                    border: 1px solid rgba(92,184,92,0.4);
-                    border-radius: 4px;
-                    color: #8fd98f;
+                    background: linear-gradient(180deg, rgba(0,255,136,0.15) 0%, rgba(0,255,136,0.06) 100%);
+                    border: 1px solid rgba(0,255,136,0.3);
+                    border-radius: 6px;
+                    color: rgba(0,255,136,0.9);
                     font-size: 0.65rem;
                     font-weight: 600;
                     letter-spacing: 0.1em;
@@ -10168,28 +10186,33 @@
                         }
                     },
                     enable: () => {
-                        // v7.6.12d: Dynamic EQ — frequency-targeted compression
-                        // Uses filter + compressor per band to tame problem frequencies
-                        // Filters boost the target freq so the compressor "hears" it more
-                        dynEqLowFilter.gain.value = 6;       // Boost bass for detection
-                        dynEqMidFilter.gain.value = 6;       // Boost mids for detection
-                        dynEqHighFilter.gain.value = 6;      // Boost highs for detection
-                        dynEqLowComp.threshold.value = -14;  // Engages on moderate bass
-                        dynEqMidComp.threshold.value = -12;  // Catches mid harshness
-                        dynEqHighComp.threshold.value = -16; // Catches sibilance
-                        dynEqLowComp.ratio.value = 2.0;
-                        dynEqMidComp.ratio.value = 2.5;
-                        dynEqHighComp.ratio.value = 3.0;
-                        // 85% dry + 15% wet — subtle frequency taming without volume loss
-                        dynEqDry.gain.value = 0.85;
-                        dynEqLowGain.gain.value = 0.06;
-                        dynEqMidGain.gain.value = 0.05;
-                        dynEqHighGain.gain.value = 0.04;
-                        // OUTPUT MAKEUP: compensate for the parallel mix volume reduction
-                        // Without this, enabling Dynamic EQ drops volume ~1-2 dB
-                        dynEqOutput.gain.value = 1.12;       // +1 dB makeup
+                        // v7.6.14: Dynamic EQ — TRANSPARENT parallel compression
+                        // Conservative settings: 95% dry signal preserved, subtle taming only.
+                        // Only applies gentle compression to problem frequencies when user
+                        // manually enables it. Never auto-enabled during mastering.
+                        dynEqLowFilter.gain.value = 6;       // Gentle boost for detection
+                        dynEqMidFilter.gain.value = 6;       // Gentle boost for detection
+                        dynEqHighFilter.gain.value = 6;      // Gentle boost for detection
+                        dynEqLowComp.threshold.value = -24;  // Only catches loud bass peaks
+                        dynEqMidComp.threshold.value = -22;  // Only catches harsh peaks
+                        dynEqHighComp.threshold.value = -26; // Only catches sibilance peaks
+                        dynEqLowComp.ratio.value = 2.0;      // Gentle control
+                        dynEqMidComp.ratio.value = 2.0;      // Gentle control
+                        dynEqHighComp.ratio.value = 2.5;     // Slightly firmer on sibilance
+                        dynEqLowComp.attack.value = 0.010;   // 10ms — musical attack
+                        dynEqMidComp.attack.value = 0.005;   // 5ms — catches transients
+                        dynEqHighComp.attack.value = 0.002;  // 2ms — catches sibilance
+                        dynEqLowComp.release.value = 0.200;  // 200ms — smooth bass release
+                        dynEqMidComp.release.value = 0.120;  // 120ms — natural mid release
+                        dynEqHighComp.release.value = 0.080; // 80ms — fast sibilance release
+                        // 95% dry — transparent, no "wetness"
+                        dynEqDry.gain.value = 0.95;
+                        dynEqLowGain.gain.value = 0.03;      // Very subtle tamed bass
+                        dynEqMidGain.gain.value = 0.03;      // Very subtle tamed mids
+                        dynEqHighGain.gain.value = 0.02;     // Very subtle tamed highs
+                        dynEqOutput.gain.value = 1.0;        // No makeup gain needed
                         window.dynamicEQ.enabled = true;
-                        console.log('🎛️ Dynamic EQ ENABLED: 85/15 mix with +1dB makeup, filter boost +6dB for detection');
+                        console.log('🎛️ Dynamic EQ ENABLED: transparent 95/5 mix, gentle ratios 2-2.5:1');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
@@ -12491,17 +12514,12 @@
                 // ENABLE PROCESSORS WITH SAFE DEFAULTS
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                // Enable Dynamic EQ with gentle settings + sync toggle UI
-                window.dynamicEQ.enable();
+                // v7.6.13k: Dynamic EQ DISABLED by default — user enables manually
+                // or mastering engine enables it at intensity 3+ via bypass flags
+                window.dynamicEQ.disable();
                 const dynEqToggleEl = document.getElementById('dynamicEQToggle');
                 if (dynEqToggleEl) {
-                    dynEqToggleEl.checked = true;
-                    // Sync visual state
-                    const dynToggleLabel = dynEqToggleEl.parentElement;
-                    const dynToggleTrack = dynToggleLabel ? dynToggleLabel.querySelector('span') : null;
-                    const dynToggleThumb = dynToggleTrack ? dynToggleTrack.querySelector('span') : null;
-                    if (dynToggleTrack) dynToggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
-                    if (dynToggleThumb) dynToggleThumb.style.transform = 'translateX(20px)';
+                    dynEqToggleEl.checked = false;
                 }
 
                 // ═══════════════════════════════════════════════════════════════════════
@@ -15249,312 +15267,312 @@
                 {
                     name: 'Classic Boom Bap',
                     description: 'DJ Premier / J Dilla - Punchy drums, warm bass',
-                    eq: { sub: +2.0, bass: +1.8, lowmid: -1.5, mid: +0.5, highmid: +1.0, high: +0.5, air: +0.8 }
+                    eq: { sub: +2.0, bass: +1.8, lowmid: -1.5, mid: +0.5, highmid: +1.5, high: +0.8, air: +0.5 }
                 },
                 {
                     name: 'Modern Trap',
                     description: 'Metro Boomin / 808 Mafia - Heavy 808s, crisp hats',
-                    eq: { sub: +3.0, bass: +2.5, lowmid: -2.5, mid: -1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +1.0, lowmid: -2.0, mid: -0.5, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Vocal Forward',
                     description: 'Drake / Kendrick - Clear vocals, balanced low',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -1.8, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -1.5, mid: +0.8, highmid: +2.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Club Ready',
                     description: 'Club systems - Sub-focused, impactful',
-                    eq: { sub: +3.5, bass: +2.8, lowmid: -2.0, mid: -0.5, highmid: +1.2, high: +1.0, air: +1.0 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: -0.5, highmid: +1.5, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Streaming Master',
                     description: 'Spotify/Apple - Balanced, -14 LUFS ready',
-                    eq: { sub: +2.0, bass: +1.8, lowmid: -1.2, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Lo-Fi Hip-Hop',
                     description: 'Chill beats - Warm, mellow, vinyl character',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: +0.5, mid: -0.3, highmid: -0.5, high: -0.8, air: +0.5 }
+                    eq: { sub: +1.5, bass: +1.8, lowmid: +0.5, mid: -0.3, highmid: +0.5, high: -1.0, air: -0.5 }
                 },
                 {
                     name: 'UK Drill',
                     description: 'Pop Smoke / Central Cee - Dark 808s, crisp slides',
-                    eq: { sub: +3.2, bass: +2.2, lowmid: -2.2, mid: -0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +0.5, lowmid: -2.5, mid: -0.5, highmid: +1.0, high: +2.5, air: +2.0 }
                 },
                 {
                     name: 'West Coast G-Funk',
                     description: 'Dr. Dre / Snoop style - Warm, bouncy, analog',
-                    eq: { sub: +2.2, bass: +2.5, lowmid: -0.8, mid: +0.5, highmid: +1.2, high: +1.0, air: +1.2 }
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -0.8, mid: +0.5, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Afrobeats Fusion',
                     description: 'Burna Boy / Wizkid - Rhythmic, percussive, warm',
-                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Underground Raw',
                     description: 'Griselda / Alchemist - Gritty, authentic, punchy',
-                    eq: { sub: +1.8, bass: +1.5, lowmid: -1.2, mid: +1.0, highmid: +1.5, high: +0.8, air: +0.5 }
+                    eq: { sub: +1.8, bass: +1.5, lowmid: -1.0, mid: +1.0, highmid: +1.5, high: +0.5, air: +0.3 }
                 }
             ],
             'electronic': [
                 {
                     name: 'Festival Banger',
                     description: 'Main stage - Massive bass, bright presence',
-                    eq: { sub: +3.5, bass: +2.8, lowmid: -1.5, mid: -0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -1.5, mid: -0.5, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Deep House',
                     description: 'Warm grooves - Rich low end, smooth highs',
-                    eq: { sub: +2.5, bass: +2.8, lowmid: +0.3, mid: -0.3, highmid: +0.8, high: +1.0, air: +1.5 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: -1.5, mid: -0.5, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Techno',
                     description: 'Berlin style - Tight kicks, industrial edge',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -2.0, mid: +0.5, highmid: +1.0, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Trance / Progressive',
                     description: 'Uplifting - Ethereal highs, driving bass',
-                    eq: { sub: +2.0, bass: +1.8, lowmid: -0.8, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
                 },
                 {
                     name: 'Dubstep / Bass',
                     description: 'Maximum impact - Sub-heavy, aggressive',
-                    eq: { sub: +4.0, bass: +3.0, lowmid: -1.8, mid: +0.8, highmid: +1.4, high: +0.9, air: +1.1 }
+                    eq: { sub: +3.0, bass: +1.0, lowmid: -2.0, mid: +1.0, highmid: +1.5, high: +2.0, air: +1.0 }
                 },
                 {
                     name: 'Ambient / Chillout',
                     description: 'Spacious, atmospheric - Dreamy textures',
-                    eq: { sub: +1.5, bass: +1.2, lowmid: -0.3, mid: -0.5, highmid: +0.8, high: +1.0, air: +1.5 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -0.3, mid: -0.5, highmid: +0.8, high: +1.0, air: +2.0 }
                 },
                 {
                     name: 'Drum & Bass',
                     description: 'Liquid / Neurofunk - Punchy, energetic',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +1.5 }
                 },
                 {
                     name: 'Synthwave / Retro',
                     description: '80s inspired - Warm synths, analog feel',
-                    eq: { sub: +1.8, bass: +2.2, lowmid: +0.5, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Minimal Techno',
                     description: 'Stripped back - Hypnotic, clean',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.8, mid: +0.3, highmid: +1.0, high: +1.0, air: +1.0 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -1.0, mid: +0.3, highmid: +0.8, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Hardstyle / Hard Dance',
                     description: 'Aggressive kicks - Maximum energy',
-                    eq: { sub: +3.5, bass: +2.5, lowmid: -2.0, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: +1.0, highmid: +1.5, high: +2.0, air: +1.0 }
                 }
             ],
             'edm': [
                 {
                     name: 'Festival Main Stage',
                     description: 'Martin Garrix / Tiësto - Massive, euphoric',
-                    eq: { sub: +3.5, bass: +2.5, lowmid: -1.5, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -1.5, mid: -0.5, highmid: +1.5, high: +2.0, air: +2.0 }
                 },
                 {
                     name: 'Future Bass',
                     description: 'Flume / Odesza - Lush, wide, emotional',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.0, air: +2.5 }
                 },
                 {
                     name: 'Big Room House',
                     description: 'Hardwell / W&W - Powerful kicks, soaring',
-                    eq: { sub: +3.0, bass: +2.2, lowmid: -1.8, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: 0, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Melodic House',
                     description: 'Lane 8 / Rufus Du Sol - Atmospheric',
-                    eq: { sub: +2.2, bass: +2.0, lowmid: +0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.5 }
                 },
                 {
                     name: 'Bass House / Tech',
                     description: 'Chris Lake / Fisher - Punchy, groovy',
-                    eq: { sub: +3.2, bass: +2.8, lowmid: -1.2, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +1.0 }
                 },
                 {
                     name: 'Electro House',
                     description: 'Deadmau5 / Feed Me - Gritty, driving',
-                    eq: { sub: +2.8, bass: +2.5, lowmid: -1.0, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +1.0, highmid: +1.5, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Progressive House',
                     description: 'Eric Prydz / Pryda - Building, hypnotic',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +2.0 }
                 },
                 {
                     name: 'Tropical House',
                     description: 'Kygo / Thomas Jack - Bright, summery',
-                    eq: { sub: +1.8, bass: +1.5, lowmid: -0.3, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.5 }
                 },
                 {
                     name: 'Slap House',
                     description: 'Dynoro / Imanbek - Punchy bass, catchy',
-                    eq: { sub: +2.5, bass: +2.8, lowmid: -1.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.0, bass: +2.5, lowmid: -1.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Mainstage Anthem',
                     description: 'Festival closer - Maximum impact, epic',
-                    eq: { sub: +3.8, bass: +2.8, lowmid: -1.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -2.0, mid: 0, highmid: +2.0, high: +2.5, air: +2.0 }
                 }
             ],
             'pop': [
                 {
                     name: 'Radio Ready',
                     description: 'Top 40 - Bright, polished, commercial',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: -0.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -1.0, mid: +0.5, highmid: +2.5, high: +1.5, air: +1.5 }
                 },
                 {
                     name: 'Indie Pop',
                     description: 'Authentic - Natural, less processed',
-                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.0, air: +1.5 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'Dance Pop',
                     description: 'Club crossover - Energetic, driving',
-                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.0, mid: -0.3, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Ballad',
                     description: 'Emotional - Warm mids, intimate',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.5, mid: +1.2, highmid: +1.0, high: +0.8, air: +1.5 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +1.0, highmid: +2.0, high: +1.0, air: +1.0 }
                 },
                 {
                     name: 'K-Pop / J-Pop',
                     description: 'Asian pop - Bright, punchy, detailed',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: -0.5, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.5, high: +2.5, air: +2.0 }
                 },
                 {
                     name: 'Synth Pop',
                     description: 'The Weeknd / Dua Lipa - Modern, polished',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.0, air: +2.0 }
                 },
                 {
                     name: 'Acoustic Pop',
                     description: 'Ed Sheeran style - Natural, warm',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +1.1, high: +0.9, air: +1.4 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Power Pop',
                     description: 'Energetic hooks - Punchy, uplifting',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: -0.3, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: -1.0, mid: +1.0, highmid: +2.5, high: +2.0, air: +1.0 }
                 },
                 {
                     name: 'Electro Pop',
                     description: 'Charli XCX / Robyn - Bright, synthetic',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: -0.8, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +2.0 }
                 },
                 {
                     name: 'Latin Pop',
                     description: 'Crossover appeal - Rhythmic, warm',
-                    eq: { sub: +1.2, bass: +1.8, lowmid: -0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
                 }
             ],
             'rock': [
                 {
                     name: 'Classic Rock',
                     description: 'Zeppelin / AC/DC - Warm, powerful',
-                    eq: { sub: +0.3, bass: +1.2, lowmid: +1.0, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
+                    eq: { sub: +0.5, bass: +1.5, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +0.8 }
                 },
                 {
                     name: 'Modern Rock',
                     description: 'Foo Fighters - Tight, punchy, clear',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.5, bass: +1.5, lowmid: -1.0, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.0 }
                 },
                 {
                     name: 'Hard Rock',
                     description: 'High energy - Aggressive, driving',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.8, mid: +1.5, highmid: +1.4, high: +0.9, air: +1.1 }
+                    eq: { sub: +0.8, bass: +2.0, lowmid: -1.0, mid: +1.0, highmid: +2.5, high: +2.0, air: +0.8 }
                 },
                 {
                     name: 'Alternative',
                     description: 'Indie rock - Balanced, textured',
-                    eq: { sub: +0.3, bass: +0.8, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Punk / Pop-Punk',
                     description: 'Raw energy - Fast, aggressive, mid-forward',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +1.5, mid: +2.0, highmid: +1.5, high: +1.0, air: +0.8 }
+                    eq: { sub: +0.5, bass: +2.0, lowmid: -1.5, mid: +1.5, highmid: +2.5, high: +2.5, air: +0.5 }
                 },
                 {
                     name: 'Grunge',
                     description: 'Nirvana / Soundgarden - Dark, heavy, raw',
-                    eq: { sub: +0.5, bass: +1.5, lowmid: +1.2, mid: +0.8, highmid: +1.2, high: +1.0, air: +0.5 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: +1.0, air: +0.5 }
                 },
                 {
                     name: 'Blues Rock',
                     description: 'SRV / Clapton - Warm, organic, soulful',
-                    eq: { sub: +0.3, bass: +1.0, lowmid: +0.8, mid: +1.0, highmid: +1.2, high: +0.8, air: +1.0 }
+                    eq: { sub: +0.5, bass: +1.5, lowmid: -0.5, mid: +1.0, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Progressive Rock',
                     description: 'Pink Floyd / Tool - Dynamic, wide, complex',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +1.5 }
                 },
                 {
                     name: 'Arena Rock',
                     description: 'Stadium anthems - Big, powerful, soaring',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Post-Rock',
                     description: 'Explosions in the Sky - Atmospheric, building',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +1.1, high: +0.9, air: +1.4 }
+                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.5, mid: +0.5, highmid: +1.0, high: +1.5, air: +2.0 }
                 }
             ],
             'rnb': [
                 {
                     name: 'Classic R&B',
                     description: 'Motown / 90s vibe - Warm, soulful',
-                    eq: { sub: +1.5, bass: +1.8, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +0.8, air: +1.2 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +0.8, air: +0.5 }
                 },
                 {
                     name: 'Modern R&B',
                     description: 'The Weeknd / SZA style - Atmospheric, lush',
-                    eq: { sub: +2.0, bass: +1.5, lowmid: -0.5, mid: +0.3, highmid: +1.1, high: +0.9, air: +1.4 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Neo-Soul',
                     description: 'Erykah Badu / D\'Angelo - Organic, deep',
-                    eq: { sub: +1.8, bass: +2.0, lowmid: +0.5, mid: +0.5, highmid: +0.5, high: +0.8, air: +1.5 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +0.5, air: +0.5 }
                 },
                 {
                     name: 'Vocal Intimate',
                     description: 'Vocal-focused - Clear, present, emotional',
-                    eq: { sub: +1.2, bass: +1.0, lowmid: -0.3, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.0, lowmid: -0.5, mid: +0.8, highmid: +2.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'R&B/Hip-Hop Hybrid',
                     description: 'Drake / Bryson Tiller - Atmospheric trap',
-                    eq: { sub: +2.2, bass: +1.8, lowmid: -1.0, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.5, bass: +1.5, lowmid: -1.5, mid: +0.3, highmid: +2.0, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Slow Jam',
                     description: '90s Babyface - Silky, romantic, warm',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.0, high: +0.8, air: +1.2 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.3, mid: +0.8, highmid: +1.5, high: +0.8, air: +0.5 }
                 },
                 {
                     name: 'Alternative R&B',
                     description: 'Frank Ocean / Solange - Experimental, lush',
-                    eq: { sub: +1.8, bass: +1.2, lowmid: -0.3, mid: +0.5, highmid: +1.0, high: +1.0, air: +1.5 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.5, air: +1.5 }
                 },
                 {
                     name: 'Gospel Soul',
                     description: 'Aretha / Hezekiah Walker - Powerful, uplifting',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.5, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'PBR&B',
                     description: 'Minimalist R&B - Dark, sparse, moody',
-                    eq: { sub: +2.0, bass: +1.2, lowmid: -0.8, mid: -0.3, highmid: +0.8, high: +1.0, air: +1.5 }
+                    eq: { sub: +2.0, bass: +1.0, lowmid: -1.0, mid: -0.5, highmid: +1.0, high: +0.5, air: +0.5 }
                 },
                 {
                     name: 'Funk R&B',
                     description: 'Bruno Mars / Anderson .Paak - Groovy, punchy',
-                    eq: { sub: +1.8, bass: +2.0, lowmid: -0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: -1.0, mid: +1.0, highmid: +2.0, high: +1.5, air: +1.0 }
                 }
             ],
             'acoustic': [
@@ -15717,52 +15735,52 @@
                 {
                     name: 'Modern Metal',
                     description: 'Djent / Prog - Tight, surgical',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +1.5, highmid: +1.5, high: +1.0, air: +1.0 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -1.0, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Classic Metal',
                     description: 'Metallica / Iron Maiden - Powerful, warm',
-                    eq: { sub: +0.5, bass: +1.8, lowmid: +1.0, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
+                    eq: { sub: +0.5, bass: +2.0, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +0.8 }
                 },
                 {
                     name: 'Death Metal',
-                    description: 'Brutal - Heavy, aggressive',
-                    eq: { sub: +1.5, bass: +2.0, lowmid: +0.5, mid: +1.8, highmid: +1.5, high: +1.0, air: +0.5 }
+                    description: 'Brutal - Heavy, aggressive, scooped',
+                    eq: { sub: +1.5, bass: +2.5, lowmid: -2.0, mid: +1.5, highmid: +2.0, high: +1.5, air: +0.5 }
                 },
                 {
                     name: 'Black Metal',
                     description: 'Raw, atmospheric - Cold, trebly',
-                    eq: { sub: -0.5, bass: +0.5, lowmid: +1.0, mid: +2.0, highmid: +1.5, high: +1.0, air: +1.0 }
+                    eq: { sub: -0.5, bass: +0.5, lowmid: -0.5, mid: +1.5, highmid: +2.0, high: +2.5, air: +1.5 }
                 },
                 {
                     name: 'Melodic Metal',
                     description: 'Symphonic / Power - Epic, full',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Thrash Metal',
                     description: 'Slayer / Megadeth - Fast, aggressive, tight',
-                    eq: { sub: +0.5, bass: +1.2, lowmid: +0.5, mid: +1.5, highmid: +1.5, high: +1.0, air: +1.0 }
+                    eq: { sub: +0.5, bass: +1.5, lowmid: -1.5, mid: +1.5, highmid: +2.5, high: +2.0, air: +0.8 }
                 },
                 {
                     name: 'Doom / Stoner',
                     description: 'Sleep / Electric Wizard - Heavy, sludgy, huge',
-                    eq: { sub: +1.5, bass: +2.5, lowmid: +1.5, mid: +1.0, highmid: +1.0, high: +0.8, air: +0.5 }
+                    eq: { sub: +2.0, bass: +2.5, lowmid: +0.5, mid: +0.5, highmid: +1.0, high: +0.5, air: +0.3 }
                 },
                 {
                     name: 'Nu-Metal',
                     description: 'Deftones / Korn - Thick, downtuned, punchy',
-                    eq: { sub: +1.2, bass: +2.0, lowmid: +0.8, mid: +1.2, highmid: +1.5, high: +1.0, air: +0.8 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +0.8 }
                 },
                 {
                     name: 'Metalcore',
                     description: 'Architects / Parkway Drive - Modern, punchy',
-                    eq: { sub: +1.0, bass: +1.8, lowmid: -0.3, mid: +1.5, highmid: +1.4, high: +0.9, air: +1.1 }
+                    eq: { sub: +1.0, bass: +2.0, lowmid: -1.5, mid: +1.0, highmid: +2.5, high: +2.0, air: +1.0 }
                 },
                 {
                     name: 'Deathcore',
                     description: 'Breakdown heavy - Maximum impact, crushing',
-                    eq: { sub: +1.5, bass: +2.2, lowmid: +0.5, mid: +1.8, highmid: +1.5, high: +1.0, air: +0.8 }
+                    eq: { sub: +1.5, bass: +2.5, lowmid: -2.0, mid: +1.5, highmid: +2.0, high: +1.5, air: +0.5 }
                 }
             ],
             'country': [
@@ -15821,104 +15839,312 @@
                 {
                     name: 'Reggaeton',
                     description: 'Club banger - Heavy dembow, sub bass',
-                    eq: { sub: +3.0, bass: +2.5, lowmid: -1.5, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +1.5, high: +2.5, air: +2.0 }
                 },
                 {
                     name: 'Latin Pop',
                     description: 'Mainstream - Bright, commercial',
-                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.5 }
                 },
                 {
                     name: 'Salsa / Bachata',
-                    description: 'Traditional - Warm, rhythmic',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.2, high: +1.0, air: +1.2 }
+                    description: 'Traditional - Warm, rhythmic, percussive',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Latin Trap',
                     description: 'Bad Bunny style - 808s, atmospheric',
-                    eq: { sub: +2.8, bass: +2.0, lowmid: -1.8, mid: -0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +3.0, bass: +1.0, lowmid: -2.0, mid: -0.5, highmid: +1.5, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Regional Mexican',
                     description: 'Corridos / Banda - Full, traditional',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: +0.5, mid: +1.0, highmid: +1.2, high: +1.0, air: +1.0 }
+                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +1.0 }
                 },
                 {
                     name: 'Cumbia',
                     description: 'Colombian rhythm - Warm, groovy, infectious',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.1, high: +0.9, air: +1.4 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Bossa Nova',
                     description: 'Brazilian smooth - Mellow, intimate, warm',
-                    eq: { sub: +0.5, bass: +0.8, lowmid: +0.3, mid: +0.5, highmid: +0.8, high: +1.0, air: +1.2 }
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.0, air: +0.8 }
                 },
                 {
                     name: 'Flamenco',
                     description: 'Spanish passion - Percussive, dynamic, bright',
-                    eq: { sub: +0.3, bass: +0.5, lowmid: +0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +0.3, bass: +0.5, lowmid: -0.5, mid: +0.8, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Merengue',
                     description: 'Dominican energy - Fast, bright, punchy',
-                    eq: { sub: +1.0, bass: +1.2, lowmid: -0.3, mid: +0.8, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.8, highmid: +2.0, high: +2.0, air: +1.5 }
                 },
                 {
                     name: 'Urbano Latino',
                     description: 'Modern Latin urban - 808s, crisp, streaming',
-                    eq: { sub: +2.5, bass: +2.0, lowmid: -1.2, mid: +0.3, highmid: +1.3, high: +0.9, air: +1.3 }
+                    eq: { sub: +2.5, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.0, air: +1.5 }
                 }
             ],
             'lofi': [
                 {
                     name: 'Chill Beats',
-                    description: 'Study music - Warm, mellow, lo-fi',
-                    eq: { sub: +1.0, bass: +1.2, lowmid: +0.5, mid: -0.3, highmid: -0.5, high: -0.8, air: +0.5 }
+                    description: 'Study music - Warm, mellow, cozy',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: +0.5, mid: -0.5, highmid: +1.0, high: -1.5, air: -2.0 }
                 },
                 {
                     name: 'Vinyl Warmth',
                     description: 'Vintage character - Rolled off highs',
-                    eq: { sub: +0.8, bass: +1.5, lowmid: +0.8, mid: +0.3, highmid: -0.3, high: -1.0, air: 0 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.8, mid: 0, highmid: +0.5, high: -2.0, air: -2.5 }
                 },
                 {
                     name: 'Jazzy Lo-Fi',
                     description: 'Jazz samples - Smooth, nostalgic',
-                    eq: { sub: +0.8, bass: +1.0, lowmid: +0.3, mid: +0.3, highmid: +0.3, high: -0.5, air: +0.5 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.3, mid: +0.3, highmid: +1.0, high: -1.0, air: -1.5 }
                 },
                 {
                     name: 'Ambient Lo-Fi',
                     description: 'Atmospheric - Dreamy, spacious',
-                    eq: { sub: +1.2, bass: +1.0, lowmid: -0.3, mid: -0.5, highmid: -0.3, high: +0.3, air: +1.2 }
+                    eq: { sub: +2.0, bass: +1.0, lowmid: -0.3, mid: -0.5, highmid: +0.5, high: -0.5, air: -1.0 }
                 },
                 {
                     name: 'Tape Saturation',
                     description: 'Heavy character - Crunchy, warm',
-                    eq: { sub: +1.0, bass: +1.5, lowmid: +1.0, mid: +0.5, highmid: -0.5, high: -1.2, air: -0.5 }
+                    eq: { sub: +1.5, bass: +2.0, lowmid: +1.0, mid: +0.5, highmid: +0.5, high: -2.0, air: -2.5 }
                 },
                 {
                     name: 'Bedroom Pop',
                     description: 'Clairo / Rex Orange County - Soft, dreamy',
-                    eq: { sub: +1.0, bass: +1.2, lowmid: +0.3, mid: +0.3, highmid: +0.5, high: -0.3, air: +0.8 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: +0.3, mid: +0.3, highmid: +1.5, high: -0.5, air: -0.5 }
                 },
                 {
                     name: 'Dusty Samples',
                     description: 'Chopped soul - Gritty, textured, old',
-                    eq: { sub: +0.8, bass: +1.2, lowmid: +0.8, mid: +0.5, highmid: -0.3, high: -0.8, air: 0 }
+                    eq: { sub: +1.5, bass: +1.5, lowmid: +1.0, mid: +0.5, highmid: +0.5, high: -1.5, air: -2.0 }
                 },
                 {
                     name: 'Chillhop',
                     description: 'Instrumental beats - Smooth, groovy, mellow',
-                    eq: { sub: +1.2, bass: +1.5, lowmid: +0.3, mid: 0, highmid: +0.3, high: -0.3, air: +0.8 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: +0.3, mid: -0.3, highmid: +1.0, high: -1.0, air: -1.5 }
                 },
                 {
                     name: 'VHS Aesthetic',
                     description: 'Retro degradation - Warbly, nostalgic',
-                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.8, mid: +0.3, highmid: -0.5, high: -1.0, air: -0.3 }
+                    eq: { sub: +1.5, bass: +1.0, lowmid: +1.0, mid: -1.0, highmid: +0.5, high: -2.0, air: -2.5 }
                 },
                 {
                     name: 'Late Night Vibes',
                     description: '3AM sessions - Dark, intimate, spacious',
-                    eq: { sub: +1.2, bass: +1.2, lowmid: +0.3, mid: -0.3, highmid: +0.3, high: +0.5, air: +1.0 }
+                    eq: { sub: +2.0, bass: +1.5, lowmid: +0.5, mid: -0.5, highmid: +1.0, high: -1.0, air: -1.0 }
+                }
+            ],
+            'reggae': [
+                {
+                    name: 'Roots Reggae',
+                    description: 'Bob Marley - Warm bass, laid-back groove',
+                    eq: { sub: +2.0, bass: +2.5, lowmid: -1.0, mid: -0.5, highmid: +1.0, high: +1.0, air: +0.5 }
+                },
+                {
+                    name: 'Dancehall',
+                    description: 'Sean Paul / Popcaan - Heavy, bright, club-ready',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.0, air: +1.5 }
+                },
+                {
+                    name: 'Dub',
+                    description: 'Lee Scratch Perry - Cavernous bass, echo',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: -1.0, highmid: +0.5, high: +0.5, air: +0.5 }
+                },
+                {
+                    name: 'Ska',
+                    description: 'The Specials / Sublime - Bright, upbeat',
+                    eq: { sub: +0.5, bass: +1.5, lowmid: -0.5, mid: +1.0, highmid: +2.0, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Lover\'s Rock',
+                    description: 'Smooth reggae - Romantic, warm, gentle',
+                    eq: { sub: +1.5, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +1.0, air: +0.5 }
+                },
+                {
+                    name: 'Modern Reggae',
+                    description: 'Protoje / Chronixx - Contemporary, polished',
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: +0.5, highmid: +1.5, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Reggae Fusion',
+                    description: 'Crossover pop/hip-hop blend',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Steppers',
+                    description: 'Militant style - Driving, bass-heavy',
+                    eq: { sub: +2.5, bass: +2.5, lowmid: -1.0, mid: +0.5, highmid: +1.0, high: +1.0, air: +0.5 }
+                },
+                {
+                    name: 'Digital Dancehall',
+                    description: 'Sleng Teng era - Electronic riddims',
+                    eq: { sub: +3.0, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +1.5, high: +2.0, air: +1.5 }
+                },
+                {
+                    name: 'Jungle/Ragga',
+                    description: 'DnB meets dancehall - Fast, bass-heavy',
+                    eq: { sub: +2.5, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +2.0, high: +2.5, air: +1.5 }
+                }
+            ],
+            'gospel': [
+                {
+                    name: 'Traditional Gospel',
+                    description: 'Kirk Franklin - Choir-focused, full',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.5, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Contemporary Worship',
+                    description: 'Hillsong / Bethel - Atmospheric, pad-heavy',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.5 }
+                },
+                {
+                    name: 'Praise & Worship',
+                    description: 'Elevation Worship - Modern, wide, bright',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +2.0, air: +2.0 }
+                },
+                {
+                    name: 'Gospel Choir',
+                    description: 'Full ensemble - Powerful, dynamic',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.3, mid: +0.8, highmid: +2.5, high: +1.0, air: +0.8 }
+                },
+                {
+                    name: 'Southern Gospel',
+                    description: 'Quartet harmony - Warm, traditional',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: +0.3, mid: +0.8, highmid: +2.0, high: +1.0, air: +0.8 }
+                },
+                {
+                    name: 'Gospel R&B',
+                    description: 'Mary Mary / Tye Tribbett - Groovy, soulful',
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.0, air: +0.8 }
+                },
+                {
+                    name: 'Hymn / Piano',
+                    description: 'Simple piano & voice - Intimate, reverent',
+                    eq: { sub: +0.5, bass: +0.8, lowmid: -0.3, mid: +0.5, highmid: +2.0, high: +1.0, air: +1.0 }
+                },
+                {
+                    name: 'Urban Gospel',
+                    description: 'Lecrae / KB - Hip-hop influenced',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Gospel Jazz',
+                    description: 'Smooth, improvisational worship',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.3, mid: +0.5, highmid: +1.5, high: +1.0, air: +0.8 }
+                },
+                {
+                    name: 'CCM (Contemporary)',
+                    description: 'Chris Tomlin - Radio-friendly worship',
+                    eq: { sub: +0.5, bass: +1.0, lowmid: -0.5, mid: +0.5, highmid: +2.5, high: +1.5, air: +1.5 }
+                }
+            ],
+            'afrobeats': [
+                {
+                    name: 'Afrobeats',
+                    description: 'Burna Boy / Wizkid - Rhythmic, percussive',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +2.0, air: +1.5 }
+                },
+                {
+                    name: 'Amapiano',
+                    description: 'South African - Log drum, deep house feel',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: -1.5, mid: -0.5, highmid: +1.5, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Afropop',
+                    description: 'Mainstream African pop - Bright, catchy',
+                    eq: { sub: +1.5, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.5, high: +2.0, air: +1.5 }
+                },
+                {
+                    name: 'Afro-House',
+                    description: 'Black Coffee style - Deep, rhythmic, groovy',
+                    eq: { sub: +2.0, bass: +2.0, lowmid: -1.0, mid: -0.5, highmid: +1.5, high: +2.0, air: +1.5 }
+                },
+                {
+                    name: 'Afro-Fusion',
+                    description: 'Genre-blending - Modern, eclectic',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Highlife',
+                    description: 'West African classic - Warm, melodic guitars',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: -0.3, mid: +0.8, highmid: +1.5, high: +1.0, air: +0.8 }
+                },
+                {
+                    name: 'Gqom',
+                    description: 'South African club - Dark, heavy, minimal',
+                    eq: { sub: +3.0, bass: +1.5, lowmid: -1.5, mid: +0.5, highmid: +1.0, high: +1.5, air: +0.8 }
+                },
+                {
+                    name: 'Afro-Swing',
+                    description: 'UK Afro - J Hus / Not3s style',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
+                },
+                {
+                    name: 'Juju Music',
+                    description: 'Talking drums - Rich, percussive',
+                    eq: { sub: +1.0, bass: +1.5, lowmid: +0.3, mid: +0.8, highmid: +1.5, high: +1.0, air: +0.5 }
+                },
+                {
+                    name: 'Afrobeats Streaming',
+                    description: 'Spotify-optimized - -14 LUFS balanced',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: -1.0, mid: +0.5, highmid: +2.0, high: +1.5, air: +1.0 }
+                }
+            ],
+            'phonk': [
+                {
+                    name: 'Classic Phonk',
+                    description: 'DJ Smokey - Dark, chopped, heavy bass',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: +0.5, mid: +0.5, highmid: +1.0, high: -1.0, air: -1.5 }
+                },
+                {
+                    name: 'Memphis Rap',
+                    description: 'Three 6 Mafia - Raw, lo-fi, aggressive',
+                    eq: { sub: +2.5, bass: +1.5, lowmid: +0.5, mid: +1.0, highmid: +1.0, high: -0.5, air: -1.0 }
+                },
+                {
+                    name: 'Drift Phonk',
+                    description: 'Cowbell-heavy - Hard, driving, car culture',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: +0.5, mid: +0.8, highmid: +1.5, high: -0.5, air: -1.0 }
+                },
+                {
+                    name: 'Brazilian Phonk',
+                    description: 'MC style - Bass-heavy, rhythmic, loud',
+                    eq: { sub: +3.0, bass: +2.5, lowmid: +0.3, mid: +0.5, highmid: +1.5, high: +0.5, air: -0.5 }
+                },
+                {
+                    name: 'Dark Phonk',
+                    description: 'Horrorcore influenced - Sinister, distorted',
+                    eq: { sub: +3.0, bass: +1.5, lowmid: +1.0, mid: +0.5, highmid: +0.5, high: -1.5, air: -2.0 }
+                },
+                {
+                    name: 'Aggressive Phonk',
+                    description: 'KORDHELL style - Maximum energy, distorted',
+                    eq: { sub: +3.0, bass: +2.0, lowmid: +0.5, mid: +1.0, highmid: +1.5, high: -0.5, air: -1.0 }
+                },
+                {
+                    name: 'Chill Phonk',
+                    description: 'Relaxed phonk - Smooth but dark',
+                    eq: { sub: +2.5, bass: +1.5, lowmid: +0.5, mid: -0.5, highmid: +0.8, high: -1.0, air: -1.0 }
+                },
+                {
+                    name: 'Phonk House',
+                    description: 'House meets phonk - Club-ready, gritty',
+                    eq: { sub: +2.5, bass: +2.0, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +0.5, air: -0.5 }
+                },
+                {
+                    name: 'Vintage Phonk',
+                    description: '90s Memphis revival - Tape hiss, soul chops',
+                    eq: { sub: +2.0, bass: +1.5, lowmid: +0.8, mid: +0.5, highmid: +0.5, high: -1.5, air: -2.0 }
+                },
+                {
+                    name: 'Trap Phonk',
+                    description: '808s + phonk aesthetic - Modern hybrid',
+                    eq: { sub: +3.0, bass: +1.5, lowmid: -0.5, mid: +0.5, highmid: +1.5, high: +0.5, air: -0.5 }
                 }
             ],
             'neutral': [
@@ -16000,21 +16226,21 @@
                 case 'hiphop':
                     preset = {
                         eq: {
-                            sub: +3.0,      // Boost 45Hz (+3dB) - Deep sub-bass
-                            bass: +2.0,     // Boost bass
-                            lowmid: -2.0,   // Dip 400Hz (-2dB) - Remove mud
-                            mid: 0,
-                            highmid: +1.5,  // Boost 3.5kHz (+1.5dB) - Vocal presence
-                            high: +1.0,     // Slight highs
-                            air: +0.5       // Subtle air
+                            sub: +2.5,      // 45Hz sub-bass foundation
+                            bass: +1.5,     // 100Hz bass punch
+                            lowmid: -1.5,   // 400Hz scoop — remove mud
+                            mid: +0.5,      // 1kHz vocal body
+                            highmid: +2.0,  // 3.5kHz vocal presence & snap
+                            high: +1.0,     // 8kHz hi-hat clarity
+                            air: +0.5       // 16kHz subtle air
                         },
                         compression: {
-                            threshold: -20,
-                            ratio: 3.5,
-                            attack: 0.005,
-                            release: 0.15
+                            threshold: -16,
+                            ratio: 2.5,
+                            attack: 0.010,
+                            release: 0.18
                         },
-                        monoBass: 140 // Hz
+                        monoBass: 100
                     };
 
                     break;
@@ -16023,19 +16249,19 @@
                 case 'universal':
                     preset = {
                         eq: {
-                            sub: +0.5,
-                            bass: +1.5,     // Low shelf 100Hz (+1.5dB)
-                            lowmid: 0,
-                            mid: 0,
-                            highmid: +1.0,
-                            high: +1.0,
-                            air: +1.5       // High shelf 10kHz (+1.5dB 'Air')
+                            sub: +0.5,      // Gentle sub support
+                            bass: +1.0,     // Warm low-end foundation
+                            lowmid: -1.0,   // Clean low-mids
+                            mid: +0.5,      // Vocal body
+                            highmid: +2.5,  // Vocal presence & clarity (star of pop)
+                            high: +1.5,     // Sparkle
+                            air: +1.5       // Airy, polished top-end
                         },
                         compression: {
-                            threshold: -22,
-                            ratio: 2.0,     // Gentle 2:1 ratio on mids
-                            attack: 0.003,
-                            release: 0.2
+                            threshold: -18,
+                            ratio: 2.0,
+                            attack: 0.015,
+                            release: 0.20
                         },
                         monoBass: 100
                     };
@@ -16047,45 +16273,43 @@
                 case 'dance':
                     preset = {
                         eq: {
-                            sub: +4.0,      // Sub boost 35Hz (+4dB) - Massive sub
-                            bass: +3.0,
-                            lowmid: -1.0,   // Cut mud
-                            mid: 0,
-                            highmid: +1.3,  // High-mid 2.5kHz (+1.3dB) for 'Snap'
-                            high: +0.9,     // Controlled highs
-                            air: +1.3       // Balanced air
+                            sub: +2.0,      // Sub foundation (house/techno kick)
+                            bass: +2.0,     // Bass energy
+                            lowmid: -1.5,   // Clean low-mids for kick clarity
+                            mid: -0.5,      // Slight mid scoop
+                            highmid: +1.5,  // Synth presence & snap
+                            high: +2.0,     // Hi-hat & cymbal energy
+                            air: +1.5       // Atmosphere & sheen
                         },
                         compression: {
                             threshold: -18,
-                            ratio: 4.0,     // Heavy compression
-                            attack: 0.001,  // Fast attack for transients
-                            release: 0.1
+                            ratio: 2.0,
+                            attack: 0.010,
+                            release: 0.20
                         },
-                        saturation: 2.0, // Tape-style drive
-                        monoBass: 150
+                        monoBass: 120
                     };
 
                     break;
 
                 case 'rock':
-                case 'metal':
                     preset = {
                         eq: {
-                            sub: 0,
-                            bass: +1.0,     // Low-mid 200Hz (+1dB 'Body')
-                            lowmid: +1.0,
-                            mid: +0.5,
-                            highmid: +1.5,
-                            high: +1.0,     // Highs 5kHz (+1dB 'Bite')
-                            air: +1.0
+                            sub: +0.5,      // Subtle sub foundation
+                            bass: +1.5,     // Kick & bass guitar punch
+                            lowmid: -1.0,   // Scoop mud for clarity
+                            mid: +1.0,      // Guitar & vocal body
+                            highmid: +2.0,  // Guitar bite & vocal presence
+                            high: +2.0,     // Cymbal energy
+                            air: +1.0       // Open top-end
                         },
                         compression: {
                             threshold: -20,
-                            ratio: 3.0,
-                            attack: 0.001,  // Fast attack to catch drum transients
-                            release: 0.12
+                            ratio: 2.0,
+                            attack: 0.025,  // Slow attack preserves drum transients
+                            release: 0.25
                         },
-                        monoBass: 120
+                        monoBass: 90
                     };
 
                     break;
@@ -16094,19 +16318,19 @@
                 case 'r&b':
                     preset = {
                         eq: {
-                            sub: +1.5,
-                            bass: +1.0,
-                            lowmid: -1.0,
-                            mid: +0.3,
-                            highmid: +0.5,
-                            high: +0.3,
-                            air: +0.5
+                            sub: +2.0,      // Warm sub foundation
+                            bass: +1.5,     // Full bass body
+                            lowmid: -1.0,   // Clean low-mids
+                            mid: +0.5,      // Vocal warmth
+                            highmid: +2.0,  // Vocal presence & intimacy
+                            high: +1.0,     // Gentle shimmer
+                            air: +0.5       // Subtle air (not harsh)
                         },
                         compression: {
-                            threshold: -22,
+                            threshold: -18,
                             ratio: 2.0,
-                            attack: 0.008,
-                            release: 0.2
+                            attack: 0.020,
+                            release: 0.20
                         },
                         monoBass: 100
                     };
@@ -16115,42 +16339,42 @@
                 case 'country':
                     preset = {
                         eq: {
-                            sub: +0.3,
-                            bass: +0.8,
-                            lowmid: -0.5,
-                            mid: +0.5,
-                            highmid: +0.8,
-                            high: +0.5,
-                            air: +0.8
+                            sub: +0.5,      // Gentle sub
+                            bass: +1.0,     // Supportive bass
+                            lowmid: -1.0,   // Clean low-mids
+                            mid: +1.0,      // Vocal & guitar body
+                            highmid: +2.5,  // Nashville bright — vocal clarity
+                            high: +2.0,     // Acoustic guitar shimmer
+                            air: +1.5       // Open, airy top-end
                         },
                         compression: {
-                            threshold: -22,
-                            ratio: 2.5,
-                            attack: 0.005,
-                            release: 0.18
+                            threshold: -20,
+                            ratio: 2.0,
+                            attack: 0.020,
+                            release: 0.20
                         },
-                        monoBass: 100
+                        monoBass: 80
                     };
                     break;
 
                 case 'latin':
                     preset = {
                         eq: {
-                            sub: +1.8,
-                            bass: +1.5,
-                            lowmid: -1.2,
-                            mid: +0.3,
-                            highmid: +0.8,
-                            high: +0.5,
-                            air: +0.5
+                            sub: +2.0,      // Sub-bass for dembow/reggaeton
+                            bass: +1.5,     // Rhythm section warmth
+                            lowmid: -1.0,   // Clean separation
+                            mid: +0.5,      // Vocal & percussion body
+                            highmid: +1.5,  // Vocal presence
+                            high: +2.0,     // Percussion brightness
+                            air: +1.5       // Shimmer & energy
                         },
                         compression: {
-                            threshold: -20,
-                            ratio: 3.0,
-                            attack: 0.003,
+                            threshold: -18,
+                            ratio: 2.5,
+                            attack: 0.010,
                             release: 0.15
                         },
-                        monoBass: 120
+                        monoBass: 110
                     };
                     break;
 
@@ -16158,40 +16382,40 @@
                 case 'lo-fi':
                     preset = {
                         eq: {
-                            sub: +0.8,
-                            bass: +1.0,
-                            lowmid: +0.3,
-                            mid: -0.3,
-                            highmid: -0.3,
-                            high: -0.5,
-                            air: +0.0
+                            sub: +2.0,      // Warm sub presence
+                            bass: +1.5,     // Full, cozy bass
+                            lowmid: +0.5,   // Warm body (NOT scooped — lo-fi is warm)
+                            mid: -0.5,      // Slight mid dip
+                            highmid: +1.0,  // Gentle presence
+                            high: -1.5,     // Rolled-off highs — vinyl/tape character
+                            air: -2.0       // Dark top-end — signature lo-fi sound
                         },
                         compression: {
-                            threshold: -24,
-                            ratio: 2.0,
-                            attack: 0.01,
-                            release: 0.25
+                            threshold: -16,
+                            ratio: 3.0,
+                            attack: 0.015,
+                            release: 0.18
                         },
-                        monoBass: 80
+                        monoBass: 100
                     };
                     break;
 
                 case 'jazz':
                     preset = {
                         eq: {
-                            sub: 0,
-                            bass: 0,
-                            lowmid: -0.3,
-                            mid: 0,
-                            highmid: +0.3,
-                            high: +0.3,
-                            air: +0.5
+                            sub: +0.5,      // Subtle sub warmth
+                            bass: +1.0,     // Upright bass presence
+                            lowmid: -0.5,   // Gentle clarity
+                            mid: +0.5,      // Piano & sax body
+                            highmid: +1.5,  // Brass & sax presence
+                            high: +1.0,     // Cymbal shimmer
+                            air: +0.5       // Natural room air
                         },
                         compression: {
-                            threshold: -28,
+                            threshold: -26,
                             ratio: 1.5,
-                            attack: 0.01,
-                            release: 0.3
+                            attack: 0.050,  // Very slow — preserve dynamics
+                            release: 0.35
                         },
                         monoBass: 80
                     };
@@ -16200,40 +16424,40 @@
                 case 'classical':
                     preset = {
                         eq: {
-                            sub: 0,
-                            bass: 0,
-                            lowmid: -0.2,
-                            mid: 0,
-                            highmid: +0.2,
-                            high: +0.2,
-                            air: +0.3
+                            sub: 0,         // No sub coloration
+                            bass: +0.5,     // Subtle warmth
+                            lowmid: 0,      // Natural — don't scoop
+                            mid: +0.5,      // Instrument body
+                            highmid: +1.0,  // String definition & vocal clarity
+                            high: +0.5,     // Natural brightness
+                            air: +0.5       // Concert hall air
                         },
                         compression: {
                             threshold: -30,
                             ratio: 1.3,
-                            attack: 0.015,
-                            release: 0.35
+                            attack: 0.080,  // Very slow — preserve full dynamics
+                            release: 0.40
                         },
-                        monoBass: 60
+                        monoBass: 80
                     };
                     break;
 
                 case 'acoustic':
                     preset = {
                         eq: {
-                            sub: 0,
-                            bass: +0.3,
-                            lowmid: -0.5,
-                            mid: +0.3,
-                            highmid: +0.5,
-                            high: +0.5,
-                            air: +0.8
+                            sub: +0.5,      // Gentle sub warmth
+                            bass: +1.0,     // Guitar body
+                            lowmid: -1.0,   // Prevent muddiness
+                            mid: +0.5,      // Natural body
+                            highmid: +2.0,  // Vocal intimacy & guitar clarity
+                            high: +1.5,     // Fingerpicking detail
+                            air: +1.0       // Natural openness
                         },
                         compression: {
-                            threshold: -26,
+                            threshold: -22,
                             ratio: 1.8,
-                            attack: 0.008,
-                            release: 0.25
+                            attack: 0.030,  // Slow — preserve strumming transients
+                            release: 0.28
                         },
                         monoBass: 80
                     };
@@ -16242,19 +16466,108 @@
                 case 'metal':
                     preset = {
                         eq: {
-                            sub: +0.8,
-                            bass: +1.5,
-                            lowmid: -1.0,
-                            mid: +1.2,
-                            highmid: +1.5,
-                            high: +0.5,
-                            air: +0.3
+                            sub: +1.0,      // Kick drum sub
+                            bass: +2.0,     // Bass guitar & kick punch
+                            lowmid: -1.5,   // Scoop for guitar clarity
+                            mid: +1.0,      // Guitar & vocal aggression
+                            highmid: +2.5,  // Guitar attack & vocal bite
+                            high: +2.0,     // Cymbal energy
+                            air: +1.0       // Open top (not fizzy)
+                        },
+                        compression: {
+                            threshold: -16,
+                            ratio: 3.0,
+                            attack: 0.008,
+                            release: 0.12
+                        },
+                        monoBass: 100
+                    };
+                    break;
+
+                case 'reggae':
+                case 'dancehall':
+                case 'dub':
+                    preset = {
+                        eq: {
+                            sub: +2.0,      // Deep bass foundation
+                            bass: +2.5,     // Reggae bass guitar lives here
+                            lowmid: -1.0,   // Space between bass & vocals
+                            mid: -0.5,      // Mid scoop for spaciousness
+                            highmid: +1.0,  // Guitar skank presence
+                            high: +1.0,     // Percussion clarity
+                            air: +0.5       // Warm — not bright
                         },
                         compression: {
                             threshold: -18,
+                            ratio: 2.0,
+                            attack: 0.020,
+                            release: 0.20
+                        },
+                        monoBass: 100
+                    };
+                    break;
+
+                case 'gospel':
+                case 'worship':
+                    preset = {
+                        eq: {
+                            sub: +1.0,      // Organ & bass support
+                            bass: +1.5,     // Full low-end
+                            lowmid: -0.5,   // Clean separation
+                            mid: +0.5,      // Vocal body
+                            highmid: +2.5,  // Choir & lead vocal clarity
+                            high: +1.5,     // Brightness
+                            air: +1.0       // Spacious top-end
+                        },
+                        compression: {
+                            threshold: -18,
+                            ratio: 2.5,
+                            attack: 0.015,
+                            release: 0.20
+                        },
+                        monoBass: 90
+                    };
+                    break;
+
+                case 'afrobeats':
+                case 'amapiano':
+                    preset = {
+                        eq: {
+                            sub: +2.5,      // Log drum / sub-bass
+                            bass: +1.5,     // Rhythm section
+                            lowmid: -1.0,   // Clean separation
+                            mid: +0.5,      // Vocal warmth
+                            highmid: +2.0,  // Vocal clarity & percussion
+                            high: +2.0,     // Percussion detail
+                            air: +1.5       // Bright, energetic top
+                        },
+                        compression: {
+                            threshold: -16,
+                            ratio: 2.5,
+                            attack: 0.010,
+                            release: 0.15
+                        },
+                        monoBass: 110
+                    };
+                    break;
+
+                case 'phonk':
+                case 'memphis':
+                    preset = {
+                        eq: {
+                            sub: +3.0,      // Heavy sub-bass
+                            bass: +2.0,     // Warm, full bass
+                            lowmid: +0.5,   // Intentional warmth (NOT scooped)
+                            mid: +0.5,      // Vocal presence
+                            highmid: +1.0,  // Gentle presence
+                            high: -1.0,     // Rolled-off — cassette tape character
+                            air: -1.5       // Dark top-end — signature phonk sound
+                        },
+                        compression: {
+                            threshold: -12,
                             ratio: 4.0,
-                            attack: 0.001,
-                            release: 0.1
+                            attack: 0.005,
+                            release: 0.10
                         },
                         monoBass: 120
                     };
@@ -16277,12 +16590,26 @@
                 applyEQValues(preset.eq);
             }
 
-            // Apply compression settings
+            // Apply compression settings — RAMP smoothly to avoid clipping/pops
             if (compressor && preset.compression) {
-                compressor.threshold.value = preset.compression.threshold;
-                compressor.ratio.value = preset.compression.ratio;
-                compressor.attack.value = preset.compression.attack;
-                compressor.release.value = preset.compression.release;
+                const ac = window.audioContext;
+                if (ac) {
+                    const t = ac.currentTime;
+                    const ramp = 0.15; // 150ms smooth ramp
+                    compressor.threshold.cancelScheduledValues(t);
+                    compressor.ratio.cancelScheduledValues(t);
+                    compressor.attack.cancelScheduledValues(t);
+                    compressor.release.cancelScheduledValues(t);
+                    compressor.threshold.setTargetAtTime(preset.compression.threshold, t, ramp);
+                    compressor.ratio.setTargetAtTime(preset.compression.ratio, t, ramp);
+                    compressor.attack.setTargetAtTime(preset.compression.attack, t, ramp);
+                    compressor.release.setTargetAtTime(preset.compression.release, t, ramp);
+                } else {
+                    compressor.threshold.value = preset.compression.threshold;
+                    compressor.ratio.value = preset.compression.ratio;
+                    compressor.attack.value = preset.compression.attack;
+                    compressor.release.value = preset.compression.release;
+                }
             }
 
             // Store preset for later use
@@ -16404,6 +16731,10 @@
             const startTime = Date.now();
             const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
 
+            // v7.6.14: Apply gain compensation IMMEDIATELY at start (not after 500ms)
+            // This prevents the signal from being boosted without compensation during animation
+            applyEQGainCompensation(toEQ);
+
             function animate() {
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / durationMs, 1.0);
@@ -16412,8 +16743,8 @@
                 bands.forEach(band => {
                     const from = fromEQ[band] || 0;
                     const to = toEQ[band] || 0;
-                    // Clamp target to professional mastering range ±3.5 dB
-                    const clampedTo = Math.max(-3.5, Math.min(3.5, to));
+                    // v7.6.14: Tighter clamp ±3.0 dB — prevents stacked boosts from clipping
+                    const clampedTo = Math.max(-3.0, Math.min(3.0, to));
                     const current = from + (clampedTo - from) * eased;
 
                     // Apply to audio nodes
@@ -16434,7 +16765,7 @@
                 if (progress < 1.0) {
                     requestAnimationFrame(animate);
                 } else {
-                    // Apply gain compensation when animation completes
+                    // Final gain compensation refresh at end
                     applyEQGainCompensation(toEQ);
 
                     // Trigger visual pulse on all faders when animation completes
@@ -17672,18 +18003,11 @@
                 unfixable.push({ item: 'Sibilance', reason: 'De-esser module not available — enable it in the effects chain' });
             }
 
-            // 3g. DYNAMIC EQ
-            if (issues.some(i => i.type === 'resonance' || i.type === 'tonal') && window.dynamicEQ && !window.dynamicEQ.enabled) {
-                window.dynamicEQ.enable();
-                const dynToggle = document.getElementById('dynamicEQToggle');
-                if (dynToggle) {
-                    dynToggle.checked = true;
-                    const track = dynToggle.parentElement ? dynToggle.parentElement.querySelector('span') : null;
-                    const thumb = track ? track.querySelector('span') : null;
-                    if (track) track.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
-                    if (thumb) thumb.style.transform = 'translateX(20px)';
-                }
-                corrections.push('Dynamic EQ enabled');
+            // 3g. DYNAMIC EQ — v7.6.14: no longer auto-enabled (manual-only)
+            // Dynamic EQ adds unwanted coloration when auto-applied during mastering.
+            // Resonance/tonal issues are handled by the parametric EQ corrections instead.
+            if (issues.some(i => i.type === 'resonance' || i.type === 'tonal')) {
+                corrections.push('Tonal issues addressed via EQ corrections');
             }
 
             // 3h. PEAK LIMITER
@@ -20552,9 +20876,10 @@
                 rightAnalyser.getFloatTimeDomainData(rightData);
 
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                // TRUE PEAK MEASUREMENT - Skip calculation if meters locked
+                // TRUE PEAK MEASUREMENT - Always calculate in real-time during playback
+                // v7.6.13k: Peak, Phase, Correlation stay LIVE — only Integrated LUFS locks
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                if (!metersLocked) {
+                {
                     // ════════════════════════════════════════════════════════════════════════════
                     // ITU-R BS.1770-5 TRUE PEAK - Use proper sinc-interpolated 4x oversampling
                     // ════════════════════════════════════════════════════════════════════════════
@@ -20631,15 +20956,16 @@
                 const peakAudioEl = document.querySelector('audio');
                 const peakIsPlaying = peakAudioEl && !peakAudioEl.paused && !peakAudioEl.ended && peakAudioEl.currentTime > 0;
 
-                // Use locked peak if meters are locked, otherwise use smoothed real-time peak
-                const displayPeak = metersLocked && lockedPeak !== null ? lockedPeak : smoothedPeak;
+                // v7.6.13k: Peak meter always shows REAL-TIME value during playback
+                const peakIsActive = peakIsPlaying;
+                const displayPeak = peakIsActive ? smoothedPeak : (lockedPeak !== null ? lockedPeak : smoothedPeak);
 
                 // Update peak display (stable if locked, real-time if not)
                 const peakValueElement = document.getElementById('peakValue');
 
                 if (peakValueElement) {
-                    // Show idle state when audio is not playing
-                    if (!peakIsPlaying && !metersLocked) {
+                    // Show idle state only when audio is not playing AND no mastered value exists
+                    if (!peakIsPlaying && lockedPeak === null) {
                         peakValueElement.textContent = '-∞';
                         peakValueElement.style.color = 'rgba(255,255,255,0.4)';
                     } else {
@@ -20766,9 +21092,10 @@
             }
 
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // DERIVED METRICS - Skip if meters locked (values calculated once after mastering)
+            // DERIVED METRICS - Always update in real-time during playback
+            // v7.6.13k: LRA, Crest Factor, PLR stay live
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            if (!metersLocked) {
+            {
                 // v7.6.0: EBU R128 LRA — collect short-term LUFS, compute 10th-95th percentile
                 if (shortTermLUFS > -70) {
                     lraShortTermBuffer.push(shortTermLUFS);
@@ -24889,15 +25216,16 @@
                 const genre = window.selectedPreMasterGenre || 'pop';
                 const intensity = window.selectedIntensity || 3; // 1=Subtle, 2=Light, 3=Balanced, 4=Aggressive, 5=Maximum
 
-                // Safe intensity multipliers - prevents distortion at all levels
+                // v7.6.13k: WIDE intensity range — each level sounds distinctly different
+                // Level 1 = transparent polish, Level 5 = loud aggressive slam
                 const intensityMultipliers = {
-                    1: 0.40,  // Subtle - gentle processing
-                    2: 0.60,  // Light - noticeable but conservative
-                    3: 0.85,  // Balanced - professional standard (was 0.75, boosted for fuller sound)
-                    4: 0.95,  // Aggressive - punchy but clean
-                    5: 1.0    // Maximum - full preset (NOT boosted to prevent distortion)
+                    1: 0.25,  // Subtle - barely there, transparent polish
+                    2: 0.55,  // Light - noticeable warmth and clarity
+                    3: 1.0,   // Balanced - professional standard (full preset)
+                    4: 1.40,  // Heavy - punchy, boosted, in-your-face
+                    5: 1.80   // Maximum - aggressive slam, loud and proud
                 };
-                let intensityMult = intensityMultipliers[intensity] || 0.75;
+                let intensityMult = intensityMultipliers[intensity] || 1.0;
 
                 // AI PROFILE — processingScale modulates intensity for already-mastered tracks
                 const aiProfile = window.aiTrackProfile;
@@ -24908,24 +25236,39 @@
                 const stageInt = (aiProfile && aiProfile.stageIntensity) ? aiProfile.stageIntensity : {};
                 const aiCrestDiff = (aiProfile && aiProfile.crestDiff) || 0;
 
-                // v7.6.8c5: SIMPLIFIED MASTERING CHAIN
-                // Problem: 7+ dynamics stages stacked (dynamic EQ, bus comp, NY comp, multiband,
-                // HF limiter, look-ahead limiter, brickwall) eat 3-5 dB of bass and over-saturate.
-                // Solution: Keep ONLY what makes a master sound good:
-                //   1. Genre EQ (7-band) — the preset sound the user chose
-                //   2. Gentle bus compression — just glue, not squash
-                //   3. LUFS-targeted makeup gain — hit the loudness target
-                //   4. Brickwall limiter at -1.0 dBTP — safety ceiling
-                // Everything else is bypassed — cleaner, punchier, more dynamic masters.
-                bypass.dynamicEQ    = true;  // Was stacking compression on low end
-                bypass.multibandComp = true; // Was eating bass with -18 dB threshold
-                bypass.transient    = true;  // Was reshaping dynamics unnecessarily
-                bypass.warmth       = true;  // Saturation adds artifacts at scale
-                bypass.exciter      = true;  // Was adding HF harshness
-                bypass.hfLimiter    = true;  // Extra limiting = extra bass loss
-                bypass.msProcessing = true;  // M/S EQ alters tonal balance
-                bypass.stereoWidth  = true;  // Stereo widening distributes energy
-                console.log('🎛️ v7.6.8c5: Simplified chain — EQ + compression + LUFS + limiter only');
+                // v7.6.13k: SMART CHAIN — AI analysis + intensity BOTH drive stage activation
+                // If AI detected issues that need a stage, enable it regardless of intensity.
+                // Intensity adds EXTRA stages on top of what AI recommends.
+                const aiNeeds = (aiProfile && aiProfile.stageBypass) ? aiProfile.stageBypass : {};
+                const aiIssues = (aiProfile && aiProfile.issues) ? aiProfile.issues : [];
+
+                // Start with intensity-driven defaults
+                // v7.6.14: Dynamic EQ is ALWAYS bypassed during mastering — manual-only control
+                // User reported auto-enabled Dynamic EQ adds unwanted "wetness" to masters
+                bypass.dynamicEQ     = true;
+                bypass.multibandComp = intensity < 5;
+                bypass.transient     = intensity < 5;
+                bypass.warmth        = intensity < 4;
+                bypass.exciter       = intensity < 5;
+                bypass.hfLimiter     = true;
+                bypass.msProcessing  = true;
+                bypass.stereoWidth   = intensity < 4;
+
+                // AI OVERRIDE: if AI says a stage is needed (bypass=false), ENABLE it
+                // v7.6.14: NEVER auto-enable dynamicEQ — manual-only control
+                const manualOnlyStages = new Set(['dynamicEQ']);
+                if (aiProfile && aiProfile.stageBypass) {
+                    for (const [stage, shouldBypass] of Object.entries(aiProfile.stageBypass)) {
+                        if (manualOnlyStages.has(stage)) continue; // Skip manual-only stages
+                        if (!shouldBypass && bypass[stage] === true) {
+                            bypass[stage] = false; // AI needs this stage — enable it
+                            console.log(`🤖 AI override: enabling ${stage} (issue detected)`);
+                        }
+                    }
+                }
+
+                const activeStages = Object.entries(bypass).filter(([,v]) => !v).map(([k]) => k);
+                console.log(`🎛️ v7.6.13k: Intensity ${intensity} — active stages: ${activeStages.join(', ') || 'EQ + comp + limiter'}`);
 
                 // Apply processingScale to intensity — already-mastered tracks get reduced processing
                 // processingScale: 0.3 (already mastered) → 1.0 (raw mix needs full work)
@@ -25099,30 +25442,31 @@
                 // 11. Bus Compressor - SSL/API Style Glue
                 // With dynamic EQ + multiband + HF limiter + 2 limiters in chain,
                 // the bus comp needs to be conservative to avoid over-processing
+                // v7.6.13k: Wider compressor scaling — each level sounds different
                 const compRatioMultipliers = {
-                    1: 0.40,  // Subtle - barely compressing
-                    2: 0.55,  // Light - gentle glue
-                    3: 0.70,  // Balanced - transparent glue (reduced: other stages add compression)
-                    4: 0.85,  // Aggressive - full genre ratio
-                    5: 1.0    // Maximum - heavy but musical
+                    1: 0.20,  // Subtle - nearly transparent
+                    2: 0.50,  // Light - gentle glue
+                    3: 0.85,  // Balanced - professional glue
+                    4: 1.20,  // Heavy - firm control, punchy
+                    5: 1.60   // Maximum - aggressive slam
                 };
                 const compRatioMult = compRatioMultipliers[effectiveIntensity] || 1.0;
 
-                // Intensity-adaptive attack/release for musical response
+                // Intensity-adaptive attack — faster = more transient control
                 const compAttackMultipliers = {
-                    1: 1.3,   // Slower attack - preserve transients
-                    2: 1.15,  // Slightly slower
+                    1: 1.5,   // Slowest - preserve all transients
+                    2: 1.2,   // Slow - mostly transparent
                     3: 1.0,   // Standard
-                    4: 0.85,  // Faster attack
-                    5: 0.70   // Fastest - more aggressive transient control
+                    4: 0.7,   // Fast - catches transients
+                    5: 0.5    // Fastest - aggressive transient control
                 };
                 const compAttackMult = compAttackMultipliers[effectiveIntensity] || 1.0;
 
                 if (window.compressor) {
                     if (!bypass.compression) {
                         const compScale = stageInt.compression !== undefined ? stageInt.compression : 1.0;
-                        // Intensity-adaptive threshold: lower at higher intensities for more gain reduction
-                        const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
+                        // v7.6.13k: Wider threshold range for dramatic intensity differences
+                        const thresholdOffset = { 1: 8, 2: 4, 3: 0, 4: -4, 5: -8 };
                         let adjustedThreshold = comp.threshold + (thresholdOffset[effectiveIntensity] || 0);
                         // Scale threshold by AI stage intensity (raise threshold = less compression when intensity is low)
                         adjustedThreshold += (1.0 - compScale) * 6;
@@ -25404,8 +25748,10 @@
                 // 20. Brickwall Safety Limiter — BROADCAST STANDARD (ITU-R BS.1770-4)
                 // Hard safety net at -1.0 dBTP. The look-ahead limiter does the musical work
                 // upstream — this only catches anything that slips through.
+                // v7.6.15: Respect QC fix ceiling if user clicked "FIX" for True Peak
                 if (window.limiter) {
-                    window.limiter.threshold.setTargetAtTime(-1.0, ac.currentTime, 0.1);
+                    const bwCeiling = window._qcFixedCeiling || -1.0;
+                    window.limiter.threshold.setTargetAtTime(bwCeiling, ac.currentTime, 0.1);
                     window.limiter.ratio.setTargetAtTime(20, ac.currentTime, 0.1);
                     window.limiter.knee.setTargetAtTime(0, ac.currentTime, 0.1);   // Hard knee — true brickwall
                     window.limiter.attack.setTargetAtTime(0.001, ac.currentTime, 0.1); // Fastest attack
@@ -25421,8 +25767,10 @@
                 // it reacts, causing inter-sample peaks. This limiter has 5ms look-ahead that
                 // sees peaks coming and catches them cleanly. Set to -1.5 dBTP so it does the
                 // musical limiting gently, with the brickwall at -1.0 as safety behind it.
-                if (window.lookAheadLimiter && window.lookAheadLimiter.setThreshold) {
-                    window.lookAheadLimiter.setThreshold(-1.5);
+                if (window.lookAheadLimiter && window.lookAheadLimiter.setCeiling) {
+                    // v7.6.15: Fixed method name (was setThreshold → setCeiling)
+                    const laCeiling = window._qcFixedCeiling ? (window._qcFixedCeiling - 0.5) : -1.5;
+                    window.lookAheadLimiter.setCeiling(laCeiling);
                     if (window.lookAheadLimiter.setLookahead) {
                         window.lookAheadLimiter.setLookahead(0.005); // 5ms look-ahead
                     }
@@ -26104,65 +26452,110 @@
                         const _peakScore = _vPeak <= -1.0 ? 25 : _vPeak <= -0.5 ? 18 : _vPeak <= 0 ? 10 : 3;
                         const _totalScore = _lufsScore + _peakScore + 18 + 18; // + tonal + dynamics estimates
 
+                        // Build interactive issue list from AI profile
+                        const _rptIssues = (aiProfile && aiProfile.issues) ? aiProfile.issues : [];
+                        const _rptHasIssues = _rptIssues.length > 0 || _lufsDeviation > 1.0 || _vPeak > -1.0;
+
+                        // Build issue cards with clear descriptions
+                        let _issueCardsHTML = '';
+                        if (_rptIssues.length > 0) {
+                            _issueCardsHTML = _rptIssues.map(iss => {
+                                const icon = iss.type === 'tonal' ? '🎵' : iss.type === 'dynamics' ? '📊' :
+                                             iss.type === 'stereo' ? '🔊' : iss.type === 'sibilance' ? '🎤' :
+                                             iss.type === 'resonance' ? '📡' : iss.type === 'eq' ? '🎚️' : '⚠️';
+                                const sevColor = iss.severity === 'critical' ? '#ff6b6b' : '#ffd700';
+                                return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:6px;border-left:3px solid ${sevColor};margin-bottom:6px;">
+                                    <span style="font-size:1rem;flex-shrink:0;">${icon}</span>
+                                    <div style="flex:1;">
+                                        <div style="font-size:0.75rem;color:${sevColor};font-weight:600;">${iss.description || iss.type}</div>
+                                        <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);margin-top:2px;">Fix: ${iss.correction || 'Automatic correction available'}</div>
+                                    </div>
+                                </div>`;
+                            }).join('');
+                        }
+                        // Add LUFS/peak issues if they exist
+                        if (_lufsDeviation > 1.0) {
+                            _issueCardsHTML += `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:6px;border-left:3px solid #ffd700;margin-bottom:6px;">
+                                <span style="font-size:1rem;">🎯</span>
+                                <div><div style="font-size:0.75rem;color:#ffd700;font-weight:600;">LUFS ${_lufsDeviation.toFixed(1)} LU off target (${_vLUFS.toFixed(1)} vs ${targetLUFS})</div>
+                                <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);margin-top:2px;">Fix: Re-master will dial in exact LUFS target</div></div></div>`;
+                        }
+                        if (_vPeak > -1.0) {
+                            _issueCardsHTML += `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.02);border-radius:6px;border-left:3px solid #ff6b6b;margin-bottom:6px;">
+                                <span style="font-size:1rem;">🔴</span>
+                                <div><div style="font-size:0.75rem;color:#ff6b6b;font-weight:600;">True peak exceeds ceiling (${_vPeak.toFixed(1)} dBTP, limit: -1.0)</div>
+                                <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);margin-top:2px;">Fix: Limiter threshold will be tightened</div></div></div>`;
+                        }
+
+                        const _totalIssueCount = _rptIssues.length + (_lufsDeviation > 1.0 ? 1 : 0) + (_vPeak > -1.0 ? 1 : 0);
+                        const _scoreGrade = _totalScore >= 90 ? 'A+' : _totalScore >= 80 ? 'A' : _totalScore >= 70 ? 'A-' : _totalScore >= 60 ? 'B+' : 'B';
+                        const _gradeColor = _totalScore >= 90 ? '#ffd700' : _totalScore >= 80 ? '#00ff88' : _totalScore >= 70 ? '#00d4ff' : '#ff9a56';
+
                         _rptPanel.innerHTML = `
                             <div class="analysis-results" style="max-height: none; overflow-y: visible;">
-                                <h4>🎯 PROFESSIONAL MASTERING REPORT</h4>
+                                <h4 style="margin-bottom:12px;">MASTERING REPORT</h4>
 
-                                <!-- FIX ALL ISSUES Button - Prominent at top -->
-                                <div class="analysis-section" style="text-align: center; padding: 12px; margin-bottom: 15px; background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2); border-radius: 10px;">
+                                <!-- Score + Grade -->
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(184,79,255,0.06));border:1px solid rgba(0,212,255,0.2);border-radius:10px;margin-bottom:14px;">
+                                    <div>
+                                        <div style="font-size:0.6rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;">Quality Score</div>
+                                        <div style="font-size:1.4rem;font-weight:800;color:${_gradeColor};line-height:1.2;">${_scoreGrade}</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:2rem;font-weight:800;color:${_gradeColor};line-height:1;">${_totalScore}</div>
+                                        <div style="font-size:0.55rem;color:rgba(255,255,255,0.3);">/100</div>
+                                    </div>
+                                </div>
+
+                                <!-- Results: Before → After -->
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                                    <div style="padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                                        <div style="font-size:0.55rem;color:rgba(255,255,255,0.35);text-transform:uppercase;">Loudness</div>
+                                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:2px 0;">${_origLUFS.toFixed(1)} →</div>
+                                        <div style="font-size:1rem;font-weight:700;color:${_lufsColor};">${_vLUFS.toFixed(1)} LUFS</div>
+                                    </div>
+                                    <div style="padding:10px;background:rgba(255,255,255,0.02);border-radius:8px;text-align:center;">
+                                        <div style="font-size:0.55rem;color:rgba(255,255,255,0.35);text-transform:uppercase;">True Peak</div>
+                                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:2px 0;">${_origPeak.toFixed(1)} →</div>
+                                        <div style="font-size:1rem;font-weight:700;color:${_peakColor};">${_vPeak.toFixed(1)} dBTP</div>
+                                    </div>
+                                </div>
+
+                                <!-- Issues Found -->
+                                ${_totalIssueCount > 0 ? `
+                                <div style="margin-bottom:12px;">
+                                    <div style="font-size:0.65rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;font-weight:600;">
+                                        ${_totalIssueCount} Issue${_totalIssueCount !== 1 ? 's' : ''} Detected
+                                    </div>
+                                    ${_issueCardsHTML}
+                                </div>
+
+                                <!-- FIX ALL Button -->
+                                <div style="text-align:center;padding:10px;margin-bottom:10px;background:linear-gradient(135deg,rgba(255,107,107,0.06),rgba(255,215,0,0.06));border:1px solid rgba(255,107,107,0.2);border-radius:10px;">
                                     <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
-                                        background: linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%);
-                                        color: #000; font-weight: 800; font-size: 1rem; padding: 14px 32px;
-                                        border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase;
-                                        letter-spacing: 1.5px; width: 100%;
-                                        box-shadow: 0 4px 20px rgba(255,107,107,0.4);
-                                        transition: transform 0.2s, box-shadow 0.2s;
-                                    " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                                        FIX ALL REMAINING ISSUES
+                                        background:linear-gradient(135deg,#ff6b6b 0%,#ffd700 50%,#00ff88 100%);
+                                        color:#000;font-weight:800;font-size:0.9rem;padding:12px 28px;
+                                        border:none;border-radius:10px;cursor:pointer;text-transform:uppercase;
+                                        letter-spacing:1.5px;width:100%;
+                                        box-shadow:0 4px 20px rgba(255,107,107,0.3);
+                                        transition:transform 0.2s,box-shadow 0.2s;
+                                    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                        FIX ALL ${_totalIssueCount} ISSUE${_totalIssueCount !== 1 ? 'S' : ''}
                                     </button>
-                                    <p style="color: #aaa; font-size: 0.7rem; margin-top: 6px;">Auto-correct LUFS to exact target, fix peaks, and optimize dynamics</p>
+                                    <p style="color:rgba(255,255,255,0.35);font-size:0.6rem;margin-top:6px;">Applies corrections and re-masters your track</p>
                                 </div>
-
-                                <!-- Score Badge -->
-                                <div class="analysis-section" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 15px;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                                        <div>
-                                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">Master Quality</div>
-                                            <div style="font-size: 1.1rem; font-weight: 600; color: #00ff88;">Professional Grade</div>
-                                        </div>
-                                        <div style="font-size: 2rem; font-weight: 700; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.5);">${_totalScore}/100</div>
-                                    </div>
+                                ` : `
+                                <div style="text-align:center;padding:14px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:10px;margin-bottom:10px;">
+                                    <div style="font-size:1.2rem;margin-bottom:4px;">✅</div>
+                                    <div style="font-size:0.8rem;color:#00ff88;font-weight:600;">No Issues Found</div>
+                                    <div style="font-size:0.6rem;color:rgba(255,255,255,0.4);margin-top:4px;">Your master is broadcast-ready</div>
                                 </div>
+                                `}
 
-                                <!-- LUFS Accuracy -->
-                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.02); border-radius: 8px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">LUFS Accuracy</span>
-                                        <span style="font-size: 0.75rem; color: ${_lufsColor}; font-weight: 600;">${_lufsScore}/25</span>
-                                    </div>
-                                    <div style="font-size: 0.85rem; color: ${_lufsColor}; font-weight: 600;">
-                                        Before: ${_origLUFS.toFixed(1)} LUFS → After: ${_vLUFS.toFixed(1)} LUFS (target: ${targetLUFS})
-                                    </div>
-                                </div>
-
-                                <!-- True Peak -->
-                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.02); border-radius: 8px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">True Peak Safety</span>
-                                        <span style="font-size: 0.75rem; color: ${_peakColor}; font-weight: 600;">${_peakScore}/25</span>
-                                    </div>
-                                    <div style="font-size: 0.85rem; color: ${_peakColor}; font-weight: 600;">
-                                        Before: ${_origPeak.toFixed(1)} dBTP → After: ${_vPeak.toFixed(1)} dBTP (ceiling: -1.0 dBTP)
-                                    </div>
-                                </div>
-
-                                <!-- Genre & Platform -->
-                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px;">
-                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Processing</div>
-                                    <div style="font-size: 0.85rem; color: #00d4ff;">
-                                        Genre: ${(genre || 'pop').charAt(0).toUpperCase() + (genre || 'pop').slice(1)} |
-                                        Intensity: ${intensityLabel} |
-                                        Target: ${targetLUFS} LUFS
+                                <!-- Processing Info -->
+                                <div style="padding:8px 10px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);border-radius:6px;">
+                                    <div style="font-size:0.6rem;color:rgba(255,255,255,0.35);">
+                                        ${(genre || 'pop').charAt(0).toUpperCase() + (genre || 'pop').slice(1)} · ${intensityLabel} · ${targetLUFS} LUFS target
                                     </div>
                                 </div>
                             </div>`;
@@ -27420,7 +27813,9 @@
             chain.push(laDelay);
 
             const laLimiter = ctx.createDynamicsCompressor();
-            laLimiter.threshold.value = window.lookAheadLimiter ? window.lookAheadLimiter.threshold.value : -1.5;
+            // v7.6.15: Fixed — lookAheadLimiter is a wrapper; access .limiter for the DynamicsCompressor
+            laLimiter.threshold.value = (window.lookAheadLimiter && window.lookAheadLimiter.limiter)
+                ? window.lookAheadLimiter.limiter.threshold.value : -1.5;
             laLimiter.knee.value = 0; laLimiter.ratio.value = 12;
             laLimiter.attack.value = 0.001; laLimiter.release.value = 0.080;
             chain.push(laLimiter);
@@ -28618,17 +29013,58 @@
             },
             lofi: {
                 name: 'Lo-Fi / Chill',
-                eq: { sub: 1.5, bass: 3.0, lowMid: 1.0, mid: -0.5, highMid: -1.0, high: -2.0, air: -3.0 },
-                compression: { threshold: -16, ratio: 2.0, attack: 0.030, release: 0.30, knee: 12 },
+                eq: { sub: 2.0, bass: 1.5, lowMid: 0.5, mid: -0.5, highMid: 1.0, high: -1.5, air: -2.0 },
+                compression: { threshold: -16, ratio: 3.0, attack: 0.015, release: 0.18, knee: 12 },
                 limiter: { threshold: -1.0, attack: 0.001, release: 0.30 },
                 stereoWidth: 1.08,
                 targetLUFS: -16,
                 desc: 'Warm, mellow, vintage character'
+            },
+            reggae: {
+                name: 'Reggae / Dancehall',
+                eq: { sub: 2.0, bass: 2.5, lowMid: -1.0, mid: -0.5, highMid: 1.0, high: 1.0, air: 0.5 },
+                compression: { threshold: -18, ratio: 2.0, attack: 0.020, release: 0.20, knee: 8 },
+                limiter: { threshold: -1.0, attack: 0.0008, release: 0.20 },
+                stereoWidth: 1.08,
+                targetLUFS: -14,
+                desc: 'Deep bass, laid-back groove, warm'
+            },
+            gospel: {
+                name: 'Gospel / Worship',
+                eq: { sub: 1.0, bass: 1.5, lowMid: -0.5, mid: 0.5, highMid: 2.5, high: 1.5, air: 1.0 },
+                compression: { threshold: -18, ratio: 2.5, attack: 0.015, release: 0.20, knee: 8 },
+                limiter: { threshold: -1.0, attack: 0.0005, release: 0.20 },
+                stereoWidth: 1.12,
+                targetLUFS: -14,
+                desc: 'Vocal clarity, choir presence, dynamic'
+            },
+            afrobeats: {
+                name: 'Afrobeats / Amapiano',
+                eq: { sub: 2.5, bass: 1.5, lowMid: -1.0, mid: 0.5, highMid: 2.0, high: 2.0, air: 1.5 },
+                compression: { threshold: -16, ratio: 2.5, attack: 0.010, release: 0.15, knee: 6 },
+                limiter: { threshold: -1.0, attack: 0.0004, release: 0.12 },
+                stereoWidth: 1.12,
+                targetLUFS: -14,
+                desc: 'Rhythmic percussion, vocal clarity, energy'
+            },
+            phonk: {
+                name: 'Phonk / Memphis',
+                eq: { sub: 3.0, bass: 2.0, lowMid: 0.5, mid: 0.5, highMid: 1.0, high: -1.0, air: -1.5 },
+                compression: { threshold: -12, ratio: 4.0, attack: 0.005, release: 0.10, knee: 4 },
+                limiter: { threshold: -1.0, attack: 0.0002, release: 0.08 },
+                stereoWidth: 1.05,
+                targetLUFS: -12,
+                desc: 'Dark, aggressive, heavy bass, crushed'
             }
         };
         // EDM alias → electronic
         genrePresets.edm = genrePresets.electronic;
         genrePresets['hip-hop'] = genrePresets.hiphop;
+        genrePresets.dancehall = genrePresets.reggae;
+        genrePresets.dub = genrePresets.reggae;
+        genrePresets.worship = genrePresets.gospel;
+        genrePresets.amapiano = genrePresets.afrobeats;
+        genrePresets.memphis = genrePresets.phonk;
         // Expose for LUFS targeting and other modules
         window.genrePresets = genrePresets;
 
@@ -28651,7 +29087,11 @@
             'metal':      { sub: 2.5, bass: 3.5, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
             'country':    { sub: 1.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
             'latin':      { sub: 3.5, bass: 3.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
-            'lofi':       { sub: 2.0, bass: 3.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
+            'lofi':       { sub: 2.5, bass: 2.0, lowmid: 0.5, mid: -0.5, highmid: 1.0, high: -1.5, air: -2.0 },
+            'reggae':     { sub: 2.5, bass: 3.0, lowmid: -1.0, mid: -0.5, highmid: 1.0, high: 1.0, air: 0.5 },
+            'gospel':     { sub: 1.5, bass: 2.0, lowmid: -0.5, mid: 0.5, highmid: 2.5, high: 1.5, air: 1.0 },
+            'afrobeats':  { sub: 3.0, bass: 2.0, lowmid: -1.0, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+            'phonk':      { sub: 3.5, bass: 2.5, lowmid: 0.5, mid: 0.5, highmid: 1.0, high: -1.0, air: -1.5 }
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
@@ -28829,7 +29269,9 @@
             // Map UI genre keys to genreEQPresets keys
             const keyMap = {
                 'hiphop': 'hip-hop',
+                'hip-hop': 'hip-hop',
                 'rnb': 'rnb',
+                'r&b': 'rnb',
                 'electronic': 'electronic',
                 'edm': 'edm',
                 'pop': 'pop',
@@ -28840,7 +29282,17 @@
                 'metal': 'metal',
                 'country': 'country',
                 'latin': 'latin',
-                'lofi': 'lofi'
+                'lofi': 'lofi',
+                'lo-fi': 'lofi',
+                'reggae': 'reggae',
+                'dancehall': 'reggae',
+                'dub': 'reggae',
+                'gospel': 'gospel',
+                'worship': 'gospel',
+                'afrobeats': 'afrobeats',
+                'amapiano': 'afrobeats',
+                'phonk': 'phonk',
+                'memphis': 'phonk'
             };
 
             const genreKey = keyMap[genre] || genre;
@@ -29251,63 +29703,65 @@
             // INTENSITY CHARACTER PROFILES
             // Each level defines a complete sonic personality
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // v7.6.15: ALIGNED with runActualMastering() values — switching intensity
+            // after mastering now produces the EXACT same result as mastering at that level
             const profiles = {
                 1: { // TRANSPARENT — hear your mix with just a polish
-                    eqMult: 0.25,       // Barely any EQ coloration
-                    compRatio: 0.35,    // Near-unity compression
-                    compThreshOff: 6,   // Very high threshold = almost no GR
-                    compAttack: 1.4,    // Slow attack = all transients pass
-                    warmth: 0.0,        // No saturation
-                    exciter: 0,         // No harmonics added
-                    stereoWidth: 0.99,  // Fractionally narrower (safety)
+                    eqMult: 0.25,       // Matches mastering intensityMultipliers[1]
+                    compRatio: 0.20,    // Matches mastering compRatioMultipliers[1]
+                    compThreshOff: 8,   // Matches mastering thresholdOffset[1]
+                    compAttack: 1.5,    // Matches mastering compAttackMultipliers[1]
+                    warmth: 0.0,        // No saturation (matches warmthMultipliers[1]=0.0)
+                    exciter: 0,         // No harmonics (matches exciteAmounts[1])
+                    stereoWidth: 0.98,  // Matches mastering widthMultipliers[1]
                     limiterCeil: -0.8,  // Generous ceiling
                     knee: 14,           // Very soft knee
                     label: 'Transparent'
                 },
                 2: { // CLEAN — subtle enhancement, audiophile-grade
-                    eqMult: 0.50,       // Gentle genre shaping
-                    compRatio: 0.50,    // Light glue compression
-                    compThreshOff: 3,   // Mild threshold
-                    compAttack: 1.2,    // Slightly slow attack
-                    warmth: 0.02,       // Hint of warmth
-                    exciter: 1,         // Barely perceptible air
-                    stereoWidth: 1.0,   // Unity
+                    eqMult: 0.55,       // Matches mastering intensityMultipliers[2]
+                    compRatio: 0.50,    // Matches mastering compRatioMultipliers[2]
+                    compThreshOff: 4,   // Matches mastering thresholdOffset[2]
+                    compAttack: 1.2,    // Matches mastering compAttackMultipliers[2]
+                    warmth: 0.015,      // Matches ~baseWarmth(0.04)*warmthMult(0.3)
+                    exciter: 1,         // Matches exciteAmounts[2]
+                    stereoWidth: 1.0,   // Matches mastering widthMultipliers[2]
                     limiterCeil: -0.9,  // Standard ceiling
                     knee: 10,           // Soft knee
                     label: 'Clean'
                 },
                 3: { // PROFESSIONAL — radio-ready, genre-calibrated
-                    eqMult: 0.85,       // Full genre EQ curve
-                    compRatio: 0.70,    // Transparent glue
-                    compThreshOff: 0,   // Genre-default threshold
-                    compAttack: 1.0,    // Standard timing
-                    warmth: 0.04,       // Musical warmth
-                    exciter: 2,         // Subtle harmonic shimmer
-                    stereoWidth: 1.02,  // Slight widening
+                    eqMult: 1.0,        // Matches mastering intensityMultipliers[3]
+                    compRatio: 0.85,    // Matches mastering compRatioMultipliers[3]
+                    compThreshOff: 0,   // Matches mastering thresholdOffset[3]
+                    compAttack: 1.0,    // Matches mastering compAttackMultipliers[3]
+                    warmth: 0.025,      // Matches ~baseWarmth(0.04)*warmthMult(0.6)
+                    exciter: 2,         // Matches exciteAmounts[3]
+                    stereoWidth: 1.0,   // Matches mastering widthMultipliers[3]
                     limiterCeil: -1.0,  // Standard ceiling
                     knee: 8,            // Medium knee
                     label: 'Professional'
                 },
                 4: { // PUNCHY — aggressive character, in-your-face
-                    eqMult: 1.15,       // Boosted genre curves
-                    compRatio: 0.90,    // Heavy glue, fast pump
-                    compThreshOff: -3,  // Lower threshold = more GR
-                    compAttack: 0.75,   // Fast attack = controlled transients
-                    warmth: 0.07,       // Noticeable analog warmth
-                    exciter: 4,         // Crispy harmonic presence
-                    stereoWidth: 1.05,  // Wider image
+                    eqMult: 1.40,       // Matches mastering intensityMultipliers[4]
+                    compRatio: 1.20,    // Matches mastering compRatioMultipliers[4]
+                    compThreshOff: -4,  // Matches mastering thresholdOffset[4]
+                    compAttack: 0.7,    // Matches mastering compAttackMultipliers[4]
+                    warmth: 0.04,       // Matches ~baseWarmth(0.04)*warmthMult(1.0)
+                    exciter: 4,         // Matches exciteAmounts[4]
+                    stereoWidth: 1.03,  // Matches mastering widthMultipliers[4]
                     limiterCeil: -1.0,  // Standard ceiling
                     knee: 5,            // Harder knee
                     label: 'Punchy'
                 },
                 5: { // LOUD — maximum impact, club/streaming optimized
-                    eqMult: 1.40,       // Bold genre sculpting
-                    compRatio: 1.0,     // Full genre ratio
-                    compThreshOff: -5,  // Deep threshold = heavy GR
-                    compAttack: 0.60,   // Very fast = transient control
-                    warmth: 0.10,       // Rich saturation
-                    exciter: 6,         // Full harmonic excitation
-                    stereoWidth: 1.08,  // Wide stereo field
+                    eqMult: 1.80,       // Matches mastering intensityMultipliers[5]
+                    compRatio: 1.60,    // Matches mastering compRatioMultipliers[5]
+                    compThreshOff: -8,  // Matches mastering thresholdOffset[5]
+                    compAttack: 0.5,    // Matches mastering compAttackMultipliers[5]
+                    warmth: 0.052,      // Matches ~baseWarmth(0.04)*warmthMult(1.3)
+                    exciter: 6,         // Matches exciteAmounts[5]
+                    stereoWidth: 1.06,  // Matches mastering widthMultipliers[5]
                     limiterCeil: -1.0,  // Safety ceiling
                     knee: 3,            // Hard knee = aggressive limiting
                     label: 'Loud'
@@ -29400,8 +29854,14 @@
             }
 
             // ━━━━ 6. LIMITER ━━━━
+            // v7.6.15: Respect QC fix ceiling if set (user clicked FIX for True Peak)
             if (window.limiter) {
-                window.limiter.threshold.setTargetAtTime(p.limiterCeil, now, ramp);
+                const effectiveCeil = window._qcFixedCeiling || p.limiterCeil;
+                window.limiter.threshold.setTargetAtTime(effectiveCeil, now, ramp);
+            }
+            if (window.lookAheadLimiter && window.lookAheadLimiter.setCeiling) {
+                const laEffectiveCeil = window._qcFixedCeiling ? (window._qcFixedCeiling - 0.5) : (p.limiterCeil - 0.5);
+                window.lookAheadLimiter.setCeiling(laEffectiveCeil);
             }
 
             // ━━━━ 7. LUFS-PRESERVING AUTO-GAIN ━━━━
@@ -29908,16 +30368,16 @@
 
             // 4. TONAL BALANCE & PROCESSING (0-25): Combined clarity + width + processing quality
             let processingScore = 0;
-            // Clarity contribution (0-10)
-            if (clarity >= 10) processingScore += 10;
-            else if (clarity >= 5) processingScore += 8;
+            // Clarity contribution (0-10): Any positive high-freq shaping = good mastering
+            if (clarity >= 4) processingScore += 10;
+            else if (clarity >= 1) processingScore += 8;
             else processingScore += 5;
-            // Width contribution (0-8)
-            if (width >= 5 && width <= 25) processingScore += 8; // Subtle enhancement
+            // Width contribution (0-8): Subtle stereo enhancement = professional
+            if (width >= 3 && width <= 30) processingScore += 8;
             else if (width >= 0) processingScore += 6;
             else processingScore += 3;
             // Loudness gain appropriateness (0-7)
-            if (loudnessGain >= 1 && loudnessGain <= 8) processingScore += 7;
+            if (loudnessGain >= 0.5 && loudnessGain <= 10) processingScore += 7;
             else if (loudnessGain >= 0) processingScore += 5;
             else processingScore += 2;
             scores.tonal = processingScore;
@@ -30613,10 +31073,16 @@
             const corrEl = document.getElementById('correlationOverallValue');
             const phaseCorr = corrEl ? parseFloat(corrEl.textContent) || 0.8 : 0.8;
 
-            // Estimate LRA from crest factor
+            // v7.6.14: Read actual LRA from display, fallback to crest-based estimate
+            const lraEl = document.getElementById('lraValue');
             const crestEl = document.getElementById('crestValue');
-            const crest = crestEl ? parseFloat(crestEl.textContent) || 8 : 8;
-            const lra = crest * 0.8; // approximate
+            let lra;
+            if (lraEl && lraEl.textContent !== '--') {
+                lra = Math.max(0, parseFloat(lraEl.textContent) || 0);
+            } else {
+                const crest = crestEl ? Math.max(0, parseFloat(crestEl.textContent) || 8) : 8;
+                lra = crest * 0.8; // approximate
+            }
 
             const checks = [];
             let passCount = 0;
@@ -30630,7 +31096,8 @@
                 status: lufsPass ? 'pass' : (lufsWarn ? 'warn' : 'fail'),
                 value: `${lufs.toFixed(1)} LUFS`,
                 detail: lufsPass ? `Within ${lufsDeviation.toFixed(1)} LU of ${platformTarget} target` : `${lufsDeviation.toFixed(1)} LU off from ${platformTarget} target`,
-                icon: lufsPass ? '&#10003;' : (lufsWarn ? '&#9888;' : '&#10007;')
+                icon: lufsPass ? '&#10003;' : (lufsWarn ? '&#9888;' : '&#10007;'),
+                fixAction: lufsPass ? null : 'lufs'
             });
             if (lufsPass) passCount++;
 
@@ -30642,7 +31109,8 @@
                 status: peakPass ? 'pass' : 'fail',
                 value: `${truePeak.toFixed(1)} dBTP`,
                 detail: peakPass ? `${peakMargin.toFixed(1)} dB margin below ${peakCeiling} ceiling` : `Exceeds ${peakCeiling} dBTP ceiling by ${Math.abs(peakMargin).toFixed(1)} dB`,
-                icon: peakPass ? '&#10003;' : '&#10007;'
+                icon: peakPass ? '&#10003;' : '&#10007;',
+                fixAction: peakPass ? null : 'truepeak'
             });
             if (peakPass) passCount++;
 
@@ -30654,7 +31122,8 @@
                 status: lraPass ? 'pass' : (lraWarn ? 'warn' : 'fail'),
                 value: `LRA: ${lra.toFixed(1)} LU`,
                 detail: lraPass ? 'Healthy dynamic range preserved' : (lra < 3 ? 'Over-compressed: consider reducing limiting' : 'Very wide dynamics: may need more compression'),
-                icon: lraPass ? '&#10003;' : (lraWarn ? '&#9888;' : '&#10007;')
+                icon: lraPass ? '&#10003;' : (lraWarn ? '&#9888;' : '&#10007;'),
+                fixAction: lraPass ? null : (lra < 3 ? 'dynamics_over' : 'dynamics_under')
             });
             if (lraPass) passCount++;
 
@@ -30666,7 +31135,8 @@
                 status: phasePass ? 'pass' : (phaseWarn ? 'warn' : 'fail'),
                 value: `r = ${phaseCorr.toFixed(2)}`,
                 detail: phasePass ? 'Mono compatible — safe for all playback systems' : (phaseWarn ? 'Wide stereo — some mono cancellation possible' : 'Phase issues detected — significant mono cancellation'),
-                icon: phasePass ? '&#10003;' : (phaseWarn ? '&#9888;' : '&#10007;')
+                icon: phasePass ? '&#10003;' : (phaseWarn ? '&#9888;' : '&#10007;'),
+                fixAction: phasePass ? null : 'phase'
             });
             if (phasePass) passCount++;
 
@@ -30677,7 +31147,8 @@
                 status: clippingPass ? 'pass' : 'fail',
                 value: clippingPass ? 'No clipping' : 'Clipping detected',
                 detail: clippingPass ? 'No intersample peaks above 0 dBTP' : 'True peaks at or above 0 dBTP — will distort on playback',
-                icon: clippingPass ? '&#10003;' : '&#10007;'
+                icon: clippingPass ? '&#10003;' : '&#10007;',
+                fixAction: clippingPass ? null : 'clipping'
             });
             if (clippingPass) passCount++;
 
@@ -30697,22 +31168,38 @@
             const statusBg = { pass: 'rgba(0,255,136,0.08)', warn: 'rgba(255,215,0,0.08)', fail: 'rgba(255,107,107,0.08)' };
             const statusBorder = { pass: 'rgba(0,255,136,0.2)', warn: 'rgba(255,215,0,0.2)', fail: 'rgba(255,107,107,0.2)' };
 
-            results.innerHTML = checks.map(c => `
+            // v7.6.14: Add FIX buttons for failed/warning checks
+            results.innerHTML = checks.map(c => {
+                const fixBtn = (c.status !== 'pass' && c.fixAction)
+                    ? `<button onclick="window.fixQCIssue('${c.fixAction}')" style="
+                        padding: 4px 10px; font-size: 0.55rem; font-weight: 700; border: none;
+                        border-radius: 6px; cursor: pointer; text-transform: uppercase;
+                        letter-spacing: 0.05em; white-space: nowrap; margin-left: 8px;
+                        background: linear-gradient(135deg, ${statusColors[c.status]}, ${c.status === 'fail' ? '#ff3366' : '#ffaa00'});
+                        color: #000; transition: transform 0.15s, box-shadow 0.15s;
+                      " onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 2px 8px ${statusColors[c.status]}40'"
+                         onmouseout="this.style.transform='scale(1)';this.style.boxShadow='none'">FIX</button>`
+                    : '';
+                return `
                 <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: ${statusBg[c.status]}; border: 1px solid ${statusBorder[c.status]}; border-radius: 8px;">
                     <span style="font-size: 1rem; color: ${statusColors[c.status]}; min-width: 20px; text-align: center;">${c.icon}</span>
                     <div style="flex: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.85);">${c.name}</span>
-                            <span style="font-size: 0.65rem; font-weight: 600; color: ${statusColors[c.status]}; font-family: 'JetBrains Mono', monospace;">${c.value}</span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 0.65rem; font-weight: 600; color: ${statusColors[c.status]}; font-family: 'JetBrains Mono', monospace;">${c.value}</span>
+                                ${fixBtn}
+                            </div>
                         </div>
                         <div style="font-size: 0.55rem; color: rgba(255,255,255,0.4); margin-top: 2px;">${c.detail}</div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
             // Overall status
             const allPass = passCount === checks.length;
             const hasFailures = checks.some(c => c.status === 'fail');
+            const failedChecks = checks.filter(c => c.status !== 'pass' && c.fixAction);
             if (allPass) {
                 overall.innerHTML = 'ALL CHECKS PASSED — Ready for distribution';
                 overall.style.background = 'rgba(0,255,136,0.1)';
@@ -30729,11 +31216,153 @@
                 overall.style.color = '#ffd700';
                 overall.style.border = '1px solid rgba(255,215,0,0.3)';
             }
+
+            // v7.6.14: Add "FIX ALL ISSUES" button when there are fixable failures
+            if (failedChecks.length > 0) {
+                const fixAllActions = failedChecks.map(c => c.fixAction).join(',');
+                results.innerHTML += `
+                    <button onclick="window.fixQCIssue('${fixAllActions}')" style="
+                        width: 100%; margin-top: 8px; padding: 10px 16px;
+                        font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+                        letter-spacing: 0.1em; border: none; border-radius: 8px;
+                        cursor: pointer; color: #000;
+                        background: linear-gradient(135deg, #00ff88, #00d4ff);
+                        box-shadow: 0 2px 12px rgba(0,255,136,0.3);
+                        transition: transform 0.15s, box-shadow 0.15s;
+                    " onmouseover="this.style.transform='scale(1.02)';this.style.boxShadow='0 4px 20px rgba(0,255,136,0.5)'"
+                       onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 2px 12px rgba(0,255,136,0.3)'">
+                        FIX ALL ${failedChecks.length} ISSUE${failedChecks.length > 1 ? 'S' : ''} & RE-MASTER
+                    </button>`;
+            }
         };
 
         window.closePreExportCheck = function() {
             const modal = document.getElementById('preExportCheckModal');
             if (modal) modal.style.display = 'none';
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // v7.6.14: QC FIX ENGINE — Fixes detected issues and re-masters
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        window.fixQCIssue = function(actions) {
+            const ac = window.audioContext;
+            const fixes = actions.split(',');
+            const applied = [];
+
+            fixes.forEach(action => {
+                switch(action) {
+                    case 'lufs': {
+                        // LUFS off target — will be corrected by re-mastering with LUFS targeting
+                        applied.push('LUFS targeting will re-calibrate to platform target');
+                        break;
+                    }
+                    case 'truepeak': {
+                        // v7.6.15: True Peak fix — store ceiling so re-mastering respects it
+                        const newBwCeiling = -1.5;
+                        const newLaCeiling = -2.0;
+                        window._qcFixedCeiling = newBwCeiling; // Persists through re-mastering
+
+                        if (window.limiter && ac) {
+                            window.limiter.threshold.setTargetAtTime(newBwCeiling, ac.currentTime, 0.05);
+                            applied.push(`Brickwall limiter ceiling → ${newBwCeiling} dBTP`);
+                        }
+                        // v7.6.15: Fixed — use setCeiling() method (wrapper object, not DynamicsCompressor)
+                        if (window.lookAheadLimiter && window.lookAheadLimiter.setCeiling) {
+                            window.lookAheadLimiter.setCeiling(newLaCeiling);
+                            applied.push(`Look-ahead limiter ceiling → ${newLaCeiling} dBTP`);
+                        }
+                        break;
+                    }
+                    case 'dynamics_over': {
+                        // Over-compressed — reduce compression ratio and raise threshold
+                        if (window.compressor && ac) {
+                            const currentRatio = window.compressor.ratio.value;
+                            const currentThresh = window.compressor.threshold.value;
+                            const newRatio = Math.max(1.5, currentRatio * 0.7); // Reduce 30%
+                            const newThresh = Math.min(-12, currentThresh + 4); // Raise 4dB
+                            window.compressor.ratio.setTargetAtTime(newRatio, ac.currentTime, 0.1);
+                            window.compressor.threshold.setTargetAtTime(newThresh, ac.currentTime, 0.1);
+                            applied.push(`Compression reduced: ratio ${newRatio.toFixed(1)}:1, threshold ${newThresh.toFixed(0)} dB`);
+                        }
+                        // Also reduce limiter if it's slamming
+                        if (window.limiter && ac) {
+                            const limThresh = window.limiter.threshold.value;
+                            if (limThresh > -2) {
+                                window.limiter.threshold.setTargetAtTime(-1.5, ac.currentTime, 0.1);
+                                applied.push('Limiter eased to -1.5 dBTP for more headroom');
+                            }
+                        }
+                        // Reduce makeup gain if pushing too hard
+                        if (window.makeupGain && ac) {
+                            const currentGain = window.makeupGain.gain.value;
+                            if (currentGain > 1.5) {
+                                const newGain = currentGain * 0.85;
+                                window.makeupGain.gain.setTargetAtTime(newGain, ac.currentTime, 0.1);
+                                applied.push('Makeup gain reduced 15% for dynamic breathing room');
+                            }
+                        }
+                        break;
+                    }
+                    case 'dynamics_under': {
+                        // Too dynamic — increase compression
+                        if (window.compressor && ac) {
+                            const currentRatio = window.compressor.ratio.value;
+                            const currentThresh = window.compressor.threshold.value;
+                            const newRatio = Math.min(6, currentRatio * 1.3);
+                            const newThresh = Math.max(-30, currentThresh - 3);
+                            window.compressor.ratio.setTargetAtTime(newRatio, ac.currentTime, 0.1);
+                            window.compressor.threshold.setTargetAtTime(newThresh, ac.currentTime, 0.1);
+                            applied.push(`Compression increased: ratio ${newRatio.toFixed(1)}:1, threshold ${newThresh.toFixed(0)} dB`);
+                        }
+                        break;
+                    }
+                    case 'phase': {
+                        // Phase issues — reduce stereo width
+                        if (window.stereoWidthNode && ac) {
+                            const current = window.stereoWidthNode.gain ? window.stereoWidthNode.gain.value : 1.0;
+                            const newWidth = Math.max(0.5, current * 0.7);
+                            if (window.stereoWidthNode.gain) {
+                                window.stereoWidthNode.gain.setTargetAtTime(newWidth, ac.currentTime, 0.1);
+                            }
+                            applied.push('Stereo width narrowed for mono compatibility');
+                        }
+                        break;
+                    }
+                    case 'clipping': {
+                        // Clipping — reduce output gain and lower limiter ceiling
+                        if (window.makeupGain && ac) {
+                            const currentGain = window.makeupGain.gain.value;
+                            const newGain = currentGain * 0.9;
+                            window.makeupGain.gain.setTargetAtTime(newGain, ac.currentTime, 0.05);
+                            applied.push('Output gain reduced to eliminate clipping');
+                        }
+                        if (window.limiter && ac) {
+                            window.limiter.threshold.setTargetAtTime(-1.5, ac.currentTime, 0.05);
+                            applied.push('Limiter ceiling tightened to -1.5 dBTP');
+                        }
+                        break;
+                    }
+                }
+            });
+
+            // Close QC modal
+            window.closePreExportCheck();
+
+            // Show toast with fixes applied
+            if (applied.length > 0) {
+                const msg = applied.length === 1
+                    ? applied[0]
+                    : `${applied.length} fixes applied — re-mastering...`;
+                if (typeof showLuvLangToast === 'function') showLuvLangToast(msg);
+            }
+
+            // Re-master with the new settings
+            setTimeout(() => {
+                if (typeof window.runFullAIMaster === 'function') {
+                    window.runFullAIMaster();
+                }
+            }, 300);
         };
 
 
