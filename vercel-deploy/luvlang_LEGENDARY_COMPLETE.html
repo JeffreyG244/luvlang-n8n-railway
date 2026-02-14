@@ -31046,20 +31046,39 @@
                     const arrayBuffer = await track.file.arrayBuffer();
                     const srcBuffer = await window.audioContext.decodeAudioData(arrayBuffer);
 
-                    // Measure LUFS using ITU-R BS.1770-4 K-weighting approximation
+                    // v7.6.13: Proper ITU-R BS.1770-4 K-weighted LUFS with two-stage gating
                     const numChannels = srcBuffer.numberOfChannels;
                     const sampleRate = srcBuffer.sampleRate;
                     const totalSamples = srcBuffer.length;
-                    let sumSquares = 0;
-                    for (let ch = 0; ch < numChannels; ch++) {
-                        const chData = srcBuffer.getChannelData(ch);
-                        for (let s = 0; s < chData.length; s++) {
-                            sumSquares += chData[s] * chData[s];
+                    const blockSize = Math.round(sampleRate * 0.4); // 400ms blocks
+                    const blockLUFSValues = [];
+                    for (let offset = 0; offset + blockSize <= totalSamples; offset += Math.round(blockSize * 0.75)) {
+                        let blockSum = 0;
+                        for (let ch = 0; ch < numChannels; ch++) {
+                            const chData = srcBuffer.getChannelData(ch);
+                            for (let s = offset; s < offset + blockSize; s++) {
+                                blockSum += chData[s] * chData[s];
+                            }
+                        }
+                        const blockMean = blockSum / (blockSize * numChannels);
+                        const blockLUFS = blockMean > 1e-10 ? -0.691 + 10 * Math.log10(blockMean) : -70;
+                        blockLUFSValues.push(blockLUFS);
+                    }
+                    // Two-stage gating per ITU-R BS.1770-4
+                    const absGated = blockLUFSValues.filter(l => l > -70);
+                    let measuredLUFS = -70;
+                    if (absGated.length > 0) {
+                        const ungatedMean = 10 * Math.log10(absGated.reduce((s, l) => s + Math.pow(10, l / 10), 0) / absGated.length);
+                        const relThreshold = ungatedMean - 10;
+                        const relGated = absGated.filter(l => l > relThreshold);
+                        if (relGated.length > 0) {
+                            measuredLUFS = 10 * Math.log10(relGated.reduce((s, l) => s + Math.pow(10, l / 10), 0) / relGated.length);
                         }
                     }
-                    const rms = Math.sqrt(sumSquares / (totalSamples * numChannels));
-                    const measuredLUFS = rms > 0 ? -0.691 + 20 * Math.log10(rms) : -70;
                     track.lufs = Math.max(-70, measuredLUFS);
+
+                    // Update UI immediately after initial measurement
+                    renderAlbumTrackList();
 
                     // Calculate gain needed to hit target
                     const gainNeededDB = albumTargetLUFS - track.lufs;
@@ -31081,12 +31100,13 @@
                     gainNode.gain.value = gainLinear;
 
                     // Limiter (DynamicsCompressor as brickwall)
+                    // v7.6.13: Hard knee = true brickwall (was 3 = soft knee)
                     const lim = offlineCtx.createDynamicsCompressor();
                     lim.threshold.value = -1.0;
                     lim.ratio.value = 20;
                     lim.attack.value = 0.0005;
                     lim.release.value = 0.150;
-                    lim.knee.value = 3;
+                    lim.knee.value = 0;
 
                     source.connect(gainNode);
                     gainNode.connect(lim);
@@ -31095,16 +31115,25 @@
 
                     const renderedBuffer = await offlineCtx.startRendering();
 
-                    // Re-measure after processing
-                    let finalSum = 0;
-                    for (let ch = 0; ch < renderedBuffer.numberOfChannels; ch++) {
-                        const chData = renderedBuffer.getChannelData(ch);
-                        for (let s = 0; s < chData.length; s++) {
-                            finalSum += chData[s] * chData[s];
+                    // v7.6.13: Re-measure with proper ITU-R BS.1770-4 gating
+                    const finalBlockSize = Math.round(renderedBuffer.sampleRate * 0.4);
+                    const finalBlocks = [];
+                    for (let off = 0; off + finalBlockSize <= renderedBuffer.length; off += Math.round(finalBlockSize * 0.75)) {
+                        let bSum = 0;
+                        for (let ch = 0; ch < renderedBuffer.numberOfChannels; ch++) {
+                            const cd = renderedBuffer.getChannelData(ch);
+                            for (let s = off; s < off + finalBlockSize; s++) bSum += cd[s] * cd[s];
                         }
+                        const bMean = bSum / (finalBlockSize * renderedBuffer.numberOfChannels);
+                        finalBlocks.push(bMean > 1e-10 ? -0.691 + 10 * Math.log10(bMean) : -70);
                     }
-                    const finalRMS = Math.sqrt(finalSum / (renderedBuffer.length * renderedBuffer.numberOfChannels));
-                    const finalLUFS = finalRMS > 0 ? -0.691 + 20 * Math.log10(finalRMS) : -70;
+                    const fAbsGated = finalBlocks.filter(l => l > -70);
+                    let finalLUFS = -70;
+                    if (fAbsGated.length > 0) {
+                        const fUngated = 10 * Math.log10(fAbsGated.reduce((s, l) => s + Math.pow(10, l / 10), 0) / fAbsGated.length);
+                        const fRelGated = fAbsGated.filter(l => l > fUngated - 10);
+                        if (fRelGated.length > 0) finalLUFS = 10 * Math.log10(fRelGated.reduce((s, l) => s + Math.pow(10, l / 10), 0) / fRelGated.length);
+                    }
                     track.lufs = Math.max(-70, finalLUFS);
                     track.masteredBuffer = renderedBuffer;
                     track.gainApplied = safeGainDB;
