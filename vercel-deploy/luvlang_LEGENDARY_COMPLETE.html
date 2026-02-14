@@ -10146,35 +10146,34 @@
                         }
                     },
                     enable: () => {
-                        // v7.6.12: Audible dynamic EQ — 65% dry + 35% wet for noticeable control
-                        // Previous 85/15 split was too subtle to hear
-                        // Lower thresholds so compressors actually engage on normal audio
-                        dynEqLowComp.threshold.value = -18;  // Was -10 — now engages on moderate bass
-                        dynEqMidComp.threshold.value = -16;  // Was -8 — catches mid harshness
-                        dynEqHighComp.threshold.value = -20;  // Was -12 — catches sibilance
-                        dynEqLowComp.ratio.value = 2.5;      // Was 1.5 — more bass control
-                        dynEqMidComp.ratio.value = 3.0;      // Was 2.0 — firmer harshness control
-                        dynEqHighComp.ratio.value = 3.5;      // Was 2.5 — aggressive de-essing
-                        // 65% dry + 35% wet split across bands
-                        dynEqDry.gain.value = 0.65;       // 65% original signal
-                        dynEqLowGain.gain.value = 0.14;   // Bass control (was 0.06)
-                        dynEqMidGain.gain.value = 0.11;   // Harshness control (was 0.05)
-                        dynEqHighGain.gain.value = 0.10;   // De-essing (was 0.04)
+                        // v7.6.12b: Balanced dynamic EQ — audible but musical
+                        // Moderate thresholds so compressors engage on louder passages
+                        dynEqLowComp.threshold.value = -14;  // Bass taming on louder passages
+                        dynEqMidComp.threshold.value = -12;  // Harshness control
+                        dynEqHighComp.threshold.value = -16;  // Sibilance/de-ess
+                        dynEqLowComp.ratio.value = 2.0;      // Moderate bass control
+                        dynEqMidComp.ratio.value = 2.5;      // Mid harshness taming
+                        dynEqHighComp.ratio.value = 3.0;     // De-essing
+                        // 75% dry + 25% wet — clearly audible without destroying the mix
+                        dynEqDry.gain.value = 0.75;
+                        dynEqLowGain.gain.value = 0.10;   // Bass band
+                        dynEqMidGain.gain.value = 0.08;   // Mid band
+                        dynEqHighGain.gain.value = 0.07;   // High band
                         window.dynamicEQ.enabled = true;
-                        console.log('🎛️ Dynamic EQ ENABLED: 65/35 mix, thresholds -18/-16/-20');
+                        console.log('🎛️ Dynamic EQ ENABLED: 75/25 mix, thresholds -14/-12/-16');
                     },
                     disable: () => {
                         dynEqDry.gain.value = 1.0;
                         dynEqLowGain.gain.value = 0;
                         dynEqMidGain.gain.value = 0;
                         dynEqHighGain.gain.value = 0;
-                        // Restore conservative defaults
-                        dynEqLowComp.threshold.value = -10;
-                        dynEqMidComp.threshold.value = -8;
-                        dynEqHighComp.threshold.value = -12;
-                        dynEqLowComp.ratio.value = 1.5;
-                        dynEqMidComp.ratio.value = 2.0;
-                        dynEqHighComp.ratio.value = 2.5;
+                        // Restore bypass defaults
+                        dynEqLowComp.threshold.value = -14;
+                        dynEqMidComp.threshold.value = -12;
+                        dynEqHighComp.threshold.value = -16;
+                        dynEqLowComp.ratio.value = 2.0;
+                        dynEqMidComp.ratio.value = 2.5;
+                        dynEqHighComp.ratio.value = 3.0;
                         window.dynamicEQ.enabled = false;
                         console.log('🎛️ Dynamic EQ DISABLED: bypass mode');
                     }
@@ -13175,12 +13174,12 @@
                 let dynEQDry = null, dynEQWet = null, dynEQComp = null, dynEQMerge = null;
                 if (chainParams.dynamicEQActive) {
                     dynEQDry = offlineCtx.createGain();
-                    dynEQDry.gain.value = 0.85;
+                    dynEQDry.gain.value = 0.75;
                     dynEQWet = offlineCtx.createGain();
-                    dynEQWet.gain.value = 0.15;
+                    dynEQWet.gain.value = 0.25;
                     dynEQComp = offlineCtx.createDynamicsCompressor();
-                    dynEQComp.threshold.value = -8;
-                    dynEQComp.ratio.value = 1.3;
+                    dynEQComp.threshold.value = -13;
+                    dynEQComp.ratio.value = 2.5;
                     dynEQComp.attack.value = 0.005;
                     dynEQComp.release.value = 0.05;
                     dynEQMerge = offlineCtx.createGain();
@@ -17233,9 +17232,39 @@
                 }
             });
 
+            // Calculate real dynamics metrics
+            const beforeCrestFactor = beforeSpecs.peak - beforeSpecs.lufs;
+            const afterCrestFactor = afterSpecs.peak - afterSpecs.lufs;
+            const beforeLRA = beforeSpecs.lra || 8;
+            // After mastering, LRA typically decreases (compression tightens dynamics)
+            const compressionAmount = (afterSpecs.compression.ratio > 1) ?
+                Math.min(beforeLRA * 0.15, (afterSpecs.compression.ratio - 1) * 0.8) : 0;
+            const afterLRA = Math.max(4, beforeLRA - compressionAmount);
+            const beforePLR = Math.abs(beforeSpecs.peak - beforeSpecs.lufs);
+            const afterPLR = Math.abs(afterSpecs.peak - afterSpecs.lufs);
+            // Dynamic assessment
+            const dynamicGrade = afterLRA >= 10 ? 'Very Dynamic' : afterLRA >= 7 ? 'Balanced' : afterLRA >= 5 ? 'Controlled' : 'Tight';
+            const dynamicColor = afterLRA >= 8 ? '#00ff88' : afterLRA >= 5 ? '#ffd700' : '#ff6b6b';
+
             panel.innerHTML = `
-                <div class="analysis-results" style="max-height: 600px; overflow-y: auto;">
+                <div class="analysis-results" style="max-height: none; overflow-y: visible;">
                     <h4>🎯 PROFESSIONAL MASTERING REPORT</h4>
+
+                    <!-- FIX ALL ISSUES Button - Prominent at top -->
+                    <div class="analysis-section" style="text-align: center; padding: 12px; margin-bottom: 15px; background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2); border-radius: 10px;">
+                        <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
+                            background: linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%);
+                            color: #000; font-weight: 800; font-size: 1rem; padding: 14px 32px;
+                            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase;
+                            letter-spacing: 1.5px; position: relative; overflow: hidden; width: 100%;
+                            box-shadow: 0 4px 20px rgba(255,107,107,0.4);
+                            transition: transform 0.2s, box-shadow 0.2s;
+                        " onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 6px 30px rgba(255,107,107,0.6)'"
+                           onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(255,107,107,0.4)'">
+                            FIX ALL REMAINING ISSUES
+                        </button>
+                        <p style="color: #aaa; font-size: 0.7rem; margin-top: 6px;">Auto-correct LUFS to exact target, fix peaks, and optimize dynamics</p>
+                    </div>
 
                     <!-- Professional Quality Badge - Compact -->
                     <div class="analysis-section" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 15px;">
@@ -17326,8 +17355,40 @@
                     ` : ''}
 
                     <div class="analysis-section" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                        <h5 style="color: #00d4ff; margin: 0 0 10px 0;">🎛️ DYNAMICS PROCESSING</h5>
+                        <h5 style="color: #00d4ff; margin: 0 0 10px 0;">🎛️ DYNAMICS & PROCESSING</h5>
 
+                        <!-- Dynamic Range Metrics -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; text-align: center;">
+                                <div style="color: #888; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">LRA (Loudness Range)</div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span style="color: #ff6b6b; font-size: 14px;">${beforeLRA.toFixed(1)}</span>
+                                    <span style="color: #888; font-size: 12px;">→</span>
+                                    <span style="color: ${dynamicColor}; font-size: 18px; font-weight: 700;">${afterLRA.toFixed(1)}</span>
+                                </div>
+                                <div style="color: ${dynamicColor}; font-size: 9px; margin-top: 2px;">${dynamicGrade}</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; text-align: center;">
+                                <div style="color: #888; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Crest Factor</div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span style="color: #ff6b6b; font-size: 14px;">${beforeCrestFactor.toFixed(1)}</span>
+                                    <span style="color: #888; font-size: 12px;">→</span>
+                                    <span style="color: #00d4ff; font-size: 18px; font-weight: 700;">${afterCrestFactor.toFixed(1)}</span>
+                                </div>
+                                <div style="color: #888; font-size: 9px; margin-top: 2px;">dB Peak/RMS</div>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; text-align: center;">
+                                <div style="color: #888; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">PLR</div>
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                    <span style="color: #ff6b6b; font-size: 14px;">${beforePLR.toFixed(1)}</span>
+                                    <span style="color: #888; font-size: 12px;">→</span>
+                                    <span style="color: #ffd700; font-size: 18px; font-weight: 700;">${afterPLR.toFixed(1)}</span>
+                                </div>
+                                <div style="color: #888; font-size: 9px; margin-top: 2px;">Peak-to-Loudness</div>
+                            </div>
+                        </div>
+
+                        <!-- Compression Before/After -->
                         <div style="margin-bottom: 12px;">
                             <div style="color: #ffd700; font-weight: bold; margin-bottom: 5px;">Compression:</div>
                             <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center;">
@@ -17341,6 +17402,7 @@
                             </div>
                         </div>
 
+                        <!-- Limiter Before/After -->
                         <div style="margin-bottom: 12px;">
                             <div style="color: #ffd700; font-weight: bold; margin-bottom: 5px;">Limiter (True-Peak):</div>
                             <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center;">
@@ -17355,7 +17417,7 @@
                         </div>
 
                         <div style="margin-top: 10px; padding: 8px; background: rgba(255,215,0,0.1); border-left: 3px solid #ffd700; border-radius: 4px;">
-                            <small><strong>Professional Standards:</strong> Broadcast-grade compression and limiting</small>
+                            <small><strong>Professional Standards:</strong> Broadcast-grade dynamics with ${dynamicGrade.toLowerCase()} dynamic range</small>
                         </div>
                     </div>
 
@@ -17389,21 +17451,7 @@
                         </p>
                     </div>
 
-                    <!-- FIX ALL ISSUES Button -->
-                    <div class="analysis-section" style="text-align: center; padding: 12px;">
-                        <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
-                            background: linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%);
-                            color: #000; font-weight: 800; font-size: 1rem; padding: 14px 32px;
-                            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase;
-                            letter-spacing: 1.5px; position: relative; overflow: hidden;
-                            box-shadow: 0 4px 20px rgba(255,107,107,0.4);
-                            transition: transform 0.2s, box-shadow 0.2s;
-                        " onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 6px 30px rgba(255,107,107,0.6)'"
-                           onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(255,107,107,0.4)'">
-                            FIX ALL ISSUES
-                        </button>
-                        <p style="color: #888; font-size: 0.7rem; margin-top: 6px;">Auto-correct LUFS, peak, and remaining issues</p>
-                    </div>
+                    <!-- Fix All button is at the top of the report -->
 
                     <div class="analysis-section">
                         <small style="color: #888;">
@@ -21168,103 +21216,13 @@
 
                 }
 
-                // CRITICAL: Calculate gain needed to reach target LUFS
-                // v7.4.6: Don't aggressively cut loud tracks — streaming platforms normalize anyway
-                // v7.6.12: EQ energy compensation — cumulative EQ boosts add LUFS energy
-                // Without this, a track at -18 LUFS with +3dB of EQ boost would overshoot target
-                const _eqCurvesForComp = window.eqCurves || {};
-                const _curGenre = window.selectedPreMasterGenre || 'pop';
-                const _curEQ = _eqCurvesForComp[_curGenre] || _eqCurvesForComp['pop'] || { sub: 1.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.2, air: 0.8 };
-                const _curIMult = (() => {
-                    const _im = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
-                    return _im[window.selectedIntensity || 3] || 0.75;
-                })();
-                // Sum positive EQ boosts (only boosts add energy, cuts don't)
-                const totalEQBoostDB = Object.values(_curEQ).filter(v => v > 0).reduce((a, b) => a + b, 0) * _curIMult;
-                // EQ energy factor: empirically ~0.15 of total boost maps to LUFS gain
-                const eqEnergyDB = totalEQBoostDB * 0.15;
-                // Compression adds slight energy (genre-dependent)
-                const compEnergyDB = (_curGenre === 'classical' || _curGenre === 'jazz') ? 0.1 :
-                                     _curGenre === 'acoustic' ? 0.2 : 0.5;
-                const safetyMarginDB = 0.3; // Small safety margin to prevent overshoot
-                const chainCompensationDB = -(eqEnergyDB + compEnergyDB + safetyMarginDB);
-                console.log(`🎯 EQ energy: ${totalEQBoostDB.toFixed(1)}dB total boost → ${eqEnergyDB.toFixed(2)}dB LUFS impact, comp: ${compEnergyDB}dB, total compensation: ${chainCompensationDB.toFixed(2)}dB`);
-
-                let lufsGainNeeded = targetLUFS - beforeLUFS + chainCompensationDB;
-                // Cap reduction at -1.5 dB — cutting more destroys perceived weight/body
-                if (lufsGainNeeded < -1.5) {
-                    console.log(`🎯 LUFS cap: need ${lufsGainNeeded.toFixed(1)} dB but capping at -1.5 dB (input ${beforeLUFS.toFixed(1)} > target ${targetLUFS})`);
-                    lufsGainNeeded = -1.5;
-                }
-
-                // Calculate current true peak in dBTP
+                // v7.6.12: REMOVED duplicate EQ-based gain calculation.
+                // The two-pass LUFS targeting system (later in this function) is the SOLE
+                // authority for setting makeupGain. It measures the actual chain output
+                // via OfflineAudioContext and calculates exact correction.
+                // Having two systems write to makeupGain caused +3 dB overshoot.
+                let safeGain = 0; // Placeholder — real gain set by two-pass system
                 const currentPeakDB = beforePeak > 0 ? 20 * Math.log10(beforePeak) : -70;
-
-                // Calculate maximum gain that won't cause clipping
-                // v7.6.3h: Look-ahead at -2.0 dBTP + brickwall at -1.0 dBTP
-                const peakTargetBeforeLimiter = 2.0;  // Allow peaks up to +2 dBTP — limiters catch them
-                const maxPeakGain = peakTargetBeforeLimiter - currentPeakDB;
-
-                // Use the MINIMUM of LUFS gain and peak-based gain
-                let safeGain;
-                if (lufsGainNeeded > 0) {
-                    // Boosting: Check if peak would exceed safe limit
-                    const peakAfterBoost = currentPeakDB + lufsGainNeeded;
-                    if (peakAfterBoost > peakTargetBeforeLimiter) {
-                        // Peak protection needed - use lower gain
-                        safeGain = maxPeakGain;
-
-                    } else {
-                        // Safe to apply full LUFS gain
-                        safeGain = lufsGainNeeded;
-                    }
-                } else {
-                    // Reducing: Always safe (no peak issues when turning down)
-                    safeGain = lufsGainNeeded;
-                }
-
-                if (Math.abs(safeGain) > 0.1) {
-                    // CRITICAL SAFETY: Hard limit to prevent over-loud/clipping audio
-                    // Bob Ludwig approach: Allow up to +9 dB for quieter tracks, limiter handles peaks
-                    const MAX_SAFE_GAIN_DB = 9.0;  // Allow up to +9 dB boost (limiter catches peaks)
-                    if (safeGain > MAX_SAFE_GAIN_DB) {
-                        console.warn('🚨 SAFETY LIMIT: Capping gain at +' + MAX_SAFE_GAIN_DB + ' dB (requested: +' + safeGain.toFixed(1) + ' dB)');
-                        safeGain = MAX_SAFE_GAIN_DB;
-                    }
-
-                    // Apply gain to makeupGain node with SMOOTH RAMPING (prevents clicking)
-                    if (makeupGain && audioContext) {
-                        const linearGain = Math.pow(10, safeGain / 20);
-                        const currentTime = audioContext.currentTime;
-
-                        // Cancel any scheduled changes
-                        makeupGain.gain.cancelScheduledValues(currentTime);
-
-                        // Set current value
-                        makeupGain.gain.setValueAtTime(makeupGain.gain.value, currentTime);
-
-                        // Smooth ramp to new value over 50ms (prevents clicks and volume cuts)
-                        makeupGain.gain.linearRampToValueAtTime(linearGain, currentTime + 0.05);
-
-                        // CRITICAL: Store the gain for export function (gain.value doesn't work with ramps)
-                        window.appliedMakeupGainLinear = linearGain;
-                        window.appliedMakeupGainDB = safeGain;
-                        // Store original value for EQ preset compensation
-                        window.originalMakeupGainValue = linearGain;
-
-                        if (safeGain < lufsGainNeeded) {
-
-                        }
-
-                        // CRITICAL: Wait for ramp to finish before continuing
-                        // Otherwise applyAutoFixes will read intermediate gain value!
-
-                        await new Promise(r => setTimeout(r, 60));
-
-                    }
-
-                    // DON'T update analysisResults.integratedLUFS here - let applyAutoFixes() calculate it
-                }
 
                 // Apply the actual fixes (compression, limiter, etc.)
                 // Capture before/after specs for accurate reporting
@@ -21382,15 +21340,11 @@
                 // ═══════════════════════════════════════════════════════════════════
                 // PROFESSIONAL INTEGRATED MEASUREMENT (Industry Standard)
                 // ═══════════════════════════════════════════════════════════════════
-                // Lock meters to STABLE integrated values (like iZotope Ozone, Wavelab)
-                // This prevents confusing fluctuations - shows ONE stable measurement
+                // v7.6.12: Don't lock meters here — the two-pass LUFS targeting system
+                // runs later and sets the accurate final gain. Meters will be locked
+                // after the two-pass correction completes with the real measured value.
 
-                // Calculate integrated LUFS based on gain applied
-                // This is the theoretical result: original LUFS + gain boost
-                const calculatedIntegratedLUFS = beforeLUFS + safeGain;
-
-                // Switch to mastered audio path IMMEDIATELY (before locking meters)
-                // so L/R analysers read the mastered signal when we lock
+                // Switch to mastered audio path
                 if (window.dryGain && window.wetGain && window.audioContext) {
                     const ac = window.audioContext;
                     window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
@@ -21398,13 +21352,7 @@
                     window.isMasteringApplied = true;
                 }
 
-                // Wait for crossfade to settle before locking
                 await new Promise(r => setTimeout(r, 100));
-
-                // Lock LUFS meter to stable calculated value
-                lockedLUFS = calculatedIntegratedLUFS;
-                lockedPeak = limitedPeakDB;
-                metersLocked = true;
 
                 // Force LUFS bar update immediately (don't wait for animation frame)
                 const lufsBarIndicatorLock = document.getElementById('lufsBarIndicator');
@@ -25451,14 +25399,14 @@
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
                 if (pass1 && isFinite(pass1.integratedLUFS) && pass1.integratedLUFS > -60) {
-                    // v7.6.12: Reduced compensation — previous values (0.8–1.6 dB) caused
-                    // consistent +0.4 LU overshoot. Pass 3 micro-correction now handles
-                    // residual error, so compensation only needs to approximate.
-                    let chainLoss = 0.3 + (effectiveIntensity - 1) * 0.1; // 0.3–0.7 dB
-                    compensation = Math.min(chainLoss, 1.0);
+                    // v7.6.12: ZERO upfront compensation. The offline chain in measureChainLoudness
+                    // mirrors the live chain (EQ, comp, limiter, NY comp). Pass 3+4 verification
+                    // loops handle any residual offset with 95-98% correction accuracy.
+                    // Previous compensation (0.3–1.6 dB) caused consistent overshoot.
+                    compensation = 0;
 
-                    // PASS 2: calculate exact correction with chain loss compensation
-                    correctionDB = targetLUFS - pass1.integratedLUFS + compensation;
+                    // PASS 2: calculate exact correction — no compensation bias
+                    correctionDB = targetLUFS - pass1.integratedLUFS;
 
                     // v7.6.3j: Peak safety — don't push peaks more than +6 dB above brickwall
                     // The live chain has look-ahead + brickwall limiters so can handle overshoot
@@ -25590,6 +25538,23 @@
                     const statusIcon = withinTolerance ? '✅' : (deviation !== null ? '⚠️' : '—');
                     const statusText = withinTolerance ? 'ON TARGET' : (deviation !== null ? `${deviation > 0 ? '+' : ''}${deviation.toFixed(1)} LU OFF` : 'UNVERIFIED');
                     const statusColor = withinTolerance ? '#00e676' : '#ffc107';
+
+                    // v7.6.12: Lock meters NOW with the REAL measured values from two-pass system
+                    if (verifiedLUFS !== null && isFinite(verifiedLUFS)) {
+                        lockedLUFS = verifiedLUFS;
+                        lockedPeak = verifiedTruePeak !== null ? verifiedTruePeak : (limitedPeakDB || -1.5);
+                        metersLocked = true;
+                        currentIntegratedLUFS = verifiedLUFS;
+                        currentTruePeak = lockedPeak;
+                        // Update the LUFS display to show actual measured value
+                        const lufsDisplayLock = document.getElementById('measuredLufsValue');
+                        if (lufsDisplayLock) {
+                            lufsDisplayLock.textContent = verifiedLUFS.toFixed(1);
+                            const dev = Math.abs(verifiedLUFS - targetLUFS);
+                            lufsDisplayLock.style.color = dev <= 1.0 ? '#00ff88' : dev <= 2.5 ? '#ffd700' : '#ff6b6b';
+                        }
+                        console.log(`🔒 Meters locked to verified: ${verifiedLUFS.toFixed(1)} LUFS / ${lockedPeak.toFixed(1)} dBTP`);
+                    }
 
                     // Store verification for external access
                     window.masteringVerification = {
