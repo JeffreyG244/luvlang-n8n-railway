@@ -30094,14 +30094,7 @@
                 scorecardEl.style.transform = 'translateY(0)';
             });
 
-            // Auto-hide after 15 seconds
-            setTimeout(() => {
-                if (scorecardEl.style.display !== 'none') {
-                    scorecardEl.style.opacity = '0';
-                    scorecardEl.style.transform = 'translateY(10px)';
-                    setTimeout(() => { scorecardEl.style.display = 'none'; }, 300);
-                }
-            }, 15000);
+            // v7.6.13i: Quality scorecard stays visible — user dismisses manually via button
         }
 
         // v7.6.3j: Guide steps removed — genre selection now lives in sidebar only
