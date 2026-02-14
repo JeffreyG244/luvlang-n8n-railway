@@ -4718,8 +4718,9 @@
     </style>
 
     <script>
-    // Integrated A/B Toggle Handler - State of the art control
+    // Integrated A/B Toggle Handler - REMOVED v7.6.8c12
     function handleFloatingABToggle(isMastered) {
+        return; // A/B toggle removed
         if (!window.isMasteringApplied) {
             // Pre-mastering A/B: toggle preview EQ on/off
             const statusPill = document.getElementById('aiStatusPill');
@@ -23457,6 +23458,18 @@
                 }, 150);
             }
 
+            // Wait for AI analysis if it hasn't finished yet (up to 5s)
+            if (!window.aiDetectedGenre) {
+                const statusPill = document.getElementById('aiStatusPill');
+                if (statusPill) { statusPill.textContent = 'ANALYZING...'; statusPill.classList.add('processing'); }
+                if (typeof showToast === 'function') showToast('Analyzing your track...', 'info');
+                let waited = 0;
+                while (!window.aiDetectedGenre && waited < 5000) {
+                    await new Promise(r => setTimeout(r, 200));
+                    waited += 200;
+                }
+            }
+
             // Set defaults from AI analysis and go straight to mastering
             window.selectedPreMasterGenre = (window.aiDetectedGenre && window.aiDetectedGenre.top) || 'pop';
             if (!window.selectedIntensity) window.selectedIntensity = 3;
@@ -24057,11 +24070,14 @@
                 const headroomDb = headroomCompensation[effectiveIntensity] || 0;
                 // Note: headroomDb is still available for reference but NOT applied to masterGain
 
-                // Get target LUFS — genre-aware (v7.6.0)
-                // genrePresets define per-genre targets: metal=-12, pop/rock/hiphop=-14, acoustic/jazz=-16, classical=-18
-                const _gpLufs = window.genrePresets || {};
-                const genreTarget = (_gpLufs[genre] && _gpLufs[genre].targetLUFS) || -14;
-                const targetLUFS = genreTarget;
+                // Get target LUFS — always use platform target (v7.6.8c12)
+                // Platform selection (streaming=-14, apple=-16, podcast=-16) is authoritative.
+                // Genre-specific targets were causing classical/jazz/acoustic to be too quiet.
+                const platformBtn = document.querySelector('.selector-btn[data-platform].active');
+                const platformSel = platformBtn ? platformBtn.dataset.platform.toLowerCase() : 'streaming';
+                let targetLUFS = -14;
+                if (platformSel === 'apple') targetLUFS = -16;
+                else if (platformSel === 'podcast') targetLUFS = -16;
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 1: INPUT ANALYSIS & CORRECTION
@@ -26443,12 +26459,8 @@
 
         };
 
-        // Toggle the A/B switch in the modal
-        window.toggleABSwitch = function() {
-            window.abCompareMode = !window.abCompareMode;
-            updateABModalState();
-            applyABState();
-        };
+        // Toggle the A/B switch — REMOVED v7.6.8c12
+        window.toggleABSwitch = function() { return; };
 
         // Set to Original
         window.setABToOriginal = function() {
@@ -26600,9 +26612,10 @@
 
         });
 
-        // A/B Compare toggle - UNIFIED IMPLEMENTATION
-        // Uses window.abCompareMode as single source of truth
+        // A/B Compare toggle - REMOVED v7.6.8c12
+        // Kept as no-op to prevent JS errors from any remaining callers
         window.toggleABCompare = function() {
+            return; // A/B toggle removed
             // Sync with global state (used by main A/B handler)
             window.abCompareMode = !window.abCompareMode;
             const isActive = window.abCompareMode;
@@ -29557,33 +29570,8 @@
             };
         }
 
-        // Override applyABState globally (used by toggleABCompare)
-        // We inject gain-matched logic by overriding the gain values set in toggleABCompare
-        const _origToggleABCompare = window.toggleABCompare;
-        if (_origToggleABCompare) {
-            window.toggleABCompare = function() {
-                _origToggleABCompare.call(this);
-                // After the original toggle runs, apply gain-matched audio routing
-                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
-                    window.applyGainMatchedAB();
-                }
-            };
-        }
-
-        // Also patch handleFloatingABToggle for the command bar toggle
-        const _origHandleFloatingAB = window.handleFloatingABToggle;
-        if (_origHandleFloatingAB) {
-            window.handleFloatingABToggle = function(isMastered) {
-                // v7.6.8c: Sync abCompareMode so applyGainMatchedAB uses correct state
-                // isMastered=true → MASTERED (B) → abCompareMode=false
-                // isMastered=false → ORIGINAL (A) → abCompareMode=true
-                window.abCompareMode = !isMastered;
-                _origHandleFloatingAB.call(this, isMastered);
-                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
-                    window.applyGainMatchedAB();
-                }
-            };
-        }
+        // A/B toggle patches removed in v7.6.8c12 — A/B UI fully removed
+        // Original functions are already no-ops
 
 
         // ═══════════════════════════════════════════════════════════════════════════
