@@ -204,7 +204,7 @@
             background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 24px 16px 80px;
+            padding: 24px 16px 140px;
             border-left: 1px solid rgba(184, 79, 255, 0.08);
             min-width: 0;
         }
@@ -1794,6 +1794,135 @@
         .visual-bar-fill.critical {
             background: linear-gradient(90deg, #ff4444, #ff6b6b);
             box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        /* ═══ Track Analysis Report Card ═══ */
+        .report-card {
+            background: linear-gradient(135deg, rgba(12,12,24,0.97), rgba(20,16,32,0.97));
+            border: 1px solid rgba(0,212,255,0.15);
+            border-radius: 14px;
+            padding: 20px;
+            margin: 14px 0;
+            backdrop-filter: blur(12px);
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .report-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .report-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .report-card-header .rc-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .rc-grade-badge {
+            font-size: 18px;
+            font-weight: 800;
+            padding: 4px 14px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+            display: none;
+        }
+        .rc-grade-badge.visible {
+            display: inline-block;
+            animation: rcGradePulse 0.6s ease;
+        }
+        @keyframes rcGradePulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .rc-metric-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .rc-metric-row:last-child { border-bottom: none; }
+        .rc-metric-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            min-width: 100px;
+        }
+        .rc-metric-values {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+        .rc-metric-value {
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .rc-metric-value.before {
+            color: rgba(255,255,255,0.3);
+            text-decoration: line-through;
+            font-size: 11px;
+        }
+        .rc-metric-value.after {
+            color: #00e676;
+            text-shadow: 0 0 8px rgba(0,230,118,0.3);
+        }
+        .rc-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .rc-badge.good { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+        .rc-badge.warn { background: rgba(255,193,7,0.15); color: #ffc107; border: 1px solid rgba(255,193,7,0.3); }
+        .rc-badge.bad { background: rgba(255,82,82,0.15); color: #ff5252; border: 1px solid rgba(255,82,82,0.3); }
+        .rc-badge.target { background: rgba(0,212,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
+        .rc-delta {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+        .rc-delta.improved { background: rgba(0,230,118,0.12); color: #00e676; }
+        .rc-delta.neutral { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); }
+        .rc-delta.degraded { background: rgba(255,82,82,0.12); color: #ff5252; }
+        .rc-spectrum-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 36px;
+            padding: 4px 6px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 6px;
+            flex: 1;
+            max-width: 160px;
+        }
+        .rc-spectrum-bar {
+            flex: 1;
+            border-radius: 2px 2px 0 0;
+            min-height: 3px;
+            transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @media (max-width: 600px) {
+            .report-card { padding: 14px; }
+            .rc-metric-row { flex-wrap: wrap; gap: 4px; }
+            .rc-metric-label { min-width: 80px; font-size: 10px; }
+            .rc-spectrum-bars { max-width: 120px; }
         }
 
         /* Frequency balance bars */
@@ -3421,6 +3550,7 @@
                 transform: translateX(100%);
                 transition: transform 0.3s ease;
                 padding-top: 20px;
+                padding-bottom: 140px;
                 overflow-y: auto;
             }
 
@@ -12365,6 +12495,9 @@
             window.masteringComplete = false; // Reset mastering flag for new file
             window.autoLUFSGainApplied = 0; // Reset LUFS gain tracking
 
+            // Remove old report card for new file
+            if (typeof window.resetTrackReportCard === 'function') window.resetTrackReportCard();
+
             // Reset loudness history timeline for new file
             if (typeof window.clearLoudnessHistory === 'function') window.clearLoudnessHistory();
             // Reset smart hints for new file
@@ -12593,14 +12726,26 @@
                         if (typeof window.populateAIMasteringConsole === 'function') {
                             window.populateAIMasteringConsole(aiAnalysis, window.aiDetectedGenre);
                         }
+                        // Genre stored for mastering — NOT previewed on original
+                        // previewGenre only updates UI (no EQ on dry path)
                         if (typeof window.previewGenre === 'function') {
-                            window.previewGenre(aiGenre); // Pre-select AI-detected genre
+                            window.previewGenre(aiGenre);
+                        }
+
+                        // Build the Track Analysis Report Card
+                        if (typeof window.buildTrackReportCard === 'function') {
+                            window.buildTrackReportCard();
                         }
                     } catch (aiErr) {
                         console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                         window.aiTrackProfile = null;
                         window.aiTrackAnalysis = null;
                         window.aiDetectedGenre = null;
+                    }
+
+                    // Build report card even if AI analysis failed (uses LUFS/peak data)
+                    if (!document.getElementById('trackReportCard') && typeof window.buildTrackReportCard === 'function') {
+                        window.buildTrackReportCard();
                     }
 
                 } catch (error) {
@@ -12705,6 +12850,11 @@
                     if (typeof window.previewGenre === 'function') {
                         window.previewGenre(aiGenre);
                     }
+
+                    // Build the Track Analysis Report Card
+                    if (typeof window.buildTrackReportCard === 'function') {
+                        window.buildTrackReportCard();
+                    }
                 } catch (aiErr) {
                     console.error('⚠️ AI analysis failed:', aiErr.message, aiErr.stack);
                     window.aiTrackProfile = null;
@@ -12713,6 +12863,11 @@
                     if (typeof window.populateAIMasteringConsole === 'function') {
                         try { window.populateAIMasteringConsole(null, null); } catch(_) {}
                     }
+                }
+
+                // Build report card even if AI analysis failed (uses LUFS/peak data)
+                if (!document.getElementById('trackReportCard') && typeof window.buildTrackReportCard === 'function') {
+                    window.buildTrackReportCard();
                 }
 
                 // GUARANTEED FALLBACK: If console still shows defaults, force-populate now
@@ -12853,7 +13008,6 @@
                     for (let j = i; j < i + blockSize; j++) {
                         const sampleL = leftKWeighted[j];
                         const sampleR = rightKWeighted[j];
-                        // Sum of squares using K-weighted samples
                         sumSquares += (sampleL * sampleL + sampleR * sampleR) / 2;
                     }
 
@@ -13958,6 +14112,238 @@
                 if (controls) controls.appendChild(panel);
             }
         }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // TRACK ANALYSIS REPORT CARD — Real measured before/after data
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function buildTrackReportCard() {
+            // Remove any existing report card
+            resetTrackReportCard();
+
+            const lufs = window.originalInputLUFS;
+            const peak = window.originalInputPeakDB;
+            const analysis = window.aiTrackAnalysis;
+            const profile = window.aiTrackProfile;
+
+            // Need at least LUFS to show the card
+            if (typeof lufs !== 'number' || !isFinite(lufs)) return;
+
+            const card = document.createElement('div');
+            card.id = 'trackReportCard';
+            card.className = 'report-card';
+
+            // Loudness assessment
+            let lufsAssess, lufsBadge;
+            if (lufs >= -9) { lufsAssess = 'Clipping Risk'; lufsBadge = 'bad'; }
+            else if (lufs >= -11) { lufsAssess = 'Very Loud'; lufsBadge = 'warn'; }
+            else if (lufs >= -16) { lufsAssess = 'Good'; lufsBadge = 'good'; }
+            else if (lufs >= -22) { lufsAssess = 'Quiet'; lufsBadge = 'warn'; }
+            else { lufsAssess = 'Very Quiet'; lufsBadge = 'bad'; }
+
+            // True peak assessment
+            let peakAssess, peakBadge;
+            if (typeof peak === 'number' && isFinite(peak)) {
+                if (peak > -0.3) { peakAssess = 'Clipping'; peakBadge = 'bad'; }
+                else if (peak > -1.0) { peakAssess = 'Hot'; peakBadge = 'warn'; }
+                else { peakAssess = 'Safe'; peakBadge = 'good'; }
+            }
+
+            // Dynamic range (crest factor)
+            let dynAssess, dynBadge, dynVal;
+            if (analysis && analysis.overallCrest !== undefined) {
+                dynVal = parseFloat(analysis.overallCrest);
+                if (dynVal >= 12) { dynAssess = 'Healthy'; dynBadge = 'good'; }
+                else if (dynVal >= 6) { dynAssess = 'Tight'; dynBadge = 'warn'; }
+                else { dynAssess = 'Crushed'; dynBadge = 'bad'; }
+            }
+
+            // Stereo image
+            let stereoAssess, stereoBadge, stereoVal;
+            if (analysis && analysis.stereoCorrelation !== undefined) {
+                stereoVal = parseFloat(analysis.stereoCorrelation);
+                if (stereoVal >= 0.6) { stereoAssess = 'Solid'; stereoBadge = 'good'; }
+                else if (stereoVal >= 0.2) { stereoAssess = 'Wide'; stereoBadge = 'warn'; }
+                else { stereoAssess = 'Phase Issues'; stereoBadge = 'bad'; }
+            }
+
+            // Spectrum mini bars
+            let spectrumHTML = '';
+            if (analysis && analysis.spectrumDB) {
+                const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+                const colors = ['#4a90d9', '#5a9fd4', '#00b4d8', '#00d4ff', '#48cae4', '#7b68ee', '#9370db'];
+                spectrumHTML = '<div class="rc-spectrum-bars">';
+                bands.forEach((b, i) => {
+                    const db = analysis.spectrumDB[b] || -60;
+                    const norm = Math.max(0, Math.min(100, (db + 60) * 1.5));
+                    spectrumHTML += `<div class="rc-spectrum-bar" style="height:${norm}%;background:${colors[i]}" title="${b}: ${db.toFixed(1)} dB"></div>`;
+                });
+                spectrumHTML += '</div>';
+            }
+
+            // Mix score
+            let scoreHTML = '';
+            if (profile && profile.mixScore !== undefined) {
+                const sc = profile.mixScore;
+                const scoreColor = sc >= 75 ? '#00e676' : sc >= 50 ? '#ffc107' : '#ff5252';
+                scoreHTML = `
+                    <div class="rc-metric-row">
+                        <span class="rc-metric-label">Mix Score</span>
+                        <div class="rc-metric-values">
+                            <span class="rc-metric-value" style="color:${scoreColor};font-size:16px;font-weight:800">${sc}</span>
+                            <span style="font-size:10px;color:rgba(255,255,255,0.4)">/100</span>
+                            ${profile.issues ? `<span style="font-size:10px;color:rgba(255,255,255,0.3)">${profile.issues.length} issue${profile.issues.length !== 1 ? 's' : ''}</span>` : ''}
+                        </div>
+                    </div>`;
+            }
+
+            card.innerHTML = `
+                <div class="report-card-header">
+                    <span class="rc-title">Pre-Mastering Analysis</span>
+                    <span class="rc-grade-badge" id="rcGradeBadge"></span>
+                </div>
+                <div id="rcMetrics">
+                    <div class="rc-metric-row" data-metric="lufs">
+                        <span class="rc-metric-label">Loudness</span>
+                        <div class="rc-metric-values">
+                            <span class="rc-metric-value" id="rcLufsValue">${lufs.toFixed(1)} LUFS</span>
+                            <span class="rc-badge ${lufsBadge}" id="rcLufsBadge">${lufsAssess}</span>
+                        </div>
+                    </div>
+                    ${(typeof peak === 'number' && isFinite(peak)) ? `
+                    <div class="rc-metric-row" data-metric="peak">
+                        <span class="rc-metric-label">True Peak</span>
+                        <div class="rc-metric-values">
+                            <span class="rc-metric-value" id="rcPeakValue">${peak.toFixed(1)} dBTP</span>
+                            <span class="rc-badge ${peakBadge}" id="rcPeakBadge">${peakAssess}</span>
+                        </div>
+                    </div>` : ''}
+                    ${dynVal !== undefined ? `
+                    <div class="rc-metric-row" data-metric="dynamics">
+                        <span class="rc-metric-label">Dynamic Range</span>
+                        <div class="rc-metric-values">
+                            <span class="rc-metric-value" id="rcDynValue">${dynVal.toFixed(1)} dB crest</span>
+                            <span class="rc-badge ${dynBadge}" id="rcDynBadge">${dynAssess}</span>
+                        </div>
+                    </div>` : ''}
+                    ${stereoVal !== undefined ? `
+                    <div class="rc-metric-row" data-metric="stereo">
+                        <span class="rc-metric-label">Stereo Image</span>
+                        <div class="rc-metric-values">
+                            <span class="rc-metric-value" id="rcStereoValue">${stereoVal.toFixed(2)}</span>
+                            <span class="rc-badge ${stereoBadge}" id="rcStereoBadge">${stereoAssess}</span>
+                        </div>
+                    </div>` : ''}
+                    ${spectrumHTML ? `
+                    <div class="rc-metric-row" data-metric="spectrum">
+                        <span class="rc-metric-label">Spectrum</span>
+                        <div class="rc-metric-values">
+                            ${spectrumHTML}
+                        </div>
+                    </div>` : ''}
+                    ${scoreHTML}
+                </div>`;
+
+            // Insert after AI corrections panel or analysis panel
+            const aiPanel = document.getElementById('aiCorrectionsPanel');
+            const analysisSection = document.getElementById('analysisResults') || document.getElementById('trackAnalysis') || document.getElementById('analysisPanel');
+            if (aiPanel) {
+                aiPanel.parentNode.insertBefore(card, aiPanel.nextSibling);
+            } else if (analysisSection) {
+                analysisSection.parentNode.insertBefore(card, analysisSection.nextSibling);
+            } else {
+                const controls = document.querySelector('.controls-section, .mastering-controls, #masteringControls');
+                if (controls) controls.appendChild(card);
+            }
+
+            // Animate in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    card.classList.add('visible');
+                });
+            });
+        }
+        window.buildTrackReportCard = buildTrackReportCard;
+
+        function updateReportCardPostMaster() {
+            const card = document.getElementById('trackReportCard');
+            if (!card) return;
+
+            const v = window.masteringVerification;
+            if (!v) return;
+
+            // Update title
+            const titleEl = card.querySelector('.rc-title');
+            if (titleEl) titleEl.textContent = 'Mastering Report Card';
+
+            // Quality grade
+            if (typeof calculateQualityGrade === 'function') {
+                try {
+                    const beforeLUFS = window.originalInputLUFS || -14;
+                    const loudnessGain = Math.abs((v.verifiedLUFS || -14) - beforeLUFS);
+                    const grade = calculateQualityGrade(loudnessGain, 10, 10);
+                    const badge = document.getElementById('rcGradeBadge');
+                    if (badge && grade) {
+                        badge.textContent = grade.grade;
+                        badge.style.background = grade.color + '22';
+                        badge.style.color = grade.color;
+                        badge.style.border = `2px solid ${grade.color}`;
+                        badge.classList.add('visible');
+                    }
+                } catch (_) {}
+            }
+
+            // Update LUFS row with before/after
+            const lufsRow = card.querySelector('[data-metric="lufs"]');
+            if (lufsRow && v.verifiedLUFS !== null && v.verifiedLUFS !== undefined) {
+                const beforeLUFS = window.originalInputLUFS;
+                const afterLUFS = v.verifiedLUFS;
+                const delta = afterLUFS - beforeLUFS;
+                const withinTol = v.withinTolerance;
+                const badgeClass = withinTol ? 'target' : 'warn';
+                const badgeText = withinTol ? 'On Target' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)} LU`;
+
+                lufsRow.querySelector('.rc-metric-values').innerHTML = `
+                    <span class="rc-metric-value before">${beforeLUFS.toFixed(1)} LUFS</span>
+                    <span style="color:rgba(255,255,255,0.2);">&rarr;</span>
+                    <span class="rc-metric-value after">${afterLUFS.toFixed(1)} LUFS</span>
+                    <span class="rc-badge ${badgeClass}">${badgeText}</span>`;
+            }
+
+            // Update Peak row with before/after
+            const peakRow = card.querySelector('[data-metric="peak"]');
+            if (peakRow && v.verifiedTruePeak !== null && v.verifiedTruePeak !== undefined) {
+                const beforePeak = window.originalInputPeakDB;
+                const afterPeak = v.verifiedTruePeak;
+                let peakBadgeClass, peakBadgeText;
+                if (afterPeak > -0.3) { peakBadgeClass = 'bad'; peakBadgeText = 'Clipping'; }
+                else if (afterPeak > -1.0) { peakBadgeClass = 'warn'; peakBadgeText = 'Hot'; }
+                else { peakBadgeClass = 'good'; peakBadgeText = 'Safe'; }
+
+                if (typeof beforePeak === 'number' && isFinite(beforePeak)) {
+                    peakRow.querySelector('.rc-metric-values').innerHTML = `
+                        <span class="rc-metric-value before">${beforePeak.toFixed(1)} dBTP</span>
+                        <span style="color:rgba(255,255,255,0.2);">&rarr;</span>
+                        <span class="rc-metric-value after">${afterPeak.toFixed(1)} dBTP</span>
+                        <span class="rc-badge ${peakBadgeClass}">${peakBadgeText}</span>`;
+                }
+            }
+
+            // Flash the card border green briefly
+            card.style.borderColor = 'rgba(0,230,118,0.4)';
+            card.style.boxShadow = '0 0 20px rgba(0,230,118,0.1)';
+            setTimeout(() => {
+                card.style.borderColor = 'rgba(0,212,255,0.15)';
+                card.style.boxShadow = '';
+            }, 3000);
+        }
+        window.updateReportCardPostMaster = updateReportCardPostMaster;
+
+        function resetTrackReportCard() {
+            const existing = document.getElementById('trackReportCard');
+            if (existing) existing.remove();
+        }
+        window.resetTrackReportCard = resetTrackReportCard;
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // ITU-R BS.1770-4 K-WEIGHTING FILTER (Shared utility for accurate LUFS)
@@ -23512,23 +23898,9 @@
                 }
             }
 
-            // Set defaults from AI analysis and go straight to mastering
-            window.selectedPreMasterGenre = (window.aiDetectedGenre && window.aiDetectedGenre.top) || 'pop';
+            // Go straight to mastering with AI-detected genre — no console step
             if (!window.selectedIntensity) window.selectedIntensity = 3;
-
-            // Capture BEFORE spectrum for comparison (same as showGenreSelection did)
-            try { if (typeof captureBeforeSpectrum === 'function') captureBeforeSpectrum(); } catch (err) { console.warn('⚠️ Could not capture before spectrum:', err); }
-
-            // Highlight the AI-detected genre in the sidebar
-            const sidebarGenreMap = { hiphop: 'hip-hop', electronic: 'edm' };
-            const sidebarKey = sidebarGenreMap[window.selectedPreMasterGenre] || window.selectedPreMasterGenre;
-            document.querySelectorAll('.selector-btn[data-genre]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.genre === sidebarKey);
-            });
-
-            console.log(`🎯 Auto-mastering with genre: ${window.selectedPreMasterGenre}, intensity: ${window.selectedIntensity}`);
-
-            // Start mastering directly (no overlay)
+            window.selectedPreMasterGenre = (window.aiDetectedGenre && window.aiDetectedGenre.top) || 'pop';
             proceedWithMastering();
         }
 
@@ -25398,6 +25770,19 @@
          Handles tier switching, module locking, checkout, and Stripe payments
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="TIER_SYSTEM.js"></script>
+    <script>
+    // DEV/TESTING: Unlock all features — remove this block before production launch
+    window._tierOverride = 'legendary';
+    window.userTier = 'legendary';
+    // Remove feature-locked class from all elements
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.feature-locked').forEach(function(el) {
+            el.classList.remove('feature-locked');
+        });
+        // Switch to premium tier to unlock all modules
+        if (typeof switchTier === 'function') switchTier('premium');
+    });
+    </script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          💳 PROFESSIONAL PRICING MODAL - Premium Tier Selection
@@ -25500,6 +25885,11 @@
 
             // A/B Modal removed per user request - go straight to results
             showMasteringResults();
+
+            // Update Track Report Card with post-mastering data
+            if (typeof window.updateReportCardPostMaster === 'function') {
+                window.updateReportCardPostMaster();
+            }
 
             // Show genre-specific smart hint after mastering
             const activeGenre = window.selectedPreMasterGenre || 'pop';
@@ -27573,18 +27963,21 @@
         // Compression, limiting, and dynamics stages eat ~1-2 dB of low-end energy,
         // so mastering EQ needs higher sub/bass than the lightweight preview EQ.
         // Preview uses genrePresets.eq directly (lighter, great on dry path).
+        // v7.6.9: Mastering EQ curves — tuned for full chain (dynamics stages eat ~1-2 dB bass)
+        // Sub/bass intentionally higher than genrePresets to compensate
+        // High/air boosted to match genrePresets audibility since preview EQ was removed
         window.eqCurves = {
-            'hiphop':     { sub: 4.0, bass: 3.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
-            'electronic': { sub: 3.5, bass: 3.0, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 1.5, air: 1.0 },
-            'pop':        { sub: 1.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 1.2, air: 0.8 },
-            'rock':       { sub: 2.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 1.5, air: 0.8 },
-            'rnb':        { sub: 3.0, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 0.8, air: 0.3 },
-            'acoustic':   { sub: 1.0, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.0, air: 0.8 },
-            'jazz':       { sub: 1.0, bass: 2.5, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 0.8, air: 0.3 },
-            'classical':  { sub: 0.0, bass: 1.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.4, air: 0.3 },
-            'metal':      { sub: 2.5, bass: 3.5, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.2, air: 0.5 },
-            'country':    { sub: 1.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 1.5, air: 0.8 },
-            'latin':      { sub: 3.5, bass: 3.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'hiphop':     { sub: 4.0, bass: 3.5, lowmid: -2.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
+            'electronic': { sub: 3.5, bass: 3.0, lowmid: -2.0, mid: -0.5, highmid: 1.2, high: 2.5, air: 2.0 },
+            'pop':        { sub: 1.5, bass: 2.5, lowmid: -1.5, mid: 0.5, highmid: 2.0, high: 2.0, air: 1.5 },
+            'rock':       { sub: 2.0, bass: 3.0, lowmid: -1.5, mid: 1.0, highmid: 1.8, high: 2.5, air: 1.5 },
+            'rnb':        { sub: 3.0, bass: 3.0, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.0, air: 0.5 },
+            'acoustic':   { sub: 1.0, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 1.5, high: 1.5, air: 1.5 },
+            'jazz':       { sub: 1.0, bass: 2.5, lowmid: -0.5, mid: 0.5, highmid: 1.2, high: 1.0, air: 0.5 },
+            'classical':  { sub: 0.0, bass: 1.5, lowmid: 0.0, mid: 0.5, highmid: 0.8, high: 0.5, air: 0.5 },
+            'metal':      { sub: 2.5, bass: 3.5, lowmid: -1.5, mid: 1.5, highmid: 2.0, high: 1.5, air: 1.0 },
+            'country':    { sub: 1.5, bass: 2.5, lowmid: -1.0, mid: 1.0, highmid: 2.0, high: 2.5, air: 1.5 },
+            'latin':      { sub: 3.5, bass: 3.5, lowmid: -1.5, mid: 0.5, highmid: 1.5, high: 1.5, air: 1.0 },
             'lofi':       { sub: 2.0, bass: 3.5, lowmid: 1.0, mid: -0.5, highmid: -1.0, high: -2.0, air: -3.0 }
         };
 
@@ -27608,57 +28001,14 @@
                 displayAICorrections(window.aiTrackProfile);
             }
 
-            // Stay on dry path but apply lightweight EQ preview so user hears genre differences
+            // Dry path stays pure — NO EQ filters inserted into original signal
+            // Genre EQ is only applied through the mastering chain when user clicks PROCESS
             const ac = window.audioContext;
             if (ac && window.dryGain && window.wetGain) {
                 window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
                 window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
             }
-
-            // Real-time EQ preview — insert lightweight filters into dry path
-            if (ac && window.dryGain && window.outputMixer) {
-                // Create preview filters on first use
-                if (!window._previewEqFilters) {
-                    const bandDefs = [
-                        { freq: 40, type: 'lowshelf' },
-                        { freq: 100, type: 'peaking', q: 0.6 },
-                        { freq: 400, type: 'peaking', q: 0.7 },
-                        { freq: 1000, type: 'peaking', q: 0.7 },
-                        { freq: 3000, type: 'peaking', q: 0.7 },
-                        { freq: 8000, type: 'peaking', q: 0.6 },
-                        { freq: 14000, type: 'highshelf' }
-                    ];
-                    window._previewEqFilters = bandDefs.map(b => {
-                        const f = ac.createBiquadFilter();
-                        f.type = b.type;
-                        f.frequency.value = b.freq;
-                        if (b.q) f.Q.value = b.q;
-                        f.gain.value = 0;
-                        return f;
-                    });
-                    // Insert into dry path: dryGain → [preview EQ] → outputMixer
-                    try {
-                        window.dryGain.disconnect(window.outputMixer);
-                    } catch (_) {}
-                    let prev = window.dryGain;
-                    window._previewEqFilters.forEach(f => { prev.connect(f); prev = f; });
-                    prev.connect(window.outputMixer);
-                }
-                // Apply genre EQ values to preview filters
-                // Use the same intensity multiplier the mastering chain uses
-                // so preview matches the actual mastered output
-                const intensityLevel = window.selectedIntensity || 3;
-                // Use SAME multipliers as mastering chain for accurate preview
-                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
-                const intensityBoost = masteringMults[intensityLevel] || 0.85;
-                const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
-                const now = ac.currentTime;
-                window._previewEqFilters.forEach((f, i) => {
-                    const clamped = Math.max(-12, Math.min(12, eqVals[i] * intensityBoost));
-                    f.gain.setTargetAtTime(clamped, now, 0.08);
-                });
-                console.log(`🎵 Genre preview EQ applied: ${genre} @ intensity ${intensityLevel} (${eqVals.map(v => Math.max(-12, Math.min(12, v * intensityBoost)).toFixed(1) + 'dB').join(', ')})`);
-            }
+            console.log(`🎵 Genre selected: ${genre} (EQ applied only during mastering)`);
 
             // Clear any previous sub-genre override — just the genre EQ is used
             window._selectedSubGenreEQ = null;
@@ -27893,25 +28243,8 @@
             window.selectedSubPreset = index;
             window._selectedSubGenreEQ = preset.eq;
 
-            // Apply sub-preset EQ to the 7 preview filters
-            // CRITICAL: Preview must match mastering chain so WYSIWYG
-            // v7.6.8c: Reduced from 2.5 to 1.5 — was causing extreme EQ boosts
-            const ac = window.audioContext;
-            const SUBPRESET_SCALE = 2.0;
-            if (ac && window._previewEqFilters) {
-                const intensityLevel = window.selectedIntensity || 3;
-                // Use SAME multipliers as mastering chain (intensityMultipliers in runActualMastering)
-                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
-                const intensityBoost = masteringMults[intensityLevel] || 0.85;
-                const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
-                const now = ac.currentTime;
-                window._previewEqFilters.forEach((f, i) => {
-                    const scaled = eqVals[i] * SUBPRESET_SCALE * intensityBoost;
-                    const clamped = Math.max(-12, Math.min(12, scaled));
-                    f.gain.setTargetAtTime(clamped, now, 0.08);
-                });
-                console.log(`🎵 Sub-preset applied: ${preset.name} (${eqVals.map(v => (v > 0 ? '+' : '') + (v * SUBPRESET_SCALE * intensityBoost).toFixed(1) + 'dB').join(', ')})`);
-            }
+            // Sub-preset EQ stored for mastering — NO preview EQ on dry path
+            console.log(`🎵 Sub-preset selected: ${preset.name} (applied during mastering)`);
 
             // Update the EQ bars preview if visible
             const barsContainer = document.getElementById('eqBarsContainer');
@@ -28075,14 +28408,7 @@
                 }
             });
 
-            // Also apply to preview EQ filters if they exist (pre-mastering console)
-            if (window._previewEqFilters) {
-                window._previewEqFilters.forEach((f, i) => {
-                    const scaled = eqVals[i] * SUBPRESET_SCALE * intensityBoost;
-                    const clamped = Math.max(-12, Math.min(12, scaled));
-                    f.gain.setTargetAtTime(clamped, now, 0.08);
-                });
-            }
+            // Preview EQ removed — dry path stays clean
 
             // Update sidebar EQ faders + value displays + visualization
             const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
@@ -28121,11 +28447,7 @@
                 window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
             }
 
-            // Reset preview EQ to flat
-            if (window._previewEqFilters) {
-                const now = ac.currentTime;
-                window._previewEqFilters.forEach(f => f.gain.setTargetAtTime(0, now, 0.05));
-            }
+            // No preview EQ to reset — dry path is always clean
 
             // Remove genre selection highlight
             document.querySelectorAll('#preMasterGenreGrid .genre-btn').forEach(btn => {
@@ -28230,36 +28552,8 @@
                 // AFTER mastering: apply to the live mastering chain
                 window.applyIntensityToChain(level);
                 console.log(`🎚️ Intensity ${level} applied to MASTERED chain`);
-            } else if (window._previewEqFilters && window.audioContext && window.selectedPreMasterGenre) {
-                // BEFORE mastering: apply to preview EQ filters
-                // Use SAME multipliers as mastering chain for WYSIWYG
-                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
-                const boost = masteringMults[level] || 0.85;
-                const subEQ = window._selectedSubGenreEQ;
-                const SCALE = 2.5;
-                const now = window.audioContext.currentTime;
-
-                if (subEQ) {
-                    // Sub-preset active — use sub-preset EQ with SUBPRESET_SCALE
-                    const eqVals = [subEQ.sub, subEQ.bass, subEQ.lowmid, subEQ.mid, subEQ.highmid, subEQ.high, subEQ.air];
-                    window._previewEqFilters.forEach((f, i) => {
-                        const clamped = Math.max(-12, Math.min(12, eqVals[i] * SCALE * boost));
-                        f.gain.setTargetAtTime(clamped, now, 0.08);
-                    });
-                    console.log(`🎚️ Intensity ${level} applied to sub-preset preview (×${(SCALE * boost).toFixed(2)})`);
-                } else {
-                    // Genre preset only (no sub-preset)
-                    const preset = genrePresets[window.selectedPreMasterGenre];
-                    if (preset) {
-                        const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowMid, preset.eq.mid, preset.eq.highMid, preset.eq.high, preset.eq.air];
-                        window._previewEqFilters.forEach((f, i) => {
-                            const clamped = Math.max(-12, Math.min(12, eqVals[i] * boost));
-                            f.gain.setTargetAtTime(clamped, now, 0.08);
-                        });
-                        console.log(`🎚️ Intensity ${level} applied to genre preview (×${boost})`);
-                    }
-                }
             } else {
+                // BEFORE mastering: intensity stored, applied when mastering runs
                 console.log(`🎚️ Intensity ${level} stored (will apply when mastering runs)`);
             }
         };
@@ -28325,13 +28619,23 @@
                 window.compressor.knee.setTargetAtTime(comp.knee, now, 0.08);
             }
 
-            // ── Limiter: tighter ceiling at high intensity for loudness ──
+            // ── Limiter: keep at -1.0 dBTP for all levels (safety ceiling) ──
             if (window.limiter) {
-                const limiterThresholds = { 1: -2.0, 2: -1.5, 3: -1.0, 4: -0.5, 5: -0.3 };
-                window.limiter.threshold.setTargetAtTime(limiterThresholds[level] || -1.0, now, 0.08);
+                window.limiter.threshold.setTargetAtTime(-1.0, now, 0.08);
             }
 
-            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${comp.ratio}:1 @ ${comp.threshold}dB, limiter: ${level >= 4 ? 'pushed' : 'standard'}`);
+            // ── Makeup gain compensation: keep LUFS on target regardless of intensity ──
+            // Heavier processing adds loudness — compensate by pulling back makeup gain
+            // Values calibrated: level 3 is the reference (0 dB offset)
+            if (window.makeupGain && window.appliedMakeupGainLinear) {
+                const gainOffsetDB = { 1: 2.0, 2: 1.0, 3: 0, 4: -2.5, 5: -4.5 };
+                const offsetDB = gainOffsetDB[level] || 0;
+                const offsetLinear = Math.pow(10, offsetDB / 20);
+                const compensatedGain = window.appliedMakeupGainLinear * offsetLinear;
+                window.makeupGain.gain.setTargetAtTime(compensatedGain, now, 0.08);
+            }
+
+            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${comp.ratio}:1 @ ${comp.threshold}dB`);
         };
 
         // ═══════════════════════════════════════════════════════════════════
@@ -28604,17 +28908,7 @@
             // Reset LUFS gain lock — new mastering pass will re-lock after targeting
             window._lufsGainLocked = false;
 
-            // Remove preview EQ filters from dry path — restore clean original signal
-            if (window._previewEqFilters && window.dryGain && window.outputMixer) {
-                try {
-                    // Disconnect the filter chain
-                    window.dryGain.disconnect();
-                    window._previewEqFilters.forEach(f => f.disconnect());
-                    // Restore direct connection: dryGain → outputMixer (clean original)
-                    window.dryGain.connect(window.outputMixer);
-                    window._previewEqFilters = null; // Mark as removed
-                } catch (_) {}
-            }
+            // Dry path is always clean — no preview EQ filters to remove
 
             // Ensure we have a genre selected (default to AI-detected or pop)
             if (!selectedPreMasterGenre && !window.selectedPreMasterGenre) {
