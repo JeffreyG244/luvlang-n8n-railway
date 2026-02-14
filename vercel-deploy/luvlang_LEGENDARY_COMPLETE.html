@@ -5390,6 +5390,20 @@
                     cursor: pointer;
                     transition: all 0.2s;
                 ">QC CHECK</button>
+                <button id="scorecardTabBtn" onclick="toggleScorecardPanel()" style="
+                    padding: 10px 18px;
+                    background: rgba(255,255,255,0.04);
+                    border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 4px;
+                    color: rgba(255,255,255,0.6);
+                    font-size: 0.65rem;
+                    font-weight: 600;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: none;
+                ">SCORE <span id="scorecardTabGrade" style="color: #00d4ff; font-weight: 800;"></span></button>
                 <button onclick="openPricingModal()" style="
                     padding: 10px 20px;
                     background: linear-gradient(180deg, rgba(92,184,92,0.2) 0%, rgba(92,184,92,0.1) 100%);
@@ -17532,9 +17546,9 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // FIX ALL ISSUES - Re-masters the track to resolve all detected issues
-        // Pre-applies EQ, stereo, dynamics, de-esser corrections from the AI profile,
-        // then triggers a full re-master to lock in the fixes with proper LUFS targeting.
+        // FIX ALL ISSUES - Resets mastering, pre-applies corrections, re-masters
+        // The flow: save profile → reset mastering state → re-apply fixes → re-master
+        // This ensures the scorecard + report show fresh results after each pass.
         // ═══════════════════════════════════════════════════════════════════════════
         function fixRemainingIssues() {
             // Update both possible button IDs (report panel + transport bar)
@@ -17550,78 +17564,115 @@
                 return;
             }
 
-            const ct = window.audioContext.currentTime;
-            const corrections = [];
-            const profile = window.aiTrackProfile || null;
-            const issues = profile ? (profile.issues || []) : [];
+            // ─── STEP 1: SAVE the AI profile corrections BEFORE reset clears them ──
+            const savedProfile = window.aiTrackProfile ? JSON.parse(JSON.stringify(window.aiTrackProfile)) : null;
+            const savedAnalysis = window.aiTrackAnalysis ? JSON.parse(JSON.stringify(window.aiTrackAnalysis)) : null;
+            const savedGenre = window.selectedPreMasterGenre || window.aiDetectedGenre?.top || 'pop';
+            const savedIntensity = window.selectedIntensity || 3;
 
-            // ─── 1. LOW-MID MUDDINESS (cut 200-500 Hz) ───────────────────────
+            if (!savedProfile || !(savedProfile.issues && savedProfile.issues.length > 0)) {
+                if (typeof showLuvLangToast === 'function') showLuvLangToast('No issues detected to fix. Your master sounds great!', 'success');
+                if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
+                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
+                return;
+            }
+
+            const corrections = [];
+            const unfixable = [];
+            const issues = savedProfile.issues || [];
+
+            // ─── STEP 2: RESET mastering state so re-master can proceed ─────────
+            // Flag prevents resetMastering from clearing mastering history
+            window._fixAllInProgress = true;
+            if (typeof window.resetMastering === 'function') {
+                window.resetMastering();
+            }
+            window._fixAllInProgress = false;
+
+            // Restore the analysis data that resetMastering cleared
+            window.aiTrackAnalysis = savedAnalysis;
+            window.selectedPreMasterGenre = savedGenre;
+            window.selectedIntensity = savedIntensity;
+            if (window.aiDetectedGenre) window.aiDetectedGenre.top = savedGenre;
+
+            // ─── STEP 3: PRE-APPLY corrections to the audio chain ───────────────
+            const ct = window.audioContext.currentTime;
+
+            // 3a. LOW-MID MUDDINESS (cut 200-500 Hz)
             const hasMuddy = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('muddy'));
             if (hasMuddy && window.eqLowMidFilter) {
-                const cut = Math.min(window.eqLowMidFilter.gain.value - 1.5, -2.0);
-                window.eqLowMidFilter.gain.setTargetAtTime(Math.max(-6, cut), ct, 0.02);
-                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('lowmid', Math.max(-6, cut), true);
+                window.eqLowMidFilter.gain.setTargetAtTime(-2.5, ct, 0.02);
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('lowmid', -2.5, true);
                 corrections.push('Low-mids cut (muddiness)');
+            } else if (hasMuddy) {
+                unfixable.push({ item: 'Low-mid muddiness', reason: 'EQ filter not available in current chain' });
             }
 
-            // ─── 2. HIGH-MID HARSHNESS (tame 2-5 kHz) ────────────────────────
+            // 3b. HIGH-MID HARSHNESS (tame 2-5 kHz)
             const hasHarsh = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('harsh'));
             if (hasHarsh && window.eqHighMidFilter) {
-                const cut = Math.min(window.eqHighMidFilter.gain.value - 1.5, -2.0);
-                window.eqHighMidFilter.gain.setTargetAtTime(Math.max(-6, cut), ct, 0.02);
-                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('highmid', Math.max(-6, cut), true);
+                window.eqHighMidFilter.gain.setTargetAtTime(-2.0, ct, 0.02);
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('highmid', -2.0, true);
                 corrections.push('High-mids tamed (harshness)');
+            } else if (hasHarsh) {
+                unfixable.push({ item: 'High-mid harshness', reason: 'EQ filter not available in current chain' });
             }
 
-            // ─── 3. EQ CORRECTIONS FROM PROFILE ──────────────────────────────
-            if (profile && profile.eqDeltas) {
+            // 3c. EQ CORRECTIONS FROM PROFILE DELTAS
+            if (savedProfile.eqDeltas) {
                 const eqMap = {
                     sub: window.eqSubFilter, bass: window.eqBassFilter,
                     lowmid: window.eqLowMidFilter, mid: window.eqMidFilter,
                     highmid: window.eqHighMidFilter, high: window.eqHighFilter,
                     air: window.eqAirFilter
                 };
-                for (const [band, delta] of Object.entries(profile.eqDeltas)) {
+                for (const [band, delta] of Object.entries(savedProfile.eqDeltas)) {
                     if (Math.abs(delta) > 0.8 && eqMap[band]) {
-                        const newGain = Math.max(-6, Math.min(6, eqMap[band].gain.value + delta * 0.6));
+                        const newGain = Math.max(-6, Math.min(6, delta * 0.6));
                         eqMap[band].gain.setTargetAtTime(newGain, ct, 0.02);
                         if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition(band, newGain, true);
                     }
                 }
             }
 
-            // ─── 4. STEREO BALANCE ───────────────────────────────────────────
+            // 3d. STEREO BALANCE
             const hasStereo = issues.some(i => i.type === 'stereo');
-            if (hasStereo && profile && profile.stereoDeltas) {
-                if (profile.stereoDeltas.bassMonoThreshold > 0 && window.bassMonoFilter) {
+            if (hasStereo && savedProfile.stereoDeltas) {
+                if (savedProfile.stereoDeltas.bassMonoThreshold > 0 && window.bassMonoFilter) {
                     window.bassMonoFilter.frequency.setTargetAtTime(
-                        Math.max(window.bassMonoFilter.frequency.value, profile.stereoDeltas.bassMonoThreshold), ct, 0.02);
+                        Math.max(200, savedProfile.stereoDeltas.bassMonoThreshold), ct, 0.02);
                     corrections.push('Bass mono tightened');
                 }
-                if (profile.stereoDeltas.widthMultiplier !== 1.0 && window.stereoWidthGain) {
-                    const newWidth = (window.stereoWidth || 1.0) * profile.stereoDeltas.widthMultiplier;
+                if (savedProfile.stereoDeltas.widthMultiplier && savedProfile.stereoDeltas.widthMultiplier !== 1.0 && window.stereoWidthGain) {
+                    const newWidth = savedProfile.stereoDeltas.widthMultiplier;
                     window.stereoWidthGain.gain.setTargetAtTime(newWidth, ct, 0.02);
                     window.stereoWidth = newWidth;
-                    corrections.push(`Stereo ${profile.stereoDeltas.widthMultiplier < 1 ? 'narrowed' : 'widened'}`);
+                    corrections.push(`Stereo ${newWidth < 1 ? 'narrowed' : 'widened'}`);
                 }
+            } else if (hasStereo) {
+                unfixable.push({ item: 'Stereo imbalance', reason: 'Stereo issues baked into the original mix cannot be fully corrected in mastering' });
             }
 
-            // ─── 5. DYNAMICS ─────────────────────────────────────────────────
-            if (issues.some(i => i.type === 'dynamics') && profile && profile.compDeltas && window.compressor) {
-                const comp = window.compressor;
-                if (profile.compDeltas.thresholdOffset) {
-                    comp.threshold.setTargetAtTime(comp.threshold.value + profile.compDeltas.thresholdOffset, ct, 0.02);
+            // 3e. DYNAMICS
+            if (issues.some(i => i.type === 'dynamics') && savedProfile.compDeltas && window.compressor) {
+                if (savedProfile.compDeltas.thresholdOffset) {
+                    window.compressor.threshold.setTargetAtTime(
+                        Math.max(-40, window.compressor.threshold.value + savedProfile.compDeltas.thresholdOffset), ct, 0.02);
                 }
                 corrections.push('Dynamics rebalanced');
+            } else if (issues.some(i => i.type === 'dynamics') && !window.compressor) {
+                unfixable.push({ item: 'Dynamic range', reason: 'Dynamics are determined by the original recording — extreme cases require a remix' });
             }
 
-            // ─── 6. SIBILANCE ────────────────────────────────────────────────
+            // 3f. SIBILANCE
             if (issues.some(i => i.type === 'sibilance') && window.deEsserFilter) {
-                window.deEsserFilter.gain.setTargetAtTime(Math.min(window.deEsserFilter.gain.value, -3), ct, 0.02);
+                window.deEsserFilter.gain.setTargetAtTime(-3, ct, 0.02);
                 corrections.push('De-esser tightened');
+            } else if (issues.some(i => i.type === 'sibilance')) {
+                unfixable.push({ item: 'Sibilance', reason: 'De-esser module not available — enable it in the effects chain' });
             }
 
-            // ─── 7. DYNAMIC EQ ───────────────────────────────────────────────
+            // 3g. DYNAMIC EQ
             if (issues.some(i => i.type === 'resonance' || i.type === 'tonal') && window.dynamicEQ && !window.dynamicEQ.enabled) {
                 window.dynamicEQ.enable();
                 const dynToggle = document.getElementById('dynamicEQToggle');
@@ -17635,7 +17686,7 @@
                 corrections.push('Dynamic EQ enabled');
             }
 
-            // ─── 8. PEAK LIMITER ─────────────────────────────────────────────
+            // 3h. PEAK LIMITER
             const peakEl = document.getElementById('peakValue');
             const currentPeak = peakEl ? parseFloat(peakEl.textContent) : -1.5;
             if (currentPeak > -1.0 && window.limiter) {
@@ -17644,21 +17695,28 @@
                 corrections.push('Limiter tightened');
             }
 
-            console.log('🔧 Fix All: pre-corrections applied:', corrections);
+            // Store unfixable items for the scorecard to pick up
+            window._lastFixAllUnfixable = unfixable;
 
-            // ─── 9. UNLOCK METERS + GAIN LOCK, THEN RE-MASTER ────────────────
-            // Unlock so the re-master can set new values
+            console.log('🔧 Fix All: corrections applied:', corrections);
+            if (unfixable.length > 0) {
+                console.log('⚠️ Fix All: unfixable items:', unfixable.map(u => u.item).join(', '));
+            }
+
+            // ─── STEP 4: UNLOCK METERS + TRIGGER RE-MASTER ─────────────────────
             window._lufsGainLocked = false;
-            metersLocked = false;
-            _lastLockedLufsText = null;
+            try { metersLocked = false; } catch(_) {}
+            try { _lastLockedLufsText = null; } catch(_) {}
 
-            // Brief delay to let EQ/gain changes settle, then trigger full re-master
+            // Brief delay to let corrections settle, then trigger full re-master
             setTimeout(() => {
-                if (typeof runFullAIMaster === 'function') {
-                    if (typeof showLuvLangToast === 'function') {
-                        showLuvLangToast(`Applying ${corrections.length} fix(es) and re-mastering...`, 'info');
-                    }
-                    runFullAIMaster();
+                if (typeof window.runFullAIMaster === 'function') {
+                    const fixCount = corrections.length;
+                    const unfixCount = unfixable.length;
+                    let msg = `Applying ${fixCount} fix(es) and re-mastering...`;
+                    if (unfixCount > 0) msg += ` (${unfixCount} item(s) require remix)`;
+                    if (typeof showLuvLangToast === 'function') showLuvLangToast(msg, 'info');
+                    window.runFullAIMaster();
                 } else {
                     if (typeof showLuvLangToast === 'function') {
                         showLuvLangToast('Mastering engine not ready — please try again', 'warning');
@@ -17667,7 +17725,7 @@
                 // Reset buttons (mastering overlay will show progress)
                 if (btn) { btn.textContent = 'FIX ALL REMAINING ISSUES'; btn.disabled = false; btn.style.background = ''; }
                 if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; btn2.style.background = ''; }
-            }, 200);
+            }, 300);
         }
 
         // Helper function to update EQ fader UI positions with animation
@@ -21582,6 +21640,17 @@
 
             // Clear AI track profile so fresh analysis runs on re-master
             window.aiTrackProfile = null;
+
+            // Clear mastering history for new track (user manually reset = new session)
+            // Note: Fix All does NOT clear history — it preserves it to show progress
+            if (!window._fixAllInProgress) {
+                window._masteringHistory = [];
+                const tabBtn = document.getElementById('scorecardTabBtn');
+                if (tabBtn) tabBtn.style.display = 'none';
+                const scorecard = document.getElementById('qualityScorecard');
+                if (scorecard) scorecard.style.display = 'none';
+                window._scorecardVisible = false;
+            }
 
             // Allow genre preset guide to show again on next master
             window.genrePresetGuideShown = false;
@@ -30025,17 +30094,130 @@
             closeMasteringComplete();
         };
 
-        // Show detailed quality scorecard overlay
+        // ═══════════════════════════════════════════════════════════════════
+        // MASTERING HISTORY & TOGGLEABLE SCORECARD PANEL
+        // Tracks all mastering passes (1st master, 2nd re-master, etc.)
+        // User toggles via Score tab in export bar — never blocks the UI
+        // ═══════════════════════════════════════════════════════════════════
+
+        window._masteringHistory = [];
+        window._scorecardVisible = false;
+
         function showDetailedScorecard(grade) {
+            // Build entry for this mastering pass
+            const passNum = window._masteringHistory.length + 1;
+            const profile = window.aiTrackProfile || {};
+            const issues = profile.issues || [];
+
+            // Determine what was fixed vs what couldn't be fixed
+            const fixedItems = [];
+            const unfixedItems = [];
+            const prev = window._masteringHistory.length > 0
+                ? window._masteringHistory[window._masteringHistory.length - 1] : null;
+
+            if (prev) {
+                const ps = prev.scores || {};
+                const ns = grade.scores || {};
+                // Compare each category
+                if (ns.lufs > ps.lufs) fixedItems.push('LUFS accuracy improved');
+                else if (ns.lufs < ps.lufs) unfixedItems.push({ item: 'LUFS accuracy decreased', reason: 'EQ/dynamics changes shifted loudness balance' });
+                if (ns.peak > ps.peak) fixedItems.push('True peak safety improved');
+                else if (ns.peak < ps.peak) unfixedItems.push({ item: 'True peak slightly higher', reason: 'EQ boosts added energy that raised peaks' });
+                if (ns.dynamics > ps.dynamics) fixedItems.push('Dynamic range optimized');
+                else if (ns.dynamics < ps.dynamics) unfixedItems.push({ item: 'Dynamic range shifted', reason: 'Compression adjustments changed dynamic range' });
+                if (ns.tonal > ps.tonal) fixedItems.push('Tonal balance improved');
+                else if (ns.tonal < ps.tonal) unfixedItems.push({ item: 'Tonal balance shifted', reason: 'EQ corrections affected overall tonal balance' });
+            }
+
+            // Check for issues that remain in the profile
+            if (issues.length > 0 && passNum > 1) {
+                issues.forEach(iss => {
+                    const desc = iss.description || iss.type || 'unknown';
+                    if (iss.type === 'dynamics' && grade.scores.dynamics < 20) {
+                        unfixedItems.push({ item: desc, reason: 'Source material dynamic range is baked into the recording — requires remix' });
+                    } else if (iss.type === 'stereo' && grade.scores.tonal < 20) {
+                        unfixedItems.push({ item: desc, reason: 'Stereo issues in the original mix cannot be fully corrected in mastering' });
+                    }
+                });
+            }
+
+            // Include unfixable items from Fix All (if any were flagged)
+            if (window._lastFixAllUnfixable && window._lastFixAllUnfixable.length > 0) {
+                window._lastFixAllUnfixable.forEach(u => {
+                    // Avoid duplicates
+                    if (!unfixedItems.some(existing => existing.item === u.item)) {
+                        unfixedItems.push(u);
+                    }
+                });
+                window._lastFixAllUnfixable = []; // Clear after consuming
+            }
+
+            // Push this pass to history
+            const entry = {
+                pass: passNum,
+                label: passNum === 1 ? '1st Master' : passNum === 2 ? '2nd Re-master' : `${passNum}${passNum === 3 ? 'rd' : 'th'} Re-master`,
+                grade: grade.grade,
+                total: grade.total,
+                color: grade.color,
+                scores: { ...(grade.scores || {}) },
+                details: { ...(grade.details || {}) },
+                fixed: fixedItems,
+                unfixed: unfixedItems,
+                timestamp: new Date()
+            };
+            window._masteringHistory.push(entry);
+
+            // Update the Score tab button in export bar
+            const tabBtn = document.getElementById('scorecardTabBtn');
+            const tabGrade = document.getElementById('scorecardTabGrade');
+            if (tabBtn) {
+                tabBtn.style.display = 'flex';
+                tabBtn.style.alignItems = 'center';
+                tabBtn.style.gap = '6px';
+            }
+            if (tabGrade) {
+                tabGrade.textContent = grade.grade + ' ' + grade.total;
+                tabGrade.style.color = grade.color;
+            }
+
+            // Build and show the panel
+            renderScorecardPanel();
+            window._scorecardVisible = true;
+
+            // Auto-hide after 8 seconds so it doesn't block — user can re-open via tab
+            setTimeout(() => {
+                if (window._scorecardVisible) {
+                    const panel = document.getElementById('qualityScorecard');
+                    if (panel) {
+                        panel.style.opacity = '0';
+                        panel.style.transform = 'translateY(10px)';
+                        setTimeout(() => { if (panel) panel.style.display = 'none'; }, 300);
+                    }
+                    window._scorecardVisible = false;
+                    // Pulse the tab button to remind user they can re-open
+                    if (tabBtn) {
+                        tabBtn.style.background = 'rgba(0,212,255,0.2)';
+                        tabBtn.style.borderColor = 'rgba(0,212,255,0.5)';
+                        setTimeout(() => {
+                            tabBtn.style.background = '';
+                            tabBtn.style.borderColor = '';
+                        }, 2000);
+                    }
+                }
+            }, 8000);
+        }
+
+        function renderScorecardPanel() {
             let scorecardEl = document.getElementById('qualityScorecard');
             if (!scorecardEl) {
                 scorecardEl = document.createElement('div');
                 scorecardEl.id = 'qualityScorecard';
                 scorecardEl.style.cssText = `
-                    position: fixed; bottom: 70px; right: 20px; width: 320px;
+                    position: fixed; bottom: 56px; right: 20px; width: 340px; max-height: 70vh;
+                    overflow-y: auto;
                     background: linear-gradient(135deg, rgba(15,15,30,0.97), rgba(20,25,45,0.97));
                     border: 1px solid rgba(0,212,255,0.2); border-radius: 14px;
-                    padding: 18px; z-index: 50000; backdrop-filter: blur(20px);
+                    padding: 16px; z-index: 50000; backdrop-filter: blur(20px);
                     box-shadow: 0 10px 40px rgba(0,0,0,0.5);
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                     transition: opacity 0.3s, transform 0.3s;
@@ -30043,8 +30225,10 @@
                 document.body.appendChild(scorecardEl);
             }
 
-            const s = grade.scores || {};
-            const d = grade.details || {};
+            const history = window._masteringHistory;
+            const latest = history[history.length - 1];
+            if (!latest) return;
+
             const barColor = (score, max) => {
                 const pct = score / max;
                 if (pct >= 0.85) return '#00ff88';
@@ -30053,39 +30237,84 @@
                 return '#ff6b6b';
             };
             const scoreBar = (label, score, max, detail) => `
-                <div style="margin-bottom: 10px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;">${label}</span>
-                        <span style="font-size: 0.7rem; font-weight: 700; color: ${barColor(score, max)};">${score}/${max}</span>
+                <div style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                        <span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;">${label}</span>
+                        <span style="font-size: 0.65rem; font-weight: 700; color: ${barColor(score, max)};">${score}/${max}</span>
                     </div>
-                    <div style="height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
+                    <div style="height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
                         <div style="height: 100%; width: ${(score/max)*100}%; background: ${barColor(score, max)}; border-radius: 2px; transition: width 0.8s ease;"></div>
                     </div>
-                    <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35); margin-top: 2px;">${detail}</div>
+                    <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 2px;">${detail}</div>
                 </div>`;
 
+            // Build history timeline
+            let historyHTML = '';
+            if (history.length > 1) {
+                historyHTML = `<div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Mastering History</div>`;
+                history.forEach((h, i) => {
+                    const isCurrent = i === history.length - 1;
+                    const arrow = i > 0 ? (() => {
+                        const diff = h.total - history[i-1].total;
+                        return diff > 0 ? `<span style="color:#00ff88;">+${diff}</span>` :
+                               diff < 0 ? `<span style="color:#ff6b6b;">${diff}</span>` :
+                               `<span style="color:rgba(255,255,255,0.3);">0</span>`;
+                    })() : '';
+                    historyHTML += `
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0; ${isCurrent ? 'opacity:1;' : 'opacity:0.5;'}">
+                            <div style="width: 6px; height: 6px; border-radius: 50%; background: ${h.color}; flex-shrink: 0;"></div>
+                            <span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); flex: 1;">${h.label}</span>
+                            <span style="font-size: 0.7rem; font-weight: 800; color: ${h.color};">${h.grade} ${h.total}</span>
+                            ${arrow ? `<span style="font-size: 0.55rem; font-weight: 600;">${arrow}</span>` : ''}
+                        </div>`;
+                });
+                historyHTML += '</div>';
+            }
+
+            // Build fixed/unfixed sections for latest pass
+            let changesHTML = '';
+            if (latest.fixed.length > 0 || latest.unfixed.length > 0) {
+                changesHTML = '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">';
+                if (latest.fixed.length > 0) {
+                    changesHTML += latest.fixed.map(f =>
+                        `<div style="font-size: 0.55rem; color: #00ff88; padding: 2px 0;">&#10003; ${f}</div>`
+                    ).join('');
+                }
+                if (latest.unfixed.length > 0) {
+                    changesHTML += latest.unfixed.map(u =>
+                        `<div style="font-size: 0.55rem; color: #ff6b6b; padding: 2px 0;">&#10007; ${u.item}</div>
+                         <div style="font-size: 0.48rem; color: rgba(255,255,255,0.25); padding: 0 0 4px 14px;">${u.reason}</div>`
+                    ).join('');
+                }
+                changesHTML += '</div>';
+            }
+
+            const s = latest.scores;
+            const d = latest.details;
+
             scorecardEl.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <div>
-                        <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">Quality Score</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; color: ${grade.color}; line-height: 1;">${grade.grade}</div>
+                        <div style="font-size: 0.5rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">${latest.label}</div>
+                        <div style="font-size: 1.4rem; font-weight: 800; color: ${latest.color}; line-height: 1;">${latest.grade}</div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 1.8rem; font-weight: 800; color: ${grade.color}; line-height: 1;">${grade.total}</div>
-                        <div style="font-size: 0.55rem; color: rgba(255,255,255,0.35);">/ 100</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: ${latest.color}; line-height: 1;">${latest.total}</div>
+                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.35);">/ 100</div>
                     </div>
                 </div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 16px;">
-                    <div style="height: 100%; width: ${grade.total}%; background: linear-gradient(90deg, ${grade.color}, ${grade.color}88); border-radius: 3px; transition: width 1s ease;"></div>
+                <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
+                    <div style="height: 100%; width: ${latest.total}%; background: linear-gradient(90deg, ${latest.color}, ${latest.color}88); border-radius: 3px; transition: width 1s ease;"></div>
                 </div>
                 ${scoreBar('LUFS Accuracy', s.lufs || 0, 25, `${(d.lufsActual||0).toFixed(1)} LUFS vs ${d.lufsTarget||'-14'} target (${d.platformName||'Streaming'})`)}
                 ${scoreBar('True Peak Safety', s.peak || 0, 25, `${(d.peakActual||0).toFixed(1)} dBTP (ceiling: ${d.peakCeiling||'-1.0'} dBTP)`)}
                 ${scoreBar('Dynamic Range', s.dynamics || 0, 25, `LRA: ${(d.lra||0).toFixed(1)} LU (${d.genre||'pop'} target: ${d.lraTarget||'5-10 LU'})`)}
                 ${scoreBar('Tonal Balance', s.tonal || 0, 25, `Clarity, width, and processing quality`)}
-                <div style="text-align: center; margin-top: 8px;">
-                    <button onclick="document.getElementById('qualityScorecard').style.display='none'" style="background: none; border: none; color: rgba(255,255,255,0.3); font-size: 0.6rem; cursor: pointer;">Dismiss</button>
-                </div>
+                ${changesHTML}
+                ${historyHTML}
             `;
+
             scorecardEl.style.display = 'block';
             scorecardEl.style.opacity = '0';
             scorecardEl.style.transform = 'translateY(10px)';
@@ -30093,9 +30322,25 @@
                 scorecardEl.style.opacity = '1';
                 scorecardEl.style.transform = 'translateY(0)';
             });
-
-            // v7.6.13i: Quality scorecard stays visible — user dismisses manually via button
         }
+
+        // Toggle scorecard panel from export bar tab
+        window.toggleScorecardPanel = function() {
+            const panel = document.getElementById('qualityScorecard');
+            if (!panel || window._masteringHistory.length === 0) {
+                if (typeof showLuvLangToast === 'function') showLuvLangToast('Master a track first to see the scorecard', 'info');
+                return;
+            }
+            if (window._scorecardVisible) {
+                panel.style.opacity = '0';
+                panel.style.transform = 'translateY(10px)';
+                setTimeout(() => { panel.style.display = 'none'; }, 300);
+                window._scorecardVisible = false;
+            } else {
+                renderScorecardPanel();
+                window._scorecardVisible = true;
+            }
+        };
 
         // v7.6.3j: Guide steps removed — genre selection now lives in sidebar only
         window.showGuideStep = function() {};
