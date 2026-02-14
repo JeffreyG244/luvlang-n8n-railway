@@ -18639,44 +18639,94 @@
 
             thumb.style.top = '50%';
 
-            thumb.addEventListener('mousedown', (e) => {
+            // v7.6.16d: ARIA accessibility for EQ faders
+            thumb.setAttribute('role', 'slider');
+            thumb.setAttribute('tabindex', '0');
+            thumb.setAttribute('aria-label', `${band} EQ band`);
+            thumb.setAttribute('aria-valuemin', '-12');
+            thumb.setAttribute('aria-valuemax', '12');
+            thumb.setAttribute('aria-valuenow', '0');
+            thumb.setAttribute('aria-orientation', 'vertical');
+
+            // Keyboard support for EQ faders
+            thumb.addEventListener('keydown', (e) => {
+                if (!audioContext || !audioElement || !audioElement.src) return;
+                const filter = config.filter();
+                if (!filter || !filter.gain) return;
+                let currentDB = filter.gain.value;
+                if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
+                    currentDB = Math.min(12, currentDB + 0.5);
+                    e.preventDefault();
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
+                    currentDB = Math.max(-12, currentDB - 0.5);
+                    e.preventDefault();
+                } else if (e.key === 'Home') {
+                    currentDB = 12; e.preventDefault();
+                } else if (e.key === 'End') {
+                    currentDB = -12; e.preventDefault();
+                } else { return; }
+                updateEQFromFader(band, currentDB);
+                // Update thumb position
+                const trackRect = track.getBoundingClientRect();
+                const trackHeight = trackRect.height;
+                const thumbHeight = thumb.offsetHeight;
+                const percent = (12 - currentDB) / 24;
+                thumb.style.top = (percent * (trackHeight - thumbHeight)) + 'px';
+                thumb.setAttribute('aria-valuenow', currentDB.toFixed(1));
+            });
+
+            // v7.6.16d: Shared drag handler for mouse AND touch
+            function handleDragStart(clientY, e) {
                 isDragging = true;
-                startY = e.clientY;
+                startY = clientY;
                 startTop = thumb.offsetTop;
-                e.preventDefault();
-            });
+                if (e) e.preventDefault();
+            }
 
-            thumb.addEventListener('dblclick', () => {
-                thumb.style.top = '50%';
-                updateEQFromFader(band, 0);
-            });
-
-            document.addEventListener('mousemove', (e) => {
+            function handleDragMove(clientY) {
                 if (!isDragging) return;
-
-                // BUG FIX #4: Validate that audio is loaded before processing
-                if (!audioContext || !audioElement || !audioElement.src) {
-                    return;
-                }
+                if (!audioContext || !audioElement || !audioElement.src) return;
 
                 const trackRect = track.getBoundingClientRect();
                 const trackHeight = trackRect.height;
                 const thumbHeight = thumb.offsetHeight;
 
-                const deltaY = e.clientY - startY;
+                const deltaY = clientY - startY;
                 let newTop = startTop + deltaY;
 
                 newTop = Math.max(0, Math.min(trackHeight - thumbHeight, newTop));
                 thumb.style.top = newTop + 'px';
 
                 const percent = newTop / (trackHeight - thumbHeight);
-                const db = 12 - (percent * 24);  // ±12dB range for POWERFUL Steely Dan-level EQ
+                const db = 12 - (percent * 24);  // ±12dB range
 
                 updateEQFromFader(band, db);
-            });
+            }
 
-            document.addEventListener('mouseup', () => {
+            function handleDragEnd() {
                 isDragging = false;
+            }
+
+            // Mouse events
+            thumb.addEventListener('mousedown', (e) => handleDragStart(e.clientY, e));
+            document.addEventListener('mousemove', (e) => handleDragMove(e.clientY));
+            document.addEventListener('mouseup', handleDragEnd);
+
+            // Touch events (mobile support)
+            thumb.addEventListener('touchstart', (e) => {
+                handleDragStart(e.touches[0].clientY, e);
+            }, { passive: false });
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    e.preventDefault(); // prevent scroll while dragging
+                    handleDragMove(e.touches[0].clientY);
+                }
+            }, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
+
+            thumb.addEventListener('dblclick', () => {
+                thumb.style.top = '50%';
+                updateEQFromFader(band, 0);
             });
 
             track.addEventListener('click', (e) => {
@@ -18706,6 +18756,10 @@
             if (filter && filter.gain) {
                 filter.gain.value = db;
                 config.valueEl.textContent = (db >= 0 ? '+' : '') + db.toFixed(1) + ' dB';
+
+                // v7.6.16d: Update ARIA value for accessibility
+                const thumb = document.querySelector(`.eq-fader-thumb[data-eq="${band}"]`);
+                if (thumb) thumb.setAttribute('aria-valuenow', db.toFixed(1));
 
                 // Apply automatic EQ compensation to prevent distortion
                 updateEQCompensation();
