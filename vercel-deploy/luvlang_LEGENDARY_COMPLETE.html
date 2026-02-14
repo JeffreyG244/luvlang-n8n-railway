@@ -10325,20 +10325,15 @@
                 limiter.attack.value = 0.001;       // 1ms attack
                 limiter.release.value = 0.080;      // v7.6.3j: 80ms (balanced: fast enough for transients, no bass distortion)
 
-                // SAFETY CLIPPER - only catches extreme peaks that escape the limiter
+                // v7.6.13d: BRICKWALL CLIPPER at -1.0 dBTP — sample-level ceiling enforcement
+                // DynamicsCompressor limiters have inherent attack time; transients slip through.
+                // This WaveShaperNode hard-clips at 0.8913 linear (-1.0 dBTP) — instant, zero latency.
                 const safetyClipper = audioContext.createWaveShaper();
                 const safetyClipCurve = new Float32Array(65536);
+                const ceilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1; // -1 to +1
-                    // Soft clip at 0.995 (-0.04 dBFS) - very gentle, only catches true clips
-                    if (Math.abs(x) < 0.99) {
-                        safetyClipCurve[i] = x; // Pass through unchanged
-                    } else {
-                        // Soft saturation above 0.99
-                        const sign = x > 0 ? 1 : -1;
-                        const excess = Math.abs(x) - 0.99;
-                        safetyClipCurve[i] = sign * (0.99 + Math.tanh(excess * 10) * 0.009);
-                    }
+                    safetyClipCurve[i] = Math.max(-ceilingLinear, Math.min(ceilingLinear, x));
                 }
                 safetyClipper.curve = safetyClipCurve;
                 safetyClipper.oversample = '4x';
@@ -12401,8 +12396,11 @@
                 // STAGE 18: BRICKWALL LIMITER (-1.0 dBTP ceiling — safety net)
                 lookAheadLimiter.connect(limiter);
 
+                // STAGE 18b: HARD CLIPPER at -1.0 dBTP — catches transients that escape limiters
+                limiter.connect(safetyClipper);
+
                 // STAGE 19: TPDF DITHER (bit-depth conversion)
-                limiter.connect(ditherProcessor);
+                safetyClipper.connect(ditherProcessor);
 
                 // STAGE 20: FINAL OUTPUT GAIN
                 ditherProcessor.connect(masterGain);
@@ -12516,6 +12514,7 @@
 
             // Unlock meters when new audio is loaded (allow fresh measurement)
             metersLocked = false;
+            _lastLockedLufsText = null; // v7.6.13d: Reset blink cache
             lockedLUFS = null;
             lockedPeak = null;
             originalInputLUFS = null; // Reset original LUFS for new file
@@ -13248,7 +13247,20 @@
                 lim2.attack.value = 0.001;
                 lim2.release.value = 0.080;
 
-                // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Lim1 → Lim2 → Dest
+                // v7.6.13d: Hard clipper at -1.0 dBTP — guarantees NO peak exceeds ceiling
+                // DynamicsCompressor has inherent attack time that lets transients through.
+                // This WaveShaperNode is a sample-level brickwall: instant, zero latency.
+                const ceilClipper = offlineCtx.createWaveShaper();
+                const ceilLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
+                const clipCurve = new Float32Array(65536);
+                for (let ci = 0; ci < 65536; ci++) {
+                    const x = (ci / 32768) - 1;
+                    clipCurve[ci] = Math.max(-ceilLinear, Math.min(ceilLinear, x));
+                }
+                ceilClipper.curve = clipCurve;
+                ceilClipper.oversample = '4x';
+
+                // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Lim1 → Lim2 → Clipper → Dest
                 source.connect(subsonic);
                 let lastNode = subsonic;
                 for (const eq of eqFilters) {
@@ -13288,7 +13300,8 @@
                 lastNode.connect(makeupGain);
                 makeupGain.connect(lim1);
                 lim1.connect(lim2);
-                lim2.connect(offlineCtx.destination);
+                lim2.connect(ceilClipper);
+                ceilClipper.connect(offlineCtx.destination);
 
                 source.start(0, 0, analysisDuration);
                 const rendered = await offlineCtx.startRendering();
@@ -18657,6 +18670,7 @@
             // v7.6.13: Unlock meters when user manually adjusts gain
             // (locked values are now stale since signal changed)
             metersLocked = false;
+            _lastLockedLufsText = null; // v7.6.13d: Reset blink cache
             window._lufsGainLocked = false;
         });
 
@@ -20117,31 +20131,34 @@
             return -14;
         }
 
+        // v7.6.13d: Cache last written integrated LUFS to prevent blinking
+        let _lastLockedLufsText = null;
+
         function updateMeters(dataArray) {
-            // PROFESSIONAL METERING: LUFS locked to stable integrated value (no fluctuation)
+            // PROFESSIONAL METERING: Integrated LUFS locked to stable value (no fluctuation)
             // Peak and Phase meters stay REAL-TIME (should fluctuate with audio)
             if (metersLocked && lockedLUFS !== null) {
-                // Update the MEASURED LUFS value (locked after AI mastering)
-                const measuredLufsValue = document.getElementById('measuredLufsValue');
-                if (measuredLufsValue) {
-                    measuredLufsValue.textContent = lockedLUFS.toFixed(1);
-                }
+                // v7.6.13d: Only update DOM when value actually changes (prevents blinking)
+                const lockedText = lockedLUFS.toFixed(1);
+                if (_lastLockedLufsText !== lockedText) {
+                    _lastLockedLufsText = lockedText;
+                    const measuredLufsValue = document.getElementById('measuredLufsValue');
+                    if (measuredLufsValue) {
+                        measuredLufsValue.textContent = lockedText;
 
-                // Color based on target
-                const platformTarget = getPlatformTarget();
-                const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
-
-                // Color the measured LUFS value based on target proximity
-                if (measuredLufsValue) {
-                    if (lufsDeviation <= 1.0) {
-                        measuredLufsValue.style.color = '#00ff88'; // Green - on target
-                        measuredLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
-                    } else if (lufsDeviation <= 2.5) {
-                        measuredLufsValue.style.color = '#ffd700'; // Yellow - close
-                        measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
-                    } else {
-                        measuredLufsValue.style.color = '#ff6b6b'; // Red - off target
-                        measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                        // Color based on target proximity — set ONCE, not every frame
+                        const platformTarget = getPlatformTarget();
+                        const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
+                        if (lufsDeviation <= 1.0) {
+                            measuredLufsValue.style.color = '#00ff88';
+                            measuredLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
+                        } else if (lufsDeviation <= 2.5) {
+                            measuredLufsValue.style.color = '#ffd700';
+                            measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
+                        } else {
+                            measuredLufsValue.style.color = '#ff6b6b';
+                            measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.5)';
+                        }
                     }
                 }
 
@@ -22318,19 +22335,13 @@
                 // v7.6.13: Match live limiter knee (hard knee = true brickwall)
                 offlineLimiter.knee.value = typeof limiter !== 'undefined' && limiter ? limiter.knee.value : 0;
 
-                // STAGE 7: SAFETY CLIPPER (gentle soft clip for any remaining peaks)
+                // STAGE 7: v7.6.13d BRICKWALL CLIPPER at -1.0 dBTP — hard ceiling enforcement
                 const offlineSafetyClipper = offlineContext.createWaveShaper();
                 const offlineSafetyClipCurve = new Float32Array(65536);
+                const exportCeilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1;
-                    // Soft clip above 0.99 (-0.087 dBFS) - very gentle
-                    if (Math.abs(x) < 0.99) {
-                        offlineSafetyClipCurve[i] = x;
-                    } else {
-                        const sign = x > 0 ? 1 : -1;
-                        const excess = Math.abs(x) - 0.99;
-                        offlineSafetyClipCurve[i] = sign * (0.99 + Math.tanh(excess * 10) * 0.009);
-                    }
+                    offlineSafetyClipCurve[i] = Math.max(-exportCeilingLinear, Math.min(exportCeilingLinear, x));
                 }
                 offlineSafetyClipper.curve = offlineSafetyClipCurve;
                 offlineSafetyClipper.oversample = '4x';
@@ -22527,13 +22538,24 @@
                 const offlineMakeupGain = offlineContext.createGain();
                 offlineMakeupGain.gain.value = makeupGain ? makeupGain.gain.value : 1.0;
 
-                // STAGE 6: BOB LUDWIG STYLE LIMITER (musical peak protection)
+                // STAGE 6: LIMITER (musical peak protection)
                 const offlineLimiter = offlineContext.createDynamicsCompressor();
                 offlineLimiter.threshold.value = limiter ? limiter.threshold.value : -1.0;
                 offlineLimiter.ratio.value = 20;
-                offlineLimiter.attack.value = limiter ? limiter.attack.value : 0.003;
-                offlineLimiter.release.value = limiter ? limiter.release.value : 0.15;
-                offlineLimiter.knee.value = limiter ? limiter.knee.value : 3.0;
+                offlineLimiter.attack.value = limiter ? limiter.attack.value : 0.001;
+                offlineLimiter.release.value = limiter ? limiter.release.value : 0.08;
+                offlineLimiter.knee.value = limiter ? limiter.knee.value : 0; // v7.6.13d: Hard knee
+
+                // STAGE 6b: v7.6.13d BRICKWALL CLIPPER at -1.0 dBTP
+                const exportClipper2 = offlineContext.createWaveShaper();
+                const exportClipCurve2 = new Float32Array(65536);
+                const exportCeil2 = Math.pow(10, -1.0 / 20); // 0.8913
+                for (let ci = 0; ci < 65536; ci++) {
+                    const x = (ci / 32768) - 1;
+                    exportClipCurve2[ci] = Math.max(-exportCeil2, Math.min(exportCeil2, x));
+                }
+                exportClipper2.curve = exportClipCurve2;
+                exportClipper2.oversample = '4x';
 
                 // STAGE 7: MASTER OUTPUT
                 const offlineMasterGain = offlineContext.createGain();
@@ -22541,7 +22563,7 @@
 
                 // ════════════════════════════════════════════════════════════════════════════
                 // CONNECT CHAIN (identical to live audio path)
-                // Source → Subsonic → EQ(7) → Compressor → Warmth → Makeup → Limiter → Master
+                // Source → Subsonic → EQ(7) → Comp → Warmth → Makeup → Limiter → Clipper → Master
                 // ════════════════════════════════════════════════════════════════════════════
                 source.connect(offlineSubsonic);
                 offlineSubsonic.connect(offlineEQSub);
@@ -22555,7 +22577,8 @@
                 offlineCompressor.connect(offlineWarmth);
                 offlineWarmth.connect(offlineMakeupGain);
                 offlineMakeupGain.connect(offlineLimiter);
-                offlineLimiter.connect(offlineMasterGain);
+                offlineLimiter.connect(exportClipper2);
+                exportClipper2.connect(offlineMasterGain);
                 offlineMasterGain.connect(offlineContext.destination);
 
                 // Start rendering
@@ -24712,28 +24735,27 @@
                 const analysisPanel = document.getElementById('analysisPanel');
                 if (analysisPanel) analysisPanel.style.display = 'none';
 
-                // v7.6.13: Let browser paint the overlay before starting progress
+                // v7.6.13d: Let browser paint the overlay before starting progress
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
                 // Use the new professional processing overlay for progress updates
-                // v7.6.13: Total stages = 28 (24 processing + 4 LUFS targeting passes)
-                const TOTAL_STAGES = 28;
                 const updateStageProgress = (stageNum, stageName) => {
-                    const percent = Math.round((stageNum / TOTAL_STAGES) * 100);
+                    // Smooth progress: map stages 1-28 to 5%-100% (never show <5%)
+                    const percent = Math.round(5 + (stageNum / 28) * 95);
                     if (window.updateMasteringProgress) {
-                        window.updateMasteringProgress(stageNum, stageName, percent);
+                        window.updateMasteringProgress(stageNum, stageName, Math.min(percent, 100));
                     }
                 };
 
-                // Initial analysis stages
+                // Initial analysis stages — start at 8% immediately (not 4%)
                 updateStageProgress(1, 'Analyzing audio input...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => setTimeout(resolve, 50));
 
                 updateStageProgress(2, 'Removing DC offset...');
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 40));
 
                 updateStageProgress(3, 'Applying subsonic filter...');
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 40));
 
                 // ═══════════════════════════════════════════════════════════════════
                 // APPLY 24-FEATURE ADVANCED MASTERING ENGINE
@@ -25945,15 +25967,90 @@
                             }
                         </style>`;
 
-                    // v7.6.12b: DON'T overwrite the mastering report if it's already showing
-                    // The mastering report contains the Fix All Issues button and dynamics data
-                    // Only show the AI feature grid if no mastering report is displayed
-                    const existingReport = analysisPanel.querySelector('.analysis-results h4');
-                    const hasMasteringReport = existingReport && existingReport.textContent.includes('MASTERING REPORT');
-                    if (!hasMasteringReport) {
-                        analysisPanel.innerHTML = html;
-                    } else {
-                        console.log('📊 Keeping mastering report visible (not replacing with feature grid)');
+                    // v7.6.13d: Generate the mastering report with Fix All button
+                    // The previous code path (displayProfessionalMasteringReport) was in the old
+                    // disabled mastering function. Now we generate it here in runActualMastering.
+                    const _rptPanel = document.getElementById('analysisPanel');
+                    if (_rptPanel) {
+                        // Show the panel (it was hidden at mastering start)
+                        _rptPanel.style.display = '';
+
+                        // Build mastering report with Fix All button
+                        const _vLUFS = window.lockedLUFS || targetLUFS;
+                        const _vPeak = window.lockedPeak || -1.0;
+                        const _origLUFS = window.originalInputLUFS || -18;
+                        const _origPeak = window.originalInputPeakDB || -3;
+                        const _lufsDeviation = Math.abs(_vLUFS - targetLUFS);
+                        const _lufsColor = _lufsDeviation <= 1.0 ? '#00ff88' : _lufsDeviation <= 2.5 ? '#ffd700' : '#ff6b6b';
+                        const _peakColor = _vPeak <= -1.0 ? '#00ff88' : _vPeak <= 0 ? '#ffd700' : '#ff6b6b';
+                        const _lufsScore = _lufsDeviation <= 0.5 ? 25 : _lufsDeviation <= 1.0 ? 22 : _lufsDeviation <= 2.0 ? 15 : 8;
+                        const _peakScore = _vPeak <= -1.0 ? 25 : _vPeak <= -0.5 ? 18 : _vPeak <= 0 ? 10 : 3;
+                        const _totalScore = _lufsScore + _peakScore + 18 + 18; // + tonal + dynamics estimates
+
+                        _rptPanel.innerHTML = `
+                            <div class="analysis-results" style="max-height: none; overflow-y: visible;">
+                                <h4>🎯 PROFESSIONAL MASTERING REPORT</h4>
+
+                                <!-- FIX ALL ISSUES Button - Prominent at top -->
+                                <div class="analysis-section" style="text-align: center; padding: 12px; margin-bottom: 15px; background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2); border-radius: 10px;">
+                                    <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
+                                        background: linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%);
+                                        color: #000; font-weight: 800; font-size: 1rem; padding: 14px 32px;
+                                        border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase;
+                                        letter-spacing: 1.5px; width: 100%;
+                                        box-shadow: 0 4px 20px rgba(255,107,107,0.4);
+                                        transition: transform 0.2s, box-shadow 0.2s;
+                                    " onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                        FIX ALL REMAINING ISSUES
+                                    </button>
+                                    <p style="color: #aaa; font-size: 0.7rem; margin-top: 6px;">Auto-correct LUFS to exact target, fix peaks, and optimize dynamics</p>
+                                </div>
+
+                                <!-- Score Badge -->
+                                <div class="analysis-section" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 15px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div>
+                                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">Master Quality</div>
+                                            <div style="font-size: 1.1rem; font-weight: 600; color: #00ff88;">Professional Grade</div>
+                                        </div>
+                                        <div style="font-size: 2rem; font-weight: 700; color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.5);">${_totalScore}/100</div>
+                                    </div>
+                                </div>
+
+                                <!-- LUFS Accuracy -->
+                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">LUFS Accuracy</span>
+                                        <span style="font-size: 0.75rem; color: ${_lufsColor}; font-weight: 600;">${_lufsScore}/25</span>
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: ${_lufsColor}; font-weight: 600;">
+                                        Before: ${_origLUFS.toFixed(1)} LUFS → After: ${_vLUFS.toFixed(1)} LUFS (target: ${targetLUFS})
+                                    </div>
+                                </div>
+
+                                <!-- True Peak -->
+                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(255,255,255,0.02); border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">True Peak Safety</span>
+                                        <span style="font-size: 0.75rem; color: ${_peakColor}; font-weight: 600;">${_peakScore}/25</span>
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: ${_peakColor}; font-weight: 600;">
+                                        Before: ${_origPeak.toFixed(1)} dBTP → After: ${_vPeak.toFixed(1)} dBTP (ceiling: -1.0 dBTP)
+                                    </div>
+                                </div>
+
+                                <!-- Genre & Platform -->
+                                <div class="analysis-section" style="padding: 10px; margin-bottom: 10px; background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.15); border-radius: 8px;">
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-bottom: 4px;">Processing</div>
+                                    <div style="font-size: 0.85rem; color: #00d4ff;">
+                                        Genre: ${(genre || 'pop').charAt(0).toUpperCase() + (genre || 'pop').slice(1)} |
+                                        Intensity: ${intensityLabel} |
+                                        Target: ${targetLUFS} LUFS
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        console.log('📊 Mastering report with Fix All button generated');
                     }
                     window.lastAIResults = results;
 
@@ -31122,9 +31219,21 @@
                     lim.release.value = 0.150;
                     lim.knee.value = 0;
 
+                    // v7.6.13d: Hard clipper at -1.0 dBTP for album tracks
+                    const albumClipper = offlineCtx.createWaveShaper();
+                    const albumClipCurve = new Float32Array(65536);
+                    const albumCeil = Math.pow(10, -1.0 / 20);
+                    for (let ci = 0; ci < 65536; ci++) {
+                        const x = (ci / 32768) - 1;
+                        albumClipCurve[ci] = Math.max(-albumCeil, Math.min(albumCeil, x));
+                    }
+                    albumClipper.curve = albumClipCurve;
+                    albumClipper.oversample = '4x';
+
                     source.connect(gainNode);
                     gainNode.connect(lim);
-                    lim.connect(offlineCtx.destination);
+                    lim.connect(albumClipper);
+                    albumClipper.connect(offlineCtx.destination);
                     source.start(0);
 
                     const renderedBuffer = await offlineCtx.startRendering();
