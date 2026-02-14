@@ -17532,173 +17532,98 @@
         }
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // FIX ALL ISSUES - Comprehensive post-mastering correction
-        // Reads detected issues from AI profile and applies real corrections:
-        // LUFS targeting, peak limiting, EQ (muddiness/harshness), stereo,
-        // dynamics, sibilance/de-esser, and resonance fixes.
+        // FIX ALL ISSUES - Re-masters the track to resolve all detected issues
+        // Pre-applies EQ, stereo, dynamics, de-esser corrections from the AI profile,
+        // then triggers a full re-master to lock in the fixes with proper LUFS targeting.
         // ═══════════════════════════════════════════════════════════════════════════
         function fixRemainingIssues() {
             // Update both possible button IDs (report panel + transport bar)
             const btn = document.getElementById('fixAllIssuesBtn');
             const btn2 = document.getElementById('fixAllBtn');
-            if (btn) { btn.textContent = 'FIXING...'; btn.disabled = true; }
+            if (btn) { btn.textContent = 'RE-MASTERING...'; btn.disabled = true; }
             if (btn2) { btn2.textContent = '⏳ Fixing...'; btn2.disabled = true; }
 
-            const ct = window.audioContext ? window.audioContext.currentTime : 0;
-
-            // Determine target LUFS from platform selection
-            const platformBtn = document.querySelector('.selector-btn[data-platform].active');
-            const platform = platformBtn ? platformBtn.dataset.platform.toLowerCase() : 'streaming';
-            let targetLUFS = -14;
-            if (platform === 'apple' || platform === 'podcast') targetLUFS = -16;
-            if (window.selectedPlatformPreset) targetLUFS = window.selectedPlatformPreset.targetLUFS;
-
-            // Get current LUFS reading
-            const currentLUFS = window.lockedLUFS || window.currentIntegratedLUFS || (typeof smoothedLUFS !== 'undefined' ? smoothedLUFS : null);
-            if (currentLUFS === null || !window.makeupGain || !window.audioContext) {
-                if (typeof showLuvLangToast === 'function') showLuvLangToast('Please master a track first', 'warning');
+            if (!window.audioContext || !window.audioBuffer) {
+                if (typeof showLuvLangToast === 'function') showLuvLangToast('Please load and master a track first', 'warning');
                 if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
                 if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
                 return;
             }
 
+            const ct = window.audioContext.currentTime;
             const corrections = [];
             const profile = window.aiTrackProfile || null;
             const issues = profile ? (profile.issues || []) : [];
 
-            // ─── 1. LUFS CORRECTION ───────────────────────────────────────────
-            const lufsDiff = currentLUFS - targetLUFS;
-            let gainAdjustDB = 0;
-            if (Math.abs(lufsDiff) > 0.3) {
-                gainAdjustDB = -lufsDiff;
-                gainAdjustDB = Math.max(-4, Math.min(4, gainAdjustDB));
-                corrections.push(`LUFS ${currentLUFS.toFixed(1)} → ${targetLUFS} target`);
-            }
-
-            // Apply gain correction
-            if (Math.abs(gainAdjustDB) > 0.05) {
-                const currentGainLinear = window.appliedMakeupGainLinear || window.makeupGain.gain.value;
-                const currentGainDB = 20 * Math.log10(Math.max(currentGainLinear, 0.0001));
-                const newGainDB = currentGainDB + gainAdjustDB;
-                const newGainLinear = Math.pow(10, newGainDB / 20);
-                window.makeupGain.gain.cancelScheduledValues(ct);
-                window.makeupGain.gain.setValueAtTime(window.makeupGain.gain.value, ct);
-                window.makeupGain.gain.linearRampToValueAtTime(newGainLinear, ct + 0.1);
-                window.appliedMakeupGainLinear = newGainLinear;
-                window.appliedMakeupGainDB = newGainDB;
-            }
-
-            // ─── 2. PEAK LIMITER ──────────────────────────────────────────────
-            const peakEl = document.getElementById('peakValue');
-            const currentPeak = peakEl ? parseFloat(peakEl.textContent) : -1.5;
-            if (currentPeak > -1.0 && window.limiter) {
-                window.limiter.threshold.value = Math.min(window.limiter.threshold.value, -2.0);
-                window.limiter.knee.value = 0;
-                corrections.push(`Peaks ${currentPeak.toFixed(1)} → ≤-1.0 dBTP`);
-            }
-
-            // ─── 3. LOW-MID MUDDINESS (cut 200-500 Hz) ───────────────────────
+            // ─── 1. LOW-MID MUDDINESS (cut 200-500 Hz) ───────────────────────
             const hasMuddy = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('muddy'));
             if (hasMuddy && window.eqLowMidFilter) {
-                const currentGain = window.eqLowMidFilter.gain.value;
-                const cut = Math.min(currentGain, -1.5); // At least -1.5 dB cut
-                window.eqLowMidFilter.gain.setTargetAtTime(cut, ct, 0.05);
-                corrections.push(`Low-mids cut to ${cut.toFixed(1)} dB (muddiness)`);
-                // Also update the UI fader if available
-                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('lowmid', cut, true);
+                const cut = Math.min(window.eqLowMidFilter.gain.value - 1.5, -2.0);
+                window.eqLowMidFilter.gain.setTargetAtTime(Math.max(-6, cut), ct, 0.02);
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('lowmid', Math.max(-6, cut), true);
+                corrections.push('Low-mids cut (muddiness)');
             }
 
-            // ─── 4. HIGH-MID HARSHNESS (tame 2-5 kHz) ────────────────────────
+            // ─── 2. HIGH-MID HARSHNESS (tame 2-5 kHz) ────────────────────────
             const hasHarsh = issues.some(i => i.type === 'tonal' && i.description && i.description.includes('harsh'));
             if (hasHarsh && window.eqHighMidFilter) {
-                const currentGain = window.eqHighMidFilter.gain.value;
-                const cut = Math.min(currentGain, -1.5);
-                window.eqHighMidFilter.gain.setTargetAtTime(cut, ct, 0.05);
-                corrections.push(`High-mids cut to ${cut.toFixed(1)} dB (harshness)`);
-                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('highmid', cut, true);
+                const cut = Math.min(window.eqHighMidFilter.gain.value - 1.5, -2.0);
+                window.eqHighMidFilter.gain.setTargetAtTime(Math.max(-6, cut), ct, 0.02);
+                if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition('highmid', Math.max(-6, cut), true);
+                corrections.push('High-mids tamed (harshness)');
             }
 
-            // ─── 5. EQ CORRECTIONS FROM PROFILE ──────────────────────────────
+            // ─── 3. EQ CORRECTIONS FROM PROFILE ──────────────────────────────
             if (profile && profile.eqDeltas) {
                 const eqMap = {
-                    sub: window.eqSubFilter,
-                    bass: window.eqBassFilter,
-                    lowmid: window.eqLowMidFilter,
-                    mid: window.eqMidFilter,
-                    highmid: window.eqHighMidFilter,
-                    high: window.eqHighFilter,
+                    sub: window.eqSubFilter, bass: window.eqBassFilter,
+                    lowmid: window.eqLowMidFilter, mid: window.eqMidFilter,
+                    highmid: window.eqHighMidFilter, high: window.eqHighFilter,
                     air: window.eqAirFilter
                 };
                 for (const [band, delta] of Object.entries(profile.eqDeltas)) {
-                    if (Math.abs(delta) > 0.5 && eqMap[band]) {
-                        const filter = eqMap[band];
-                        const newGain = filter.gain.value + delta * 0.5; // Apply 50% of remaining correction
-                        const clamped = Math.max(-6, Math.min(6, newGain));
-                        filter.gain.setTargetAtTime(clamped, ct, 0.05);
-                        if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition(band, clamped, true);
+                    if (Math.abs(delta) > 0.8 && eqMap[band]) {
+                        const newGain = Math.max(-6, Math.min(6, eqMap[band].gain.value + delta * 0.6));
+                        eqMap[band].gain.setTargetAtTime(newGain, ct, 0.02);
+                        if (typeof updateEQFaderPosition === 'function') updateEQFaderPosition(band, newGain, true);
                     }
                 }
             }
 
-            // ─── 6. STEREO BALANCE (bass mono + width) ───────────────────────
-            const hasStereoIssue = issues.some(i => i.type === 'stereo');
-            if (hasStereoIssue && profile && profile.stereoDeltas) {
-                // Bass mono — tighten low-end to mono if phase issues detected
+            // ─── 4. STEREO BALANCE ───────────────────────────────────────────
+            const hasStereo = issues.some(i => i.type === 'stereo');
+            if (hasStereo && profile && profile.stereoDeltas) {
                 if (profile.stereoDeltas.bassMonoThreshold > 0 && window.bassMonoFilter) {
                     window.bassMonoFilter.frequency.setTargetAtTime(
-                        Math.max(window.bassMonoFilter.frequency.value, profile.stereoDeltas.bassMonoThreshold),
-                        ct, 0.05
-                    );
-                    corrections.push('Bass mono tightened (phase fix)');
+                        Math.max(window.bassMonoFilter.frequency.value, profile.stereoDeltas.bassMonoThreshold), ct, 0.02);
+                    corrections.push('Bass mono tightened');
                 }
-                // Stereo width — narrow or widen
                 if (profile.stereoDeltas.widthMultiplier !== 1.0 && window.stereoWidthGain) {
-                    const currentWidth = window.stereoWidth || 1.0;
-                    const newWidth = currentWidth * profile.stereoDeltas.widthMultiplier;
-                    window.stereoWidthGain.gain.setTargetAtTime(newWidth, ct, 0.05);
+                    const newWidth = (window.stereoWidth || 1.0) * profile.stereoDeltas.widthMultiplier;
+                    window.stereoWidthGain.gain.setTargetAtTime(newWidth, ct, 0.02);
                     window.stereoWidth = newWidth;
-                    corrections.push(`Stereo width ${profile.stereoDeltas.widthMultiplier < 1 ? 'narrowed' : 'widened'}`);
+                    corrections.push(`Stereo ${profile.stereoDeltas.widthMultiplier < 1 ? 'narrowed' : 'widened'}`);
                 }
             }
 
-            // ─── 7. DYNAMICS / COMPRESSION ────────────────────────────────────
-            const hasDynamicsIssue = issues.some(i => i.type === 'dynamics');
-            if (hasDynamicsIssue && profile && profile.compDeltas && window.compressor) {
+            // ─── 5. DYNAMICS ─────────────────────────────────────────────────
+            if (issues.some(i => i.type === 'dynamics') && profile && profile.compDeltas && window.compressor) {
                 const comp = window.compressor;
                 if (profile.compDeltas.thresholdOffset) {
-                    comp.threshold.setTargetAtTime(
-                        comp.threshold.value + profile.compDeltas.thresholdOffset, ct, 0.05
-                    );
-                }
-                if (profile.compDeltas.ratioMultiplier && profile.compDeltas.ratioMultiplier !== 1.0) {
-                    comp.ratio.setTargetAtTime(
-                        Math.max(1.5, Math.min(8, comp.ratio.value * profile.compDeltas.ratioMultiplier)), ct, 0.05
-                    );
+                    comp.threshold.setTargetAtTime(comp.threshold.value + profile.compDeltas.thresholdOffset, ct, 0.02);
                 }
                 corrections.push('Dynamics rebalanced');
             }
 
-            // ─── 8. SIBILANCE / DE-ESSER ─────────────────────────────────────
-            const hasSibilance = issues.some(i => i.type === 'sibilance');
-            if (hasSibilance && window.deEsserControls) {
-                // Enable and tighten de-esser
-                if (typeof window.deEsserControls.enable === 'function') {
-                    window.deEsserControls.enable();
-                }
-                if (window.deEsserFilter) {
-                    window.deEsserFilter.gain.setTargetAtTime(
-                        Math.min(window.deEsserFilter.gain.value, -3), ct, 0.05
-                    );
-                }
-                corrections.push('De-esser engaged (sibilance)');
+            // ─── 6. SIBILANCE ────────────────────────────────────────────────
+            if (issues.some(i => i.type === 'sibilance') && window.deEsserFilter) {
+                window.deEsserFilter.gain.setTargetAtTime(Math.min(window.deEsserFilter.gain.value, -3), ct, 0.02);
+                corrections.push('De-esser tightened');
             }
 
-            // ─── 9. DYNAMIC EQ (for resonances + tonal issues) ───────────────
-            const hasResonance = issues.some(i => i.type === 'resonance');
-            const hasTonal = hasMuddy || hasHarsh;
-            if ((hasResonance || hasTonal) && window.dynamicEQ && !window.dynamicEQ.enabled) {
+            // ─── 7. DYNAMIC EQ ───────────────────────────────────────────────
+            if (issues.some(i => i.type === 'resonance' || i.type === 'tonal') && window.dynamicEQ && !window.dynamicEQ.enabled) {
                 window.dynamicEQ.enable();
-                // Sync toggle UI
                 const dynToggle = document.getElementById('dynamicEQToggle');
                 if (dynToggle) {
                     dynToggle.checked = true;
@@ -17707,55 +17632,42 @@
                     if (track) track.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
                     if (thumb) thumb.style.transform = 'translateX(20px)';
                 }
-                corrections.push('Dynamic EQ enabled (resonance/tonal fix)');
+                corrections.push('Dynamic EQ enabled');
             }
 
-            // ─── UPDATE DISPLAYS ──────────────────────────────────────────────
-            const newLUFS = targetLUFS;
-            window.lockedLUFS = newLUFS;
-            window.currentIntegratedLUFS = newLUFS;
-
-            const lufsEl = document.getElementById('measuredLufsValue');
-            if (lufsEl) {
-                lufsEl.textContent = newLUFS.toFixed(1);
-                lufsEl.style.color = '#00ff88';
-                lufsEl.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
+            // ─── 8. PEAK LIMITER ─────────────────────────────────────────────
+            const peakEl = document.getElementById('peakValue');
+            const currentPeak = peakEl ? parseFloat(peakEl.textContent) : -1.5;
+            if (currentPeak > -1.0 && window.limiter) {
+                window.limiter.threshold.value = Math.min(window.limiter.threshold.value, -2.0);
+                window.limiter.knee.value = 0;
+                corrections.push('Limiter tightened');
             }
 
-            const barIndicator = document.getElementById('lufsBarIndicatorLock');
-            if (barIndicator) {
-                const clamped = Math.max(-40, Math.min(-6, newLUFS));
-                const pct = ((clamped - (-40)) / ((-6) - (-40))) * 100;
-                barIndicator.style.left = pct + '%';
-                barIndicator.style.display = 'block';
-            }
+            console.log('🔧 Fix All: pre-corrections applied:', corrections);
 
-            // ─── TOAST RESULTS ────────────────────────────────────────────────
-            if (corrections.length > 0) {
-                if (typeof showLuvLangToast === 'function') {
-                    showLuvLangToast(`Fixed ${corrections.length} issue(s): ${corrections.join(' | ')}`, 'success');
+            // ─── 9. UNLOCK METERS + GAIN LOCK, THEN RE-MASTER ────────────────
+            // Unlock so the re-master can set new values
+            window._lufsGainLocked = false;
+            metersLocked = false;
+            _lastLockedLufsText = null;
+
+            // Brief delay to let EQ/gain changes settle, then trigger full re-master
+            setTimeout(() => {
+                if (typeof runFullAIMaster === 'function') {
+                    if (typeof showLuvLangToast === 'function') {
+                        showLuvLangToast(`Applying ${corrections.length} fix(es) and re-mastering...`, 'info');
+                    }
+                    runFullAIMaster();
+                } else {
+                    if (typeof showLuvLangToast === 'function') {
+                        showLuvLangToast('Mastering engine not ready — please try again', 'warning');
+                    }
                 }
-            } else {
-                if (typeof showLuvLangToast === 'function') {
-                    showLuvLangToast('All specs already on target — no fixes needed!', 'success');
-                }
-            }
-
-            // ─── RESET BUTTONS ────────────────────────────────────────────────
-            const resetBtn = (b, label) => {
-                if (!b) return;
-                b.textContent = corrections.length > 0 ? '✓ All Fixed' : '✓ On Target';
-                b.style.background = 'linear-gradient(135deg, #00ff88, #00d4ff)';
-                setTimeout(() => {
-                    b.textContent = label;
-                    b.disabled = false;
-                    b.style.background = '';
-                }, 3000);
-            };
-            resetBtn(btn, 'FIX ALL REMAINING ISSUES');
-            resetBtn(btn2, '🔧 Fix All');
-
-            console.log('🔧 Fix All Issues — applied', corrections.length, 'corrections:', corrections);
+                // Reset buttons (mastering overlay will show progress)
+                if (btn) { btn.textContent = 'FIX ALL REMAINING ISSUES'; btn.disabled = false; btn.style.background = ''; }
+                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; btn2.style.background = ''; }
+            }, 200);
         }
 
         // Helper function to update EQ fader UI positions with animation
