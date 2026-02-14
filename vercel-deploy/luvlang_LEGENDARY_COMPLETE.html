@@ -5180,23 +5180,23 @@
                     <div id="intensityButtons" style="display: flex; gap: 6px;">
                         <button type="button" class="intensity-btn" data-level="1" onclick="selectIntensity(1)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">I</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">SUBTLE</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">CLEAN</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="2" onclick="selectIntensity(2)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">II</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">LIGHT</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">WARM</div>
                         </button>
                         <button type="button" class="intensity-btn selected" data-level="3" onclick="selectIntensity(3)" style="flex: 1; padding: 10px 4px; background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.4); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: #00d4ff;">III</div>
-                            <div style="font-size: 0.5rem; color: #00d4ff; margin-top: 2px;">BALANCED</div>
+                            <div style="font-size: 0.5rem; color: #00d4ff; margin-top: 2px;">PRO</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="4" onclick="selectIntensity(4)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">IV</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">HEAVY</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">PUNCH</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="5" onclick="selectIntensity(5)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">V</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">MAX</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">LOUD</div>
                         </button>
                     </div>
                 </div>
@@ -5207,11 +5207,11 @@
                     window.selectIntensity = function(level) {
                         window.selectedIntensity = level;
                         var colors = {
-                            1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
-                            2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
-                            3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
-                            4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
-                            5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
+                            1: { r: '67,233,123', hex: '#43e97b', name: 'CLEAN' },
+                            2: { r: '0,255,136', hex: '#00ff88', name: 'WARM' },
+                            3: { r: '0,212,255', hex: '#00d4ff', name: 'PRO' },
+                            4: { r: '255,154,86', hex: '#ff9a56', name: 'PUNCH' },
+                            5: { r: '255,87,51', hex: '#ff5733', name: 'LOUD' }
                         };
                         var c = colors[level] || colors[3];
                         document.querySelectorAll('.intensity-btn[data-level]').forEach(function(btn) {
@@ -5235,11 +5235,11 @@
                             }
                         });
                         var descriptions = {
-                            1: 'Subtle - Gentle polish',
-                            2: 'Light - Clean enhancement',
-                            3: 'Balanced - Radio-ready',
-                            4: 'Aggressive - Punchy & loud',
-                            5: 'Maximum - Full power'
+                            1: 'Transparent - Hear your mix with a polish',
+                            2: 'Clean - Subtle enhancement, audiophile-grade',
+                            3: 'Professional - Radio-ready, genre-calibrated',
+                            4: 'Punchy - Aggressive character, in-your-face',
+                            5: 'Loud - Maximum impact, club-ready'
                         };
                         var descEl = document.getElementById('intensityDescription');
                         if (descEl) { descEl.textContent = descriptions[level]; descEl.style.color = c.hex; }
@@ -14291,6 +14291,22 @@
                         </div>
                     </div>` : ''}
                     ${scoreHTML}
+                    ${(profile && profile.issues && profile.issues.length > 0) ? `
+                    <div class="rc-metric-row" style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)">
+                        <button id="rcFixAllBtn" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}" style="
+                            width:100%;padding:10px 16px;
+                            background:linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2));
+                            border:1px solid rgba(0,230,118,0.4);border-radius:8px;
+                            color:#00e676;font-size:12px;font-weight:700;
+                            letter-spacing:0.05em;cursor:pointer;
+                            transition:all 0.2s;text-transform:uppercase;
+                            display:flex;align-items:center;justify-content:center;gap:8px;
+                        " onmouseover="this.style.background='linear-gradient(135deg,rgba(0,230,118,0.35),rgba(0,212,255,0.35))';this.style.boxShadow='0 0 20px rgba(0,230,118,0.2)'"
+                           onmouseout="this.style.background='linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))';this.style.boxShadow='none'">
+                            <span style="font-size:14px">&#9889;</span>
+                            Fix All ${profile.issues.length} Issues — Master Now
+                        </button>
+                    </div>` : ''}
                 </div>`;
 
             // Insert after AI corrections panel or analysis panel
@@ -14362,13 +14378,14 @@
             // Update Peak row with before/after
             // Post-mastering thresholds are more lenient — limiter ceiling is -1.0 dBTP,
             // so values near 0.0 are acceptable (ISPs allow 0.0 dBTP)
+            // Use 0.1 threshold to handle floating point (0.04 displays as "0.0" but isn't clipping)
             const peakRow = card.querySelector('[data-metric="peak"]');
             if (peakRow && v.verifiedTruePeak !== null && v.verifiedTruePeak !== undefined) {
                 const beforePeak = window.originalInputPeakDB;
                 const afterPeak = v.verifiedTruePeak;
                 let peakBadgeClass, peakBadgeText;
-                if (afterPeak > 0.0) { peakBadgeClass = 'bad'; peakBadgeText = 'Clipping'; }
-                else if (afterPeak > -0.5) { peakBadgeClass = 'warn'; peakBadgeText = 'Hot'; }
+                if (afterPeak > 0.1) { peakBadgeClass = 'bad'; peakBadgeText = 'Clipping'; }
+                else if (afterPeak > -0.3) { peakBadgeClass = 'warn'; peakBadgeText = 'Hot'; }
                 else { peakBadgeClass = 'good'; peakBadgeText = 'Safe'; }
 
                 if (typeof beforePeak === 'number' && isFinite(beforePeak)) {
@@ -14378,6 +14395,15 @@
                         <span class="rc-metric-value after">${afterPeak.toFixed(1)} dBTP</span>
                         <span class="rc-badge ${peakBadgeClass}">${peakBadgeText}</span>`;
                 }
+            }
+
+            // Hide "Fix All Issues" button — mastering already applied
+            const fixBtn = document.getElementById('rcFixAllBtn');
+            if (fixBtn) {
+                fixBtn.parentElement.innerHTML = `
+                    <div style="text-align:center;padding:4px 0">
+                        <span style="font-size:11px;color:#00e676;font-weight:600">&#10003; All issues addressed by mastering</span>
+                    </div>`;
             }
 
             // Flash the card border green briefly
@@ -28647,11 +28673,11 @@
 
             // Color palette per intensity level
             const colors = {
-                1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
-                2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
-                3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
-                4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
-                5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
+                1: { r: '67,233,123', hex: '#43e97b', name: 'CLEAN' },
+                2: { r: '0,255,136', hex: '#00ff88', name: 'WARM' },
+                3: { r: '0,212,255', hex: '#00d4ff', name: 'PRO' },
+                4: { r: '255,154,86', hex: '#ff9a56', name: 'PUNCH' },
+                5: { r: '255,87,51', hex: '#ff5733', name: 'LOUD' }
             };
             const c = colors[level] || colors[3];
 
@@ -28681,11 +28707,11 @@
 
             // Update description with color
             const descriptions = {
-                1: 'Subtle - Gentle polish, preserves original dynamics',
-                2: 'Light - Clean enhancement with minimal coloration',
-                3: 'Balanced - Professional radio-ready sound',
-                4: 'Aggressive - Punchy, loud, and impactful',
-                5: 'Maximum - Full processing power, EDM/Hip-Hop ready'
+                1: 'Transparent - Hear your mix with a polish',
+                2: 'Clean - Subtle enhancement, audiophile-grade',
+                3: 'Professional - Radio-ready, genre-calibrated',
+                4: 'Punchy - Aggressive character, in-your-face',
+                5: 'Loud - Maximum impact, club-ready'
             };
             const descEl = document.getElementById('intensityDescription');
             if (descEl) {
@@ -28704,36 +28730,98 @@
             }
         };
 
-        // Apply intensity to the mastering chain in real-time
-        // Genre-aware compression with LUFS-preserving auto-gain
+        // ═══════════════════════════════════════════════════════════════════
+        // INTENSITY ENGINE v2 — Complete overhaul
+        // Each level has distinct sonic character across ALL processing stages:
+        //   EQ, compression, saturation, stereo width, exciter, limiter
+        // ═══════════════════════════════════════════════════════════════════
         window.applyIntensityToChain = function(level) {
             const ac = window.audioContext;
             if (!ac) return;
 
-            // EQ multiplier range — level 1 is near-transparent, level 5 is bold
-            const intensityMultipliers = {
-                1: 0.15,  // Subtle — barely any EQ
-                2: 0.45,  // Light — gentle shaping
-                3: 0.85,  // Balanced — default mastering level
-                4: 1.20,  // Aggressive — pushed beyond base preset
-                5: 1.50   // Maximum — full creative processing
-            };
-            let intensityMult = intensityMultipliers[level] || 0.85;
-
             const now = ac.currentTime;
-            const aiScale = window._processingScale || 1.0;
-
-            // ── EQ: recalculate with wider range ──
+            const ramp = 0.08; // smooth transition time
             const genre = window.selectedPreMasterGenre || 'pop';
+            const aiScale = window._processingScale || 1.0;
+            const aiProfile = window.aiTrackProfile;
+
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // INTENSITY CHARACTER PROFILES
+            // Each level defines a complete sonic personality
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            const profiles = {
+                1: { // TRANSPARENT — hear your mix with just a polish
+                    eqMult: 0.25,       // Barely any EQ coloration
+                    compRatio: 0.35,    // Near-unity compression
+                    compThreshOff: 6,   // Very high threshold = almost no GR
+                    compAttack: 1.4,    // Slow attack = all transients pass
+                    warmth: 0.0,        // No saturation
+                    exciter: 0,         // No harmonics added
+                    stereoWidth: 0.99,  // Fractionally narrower (safety)
+                    limiterCeil: -0.8,  // Generous ceiling
+                    knee: 14,           // Very soft knee
+                    label: 'Transparent'
+                },
+                2: { // CLEAN — subtle enhancement, audiophile-grade
+                    eqMult: 0.50,       // Gentle genre shaping
+                    compRatio: 0.50,    // Light glue compression
+                    compThreshOff: 3,   // Mild threshold
+                    compAttack: 1.2,    // Slightly slow attack
+                    warmth: 0.02,       // Hint of warmth
+                    exciter: 1,         // Barely perceptible air
+                    stereoWidth: 1.0,   // Unity
+                    limiterCeil: -0.9,  // Standard ceiling
+                    knee: 10,           // Soft knee
+                    label: 'Clean'
+                },
+                3: { // PROFESSIONAL — radio-ready, genre-calibrated
+                    eqMult: 0.85,       // Full genre EQ curve
+                    compRatio: 0.70,    // Transparent glue
+                    compThreshOff: 0,   // Genre-default threshold
+                    compAttack: 1.0,    // Standard timing
+                    warmth: 0.04,       // Musical warmth
+                    exciter: 2,         // Subtle harmonic shimmer
+                    stereoWidth: 1.02,  // Slight widening
+                    limiterCeil: -1.0,  // Standard ceiling
+                    knee: 8,            // Medium knee
+                    label: 'Professional'
+                },
+                4: { // PUNCHY — aggressive character, in-your-face
+                    eqMult: 1.15,       // Boosted genre curves
+                    compRatio: 0.90,    // Heavy glue, fast pump
+                    compThreshOff: -3,  // Lower threshold = more GR
+                    compAttack: 0.75,   // Fast attack = controlled transients
+                    warmth: 0.07,       // Noticeable analog warmth
+                    exciter: 4,         // Crispy harmonic presence
+                    stereoWidth: 1.05,  // Wider image
+                    limiterCeil: -1.0,  // Standard ceiling
+                    knee: 5,            // Harder knee
+                    label: 'Punchy'
+                },
+                5: { // LOUD — maximum impact, club/streaming optimized
+                    eqMult: 1.40,       // Bold genre sculpting
+                    compRatio: 1.0,     // Full genre ratio
+                    compThreshOff: -5,  // Deep threshold = heavy GR
+                    compAttack: 0.60,   // Very fast = transient control
+                    warmth: 0.10,       // Rich saturation
+                    exciter: 6,         // Full harmonic excitation
+                    stereoWidth: 1.08,  // Wide stereo field
+                    limiterCeil: -1.0,  // Safety ceiling
+                    knee: 3,            // Hard knee = aggressive limiting
+                    label: 'Loud'
+                }
+            };
+            const p = profiles[level] || profiles[3];
+
+            // ━━━━ 1. EQ — genre-aware with intensity scaling ━━━━
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
-            const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
+            const aiEQ = (aiProfile && aiProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
             const MASTERING_SUBPRESET_SCALE = 2.0;
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
 
-            // Track total EQ energy change for auto-gain
             let totalEQBoostDB = 0;
             filters.forEach((f, i) => {
                 if (!f) return;
@@ -28742,84 +28830,93 @@
                 let val;
                 if (subEQ) {
                     const baseVal = (subEQ[band] ?? eq[band]) * MASTERING_SUBPRESET_SCALE;
-                    val = (baseVal + aiDelta * 0.2) * intensityMult * aiScale;
+                    val = (baseVal + aiDelta * 0.2) * p.eqMult * aiScale;
                 } else {
-                    val = (eq[band] + aiDelta) * intensityMult * aiScale;
+                    val = (eq[band] + aiDelta) * p.eqMult * aiScale;
                 }
-                // Clamp to safe range
                 val = Math.max(-12, Math.min(12, val));
-                f.gain.setTargetAtTime(val, now, 0.08);
-                // Accumulate positive EQ changes (boosts add loudness)
-                if (val > 0) totalEQBoostDB += val * 0.15; // ~15% of EQ boost translates to level
+                f.gain.setTargetAtTime(val, now, ramp);
+                if (val > 0) totalEQBoostDB += val * 0.15;
             });
 
-            // ── Compression: genre-aware, matching runActualMastering logic ──
+            // ━━━━ 2. COMPRESSION — genre base + intensity character ━━━━
             const _gp = window.genrePresets || {};
             const gpEntry = _gp[genre] || _gp['pop'] || {};
             const baseComp = gpEntry.compression || { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 };
 
-            // Same multiplier tables used in runActualMastering
-            const compRatioMultipliers = {
-                1: 0.40,  // Subtle - barely compressing
-                2: 0.55,  // Light - gentle glue
-                3: 0.70,  // Balanced - transparent glue
-                4: 0.85,  // Aggressive - full genre ratio
-                5: 1.0    // Maximum - heavy but musical
-            };
-            const compAttackMultipliers = {
-                1: 1.3,   // Slower attack - preserve transients
-                2: 1.15,  // Slightly slower
-                3: 1.0,   // Standard
-                4: 0.85,  // Faster attack
-                5: 0.70   // Fastest - more aggressive transient control
-            };
-            const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
-
-            const compRatioMult = compRatioMultipliers[level] || 0.70;
-            const compAttackMult = compAttackMultipliers[level] || 1.0;
-            const aiProfile = window.aiTrackProfile;
             const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
             const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
             const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
-            const aiThresholdOffset = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.thresholdOffset || 0) : 0;
+            const aiThreshOff = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.thresholdOffset || 0) : 0;
 
-            let adjustedThreshold = baseComp.threshold + (thresholdOffset[level] || 0) + aiThresholdOffset;
-            adjustedThreshold = Math.max(adjustedThreshold, -24);
-            const adjustedRatio = baseComp.ratio * compRatioMult * aiRatioMult;
-            const adjustedAttack = baseComp.attack * compAttackMult * aiAttackMult;
-            const adjustedRelease = baseComp.release * aiReleaseMult;
+            let adjThreshold = baseComp.threshold + p.compThreshOff + aiThreshOff;
+            adjThreshold = Math.max(adjThreshold, -24);
+            const adjRatio = baseComp.ratio * p.compRatio * aiRatioMult;
+            const adjAttack = baseComp.attack * p.compAttack * aiAttackMult;
+            const adjRelease = baseComp.release * aiReleaseMult;
 
             if (window.compressor) {
-                window.compressor.threshold.setTargetAtTime(adjustedThreshold, now, 0.08);
-                window.compressor.ratio.setTargetAtTime(adjustedRatio, now, 0.08);
-                window.compressor.attack.setTargetAtTime(adjustedAttack, now, 0.08);
-                window.compressor.release.setTargetAtTime(adjustedRelease, now, 0.08);
-                window.compressor.knee.setTargetAtTime(baseComp.knee, now, 0.08);
+                window.compressor.threshold.setTargetAtTime(adjThreshold, now, ramp);
+                window.compressor.ratio.setTargetAtTime(adjRatio, now, ramp);
+                window.compressor.attack.setTargetAtTime(adjAttack, now, ramp);
+                window.compressor.release.setTargetAtTime(adjRelease, now, ramp);
+                window.compressor.knee.setTargetAtTime(p.knee, now, ramp);
             }
 
-            // ── Limiter: keep at -1.0 dBTP for all levels (safety ceiling) ──
+            // ━━━━ 3. SATURATION / WARMTH ━━━━
+            if (window.warmthControls) {
+                // Genre-adjusted base warmth
+                const genreWarmthBase = (genre === 'lofi') ? 1.5 :
+                    (genre === 'hiphop' || genre === 'rnb') ? 1.2 :
+                    (genre === 'rock' || genre === 'metal') ? 1.3 :
+                    (genre === 'electronic') ? 0.7 : 1.0;
+                const wetAmount = Math.min(p.warmth * genreWarmthBase, 0.15);
+                window.warmthControls.wet.gain.setTargetAtTime(wetAmount, now, ramp);
+                window.warmthControls.dry.gain.setTargetAtTime(1.0 - wetAmount, now, ramp);
+            }
+            if (window.analogWarmth && window.analogWarmth.setDrive) {
+                window.analogWarmth.setDrive(p.warmth);
+            }
+
+            // ━━━━ 4. HARMONIC EXCITER ━━━━
+            if (window.harmonicExciter && window.harmonicExciter.setAmount) {
+                window.harmonicExciter.setAmount(p.exciter);
+            }
+
+            // ━━━━ 5. STEREO WIDTH ━━━━
+            if (window.sideChannel) {
+                const genreWidthBase = (genre === 'electronic') ? 1.06 :
+                    (genre === 'pop' || genre === 'hiphop') ? 1.04 :
+                    (genre === 'acoustic' || genre === 'jazz') ? 1.01 : 1.03;
+                const finalWidth = genreWidthBase * p.stereoWidth;
+                if (aiProfile && aiProfile.stereoDeltas) {
+                    window.sideChannel.gain.setTargetAtTime(
+                        finalWidth * (aiProfile.stereoDeltas.widthMultiplier || 1.0), now, ramp);
+                } else {
+                    window.sideChannel.gain.setTargetAtTime(finalWidth, now, ramp);
+                }
+            }
+
+            // ━━━━ 6. LIMITER ━━━━
             if (window.limiter) {
-                window.limiter.threshold.setTargetAtTime(-1.0, now, 0.08);
+                window.limiter.threshold.setTargetAtTime(p.limiterCeil, now, ramp);
             }
 
-            // ── LUFS-preserving auto-gain ──
-            // Estimate loudness delta from compression + EQ, apply inverse to maintain level
-            // More compression = more gain reduction → need MORE makeup gain, not less
-            // thresholdOffset going negative means more GR → estimate ~0.5 dB GR per dB threshold drop
+            // ━━━━ 7. LUFS-PRESERVING AUTO-GAIN ━━━━
+            // More compression → more GR → need more makeup gain (not less!)
             if (window.makeupGain && window.appliedMakeupGainLinear) {
-                const threshDelta = (thresholdOffset[level] || 0); // negative = more compression
-                const estimatedGR = Math.max(0, -threshDelta * 0.5); // dB of gain reduction
-                // Compensate: add back estimated GR, subtract EQ loudness boost
-                const autoGainDB = estimatedGR - totalEQBoostDB;
-                // Small safety offset — slight trim at extremes to avoid limiter pumping
-                const safetyOffset = { 1: 0.5, 2: 0.2, 3: 0, 4: -0.3, 5: -0.5 };
-                const totalOffsetDB = autoGainDB + (safetyOffset[level] || 0);
+                const estimatedGR = Math.max(0, -p.compThreshOff * 0.5);
+                const warmthLoudness = p.warmth * 2; // saturation adds perceived loudness
+                const autoGainDB = estimatedGR - totalEQBoostDB - warmthLoudness;
+                // Tiny safety trim at extremes
+                const safetyTrim = { 1: 0.3, 2: 0.1, 3: 0, 4: -0.2, 5: -0.4 };
+                const totalOffsetDB = autoGainDB + (safetyTrim[level] || 0);
                 const offsetLinear = Math.pow(10, totalOffsetDB / 20);
                 const compensatedGain = window.appliedMakeupGainLinear * offsetLinear;
-                window.makeupGain.gain.setTargetAtTime(compensatedGain, now, 0.08);
+                window.makeupGain.gain.setTargetAtTime(compensatedGain, now, ramp);
             }
 
-            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${adjustedRatio.toFixed(1)}:1 @ ${adjustedThreshold.toFixed(0)}dB (genre: ${genre})`);
+            console.log(`🎚️ Intensity ${level} (${p.label}) — EQ:${p.eqMult}x, comp:${adjRatio.toFixed(1)}:1@${adjThreshold.toFixed(0)}dB, warmth:${p.warmth}, width:${p.stereoWidth}, exciter:${p.exciter} (${genre})`);
         };
 
         // ═══════════════════════════════════════════════════════════════════
