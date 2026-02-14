@@ -4567,11 +4567,11 @@
             <span>MASTER</span>
         </button>
 
-        <!-- Vertical Divider - REMOVED v7.6.8c12 -->
-        <div id="commandBarDivider" style="display: none !important;"></div>
+        <!-- Vertical Divider (hidden — not needed with current layout) -->
+        <div id="commandBarDivider" style="display: none;"></div>
 
-        <!-- Integrated A/B Toggle - REMOVED v7.6.8c12 (kept in DOM for JS compat) -->
-        <div id="integratedABToggle" style="display: none !important;">
+        <!-- Integrated A/B Toggle — shown after genre select or mastering -->
+        <div id="integratedABToggle" style="display: none;">
             <span id="floatingABLabelOriginal" style="
                 font-size: 0.8rem;
                 font-weight: 600;
@@ -4718,36 +4718,9 @@
     </style>
 
     <script>
-    // Integrated A/B Toggle Handler - REMOVED v7.6.8c12
+    // Integrated A/B Toggle Handler — post-mastering only
     function handleFloatingABToggle(isMastered) {
-        return; // A/B toggle removed
-        if (!window.isMasteringApplied) {
-            // Pre-mastering A/B: toggle preview EQ on/off
-            const statusPill = document.getElementById('aiStatusPill');
-            const labelA = document.getElementById('floatingABLabelOriginal');
-            const labelB = document.getElementById('floatingABLabelMastered');
-            if (window._previewEqFilters && window.audioContext) {
-                if (isMastered) {
-                    // "B" = preview ON — re-apply genre EQ via previewGenre
-                    if (window.selectedPreMasterGenre && typeof window.previewGenre === 'function') {
-                        window.previewGenre(window.selectedPreMasterGenre);
-                    }
-                    if (labelA) { labelA.style.color = 'rgba(255,255,255,0.4)'; labelA.style.fontWeight = '600'; }
-                    if (labelB) { labelB.style.color = '#00d4ff'; labelB.style.fontWeight = '700'; labelB.style.textShadow = '0 0 8px rgba(0, 212, 255, 0.5)'; }
-                    if (statusPill) { statusPill.textContent = 'PREVIEW ON'; statusPill.className = 'ai-status-pill mastered'; }
-                } else {
-                    // "A" = preview OFF — flatten EQ (original sound)
-                    const now = window.audioContext.currentTime;
-                    window._previewEqFilters.forEach(f => {
-                        f.gain.setTargetAtTime(0, now, 0.05);
-                    });
-                    if (labelA) { labelA.style.color = '#ff9a56'; labelA.style.fontWeight = '700'; }
-                    if (labelB) { labelB.style.color = 'rgba(255,255,255,0.4)'; labelB.style.fontWeight = '600'; labelB.style.textShadow = 'none'; }
-                    if (statusPill) { statusPill.textContent = 'ORIGINAL'; statusPill.className = 'ai-status-pill original'; }
-                }
-            }
-            return;
-        }
+        if (!window.isMasteringApplied) return; // Nothing to toggle before mastering
 
         const ac = window.audioContext || window.ac;
         const dryGain = window.dryGain;
@@ -4797,9 +4770,13 @@
         }
     }
 
-    // A/B toggle removed in v7.6.8c12 — function kept as no-op for JS compat
+    // Show the integrated A/B toggle with slide-in animation
     window.showFloatingABCompare = function() {
-        // No-op: A/B toggle removed from UI
+        const abToggle = document.getElementById('integratedABToggle');
+        if (abToggle) {
+            abToggle.style.display = 'flex';
+            abToggle.classList.add('visible');
+        }
     };
     </script>
 
@@ -5093,6 +5070,52 @@
                         </button>
                     </div>
                 </div>
+                <script>
+                // Early selectIntensity — ensures buttons work even before main IIFE loads
+                // The full version (with audio chain control) is defined later and overrides this
+                if (!window.selectIntensity) {
+                    window.selectIntensity = function(level) {
+                        window.selectedIntensity = level;
+                        var colors = {
+                            1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
+                            2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
+                            3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
+                            4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
+                            5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
+                        };
+                        var c = colors[level] || colors[3];
+                        document.querySelectorAll('.intensity-btn[data-level]').forEach(function(btn) {
+                            var btnLevel = parseInt(btn.getAttribute('data-level'));
+                            if (btnLevel === level) {
+                                btn.classList.add('selected', 'active');
+                                btn.style.background = 'rgba(' + c.r + ', 0.3)';
+                                btn.style.borderColor = c.hex;
+                                btn.style.boxShadow = '0 0 20px rgba(' + c.r + ', 0.5)';
+                                var divs = btn.querySelectorAll('div');
+                                if (divs[0]) divs[0].style.color = c.hex;
+                                if (divs[1]) { divs[1].style.color = c.hex; divs[1].style.opacity = '1'; }
+                            } else {
+                                btn.classList.remove('selected', 'active');
+                                btn.style.background = 'rgba(255,255,255,0.03)';
+                                btn.style.borderColor = 'rgba(255,255,255,0.1)';
+                                btn.style.boxShadow = 'none';
+                                var divs = btn.querySelectorAll('div');
+                                if (divs[0]) divs[0].style.color = 'rgba(255,255,255,0.7)';
+                                if (divs[1]) { divs[1].style.color = 'rgba(255,255,255,0.4)'; divs[1].style.opacity = '0.5'; }
+                            }
+                        });
+                        var descriptions = {
+                            1: 'Subtle - Gentle polish',
+                            2: 'Light - Clean enhancement',
+                            3: 'Balanced - Radio-ready',
+                            4: 'Aggressive - Punchy & loud',
+                            5: 'Maximum - Full power'
+                        };
+                        var descEl = document.getElementById('intensityDescription');
+                        if (descEl) { descEl.textContent = descriptions[level]; descEl.style.color = c.hex; }
+                    };
+                }
+                </script>
 
                 <!-- Section E: Export Format + Bit Depth -->
                 <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.04);">
@@ -8345,9 +8368,27 @@
             <script>
             // Enable A/B toggle after mastering completes
             function enableABToggle() {
-                // Ensure floating toggle is set to mastered
+                // Ensure floating toggle is set to mastered (B)
                 const floatingSwitch = document.getElementById('floatingABSwitch');
                 if (floatingSwitch) floatingSwitch.checked = true;
+
+                // Update labels for post-mastering mode
+                const labelA = document.getElementById('floatingABLabelOriginal');
+                const labelB = document.getElementById('floatingABLabelMastered');
+                const statusPill = document.getElementById('aiStatusPill');
+                if (labelA) labelA.textContent = 'A';
+                if (labelB) {
+                    labelB.textContent = 'B';
+                    labelB.style.color = '#00ff88';
+                    labelB.style.textShadow = '0 0 8px rgba(0, 255, 136, 0.5)';
+                }
+                if (statusPill) {
+                    statusPill.textContent = 'PLAYING MASTERED';
+                    statusPill.className = 'ai-status-pill mastered';
+                }
+
+                // Reset A/B state to mastered
+                window.abCompareMode = false;
 
                 // Show the floating A/B compare
                 if (typeof window.showFloatingABCompare === 'function') {
@@ -20848,11 +20889,12 @@
                 };
             }
 
-            // Hide A/B toggle
+            // Hide A/B toggle and reset state
             const abToggle = document.getElementById('integratedABToggle');
             const divider = document.getElementById('commandBarDivider');
-            if (abToggle) abToggle.style.display = 'none';
+            if (abToggle) { abToggle.style.display = 'none'; abToggle.classList.remove('visible'); }
             if (divider) divider.style.display = 'none';
+            window.abCompareMode = false;
 
             // Re-enable the Process Master Now button so user can re-master
             const startBtn = document.getElementById('startMasteringBtn');
@@ -26421,46 +26463,15 @@
         // World-class audio comparison experience
         // ═══════════════════════════════════════════════════════════════════════════
 
-        // A/B modal removed per user request - function disabled
-        window.showABModal = function(originalLUFS, masteredLUFS, targetLUFS) {
-            // Modal removed - do nothing
-            return;
+        // A/B modal removed per user request — kept as stub for callers
+        window.showABModal = function() { };
 
-            // Calculate metrics
-            const loudnessGain = Math.abs((masteredLUFS || -14) - (originalLUFS || -20));
-            const clarityBoost = Math.round(15 + Math.random() * 10); // Based on EQ applied
-            const widthBoost = Math.round(20 + Math.random() * 15); // Based on stereo processing
-
-            // Update metric displays
-            const loudnessEl = document.getElementById('abLoudnessGain');
-            const targetEl = document.getElementById('abTargetLUFS');
-            const clarityEl = document.getElementById('abClarityBoost');
-            const widthEl = document.getElementById('abWidthBoost');
-
-            if (loudnessEl) loudnessEl.textContent = '+' + loudnessGain.toFixed(1) + ' dB';
-            if (targetEl) targetEl.textContent = (targetLUFS || -14) + ' LUFS';
-            if (clarityEl) clarityEl.textContent = '+' + clarityBoost + '%';
-            if (widthEl) widthEl.textContent = '+' + widthBoost + '%';
-
-            // Set initial state to MASTERED
-            window.abCompareMode = false;
-            updateABModalState();
-
-            // Draw comparison waveform
-            drawABComparisonWaveform();
-
-            // Show modal with animation
-            modal.classList.add('active');
-
-            // Start audio if not playing
-            if (window.audioElement && window.audioElement.paused) {
-                window.audioElement.play().catch(() => {});
-            }
-
+        // Toggle the A/B switch
+        window.toggleABSwitch = function() {
+            window.abCompareMode = !window.abCompareMode;
+            if (typeof updateABModalState === 'function') updateABModalState();
+            if (typeof applyABState === 'function') applyABState();
         };
-
-        // Toggle the A/B switch — REMOVED v7.6.8c12
-        window.toggleABSwitch = function() { return; };
 
         // Set to Original
         window.setABToOriginal = function() {
@@ -26612,10 +26623,9 @@
 
         });
 
-        // A/B Compare toggle - REMOVED v7.6.8c12
-        // Kept as no-op to prevent JS errors from any remaining callers
+        // A/B Compare toggle - UNIFIED IMPLEMENTATION
+        // Command bar toggle hidden but function still works for programmatic use
         window.toggleABCompare = function() {
-            return; // A/B toggle removed
             // Sync with global state (used by main A/B handler)
             window.abCompareMode = !window.abCompareMode;
             const isActive = window.abCompareMode;
@@ -27781,35 +27791,7 @@
             if (typeof updateConsoleSummary === 'function') updateConsoleSummary();
             if (typeof syncSidebarWithConsole === 'function') syncSidebarWithConsole();
 
-            // Show A/B toggle so user can compare preview vs original before mastering
-            if (!window.isMasteringApplied) {
-                const abToggle = document.getElementById('integratedABToggle');
-                const divider = document.getElementById('commandBarDivider');
-                const labelA = document.getElementById('floatingABLabelOriginal');
-                const labelB = document.getElementById('floatingABLabelMastered');
-                const statusPill = document.getElementById('aiStatusPill');
-                if (abToggle) {
-                    abToggle.style.display = 'flex';
-                    abToggle.classList.add('visible');
-                }
-                if (divider) divider.style.display = 'block';
-                // Update labels for preview mode
-                if (labelB) {
-                    labelB.textContent = 'B';
-                    labelB.style.color = '#00d4ff';
-                    labelB.style.textShadow = '0 0 8px rgba(0, 212, 255, 0.5)';
-                }
-                if (labelA) {
-                    labelA.textContent = 'A';
-                }
-                if (statusPill) {
-                    statusPill.textContent = 'PREVIEW ON';
-                    statusPill.className = 'ai-status-pill mastered';
-                }
-                // Ensure switch is checked (B = preview ON)
-                const sw = document.getElementById('floatingABSwitch');
-                if (sw) sw.checked = true;
-            }
+            // A/B toggle only shown after mastering — no toggle during preview
 
         };
 
@@ -28209,23 +28191,23 @@
             document.querySelectorAll('.intensity-btn[data-level]').forEach(btn => {
                 const btnLevel = parseInt(btn.getAttribute('data-level'));
                 if (btnLevel === level) {
-                    btn.classList.add('selected');
+                    btn.classList.add('selected', 'active');
                     btn.style.background = `rgba(${c.r}, 0.3)`;
                     btn.style.borderColor = c.hex;
                     btn.style.boxShadow = `0 0 20px rgba(${c.r}, 0.5)`;
                     // Update text colors inside the selected button
                     const divs = btn.querySelectorAll('div');
                     if (divs[0]) divs[0].style.color = c.hex;
-                    if (divs[1]) divs[1].style.color = c.hex;
+                    if (divs[1]) { divs[1].style.color = c.hex; divs[1].style.opacity = '1'; }
                 } else {
-                    btn.classList.remove('selected');
+                    btn.classList.remove('selected', 'active');
                     btn.style.background = 'rgba(255,255,255,0.03)';
                     btn.style.borderColor = 'rgba(255,255,255,0.1)';
                     btn.style.boxShadow = 'none';
                     // Reset text colors
                     const divs = btn.querySelectorAll('div');
                     if (divs[0]) divs[0].style.color = 'rgba(255,255,255,0.7)';
-                    if (divs[1]) divs[1].style.color = 'rgba(255,255,255,0.4)';
+                    if (divs[1]) { divs[1].style.color = 'rgba(255,255,255,0.4)'; divs[1].style.opacity = '0.5'; }
                 }
             });
 
@@ -28283,78 +28265,73 @@
         };
 
         // Apply intensity to the mastering chain in real-time
+        // Wider range for audible difference across all genres
         window.applyIntensityToChain = function(level) {
             const ac = window.audioContext;
             if (!ac) return;
 
-            // Intensity multipliers for different processing parameters
+            // Wider multiplier range — level 1 is near-transparent, level 5 is bold
             const intensityMultipliers = {
-                1: { eq: 0.3, comp: 0.4, transient: 0.2, width: 0.3, exciter: 0.15 },  // Subtle
-                2: { eq: 0.5, comp: 0.6, transient: 0.35, width: 0.5, exciter: 0.25 },  // Light
-                3: { eq: 0.7, comp: 0.75, transient: 0.5, width: 0.7, exciter: 0.35 },  // Balanced
-                4: { eq: 0.9, comp: 0.85, transient: 0.7, width: 0.85, exciter: 0.5 },  // Aggressive
-                5: { eq: 1.0, comp: 1.0, transient: 0.9, width: 1.0, exciter: 0.7 }    // Maximum
+                1: 0.15,  // Subtle — barely any EQ
+                2: 0.45,  // Light — gentle shaping
+                3: 0.85,  // Balanced — default mastering level
+                4: 1.20,  // Aggressive — pushed beyond base preset
+                5: 1.50   // Maximum — full creative processing
             };
+            let intensityMult = intensityMultipliers[level] || 0.85;
 
-            const mult = intensityMultipliers[level] || intensityMultipliers[3];
             const now = ac.currentTime;
-
-            // Apply processingScale — already-mastered tracks get reduced processing
             const aiScale = window._processingScale || 1.0;
 
-            // Apply to EQ — uses eqCurves (same source as mastering) + AI deltas + sub-genre override
+            // ── EQ: recalculate with wider range ──
             const genre = window.selectedPreMasterGenre || 'pop';
             const eq = window.eqCurves[genre] || window.eqCurves['pop'];
             const aiEQ = (window.aiTrackProfile && window.aiTrackProfile.eqDeltas) || {};
             const subEQ = window._selectedSubGenreEQ || null;
-            const INTENSITY_SUBPRESET_SCALE = 2.0; // v7.6.8c2: Match preview and mastering
+            const MASTERING_SUBPRESET_SCALE = 2.0;
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
             filters.forEach((f, i) => {
                 if (!f) return;
                 const band = bandKeys[i];
-                let baseVal;
+                const aiDelta = aiEQ[band] || 0;
+                let val;
                 if (subEQ) {
-                    // Sub-preset active — scale for audible genre shaping + minimal AI delta (20%)
-                    baseVal = (subEQ[band] ?? eq[band]) * INTENSITY_SUBPRESET_SCALE + (aiEQ[band] || 0) * 0.2;
+                    const baseVal = (subEQ[band] ?? eq[band]) * MASTERING_SUBPRESET_SCALE;
+                    val = (baseVal + aiDelta * 0.2) * intensityMult * aiScale;
                 } else {
-                    baseVal = eq[band] + (aiEQ[band] || 0);
+                    val = (eq[band] + aiDelta) * intensityMult * aiScale;
                 }
-                f.gain.setTargetAtTime(baseVal * mult.eq * aiScale, now, 0.1);
+                // Clamp to safe range
+                val = Math.max(-12, Math.min(12, val));
+                f.gain.setTargetAtTime(val, now, 0.08);
             });
 
-            // Apply to compressor (genre-specific settings scaled by intensity × processingScale)
-            const activePreset = genrePresets[genre];
+            // ── Compression: engage at higher intensities even if AI bypassed it ──
+            const compSettings = {
+                1: { threshold: -6,  ratio: 1.1, attack: 0.030, release: 0.25, knee: 12 },  // Near-transparent
+                2: { threshold: -10, ratio: 1.3, attack: 0.025, release: 0.22, knee: 10 },
+                3: { threshold: -14, ratio: 1.6, attack: 0.020, release: 0.18, knee: 8 },   // Default
+                4: { threshold: -18, ratio: 2.2, attack: 0.012, release: 0.15, knee: 6 },   // Punchy
+                5: { threshold: -22, ratio: 3.0, attack: 0.008, release: 0.12, knee: 4 }    // Heavy
+            };
+            const comp = compSettings[level] || compSettings[3];
             if (window.compressor) {
-                const compPreset = activePreset.compression || { threshold: -20, ratio: 2.0, attack: 0.015, release: 0.18, knee: 8 };
-                window.compressor.ratio.setTargetAtTime(1 + (compPreset.ratio - 1) * mult.comp * aiScale, now, 0.1);
-                window.compressor.threshold.setTargetAtTime(compPreset.threshold, now, 0.1);
-                window.compressor.attack.setTargetAtTime(compPreset.attack, now, 0.1);
-                window.compressor.release.setTargetAtTime(compPreset.release, now, 0.1);
-                window.compressor.knee.setTargetAtTime(compPreset.knee, now, 0.1);
+                window.compressor.threshold.setTargetAtTime(comp.threshold, now, 0.08);
+                window.compressor.ratio.setTargetAtTime(comp.ratio, now, 0.08);
+                window.compressor.attack.setTargetAtTime(comp.attack, now, 0.08);
+                window.compressor.release.setTargetAtTime(comp.release, now, 0.08);
+                window.compressor.knee.setTargetAtTime(comp.knee, now, 0.08);
             }
 
-            // Apply to transient shaper (scaled by processingScale)
-            if (window.transientControls) {
-                const tMult = mult.transient * aiScale;
-                window.transientControls.attack.gain.setTargetAtTime(0.15 * tMult, now, 0.1);
-                window.transientControls.sustain.gain.setTargetAtTime(0.15 * tMult, now, 0.1);
-                window.transientControls.dry.gain.setTargetAtTime(1 - (0.3 * tMult), now, 0.1);
+            // ── Limiter: tighter ceiling at high intensity for loudness ──
+            if (window.limiter) {
+                const limiterThresholds = { 1: -2.0, 2: -1.5, 3: -1.0, 4: -0.5, 5: -0.3 };
+                window.limiter.threshold.setTargetAtTime(limiterThresholds[level] || -1.0, now, 0.08);
             }
 
-            // Apply to stereo width (scaled by processingScale)
-            if (window.stereoWidthGain) {
-                window.stereoWidthGain.gain.setTargetAtTime(1 + (0.3 * mult.width * aiScale), now, 0.1);
-            }
-
-            // Apply to exciter (scaled by processingScale)
-            if (window.exciterControls) {
-                const eMult = mult.exciter * aiScale;
-                window.exciterControls.wet.gain.setTargetAtTime(eMult * 0.3, now, 0.1);
-                window.exciterControls.dry.gain.setTargetAtTime(1 - (eMult * 0.3), now, 0.1);
-            }
-
+            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${comp.ratio}:1 @ ${comp.threshold}dB, limiter: ${level >= 4 ? 'pushed' : 'standard'}`);
         };
 
         // ═══════════════════════════════════════════════════════════════════
@@ -29523,7 +29500,7 @@
         // Gain-matching: when switching to original (A), boost dryGain to match mastered loudness.
         // This lets users hear the TRUE quality difference, not just "louder = better".
 
-        window._gainMatchEnabled = true; // Default ON for professional comparison
+        window._gainMatchEnabled = false; // OFF — user hears true original at native volume
         window._gainMatchCompensation = 0; // dB compensation applied to dry signal
 
         // Calculate gain match compensation from measured LUFS values
@@ -29570,8 +29547,26 @@
             };
         }
 
-        // A/B toggle patches removed in v7.6.8c12 — A/B UI fully removed
-        // Original functions are already no-ops
+        // Gain-matched A/B patches
+        const _origToggleABCompare = window.toggleABCompare;
+        if (_origToggleABCompare) {
+            window.toggleABCompare = function() {
+                _origToggleABCompare.call(this);
+                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
+                    window.applyGainMatchedAB();
+                }
+            };
+        }
+        const _origHandleFloatingAB = window.handleFloatingABToggle;
+        if (_origHandleFloatingAB) {
+            window.handleFloatingABToggle = function(isMastered) {
+                window.abCompareMode = !isMastered;
+                _origHandleFloatingAB.call(this, isMastered);
+                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
+                    window.applyGainMatchedAB();
+                }
+            };
+        }
 
 
         // ═══════════════════════════════════════════════════════════════════════════
