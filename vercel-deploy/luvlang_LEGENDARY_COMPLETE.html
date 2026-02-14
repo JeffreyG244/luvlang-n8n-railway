@@ -10336,7 +10336,7 @@
                     safetyClipCurve[i] = Math.max(-ceilingLinear, Math.min(ceilingLinear, x));
                 }
                 safetyClipper.curve = safetyClipCurve;
-                safetyClipper.oversample = '4x';
+                safetyClipper.oversample = 'none'; // v7.6.13g: 'none' for hard clipper — '4x' causes Gibbs ringing overshoot
                 window.safetyClipper = safetyClipper;
 
                 // Makeup Gain (AI Mastering - BEFORE limiter for proper peak protection)
@@ -12469,8 +12469,18 @@
                 // ENABLE PROCESSORS WITH SAFE DEFAULTS
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                // Enable Dynamic EQ with gentle settings
+                // Enable Dynamic EQ with gentle settings + sync toggle UI
                 window.dynamicEQ.enable();
+                const dynEqToggleEl = document.getElementById('dynamicEQToggle');
+                if (dynEqToggleEl) {
+                    dynEqToggleEl.checked = true;
+                    // Sync visual state
+                    const dynToggleLabel = dynEqToggleEl.parentElement;
+                    const dynToggleTrack = dynToggleLabel ? dynToggleLabel.querySelector('span') : null;
+                    const dynToggleThumb = dynToggleTrack ? dynToggleTrack.querySelector('span') : null;
+                    if (dynToggleTrack) dynToggleTrack.style.background = 'linear-gradient(135deg, #00d4ff, #b84fff)';
+                    if (dynToggleThumb) dynToggleThumb.style.transform = 'translateX(20px)';
+                }
 
                 // ═══════════════════════════════════════════════════════════════════════
                 // PROFESSIONAL MASTERING: "LESS IS MORE"
@@ -13258,7 +13268,7 @@
                     clipCurve[ci] = Math.max(-ceilLinear, Math.min(ceilLinear, x));
                 }
                 ceilClipper.curve = clipCurve;
-                ceilClipper.oversample = '4x';
+                ceilClipper.oversample = 'none'; // v7.6.13g: 'none' for hard clipper — '4x' causes Gibbs ringing overshoot
 
                 // Connect chain: Source → Subsonic → EQ → [DynEQ] → Comp → [NY] → [MB] → Makeup → Lim1 → Lim2 → Clipper → Dest
                 source.connect(subsonic);
@@ -20539,11 +20549,11 @@
                     } else {
                         peakValueElement.textContent = displayPeak.toFixed(1);
 
-                        // Dynamic color coding based on peak level (matches compliance badge thresholds)
+                        // Dynamic color coding based on peak level (matches EBU R128 compliance badge)
                         if (displayPeak >= 0.0) {
                             peakValueElement.style.color = '#ff3333'; // Red (clipping!)
-                        } else if (displayPeak >= -0.5) {
-                            peakValueElement.style.color = '#ffaa00'; // Orange (hot - approaching clip)
+                        } else if (displayPeak >= -1.0) {
+                            peakValueElement.style.color = '#ffaa00'; // Orange (exceeds -1.0 dBTP ceiling)
                         } else {
                             peakValueElement.style.color = '#00ff88'; // Green (broadcast safe)
                         }
@@ -20569,11 +20579,11 @@
                     const lufsOnTarget = lufsDeviation <= 2.5; // Within ±2.5 LU tolerance (professional standard)
 
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    // LED State Logic - Professional Broadcast Compliance:
+                    // LED State Logic - Professional Broadcast Compliance (EBU R128):
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // 🔴 CLIP: True Peak ≥ 0.0 dBTP (inter-sample clipping)
-                    // 🟡 HOT: True Peak -1.4 to 0.0 dBTP (exceeds broadcast safe limit)
-                    // 🟢 Broadcast Safe: True Peak < -1.4 dBTP (broadcast compliant)
+                    // 🟡 HOT: True Peak -1.0 to 0.0 dBTP (exceeds EBU R128 ceiling)
+                    // 🟢 Broadcast Safe: True Peak < -1.0 dBTP (EBU R128 compliant)
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
                     if (displayPeak >= 0.0) {
@@ -20586,8 +20596,8 @@
                         complianceLight.style.animation = 'flash 0.5s infinite';
                         complianceLabel.textContent = 'CLIP';
                         complianceLabel.style.color = '#F44336';
-                    } else if (displayPeak >= -1.4) {
-                        // 🟡 HOT - Amber (Exceeds broadcast safe limit: -1.4 to 0 dBTP)
+                    } else if (displayPeak >= -1.0) {
+                        // 🟡 HOT - Amber (Exceeds EBU R128 broadcast ceiling: -1.0 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))';
                         complianceBadge.style.borderColor = '#FFC107';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(255, 193, 7, 0.4)';
@@ -20597,7 +20607,7 @@
                         complianceLabel.textContent = 'HOT';
                         complianceLabel.style.color = '#FFC107';
                     } else {
-                        // 🟢 Broadcast Safe - Green (Compliant: < -1.4 dBTP)
+                        // 🟢 Broadcast Safe - Green (EBU R128 compliant: < -1.0 dBTP)
                         complianceBadge.style.background = 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05))';
                         complianceBadge.style.borderColor = '#4CAF50';
                         complianceBadge.style.boxShadow = '0 0 15px rgba(76, 175, 80, 0.3)';
@@ -22344,7 +22354,7 @@
                     offlineSafetyClipCurve[i] = Math.max(-exportCeilingLinear, Math.min(exportCeilingLinear, x));
                 }
                 offlineSafetyClipper.curve = offlineSafetyClipCurve;
-                offlineSafetyClipper.oversample = '4x';
+                offlineSafetyClipper.oversample = 'none'; // v7.6.13g: 'none' for hard clipper
 
                 // STAGE 8: MASTER OUTPUT
                 const offlineMasterGain = offlineContext.createGain();
@@ -22555,7 +22565,7 @@
                     exportClipCurve2[ci] = Math.max(-exportCeil2, Math.min(exportCeil2, x));
                 }
                 exportClipper2.curve = exportClipCurve2;
-                exportClipper2.oversample = '4x';
+                exportClipper2.oversample = 'none'; // v7.6.13g: 'none' for hard clipper
 
                 // STAGE 7: MASTER OUTPUT
                 const offlineMasterGain = offlineContext.createGain();
@@ -31228,7 +31238,7 @@
                         albumClipCurve[ci] = Math.max(-albumCeil, Math.min(albumCeil, x));
                     }
                     albumClipper.curve = albumClipCurve;
-                    albumClipper.oversample = '4x';
+                    albumClipper.oversample = 'none'; // v7.6.13g: 'none' for hard clipper
 
                     source.connect(gainNode);
                     gainNode.connect(lim);
