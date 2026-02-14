@@ -24712,9 +24712,14 @@
                 const analysisPanel = document.getElementById('analysisPanel');
                 if (analysisPanel) analysisPanel.style.display = 'none';
 
+                // v7.6.13: Let browser paint the overlay before starting progress
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
                 // Use the new professional processing overlay for progress updates
+                // v7.6.13: Total stages = 28 (24 processing + 4 LUFS targeting passes)
+                const TOTAL_STAGES = 28;
                 const updateStageProgress = (stageNum, stageName) => {
-                    const percent = Math.round((stageNum / 24) * 100);
+                    const percent = Math.round((stageNum / TOTAL_STAGES) * 100);
                     if (window.updateMasteringProgress) {
                         window.updateMasteringProgress(stageNum, stageName, percent);
                     }
@@ -24722,7 +24727,7 @@
 
                 // Initial analysis stages
                 updateStageProgress(1, 'Analyzing audio input...');
-                await new Promise(resolve => setTimeout(resolve, 120));
+                await new Promise(resolve => setTimeout(resolve, 80));
 
                 updateStageProgress(2, 'Removing DC offset...');
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -25346,26 +25351,14 @@
 
                 // Final progress updates
                 updateStageProgress(22, 'Applying final polish...');
-                await new Promise(resolve => setTimeout(resolve, 80));
-                updateStageProgress(23, 'Running output metering...');
                 await new Promise(resolve => setTimeout(resolve, 60));
-                updateStageProgress(24, 'Finalizing output...');
-                await new Promise(resolve => setTimeout(resolve, 100));
+                updateStageProgress(23, 'Running output metering...');
+                await new Promise(resolve => setTimeout(resolve, 50));
+                updateStageProgress(24, 'Preparing LUFS targeting...');
+                await new Promise(resolve => setTimeout(resolve, 50));
 
-                // Close the processing overlay with a smooth transition
-                const procOverlay = document.getElementById('masteringProcessOverlay');
-                if (procOverlay) {
-                    // Show 100% complete briefly
-                    if (window.updateMasteringProgress) {
-                        window.updateMasteringProgress(24, 'Mastering complete', 100);
-                    }
-                    // Fade out after brief pause
-                    await new Promise(resolve => setTimeout(resolve, 600));
-                    procOverlay.style.transition = 'opacity 0.4s ease';
-                    procOverlay.style.opacity = '0';
-                    await new Promise(resolve => setTimeout(resolve, 400));
-                    procOverlay.remove();
-                }
+                // v7.6.13: Keep overlay visible during LUFS targeting (4 passes)
+                // Overlay will close AFTER targeting completes
 
                 // ═══════════════════════════════════════════════════════════════
                 // SWITCH TO MASTERED AUDIO - Now hearing the processed version!
@@ -25442,6 +25435,10 @@
                 let compensation = 0; // Declared here so verification panel can access it
                 const originalPeakDB = window.originalInputPeakDB || originalInputPeakDB || -3;
 
+                // v7.6.13: Update overlay during LUFS targeting passes
+                updateStageProgress(25, 'LUFS Pass 1: Measuring chain output...');
+                await new Promise(r => setTimeout(r, 30));
+
                 // PASS 1: measure chain output at unity makeup gain
                 const pass1 = window.audioBuffer ? await measureChainLoudness(window.audioBuffer, chainParams) : null;
 
@@ -25475,6 +25472,9 @@
                 // Professional standard: ±0.5 LU tolerance
                 // ════════════════════════════════════════════════════════════════════════════
                 if (pass1 && window.audioBuffer && isFinite(correctionDB)) {
+                    updateStageProgress(26, 'LUFS Pass 3: Verifying correction...');
+                    await new Promise(r => setTimeout(r, 30));
+
                     const pass3Params = Object.assign({}, chainParams, {
                         makeupGainLinear: Math.pow(10, correctionDB / 20)
                     });
@@ -25504,6 +25504,9 @@
                         // PASS 4: Final verification — re-measure with corrected gain
                         // CRITICAL: Must also enforce true peak ceiling (don't let LUFS
                         // correction undo the peak safety from Pass 3)
+                        updateStageProgress(27, 'LUFS Pass 4: Final verification...');
+                        await new Promise(r => setTimeout(r, 30));
+
                         const pass4Params = Object.assign({}, chainParams, {
                             makeupGainLinear: Math.pow(10, correctionDB / 20)
                         });
@@ -25583,6 +25586,17 @@
                 // MASTERING VERIFICATION PANEL — Show professional measurements to user
                 // ══════════════════════════════════════════════════════════════════════
                 try {
+                    // v7.6.13: Final stage — close overlay after LUFS targeting
+                    updateStageProgress(28, 'Mastering complete!');
+                    await new Promise(r => setTimeout(r, 400));
+                    const procOverlay = document.getElementById('masteringProcessOverlay');
+                    if (procOverlay) {
+                        procOverlay.style.transition = 'opacity 0.4s ease';
+                        procOverlay.style.opacity = '0';
+                        await new Promise(r => setTimeout(r, 400));
+                        procOverlay.remove();
+                    }
+
                     // Final verification: re-measure with applied makeup gain
                     let verifiedLUFS = null;
                     let verifiedTruePeak = null;
