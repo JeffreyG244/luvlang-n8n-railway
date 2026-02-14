@@ -12748,6 +12748,11 @@
                         window.buildTrackReportCard();
                     }
 
+                    // Chloe narrates the pre-mastering analysis
+                    if (typeof window.chloeNarrateReportCard === 'function') {
+                        window.chloeNarrateReportCard();
+                    }
+
                 } catch (error) {
                     console.error('⚠️ Error decoding audio buffer:', error);
                 }
@@ -14158,11 +14163,15 @@
                 else { dynAssess = 'Crushed'; dynBadge = 'bad'; }
             }
 
-            // Stereo image
+            // Stereo image — guard against NaN (mono files, analysis edge cases)
             let stereoAssess, stereoBadge, stereoVal;
             if (analysis && analysis.stereoCorrelation !== undefined) {
-                stereoVal = parseFloat(analysis.stereoCorrelation);
-                if (stereoVal >= 0.6) { stereoAssess = 'Solid'; stereoBadge = 'good'; }
+                const rawStereo = typeof analysis.stereoCorrelation === 'object'
+                    ? analysis.stereoCorrelation.overall : analysis.stereoCorrelation;
+                stereoVal = parseFloat(rawStereo);
+                if (!isFinite(stereoVal)) {
+                    stereoVal = undefined; // Hide row entirely for NaN/Infinity
+                } else if (stereoVal >= 0.6) { stereoAssess = 'Solid'; stereoBadge = 'good'; }
                 else if (stereoVal >= 0.2) { stereoAssess = 'Wide'; stereoBadge = 'warn'; }
                 else { stereoAssess = 'Phase Issues'; stereoBadge = 'bad'; }
             }
@@ -14181,11 +14190,50 @@
                 spectrumHTML += '</div>';
             }
 
-            // Mix score
+            // Mix score with actionable improvement tips
             let scoreHTML = '';
             if (profile && profile.mixScore !== undefined) {
                 const sc = profile.mixScore;
                 const scoreColor = sc >= 75 ? '#00e676' : sc >= 50 ? '#ffc107' : '#ff5252';
+
+                // Build actionable tips based on detected issues
+                let tipsHTML = '';
+                const tips = [];
+                if (profile.issues && profile.issues.length > 0) {
+                    profile.issues.forEach(issue => {
+                        if (issue.type === 'loudness' || (issue.description && issue.description.toLowerCase().includes('loud'))) {
+                            tips.push('Adjust your mix volume — aim for -16 to -12 LUFS before mastering');
+                        } else if (issue.type === 'peak' || (issue.description && issue.description.toLowerCase().includes('peak'))) {
+                            tips.push('Lower your loudest peaks — use a limiter on your mix bus');
+                        } else if (issue.type === 'tonal' && issue.description && issue.description.includes('muddy')) {
+                            tips.push('Cut low-mids (200-500 Hz) to reduce muddiness');
+                        } else if (issue.type === 'tonal' && issue.description && issue.description.includes('harsh')) {
+                            tips.push('Tame the high-mids (2-5 kHz) to reduce harshness');
+                        } else if (issue.type === 'stereo') {
+                            tips.push('Check your stereo balance — keep bass centered, widen highs');
+                        } else if (issue.type === 'sibilance') {
+                            tips.push('Add a de-esser to your vocal chain before mastering');
+                        } else if (issue.type === 'dynamics' || (issue.description && issue.description.toLowerCase().includes('crest'))) {
+                            tips.push('Ease up on mix-bus compression to restore dynamics');
+                        } else if (issue.type === 'resonance') {
+                            tips.push('Use a narrow EQ cut to tame resonant frequencies');
+                        }
+                    });
+                }
+                // Always show what 100% looks like
+                if (sc < 100) {
+                    tips.push('A 100% mix: -14 LUFS, peaks below -1 dBTP, healthy dynamics, clean stereo');
+                }
+                // Deduplicate
+                const uniqueTips = [...new Set(tips)];
+                if (uniqueTips.length > 0) {
+                    tipsHTML = `
+                    <div class="rc-metric-row" style="flex-direction:column;align-items:stretch;padding:6px 0 2px">
+                        <span style="font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">How to improve</span>
+                        ${uniqueTips.slice(0, 4).map(t => `<div style="font-size:11px;color:rgba(255,255,255,0.6);padding:2px 0;padding-left:8px;border-left:2px solid ${scoreColor}">• ${t}</div>`).join('')}
+                    </div>`;
+                }
+
                 scoreHTML = `
                     <div class="rc-metric-row">
                         <span class="rc-metric-label">Mix Score</span>
@@ -14194,7 +14242,8 @@
                             <span style="font-size:10px;color:rgba(255,255,255,0.4)">/100</span>
                             ${profile.issues ? `<span style="font-size:10px;color:rgba(255,255,255,0.3)">${profile.issues.length} issue${profile.issues.length !== 1 ? 's' : ''}</span>` : ''}
                         </div>
-                    </div>`;
+                    </div>
+                    ${tipsHTML}`;
             }
 
             card.innerHTML = `
@@ -14311,13 +14360,15 @@
             }
 
             // Update Peak row with before/after
+            // Post-mastering thresholds are more lenient — limiter ceiling is -1.0 dBTP,
+            // so values near 0.0 are acceptable (ISPs allow 0.0 dBTP)
             const peakRow = card.querySelector('[data-metric="peak"]');
             if (peakRow && v.verifiedTruePeak !== null && v.verifiedTruePeak !== undefined) {
                 const beforePeak = window.originalInputPeakDB;
                 const afterPeak = v.verifiedTruePeak;
                 let peakBadgeClass, peakBadgeText;
-                if (afterPeak > -0.3) { peakBadgeClass = 'bad'; peakBadgeText = 'Clipping'; }
-                else if (afterPeak > -1.0) { peakBadgeClass = 'warn'; peakBadgeText = 'Hot'; }
+                if (afterPeak > 0.0) { peakBadgeClass = 'bad'; peakBadgeText = 'Clipping'; }
+                else if (afterPeak > -0.5) { peakBadgeClass = 'warn'; peakBadgeText = 'Hot'; }
                 else { peakBadgeClass = 'good'; peakBadgeText = 'Safe'; }
 
                 if (typeof beforePeak === 'number' && isFinite(beforePeak)) {
@@ -14338,6 +14389,96 @@
             }, 3000);
         }
         window.updateReportCardPostMaster = updateReportCardPostMaster;
+
+        // ── Chloe Voice Narration for Report Card ──
+        // Narrates key findings after pre-mastering analysis
+        window.chloeNarrateReportCard = function() {
+            if (typeof window.speakWithDucking !== 'function') return;
+            if (window.tourActive) return; // Don't interrupt the voice tour
+
+            const lufs = window.originalInputLUFS;
+            const peak = window.originalInputPeakDB;
+            const profile = window.aiTrackProfile;
+            const analysis = window.aiTrackAnalysis;
+
+            if (typeof lufs !== 'number' || !isFinite(lufs)) return;
+
+            // Build the key finding
+            let finding = '';
+            if (lufs >= -9) {
+                finding = `Your track is very hot at ${lufs.toFixed(1)} LUFS, which risks clipping.`;
+            } else if (lufs >= -11) {
+                finding = `Your track is pretty loud at ${lufs.toFixed(1)} LUFS.`;
+            } else if (lufs >= -16) {
+                finding = `Your track is sitting at ${lufs.toFixed(1)} LUFS, which is a solid starting point.`;
+            } else if (lufs >= -22) {
+                finding = `Your track is a bit quiet at ${lufs.toFixed(1)} LUFS.`;
+            } else {
+                finding = `Your track is very quiet at ${lufs.toFixed(1)} LUFS.`;
+            }
+
+            // Add peak info if concerning
+            if (typeof peak === 'number' && isFinite(peak) && peak > -0.3) {
+                finding += ` I'm also seeing some peaks near clipping.`;
+            }
+
+            // Build recommendation
+            let recommendation = '';
+            if (lufs < -16) {
+                recommendation = `I'll bring it up to streaming standards when you master.`;
+            } else if (lufs >= -9) {
+                recommendation = `I'll tame those levels and keep it punchy.`;
+            } else {
+                recommendation = `Let's polish it up with mastering.`;
+            }
+
+            // Add issue count if relevant
+            if (profile && profile.issues && profile.issues.length > 2) {
+                recommendation += ` I found ${profile.issues.length} things I can fix.`;
+            }
+
+            const message = `I've analyzed your track. ${finding} ${recommendation}`;
+            setTimeout(() => window.speakWithDucking(message), 800);
+        };
+
+        // Narrates mastering results after post-mastering report card updates
+        window.chloeNarrateMasterResult = function() {
+            if (typeof window.speakWithDucking !== 'function') return;
+            if (window.tourActive) return;
+
+            const v = window.masteringVerification;
+            if (!v) return;
+
+            // Get the grade
+            let gradeText = '';
+            const badge = document.getElementById('rcGradeBadge');
+            if (badge && badge.textContent) {
+                const grade = badge.textContent.trim();
+                if (grade === 'A' || grade === 'A+') {
+                    gradeText = `Your track earned an ${grade} grade!`;
+                } else {
+                    gradeText = `Your track scored a ${grade} grade.`;
+                }
+            } else {
+                gradeText = `Mastering complete!`;
+            }
+
+            // Key improvement
+            let improvement = '';
+            const afterLUFS = v.verifiedLUFS;
+            const beforeLUFS = window.originalInputLUFS;
+            if (typeof afterLUFS === 'number' && isFinite(afterLUFS)) {
+                if (v.withinTolerance) {
+                    improvement = `Loudness is now on target at ${afterLUFS.toFixed(1)} LUFS.`;
+                } else {
+                    const delta = afterLUFS - (beforeLUFS || -18);
+                    improvement = `Loudness moved ${delta > 0 ? 'up' : 'down'} to ${afterLUFS.toFixed(1)} LUFS.`;
+                }
+            }
+
+            const message = `${gradeText} ${improvement} Try different genre presets to hear how they shape your sound.`;
+            setTimeout(() => window.speakWithDucking(message), 1200);
+        };
 
         function resetTrackReportCard() {
             const existing = document.getElementById('trackReportCard');
@@ -25891,6 +26032,11 @@
                 window.updateReportCardPostMaster();
             }
 
+            // Chloe announces the mastering grade
+            if (typeof window.chloeNarrateMasterResult === 'function') {
+                window.chloeNarrateMasterResult();
+            }
+
             // Show genre-specific smart hint after mastering
             const activeGenre = window.selectedPreMasterGenre || 'pop';
             if (typeof window.showGenreMasteringTip === 'function') {
@@ -28559,12 +28705,12 @@
         };
 
         // Apply intensity to the mastering chain in real-time
-        // Wider range for audible difference across all genres
+        // Genre-aware compression with LUFS-preserving auto-gain
         window.applyIntensityToChain = function(level) {
             const ac = window.audioContext;
             if (!ac) return;
 
-            // Wider multiplier range — level 1 is near-transparent, level 5 is bold
+            // EQ multiplier range — level 1 is near-transparent, level 5 is bold
             const intensityMultipliers = {
                 1: 0.15,  // Subtle — barely any EQ
                 2: 0.45,  // Light — gentle shaping
@@ -28586,6 +28732,9 @@
             const bandKeys = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
             const filters = [window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
                              window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter];
+
+            // Track total EQ energy change for auto-gain
+            let totalEQBoostDB = 0;
             filters.forEach((f, i) => {
                 if (!f) return;
                 const band = bandKeys[i];
@@ -28600,23 +28749,52 @@
                 // Clamp to safe range
                 val = Math.max(-12, Math.min(12, val));
                 f.gain.setTargetAtTime(val, now, 0.08);
+                // Accumulate positive EQ changes (boosts add loudness)
+                if (val > 0) totalEQBoostDB += val * 0.15; // ~15% of EQ boost translates to level
             });
 
-            // ── Compression: engage at higher intensities even if AI bypassed it ──
-            const compSettings = {
-                1: { threshold: -6,  ratio: 1.1, attack: 0.030, release: 0.25, knee: 12 },  // Near-transparent
-                2: { threshold: -10, ratio: 1.3, attack: 0.025, release: 0.22, knee: 10 },
-                3: { threshold: -14, ratio: 1.6, attack: 0.020, release: 0.18, knee: 8 },   // Default
-                4: { threshold: -18, ratio: 2.2, attack: 0.012, release: 0.15, knee: 6 },   // Punchy
-                5: { threshold: -22, ratio: 3.0, attack: 0.008, release: 0.12, knee: 4 }    // Heavy
+            // ── Compression: genre-aware, matching runActualMastering logic ──
+            const _gp = window.genrePresets || {};
+            const gpEntry = _gp[genre] || _gp['pop'] || {};
+            const baseComp = gpEntry.compression || { threshold: -16, ratio: 1.8, attack: 0.020, release: 0.18, knee: 8 };
+
+            // Same multiplier tables used in runActualMastering
+            const compRatioMultipliers = {
+                1: 0.40,  // Subtle - barely compressing
+                2: 0.55,  // Light - gentle glue
+                3: 0.70,  // Balanced - transparent glue
+                4: 0.85,  // Aggressive - full genre ratio
+                5: 1.0    // Maximum - heavy but musical
             };
-            const comp = compSettings[level] || compSettings[3];
+            const compAttackMultipliers = {
+                1: 1.3,   // Slower attack - preserve transients
+                2: 1.15,  // Slightly slower
+                3: 1.0,   // Standard
+                4: 0.85,  // Faster attack
+                5: 0.70   // Fastest - more aggressive transient control
+            };
+            const thresholdOffset = { 1: 4, 2: 2, 3: 0, 4: -2, 5: -4 };
+
+            const compRatioMult = compRatioMultipliers[level] || 0.70;
+            const compAttackMult = compAttackMultipliers[level] || 1.0;
+            const aiProfile = window.aiTrackProfile;
+            const aiRatioMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.ratioMultiplier || 1.0) : 1.0;
+            const aiAttackMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.attackMultiplier || 1.0) : 1.0;
+            const aiReleaseMult = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.releaseMultiplier || 1.0) : 1.0;
+            const aiThresholdOffset = (aiProfile && aiProfile.compDeltas) ? (aiProfile.compDeltas.thresholdOffset || 0) : 0;
+
+            let adjustedThreshold = baseComp.threshold + (thresholdOffset[level] || 0) + aiThresholdOffset;
+            adjustedThreshold = Math.max(adjustedThreshold, -24);
+            const adjustedRatio = baseComp.ratio * compRatioMult * aiRatioMult;
+            const adjustedAttack = baseComp.attack * compAttackMult * aiAttackMult;
+            const adjustedRelease = baseComp.release * aiReleaseMult;
+
             if (window.compressor) {
-                window.compressor.threshold.setTargetAtTime(comp.threshold, now, 0.08);
-                window.compressor.ratio.setTargetAtTime(comp.ratio, now, 0.08);
-                window.compressor.attack.setTargetAtTime(comp.attack, now, 0.08);
-                window.compressor.release.setTargetAtTime(comp.release, now, 0.08);
-                window.compressor.knee.setTargetAtTime(comp.knee, now, 0.08);
+                window.compressor.threshold.setTargetAtTime(adjustedThreshold, now, 0.08);
+                window.compressor.ratio.setTargetAtTime(adjustedRatio, now, 0.08);
+                window.compressor.attack.setTargetAtTime(adjustedAttack, now, 0.08);
+                window.compressor.release.setTargetAtTime(adjustedRelease, now, 0.08);
+                window.compressor.knee.setTargetAtTime(baseComp.knee, now, 0.08);
             }
 
             // ── Limiter: keep at -1.0 dBTP for all levels (safety ceiling) ──
@@ -28624,18 +28802,24 @@
                 window.limiter.threshold.setTargetAtTime(-1.0, now, 0.08);
             }
 
-            // ── Makeup gain compensation: keep LUFS on target regardless of intensity ──
-            // Heavier processing adds loudness — compensate by pulling back makeup gain
-            // Values calibrated: level 3 is the reference (0 dB offset)
+            // ── LUFS-preserving auto-gain ──
+            // Estimate loudness delta from compression + EQ, apply inverse to maintain level
+            // More compression = more gain reduction → need MORE makeup gain, not less
+            // thresholdOffset going negative means more GR → estimate ~0.5 dB GR per dB threshold drop
             if (window.makeupGain && window.appliedMakeupGainLinear) {
-                const gainOffsetDB = { 1: 2.0, 2: 1.0, 3: 0, 4: -2.5, 5: -4.5 };
-                const offsetDB = gainOffsetDB[level] || 0;
-                const offsetLinear = Math.pow(10, offsetDB / 20);
+                const threshDelta = (thresholdOffset[level] || 0); // negative = more compression
+                const estimatedGR = Math.max(0, -threshDelta * 0.5); // dB of gain reduction
+                // Compensate: add back estimated GR, subtract EQ loudness boost
+                const autoGainDB = estimatedGR - totalEQBoostDB;
+                // Small safety offset — slight trim at extremes to avoid limiter pumping
+                const safetyOffset = { 1: 0.5, 2: 0.2, 3: 0, 4: -0.3, 5: -0.5 };
+                const totalOffsetDB = autoGainDB + (safetyOffset[level] || 0);
+                const offsetLinear = Math.pow(10, totalOffsetDB / 20);
                 const compensatedGain = window.appliedMakeupGainLinear * offsetLinear;
                 window.makeupGain.gain.setTargetAtTime(compensatedGain, now, 0.08);
             }
 
-            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${comp.ratio}:1 @ ${comp.threshold}dB`);
+            console.log(`🎚️ Intensity ${level} applied live — EQ mult: ${intensityMult.toFixed(2)}, comp: ${adjustedRatio.toFixed(1)}:1 @ ${adjustedThreshold.toFixed(0)}dB (genre: ${genre})`);
         };
 
         // ═══════════════════════════════════════════════════════════════════
