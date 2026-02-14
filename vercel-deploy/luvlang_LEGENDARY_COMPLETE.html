@@ -4567,11 +4567,11 @@
             <span>MASTER</span>
         </button>
 
-        <!-- Vertical Divider - Shows after mastering -->
-        <div id="commandBarDivider" style="display: none; width: 1px; height: 32px; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.3), transparent);"></div>
+        <!-- Vertical Divider - REMOVED v7.6.8c12 -->
+        <div id="commandBarDivider" style="display: none !important;"></div>
 
-        <!-- Integrated A/B Toggle - Shows after mastering -->
-        <div id="integratedABToggle" style="display: none; align-items: center; gap: 12px;">
+        <!-- Integrated A/B Toggle - REMOVED v7.6.8c12 (kept in DOM for JS compat) -->
+        <div id="integratedABToggle" style="display: none !important;">
             <span id="floatingABLabelOriginal" style="
                 font-size: 0.8rem;
                 font-weight: 600;
@@ -4796,24 +4796,9 @@
         }
     }
 
-    // Show integrated A/B toggle after mastering
+    // A/B toggle removed in v7.6.8c12 — function kept as no-op for JS compat
     window.showFloatingABCompare = function() {
-        const divider = document.getElementById('commandBarDivider');
-        const abToggle = document.getElementById('integratedABToggle');
-        const statusPill = document.getElementById('aiStatusPill');
-
-        if (divider) {
-            divider.style.display = 'block';
-        }
-        if (abToggle) {
-            abToggle.style.display = 'flex';
-            abToggle.classList.add('visible');
-        }
-        if (statusPill) {
-            statusPill.textContent = 'PLAYING MASTERED';
-            statusPill.className = 'ai-status-pill mastered';
-        }
-
+        // No-op: A/B toggle removed from UI
     };
     </script>
 
@@ -23477,7 +23462,7 @@
             if (!window.selectedIntensity) window.selectedIntensity = 3;
 
             // Capture BEFORE spectrum for comparison (same as showGenreSelection did)
-            try { captureBeforeSpectrum(); } catch (err) { console.warn('⚠️ Could not capture before spectrum:', err); }
+            try { if (typeof captureBeforeSpectrum === 'function') captureBeforeSpectrum(); } catch (err) { console.warn('⚠️ Could not capture before spectrum:', err); }
 
             // Highlight the AI-detected genre in the sidebar
             const sidebarGenreMap = { hiphop: 'hip-hop', electronic: 'edm' };
@@ -25400,11 +25385,16 @@
                 window.dryGain.gain.value = 0.0;
                 window.wetGain.gain.value = 1.0;
                 window.isMasteringApplied = true;
-                window.abCompareMode = false;  // Ensure A/B state is MASTERED mode
+                window.abCompareMode = false;
 
                 // Show notification to user
                 if (typeof showToast === 'function') {
-                    showToast('🎧 Now playing: MASTERED - Use A/B button to compare!', 'success');
+                    showToast('🎧 Now playing: MASTERED', 'success');
+                }
+
+                // Ensure audio playback resumes after mastering
+                if (window.audioElement && window.audioElement.paused) {
+                    window.audioElement.play().catch(() => {});
                 }
             }
 
@@ -30601,7 +30591,7 @@
                 steps: [
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Chloe, and I\'ll be walking you through everything. Let\'s get started. Just drag your track onto that glowing area, or click to browse your files. We support WAV, MP3, FLAC, and more.' },
                     { title: 'Time to Master', desc: 'Hit MASTER and we\'ll analyze and master your track automatically. The AI detects your genre and applies professional processing.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll analyze your track, detect the genre, and master it automatically. No extra steps, just one click and we handle the rest. Go on, let\'s hear what you\'ve got.' },
-                    { title: 'Sounding Proper!', desc: 'Your master sounds incredible. Now use the sidebar on the left to fine-tune your sound. Pick your genre, adjust the intensity, and explore sub-genre presets.', action: '', voice: 'Beautiful. Your master is sounding incredible. Use the A B toggle at the bottom to compare your original with the mastered version. Now check out the sidebar on the left. You can change the genre, adjust the intensity, and explore sub-genre presets to dial in your sound.' },
+                    { title: 'Sounding Proper!', desc: 'Your master sounds incredible. Now use the sidebar on the left to fine-tune your sound. Pick your genre, adjust the intensity, and explore sub-genre presets.', action: '', voice: 'Beautiful. Your master is sounding incredible. Now check out the sidebar on the left. You can change the genre, adjust the intensity, and explore sub-genre presets to dial in your sound.' },
                     { title: 'Export Your Master', desc: 'When you\'re happy with your sound, scroll down to Export in the sidebar. Pick your format and download your master.', action: '', voice: 'When you\'re happy with your sound, scroll down on the left sidebar to find the Export section. Pick your format, and download your master. Enjoy.' }
                 ],
                 explore: { title: "You're All Set!", subtitle: 'Your track sounds brilliant. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
