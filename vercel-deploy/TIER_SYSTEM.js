@@ -7,7 +7,7 @@
 // GLOBAL STATE
 // ═══════════════════════════════════════════════════════════════════════════
 
-let currentTier = 'basic'; // 'basic', 'advanced', 'premium'
+let currentTier = 'legendary'; // DEV: default to legendary for testing
 let wasmPrecisionMode = '32bit'; // '32bit', '64bit'
 
 const TIER_CONFIG = {
@@ -70,6 +70,29 @@ const TIER_CONFIG = {
             ms: true               // Unlocked
         },
         exportFormats: ['mp3', 'wav', 'ddp'],
+        processing: '64bit'
+    },
+    legendary: {
+        price: 0,
+        label: 'LEGENDARY',
+        stripeLink: '',
+        features: [
+            'ALL features unlocked',
+            '64-bit precision engine (4x oversampling)',
+            'Full manual control - All modules unlocked',
+            'Multiband Compression',
+            'M/S Processing (Mid/Side)',
+            'Reference Track Matching',
+            'DDP Export for CD manufacturing',
+            'High-res WAV (24/32-bit)',
+            'Unlimited exports in all formats'
+        ],
+        modules: {
+            stereoWidth: true,
+            multiband: true,
+            ms: true
+        },
+        exportFormats: ['mp3', 'wav', 'ddp', 'flac'],
         processing: '64bit'
     }
 };
@@ -346,8 +369,9 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeStripe();
     }, 1000);
 
-    // Set initial tier state
-    switchTier('basic');
+    // Set initial tier state — use override if set, otherwise legendary for testing
+    const initTier = window._tierOverride || 'legendary';
+    switchTier(initTier);
 
 });
 
@@ -364,6 +388,15 @@ window.addEventListener('load', function() {
         exportBtn.addEventListener('click', async function(e) {
             e.preventDefault();
             e.stopPropagation();
+
+            // Legendary/premium tier: export directly without payment gate
+            if (currentTier === 'legendary' || currentTier === 'premium' ||
+                window._tierOverride === 'legendary' || window.userTier === 'legendary') {
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                    return;
+                }
+            }
 
             // Show pricing modal - user must pay before export
             if (typeof window.openPricingModal === 'function') {

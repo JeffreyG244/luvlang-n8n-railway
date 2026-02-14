@@ -647,6 +647,15 @@ async function getAvailableFeatures() {
  * Locks/unlocks premium features
  */
 async function applyTierRestrictions() {
+    // Legendary tier override — skip all restrictions
+    if (window._tierOverride === 'legendary' || window.userTier === 'legendary') {
+        document.querySelectorAll('.feature-locked').forEach(el => {
+            el.classList.remove('feature-locked');
+            el.removeAttribute('data-locked');
+            el.removeAttribute('data-upgrade-tier');
+        });
+        return;
+    }
     const subscription = await getUserSubscription();
     const features = subscription.features;
 
