@@ -10330,7 +10330,7 @@
                 // This WaveShaperNode hard-clips at 0.8913 linear (-1.0 dBTP) — instant, zero latency.
                 const safetyClipper = audioContext.createWaveShaper();
                 const safetyClipCurve = new Float32Array(65536);
-                const ceilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
+                const ceilingLinear = Math.pow(10, -1.5 / 20); // 0.8414 = -1.5 dBTP (accounts for inter-sample overshoot)
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1; // -1 to +1
                     safetyClipCurve[i] = Math.max(-ceilingLinear, Math.min(ceilingLinear, x));
@@ -13251,7 +13251,7 @@
                 // DynamicsCompressor has inherent attack time that lets transients through.
                 // This WaveShaperNode is a sample-level brickwall: instant, zero latency.
                 const ceilClipper = offlineCtx.createWaveShaper();
-                const ceilLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
+                const ceilLinear = Math.pow(10, -1.5 / 20); // 0.8414 = -1.5 dBTP (accounts for inter-sample overshoot)
                 const clipCurve = new Float32Array(65536);
                 for (let ci = 0; ci < 65536; ci++) {
                     const x = (ci / 32768) - 1;
@@ -22338,7 +22338,7 @@
                 // STAGE 7: v7.6.13d BRICKWALL CLIPPER at -1.0 dBTP — hard ceiling enforcement
                 const offlineSafetyClipper = offlineContext.createWaveShaper();
                 const offlineSafetyClipCurve = new Float32Array(65536);
-                const exportCeilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP
+                const exportCeilingLinear = Math.pow(10, -1.5 / 20); // 0.8414 = -1.5 dBTP (accounts for inter-sample overshoot)
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1;
                     offlineSafetyClipCurve[i] = Math.max(-exportCeilingLinear, Math.min(exportCeilingLinear, x));
@@ -22549,7 +22549,7 @@
                 // STAGE 6b: v7.6.13d BRICKWALL CLIPPER at -1.0 dBTP
                 const exportClipper2 = offlineContext.createWaveShaper();
                 const exportClipCurve2 = new Float32Array(65536);
-                const exportCeil2 = Math.pow(10, -1.0 / 20); // 0.8913
+                const exportCeil2 = Math.pow(10, -1.5 / 20); // 0.8414 (-1.5 dBTP for ISP safety)
                 for (let ci = 0; ci < 65536; ci++) {
                     const x = (ci / 32768) - 1;
                     exportClipCurve2[ci] = Math.max(-exportCeil2, Math.min(exportCeil2, x));
@@ -31222,7 +31222,7 @@
                     // v7.6.13d: Hard clipper at -1.0 dBTP for album tracks
                     const albumClipper = offlineCtx.createWaveShaper();
                     const albumClipCurve = new Float32Array(65536);
-                    const albumCeil = Math.pow(10, -1.0 / 20);
+                    const albumCeil = Math.pow(10, -1.5 / 20); // -1.5 dBTP for ISP safety
                     for (let ci = 0; ci < 65536; ci++) {
                         const x = (ci / 32768) - 1;
                         albumClipCurve[ci] = Math.max(-albumCeil, Math.min(albumCeil, x));

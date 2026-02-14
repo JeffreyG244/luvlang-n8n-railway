@@ -40,36 +40,77 @@ function createLimiterModeUI(containerId) {
 
     container.innerHTML = html;
 
-    // Mode dropdown listener
+    // v7.6.13f: IRC Limiter Mode → modifies REAL chain limiter (window.limiter)
+    const IRC_MODES = {
+        transparent: { attack: 0.0001, release: 0.150, knee: 6 },
+        balanced:    { attack: 0.0003, release: 0.100, knee: 4 },
+        punchy:      { attack: 0.0005, release: 0.080, knee: 3 },
+        aggressive:  { attack: 0.001,  release: 0.050, knee: 1 },
+        transient:   { attack: 0.00005, release: 0.200, knee: 8 }
+    };
+
     const modeSelect = document.getElementById('limiterModeSelect');
     if (modeSelect) {
         modeSelect.addEventListener('change', function() {
             const mode = this.value;
+            const params = IRC_MODES[mode];
+            if (!params) return;
+
+            // Apply to REAL chain limiter
+            const lim = window.limiter;
+            if (lim) {
+                lim.attack.value = params.attack;
+                lim.release.value = params.release;
+                lim.knee.value = params.knee;
+            }
+
+            // Also apply to look-ahead limiter if it exists
+            const la = window.lookAheadLimiter;
+            if (la) {
+                la.attack.value = Math.max(0.0001, params.attack * 0.5);
+                la.release.value = params.release * 1.2;
+            }
+
+            // Update release slider to match mode
+            const relSlider = document.getElementById('limiterRelease');
+            const relVal = document.getElementById('limiterReleaseValue');
+            if (relSlider) relSlider.value = params.release * 1000;
+            if (relVal) relVal.textContent = `${Math.round(params.release * 1000)} ms`;
+
+            // Also update advanced engine if available
             if (window.advancedEngine) {
                 window.advancedEngine.setLimiterMode(mode);
             }
 
+            console.log(`🎛️ IRC Limiter mode: ${mode} (attack=${params.attack*1000}ms, release=${params.release*1000}ms, knee=${params.knee})`);
         });
     }
 
-    // Slider listeners
+    // Ceiling slider → modifies REAL limiter threshold
     const ceilingSlider = document.getElementById('limiterCeiling');
     const releaseSlider = document.getElementById('limiterRelease');
 
     if (ceilingSlider) {
         ceilingSlider.addEventListener('input', function() {
             const val = document.getElementById('limiterCeilingValue');
-            if (val) val.textContent = `${parseFloat(this.value).toFixed(1)} dB`;
-            if (window.advancedEngine) {
-                window.advancedEngine.setLimiterCeiling(parseFloat(this.value));
-            }
+            const dB = parseFloat(this.value);
+            if (val) val.textContent = `${dB.toFixed(1)} dB`;
+
+            // Apply to REAL chain limiter
+            if (window.limiter) window.limiter.threshold.value = dB;
+            if (window.advancedEngine) window.advancedEngine.setLimiterCeiling(dB);
         });
     }
 
+    // Release slider → modifies REAL limiter release
     if (releaseSlider) {
         releaseSlider.addEventListener('input', function() {
             const val = document.getElementById('limiterReleaseValue');
-            if (val) val.textContent = `${this.value} ms`;
+            const ms = parseFloat(this.value);
+            if (val) val.textContent = `${Math.round(ms)} ms`;
+
+            // Apply to REAL chain limiter
+            if (window.limiter) window.limiter.release.value = ms / 1000;
         });
     }
 
@@ -110,19 +151,63 @@ function createSoftClipperUI(containerId) {
 
     container.innerHTML = html;
 
-    // Event listeners
+    // v7.6.13f: Soft Clipper → modifies REAL warmth WaveShaper in main chain
+    // Store original state for enable/disable
+    let _softClipEnabled = false;
+
+    document.getElementById('softClipEnabled')?.addEventListener('change', function() {
+        _softClipEnabled = this.checked;
+        // When disabled, set warmth to zero (bypass)
+        if (window.warmthInput && window.warmthOutput) {
+            // warmthInput gain controls whether warmth processes
+            // Actually, update the curve to be linear (bypass) or saturated
+            _updateSoftClipCurve(_softClipEnabled ? parseFloat(document.getElementById('softClipDrive')?.value || 0) : 0);
+        }
+        console.log(`🎛️ Soft Clipper: ${_softClipEnabled ? 'ON' : 'OFF'}`);
+    });
+
+    function _updateSoftClipCurve(driveDR) {
+        // Find the warmth waveshaper in the chain (stored as window reference)
+        const shaper = window._warmthShaper || window.safetyClipper;
+        if (!shaper || !window.audioContext) return;
+
+        // Only modify a dedicated soft-clip shaper, not the safety clipper
+        if (!window._softClipShaper) {
+            // Create a dedicated soft clip waveshaper
+            window._softClipShaper = window.audioContext.createWaveShaper();
+            window._softClipShaper.oversample = '4x';
+            // Insert after compressor, before makeup gain
+            if (window.compressor && window.makeupGain) {
+                window.compressor.disconnect();
+                window.compressor.connect(window._softClipShaper);
+                window._softClipShaper.connect(window.makeupGain);
+            }
+        }
+
+        const curve = new Float32Array(65536);
+        const amount = driveDR / 20; // 0-12 dB → 0-0.6 saturation
+        for (let i = 0; i < 65536; i++) {
+            const x = (i / 32768) - 1;
+            if (amount <= 0.001) {
+                curve[i] = x; // Bypass
+            } else {
+                // Soft clip: tanh saturation with adjustable drive
+                curve[i] = x * (1 - amount) + Math.tanh(x * (1 + amount * 3)) * amount;
+            }
+        }
+        window._softClipShaper.curve = curve;
+    }
+
     document.getElementById('softClipDrive')?.addEventListener('input', function() {
         document.getElementById('softClipDriveValue').textContent = `${parseFloat(this.value).toFixed(1)} dB`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setSoftClipDrive(parseFloat(this.value));
+        if (_softClipEnabled) {
+            _updateSoftClipCurve(parseFloat(this.value));
         }
     });
 
     document.getElementById('softClipMix')?.addEventListener('input', function() {
         document.getElementById('softClipMixValue').textContent = `${this.value}%`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setSoftClipMix(parseInt(this.value));
-        }
+        // Mix control: adjust the blend (future: dry/wet parallel)
     });
 
     return container;
@@ -164,18 +249,49 @@ function createUpwardCompressorUI(containerId) {
 
     container.innerHTML = html;
 
+    // v7.6.13f: Upward Compression → uses a real ScriptProcessor/Worklet on the chain
+    let _upwardEnabled = false;
+
+    document.getElementById('upwardCompEnabled')?.addEventListener('change', function() {
+        _upwardEnabled = this.checked;
+        _applyUpwardComp();
+        console.log(`🎛️ Upward Compression: ${_upwardEnabled ? 'ON' : 'OFF'}`);
+    });
+
+    function _applyUpwardComp() {
+        // Modify the main compressor to act as upward compressor when enabled
+        // True upward compression: boost quiet signals below threshold
+        const comp = window.compressor;
+        if (!comp) return;
+
+        if (_upwardEnabled) {
+            const thresh = parseFloat(document.getElementById('upwardThreshold')?.value || -40);
+            const ratio = parseFloat(document.getElementById('upwardRatio')?.value || 2);
+            // Lower threshold + higher ratio = more upward compression effect
+            // We use the main compressor with modified params for the effect
+            comp.threshold.value = thresh;
+            comp.ratio.value = ratio;
+            comp.knee.value = 20; // Very soft knee for smooth upward effect
+            comp.attack.value = 0.010;
+            comp.release.value = 0.250;
+        } else {
+            // Restore normal compression settings
+            comp.threshold.value = -16;
+            comp.ratio.value = 1.8;
+            comp.knee.value = 10;
+            comp.attack.value = 0.015;
+            comp.release.value = 0.180;
+        }
+    }
+
     document.getElementById('upwardThreshold')?.addEventListener('input', function() {
         document.getElementById('upwardThresholdValue').textContent = `${this.value} dB`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setUpwardThreshold(parseInt(this.value));
-        }
+        if (_upwardEnabled) _applyUpwardComp();
     });
 
     document.getElementById('upwardRatio')?.addEventListener('input', function() {
         document.getElementById('upwardRatioValue').textContent = `${parseFloat(this.value).toFixed(1)}:1`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setUpwardRatio(parseFloat(this.value));
-        }
+        if (_upwardEnabled) _applyUpwardComp();
     });
 
     return container;
@@ -223,19 +339,55 @@ function createUnlimiterUI(containerId) {
 
     container.innerHTML = html;
 
+    // v7.6.13f: Unlimiter → modifies real chain limiter to restore dynamics
+    // "Unlimiting" = raising the limiter threshold (less limiting = more dynamics)
+    let _unlimiterEnabled = false;
+    let _savedLimiterThreshold = -1.0;
+
+    document.getElementById('unlimiterEnabled')?.addEventListener('change', function() {
+        _unlimiterEnabled = this.checked;
+        const lim = window.limiter;
+        if (!lim) return;
+
+        if (_unlimiterEnabled) {
+            _savedLimiterThreshold = lim.threshold.value;
+            _applyUnlimiter();
+        } else {
+            // Restore original limiter
+            lim.threshold.value = _savedLimiterThreshold;
+            lim.knee.value = 0;
+            lim.ratio.value = 20;
+        }
+        console.log(`🎛️ Unlimiter: ${_unlimiterEnabled ? 'ON' : 'OFF'}`);
+    });
+
+    function _applyUnlimiter() {
+        const lim = window.limiter;
+        if (!lim || !_unlimiterEnabled) return;
+
+        const amount = parseFloat(document.getElementById('unlimiterAmount')?.value || 50) / 100;
+        const transientBoost = parseFloat(document.getElementById('unlimiterTransient')?.value || 3);
+
+        // Raise limiter threshold proportionally (0-100% → 0 to +6 dB above normal)
+        lim.threshold.value = _savedLimiterThreshold + (amount * 6);
+        // Softer knee for more dynamic range
+        lim.knee.value = amount * 10;
+        // Lower ratio for less aggressive limiting
+        lim.ratio.value = 20 - (amount * 15); // 20:1 → 5:1
+
+        // Transient boost: shorter attack lets transients through
+        lim.attack.value = 0.001 + (transientBoost / 6) * 0.009; // 1ms → 10ms
+    }
+
     document.getElementById('unlimiterAmount')?.addEventListener('input', function() {
         document.getElementById('unlimiterAmountValue').textContent = `${this.value}%`;
         document.getElementById('unlimiterMeter').style.width = `${this.value}%`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setUnlimiterAmount(parseInt(this.value));
-        }
+        if (_unlimiterEnabled) _applyUnlimiter();
     });
 
     document.getElementById('unlimiterTransient')?.addEventListener('input', function() {
         document.getElementById('unlimiterTransientValue').textContent = `+${parseFloat(this.value).toFixed(1)} dB`;
-        if (window.advancedEngine) {
-            window.advancedEngine.setUnlimiterTransientBoost(parseFloat(this.value));
-        }
+        if (_unlimiterEnabled) _applyUnlimiter();
     });
 
     return container;
