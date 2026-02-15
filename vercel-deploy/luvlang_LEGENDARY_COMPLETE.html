@@ -12,13 +12,13 @@
         (function() {
             // Create and inject loading screen CSS + HTML immediately
             var style = document.createElement('style');
-            style.textContent = '#initialLoadingScreen{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#000510 0%,#020a18 50%,#000510 100%);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease;}#initialLoadingScreen.fade-out{opacity:0;pointer-events:none;}#initLoadBar{width:240px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:24px;overflow:hidden;}#initLoadProgress{height:100%;width:0%;background:linear-gradient(90deg,#00d4ff,#b84fff,#00ff88);border-radius:3px;transition:width 2.5s cubic-bezier(0.4,0,0.2,1);}';
+            style.textContent = '#initialLoadingScreen{position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#000510 0%,#020a18 50%,#000510 100%);z-index:9999999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease;}#initialLoadingScreen.fade-out{opacity:0;pointer-events:none;}#initLoadBar{width:240px;height:3px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:24px;overflow:hidden;}#initLoadProgress{height:100%;width:0%;background:linear-gradient(90deg,#00d4ff,#b84fff,#00ff88);border-radius:3px;transition:width 2.5s cubic-bezier(0.4,0,0.2,1);}@keyframes luvlangColorFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}';
             document.head.appendChild(style);
 
             document.addEventListener('DOMContentLoaded', function() {
                 var loader = document.createElement('div');
                 loader.id = 'initialLoadingScreen';
-                loader.innerHTML = '<div style="font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#fff 0%,#00d4ff 50%,#b84fff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;">LuvLang</div><div style="font-size:0.8rem;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;">Professional Mastering Platform</div><div id="initLoadBar"><div id="initLoadProgress"></div></div>';
+                loader.innerHTML = '<div style="font-size:2.5rem;font-weight:800;background:linear-gradient(270deg,#43e97b,#00ff88,#00d4ff,#b84fff,#ff9a56,#00d4ff,#00ff88,#43e97b);background-size:300% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:luvlangColorFlow 6s ease infinite;margin-bottom:10px;">LuvLang</div><div style="font-size:0.8rem;color:#00d4ff;text-transform:uppercase;letter-spacing:2px;">Professional Mastering Platform</div><div id="initLoadBar"><div id="initLoadProgress"></div></div>';
                 setTimeout(function() { var p = document.getElementById('initLoadProgress'); if (p) p.style.width = '100%'; }, 100);
                 document.body.insertBefore(loader, document.body.firstChild);
 
@@ -472,20 +472,23 @@
             padding: 20px 0;
         }
 
+        /* Animated gradient flow for all LuvLang branding text */
+        @keyframes luvlangColorFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .logo-text {
             font-size: 1.8rem;
             font-weight: 800;
             letter-spacing: -1px;
-            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+            background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: headerLogoShine 3s ease-in-out infinite;
-        }
-
-        @keyframes headerLogoShine {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.15); }
+            animation: luvlangColorFlow 6s ease infinite;
         }
 
         .logo-subtitle {
@@ -5033,7 +5036,7 @@
                         <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); letter-spacing: 0.05em;">Configure your master in one place</div>
                     </div>
                 </div>
-                <span style="font-size: 0.55rem; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; font-weight: 600;">LUVLANG STUDIO</span>
+                <span style="font-size: 0.55rem; letter-spacing: 0.08em; font-weight: 600; background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b); background-size: 300% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: luvlangColorFlow 6s ease infinite;">LUVLANG STUDIO</span>
             </div>
 
             <!-- Main Content -->
@@ -5710,15 +5713,12 @@
                 font-weight: 800;
                 letter-spacing: -2px;
                 margin: 0 0 12px;
-                background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b);
+                background-size: 300% 100%;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
-                animation: titleShine 3s ease-in-out infinite;
-            }
-            @keyframes titleShine {
-                0%, 100% { filter: brightness(1); }
-                50% { filter: brightness(1.2); }
+                animation: luvlangColorFlow 6s ease infinite;
             }
             .splash-tagline {
                 font-size: 1.1rem;
@@ -5953,7 +5953,7 @@
                     </svg>
                 </div>
                 <!-- LuvLang text below logo -->
-                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-top: 8px;">LuvLang</div>
+                <div style="font-size: 1.8rem; font-weight: 800; background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b); background-size: 300% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: luvlangColorFlow 6s ease infinite; margin-top: 8px;">LuvLang</div>
             </div>
             <h1 class="language-title">Choose Your Language</h1>
             <p class="language-subtitle">Select your preferred language for the guided tour</p>
@@ -6291,9 +6291,12 @@
                         .loading-title {
                             font-size: 2.5rem;
                             font-weight: 700;
-                            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                            background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b);
+                            background-size: 300% 100%;
                             -webkit-background-clip: text;
                             -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                            animation: luvlangColorFlow 6s ease infinite;
                             margin-bottom: 40px;
                         }
                         .loading-bar-container {
@@ -6784,13 +6787,14 @@
             .gate-logo h1 {
                 font-size: 2.5rem;
                 font-weight: 800;
-                background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+                background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b);
+                background-size: 300% 100%;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
+                animation: luvlangColorFlow 6s ease infinite;
                 margin: 0;
                 letter-spacing: -1px;
-                text-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
             }
             @keyframes titleGradient {
                 0%, 100% { background-position: 0% 50%; }
@@ -7642,7 +7646,7 @@
                         </g>
                     </svg>
                 </div>
-                <div class="logo-text" style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">LuvLang</div>
+                <div class="logo-text" style="font-size: 2rem;">LuvLang</div>
                 <div class="logo-subtitle" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #00d4ff; margin-top: 4px; font-weight: 600;">Professional Mastering Platform</div>
                 <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 4px;">v4.2.0</div>
                 <!-- Progressive Disclosure Mode Switcher -->
