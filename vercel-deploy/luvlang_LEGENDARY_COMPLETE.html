@@ -5199,23 +5199,23 @@
                     <div id="intensityButtons" style="display: flex; gap: 6px;">
                         <button type="button" class="intensity-btn" data-level="1" onclick="selectIntensity(1)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">I</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">CLEAN</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">SUBTLE</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="2" onclick="selectIntensity(2)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">II</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">WARM</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">LIGHT</div>
                         </button>
                         <button type="button" class="intensity-btn selected" data-level="3" onclick="selectIntensity(3)" style="flex: 1; padding: 10px 4px; background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.4); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: #00d4ff;">III</div>
-                            <div style="font-size: 0.5rem; color: #00d4ff; margin-top: 2px;">PRO</div>
+                            <div style="font-size: 0.5rem; color: #00d4ff; margin-top: 2px;">BALANCED</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="4" onclick="selectIntensity(4)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">IV</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">PUNCH</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">HEAVY</div>
                         </button>
                         <button type="button" class="intensity-btn" data-level="5" onclick="selectIntensity(5)" style="flex: 1; padding: 10px 4px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; cursor: pointer; transition: all 0.15s;">
                             <div style="font-size: 0.9rem; font-weight: 700; color: rgba(255,255,255,0.7);">V</div>
-                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">LOUD</div>
+                            <div style="font-size: 0.5rem; color: rgba(255,255,255,0.4); margin-top: 2px;">MAX</div>
                         </button>
                     </div>
                 </div>
@@ -5226,11 +5226,11 @@
                     window.selectIntensity = function(level) {
                         window.selectedIntensity = level;
                         var colors = {
-                            1: { r: '67,233,123', hex: '#43e97b', name: 'CLEAN' },
-                            2: { r: '0,255,136', hex: '#00ff88', name: 'WARM' },
-                            3: { r: '0,212,255', hex: '#00d4ff', name: 'PRO' },
-                            4: { r: '255,154,86', hex: '#ff9a56', name: 'PUNCH' },
-                            5: { r: '255,87,51', hex: '#ff5733', name: 'LOUD' }
+                            1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
+                            2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
+                            3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
+                            4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
+                            5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
                         };
                         var c = colors[level] || colors[3];
                         document.querySelectorAll('.intensity-btn[data-level]').forEach(function(btn) {
@@ -5254,11 +5254,11 @@
                             }
                         });
                         var descriptions = {
-                            1: 'Transparent - Hear your mix with a polish',
-                            2: 'Clean - Subtle enhancement, audiophile-grade',
-                            3: 'Professional - Radio-ready, genre-calibrated',
-                            4: 'Punchy - Aggressive character, in-your-face',
-                            5: 'Loud - Maximum impact, club-ready'
+                            1: 'Subtle - Transparent polish, preserves your mix',
+                            2: 'Light - Gentle warmth and clarity',
+                            3: 'Balanced - Professional, radio-ready master',
+                            4: 'Heavy - Punchy, in-your-face character',
+                            5: 'Max - Full slam, maximum impact'
                         };
                         var descEl = document.getElementById('intensityDescription');
                         if (descEl) { descEl.textContent = descriptions[level]; descEl.style.color = c.hex; }
@@ -5407,22 +5407,23 @@
                     transition: all 0.2s;
                 ">QC CHECK</button>
                 <button id="scorecardTabBtn" onclick="toggleScorecardPanel()" style="
-                    padding: 10px 18px;
-                    background: linear-gradient(135deg, rgba(255,184,0,0.2) 0%, rgba(255,136,0,0.1) 100%);
-                    border: 1px solid rgba(255,184,0,0.5);
-                    border-radius: 6px;
-                    color: #ffb800;
-                    font-size: 0.65rem;
-                    font-weight: 700;
-                    letter-spacing: 0.1em;
+                    padding: 12px 24px;
+                    background: linear-gradient(135deg, rgba(255,215,0,0.25) 0%, rgba(255,165,0,0.15) 100%);
+                    border: 2px solid rgba(255,215,0,0.6);
+                    border-radius: 8px;
+                    color: #ffd700;
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                    letter-spacing: 0.15em;
                     text-transform: uppercase;
                     cursor: pointer;
                     transition: all 0.2s;
                     display: none;
                     align-items: center;
-                    gap: 6px;
-                    box-shadow: 0 0 8px rgba(255,184,0,0.15);
-                ">SCORE <span id="scorecardTabGrade" style="color: #fff; font-weight: 800;"></span></button>
+                    gap: 8px;
+                    box-shadow: 0 0 15px rgba(255,215,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+                    min-height: 44px;
+                ">&#9733; SCORE <span id="scorecardTabGrade" style="color: #fff; font-weight: 900; font-size: 0.9rem;"></span></button>
                 <button onclick="openPricingModal()" style="
                     padding: 10px 20px;
                     background: linear-gradient(180deg, rgba(0,255,136,0.15) 0%, rgba(0,255,136,0.06) 100%);
@@ -8877,10 +8878,10 @@
                             height: 6px;
                             background: linear-gradient(90deg,
                                 rgba(102, 126, 234, 0.3) 0%,
-                                rgba(0, 212, 255, 0.3) 20%,
-                                rgba(0, 255, 136, 0.3) 40%,
-                                rgba(255, 200, 0, 0.3) 60%,
-                                rgba(255, 100, 0, 0.3) 80%,
+                                rgba(102, 126, 234, 0.3) 20%,
+                                rgba(0, 212, 255, 0.3) 40%,
+                                rgba(0, 255, 136, 0.3) 60%,
+                                rgba(255, 200, 0, 0.3) 80%,
                                 rgba(255, 0, 0, 0.3) 100%
                             );
                             border-radius: 3px;
@@ -8899,13 +8900,13 @@
                                 transition: left 0.1s ease-out;
                             "></div>
                         </div>
-                        <!-- Scale labels (left=quiet, right=loud — matches needle direction) -->
+                        <!-- Scale labels — linear 6 dB/segment (v7.6.25 calibration fix) -->
                         <div style="display: flex; justify-content: space-between; margin-top: 4px;">
-                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.5);">-40</span>
-                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.7);">-24</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-18</span>
-                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-14</span>
-                            <span style="font-size: 0.45rem; color: rgba(255, 200, 100, 0.7);">-10</span>
+                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.5);">-36</span>
+                            <span style="font-size: 0.45rem; color: rgba(102, 126, 234, 0.7);">-30</span>
+                            <span style="font-size: 0.45rem; color: rgba(0, 212, 255, 0.7);">-24</span>
+                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.9); font-weight: 700;">-18</span>
+                            <span style="font-size: 0.45rem; color: rgba(0, 255, 136, 0.7);">-12</span>
                             <span style="font-size: 0.45rem; color: rgba(255, 100, 100, 0.7);">-6</span>
                         </div>
                     </div>
@@ -20871,25 +20872,13 @@
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // UPDATE VISUAL ELEMENTS - LUFS bar indicator, LED status
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                    // LUFS Bar Indicator - piecewise linear mapping calibrated to label positions
-                    // Labels are evenly spaced: -40(0%), -24(20%), -18(40%), -14(60%), -10(80%), -6(100%)
-                    // v7.6.8c5b: Fixed calibration — breakpoints now match label positions exactly
-                    // v7.6.13: Bar indicator always tracks real-time smoothed LUFS
+                    // LUFS Bar Indicator — linear dB scale (v7.6.25)
+                    // Range: -36 to -6 (30 dB), labels every 6 dB = linear mapping
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator) {
                         const barLUFS = smoothedLUFS;
-                        const clampedLUFS = Math.max(-40, Math.min(-6, barLUFS));
-                        // Piecewise linear: breakpoints aligned to evenly-spaced labels
-                        const _bkpts = [[-40,0],[-24,20],[-18,40],[-14,60],[-10,80],[-6,100]];
-                        let position = 0;
-                        for (let i = 1; i < _bkpts.length; i++) {
-                            if (clampedLUFS <= _bkpts[i][0]) {
-                                const [l0,p0] = _bkpts[i-1], [l1,p1] = _bkpts[i];
-                                position = p0 + (clampedLUFS - l0) / (l1 - l0) * (p1 - p0);
-                                break;
-                            }
-                        }
-                        if (clampedLUFS >= -6) position = 100;
+                        const clampedLUFS = Math.max(-36, Math.min(-6, barLUFS));
+                        const position = (clampedLUFS + 36) / 30 * 100;
                         lufsBarIndicator.style.left = `${position}%`;
                     }
 
@@ -21919,17 +21908,8 @@
                 // Force LUFS bar update immediately (don't wait for animation frame)
                 const lufsBarIndicatorLock = document.getElementById('lufsBarIndicator');
                 if (lufsBarIndicatorLock && lockedLUFS !== null) {
-                    const clampedLock = Math.max(-40, Math.min(-6, lockedLUFS));
-                    const _bkptsLock = [[-40,0],[-24,20],[-18,40],[-14,60],[-10,80],[-6,100]];
-                    let posLock = 0;
-                    for (let i = 1; i < _bkptsLock.length; i++) {
-                        if (clampedLock <= _bkptsLock[i][0]) {
-                            const [l0,p0] = _bkptsLock[i-1], [l1,p1] = _bkptsLock[i];
-                            posLock = p0 + (clampedLock - l0) / (l1 - l0) * (p1 - p0);
-                            break;
-                        }
-                    }
-                    if (clampedLock >= -6) posLock = 100;
+                    const clampedLock = Math.max(-36, Math.min(-6, lockedLUFS));
+                    const posLock = (clampedLock + 36) / 30 * 100;
                     lufsBarIndicatorLock.style.left = `${posLock}%`;
                 }
 
@@ -24878,7 +24858,7 @@
                     edm: 'EDM', neutral: 'Neutral'
                 };
                 const genreName = genreNameMap[activeGenre] || activeGenre;
-                const intensityLabels = { 1: 'Subtle', 2: 'Light', 3: 'Balanced', 4: 'Aggressive', 5: 'Maximum' };
+                const intensityLabels = { 1: 'Subtle', 2: 'Light', 3: 'Balanced', 4: 'Heavy', 5: 'Max' };
                 const intensityName = intensityLabels[window.selectedIntensity || 3];
 
                 // Create full-screen professional processing overlay
@@ -25371,16 +25351,16 @@
 
                 // Get genre preset and intensity (1-5 scale)
                 const genre = window.selectedPreMasterGenre || 'pop';
-                const intensity = window.selectedIntensity || 3; // 1=Subtle, 2=Light, 3=Balanced, 4=Aggressive, 5=Maximum
+                const intensity = window.selectedIntensity || 3; // 1=Subtle, 2=Light, 3=Balanced, 4=Heavy, 5=Max
 
                 // v7.6.13k: WIDE intensity range — each level sounds distinctly different
                 // Level 1 = transparent polish, Level 5 = loud aggressive slam
                 const intensityMultipliers = {
-                    1: 0.25,  // Subtle - barely there, transparent polish
-                    2: 0.55,  // Light - noticeable warmth and clarity
+                    1: 0.30,  // Subtle - transparent polish, preserves mix
+                    2: 0.60,  // Light - gentle warmth and clarity
                     3: 1.0,   // Balanced - professional standard (full preset)
-                    4: 1.40,  // Heavy - punchy, boosted, in-your-face
-                    5: 1.80   // Maximum - aggressive slam, loud and proud
+                    4: 1.50,  // Heavy - punchy, in-your-face character
+                    5: 2.0    // Max - full slam, maximum impact
                 };
                 let intensityMult = intensityMultipliers[intensity] || 1.0;
 
@@ -25443,8 +25423,8 @@
                     1: 0,      // No reduction needed
                     2: 0,      // No reduction needed
                     3: 0,      // No reduction — limiter handles headroom
-                    4: -0.5,   // Slight reduction for aggressive processing
-                    5: -1.0    // Modest reduction at maximum intensity
+                    4: -0.8,   // Moderate reduction for heavy processing
+                    5: -1.5    // Larger reduction at max intensity
                 };
                 const headroomDb = headroomCompensation[effectiveIntensity] || 0;
                 // Note: headroomDb is still available for reference but NOT applied to masterGain
@@ -25601,21 +25581,21 @@
                 // the bus comp needs to be conservative to avoid over-processing
                 // v7.6.13k: Wider compressor scaling — each level sounds different
                 const compRatioMultipliers = {
-                    1: 0.20,  // Subtle - nearly transparent
-                    2: 0.50,  // Light - gentle glue
-                    3: 0.85,  // Balanced - professional glue
-                    4: 1.20,  // Heavy - firm control, punchy
-                    5: 1.60   // Maximum - aggressive slam
+                    1: 0.25,  // Subtle - nearly transparent
+                    2: 0.55,  // Light - gentle glue
+                    3: 0.90,  // Balanced - professional glue
+                    4: 1.35,  // Heavy - firm control, punchy
+                    5: 1.80   // Max - aggressive slam
                 };
                 const compRatioMult = compRatioMultipliers[effectiveIntensity] || 1.0;
 
                 // Intensity-adaptive attack — faster = more transient control
                 const compAttackMultipliers = {
-                    1: 1.5,   // Slowest - preserve all transients
-                    2: 1.2,   // Slow - mostly transparent
+                    1: 1.6,   // Slowest - preserve all transients
+                    2: 1.25,  // Slow - mostly transparent
                     3: 1.0,   // Standard
-                    4: 0.7,   // Fast - catches transients
-                    5: 0.5    // Fastest - aggressive transient control
+                    4: 0.65,  // Fast - catches transients
+                    5: 0.40   // Fastest - aggressive transient control
                 };
                 const compAttackMult = compAttackMultipliers[effectiveIntensity] || 1.0;
 
@@ -25988,8 +25968,8 @@
                     1: 'Subtle',
                     2: 'Light',
                     3: 'Balanced',
-                    4: 'Aggressive',
-                    5: 'Maximum'
+                    4: 'Heavy',
+                    5: 'Max'
                 };
                 const intensityLabel = logIntensityLabels[intensity] || 'Balanced';
 
@@ -29776,7 +29756,7 @@
 
         };
 
-        // Processing intensity (1-5 scale: Subtle, Light, Balanced, Aggressive, Maximum)
+        // Processing intensity (1-5 scale: Subtle, Light, Balanced, Heavy, Max)
         let processingIntensity = 3;
         window.selectedIntensity = 3; // Match default UI state (Balanced)
 
@@ -29814,11 +29794,11 @@
 
             // Color palette per intensity level
             const colors = {
-                1: { r: '67,233,123', hex: '#43e97b', name: 'CLEAN' },
-                2: { r: '0,255,136', hex: '#00ff88', name: 'WARM' },
-                3: { r: '0,212,255', hex: '#00d4ff', name: 'PRO' },
-                4: { r: '255,154,86', hex: '#ff9a56', name: 'PUNCH' },
-                5: { r: '255,87,51', hex: '#ff5733', name: 'LOUD' }
+                1: { r: '67,233,123', hex: '#43e97b', name: 'SUBTLE' },
+                2: { r: '0,255,136', hex: '#00ff88', name: 'LIGHT' },
+                3: { r: '0,212,255', hex: '#00d4ff', name: 'BALANCED' },
+                4: { r: '255,154,86', hex: '#ff9a56', name: 'HEAVY' },
+                5: { r: '255,87,51', hex: '#ff5733', name: 'MAX' }
             };
             const c = colors[level] || colors[3];
 
@@ -29848,11 +29828,11 @@
 
             // Update description with color
             const descriptions = {
-                1: 'Transparent - Hear your mix with a polish',
-                2: 'Clean - Subtle enhancement, audiophile-grade',
-                3: 'Professional - Radio-ready, genre-calibrated',
-                4: 'Punchy - Aggressive character, in-your-face',
-                5: 'Loud - Maximum impact, club-ready'
+                1: 'Subtle - Transparent polish, preserves your mix',
+                2: 'Light - Gentle warmth and clarity',
+                3: 'Balanced - Professional, radio-ready master',
+                4: 'Heavy - Punchy, in-your-face character',
+                5: 'Max - Full slam, maximum impact'
             };
             const descEl = document.getElementById('intensityDescription');
             if (descEl) {
@@ -29893,65 +29873,65 @@
             // v7.6.15: ALIGNED with runActualMastering() values — switching intensity
             // after mastering now produces the EXACT same result as mastering at that level
             const profiles = {
-                1: { // TRANSPARENT — hear your mix with just a polish
-                    eqMult: 0.25,       // Matches mastering intensityMultipliers[1]
-                    compRatio: 0.20,    // Matches mastering compRatioMultipliers[1]
+                1: { // SUBTLE — transparent polish, preserves your mix
+                    eqMult: 0.30,       // Matches mastering intensityMultipliers[1]
+                    compRatio: 0.25,    // Matches mastering compRatioMultipliers[1]
                     compThreshOff: 8,   // Matches mastering thresholdOffset[1]
-                    compAttack: 1.5,    // Matches mastering compAttackMultipliers[1]
-                    warmth: 0.0,        // No saturation (matches warmthMultipliers[1]=0.0)
-                    exciter: 0,         // No harmonics (matches exciteAmounts[1])
-                    stereoWidth: 0.98,  // Matches mastering widthMultipliers[1]
+                    compAttack: 1.6,    // Matches mastering compAttackMultipliers[1]
+                    warmth: 0.0,        // No saturation
+                    exciter: 0,         // No harmonics
+                    stereoWidth: 0.98,  // Natural width
                     limiterCeil: -0.8,  // Generous ceiling
                     knee: 14,           // Very soft knee
-                    label: 'Transparent'
+                    label: 'Subtle'
                 },
-                2: { // CLEAN — subtle enhancement, audiophile-grade
-                    eqMult: 0.55,       // Matches mastering intensityMultipliers[2]
-                    compRatio: 0.50,    // Matches mastering compRatioMultipliers[2]
+                2: { // LIGHT — gentle warmth and clarity
+                    eqMult: 0.60,       // Matches mastering intensityMultipliers[2]
+                    compRatio: 0.55,    // Matches mastering compRatioMultipliers[2]
                     compThreshOff: 4,   // Matches mastering thresholdOffset[2]
-                    compAttack: 1.2,    // Matches mastering compAttackMultipliers[2]
-                    warmth: 0.015,      // Matches ~baseWarmth(0.04)*warmthMult(0.3)
-                    exciter: 1,         // Matches exciteAmounts[2]
-                    stereoWidth: 1.0,   // Matches mastering widthMultipliers[2]
+                    compAttack: 1.25,   // Matches mastering compAttackMultipliers[2]
+                    warmth: 0.015,      // Gentle warmth
+                    exciter: 1,         // Minimal harmonics
+                    stereoWidth: 1.0,   // Natural width
                     limiterCeil: -0.9,  // Standard ceiling
                     knee: 10,           // Soft knee
-                    label: 'Clean'
+                    label: 'Light'
                 },
-                3: { // PROFESSIONAL — radio-ready, genre-calibrated
+                3: { // BALANCED — professional, radio-ready master
                     eqMult: 1.0,        // Matches mastering intensityMultipliers[3]
-                    compRatio: 0.85,    // Matches mastering compRatioMultipliers[3]
+                    compRatio: 0.90,    // Matches mastering compRatioMultipliers[3]
                     compThreshOff: 0,   // Matches mastering thresholdOffset[3]
                     compAttack: 1.0,    // Matches mastering compAttackMultipliers[3]
-                    warmth: 0.025,      // Matches ~baseWarmth(0.04)*warmthMult(0.6)
-                    exciter: 2,         // Matches exciteAmounts[3]
-                    stereoWidth: 1.0,   // Matches mastering widthMultipliers[3]
+                    warmth: 0.025,      // Professional warmth
+                    exciter: 2,         // Balanced harmonics
+                    stereoWidth: 1.0,   // Natural width
                     limiterCeil: -1.0,  // Standard ceiling
                     knee: 8,            // Medium knee
-                    label: 'Professional'
+                    label: 'Balanced'
                 },
-                4: { // PUNCHY — aggressive character, in-your-face
-                    eqMult: 1.40,       // Matches mastering intensityMultipliers[4]
-                    compRatio: 1.20,    // Matches mastering compRatioMultipliers[4]
+                4: { // HEAVY — punchy, in-your-face character
+                    eqMult: 1.50,       // Matches mastering intensityMultipliers[4]
+                    compRatio: 1.35,    // Matches mastering compRatioMultipliers[4]
                     compThreshOff: -4,  // Matches mastering thresholdOffset[4]
-                    compAttack: 0.7,    // Matches mastering compAttackMultipliers[4]
-                    warmth: 0.04,       // Matches ~baseWarmth(0.04)*warmthMult(1.0)
-                    exciter: 4,         // Matches exciteAmounts[4]
-                    stereoWidth: 1.03,  // Matches mastering widthMultipliers[4]
+                    compAttack: 0.65,   // Matches mastering compAttackMultipliers[4]
+                    warmth: 0.04,       // Noticeable warmth
+                    exciter: 4,         // Strong harmonics
+                    stereoWidth: 1.03,  // Slightly wide
                     limiterCeil: -1.0,  // Standard ceiling
                     knee: 5,            // Harder knee
-                    label: 'Punchy'
+                    label: 'Heavy'
                 },
-                5: { // LOUD — maximum impact, club/streaming optimized
-                    eqMult: 1.80,       // Matches mastering intensityMultipliers[5]
-                    compRatio: 1.60,    // Matches mastering compRatioMultipliers[5]
+                5: { // MAX — full slam, maximum impact
+                    eqMult: 2.0,        // Matches mastering intensityMultipliers[5]
+                    compRatio: 1.80,    // Matches mastering compRatioMultipliers[5]
                     compThreshOff: -8,  // Matches mastering thresholdOffset[5]
-                    compAttack: 0.5,    // Matches mastering compAttackMultipliers[5]
-                    warmth: 0.052,      // Matches ~baseWarmth(0.04)*warmthMult(1.3)
-                    exciter: 6,         // Matches exciteAmounts[5]
-                    stereoWidth: 1.06,  // Matches mastering widthMultipliers[5]
+                    compAttack: 0.40,   // Matches mastering compAttackMultipliers[5]
+                    warmth: 0.06,       // Heavy warmth/saturation
+                    exciter: 6,         // Maximum harmonics
+                    stereoWidth: 1.06,  // Wide stereo
                     limiterCeil: -1.0,  // Safety ceiling
                     knee: 3,            // Hard knee = aggressive limiting
-                    label: 'Loud'
+                    label: 'Max'
                 }
             };
             const p = profiles[level] || profiles[3];
@@ -30857,12 +30837,14 @@
                     window._scorecardVisible = false;
                     // Pulse the tab button to remind user they can re-open
                     if (tabBtn) {
-                        tabBtn.style.background = 'rgba(0,212,255,0.2)';
-                        tabBtn.style.borderColor = 'rgba(0,212,255,0.5)';
+                        tabBtn.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.35) 0%, rgba(255,165,0,0.2) 100%)';
+                        tabBtn.style.borderColor = 'rgba(255,215,0,0.8)';
+                        tabBtn.style.boxShadow = '0 0 20px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
                         setTimeout(() => {
                             tabBtn.style.background = '';
                             tabBtn.style.borderColor = '';
-                        }, 2000);
+                            tabBtn.style.boxShadow = '';
+                        }, 2500);
                     }
                 }
             }, 8000);
