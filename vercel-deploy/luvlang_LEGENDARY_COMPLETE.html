@@ -11345,7 +11345,7 @@
                     },
                     setLookAhead: (ms) => {
                         lookAheadDelay.delayTime.value = ms / 1000;
-
+                        if (window.dryCompDelay) window.dryCompDelay.delayTime.value = ms / 1000;
                     }
                 };
 
@@ -12290,6 +12290,11 @@
                 const wetGain = audioContext.createGain();
                 const outputMixer = audioContext.createGain();
 
+                // Latency compensation: match the 5ms look-ahead delay on the wet path
+                // so A/B crossfade doesn't cause a time-shift skip
+                const dryCompDelay = audioContext.createDelay(0.01);
+                dryCompDelay.delayTime.value = 0.005; // must match lookAheadDelay
+
                 // START WITH ORIGINAL AUDIO (no processing)
                 // dryGain = DIRECT path (original), wetGain = PROCESSED path (mastered)
                 dryGain.gain.value = 1.0;  // Original path ON (user hears ORIGINAL track on load)
@@ -12299,6 +12304,7 @@
                 // Expose globally for A/B control and professional playback features
                 window.dryGain = dryGain;
                 window.wetGain = wetGain;
+                window.dryCompDelay = dryCompDelay;
                 window.outputMixer = outputMixer;
                 window.isMasteringApplied = false;
 
@@ -12491,8 +12497,9 @@
                 // OUTPUT ROUTING
                 // ═══════════════════════════════════════════════════════════════════════════
 
-                // DRY PATH - direct from source (bypass all processing)
-                sourceNode.connect(dryGain);
+                // DRY PATH - through latency compensation delay (matches wet path's look-ahead)
+                sourceNode.connect(dryCompDelay);
+                dryCompDelay.connect(dryGain);
                 dryGain.connect(outputMixer);
 
                 // WET PATH - through mastering chain
@@ -27103,22 +27110,6 @@
                 window.chloeNarrateMasterResult();
             }
 
-            // Show genre-specific smart hint after mastering
-            const activeGenre = window.selectedPreMasterGenre || 'pop';
-            if (typeof window.showGenreMasteringTip === 'function') {
-                window.showGenreMasteringTip(activeGenre);
-            }
-
-            // Evaluate post-mastering smart hints
-            if (typeof window.evaluateSmartHints === 'function') {
-                const platformTarget = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
-                window.evaluateSmartHints({
-                    bassEnergy: 0, highEnergy: 0, crestFactor: 10,
-                    stereoWidth: 0.5, peakDb: -1.5,
-                    lufsDeviation: Math.abs(afterLUFS - platformTarget),
-                    genre: activeGenre, afterMastering: true
-                });
-            }
 
         };
 
@@ -27470,8 +27461,12 @@
             const genreOverlay = document.getElementById('preMasteringGenreSelect');
             if (genreOverlay) genreOverlay.style.display = 'none';
 
-            // Show export format selection overlay
-            showExportFormatOverlay();
+            // Default to WAV and go straight to tier preview
+            window.selectedExportFormat = window.selectedExportFormat || 'wav';
+            window.exportFormat = window.selectedExportFormat;
+            if (typeof window.proceedToPayment === 'function') {
+                window.proceedToPayment();
+            }
         };
 
         // Export format selection overlay
@@ -27597,7 +27592,11 @@
 
         // openPricingModal — entry point from QC Check "Proceed to Export" and Export button
         window.openPricingModal = function() {
-            showExportFormatOverlay();
+            window.selectedExportFormat = window.selectedExportFormat || 'wav';
+            window.exportFormat = window.selectedExportFormat;
+            if (typeof window.proceedToPayment === 'function') {
+                window.proceedToPayment();
+            }
         };
 
         // Expose LUFS/peak getters for CONFIRMATION_TIER_PREVIEW.js
@@ -27615,14 +27614,6 @@
 
             // Close format overlay
             closeExportFormatOverlay();
-
-            // Legendary tier: export directly without payment gate
-            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
-                }
-            }
 
             // Use Stripe payment system (downloadMaster from STRIPE_PAYMENT_INTEGRATION.js)
             if (typeof downloadMaster === 'function') {
@@ -29970,7 +29961,8 @@
             if (!ac) return;
 
             const now = ac.currentTime;
-            const ramp = 0.08; // smooth transition time
+            // Slower ramp while Chloe is speaking so changes don't spike over her voice
+            const ramp = window._isSpeaking ? 0.5 : 0.08;
             const genre = window.selectedPreMasterGenre || 'pop';
             const aiScale = window._processingScale || 1.0;
             const aiProfile = window.aiTrackProfile;
@@ -31730,22 +31722,20 @@
             if (!window.dryGain || !window.wetGain || !window.audioContext) return;
             const ac = window.audioContext;
             const now = ac.currentTime;
-            const fade = 0.035;
-            window.dryGain.gain.cancelScheduledValues(0);
-            window.wetGain.gain.cancelScheduledValues(0);
+            const fade = 0.08; // Match base handler crossfade time
+            window.dryGain.gain.cancelScheduledValues(now);
+            window.wetGain.gain.cancelScheduledValues(now);
+            window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+            window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
 
             if (window.abCompareMode) {
                 // Switching to ORIGINAL (A) — apply gain compensation
                 const dryTarget = (window._gainMatchEnabled && window._gainMatchCompensation > 0)
                     ? Math.pow(10, window._gainMatchCompensation / 20) : 1.0;
-                window.dryGain.gain.setValueAtTime(0.0, now);
-                window.wetGain.gain.setValueAtTime(1.0, now);
                 window.dryGain.gain.linearRampToValueAtTime(dryTarget, now + fade);
                 window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
             } else {
                 // Switching to MASTERED (B) — normal level
-                window.dryGain.gain.setValueAtTime(1.0, now);
-                window.wetGain.gain.setValueAtTime(0.0, now);
                 window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
                 window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
             }
@@ -32000,9 +31990,7 @@
         let _hintsShownThisSession = new Set();
 
         window.showSmartHint = function(message, icon) {
-            if (!message) return;
-            const container = document.getElementById('smartHintsContainer');
-            if (!container) return;
+            return; // Disabled — no popup hints
 
             const hint = document.createElement('div');
             hint.style.cssText = `
@@ -33129,19 +33117,31 @@
             return voice + ':' + text;
         }
 
-        // ── Helper: duck music, play audio blob, restore volume ──
+        // ── Helper: duck music at output stage, play audio blob, restore volume ──
+        // Ducks outputMixer.gain (after all processing) so the mastering chain
+        // can't amplify the signal back up and drown out Chloe's voice
         function duckMusicVolume() {
-            const musicPlayer = document.getElementById('audioElement');
-            if (musicPlayer && !musicPlayer.paused) {
-                musicDuckedVolume = musicPlayer.volume;
-                musicPlayer.volume = 0.12;
+            window._isSpeaking = true;
+            const ac = window.audioContext;
+            const mixer = window.outputMixer;
+            if (ac && mixer) {
+                if (musicDuckedVolume === null) musicDuckedVolume = mixer.gain.value;
+                const now = ac.currentTime;
+                mixer.gain.cancelScheduledValues(now);
+                mixer.gain.setValueAtTime(mixer.gain.value, now);
+                mixer.gain.linearRampToValueAtTime(0.12, now + 0.15);
             }
         }
 
         function restoreMusicVolume() {
-            const mp = document.getElementById('audioElement');
-            if (mp && musicDuckedVolume !== null) {
-                mp.volume = musicDuckedVolume;
+            window._isSpeaking = false;
+            const ac = window.audioContext;
+            const mixer = window.outputMixer;
+            if (ac && mixer && musicDuckedVolume !== null) {
+                const now = ac.currentTime;
+                mixer.gain.cancelScheduledValues(now);
+                mixer.gain.setValueAtTime(mixer.gain.value, now);
+                mixer.gain.linearRampToValueAtTime(musicDuckedVolume, now + 0.3);
                 musicDuckedVolume = null;
             }
         }

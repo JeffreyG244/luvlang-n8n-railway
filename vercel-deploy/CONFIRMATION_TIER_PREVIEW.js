@@ -1500,15 +1500,7 @@
                 closeExportFormatOverlay();
             }
 
-            // Legendary tier: export directly without payment gate
-            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
-                }
-            }
-
-            // Non-legendary: open the confirmation + tier preview modal
+            // Always show tier preview modal so users can compare tiers
             openModal();
         };
     }

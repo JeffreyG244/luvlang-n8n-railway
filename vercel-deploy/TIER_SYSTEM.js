@@ -391,40 +391,13 @@ window.addEventListener('load', function() {
             e.preventDefault();
             e.stopPropagation();
 
-            // Determine what happens AFTER format selection
-            const afterFormatSelected = function() {
-                // Sync format from Chloe guide to export system
-                if (window.tourSelectedFormat) {
-                    window.selectedExportFormat = window.tourSelectedFormat;
-                    window.exportFormat = window.tourSelectedFormat;
-                }
-
-                // Legendary/premium tier: export directly without payment gate
-                if (currentTier === 'legendary' || currentTier === 'premium' ||
-                    window._tierOverride === 'legendary' || window.userTier === 'legendary') {
-                    if (typeof window.performExport === 'function') {
-                        window.performExport();
-                        return;
-                    }
-                }
-
-                // Go directly to tier comparison (skip duplicate format picker)
-                if (typeof window.proceedToPayment === 'function') {
-                    window.proceedToPayment();
-                } else if (typeof window.openPricingModal === 'function') {
-                    window.openPricingModal();
-                } else {
-                    console.error('❌ Pricing modal not found');
-                    (typeof showLuvLangToast==='function'?showLuvLangToast('Please wait for the page to fully load, then try again.'):void 0);
-                }
-            };
-
-            // Show Chloe's export guide first (format picker), then proceed
-            if (typeof window.showExportGuide === 'function') {
-                window.showExportGuide(afterFormatSelected);
+            // Set default format and go straight to tier preview
+            window.selectedExportFormat = window.selectedExportFormat || 'wav';
+            window.exportFormat = window.selectedExportFormat;
+            if (typeof window.proceedToPayment === 'function') {
+                window.proceedToPayment();
             } else {
-                // Fallback if guide not loaded
-                afterFormatSelected();
+                console.error('proceedToPayment not available');
             }
         });
 
