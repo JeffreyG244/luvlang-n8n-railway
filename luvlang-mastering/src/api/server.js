@@ -63,7 +63,17 @@ const log = {
 // Security headers
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: config.isProd ? undefined : false,
+    contentSecurityPolicy: config.isProd ? {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "js.stripe.com"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "*.supabase.co", "api.stripe.com"],
+            frameSrc: ["checkout.stripe.com"],
+            frameAncestors: ["'none'"],
+        }
+    } : false,
     hsts: config.isProd ? { maxAge: 31536000, includeSubDomains: true } : false,
 }));
 
@@ -97,7 +107,7 @@ app.use(express.json({ limit: '5mb' }));
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 500 * 1024 * 1024, // 500MB max per file
+        fileSize: 100 * 1024 * 1024, // 100MB max per file (keeps total RAM bounded)
         files: 10,
         fields: 20,
         fieldSize: 1024 * 1024 // 1MB max for non-file fields
@@ -172,7 +182,7 @@ const validateApiKey = async (req, res, next) => {
     if (!apiKey.startsWith('lm_') || apiKey.length < 10) {
         return res.status(401).json({
             success: false,
-            error: 'Invalid API key format. Keys start with lm_ and are at least 10 characters.'
+            error: 'Invalid API key format'
         });
     }
 
@@ -186,7 +196,7 @@ const validateApiKey = async (req, res, next) => {
     }
 
     if (!user) {
-        log.warn('Invalid API key attempt:', apiKey.slice(0, 6) + '***');
+        log.warn('Invalid API key attempt: hash=' + keyHash.slice(0, 8));
         return res.status(401).json({
             success: false,
             error: 'Invalid or expired API key'
@@ -233,6 +243,13 @@ function validateSettings(body) {
         } else if (typeof body.settings === 'object') {
             settings = body.settings;
         }
+    }
+
+    // Reject unknown top-level keys
+    const allowedKeys = ['eq', 'dynamics', 'stereo', 'masterGain', 'preset', 'targetPlatform'];
+    const unknownKeys = Object.keys(settings).filter(k => !allowedKeys.includes(k));
+    if (unknownKeys.length > 0) {
+        return { error: `Unknown settings fields: ${unknownKeys.join(', ')}` };
     }
 
     // Validate EQ bands if present
@@ -351,8 +368,7 @@ app.get(`/api/${API_VERSION}/docs`, (req, res) => {
         baseUrl: `/api/${API_VERSION}`,
         authentication: {
             type: 'API Key',
-            header: 'X-API-Key',
-            format: 'lm_xxxxxxxxxxxxx'
+            header: 'X-API-Key'
         },
         endpoints: getEndpointDocs()
     });
@@ -423,9 +439,10 @@ app.post(`/api/${API_VERSION}/analyze/spectrum`,
                 return res.status(400).json({ success: false, error: 'No audio file provided' });
             }
 
-            let fftSize = parseInt(req.body.fftSize) || 8192;
-            // Ensure power of 2
-            fftSize = Math.pow(2, Math.round(Math.log2(Math.max(512, Math.min(32768, fftSize)))));
+            let fftSize = parseInt(req.body.fftSize, 10);
+            if (isNaN(fftSize) || fftSize < 512 || fftSize > 32768) fftSize = 8192;
+            // Snap to nearest power of 2
+            fftSize = Math.pow(2, Math.round(Math.log2(fftSize)));
 
             const parsed = parseUploadedAudio(req.file.buffer);
             const spectrum = analyzeSpectrum(parsed, fftSize);
