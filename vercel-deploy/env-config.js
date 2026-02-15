@@ -4,9 +4,9 @@
 // DO NOT EDIT - changes will be overwritten on next deploy
 
 window.__ENV__ = {
-    SUPABASE_URL: "",
-    SUPABASE_ANON_KEY: "",
-    STRIPE_PUBLIC_KEY: "",
+    SUPABASE_URL: "https://jzclawsctaczhgvfpssx.supabase.co",
+    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6Y2xhd3NjdGFjemhndmZwc3N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1MjE2MDEsImV4cCI6MjA4NDA5NzYwMX0.3c08nfLITB4Z-DUZv4f-35CoZN7TXBHLgktgqB5c0K0",
+    STRIPE_PUBLIC_KEY: "pk_live_51T140e1lp4jDhuWynSUqw0CWb0D5gFJ04G41ea3b1FDaR7yasAoxzny8zdSVM2IuV5xyCMl6MwRx3CY5e1QiQrcG00Q8b4qnCn",
     STRIPE_LINK_BASIC: "",
     STRIPE_LINK_ADVANCED: "",
     STRIPE_LINK_PREMIUM: "",
