@@ -181,11 +181,23 @@ class AppState {
         if (this.isReplaying) return;
 
         const oldValue = this.get(path);
-        if (JSON.stringify(oldValue) === JSON.stringify(value)) return;
+
+        // Fast reference equality check (covers primitives and same-object)
+        if (oldValue === value) return;
+
+        // Deep equality via serialization (serialize once, reuse for history)
+        let oldSerialized, newSerialized;
+        try {
+            oldSerialized = JSON.stringify(oldValue);
+            newSerialized = JSON.stringify(value);
+        } catch {
+            // Non-serializable values (e.g. AudioBuffer) — skip equality check
+        }
+        if (oldSerialized !== undefined && oldSerialized === newSerialized) return;
 
         // Save to history before change
         if (saveHistory) {
-            this.saveToHistory(path, oldValue, value);
+            this.saveToHistory(path, oldValue, value, oldSerialized, newSerialized);
         }
 
         // Update state
@@ -270,17 +282,27 @@ class AppState {
     /**
      * Save state change to history
      */
-    saveToHistory(path, oldValue, newValue) {
+    saveToHistory(path, oldValue, newValue, oldSerialized, newSerialized) {
         // Remove future history if we're not at the end
         if (this.historyIndex < this.history.length - 1) {
             this.history = this.history.slice(0, this.historyIndex + 1);
         }
 
+        // Deep copy via pre-serialized strings (avoids redundant serialization)
+        let oldCopy, newCopy;
+        try {
+            oldCopy = oldSerialized !== undefined ? JSON.parse(oldSerialized) : oldValue;
+            newCopy = newSerialized !== undefined ? JSON.parse(newSerialized) : newValue;
+        } catch {
+            oldCopy = oldValue;
+            newCopy = newValue;
+        }
+
         // Add to history
         this.history.push({
             path,
-            oldValue: JSON.parse(JSON.stringify(oldValue)),
-            newValue: JSON.parse(JSON.stringify(newValue)),
+            oldValue: oldCopy,
+            newValue: newCopy,
             timestamp: Date.now(),
             description: this.getActionDescription(path, newValue)
         });

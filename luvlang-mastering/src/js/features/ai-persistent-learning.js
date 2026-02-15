@@ -234,7 +234,13 @@ class AILearningEngine {
             // Use local storage as fallback
             const stored = localStorage.getItem('luvlang_ai_profile');
             if (stored) {
-                this.userProfile = UserProfile.fromJSON(JSON.parse(stored));
+                try {
+                    this.userProfile = UserProfile.fromJSON(JSON.parse(stored));
+                } catch {
+                    // Corrupted data — start fresh
+                    localStorage.removeItem('luvlang_ai_profile');
+                    this.userProfile = new UserProfile('local');
+                }
             } else {
                 this.userProfile = new UserProfile('local');
             }

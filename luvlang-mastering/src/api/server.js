@@ -853,7 +853,8 @@ async function getUserByApiKeyFromDB(apiKey) {
             tier: data.users.tier,
             createdAt: data.users.created_at
         };
-    } catch {
+    } catch (error) {
+        log.error('getUserByApiKeyFromDB failed:', error.message);
         return null;
     }
 }

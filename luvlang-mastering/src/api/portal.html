@@ -1082,6 +1082,13 @@
                     const data = await response.json();
 
                     if (data.success && data.data.url) {
+                        // Validate redirect URL — only allow Stripe or same-origin
+                        const redirectUrl = new URL(data.data.url, window.location.origin);
+                        const trustedHosts = [window.location.hostname, 'checkout.stripe.com', 'billing.stripe.com'];
+                        if (!trustedHosts.includes(redirectUrl.hostname)) {
+                            showPortalToast('Untrusted redirect blocked');
+                            return;
+                        }
                         window.location.href = data.data.url;
                     } else {
                         showPortalToast(data.error || 'Failed to start checkout');

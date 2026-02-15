@@ -380,21 +380,28 @@ class SubscriptionManager {
         const currentMonth = new Date().toISOString().slice(0, 7);
 
         try {
+            const newAmount = (this.usage?.[action] || 0) + amount;
+
             // Upsert usage record
-            const { data: _data, error: _error } = await this.supabase
+            const { error } = await this.supabase
                 .from('usage')
                 .upsert({
                     user_id: this.currentUser.id,
                     period: currentMonth,
-                    [action]: (this.usage?.[action] || 0) + amount,
+                    [action]: newAmount,
                     updated_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id,period'
                 });
 
-            // Update local usage
+            if (error) {
+                console.error('[SubscriptionManager] Failed to record usage:', error);
+                return;
+            }
+
+            // Only update local state after confirmed write
             if (!this.usage) this.usage = {};
-            this.usage[action] = (this.usage[action] || 0) + amount;
+            this.usage[action] = newAmount;
 
             eventBus.emit(Events.STATE_CHANGE, { path: 'usage', value: this.usage });
         } catch (error) {
@@ -641,9 +648,9 @@ class PricingUI {
                             ${currentTierId === 'free' ? 'Start Free Trial' : 'Upgrade'}
                         </button>
                     ` : `
-                        <button class="btn btn-contact" onclick="window.location.href='mailto:enterprise@luvlang.studio'">
+                        <a class="btn btn-contact" href="mailto:enterprise@luvlang.studio">
                             Contact Sales
-                        </button>
+                        </a>
                     `}
                 </div>
             </div>

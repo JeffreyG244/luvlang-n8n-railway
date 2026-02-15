@@ -7,7 +7,9 @@
 
 import { eventBus, Events } from '../core/event-bus.js';
 import { appState } from '../core/app-state.js';
-import { resolveContainer, escapeHtml } from '../shared/utils.js';
+import { resolveContainer, escapeHtml, showToast } from '../shared/utils.js';
+
+const MAX_FILE_SIZE_MB = 500;
 
 class BatchProcessor {
     constructor(container, audioContext) {
@@ -226,6 +228,11 @@ class BatchProcessor {
         );
 
         for (const file of audioFiles) {
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > MAX_FILE_SIZE_MB) {
+                showToast(`${file.name} exceeds ${MAX_FILE_SIZE_MB} MB limit`, { type: 'error' });
+                continue;
+            }
             await this.addToQueue(file);
         }
 

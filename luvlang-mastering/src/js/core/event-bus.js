@@ -57,6 +57,7 @@ class EventBus {
     off(event, callback) {
         if (this.events.has(event)) {
             this.events.get(event).delete(callback);
+            this.onceEvents.delete(callback);
 
             if (this.events.get(event).size === 0) {
                 this.events.delete(event);
@@ -95,6 +96,7 @@ class EventBus {
             this.events.delete(event);
         } else {
             this.events.clear();
+            this.onceEvents.clear();
         }
     }
 
