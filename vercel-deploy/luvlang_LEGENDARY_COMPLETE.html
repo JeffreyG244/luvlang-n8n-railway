@@ -4451,9 +4451,11 @@
                 if (iconEl) iconEl.textContent = '📀';
                 // Sync selections to sidebar export controls
                 updateTourFormatSummary();
-                // Trigger the actual export
-                const exportBtn = document.getElementById('exportBtn');
-                if (exportBtn) exportBtn.click();
+                // Call the export callback (pricing modal or performExport)
+                if (typeof window._exportGuideCallback === 'function') {
+                    window._exportGuideCallback();
+                    window._exportGuideCallback = null;
+                }
                 return;
             }
 
@@ -23091,33 +23093,27 @@
             }
         };
 
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // OLD EXPORT BUTTON HANDLER - DISABLED: Now handled by TIER_SYSTEM.js payment gate
-        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        /*
         // ═══════════════════════════════════════════════════════════════════════
         // CHLOE EXPORT GUIDE — Shows premium format picker before export
+        // Called by TIER_SYSTEM.js before pricing modal
         // ═══════════════════════════════════════════════════════════════════════
-        window.showExportGuide = function() {
-            if (!audioBuffer) {
-                showLuvLangToast('Please upload an audio file first');
-                return;
-            }
-            // Set export mode flag
+        window.showExportGuide = function(onComplete) {
+            // Store callback for after format selection
+            window._exportGuideCallback = onComplete || null;
             window._exportGuideActive = true;
 
             // Update UI for export context
-            const confirmBtn = document.getElementById('tourFormatConfirmBtn');
-            if (confirmBtn) confirmBtn.textContent = 'Export My Master →';
-            const titleEl = document.getElementById('tourFormatTitle');
+            var confirmBtn = document.getElementById('tourFormatConfirmBtn');
+            if (confirmBtn) confirmBtn.textContent = 'Continue to Export →';
+            var titleEl = document.getElementById('tourFormatTitle');
             if (titleEl) titleEl.textContent = 'Export Your Mastered Track';
-            const subtitleEl = document.getElementById('tourFormatSubtitle');
+            var subtitleEl = document.getElementById('tourFormatSubtitle');
             if (subtitleEl) subtitleEl.textContent = 'Chloe recommends WAV 24-bit for the best quality';
-            const iconEl = document.getElementById('tourFormatIcon');
+            var iconEl = document.getElementById('tourFormatIcon');
             if (iconEl) iconEl.textContent = '🎧';
 
             // Show the premium format zone
-            const formatZone = document.getElementById('tourFormatZone');
+            var formatZone = document.getElementById('tourFormatZone');
             if (formatZone) {
                 formatZone.style.display = 'block';
                 formatZone.style.animation = 'fadeIn 0.3s ease';
@@ -23125,55 +23121,20 @@
 
             // Have Chloe guide the user
             if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
-                const hist = window._masteringHistory;
-                const last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
-                const gradeText = last ? `${last.grade}` : '';
-                let msg = `Time to export! `;
-                if (gradeText) msg += `Your master scored an ${gradeText}. `;
-                msg += `WAV is the best quality — lossless at 24-bit. FLAC gives you the same quality but smaller file size. MP3 is great for streaming and sharing. Pick your format and bit depth, then we'll get your track ready to go.`;
+                var hist = window._masteringHistory;
+                var last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
+                var gradeText = last ? last.grade : '';
+                var msg = 'Time to export! ';
+                if (gradeText) msg += 'Your master scored an ' + gradeText + '. ';
+                msg += 'WAV is the best quality — lossless at 24-bit. FLAC gives you the same quality but smaller file size. MP3 is great for streaming and sharing. Pick your format and bit depth, then we will get your track ready to go.';
                 window.speakWithDucking(msg);
             }
         };
 
-        document.getElementById('exportBtn').addEventListener('click', async () => {
-            // If export guide hasn't been shown yet, show it first
-            if (!window._exportGuideActive && !window._exportGuideCompleted) {
-                window.showExportGuide();
-                return;
-            }
-            // Reset the flag so guide shows again next time
-            window._exportGuideCompleted = false;
-
-            if (!audioBuffer) {
-                showLuvLangToast('Please upload an audio file first');
-                return;
-            }
-
-            try {
-
-                // Get selected format
-                const formatBtn = document.querySelector('.export-format-btn.active');
-                const format = formatBtn ? formatBtn.dataset.format : 'wav';
-
-                // Show progress
-                const exportBtn = document.getElementById('exportBtn');
-                const originalText = exportBtn.textContent;
-                exportBtn.textContent = '⏳ Rendering...';
-                exportBtn.disabled = true;
-
-                // PROFESSIONAL EXPORT: Use OfflineAudioContext for pristine quality
-                // This renders the entire audio file with all processing applied
-
-                const sampleRate = 48000; // Professional standard: 48kHz
-                const duration = audioBuffer.duration;
-                const numberOfChannels = audioBuffer.numberOfChannels;
-
-                // Create offline context for rendering
-                const offlineContext = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
-                    numberOfChannels,
-                    sampleRate * duration,
-                    sampleRate
-                );
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // OLD EXPORT BUTTON HANDLER - DISABLED: Now handled by TIER_SYSTEM.js payment gate
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        /*
 
                 // Create buffer source
                 const source = offlineContext.createBufferSource();

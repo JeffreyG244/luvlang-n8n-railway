@@ -391,21 +391,32 @@ window.addEventListener('load', function() {
             e.preventDefault();
             e.stopPropagation();
 
-            // Legendary/premium tier: export directly without payment gate
-            if (currentTier === 'legendary' || currentTier === 'premium' ||
-                window._tierOverride === 'legendary' || window.userTier === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
+            // Determine what happens AFTER format selection
+            const afterFormatSelected = function() {
+                // Legendary/premium tier: export directly without payment gate
+                if (currentTier === 'legendary' || currentTier === 'premium' ||
+                    window._tierOverride === 'legendary' || window.userTier === 'legendary') {
+                    if (typeof window.performExport === 'function') {
+                        window.performExport();
+                        return;
+                    }
                 }
-            }
 
-            // Show pricing modal - user must pay before export
-            if (typeof window.openPricingModal === 'function') {
-                window.openPricingModal();
+                // Show pricing modal - user must pay before export
+                if (typeof window.openPricingModal === 'function') {
+                    window.openPricingModal();
+                } else {
+                    console.error('❌ Pricing modal not found');
+                    (typeof showLuvLangToast==='function'?showLuvLangToast('Please wait for the page to fully load, then try again.'):void 0);
+                }
+            };
+
+            // Show Chloe's export guide first (format picker), then proceed
+            if (typeof window.showExportGuide === 'function') {
+                window.showExportGuide(afterFormatSelected);
             } else {
-                console.error('❌ Pricing modal not found');
-                (typeof showLuvLangToast==='function'?showLuvLangToast('Please wait for the page to fully load, then try again.'):void 0);
+                // Fallback if guide not loaded
+                afterFormatSelected();
             }
         });
 
