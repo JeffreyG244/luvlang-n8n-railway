@@ -22030,8 +22030,14 @@
 
             // Reset dry/wet crossfade — restore original (dry) path
             if (window.dryGain && window.wetGain && audioContext) {
-                window.dryGain.gain.setTargetAtTime(1.0, audioContext.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(0.0, audioContext.currentTime, 0.05);
+                const now = audioContext.currentTime;
+                const fade = 0.035;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.wetGain.gain.cancelScheduledValues(0);
+                window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
             }
 
             // Clear AI track profile so fresh analysis runs on re-master
@@ -22255,10 +22261,10 @@
                     if (window.dryGain && window.wetGain && ac) {
                         const now = ac.currentTime;
                         const fade = 0.035;
-                        window.dryGain.gain.cancelScheduledValues(now);
-                        window.wetGain.gain.cancelScheduledValues(now);
-                        window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
-                        window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                        window.dryGain.gain.cancelScheduledValues(0);
+                        window.wetGain.gain.cancelScheduledValues(0);
+                        window.dryGain.gain.setValueAtTime(0.0, now);
+                        window.wetGain.gain.setValueAtTime(1.0, now);
                         window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
                         window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
                     }
@@ -22298,10 +22304,10 @@
                     if (window.dryGain && window.wetGain && ac) {
                         const now = ac.currentTime;
                         const fade = 0.035;
-                        window.dryGain.gain.cancelScheduledValues(now);
-                        window.wetGain.gain.cancelScheduledValues(now);
-                        window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
-                        window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                        window.dryGain.gain.cancelScheduledValues(0);
+                        window.wetGain.gain.cancelScheduledValues(0);
+                        window.dryGain.gain.setValueAtTime(1.0, now);
+                        window.wetGain.gain.setValueAtTime(0.0, now);
                         window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
                         window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
                     }
@@ -28349,16 +28355,22 @@
             // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
+                const now = ac.currentTime;
+                const fade = 0.035;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.wetGain.gain.cancelScheduledValues(0);
                 if (isActive) {
                     // Switch to UNMASTERED - raw unprocessed audio
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Unmastered ON
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Mastered OFF
-
+                    window.dryGain.gain.setValueAtTime(0.0, now);
+                    window.wetGain.gain.setValueAtTime(1.0, now);
+                    window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
                 } else {
                     // Switch to MASTERED - fully processed audio
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);  // Unmastered OFF
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);  // Mastered ON
-
+                    window.dryGain.gain.setValueAtTime(1.0, now);
+                    window.wetGain.gain.setValueAtTime(0.0, now);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
                 }
             } else {
                 console.warn('⚠️ Toggle: Audio nodes not available');
@@ -28400,17 +28412,22 @@
             if (isMastered) {
                 // MASTERED - play processed audio at target LUFS
                 if (window.dryGain && window.wetGain && ac) {
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    const now = ac.currentTime;
+                    const fade = 0.035;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(1.0, now);
+                    window.wetGain.gain.setValueAtTime(0.0, now);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
                 }
 
                 // RESTORE saved makeup gain when switching back to mastered
                 if (makeupGain && window.toggleSavedMakeupGain !== null) {
-                    makeupGain.gain.setTargetAtTime(window.toggleSavedMakeupGain, ac.currentTime, 0.02);
-
+                    makeupGain.gain.setValueAtTime(window.toggleSavedMakeupGain, ac.currentTime);
                 }
                 if (masterGain && window.toggleSavedMasterGain !== null) {
-                    masterGain.gain.setTargetAtTime(window.toggleSavedMasterGain, ac.currentTime, 0.02);
+                    masterGain.gain.setValueAtTime(window.toggleSavedMasterGain, ac.currentTime);
                 }
 
                 window.abCompareMode = false;
@@ -28437,8 +28454,14 @@
                 }
 
                 if (window.dryGain && window.wetGain && ac) {
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                    const now = ac.currentTime;
+                    const fade = 0.035;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(0.0, now);
+                    window.wetGain.gain.setValueAtTime(1.0, now);
+                    window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
                 }
                 window.abCompareMode = true;
 
@@ -28763,7 +28786,10 @@
             // Reset dry gain to normal
             if (window.dryGain && window.audioContext) {
                 const targetGain = window.abCompareMode ? 1.0 : 0.0;
-                window.dryGain.gain.setTargetAtTime(targetGain, window.audioContext.currentTime, 0.05);
+                const now = window.audioContext.currentTime;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                window.dryGain.gain.linearRampToValueAtTime(targetGain, now + 0.035);
             }
         }
 
@@ -29319,10 +29345,18 @@
 
             // Dry path stays pure — NO EQ filters inserted into original signal
             // Genre EQ is only applied through the mastering chain when user clicks PROCESS
+            // v7.6.27: Only switch to dry BEFORE mastering. After mastering, keep playing
+            // the mastered audio — genre selection just configures the next mastering run.
             const ac = window.audioContext;
-            if (ac && window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+            if (ac && window.dryGain && window.wetGain && !window.isMasteringApplied) {
+                const now = ac.currentTime;
+                const fade = 0.035;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.wetGain.gain.cancelScheduledValues(0);
+                window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
             }
             console.log(`🎵 Genre selected: ${genre} (EQ applied only during mastering)`);
 
@@ -29773,8 +29807,14 @@
 
             // Switch to UNMASTERED audio path
             if (window.dryGain && window.wetGain) {
-                window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);
+                const now = ac.currentTime;
+                const fade = 0.035;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.wetGain.gain.cancelScheduledValues(0);
+                window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
             }
 
             // No preview EQ to reset — dry path is always clean
@@ -31651,20 +31691,25 @@
         window.applyGainMatchedAB = function() {
             if (!window.dryGain || !window.wetGain || !window.audioContext) return;
             const ac = window.audioContext;
+            const now = ac.currentTime;
+            const fade = 0.035;
+            window.dryGain.gain.cancelScheduledValues(0);
+            window.wetGain.gain.cancelScheduledValues(0);
 
             if (window.abCompareMode) {
                 // Switching to ORIGINAL (A) — apply gain compensation
-                if (window._gainMatchEnabled && window._gainMatchCompensation > 0) {
-                    const linearGain = Math.pow(10, window._gainMatchCompensation / 20);
-                    window.dryGain.gain.setTargetAtTime(linearGain, ac.currentTime, 0.02);
-                } else {
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
-                }
-                window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
+                const dryTarget = (window._gainMatchEnabled && window._gainMatchCompensation > 0)
+                    ? Math.pow(10, window._gainMatchCompensation / 20) : 1.0;
+                window.dryGain.gain.setValueAtTime(0.0, now);
+                window.wetGain.gain.setValueAtTime(1.0, now);
+                window.dryGain.gain.linearRampToValueAtTime(dryTarget, now + fade);
+                window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
             } else {
                 // Switching to MASTERED (B) — normal level
-                window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
-                window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                window.dryGain.gain.setValueAtTime(1.0, now);
+                window.wetGain.gain.setValueAtTime(0.0, now);
+                window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
             }
         };
 
