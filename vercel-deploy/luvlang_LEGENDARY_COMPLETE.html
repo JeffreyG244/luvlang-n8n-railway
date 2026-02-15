@@ -778,7 +778,7 @@
 
         .spectrum-panel canvas#spectrumCanvas {
             width: 100%;
-            height: 400px;
+            height: 220px;
             background: linear-gradient(180deg,
                 rgba(0, 0, 0, 1) 0%,
                 rgba(5, 5, 12, 1) 30%,
@@ -797,7 +797,7 @@
             top: 42px;
             left: 0;
             width: 100%;
-            height: 400px;
+            height: 220px;
             pointer-events: none;
             background: transparent;
             z-index: 100;
@@ -4759,10 +4759,10 @@
         <button id="floatingFixAllBtn" onclick="fixRemainingIssues()" title="Fix All Remaining Issues" style="
             display: none;
             padding: 6px 14px;
-            background: linear-gradient(135deg, rgba(255,107,107,0.25), rgba(255,215,0,0.25));
-            border: 1px solid rgba(255,107,107,0.5);
+            background: linear-gradient(135deg, rgba(0,255,136,0.2), rgba(0,212,255,0.2));
+            border: 1px solid rgba(0,255,136,0.4);
             border-radius: 8px;
-            color: #ffd700;
+            color: #00ff88;
             font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
@@ -8042,9 +8042,9 @@
                     </div>
                 </div>
                 <div style="position: relative;">
-                    <canvas id="spectrumCanvas" width="2000" height="400"></canvas>
+                    <canvas id="spectrumCanvas" width="2000" height="220"></canvas>
                     <!-- Overlay canvas for 2D grid + peak dots (WebGL can't share context with 2D) -->
-                    <canvas id="spectrumOverlayCanvas" width="2000" height="400"></canvas>
+                    <canvas id="spectrumOverlayCanvas" width="2000" height="220"></canvas>
                     <!-- Frequency hover tooltip - Premium Design -->
                     <div id="spectrumTooltip" style="
                         position: absolute;
@@ -8639,14 +8639,6 @@
                 <!-- Mono Check -->
                 <button class="transport-btn" id="monoCheckBtn" onclick="toggleMonoCheck()" title="Check Mono Compatibility (M)">
                     🔊 Mono
-                </button>
-
-                <!-- Separator -->
-                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
-
-                <!-- Fix All Issues -->
-                <button class="transport-btn" id="fixAllBtn" onclick="fixRemainingIssues()" title="Fix All Remaining Issues" style="background: linear-gradient(135deg, rgba(255,107,107,0.25), rgba(255,215,0,0.25)); border-color: rgba(255,107,107,0.5); color: #ffd700; font-weight: 700;">
-                    🔧 Fix All
                 </button>
 
             </div>
@@ -14677,13 +14669,13 @@
                 const weakest = categories[0];
 
                 if (weakest.name === 'dynamics' && weakest.score < 25) {
-                    advice = `Your ${weakest.label} score is holding you back. Here's a tip — try switching to a different genre or sub-genre preset. Each genre has different dynamic range targets, so picking one that matches your track's natural dynamics can push you to a perfect score. You can also try the Fix All button.`;
+                    advice = `Your ${weakest.label} score is holding you back. Here's a tip — try switching to a different genre or sub-genre preset. Each genre has different dynamic range targets, so picking one that matches your track's natural dynamics can push you to a perfect score.`;
                 } else if (weakest.name === 'dynamics') {
                     advice = `Your ${weakest.label} could be better. Try changing your genre or sub-genre preset — different genres expect different dynamic ranges, and finding the right match can bump your score up to a perfect A plus.`;
                 } else if (weakest.score < 20) {
-                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset, or hit Fix All to let me optimize it. The right genre match can make a big difference.`;
+                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset — the right genre match can make a big difference.`;
                 } else {
-                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track. Each preset targets different specs, and the right one could push you to a perfect score. You can also hit Fix All.`;
+                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track. Each preset targets different specs, and the right one could push you to a perfect score.`;
                 }
             }
 
@@ -17753,22 +17745,6 @@
                 <div class="analysis-results" style="max-height: none; overflow-y: visible;">
                     <h4>🎯 PROFESSIONAL MASTERING REPORT</h4>
 
-                    <!-- FIX ALL ISSUES Button - Prominent at top -->
-                    <div class="analysis-section" style="text-align: center; padding: 12px; margin-bottom: 15px; background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2); border-radius: 10px;">
-                        <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
-                            background: linear-gradient(135deg, #ff6b6b 0%, #ffd700 50%, #00ff88 100%);
-                            color: #000; font-weight: 800; font-size: 1rem; padding: 14px 32px;
-                            border: none; border-radius: 12px; cursor: pointer; text-transform: uppercase;
-                            letter-spacing: 1.5px; position: relative; overflow: hidden; width: 100%;
-                            box-shadow: 0 4px 20px rgba(255,107,107,0.4);
-                            transition: transform 0.2s, box-shadow 0.2s;
-                        " onmouseover="this.style.transform='scale(1.03)';this.style.boxShadow='0 6px 30px rgba(255,107,107,0.6)'"
-                           onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(255,107,107,0.4)'">
-                            FIX ALL REMAINING ISSUES
-                        </button>
-                        <p style="color: #aaa; font-size: 0.7rem; margin-top: 6px;">Auto-correct LUFS to exact target, fix peaks, and optimize dynamics</p>
-                    </div>
-
                     <!-- Professional Quality Badge - Compact -->
                     <div class="analysis-section" style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); padding: 12px 16px; border-radius: 8px; margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -17976,18 +17952,12 @@
         // This ensures the scorecard + report show fresh results after each pass.
         // ═══════════════════════════════════════════════════════════════════════════
         function fixRemainingIssues() {
-            // Update all possible button IDs (report panel + transport bar + floating bar)
-            const btn = document.getElementById('fixAllIssuesBtn');
-            const btn2 = document.getElementById('fixAllBtn');
+            // Update floating Fix All button
             const btn3 = document.getElementById('floatingFixAllBtn');
-            if (btn) { btn.textContent = 'RE-MASTERING...'; btn.disabled = true; }
-            if (btn2) { btn2.textContent = '⏳ Fixing...'; btn2.disabled = true; }
             if (btn3) { btn3.textContent = 'FIXING...'; btn3.disabled = true; btn3.style.opacity = '0.6'; }
 
             if (!window.audioContext || !window.audioBuffer) {
                 if (typeof showLuvLangToast === 'function') showLuvLangToast('Please load and master a track first', 'warning');
-                if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
-                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
                 if (btn3) { btn3.textContent = 'FIX ALL'; btn3.disabled = false; btn3.style.opacity = '1'; }
                 return;
             }
@@ -18000,8 +17970,7 @@
 
             if (!savedProfile || !(savedProfile.issues && savedProfile.issues.length > 0)) {
                 if (typeof showLuvLangToast === 'function') showLuvLangToast('No issues detected to fix. Your master sounds great!', 'success');
-                if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
-                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
+                if (btn3) { btn3.textContent = 'FIX ALL'; btn3.disabled = false; btn3.style.opacity = '1'; }
                 return;
             }
 
@@ -18146,8 +18115,6 @@
                     }
                 }
                 // Reset buttons (mastering overlay will show progress)
-                if (btn) { btn.textContent = 'FIX ALL REMAINING ISSUES'; btn.disabled = false; btn.style.background = ''; }
-                if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; btn2.style.background = ''; }
                 if (btn3) { btn3.textContent = 'FIX ALL'; btn3.disabled = false; btn3.style.opacity = '1'; }
             }, 300);
         }
@@ -19194,68 +19161,38 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // DYNAMICS CONTROLS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // LOCKED AUDIO: Sliders update UI labels only — audio parameters are set
+        // exclusively by the mastering engine to preserve true A/B comparison.
         document.getElementById('compSlider').addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('compValue').textContent = value + '%';
-
-            if (compressor) {
-                const ratio = 1 + (value / 100) * 11;
-                compressor.ratio.value = ratio;
-            }
+            // Audio node NOT modified — mastering engine owns compressor.ratio
         });
 
         document.getElementById('widthSlider').addEventListener('input', function() {
             const value = parseInt(this.value);
             document.getElementById('widthValue').textContent = value + '%';
-
-            // PROFESSIONAL M/S PROCESSING: Use proper Mid/Side matrix
-            if (window.msControls) {
-                // 0% = mono (no side), 100% = normal, 200% = ultra wide
-                window.msControls.setWidth(value);
-            } else if (typeof stereoFieldEditor !== 'undefined' && stereoFieldEditor) {
-                // Fallback: Use StereoFieldEditor for frequency-dependent width
-                for (let i = 0; i < 7; i++) {
-                    stereoFieldEditor.setWidth(i, value);
-                }
-
-            }
+            // Audio node NOT modified — mastering engine owns stereo width
         });
 
         document.getElementById('limiterSlider').addEventListener('input', function() {
             const value = parseFloat(this.value);
             document.getElementById('limiterValue').textContent = value.toFixed(1) + ' dB';
-
-            if (limiter) {
-                limiter.threshold.value = value;
-            }
+            // Audio node NOT modified — mastering engine owns limiter.threshold
         });
 
         document.getElementById('outputGainSlider').addEventListener('input', function() {
             const value = parseFloat(this.value);
             document.getElementById('outputGainValue').textContent =
                 (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
-
-            // CRITICAL FIX: Actually apply the gain to the audio chain!
-            if (masterGain) {
-                masterGain.gain.value = Math.pow(10, value / 20);
-
-            }
+            // Audio node NOT modified — mastering engine owns masterGain
         });
 
         document.getElementById('masterGainSlider').addEventListener('input', function() {
             const value = parseFloat(this.value);
             document.getElementById('masterGainValue').textContent =
                 (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
-
-            if (masterGain) {
-                masterGain.gain.value = Math.pow(10, value / 20);
-            }
-
-            // v7.6.13: Unlock meters when user manually adjusts gain
-            // (locked values are now stale since signal changed)
-            metersLocked = false;
-            _lastLockedLufsText = null; // v7.6.13d: Reset blink cache
-            window._lufsGainLocked = false;
+            // Audio node NOT modified — mastering engine owns masterGain
         });
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26804,20 +26741,6 @@
                                     ${_issueCardsHTML}
                                 </div>
 
-                                <!-- FIX ALL Button -->
-                                <div style="text-align:center;padding:10px;margin-bottom:10px;background:linear-gradient(135deg,rgba(255,107,107,0.06),rgba(255,215,0,0.06));border:1px solid rgba(255,107,107,0.2);border-radius:10px;">
-                                    <button id="fixAllIssuesBtn" onclick="fixRemainingIssues()" style="
-                                        background:linear-gradient(135deg,#ff6b6b 0%,#ffd700 50%,#00ff88 100%);
-                                        color:#000;font-weight:800;font-size:0.9rem;padding:12px 28px;
-                                        border:none;border-radius:10px;cursor:pointer;text-transform:uppercase;
-                                        letter-spacing:1.5px;width:100%;
-                                        box-shadow:0 4px 20px rgba(255,107,107,0.3);
-                                        transition:transform 0.2s,box-shadow 0.2s;
-                                    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                                        FIX ALL ${_totalIssueCount} ISSUE${_totalIssueCount !== 1 ? 'S' : ''}
-                                    </button>
-                                    <p style="color:rgba(255,255,255,0.35);font-size:0.6rem;margin-top:6px;">Applies corrections and re-masters your track</p>
-                                </div>
                                 ` : `
                                 <div style="text-align:center;padding:14px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:10px;margin-bottom:10px;">
                                     <div style="font-size:1.2rem;margin-bottom:4px;">✅</div>
@@ -30088,15 +30011,9 @@
                 descEl.style.color = c.hex;
             }
 
-            // Apply intensity to the appropriate path
-            if (window.isMasteringApplied && window.applyIntensityToChain) {
-                // AFTER mastering: apply to the live mastering chain
-                window.applyIntensityToChain(level);
-                console.log(`🎚️ Intensity ${level} applied to MASTERED chain`);
-            } else {
-                // BEFORE mastering: intensity stored, applied when mastering runs
-                console.log(`🎚️ Intensity ${level} stored (will apply when mastering runs)`);
-            }
+            // LOCKED AUDIO: Intensity is always stored for the NEXT mastering run.
+            // Never modify the live chain — preserves true A/B comparison.
+            console.log(`🎚️ Intensity ${level} stored (will apply on next master run)`);
         };
 
         // ═══════════════════════════════════════════════════════════════════
