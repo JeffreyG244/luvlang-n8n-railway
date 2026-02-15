@@ -25284,6 +25284,8 @@
                     </div>
                 `;
 
+                // Let browser parse the overlay DOM before displaying
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 processingOverlay.style.display = 'flex';
 
                 // Store update function globally for use during processing
@@ -25342,15 +25344,15 @@
                     }
                 };
 
-                // Initial analysis stages — start at 8% immediately (not 4%)
+                // Initial analysis stages — yield to browser for smooth animation
                 updateStageProgress(1, 'Analyzing audio input...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 updateStageProgress(2, 'Removing DC offset...');
-                await new Promise(resolve => setTimeout(resolve, 40));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 updateStageProgress(3, 'Applying subsonic filter...');
-                await new Promise(resolve => setTimeout(resolve, 40));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // ═══════════════════════════════════════════════════════════════════
                 // APPLY 24-FEATURE ADVANCED MASTERING ENGINE
@@ -25465,14 +25467,14 @@
                 }
 
                 updateStageProgress(4, 'Configuring 7-band parametric EQ...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // STAGE 2: TONAL SHAPING (7-Band Parametric EQ)
                 // Genre-adaptive frequency sculpting
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(5, 'Applying dynamic EQ processing...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // v7.6.8c2: Mastering EQ curves — tuned for full chain (compression/limiting eat bass)
                 // These are intentionally higher in sub/bass than genrePresets preview values
@@ -25521,7 +25523,7 @@
                 // STAGE 3: DYNAMIC EQ (Frequency-Dependent Compression)
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(6, 'Setting up compression...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 if (window.dynamicEQ) {
                     if (!bypass.dynamicEQ) {
@@ -25580,9 +25582,9 @@
                 // STAGE 4: DYNAMICS PROCESSING
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(7, 'Multiband compression...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(8, 'Shaping transients...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // Genre-specific compression settings — read from genrePresets (single source of truth)
                 // v7.6.0: Eliminated duplicate compSettings — genrePresets now synced to v7.5.0 values
@@ -25754,7 +25756,7 @@
                 // STAGE 5: HARMONIC ENHANCEMENT
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(9, 'Adding harmonic saturation...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 14. Analog Warmth / Tape Saturation - Intensity-adaptive
                 if (window.analogWarmth) {
@@ -25807,9 +25809,9 @@
                 // STAGE 6: STEREO IMAGE
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(10, 'Configuring harmonic exciter...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(11, 'Enhancing stereo width...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 16. Stereo Width Enhancement - Intensity-adaptive
                 if (window.sideChannel) {
@@ -25833,7 +25835,7 @@
                 }
 
                 updateStageProgress(12, 'M/S processing...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 17. M/S Processing - Intensity-adaptive Mid/Side EQ
                 if (window.msEQ) {
@@ -25874,11 +25876,11 @@
                 }
 
                 updateStageProgress(13, 'Applying de-esser...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(14, 'Adding air frequencies...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(15, 'Configuring bass mono...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 18. Stereo Balance Check
 
@@ -25886,15 +25888,15 @@
                 // STAGE 7: LOUDNESS OPTIMIZATION
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(16, 'Targeting LUFS loudness...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 19. LUFS Targeting - Handled later with originalInputLUFS for accuracy
                 // (Moved to avoid duplicate gain application)
 
                 updateStageProgress(17, 'Configuring true peak detector...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(18, 'Setting up limiter...');
-                await new Promise(resolve => setTimeout(resolve, 80));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 20. Brickwall Safety Limiter — BROADCAST STANDARD (ITU-R BS.1770-4)
                 // Hard safety net at -1.0 dBTP. The look-ahead limiter does the musical work
@@ -25910,7 +25912,7 @@
                 }
 
                 updateStageProgress(19, 'Configuring look-ahead...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 21. Look-Ahead Limiter — PRIMARY peak catcher (5ms anticipation)
                 // v7.6.8c5b: Re-enabled to prevent ISP clipping. The DynamicsCompressorNode
@@ -25932,7 +25934,7 @@
                 // STAGE 8: FINAL POLISH & QC
                 // ═══════════════════════════════════════════════════════════════════════════
                 updateStageProgress(20, 'Applying HF limiter...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 22. High-Frequency Limiter (De-Harsh) - Intensity-adaptive
                 if (window.hfLimiter && window.hfLimiter.setThreshold) {
@@ -25961,7 +25963,7 @@
                 }
 
                 updateStageProgress(21, 'Preparing dither for export...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // 23. Dither (for export - 16-bit)
                 if (window.outputDither && window.outputDither.enable) {
@@ -25989,11 +25991,11 @@
 
                 // Final progress updates
                 updateStageProgress(22, 'Applying final polish...');
-                await new Promise(resolve => setTimeout(resolve, 60));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(23, 'Running output metering...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
                 updateStageProgress(24, 'Preparing LUFS targeting...');
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => requestAnimationFrame(resolve));
 
                 // v7.6.13: Keep overlay visible during LUFS targeting (4 passes)
                 // Overlay will close AFTER targeting completes
@@ -29952,9 +29954,10 @@
                 descEl.style.color = c.hex;
             }
 
-            // LOCKED AUDIO: Intensity is always stored for the NEXT mastering run.
-            // Never modify the live chain — preserves true A/B comparison.
-            console.log(`🎚️ Intensity ${level} stored (will apply on next master run)`);
+            // Apply intensity to the live chain in real-time after mastering
+            if (window.isMasteringApplied && window.applyIntensityToChain) {
+                window.applyIntensityToChain(level);
+            }
         };
 
         // ═══════════════════════════════════════════════════════════════════
