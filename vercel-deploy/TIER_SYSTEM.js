@@ -10,11 +10,12 @@
 let currentTier = 'legendary'; // DEV: default to legendary for testing
 let wasmPrecisionMode = '32bit'; // '32bit', '64bit'
 
+const _tierLinks = (typeof window !== 'undefined' && window.__ENV__) || {};
 const TIER_CONFIG = {
     basic: {
         price: 12.99,
         label: 'BASIC',
-        stripeLink: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03',
+        stripeLink: _tierLinks.STRIPE_LINK_BASIC || '',
         features: [
             'Unlimited MP3 exports (320kbps)',
             '32-bit float processing',
@@ -33,7 +34,7 @@ const TIER_CONFIG = {
     advanced: {
         price: 29.99,
         label: 'ADVANCED',
-        stripeLink: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01',
+        stripeLink: _tierLinks.STRIPE_LINK_ADVANCED || '',
         features: [
             'Unlimited 24-bit WAV exports',
             '32-bit float processing',
@@ -53,7 +54,7 @@ const TIER_CONFIG = {
     premium: {
         price: 59.99,
         label: 'PREMIUM',
-        stripeLink: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02',
+        stripeLink: _tierLinks.STRIPE_LINK_PREMIUM || '',
         features: [
             '64-bit precision engine (4x oversampling)',
             'Full manual control - All modules unlocked',
@@ -240,8 +241,9 @@ function closeCheckout() {
 // STRIPE PAYMENT INTEGRATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Stripe publishable key (REPLACE WITH YOUR KEY)
-const STRIPE_PUBLIC_KEY = 'pk_test_51RXBWQP1VAtK8qeDRotSKHkuZF2UsKG18z4dDtoJM9MTtuR6Eh28ghQIGljfwQCyNN9fXHV8HwdvNJ8TmPizjagQ003L592cFz';
+// Stripe publishable key — loaded from env-config.js (build-time injection)
+const _tierEnv = (typeof window !== 'undefined' && window.__ENV__) || {};
+const STRIPE_PUBLIC_KEY = _tierEnv.STRIPE_PUBLIC_KEY || '';
 
 // Use stripe from stripe-client.js (avoid duplicate declaration)
 // let stripe = null;
@@ -252,7 +254,7 @@ function initializeStripe() {
     // Check if valid key is set
     if (!STRIPE_PUBLIC_KEY || STRIPE_PUBLIC_KEY === 'pk_test_YOUR_PUBLISHABLE_KEY_HERE') {
         console.warn('⚠️ Stripe key not configured - payment system disabled');
-        console.warn('   To enable payments, update STRIPE_PUBLIC_KEY in TIER_SYSTEM.js');
+        console.warn('   Set STRIPE_PUBLIC_KEY in Vercel Environment Variables');
         console.warn('   See STRIPE_SETUP_GUIDE.md for instructions');
         return;
     }

@@ -56,21 +56,22 @@ function createLimiterModeUI(containerId) {
             const params = IRC_MODES[mode];
             if (!params) return;
 
-            // Apply to REAL chain limiter
-            const lim = window.limiter;
-            if (lim) {
-                lim.attack.value = params.attack;
-                lim.release.value = params.release;
-                lim.knee.value = params.knee;
-            }
-
-            // Also apply to look-ahead limiter if it exists
-            // Note: window.lookAheadLimiter is a wrapper object — the actual node is .limiter
+            // PRIMARY target: look-ahead limiter (the musical limiter that does the real work)
             const laObj = window.lookAheadLimiter;
             const laNode = laObj && laObj.limiter ? laObj.limiter : null;
             if (laNode) {
-                laNode.attack.value = Math.max(0.0001, params.attack * 0.5);
-                laNode.release.value = params.release * 1.2;
+                laNode.attack.value = params.attack;
+                laNode.release.value = params.release;
+                laNode.knee.value = params.knee;
+            }
+
+            // SECONDARY target: brickwall safety limiter (catches what look-ahead misses)
+            const lim = window.limiter;
+            if (lim) {
+                // Safety limiter uses faster attack, same release
+                lim.attack.value = Math.max(0.0001, params.attack * 0.5);
+                lim.release.value = params.release;
+                lim.knee.value = Math.min(params.knee, 2); // Keep safety limiter tight
             }
 
             // Update release slider to match mode
@@ -84,11 +85,11 @@ function createLimiterModeUI(containerId) {
                 window.advancedEngine.setLimiterMode(mode);
             }
 
-            console.log(`🎛️ IRC Limiter mode: ${mode} (attack=${params.attack*1000}ms, release=${params.release*1000}ms, knee=${params.knee})`);
+            console.log(`IRC Limiter mode: ${mode} (attack=${params.attack*1000}ms, release=${params.release*1000}ms, knee=${params.knee})`);
         });
     }
 
-    // Ceiling slider → modifies REAL limiter threshold
+    // Ceiling slider → modifies PRIMARY look-ahead limiter threshold
     const ceilingSlider = document.getElementById('limiterCeiling');
     const releaseSlider = document.getElementById('limiterRelease');
 
@@ -98,20 +99,37 @@ function createLimiterModeUI(containerId) {
             const dB = parseFloat(this.value);
             if (val) val.textContent = `${dB.toFixed(1)} dB`;
 
-            // Apply to REAL chain limiter
-            if (window.limiter) window.limiter.threshold.value = dB;
+            // PRIMARY: set look-ahead limiter ceiling (the musical limiter)
+            const laObj = window.lookAheadLimiter;
+            if (laObj && typeof laObj.setCeiling === 'function') {
+                laObj.setCeiling(dB);
+            } else if (laObj && laObj.limiter) {
+                laObj.limiter.threshold.value = dB;
+            }
+
+            // SECONDARY: safety limiter stays 0.5dB above to only catch escapes
+            if (window.limiter) window.limiter.threshold.value = Math.min(dB + 0.5, 0);
+
             if (window.advancedEngine) window.advancedEngine.setLimiterCeiling(dB);
         });
     }
 
-    // Release slider → modifies REAL limiter release
+    // Release slider → modifies BOTH limiters
     if (releaseSlider) {
         releaseSlider.addEventListener('input', function() {
             const val = document.getElementById('limiterReleaseValue');
             const ms = parseFloat(this.value);
             if (val) val.textContent = `${Math.round(ms)} ms`;
 
-            // Apply to REAL chain limiter
+            // PRIMARY: look-ahead limiter release
+            const laObj = window.lookAheadLimiter;
+            if (laObj && typeof laObj.setRelease === 'function') {
+                laObj.setRelease(ms);
+            } else if (laObj && laObj.limiter) {
+                laObj.limiter.release.value = ms / 1000;
+            }
+
+            // SECONDARY: safety limiter matches
             if (window.limiter) window.limiter.release.value = ms / 1000;
         });
     }
@@ -341,44 +359,56 @@ function createUnlimiterUI(containerId) {
 
     container.innerHTML = html;
 
-    // v7.6.13f: Unlimiter → modifies real chain limiter to restore dynamics
+    // v7.6.17: Unlimiter → modifies PRIMARY look-ahead limiter to restore dynamics
     // "Unlimiting" = raising the limiter threshold (less limiting = more dynamics)
     let _unlimiterEnabled = false;
-    let _savedLimiterThreshold = -1.0;
+    let _savedLAThreshold = -1.5;
+    let _savedLAKnee = 0;
+    let _savedLARatio = 12;
+    let _savedLAAttack = 0.001;
 
     document.getElementById('unlimiterEnabled')?.addEventListener('change', function() {
         _unlimiterEnabled = this.checked;
-        const lim = window.limiter;
-        if (!lim) return;
+        const laObj = window.lookAheadLimiter;
+        const laNode = laObj && laObj.limiter ? laObj.limiter : null;
+
+        if (!laNode) {
+            console.warn('Unlimiter: look-ahead limiter not found');
+            return;
+        }
 
         if (_unlimiterEnabled) {
-            _savedLimiterThreshold = lim.threshold.value;
+            _savedLAThreshold = laNode.threshold.value;
+            _savedLAKnee = laNode.knee.value;
+            _savedLARatio = laNode.ratio.value;
+            _savedLAAttack = laNode.attack.value;
             _applyUnlimiter();
         } else {
-            // Restore original limiter
-            lim.threshold.value = _savedLimiterThreshold;
-            lim.knee.value = 0;
-            lim.ratio.value = 20;
+            // Restore original look-ahead limiter
+            laNode.threshold.value = _savedLAThreshold;
+            laNode.knee.value = _savedLAKnee;
+            laNode.ratio.value = _savedLARatio;
+            laNode.attack.value = _savedLAAttack;
         }
-        console.log(`🎛️ Unlimiter: ${_unlimiterEnabled ? 'ON' : 'OFF'}`);
+        console.log(`Unlimiter: ${_unlimiterEnabled ? 'ON' : 'OFF'}`);
     });
 
     function _applyUnlimiter() {
-        const lim = window.limiter;
-        if (!lim || !_unlimiterEnabled) return;
+        const laObj = window.lookAheadLimiter;
+        const laNode = laObj && laObj.limiter ? laObj.limiter : null;
+        if (!laNode || !_unlimiterEnabled) return;
 
         const amount = parseFloat(document.getElementById('unlimiterAmount')?.value || 50) / 100;
         const transientBoost = parseFloat(document.getElementById('unlimiterTransient')?.value || 3);
 
-        // Raise limiter threshold proportionally — clamp to 0 max (DynamicsCompressor range: -100 to 0)
-        lim.threshold.value = Math.min(0, _savedLimiterThreshold + (amount * 6));
+        // Raise look-ahead limiter threshold (less limiting = more dynamics)
+        laNode.threshold.value = Math.min(0, _savedLAThreshold + (amount * 6));
         // Softer knee for more dynamic range (max 10)
-        lim.knee.value = Math.min(10, amount * 10);
+        laNode.knee.value = Math.min(10, amount * 10);
         // Lower ratio for less aggressive limiting (min 2:1)
-        lim.ratio.value = Math.max(2, 20 - (amount * 15)); // 20:1 → 5:1
-
-        // Transient boost: shorter attack lets transients through
-        lim.attack.value = 0.001 + (transientBoost / 6) * 0.009; // 1ms → 10ms
+        laNode.ratio.value = Math.max(2, _savedLARatio - (amount * 10));
+        // Transient boost: longer attack lets transients through
+        laNode.attack.value = _savedLAAttack + (transientBoost / 6) * 0.009; // 1ms → 10ms
     }
 
     document.getElementById('unlimiterAmount')?.addEventListener('input', function() {

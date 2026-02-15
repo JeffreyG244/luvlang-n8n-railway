@@ -57,10 +57,21 @@ function escapeXml(text) {
         .replace(/'/g, '&apos;');
 }
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'https://luvlangmastering.vercel.app',
+    'https://luvlang-mastering.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

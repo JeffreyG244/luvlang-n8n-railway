@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
         event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (err) {
         console.error('Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        return res.status(400).json({ error: 'Invalid webhook signature' });
     }
 
 
@@ -86,7 +86,7 @@ module.exports = async (req, res) => {
 
     } catch (err) {
         console.error('Webhook handler error:', err);
-        res.status(200).json({ received: true, error: err.message });
+        res.status(200).json({ received: true });
     }
 };
 

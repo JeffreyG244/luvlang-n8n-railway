@@ -32996,11 +32996,14 @@
         };
 
         // ElevenLabs Configuration — Premium fallback (if Azure unavailable or user has credits)
+        // API key loaded from localStorage only — never hardcode secrets in client code
         const ELEVENLABS_CONFIG = {
-            apiKey: 'sk_97bda769b06d3a0311a366fc5f2a46105b3bf1636eec32c7',
+            apiKey: (function() {
+                try { return localStorage.getItem('elevenlabs_api_key') || ''; } catch (_) { return ''; }
+            })(),
             voiceId: 'ThT5KcBeYPX3keUQqHPh', // Dorothy — British English professional
             modelId: 'eleven_multilingual_v2',
-            enabled: true
+            enabled: false
         };
 
         if (ELEVENLABS_CONFIG.apiKey) {

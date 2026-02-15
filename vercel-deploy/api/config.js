@@ -8,11 +8,22 @@
  * - STRIPE_PUBLIC_KEY: Publishable key (designed to be public)
  */
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+    'https://luvlangmastering.vercel.app',
+    'https://luvlang-mastering.vercel.app',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 module.exports = function handler(req, res) {
-    // Enable CORS for the frontend
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Handle CORS - restrict to allowed origins
+    const origin = req.headers.origin;
+    if (ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
 
     if (req.method === 'OPTIONS') {

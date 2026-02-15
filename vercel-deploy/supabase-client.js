@@ -3,9 +3,11 @@
  * Handles authentication, database operations, and real-time subscriptions
  */
 
-// Supabase configuration - HARDCODED for reliability
-const SUPABASE_URL = 'https://jzclawsctaczhgvfpssx.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp6Y2xhd3NjdGFjemhndmZwc3N4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1MjE2MDEsImV4cCI6MjA4NDA5NzYwMX0.3c08nfLITB4Z-DUZv4f-35CoZN7TXBHLgktgqB5c0K0';
+// Supabase configuration - loaded from env-config.js (build-time injection)
+// Falls back to /api/config if env-config.js values are empty
+const _env = (typeof window !== 'undefined' && window.__ENV__) || {};
+const SUPABASE_URL = _env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = _env.SUPABASE_ANON_KEY || '';
 
 // Initialize Supabase client instance (not the library - that's window.supabase from CDN)
 let supabaseClient = null;
@@ -60,6 +62,27 @@ async function initializeSupabase() {
     isInitializing = true;
 
     try {
+        // If env-config.js didn't provide values, fetch from /api/config
+        let url = SUPABASE_URL;
+        let key = SUPABASE_ANON_KEY;
+        if (!url || !key) {
+            try {
+                const cfgRes = await fetch('/api/config');
+                if (cfgRes.ok) {
+                    const cfg = await cfgRes.json();
+                    url = cfg.SUPABASE_URL || url;
+                    key = cfg.SUPABASE_ANON_KEY || key;
+                }
+            } catch (_) { /* /api/config unavailable — demo mode */ }
+        }
+
+        if (!url || !key) {
+            console.warn('⚠️ Supabase credentials not configured. Running in demo mode.');
+            isInitializing = false;
+            isInitialized = false;
+            return false;
+        }
+
         // Check if @supabase/supabase-js is loaded
         if (!window.supabase || !window.supabase.createClient) {
             console.warn('⚠️ Supabase library not loaded yet, waiting...');
@@ -74,7 +97,7 @@ async function initializeSupabase() {
             }
         }
 
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = window.supabase.createClient(url, key);
 
         // Verify client was created successfully
         if (!supabaseClient || !supabaseClient.auth) {

@@ -54,13 +54,13 @@ CREATE POLICY "Users can create their own orders"
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
--- Policy: Service role can update orders (for webhook)
--- This allows the Edge Function with service_role key to update order status
-CREATE POLICY "Service role can update orders"
+-- Policy: Users can update their own orders (status transitions only)
+-- Service role key bypasses RLS automatically, so no permissive policy needed
+CREATE POLICY "Users can update their own orders"
     ON public.orders
     FOR UPDATE
-    USING (true)
-    WITH CHECK (true);
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- AUTOMATIC UPDATED_AT TRIGGER

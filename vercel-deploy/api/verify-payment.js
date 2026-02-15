@@ -63,7 +63,7 @@ module.exports = async (req, res) => {
         console.error('Verification error:', error);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Payment verification failed'
         });
     }
 };

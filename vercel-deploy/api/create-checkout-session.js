@@ -63,6 +63,18 @@ module.exports = async (req, res) => {
         const tierInfo = TIER_INFO[tier];
         const amount = TIER_PRICES[tier];
 
+        // Validate redirect URLs — only allow our own frontend origin
+        const frontendUrl = process.env.FRONTEND_URL || 'https://luvlangmastering.vercel.app';
+        function isSafeRedirect(url) {
+            if (!url) return false;
+            try {
+                const parsed = new URL(url);
+                return ALLOWED_ORIGINS.includes(parsed.origin);
+            } catch { return false; }
+        }
+        const safeSuccessUrl = isSafeRedirect(successUrl) ? successUrl : `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
+        const safeCancelUrl = isSafeRedirect(cancelUrl) ? cancelUrl : `${frontendUrl}/cancel`;
+
         // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -78,8 +90,8 @@ module.exports = async (req, res) => {
                 quantity: 1
             }],
             mode: 'payment',
-            success_url: successUrl || `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: cancelUrl || `${process.env.FRONTEND_URL}/cancel`,
+            success_url: safeSuccessUrl,
+            cancel_url: safeCancelUrl,
             metadata: {
                 tier: tier,
                 filename: sessionData?.filename || 'untitled',
@@ -103,7 +115,7 @@ module.exports = async (req, res) => {
         console.error('Checkout error:', error);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Checkout session creation failed'
         });
     }
 };

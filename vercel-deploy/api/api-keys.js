@@ -110,7 +110,7 @@ module.exports = async (req, res) => {
 
         } catch (error) {
             console.error('List keys error:', error);
-            return res.status(500).json({ success: false, error: error.message });
+            return res.status(500).json({ success: false, error: 'Failed to list API keys' });
         }
     }
 
@@ -195,7 +195,7 @@ module.exports = async (req, res) => {
 
         } catch (error) {
             console.error('Create key error:', error);
-            return res.status(500).json({ success: false, error: error.message });
+            return res.status(500).json({ success: false, error: 'Failed to create API key' });
         }
     }
 
