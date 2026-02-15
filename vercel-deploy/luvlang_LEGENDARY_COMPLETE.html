@@ -12603,6 +12603,7 @@
             lockedPeak = null;
             originalInputLUFS = null; // Reset original LUFS for new file
             window.masteringComplete = false; // Reset mastering flag for new file
+            window._masteringLocked = false; // Unlock mastering for new file
             window.autoLUFSGainApplied = 0; // Reset LUFS gain tracking
 
             // Remove old report card for new file
@@ -18077,6 +18078,8 @@
                     let msg = `Applying ${fixCount} fix(es) and re-mastering...`;
                     if (unfixCount > 0) msg += ` (${unfixCount} item(s) require remix)`;
                     if (typeof showLuvLangToast === 'function') showLuvLangToast(msg, 'info');
+                    // Unlock mastering so Fix All can trigger a re-master
+                    window._masteringLocked = false;
                     window.runFullAIMaster();
                 } else {
                     if (typeof showLuvLangToast === 'function') {
@@ -21986,14 +21989,23 @@
 
                 // 🏆 SET MASTERING COMPLETE FLAG - Critical for LUFS preset switching
                 window.masteringComplete = true;
+                window._masteringLocked = true;
 
-                // 🔄 Transform MASTER button to RESET button
+                // 🏆 Transform MASTER button to MASTERED indicator (locked)
                 const masterBtn = document.getElementById('aiMasterBtnFloating');
                 if (masterBtn) {
-                    masterBtn.innerHTML = '<span class="ai-btn-icon">↺</span><span>RESET</span>';
-                    masterBtn.style.background = 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)';
-                    masterBtn.onclick = function() { window.resetMastering(); };
-
+                    masterBtn.innerHTML = '<span>MASTERED</span>';
+                    masterBtn.style.background = 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)';
+                    masterBtn.style.cursor = 'default';
+                    masterBtn.onclick = function() {
+                        const hist = window._masteringHistory;
+                        const last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
+                        const gradeText = last ? `${last.grade} (${last.total}/100)` : 'A+';
+                        showLuvLangToast(
+                            `Your track is mastered at ${gradeText}! Export your track or load a new one to continue.`,
+                            'success'
+                        );
+                    };
                 }
 
                 // Reset Master Output to 0.0 dB (unity gain) - Professional standard
@@ -22033,6 +22045,7 @@
 
             // Clear mastering complete flag
             window.masteringComplete = false;
+            window._masteringLocked = false;
 
             // CRITICAL: Reset mastering-in-progress flag so user can re-master
             try { masteringInProgress = false; } catch(_) {}
@@ -22132,6 +22145,7 @@
             if (masterBtn) {
                 masterBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><defs><linearGradient id="masterIconGrad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#00ff88"/></linearGradient></defs><rect x="2" y="10" width="3" height="4" rx="1.5" fill="url(#masterIconGrad)"><animate attributeName="height" values="4;10;4" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="10;7;10" dur="0.8s" repeatCount="indefinite"/></rect><rect x="7" y="7" width="3" height="10" rx="1.5" fill="url(#masterIconGrad)"><animate attributeName="height" values="10;16;10" dur="1s" repeatCount="indefinite"/><animate attributeName="y" values="7;4;7" dur="1s" repeatCount="indefinite"/></rect><rect x="12" y="4" width="3" height="16" rx="1.5" fill="url(#masterIconGrad)"><animate attributeName="height" values="16;8;16" dur="1.2s" repeatCount="indefinite"/><animate attributeName="y" values="4;8;4" dur="1.2s" repeatCount="indefinite"/></rect><rect x="17" y="6" width="3" height="12" rx="1.5" fill="url(#masterIconGrad)"><animate attributeName="height" values="12;6;12" dur="0.9s" repeatCount="indefinite"/><animate attributeName="y" values="6;9;6" dur="0.9s" repeatCount="indefinite"/></rect></svg><span>MASTER</span>';
                 masterBtn.style.background = '';
+                masterBtn.style.cursor = '';
                 masterBtn.onclick = function() {
                     if (typeof runFullAIMaster === 'function') {
                         runFullAIMaster();
@@ -22139,11 +22153,13 @@
                 };
             }
 
-            // Hide A/B toggle and reset state
+            // Hide A/B toggle, Fix All button, and reset state
             const abToggle = document.getElementById('integratedABToggle');
             const divider = document.getElementById('commandBarDivider');
+            const floatingFixAll = document.getElementById('floatingFixAllBtn');
             if (abToggle) { abToggle.style.display = 'none'; abToggle.classList.remove('visible'); }
             if (divider) divider.style.display = 'none';
+            if (floatingFixAll) floatingFixAll.style.display = 'none';
             window.abCompareMode = false;
 
             // Re-enable the Process Master Now button so user can re-master
@@ -24788,6 +24804,18 @@
         let lastMasterClickTime = 0;
 
         async function runFullAIMaster() {
+
+            // Prevent re-mastering a locked (already mastered) track
+            if (window._masteringLocked) {
+                const hist = window._masteringHistory;
+                const last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
+                const gradeText = last ? `${last.grade} (${last.total}/100)` : 'A+';
+                showLuvLangToast(
+                    `Your track is mastered at ${gradeText}! Export your track or load a new one to continue.`,
+                    'success'
+                );
+                return;
+            }
 
             // Prevent double-clicks (debounce 500ms)
             const now = Date.now();
