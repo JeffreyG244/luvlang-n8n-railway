@@ -6476,6 +6476,7 @@
             try {
                 localStorage.setItem('tourLanguage', lang);
                 localStorage.setItem('luvlang_language_selected', 'true');
+                sessionStorage.setItem('voiceTourStarted', 'true'); // Prevent auto-start timer race
             } catch (_) { /* private browsing */ }
 
             // Set tour language
@@ -14495,7 +14496,13 @@
                 try {
                     const beforeLUFS = window.originalInputLUFS || -14;
                     const loudnessGain = Math.abs((v.verifiedLUFS || -14) - beforeLUFS);
-                    const grade = calculateQualityGrade(loudnessGain, 10, 10);
+                    // Use real clarity/width from active genre preset (consistent with main scorecard)
+                    const _activeGenre = window.selectedPreMasterGenre || 'pop';
+                    const _preset = (typeof genrePresets !== 'undefined' && genrePresets[_activeGenre]) || { eq: { high: 2, air: 1.5, highMid: 2 }, stereoWidth: 1.15 };
+                    const _clarityBoost = (_preset.eq.high + _preset.eq.air + _preset.eq.highMid) / 3;
+                    const _clarityPct = Math.round(_clarityBoost * 6);
+                    const _widthPct = Math.round((_preset.stereoWidth - 1.0) * 100);
+                    const grade = calculateQualityGrade(loudnessGain, _clarityPct, _widthPct);
                     const badge = document.getElementById('rcGradeBadge');
                     if (badge && grade) {
                         badge.textContent = grade.grade;
@@ -30801,9 +30808,10 @@
             else if (width >= 0) processingScore += 6;
             else processingScore += 3;
             // Loudness gain appropriateness (0-7)
-            if (loudnessGain >= 0.5 && loudnessGain <= 10) processingScore += 7;
-            else if (loudnessGain >= 0) processingScore += 5;
-            else processingScore += 2;
+            // Tracks already near target LUFS are well-mixed — don't penalize low gain
+            if (loudnessGain >= 0 && loudnessGain <= 15) processingScore += 7;
+            else if (loudnessGain > 15) processingScore += 4; // Excessive gain needed (very quiet source)
+            else processingScore += 2; // Negative gain (shouldn't happen normally)
             scores.tonal = processingScore;
 
             // Total score
@@ -33199,7 +33207,9 @@
             try { localStorage.setItem('voiceTourLang', lang); } catch (_) { /* private browsing */ }
             updateVoiceForLanguage();
 
-            // Update current step display if tour is active
+            // Update current step display if tour is active (text only — don't re-speak
+            // because the caller (selectTourLanguage/continueTourAfterLanguage) will
+            // advance and speak the next step, which would cause double voices)
             if (tourActive && currentStep < voiceTourSteps.length) {
                 const trans = tourTranslations[currentLang]?.steps[currentStep];
                 if (trans) {
@@ -33207,7 +33217,7 @@
                     document.getElementById('voiceTourDesc').textContent = trans.desc;
                     const actionEl = document.getElementById('voiceTourAction');
                     if (actionEl) actionEl.textContent = trans.action;
-                    speak(trans.voice);
+                    // Don't speak here — continueTourAfterLanguage will speak the next step
                 }
             }
 
@@ -33417,6 +33427,11 @@
         async function speak(text) {
             if (!voiceEnabled || !text) return;
 
+            // Stop any in-flight speech (Azure audio + browser SpeechSynthesis)
+            // to prevent overlapping voices
+            stopCurrentAudio();
+            window.speechSynthesis.cancel();
+
             // 1) Azure Neural TTS (FREE, high quality)
             if (AZURE_TTS_CONFIG.enabled) {
                 const success = await speakWithAzure(text);
@@ -33580,10 +33595,14 @@
 
         // Actually start the tour after language is selected
         function startTourAfterLanguage() {
+            // Prevent double-start
+            if (tourActive) return;
             currentStep = 0;
             tourActive = true;
+            sessionStorage.setItem('voiceTourStarted', 'true');
             lastAdvanceAction = null;
             lastAdvanceTime = 0;
+            stopSpeaking(); // Cancel any in-flight speech before starting fresh
             initVoiceEngine();
             showStep(0);
 
@@ -34167,8 +34186,8 @@
         // Continue tour after language selection (mid-tour)
         function continueTourAfterLanguage() {
 
-            // Cancel any speech
-            window.speechSynthesis.cancel();
+            // Cancel ALL speech (Azure audio + browser SpeechSynthesis)
+            stopSpeaking();
             // Advance to next step (format selection)
             currentStep++;
             showStep(currentStep);
@@ -34211,11 +34230,13 @@
                 const postLoginLoading = document.getElementById('postLoginLoading');
                 const masterMeSplash = document.getElementById('onboardingSplash');
                 const langModal = document.getElementById('tourLanguageModal');
+                const langPage = document.getElementById('onboardingLanguage');
                 const signupGate = document.getElementById('signupGateOverlay');
 
                 const onboardingVisible = (postLoginLoading) ||
                     (masterMeSplash && masterMeSplash.style.display === 'flex') ||
                     (langModal && langModal.style.display === 'flex') ||
+                    (langPage && (langPage.style.display === 'flex' || langPage.classList.contains('active'))) ||
                     (signupGate && !signupGate.classList.contains('hidden'));
 
                 if (onboardingVisible) {
