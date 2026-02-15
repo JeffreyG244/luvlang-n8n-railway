@@ -64,7 +64,7 @@ const MASTERING_TIERS = {
         name: 'BASIC',
         slug: 'basic',
         price: 12.99,
-        priceId: 'price_basic_per_track',
+        priceId: 'price_1T14Tz1lp4jDhuWyDrvMIB3m',
         features: [
             'AI-powered loudness normalization (99%+ LUFS accuracy)',
             'Platform presets (Spotify, Apple Music, YouTube, Tidal)',
@@ -87,7 +87,7 @@ const MASTERING_TIERS = {
         name: 'PROFESSIONAL',
         slug: 'professional',
         price: 29.99,
-        priceId: 'price_professional_per_track',
+        priceId: 'price_1T14UF1lp4jDhuWyvc8zu8wq',
         features: [
             'Everything in BASIC, plus:',
             'Real-time transient detection (drum optimization)',
@@ -112,7 +112,7 @@ const MASTERING_TIERS = {
         name: 'STUDIO',
         slug: 'studio',
         price: 59.99,
-        priceId: 'price_studio_per_track',
+        priceId: 'price_1T14UX1lp4jDhuWySLwOnf00',
         features: [
             'Everything in PROFESSIONAL, plus:',
             'Stem mastering (up to 5 stems)',
