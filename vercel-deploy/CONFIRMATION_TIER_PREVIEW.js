@@ -1015,25 +1015,21 @@
     }
 
     function applyAnalogWarmth(ctx, input) {
-        // Gentle tape-style saturation via waveshaper
+        // Gentle tape-style saturation via waveshaper (tanh soft-clip)
         const shaper = ctx.createWaveShaper();
         const curve = new Float32Array(2048);
         for (let i = 0; i < 2048; i++) {
             const x = (i / 2047) * 2 - 1;
-            // Soft saturation curve
-            curve[i] = (3 + 1.5) * x * 20 * (Math.PI / 180) /
-                (Math.PI + 1.5 * Math.abs(x * 20 * (Math.PI / 180)));
+            // Gentle tanh saturation — preserves ~95% of level at peak
+            curve[i] = Math.tanh(x * 1.4);
         }
         shaper.curve = curve;
         shaper.oversample = '2x';
 
-        const preGain = ctx.createGain();
-        preGain.gain.value = 0.8;
-        input.connect(preGain);
-        preGain.connect(shaper);
+        input.connect(shaper);
 
         const postGain = ctx.createGain();
-        postGain.gain.value = 1.2; // makeup
+        postGain.gain.value = 1.05; // slight makeup for tanh compression
         shaper.connect(postGain);
 
         return postGain;

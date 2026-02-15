@@ -393,6 +393,12 @@ window.addEventListener('load', function() {
 
             // Determine what happens AFTER format selection
             const afterFormatSelected = function() {
+                // Sync format from Chloe guide to export system
+                if (window.tourSelectedFormat) {
+                    window.selectedExportFormat = window.tourSelectedFormat;
+                    window.exportFormat = window.tourSelectedFormat;
+                }
+
                 // Legendary/premium tier: export directly without payment gate
                 if (currentTier === 'legendary' || currentTier === 'premium' ||
                     window._tierOverride === 'legendary' || window.userTier === 'legendary') {
@@ -402,8 +408,10 @@ window.addEventListener('load', function() {
                     }
                 }
 
-                // Show pricing modal - user must pay before export
-                if (typeof window.openPricingModal === 'function') {
+                // Go directly to tier comparison (skip duplicate format picker)
+                if (typeof window.proceedToPayment === 'function') {
+                    window.proceedToPayment();
+                } else if (typeof window.openPricingModal === 'function') {
                     window.openPricingModal();
                 } else {
                     console.error('❌ Pricing modal not found');
