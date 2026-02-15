@@ -20658,10 +20658,10 @@
                         // Color based on target proximity — set ONCE, not every frame
                         const platformTarget = getPlatformTarget();
                         const lufsDeviation = Math.abs(lockedLUFS - platformTarget);
-                        if (lufsDeviation <= 1.0) {
+                        if (lufsDeviation <= 3.0) {
                             measuredLufsValue.style.color = '#00ff88';
                             measuredLufsValue.style.textShadow = '0 0 20px rgba(0, 255, 136, 0.5)';
-                        } else if (lufsDeviation <= 2.5) {
+                        } else if (lufsDeviation <= 5.0) {
                             measuredLufsValue.style.color = '#ffd700';
                             measuredLufsValue.style.textShadow = '0 0 20px rgba(255, 215, 0, 0.5)';
                         } else {
@@ -20827,11 +20827,12 @@
                     if (liveLufsValue) {
                         const liveDisplay = momentaryLUFS;
                         liveLufsValue.textContent = liveDisplay.toFixed(1);
+                        // Wider thresholds for momentary — it naturally fluctuates ±4 dB above integrated
                         const diff = Math.abs(liveDisplay - platformTarget);
-                        if (diff <= 1) {
+                        if (diff <= 5) {
                             liveLufsValue.style.color = '#00ff88';
                             liveLufsValue.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
-                        } else if (diff <= 3) {
+                        } else if (diff <= 8) {
                             liveLufsValue.style.color = '#ffd700';
                             liveLufsValue.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
                         } else {
@@ -20846,11 +20847,12 @@
                     if (measuredLufsDisplay) {
                         const displayValue = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
                         measuredLufsDisplay.textContent = displayValue.toFixed(1);
+                        // Wider thresholds — integrated naturally settles close to target
                         const diff = Math.abs(displayValue - platformTarget);
-                        if (diff <= 1) {
+                        if (diff <= 3) {
                             measuredLufsDisplay.style.color = '#00ff88';
                             measuredLufsDisplay.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
-                        } else if (diff <= 3) {
+                        } else if (diff <= 5) {
                             measuredLufsDisplay.style.color = '#00d4ff';
                             measuredLufsDisplay.style.textShadow = '0 0 25px rgba(0, 212, 255, 0.6)';
                         } else {
@@ -21830,10 +21832,10 @@
 
                     // Color code based on target accuracy
                     const lufsDeviation2 = Math.abs(finalExpectedLUFS - targetLUFS);
-                    if (lufsDeviation2 <= 1.0) {
+                    if (lufsDeviation2 <= 3.0) {
                         lufsDisplayEl.style.color = '#00ff88'; // Green - on target
                         lufsDisplayEl.style.textShadow = '0 0 25px rgba(0, 255, 136, 0.6)';
-                    } else if (lufsDeviation2 <= 2.5) {
+                    } else if (lufsDeviation2 <= 5.0) {
                         lufsDisplayEl.style.color = '#ffd700'; // Yellow - close
                         lufsDisplayEl.style.textShadow = '0 0 25px rgba(255, 215, 0, 0.6)';
                     } else {
@@ -26273,7 +26275,7 @@
                         if (lufsDisplayLock) {
                             lufsDisplayLock.textContent = verifiedLUFS.toFixed(1);
                             const dev = Math.abs(verifiedLUFS - targetLUFS);
-                            lufsDisplayLock.style.color = dev <= 1.0 ? '#00ff88' : dev <= 2.5 ? '#ffd700' : '#ff6b6b';
+                            lufsDisplayLock.style.color = dev <= 3.0 ? '#00ff88' : dev <= 5.0 ? '#ffd700' : '#ff6b6b';
                         }
                         console.log(`🔒 Meters locked to verified: ${verifiedLUFS.toFixed(1)} LUFS / ${lockedPeak.toFixed(1)} dBTP`);
                     }
@@ -26602,7 +26604,7 @@
                         const _origLUFS = window.originalInputLUFS || -18;
                         const _origPeak = window.originalInputPeakDB || -3;
                         const _lufsDeviation = Math.abs(_vLUFS - targetLUFS);
-                        const _lufsColor = _lufsDeviation <= 1.0 ? '#00ff88' : _lufsDeviation <= 2.5 ? '#ffd700' : '#ff6b6b';
+                        const _lufsColor = _lufsDeviation <= 3.0 ? '#00ff88' : _lufsDeviation <= 5.0 ? '#ffd700' : '#ff6b6b';
                         const _peakColor = _vPeak <= -1.0 ? '#00ff88' : _vPeak <= 0 ? '#ffd700' : '#ff6b6b';
                         const _lufsScore = _lufsDeviation <= 0.5 ? 25 : _lufsDeviation <= 1.0 ? 22 : _lufsDeviation <= 2.0 ? 15 : 8;
                         const _peakScore = _vPeak <= -1.0 ? 25 : _vPeak <= -0.5 ? 18 : _vPeak <= 0 ? 10 : 3;
