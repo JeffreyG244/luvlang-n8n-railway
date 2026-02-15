@@ -99,7 +99,7 @@
     <!-- Main application (hidden until ready) -->
     <div id="app-root" aria-busy="false">
         <!-- Left Sidebar -->
-        <aside id="left-sidebar" class="sidebar left-sidebar">
+        <aside id="left-sidebar" class="sidebar left-sidebar" aria-label="Navigation and presets">
             <nav id="main-nav"></nav>
             <div id="preset-panel"></div>
         </aside>
@@ -109,7 +109,7 @@
             <!-- Audio Drop Zone -->
             <div id="audio-dropzone" class="audio-dropzone">
                 <p>Drop audio file here or click to browse</p>
-                <input type="file" id="audio-file-input" accept="audio/*" hidden>
+                <input type="file" id="audio-file-input" accept=".wav,.mp3,.flac,.aiff,.aif,.ogg,.m4a,.aac" hidden>
             </div>
 
             <!-- Transport Controls -->
@@ -135,7 +135,7 @@
         </main>
 
         <!-- Right Sidebar -->
-        <aside id="right-sidebar" class="sidebar right-sidebar">
+        <aside id="right-sidebar" class="sidebar right-sidebar" aria-label="Analytics and tools">
             <!-- Analytics Dashboard -->
             <div id="analytics-panel"></div>
 
@@ -155,11 +155,11 @@
 
     <!-- Mobile Bottom Nav -->
     <nav id="mobile-bottom-nav" class="mobile-bottom-nav" hidden>
-        <button data-panel="eq" class="nav-btn active">EQ</button>
-        <button data-panel="dynamics" class="nav-btn">Dyn</button>
-        <button data-panel="master" class="nav-btn">Master</button>
-        <button data-panel="analytics" class="nav-btn">Analyze</button>
-        <button data-panel="more" class="nav-btn">More</button>
+        <button data-panel="eq" class="nav-btn active" aria-label="Equalizer">EQ</button>
+        <button data-panel="dynamics" class="nav-btn" aria-label="Dynamics processing">Dyn</button>
+        <button data-panel="master" class="nav-btn" aria-label="Master output">Master</button>
+        <button data-panel="analytics" class="nav-btn" aria-label="Audio analysis">Analyze</button>
+        <button data-panel="more" class="nav-btn" aria-label="More options">More</button>
     </nav>
 
     <!-- App Module (deferred, non-blocking) -->
@@ -189,7 +189,7 @@
 
         } catch (error) {
             console.error('Failed to load LuvLang:', error);
-            status.textContent = 'Failed to load. Please refresh.';
+            status.textContent = `Failed to load: ${error.message || 'unknown error'}. Please refresh.`;
             status.style.color = '#ff3c3c';
         }
     </script>
@@ -204,8 +204,8 @@
                             // New SW waiting - could prompt user to refresh
                         }
                     })
-                    .catch(() => {
-                        // SW registration failed - app still works without it
+                    .catch(err => {
+                        console.warn('Service worker registration failed:', err.message);
                     });
             });
         }

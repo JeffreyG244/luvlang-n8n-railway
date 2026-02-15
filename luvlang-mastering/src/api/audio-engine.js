@@ -37,6 +37,11 @@ export function parseWav(buffer) {
         );
         const chunkSize = view.getUint32(offset + 4, true);
 
+        // Guard against malformed chunkSize exceeding buffer
+        if (chunkSize > view.byteLength - offset - 8) {
+            throw new Error('Invalid WAV file: chunk size exceeds buffer');
+        }
+
         if (chunkId === 'fmt ') {
             fmtChunk = {
                 audioFormat: view.getUint16(offset + 8, true),
@@ -60,17 +65,30 @@ export function parseWav(buffer) {
 
     // Extract PCM samples as Float32
     const { numChannels, sampleRate, bitsPerSample } = fmtChunk;
+
+    if (!bitsPerSample || !numChannels) {
+        throw new Error('Invalid WAV file: bitsPerSample or numChannels is zero');
+    }
+    if (![8, 16, 24, 32].includes(bitsPerSample)) {
+        throw new Error(`Unsupported bit depth: ${bitsPerSample}`);
+    }
+
     const bytesPerSample = bitsPerSample / 8;
-    const numSamples = dataChunk.size / (numChannels * bytesPerSample);
+    const numSamples = Math.floor(dataChunk.size / (numChannels * bytesPerSample));
     const channels = [];
 
     for (let ch = 0; ch < numChannels; ch++) {
         channels.push(new Float32Array(numSamples));
     }
 
+    const dataEnd = dataChunk.offset + dataChunk.size;
+
     for (let i = 0; i < numSamples; i++) {
         for (let ch = 0; ch < numChannels; ch++) {
             const byteOffset = dataChunk.offset + (i * numChannels + ch) * bytesPerSample;
+
+            // Bounds check before reading
+            if (byteOffset + bytesPerSample > view.byteLength) break;
             let sample = 0;
 
             if (bitsPerSample === 16) {
@@ -108,6 +126,9 @@ export function parseWav(buffer) {
  * Encode PCM channels back to WAV buffer
  */
 export function encodeWav(channels, sampleRate, bitDepth = 24) {
+    if (!channels || channels.length === 0) {
+        throw new Error('encodeWav: channels array must not be empty');
+    }
     const numChannels = channels.length;
     const numSamples = channels[0].length;
     const bytesPerSample = bitDepth / 8;
@@ -229,10 +250,12 @@ function applyKWeighting(samples, sampleRate) {
 function meanSquare(samples, start, length) {
     let sum = 0;
     const end = Math.min(start + length, samples.length);
+    const actualLength = end - start;
+    if (actualLength <= 0) return 0;
     for (let i = start; i < end; i++) {
         sum += samples[i] * samples[i];
     }
-    return sum / length;
+    return sum / actualLength;
 }
 
 /**
@@ -531,7 +554,7 @@ export function analyzeSpectrum(parsedAudio, fftSize = 8192) {
     ];
 
     const bandMagnitudes = isoFrequencies.map(freq => {
-        const binIndex = Math.round(freq * fftSize / sampleRate);
+        const binIndex = Math.min(Math.round(freq * fftSize / sampleRate), magnitudes.length - 1);
         const halfBandwidth = Math.max(1, Math.round(binIndex * 0.115)); // ~1/3 octave
 
         let maxMag = -120;
@@ -649,8 +672,8 @@ function applyEQ(channels, sampleRate, eqSettings) {
 function applyCompression(channels, sampleRate, settings) {
     const threshold = settings?.threshold ?? -18;   // dB
     const ratio = settings?.ratio ?? 3;
-    const attack = (settings?.attack ?? 10) / 1000; // ms to seconds
-    const release = (settings?.release ?? 100) / 1000;
+    const attack = Math.max(0.001, (settings?.attack ?? 10)) / 1000; // ms to seconds, min 1µs
+    const release = Math.max(0.001, (settings?.release ?? 100)) / 1000; // min 1µs
     const knee = settings?.knee ?? 6;                // dB
 
     const attackCoeff = Math.exp(-1 / (sampleRate * attack));
@@ -696,8 +719,8 @@ function applyLimiter(channels, sampleRate, settings) {
     const releaseMs = settings?.release ?? 50;
     const lookAheadMs = settings?.lookAhead ?? 5;
 
-    const lookAheadSamples = Math.round(sampleRate * lookAheadMs / 1000);
-    const releaseCoeff = Math.exp(-1 / (sampleRate * releaseMs / 1000));
+    const lookAheadSamples = Math.min(Math.round(sampleRate * lookAheadMs / 1000), sampleRate); // cap at 1 second
+    const releaseCoeff = Math.exp(-1 / (sampleRate * Math.max(0.001, releaseMs) / 1000));
 
     return channels.map(channel => {
         const output = new Float32Array(channel.length);

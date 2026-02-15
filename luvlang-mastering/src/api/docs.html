@@ -74,6 +74,10 @@
             50% { opacity: 0.5; }
         }
 
+        @media (prefers-reduced-motion: reduce) {
+            .status::before { animation: none; }
+        }
+
         .section {
             margin-bottom: 40px;
         }
@@ -260,6 +264,12 @@
             background: rgba(0, 217, 255, 0.3);
         }
 
+        .endpoint-card:focus-visible,
+        .tab-btn:focus-visible {
+            outline: 2px solid #00d9ff;
+            outline-offset: 2px;
+        }
+
         footer {
             text-align: center;
             margin-top: 50px;
@@ -284,7 +294,7 @@
             <h1>LuvLang Mastering API</h1>
             <p>Professional audio mastering API for developers</p>
             <span class="version-badge">Version 1.0</span>
-            <div class="status" id="status">Checking server status...</div>
+            <div class="status" id="status" aria-live="polite">Checking server status...</div>
         </header>
 
         <section class="section">
@@ -499,7 +509,7 @@
             <h3>Quick Example</h3>
             <p>Analyze an audio file using cURL:</p>
             <div class="code-block">
-curl -X POST http://localhost:3001/api/v1/analyze \
+curl -X POST /api/v1/analyze \
   -H "X-API-Key: lm_your_api_key" \
   -F "audio=@your-track.wav"
             </div>
@@ -523,7 +533,7 @@ curl -X POST http://localhost:3001/api/v1/analyze \
 
         <footer>
             <p>LuvLang Mastering API &copy; 2025</p>
-            <p><a href="http://localhost:3001/api/health">Check API Status</a></p>
+            <p><a href="/api/health">Check API Status</a></p>
         </footer>
     </div>
 
@@ -532,7 +542,7 @@ curl -X POST http://localhost:3001/api/v1/analyze \
         async function checkStatus() {
             const statusEl = document.getElementById('status');
             try {
-                const response = await fetch('http://localhost:3001/api/health');
+                const response = await fetch('/api/health');
                 const data = await response.json();
                 if (data.status === 'healthy') {
                     statusEl.textContent = 'Server Online - ' + data.version;
