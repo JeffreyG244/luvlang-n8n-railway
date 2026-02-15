@@ -4855,9 +4855,9 @@
 
     <script>
     // Integrated A/B Toggle Handler — post-mastering only
-    // v7.6.25: Fixed first-toggle bug — cancelScheduledValues(0) kills stale setTargetAtTime
+    // v7.6.28: Smooth crossfade using current gain values — no skip/glitch
     function handleFloatingABToggle(isMastered) {
-        if (!window.isMasteringApplied) return; // Nothing to toggle before mastering
+        if (!window.isMasteringApplied) return;
 
         const ac = window.audioContext || window.ac;
         const dryGain = window.dryGain;
@@ -4866,30 +4866,22 @@
         const labelA = document.getElementById('floatingABLabelOriginal');
         const labelB = document.getElementById('floatingABLabelMastered');
 
-        if (!ac || !dryGain || !wetGain) {
-            console.warn('Audio nodes not ready');
-            return;
-        }
+        if (!ac || !dryGain || !wetGain) return;
 
-        // Resume AudioContext if suspended (common after mastering completes)
-        if (ac.state === 'suspended') {
-            ac.resume();
-        }
+        if (ac.state === 'suspended') ac.resume();
 
-        // Cancel ALL automation from time 0 — kills stale setTargetAtTime from mastering
-        // Using cancelScheduledValues(now) fails because setTargetAtTime started in the past
+        // Cancel any pending automation
         dryGain.gain.cancelScheduledValues(0);
         wetGain.gain.cancelScheduledValues(0);
 
-        // Glitch-free crossfade with explicit known starting values
-        // Don't read .gain.value — unreliable when setTargetAtTime was active
+        // Read current gain values (reliable now — no setTargetAtTime in codebase)
         const now = ac.currentTime;
-        const fade = 0.035; // 35ms crossfade — inaudible gap, no click
+        const fade = 0.05; // 50ms crossfade — smooth, no skip
+        dryGain.gain.setValueAtTime(dryGain.gain.value, now);
+        wetGain.gain.setValueAtTime(wetGain.gain.value, now);
 
         if (isMastered) {
-            // Switch TO mastered (B) — coming FROM original (dry=1, wet=0)
-            dryGain.gain.setValueAtTime(1.0, now);
-            wetGain.gain.setValueAtTime(0.0, now);
+            // Crossfade TO mastered (B)
             dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
             wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
 
@@ -4899,11 +4891,8 @@
                 statusPill.textContent = 'PLAYING MASTERED';
                 statusPill.className = 'ai-status-pill mastered';
             }
-
         } else {
-            // Switch TO original (A) — coming FROM mastered (dry=0, wet=1)
-            dryGain.gain.setValueAtTime(0.0, now);
-            wetGain.gain.setValueAtTime(1.0, now);
+            // Crossfade TO original (A)
             dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
             wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
 
@@ -4913,7 +4902,6 @@
                 statusPill.textContent = 'PLAYING ORIGINAL';
                 statusPill.className = 'ai-status-pill original';
             }
-
         }
     }
 
@@ -29343,22 +29331,38 @@
                 displayAICorrections(window.aiTrackProfile);
             }
 
-            // Dry path stays pure — NO EQ filters inserted into original signal
-            // Genre EQ is only applied through the mastering chain when user clicks PROCESS
-            // v7.6.27: Only switch to dry BEFORE mastering. After mastering, keep playing
-            // the mastered audio — genre selection just configures the next mastering run.
+            // v7.6.28: Apply genre EQ to live filters for immediate audible preview
             const ac = window.audioContext;
-            if (ac && window.dryGain && window.wetGain && !window.isMasteringApplied) {
+            if (ac) {
                 const now = ac.currentTime;
-                const fade = 0.035;
-                window.dryGain.gain.cancelScheduledValues(0);
-                window.wetGain.gain.cancelScheduledValues(0);
-                window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
-                window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
-                window.dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
-                window.wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                const ramp = 0.08; // 80ms smooth ramp
+
+                // Apply genre EQ to the 7-band filters on the wet path
+                if (window.eqSubFilter) window.eqSubFilter.gain.setTargetAtTime(preset.eq.sub, now, ramp);
+                if (window.eqBassFilter) window.eqBassFilter.gain.setTargetAtTime(preset.eq.bass, now, ramp);
+                if (window.eqLowMidFilter) window.eqLowMidFilter.gain.setTargetAtTime(preset.eq.lowMid, now, ramp);
+                if (window.eqMidFilter) window.eqMidFilter.gain.setTargetAtTime(preset.eq.mid, now, ramp);
+                if (window.eqHighMidFilter) window.eqHighMidFilter.gain.setTargetAtTime(preset.eq.highMid, now, ramp);
+                if (window.eqHighFilter) window.eqHighFilter.gain.setTargetAtTime(preset.eq.high, now, ramp);
+                if (window.eqAirFilter) window.eqAirFilter.gain.setTargetAtTime(preset.eq.air, now, ramp);
+
+                // Route through wet path so EQ is audible
+                if (window.dryGain && window.wetGain) {
+                    const fade = 0.05;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                    window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                }
+
+                // Update sidebar EQ faders to match
+                const eqMap = { sub: preset.eq.sub, bass: preset.eq.bass, lowmid: preset.eq.lowMid,
+                    mid: preset.eq.mid, highmid: preset.eq.highMid, high: preset.eq.high, air: preset.eq.air };
+                if (typeof window.updateEQUI === 'function') window.updateEQUI(eqMap);
             }
-            console.log(`🎵 Genre selected: ${genre} (EQ applied only during mastering)`);
+            console.log(`🎵 Genre selected: ${genre} — EQ applied to live filters`);
 
             // Clear any previous sub-genre override — just the genre EQ is used
             window._selectedSubGenreEQ = null;
@@ -29606,8 +29610,50 @@
             window.selectedSubPreset = index;
             window._selectedSubGenreEQ = preset.eq;
 
-            // Sub-preset EQ stored for mastering — NO preview EQ on dry path
-            console.log(`🎵 Sub-preset selected: ${preset.name} (applied during mastering)`);
+            // v7.6.28: Apply sub-preset EQ to live filters for immediate audible preview
+            const ac = window.audioContext;
+            if (ac) {
+                const SUBPRESET_SCALE_LIVE = 2.0;
+                const intensityLevel = window.selectedIntensity || 3;
+                const masteringMults = { 1: 0.40, 2: 0.60, 3: 0.85, 4: 0.95, 5: 1.0 };
+                const intensityBoost = masteringMults[intensityLevel] || 0.85;
+                const now = ac.currentTime;
+                const ramp = 0.08;
+
+                const filters = [
+                    window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
+                    window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter, window.eqAirFilter
+                ];
+                const eqVals = [preset.eq.sub, preset.eq.bass, preset.eq.lowmid, preset.eq.mid, preset.eq.highmid, preset.eq.high, preset.eq.air];
+
+                filters.forEach((f, i) => {
+                    if (f) {
+                        const scaled = eqVals[i] * SUBPRESET_SCALE_LIVE * intensityBoost;
+                        const clamped = Math.max(-12, Math.min(12, scaled));
+                        f.gain.setTargetAtTime(clamped, now, ramp);
+                    }
+                });
+
+                // Route through wet path so EQ is audible
+                if (window.dryGain && window.wetGain) {
+                    const fade = 0.05;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, now);
+                    window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, now);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
+                }
+
+                // Update sidebar EQ faders
+                const bands = ['sub', 'bass', 'lowmid', 'mid', 'highmid', 'high', 'air'];
+                const scaledEQ = {};
+                bands.forEach((b, i) => {
+                    scaledEQ[b] = Math.max(-12, Math.min(12, eqVals[i] * SUBPRESET_SCALE_LIVE * intensityBoost));
+                });
+                if (typeof window.updateEQUI === 'function') window.updateEQUI(scaledEQ);
+            }
+            console.log(`🎵 Sub-preset selected: ${preset.name} — EQ applied to live filters`);
 
             // Update the EQ bars preview if visible
             const SUBPRESET_SCALE = 2.0; // v7.6.12: Define locally (was missing, causing ReferenceError)
