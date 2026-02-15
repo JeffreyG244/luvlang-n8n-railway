@@ -14603,32 +14603,60 @@
             const v = window.masteringVerification;
             if (!v) return;
 
+            // Get the score from mastering history
+            const hist = window._masteringHistory;
+            const lastEntry = hist && hist.length > 0 ? hist[hist.length - 1] : null;
+            const totalScore = lastEntry ? lastEntry.total : 0;
+            const scores = lastEntry ? lastEntry.scores : {};
+            const gradeLabel = lastEntry ? lastEntry.grade : '';
+
             // Get the grade
             let gradeText = '';
-            const badge = document.getElementById('rcGradeBadge');
-            if (badge && badge.textContent) {
-                const grade = badge.textContent.trim();
-                if (grade === 'A' || grade === 'A+') {
-                    gradeText = `Your track earned an ${grade} grade!`;
-                } else {
-                    gradeText = `Your track scored a ${grade} grade.`;
-                }
+            if (gradeLabel === 'A+' && totalScore >= 95) {
+                gradeText = `Amazing! Your track earned a perfect ${gradeLabel} grade with ${totalScore} out of 100!`;
+            } else if (gradeLabel === 'A+' || gradeLabel === 'A') {
+                gradeText = `Your track earned an ${gradeLabel} grade with ${totalScore} out of 100!`;
+            } else if (gradeLabel) {
+                gradeText = `Your track scored a ${gradeLabel} grade with ${totalScore} out of 100.`;
             } else {
                 gradeText = `Mastering complete!`;
             }
 
-            // Key improvement — announce the TARGET LUFS, not the measured value
+            // Key improvement — announce the measured LUFS
             let improvement = '';
             const afterLUFS = v.verifiedLUFS;
-            const targetLUFS = v.targetLUFS || -14;
-            const beforeLUFS = window.originalInputLUFS;
             if (typeof afterLUFS === 'number' && isFinite(afterLUFS)) {
-                // Always announce the ACTUAL measured LUFS value in real time
                 const measuredValue = Math.abs(afterLUFS).toFixed(1);
                 improvement = `Loudness is at negative ${measuredValue} LUFS.`;
             }
 
-            const message = `${gradeText} ${improvement} Try different genre presets to hear how they shape your sound.`;
+            // Genre/sub-genre advice when score isn't perfect
+            let advice = '';
+            if (totalScore >= 95) {
+                advice = `That's a perfect master! You're ready to export.`;
+            } else if (totalScore > 0) {
+                // Find the weakest category
+                const categories = [
+                    { name: 'dynamics', label: 'dynamic range', score: scores.dynamics || 0 },
+                    { name: 'lufs', label: 'loudness', score: scores.lufs || 0 },
+                    { name: 'tonal', label: 'tonal balance', score: scores.tonal || 0 },
+                    { name: 'peak', label: 'true peak', score: scores.peak || 0 }
+                ];
+                categories.sort((a, b) => a.score - b.score);
+                const weakest = categories[0];
+
+                if (weakest.name === 'dynamics' && weakest.score < 25) {
+                    advice = `Your ${weakest.label} score is holding you back. Here's a tip — try switching to a different genre or sub-genre preset. Each genre has different dynamic range targets, so picking one that matches your track's natural dynamics can push you to a perfect score. You can also try the Fix All button.`;
+                } else if (weakest.name === 'dynamics') {
+                    advice = `Your ${weakest.label} could be better. Try changing your genre or sub-genre preset — different genres expect different dynamic ranges, and finding the right match can bump your score up to a perfect A plus.`;
+                } else if (weakest.score < 20) {
+                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset, or hit Fix All to let me optimize it. The right genre match can make a big difference.`;
+                } else {
+                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track. Each preset targets different specs, and the right one could push you to a perfect score. You can also hit Fix All.`;
+                }
+            }
+
+            const message = `${gradeText} ${improvement} ${advice}`;
             setTimeout(() => window.speakWithDucking(message), 1200);
         };
 
