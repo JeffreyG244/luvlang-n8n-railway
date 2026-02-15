@@ -113,7 +113,7 @@ function ensureAudioPlayback() {
         return true;
     }
 
-    console.warn('⚠️  Audio chain will be connected when file loads');
+    // Audio chain connects on file load — expected
     return false;
 }
 

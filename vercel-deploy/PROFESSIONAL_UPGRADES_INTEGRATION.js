@@ -60,7 +60,7 @@
         // Skip limiter replacement if 20-stage mastering chain is active
         // (chain already has look-ahead limiter + brickwall limiter)
         if (window.lookAheadLimiter && window.lookAheadLimiter.limiter) {
-            console.log('✓ Professional mastering chain detected - using built-in look-ahead + brickwall limiters');
+            // Using built-in look-ahead + brickwall limiters
             window.limiterWorklet = null; // Not needed
         } else if (oldLimiter && window.compressor && window.masterGain) {
             try {

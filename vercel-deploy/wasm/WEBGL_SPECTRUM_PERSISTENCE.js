@@ -89,7 +89,7 @@ function initWebGL(canvasElement) {
     gl = canvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
 
     if (!gl) {
-        console.warn('WebGL not available — using Canvas2D spectrum fallback');
+        // Canvas2D fallback — no warning needed
         return false;
     }
 

@@ -58,7 +58,7 @@ class AIStemSeparator {
 
             return true;
         } catch (error) {
-            console.error('[AI Stem Sep] Init failed:', error);
+            // Silently skip — TF.js is optional
             return false;
         }
     }

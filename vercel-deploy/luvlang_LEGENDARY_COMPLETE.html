@@ -10270,7 +10270,7 @@
                         dynEqMidComp.ratio.value = 2.5;
                         dynEqHighComp.ratio.value = 3.0;
                         window.dynamicEQ.enabled = false;
-                        console.log('🎛️ Dynamic EQ DISABLED: bypass mode');
+                        // Dynamic EQ starts in bypass mode
                     }
                 };
 
@@ -19398,11 +19398,10 @@
 
             const canvas = document.getElementById('waveformCanvasStatic');
             if (!canvas) {
-                console.error('❌ Canvas not found!');
                 return;
             }
 
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const width = canvas.offsetWidth || 800;
             const height = canvas.offsetHeight || 120;
 
@@ -26891,17 +26890,12 @@
 
                         if (success) {
 
-                            // Show feature summary
-                            const features = window.aiSuite.getFeatureSummary();
-                            console.table(features);
-                        } else {
-                            console.warn('⚠️ Some AI modules failed to load');
                         }
                     } catch (error) {
-                        console.error('❌ AI Suite initialization failed:', error);
+                        // AI Suite init failed silently — optional modules
                     }
                 } else {
-                    console.warn('⚠️ Audio Context not available yet - AI Suite will initialize when ready');
+                    // AudioContext initializes on user interaction — expected
                 }
             }, 2000); // Wait 2 seconds for main app to initialize
         });
