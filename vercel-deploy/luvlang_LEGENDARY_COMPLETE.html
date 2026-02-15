@@ -27017,6 +27017,12 @@
     <script src="STRIPE_PAYMENT_INTEGRATION.js"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         🎛️ EXPORT CONFIRMATION + TIER PREVIEW - A/B compare tiers before checkout
+         Overrides proceedToPayment to show confirmation modal with previews
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <script src="CONFIRMATION_TIER_PREVIEW.js"></script>
+
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          ✓ MASTERING COMPLETE OVERLAY - Post-processing user guidance
          Shows clear next steps after mastering completes
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
@@ -27612,6 +27618,10 @@
         window.openPricingModal = function() {
             showExportFormatOverlay();
         };
+
+        // Expose LUFS/peak getters for CONFIRMATION_TIER_PREVIEW.js
+        window.getCurrentLUFS = function() { return lockedLUFS || currentIntegratedLUFS; };
+        window.getCurrentTruePeak = function() { return lockedPeak || currentTruePeak; };
 
         window.proceedToPayment = function() {
             if (!window.selectedExportFormat) {

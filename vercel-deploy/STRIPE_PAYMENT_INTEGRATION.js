@@ -149,6 +149,7 @@ async function createCheckoutSession(filePath) {
                 file_path: filePath,
                 original_filename: originalFilename,
                 metadata: metadata,
+                tier: window.selectedTier || 'basic',
             },
         });
 
