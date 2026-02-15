@@ -20809,13 +20809,15 @@
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 // STEP 7: Apply ASYMMETRIC SMOOTHING (fast attack, slow release)
                 // This provides professional meter ballistics like Dorrough/Ozone
+                // Freeze during voice ducking so artificially low levels don't
+                // contaminate the reading — meters resume instantly when speech ends
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                if (integratedLUFS > smoothedLUFS) {
-                    // Fast attack when level increases
-                    smoothedLUFS = smoothedLUFS + LUFS_ATTACK_COEFF * (integratedLUFS - smoothedLUFS);
-                } else {
-                    // Slow release when level decreases
-                    smoothedLUFS = smoothedLUFS + LUFS_RELEASE_COEFF * (integratedLUFS - smoothedLUFS);
+                if (!window._isSpeaking) {
+                    if (integratedLUFS > smoothedLUFS) {
+                        smoothedLUFS = smoothedLUFS + LUFS_ATTACK_COEFF * (integratedLUFS - smoothedLUFS);
+                    } else {
+                        smoothedLUFS = smoothedLUFS + LUFS_RELEASE_COEFF * (integratedLUFS - smoothedLUFS);
+                    }
                 }
 
                 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -20883,8 +20885,8 @@
                         momentaryLufsEl.textContent = momDisplay.toFixed(1);
                     }
 
-                    // Feed LOUDNESS HISTORY TIMELINE
-                    if (typeof window.updateLoudnessTimeline === 'function') {
+                    // Feed LOUDNESS HISTORY TIMELINE (freeze during voice ducking)
+                    if (typeof window.updateLoudnessTimeline === 'function' && !window._isSpeaking) {
                         window.updateLoudnessTimeline(momentaryLUFS, shortTermLUFS, smoothedLUFS);
                     }
 
@@ -20893,9 +20895,10 @@
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // LUFS Bar Indicator — linear dB scale (v7.6.25)
                     // Range: -36 to -6 (30 dB), labels every 6 dB = linear mapping
+                    // Uses momentaryLUFS for real-time movement (matches live LUFS meter)
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
-                    if (lufsBarIndicator) {
-                        const barLUFS = smoothedLUFS;
+                    if (lufsBarIndicator && !window._isSpeaking) {
+                        const barLUFS = momentaryLUFS;
                         const clampedLUFS = Math.max(-36, Math.min(-6, barLUFS));
                         const position = (clampedLUFS + 36) / 30 * 100;
                         lufsBarIndicator.style.left = `${position}%`;
@@ -33141,7 +33144,7 @@
                 const now = ac.currentTime;
                 mixer.gain.cancelScheduledValues(now);
                 mixer.gain.setValueAtTime(mixer.gain.value, now);
-                mixer.gain.linearRampToValueAtTime(musicDuckedVolume, now + 0.3);
+                mixer.gain.linearRampToValueAtTime(musicDuckedVolume, now + 0.08);
                 musicDuckedVolume = null;
             }
         }
