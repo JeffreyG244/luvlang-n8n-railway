@@ -40,6 +40,7 @@ class LuvLangApp {
 
         this.modules = {};
         this.initialized = false;
+        this._initPromise = null;
 
         log.info('App created');
     }
@@ -52,6 +53,21 @@ class LuvLangApp {
             log.warn('Already initialized');
             return;
         }
+
+        // Prevent concurrent init calls — return existing promise if in-flight
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        this._initPromise = this._doInit();
+        try {
+            await this._initPromise;
+        } finally {
+            this._initPromise = null;
+        }
+    }
+
+    async _doInit() {
 
         log.info('Initializing...');
 

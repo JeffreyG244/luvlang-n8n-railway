@@ -22,6 +22,7 @@ class PodcastPanel {
             roomTone: 5
         };
         this.detectedSpeakers = [];
+        this._eventUnsubs = [];
 
         if (this.container) {
             this.init();
@@ -267,8 +268,10 @@ class PodcastPanel {
             });
         }
 
-        // Listen for analysis updates
-        eventBus.on(Events.ANALYSIS_COMPLETE, (data) => this.updateCompliance(data));
+        // Listen for analysis updates (store unsub for cleanup)
+        this._onAnalysisComplete = (data) => this.updateCompliance(data);
+        const unsub = eventBus.on(Events.ANALYSIS_COMPLETE, this._onAnalysisComplete);
+        if (typeof unsub === 'function') this._eventUnsubs.push(unsub);
     }
 
     /**
@@ -511,6 +514,12 @@ class PodcastPanel {
      * Cleanup
      */
     destroy() {
+        // Remove eventBus subscriptions
+        for (const unsub of this._eventUnsubs) {
+            unsub();
+        }
+        this._eventUnsubs = [];
+
         if (this.container) {
             this.container.innerHTML = '';
         }

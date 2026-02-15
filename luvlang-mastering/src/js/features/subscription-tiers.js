@@ -5,7 +5,7 @@
 
 import { eventBus, Events } from '../core/event-bus.js';
 import { appState } from '../core/app-state.js';
-import { resolveContainer, showToast } from '../shared/utils.js';
+import { resolveContainer, showToast, safeFetch } from '../shared/utils.js';
 
 // ============================================
 // TIER DEFINITIONS
@@ -416,7 +416,7 @@ class SubscriptionManager {
         }
 
         try {
-            const response = await fetch('/api/create-checkout-session', {
+            const response = await safeFetch('/api/create-checkout-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -424,8 +424,13 @@ class SubscriptionManager {
                     userId: this.currentUser?.id,
                     successUrl: `${window.location.origin}/subscription/success`,
                     cancelUrl: `${window.location.origin}/pricing`
-                })
+                }),
+                timeout: 15000
             });
+
+            if (!response.ok) {
+                throw new Error(`Checkout request failed (${response.status})`);
+            }
 
             const session = await response.json();
 
@@ -448,14 +453,19 @@ class SubscriptionManager {
      */
     async openCustomerPortal() {
         try {
-            const response = await fetch('/api/create-portal-session', {
+            const response = await safeFetch('/api/create-portal-session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: this.currentUser?.id,
                     returnUrl: window.location.href
-                })
+                }),
+                timeout: 15000
             });
+
+            if (!response.ok) {
+                throw new Error(`Portal request failed (${response.status})`);
+            }
 
             const session = await response.json();
             window.location.href = session.url;
@@ -470,14 +480,19 @@ class SubscriptionManager {
      */
     async cancelSubscription() {
         try {
-            const response = await fetch('/api/cancel-subscription', {
+            const response = await safeFetch('/api/cancel-subscription', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: this.currentUser?.id,
                     subscriptionId: this.currentSubscription?.stripe_subscription_id
-                })
+                }),
+                timeout: 15000
             });
+
+            if (!response.ok) {
+                throw new Error(`Cancel request failed (${response.status})`);
+            }
 
             const result = await response.json();
 
@@ -713,7 +728,7 @@ class UpgradePrompt {
         const html = `
             <div class="upgrade-prompt-overlay">
                 <div class="upgrade-prompt">
-                    <button class="close-btn" onclick="this.closest('.upgrade-prompt-overlay').remove()">✕</button>
+                    <button class="close-btn" data-action="close">✕</button>
                     <div class="upgrade-icon">🔒</div>
                     <h3>Upgrade to Unlock</h3>
                     <p><strong>${featureNames[feature] || feature}</strong> requires the <span style="color: ${tier.color}">${tier.name}</span> plan or higher.</p>
@@ -724,10 +739,10 @@ class UpgradePrompt {
                         </ul>
                     </div>
                     <div class="upgrade-actions">
-                        <button class="btn btn-primary" onclick="window.location.href='/pricing'">
+                        <button class="btn btn-primary" data-action="pricing">
                             View Plans - Starting at $${tier.price}/track
                         </button>
-                        <button class="btn btn-secondary" onclick="this.closest('.upgrade-prompt-overlay').remove()">
+                        <button class="btn btn-secondary" data-action="close">
                             Maybe Later
                         </button>
                     </div>
@@ -740,6 +755,16 @@ class UpgradePrompt {
 
         // Add new prompt
         document.body.insertAdjacentHTML('beforeend', html);
+
+        // Bind via event delegation (no inline handlers)
+        const overlay = document.querySelector('.upgrade-prompt-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                const action = e.target.closest('[data-action]')?.dataset.action;
+                if (action === 'close') overlay.remove();
+                else if (action === 'pricing') window.location.href = '/pricing';
+            });
+        }
     }
 }
 

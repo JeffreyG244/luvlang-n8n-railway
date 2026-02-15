@@ -200,6 +200,7 @@ class AILearningEngine {
         this.userProfile = null;
         this.currentSession = null;
         this.predictions = {};
+        this._eventUnsubs = [];
 
         this.init();
         // Initialized
@@ -209,11 +210,17 @@ class AILearningEngine {
      * Initialize learning engine
      */
     async init() {
-        // Listen to state changes
-        eventBus.on(Events.STATE_CHANGE, (data) => this.onStateChange(data));
-        eventBus.on(Events.AUDIO_LOADED, (data) => this.onAudioLoaded(data));
-        eventBus.on(Events.PROCESSING_COMPLETE, (data) => this.onProcessingComplete(data));
-        eventBus.on(Events.EXPORT_COMPLETE, (data) => this.onExportComplete(data));
+        // Listen to state changes (store unsubs for cleanup)
+        const events = [
+            [Events.STATE_CHANGE, (data) => this.onStateChange(data)],
+            [Events.AUDIO_LOADED, (data) => this.onAudioLoaded(data)],
+            [Events.PROCESSING_COMPLETE, (data) => this.onProcessingComplete(data)],
+            [Events.EXPORT_COMPLETE, (data) => this.onExportComplete(data)]
+        ];
+        for (const [event, handler] of events) {
+            const unsub = eventBus.on(event, handler);
+            if (typeof unsub === 'function') this._eventUnsubs.push(unsub);
+        }
 
         // Load user profile if authenticated
         await this.loadUserProfile();
@@ -627,6 +634,17 @@ class AILearningEngine {
         const userId = this.userProfile.userId;
         this.userProfile = new UserProfile(userId);
         await this.saveUserProfile();
+    }
+
+    /**
+     * Cleanup all resources
+     */
+    destroy() {
+        for (const unsub of this._eventUnsubs) {
+            unsub();
+        }
+        this._eventUnsubs = [];
+        this.currentSession = null;
     }
 
     /**

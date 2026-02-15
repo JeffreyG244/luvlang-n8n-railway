@@ -7,7 +7,7 @@
 
 import { eventBus, Events } from '../core/event-bus.js';
 import { appState } from '../core/app-state.js';
-import { resolveContainer } from '../shared/utils.js';
+import { resolveContainer, escapeHtml } from '../shared/utils.js';
 
 class BatchProcessor {
     constructor(container, audioContext) {
@@ -95,7 +95,9 @@ class BatchProcessor {
 
                 <div class="batch-queue" id="batch-queue">
                     <div class="queue-empty">
-                        <div class="drop-zone" id="batch-dropzone">
+                        <div class="drop-zone" id="batch-dropzone"
+                             role="button" tabindex="0"
+                             aria-label="Drop audio files here or click to browse">
                             <div class="drop-icon">📁</div>
                             <div class="drop-text">Drop album/playlist files here</div>
                             <div class="drop-hint">Process multiple files with consistent settings</div>
@@ -163,6 +165,13 @@ class BatchProcessor {
             });
 
             dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
         }
 
         // File input
@@ -271,7 +280,9 @@ class BatchProcessor {
         if (this.queue.length === 0) {
             queueContainer.innerHTML = `
                 <div class="queue-empty">
-                    <div class="drop-zone" id="batch-dropzone">
+                    <div class="drop-zone" id="batch-dropzone"
+                         role="button" tabindex="0"
+                         aria-label="Drop audio files here or click to browse">
                         <div class="drop-icon">📁</div>
                         <div class="drop-text">Drop album/playlist files here</div>
                         <div class="drop-hint">Process multiple files with consistent settings</div>
@@ -288,7 +299,7 @@ class BatchProcessor {
                     ${this.getStatusIcon(item.status)}
                 </div>
                 <div class="item-info">
-                    <span class="item-name">${item.name}</span>
+                    <span class="item-name">${escapeHtml(item.name)}</span>
                     <span class="item-duration">${this.formatDuration(item.duration)}</span>
                 </div>
                 <div class="item-lufs">
@@ -334,7 +345,7 @@ class BatchProcessor {
             case 'queued': return 'Queued';
             case 'processing': return `Processing... ${item.progress}%`;
             case 'done': return 'Done';
-            case 'error': return `Error: ${item.error}`;
+            case 'error': return `Error: ${escapeHtml(item.error || 'Unknown')}`;
             default: return '';
         }
     }

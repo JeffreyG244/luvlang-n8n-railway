@@ -19,6 +19,8 @@ class UndoTimeline {
         };
 
         this.isVisible = false;
+        this._eventUnsubs = [];
+        this._keyHandler = null;
 
         if (this.container) {
             this.init();
@@ -96,21 +98,25 @@ class UndoTimeline {
             redoBtn.addEventListener('click', () => this.handleRedo());
         }
 
-        // Listen for history events
-        eventBus.on(Events.HISTORY_SAVE, () => this.updateTimeline());
-        eventBus.on(Events.HISTORY_UNDO, () => this.updateTimeline());
-        eventBus.on(Events.HISTORY_REDO, () => this.updateTimeline());
-        eventBus.on(Events.HISTORY_JUMP, () => this.updateTimeline());
-
-        // State changes
-        eventBus.on(Events.STATE_CHANGE, () => this.updateButtons());
+        // Listen for history events (store unsubs for cleanup)
+        const events = [
+            [Events.HISTORY_SAVE, () => this.updateTimeline()],
+            [Events.HISTORY_UNDO, () => this.updateTimeline()],
+            [Events.HISTORY_REDO, () => this.updateTimeline()],
+            [Events.HISTORY_JUMP, () => this.updateTimeline()],
+            [Events.STATE_CHANGE, () => this.updateButtons()]
+        ];
+        for (const [event, handler] of events) {
+            const unsub = eventBus.on(event, handler);
+            if (typeof unsub === 'function') this._eventUnsubs.push(unsub);
+        }
     }
 
     /**
      * Bind keyboard shortcuts
      */
     bindKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
+        this._keyHandler = (e) => {
             // Ignore if typing in input
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 return;
@@ -127,7 +133,8 @@ class UndoTimeline {
                 e.preventDefault();
                 this.handleRedo();
             }
-        });
+        };
+        document.addEventListener('keydown', this._keyHandler);
     }
 
     /**
@@ -431,6 +438,18 @@ class UndoTimeline {
      * Cleanup
      */
     destroy() {
+        // Remove keyboard listener
+        if (this._keyHandler) {
+            document.removeEventListener('keydown', this._keyHandler);
+            this._keyHandler = null;
+        }
+
+        // Remove eventBus subscriptions
+        for (const unsub of this._eventUnsubs) {
+            unsub();
+        }
+        this._eventUnsubs = [];
+
         if (this.container) {
             this.container.innerHTML = '';
         }
