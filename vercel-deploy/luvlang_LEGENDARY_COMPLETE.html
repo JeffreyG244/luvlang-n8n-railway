@@ -4852,6 +4852,7 @@
 
     <script>
     // Integrated A/B Toggle Handler — post-mastering only
+    // v7.6.25: Fixed first-toggle bug — cancelScheduledValues(0) kills stale setTargetAtTime
     function handleFloatingABToggle(isMastered) {
         if (!window.isMasteringApplied) return; // Nothing to toggle before mastering
 
@@ -4867,17 +4868,25 @@
             return;
         }
 
-        // Glitch-free crossfade: anchor current value then linear ramp
+        // Resume AudioContext if suspended (common after mastering completes)
+        if (ac.state === 'suspended') {
+            ac.resume();
+        }
+
+        // Cancel ALL automation from time 0 — kills stale setTargetAtTime from mastering
+        // Using cancelScheduledValues(now) fails because setTargetAtTime started in the past
+        dryGain.gain.cancelScheduledValues(0);
+        wetGain.gain.cancelScheduledValues(0);
+
+        // Glitch-free crossfade with explicit known starting values
+        // Don't read .gain.value — unreliable when setTargetAtTime was active
         const now = ac.currentTime;
         const fade = 0.035; // 35ms crossfade — inaudible gap, no click
 
-        dryGain.gain.cancelScheduledValues(now);
-        wetGain.gain.cancelScheduledValues(now);
-        dryGain.gain.setValueAtTime(dryGain.gain.value, now);
-        wetGain.gain.setValueAtTime(wetGain.gain.value, now);
-
         if (isMastered) {
-            // Play MASTERED (B)
+            // Switch TO mastered (B) — coming FROM original (dry=1, wet=0)
+            dryGain.gain.setValueAtTime(1.0, now);
+            wetGain.gain.setValueAtTime(0.0, now);
             dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
             wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
 
@@ -4889,7 +4898,9 @@
             }
 
         } else {
-            // Play ORIGINAL (A)
+            // Switch TO original (A) — coming FROM mastered (dry=0, wet=1)
+            dryGain.gain.setValueAtTime(0.0, now);
+            wetGain.gain.setValueAtTime(1.0, now);
             dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
             wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
 
@@ -21896,10 +21907,17 @@
                 // after the two-pass correction completes with the real measured value.
 
                 // Switch to mastered audio path
+                // v7.6.25: Use cancelScheduledValues + setValueAtTime instead of setTargetAtTime
+                // setTargetAtTime creates lingering automation that breaks A/B toggle
                 if (window.dryGain && window.wetGain && window.audioContext) {
                     const ac = window.audioContext;
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.02);
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.02);
+                    const t = ac.currentTime;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, t);
+                    window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, t);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, t + 0.04);
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, t + 0.04);
                     window.isMasteringApplied = true;
                 }
 
@@ -25989,8 +26007,14 @@
                 // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
                 // ═══════════════════════════════════════════════════════════════
                 if (window.dryGain && window.wetGain) {
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.05);  // Original path OFF
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.05);  // Processed path ON
+                    // v7.6.25: Use finite ramp instead of setTargetAtTime (avoids lingering automation)
+                    const t = ac.currentTime;
+                    window.dryGain.gain.cancelScheduledValues(0);
+                    window.wetGain.gain.cancelScheduledValues(0);
+                    window.dryGain.gain.setValueAtTime(window.dryGain.gain.value, t);
+                    window.wetGain.gain.setValueAtTime(window.wetGain.gain.value, t);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, t + 0.05);  // Original path OFF
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, t + 0.05);  // Processed path ON
                     window.isMasteringApplied = true;
 
                     // Enable the unified A/B toggle control
@@ -28133,17 +28157,26 @@
 
         // Apply the actual audio state
         // dryGain = DIRECT/UNMASTERED, wetGain = PROCESSED/MASTERED
+        // v7.6.25: Use cancelScheduledValues + linearRamp instead of setTargetAtTime
         function applyABState() {
             if (window.dryGain && window.wetGain && window.audioContext) {
                 const ac = window.audioContext;
+                const t = ac.currentTime;
+                const fade = 0.035;
+                window.dryGain.gain.cancelScheduledValues(0);
+                window.wetGain.gain.cancelScheduledValues(0);
                 if (window.abCompareMode) {
                     // Unmastered audio
-                    window.dryGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);  // Unmastered ON
-                    window.wetGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);  // Mastered OFF
+                    window.dryGain.gain.setValueAtTime(0.0, t);
+                    window.wetGain.gain.setValueAtTime(1.0, t);
+                    window.dryGain.gain.linearRampToValueAtTime(1.0, t + fade);  // Unmastered ON
+                    window.wetGain.gain.linearRampToValueAtTime(0.0, t + fade);  // Mastered OFF
                 } else {
                     // Mastered audio
-                    window.dryGain.gain.setTargetAtTime(0.0, ac.currentTime, 0.03);  // Unmastered OFF
-                    window.wetGain.gain.setTargetAtTime(1.0, ac.currentTime, 0.03);  // Mastered ON
+                    window.dryGain.gain.setValueAtTime(1.0, t);
+                    window.wetGain.gain.setValueAtTime(0.0, t);
+                    window.dryGain.gain.linearRampToValueAtTime(0.0, t + fade);  // Unmastered OFF
+                    window.wetGain.gain.linearRampToValueAtTime(1.0, t + fade);  // Mastered ON
                 }
             }
         }
