@@ -26600,8 +26600,8 @@
                         _rptPanel.style.display = '';
 
                         // Build mastering report with Fix All button
-                        const _vLUFS = window.lockedLUFS || targetLUFS;
-                        const _vPeak = window.lockedPeak || -1.0;
+                        const _vLUFS = lockedLUFS || targetLUFS;
+                        const _vPeak = lockedPeak || -1.0;
                         const _origLUFS = window.originalInputLUFS || -18;
                         const _origPeak = window.originalInputPeakDB || -3;
                         const _lufsDeviation = Math.abs(_vLUFS - targetLUFS);
@@ -27033,9 +27033,9 @@
 
         // Show the mastering complete overlay - WORLD-CLASS RESULTS DASHBOARD
         window.showMasteringComplete = function(originalLUFS, masteredLUFS, targetLUFS) {
-            // Store LUFS values for metrics
-            beforeLUFS = originalLUFS || window.originalInputLUFS || -18;
-            afterLUFS = masteredLUFS || targetLUFS || -14;
+            // Store LUFS values for metrics (v7.6.29: prefer verified lockedLUFS)
+            beforeLUFS = window.originalInputLUFS || originalLUFS || -18;
+            afterLUFS = lockedLUFS || masteredLUFS || targetLUFS || -14;
 
             // Store for export bar
             window.lastMasteredLUFS = afterLUFS;
@@ -28749,8 +28749,8 @@
             // Mastered LUFS is measured when playing mastered
 
             // Use stored values if available
-            const origLUFS = window.originalInputLUFS || window.currentIntegratedLUFS || -18;
-            const mastLUFS = window.lockedLUFS || window.currentIntegratedLUFS || -14;
+            const origLUFS = window.originalInputLUFS || currentIntegratedLUFS || -18;
+            const mastLUFS = lockedLUFS || currentIntegratedLUFS || -14;
 
             // Calculate the gain difference
             const lufsDiff = origLUFS - mastLUFS; // If mastered is louder, this is negative
@@ -30450,6 +30450,11 @@
             // Reset LUFS gain lock — new mastering pass will re-lock after targeting
             window._lufsGainLocked = false;
 
+            // v7.6.29: Reset meter locks so re-master gets fresh measurements
+            metersLocked = false;
+            lockedLUFS = null;
+            lockedPeak = null;
+
             // Dry path is always clean — no preview EQ filters to remove
 
             // Ensure we have a genre selected (default to AI-detected or pop)
@@ -30593,11 +30598,11 @@
                 window.analyser.getByteFrequencyData(beforeSpectrumData);
 
             }
-            // Capture original LUFS
-            if (window.integratedLUFS) {
-                beforeLUFS = window.integratedLUFS;
-            } else if (window.originalInputLUFS) {
+            // Capture original LUFS — always prefer the immutable original value (v7.6.29)
+            if (window.originalInputLUFS) {
                 beforeLUFS = window.originalInputLUFS;
+            } else if (window.integratedLUFS) {
+                beforeLUFS = window.integratedLUFS;
             }
         }
 
@@ -31371,7 +31376,7 @@
             if (!results || !overall) return;
 
             // Gather current mastering state
-            const lufs = window.lockedLUFS || window.lastMasteredLUFS || (typeof smoothedLUFS !== 'undefined' ? smoothedLUFS : -14);
+            const lufs = lockedLUFS || window.lastMasteredLUFS || (typeof smoothedLUFS !== 'undefined' ? smoothedLUFS : -14);
             const platformTarget = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
             const truePeakEl = document.getElementById('truePeakValue');
             const truePeak = truePeakEl ? parseFloat(truePeakEl.textContent) || -1.5 : -1.5;
@@ -31718,7 +31723,7 @@
                 return window.appliedMakeupGainDB;
             }
             const originalLUFS = window.originalInputLUFS;
-            const masteredLUFS = window.lastMasteredLUFS || window.lockedLUFS;
+            const masteredLUFS = window.lastMasteredLUFS || lockedLUFS;
             // Guard against null/undefined/NaN
             if (typeof originalLUFS !== 'number' || !isFinite(originalLUFS) ||
                 typeof masteredLUFS !== 'number' || !isFinite(masteredLUFS)) {
