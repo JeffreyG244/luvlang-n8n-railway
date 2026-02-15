@@ -24,6 +24,23 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Body parser for JSON endpoints (webhook uses raw parser separately)
+app.use((req, res, next) => {
+    if (req.path === '/api/stripe-webhook') return next();
+    express.json()(req, res, next);
+});
+
+// Validate redirect URLs against allowed origins
+function isSafeRedirect(url) {
+    if (!url) return false;
+    try {
+        const parsed = new URL(url);
+        return corsOptions.origin.includes(parsed.origin);
+    } catch { return false; }
+}
+
+const frontendUrl = process.env.FRONTEND_URL || 'https://luvlangmastering.vercel.app';
+
 // Tier pricing - PER-TRACK PRICING (in cents)
 const TIER_PRICES = {
     instant: 999,         // $9.99 per track
@@ -98,8 +115,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1
             }],
             mode: 'payment',
-            success_url: successUrl || `${process.env.FRONTEND_URL || 'http://localhost:8080'}/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: cancelUrl || `${process.env.FRONTEND_URL || 'http://localhost:8080'}/cancel`,
+            success_url: isSafeRedirect(successUrl) ? successUrl : `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: isSafeRedirect(cancelUrl) ? cancelUrl : `${frontendUrl}/cancel`,
             metadata: {
                 tier: tier,
                 filename: sessionData?.filename || 'untitled',
@@ -127,12 +144,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
         // Handle Stripe-specific errors
         if (error.type === 'StripeCardError') {
-            return res.status(400).json({ success: false, error: error.message });
+            return res.status(400).json({ success: false, error: 'Card error occurred' });
         }
 
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Checkout session creation failed'
         });
     }
 });
@@ -155,8 +172,6 @@ app.post('/api/verify-payment', async (req, res) => {
         });
 
         if (session.payment_status === 'paid') {
-            console.log('✅ Payment verified for session:', sessionId);
-
             res.json({
                 success: true,
                 verified: true,
@@ -174,10 +189,10 @@ app.post('/api/verify-payment', async (req, res) => {
         }
 
     } catch (error) {
-        console.error('❌ Payment verification failed:', error.message);
+        console.error('Payment verification failed:', error.message);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Payment verification failed'
         });
     }
 });
@@ -226,10 +241,10 @@ app.post('/api/create-payment-intent', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Payment failed:', error.message);
+        console.error('Payment intent failed:', error.message);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Payment processing failed'
         });
     }
 });
@@ -245,22 +260,22 @@ app.post('/api/stripe-webhook', express.raw({type: 'application/json'}), async (
 
     let event;
 
+    // SECURITY: Always require webhook secret in production
+    if (!webhookSecret) {
+        console.error('STRIPE_WEBHOOK_SECRET not configured');
+        return res.status(500).json({ error: 'Webhook not configured' });
+    }
+
+    if (!sig) {
+        return res.status(400).json({ error: 'Missing signature' });
+    }
+
     // Verify webhook signature
-    if (webhookSecret) {
-        try {
-            event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-        } catch (err) {
-            console.error('⚠️ Webhook signature verification failed:', err.message);
-            return res.status(400).send(`Webhook Error: ${err.message}`);
-        }
-    } else {
-        // For development without webhook secret (NOT recommended for production)
-        console.warn('⚠️ STRIPE_WEBHOOK_SECRET not set - running in development mode');
-        try {
-            event = JSON.parse(req.body.toString());
-        } catch (err) {
-            return res.status(400).send('Invalid JSON');
-        }
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('Webhook signature verification failed');
+        return res.status(400).json({ error: 'Invalid webhook signature' });
     }
 
     console.log(`📨 Webhook received: ${event.type}`);
@@ -326,7 +341,7 @@ app.post('/api/stripe-webhook', express.raw({type: 'application/json'}), async (
     } catch (err) {
         console.error('❌ Webhook handler error:', err.message);
         // Return 200 to acknowledge receipt (Stripe will retry on 4xx/5xx)
-        res.status(200).json({ received: true, error: err.message });
+        res.status(200).json({ received: true });
     }
 });
 
@@ -340,8 +355,7 @@ async function recordPurchase(data) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-        console.log('ℹ️ Supabase not configured - skipping database recording');
-        console.log('   Purchase data:', JSON.stringify(data, null, 2));
+        console.log('Supabase not configured - skipping database recording');
         return;
     }
 
@@ -446,18 +460,17 @@ app.listen(PORT, () => {
     console.log('');
     console.log('   ENVIRONMENT:');
     console.log(`   - Stripe key: ${process.env.STRIPE_SECRET_KEY ? '✅ Set' : '❌ Missing'}`);
-    console.log(`   - Webhook secret: ${process.env.STRIPE_WEBHOOK_SECRET ? '✅ Set' : '⚠️ Optional'}`);
+    console.log(`   - Webhook secret: ${process.env.STRIPE_WEBHOOK_SECRET ? '✅ Set' : '❌ Missing (required)'}`);
     console.log('═══════════════════════════════════════════════════════════');
     console.log('');
 
     if (!process.env.STRIPE_SECRET_KEY) {
-        console.error('');
-        console.error('❌ ERROR: STRIPE_SECRET_KEY not set!');
-        console.error('');
-        console.error('Create a .env file with:');
-        console.error('STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY_HERE');
-        console.error('');
+        console.error('FATAL: STRIPE_SECRET_KEY not set');
         process.exit(1);
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+        console.warn('WARNING: STRIPE_WEBHOOK_SECRET not set — webhook endpoint will reject all requests');
     }
 });
 
