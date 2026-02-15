@@ -87,7 +87,7 @@ class AnalyticsDashboard {
                             </div>
                         </div>
                         <div class="lufs-graph-container">
-                            <canvas id="lufs-graph" width="600" height="200"></canvas>
+                            <canvas id="lufs-graph" width="600" height="200" role="img" aria-label="LUFS loudness history graph"></canvas>
                             <div class="graph-labels">
                                 <span class="label-target">Target: -14 LUFS</span>
                                 <span class="label-range">Range: -24 to 0 LUFS</span>
@@ -115,7 +115,7 @@ class AnalyticsDashboard {
                             </div>
                         </div>
                         <div class="dynamics-graph-container">
-                            <canvas id="dynamics-graph" width="600" height="200"></canvas>
+                            <canvas id="dynamics-graph" width="600" height="200" role="img" aria-label="Dynamic range analysis graph"></canvas>
                         </div>
                         <div class="dynamics-analysis">
                             <div class="analysis-item">
@@ -144,7 +144,7 @@ class AnalyticsDashboard {
                             </select>
                         </div>
                         <div class="spectrogram-container">
-                            <canvas id="spectrogram-canvas" width="800" height="300"></canvas>
+                            <canvas id="spectrogram-canvas" width="800" height="300" role="img" aria-label="Frequency spectrogram visualization"></canvas>
                             <div class="spectrogram-axis-y">
                                 <span>20kHz</span>
                                 <span>10kHz</span>
@@ -177,7 +177,7 @@ class AnalyticsDashboard {
                         <div class="comparison-display">
                             <div class="comparison-side before">
                                 <div class="comparison-label">BEFORE</div>
-                                <canvas id="before-waveform" width="300" height="100"></canvas>
+                                <canvas id="before-waveform" width="300" height="100" role="img" aria-label="Before processing waveform"></canvas>
                                 <div class="comparison-stats" id="before-stats">
                                     <span>LUFS: --</span>
                                     <span>Peak: --</span>
@@ -186,7 +186,7 @@ class AnalyticsDashboard {
                             <div class="comparison-divider"></div>
                             <div class="comparison-side after">
                                 <div class="comparison-label">AFTER</div>
-                                <canvas id="after-waveform" width="300" height="100"></canvas>
+                                <canvas id="after-waveform" width="300" height="100" role="img" aria-label="After processing waveform"></canvas>
                                 <div class="comparison-stats" id="after-stats">
                                     <span>LUFS: --</span>
                                     <span>Peak: --</span>

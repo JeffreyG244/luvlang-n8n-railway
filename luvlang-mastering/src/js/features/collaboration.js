@@ -707,7 +707,9 @@ class CollaborationManager {
             <div class="comment-item" data-timestamp="${comment.timestamp_seconds}">
                 <div class="comment-header">
                     <span class="comment-user">${escapeHtml(comment.user_email)}</span>
-                    <span class="comment-time" data-seconds="${comment.timestamp_seconds}">
+                    <span class="comment-time" data-seconds="${comment.timestamp_seconds}"
+                          role="button" tabindex="0"
+                          aria-label="Jump to ${this.formatTimestamp(comment.timestamp_seconds)}">
                         ${this.formatTimestamp(comment.timestamp_seconds)}
                     </span>
                 </div>
@@ -716,11 +718,18 @@ class CollaborationManager {
             </div>
         `).join('');
 
-        // Click to jump to timestamp
+        // Click/keyboard to jump to timestamp
         listEl.querySelectorAll('.comment-time').forEach(timeEl => {
-            timeEl.addEventListener('click', () => {
+            const jumpToTime = () => {
                 const seconds = parseFloat(timeEl.dataset.seconds);
                 eventBus.emit(Events.AUDIO_SEEK, { time: seconds });
+            };
+            timeEl.addEventListener('click', jumpToTime);
+            timeEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    jumpToTime();
+                }
             });
         });
     }

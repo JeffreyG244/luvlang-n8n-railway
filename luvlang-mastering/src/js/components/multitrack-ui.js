@@ -7,7 +7,7 @@
 
 import { eventBus, Events } from '../core/event-bus.js';
 import { appState } from '../core/app-state.js';
-import { resolveContainer } from '../shared/utils.js';
+import { resolveContainer, escapeHtml } from '../shared/utils.js';
 
 class MultitrackUI {
     constructor(container, audioContext) {
@@ -17,6 +17,7 @@ class MultitrackUI {
         this.trackElements = new Map();
         this.isRendering = false;
         this.animationFrame = null;
+        this._stateUnsub = null;
 
         // Initialize if container exists
         if (this.container) {
@@ -63,7 +64,9 @@ class MultitrackUI {
 
                 <div class="multitrack-tracks" id="multitrack-tracks">
                     <div class="tracks-empty">
-                        <div class="drop-zone" id="multitrack-dropzone">
+                        <div class="drop-zone" id="multitrack-dropzone"
+                             role="button" tabindex="0"
+                             aria-label="Drop audio files here or click to browse">
                             <div class="drop-icon">📁</div>
                             <div class="drop-text">Drop files here or click to add tracks</div>
                             <div class="drop-hint">Supports WAV, MP3, FLAC, AIFF (up to 32 tracks)</div>
@@ -137,6 +140,13 @@ class MultitrackUI {
             dropZone.addEventListener('click', () => {
                 fileInput.click();
             });
+
+            dropZone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInput.click();
+                }
+            });
         }
 
         // File input change
@@ -167,8 +177,8 @@ class MultitrackUI {
             exportStemsBtn.addEventListener('click', () => this.handleExportStems());
         }
 
-        // Listen for state changes
-        appState.subscribe('multitrack.tracks', () => this.updateTrackList());
+        // Listen for state changes (store unsub for cleanup)
+        this._stateUnsub = appState.subscribe('multitrack.tracks', () => this.updateTrackList());
     }
 
     /**
@@ -275,8 +285,8 @@ class MultitrackUI {
         trackEl.innerHTML = `
             <div class="track-info">
                 <span class="track-icon">${icon}</span>
-                <span class="track-name" contenteditable="true">${track.name}</span>
-                <span class="track-type">${track.type}</span>
+                <span class="track-name" contenteditable="true">${escapeHtml(track.name)}</span>
+                <span class="track-type">${escapeHtml(track.type)}</span>
             </div>
             <div class="track-controls">
                 <button class="btn-solo ${track.solo ? 'active' : ''}" data-action="solo" title="Solo">S</button>
@@ -472,7 +482,9 @@ class MultitrackUI {
         const tracksContainer = this.container.querySelector('#multitrack-tracks');
         tracksContainer.innerHTML = `
             <div class="tracks-empty">
-                <div class="drop-zone" id="multitrack-dropzone">
+                <div class="drop-zone" id="multitrack-dropzone"
+                     role="button" tabindex="0"
+                     aria-label="Drop audio files here or click to browse">
                     <div class="drop-icon">📁</div>
                     <div class="drop-text">Drop files here or click to add tracks</div>
                     <div class="drop-hint">Supports WAV, MP3, FLAC, AIFF (up to 32 tracks)</div>
@@ -660,6 +672,13 @@ class MultitrackUI {
      */
     destroy() {
         this.stopMeters();
+
+        // Remove state subscription
+        if (typeof this._stateUnsub === 'function') {
+            this._stateUnsub();
+            this._stateUnsub = null;
+        }
+
         this.trackElements.clear();
         if (this.container) {
             this.container.innerHTML = '';

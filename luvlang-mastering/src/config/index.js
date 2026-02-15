@@ -245,8 +245,11 @@ const CONFIG = {
     FEATURES
 };
 
-// Freeze config in production
+// Validate critical config in production
 if (ENV.isProd) {
+    if (!SUPABASE.url) console.warn('[Config] SUPABASE_URL is not set');
+    if (!SUPABASE.anonKey) console.warn('[Config] SUPABASE_ANON_KEY is not set');
+    if (!STRIPE.publicKey) console.warn('[Config] STRIPE_PUBLISHABLE_KEY is not set');
     Object.freeze(CONFIG);
 }
 
