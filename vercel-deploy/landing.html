@@ -7,17 +7,17 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuvLang - Professional Audio Mastering Made Simple</title>
-    <meta name="description" content="The most advanced mastering platform on the web. Reference track matching, multiband compression, M/S processing, and 24 professional modules. Better than $299 plugins, starting at $12.99.">
+    <meta name="description" content="The most advanced mastering platform on the web. 20-stage mastering chain with reference matching, multiband compression, M/S processing, and AI-powered tier previews. Better than $299 plugins, starting at $12.99.">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://luvlang.studio">
     <meta property="og:title" content="LuvLang - Professional Audio Mastering Made Simple">
-    <meta property="og:description" content="The most advanced mastering platform on the web. Reference track matching, multiband compression, M/S processing, and 24 professional modules.">
+    <meta property="og:description" content="The most advanced mastering platform on the web. 20-stage mastering chain with reference matching, multiband compression, M/S processing, and AI tier previews.">
     <meta property="og:image" content="https://luvlang.studio/og-image.png">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="LuvLang - Professional Audio Mastering Made Simple">
-    <meta name="twitter:description" content="The most advanced mastering platform on the web. 24 professional modules starting at $12.99.">
+    <meta name="twitter:description" content="The most advanced mastering platform on the web. 20-stage mastering chain starting at $12.99.">
     <meta name="twitter:image" content="https://luvlang.studio/og-image.png">
 
     <!-- Favicon & PWA -->
@@ -131,13 +131,21 @@
             font-size: 1.8rem;
             font-weight: 900;
             letter-spacing: -1px;
-            background: linear-gradient(135deg, #fff 0%, #00d4ff 50%, #b84fff 100%);
+            background: linear-gradient(270deg, #43e97b, #00ff88, #00d4ff, #b84fff, #ff9a56, #00d4ff, #00ff88, #43e97b);
+            background-size: 300% 100%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: luvlangColorFlow 6s ease infinite;
             line-height: 1.1;
             position: relative;
             z-index: 2;
+        }
+
+        @keyframes luvlangColorFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .logo-eq-overlay {
@@ -1013,7 +1021,7 @@
             Works for music, podcasts, films, and anything audio.
         </p>
         <p class="hero-note">
-            <strong>24 professional modules</strong> including reference matching, multiband compression, and M/S processing.
+            <strong>20-stage mastering chain</strong> including reference matching, multiband compression, M/S processing, and AI-powered tier previews.
         </p>
         <a href="/app" class="hero-cta">
             Start Tour
@@ -1024,8 +1032,8 @@
 
         <div class="social-proof">
             <div class="proof-item">
-                <div class="proof-value">24</div>
-                <div class="proof-label">Pro Mastering Modules</div>
+                <div class="proof-value">20</div>
+                <div class="proof-label">Stage Mastering Chain</div>
             </div>
             <div class="proof-item">
                 <div class="proof-value">10,000+</div>
@@ -1093,8 +1101,8 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📊</div>
-                <h3>9 Broadcast Meters</h3>
-                <p>LUFS loudness, true peak, dynamic range, stereo width, and more. Know exactly how your track measures up before you export.</p>
+                <h3>Broadcast-Grade Meters</h3>
+                <p>LUFS integrated/short-term, true peak, dynamic range, stereo width, crest factor, and more. Know exactly how your track measures up before you export.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🎛️</div>
@@ -1103,8 +1111,8 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon">⚡</div>
-                <h3>5-Phase Auto Master</h3>
-                <p>Let our professional engine analyze your track and apply intelligent settings automatically. Then tweak to taste or just export and be done.</p>
+                <h3>AI Auto Master</h3>
+                <p>3-phase AI engine analyzes loudness, spectral balance, and dynamics, then applies intelligent mastering settings automatically. Tweak to taste or export as-is.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🎙️</div>
@@ -1113,13 +1121,13 @@
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔧</div>
-                <h3>Stem Mastering</h3>
-                <p>Upload separate stems and master them together with proper gain staging. Something the other guys don't even offer.</p>
+                <h3>AI Stem Separation</h3>
+                <p>AI-powered stem separation isolates vocals, drums, bass, and instruments from any mix. Master individual stems with precision control.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">💾</div>
                 <h3>Custom Presets</h3>
-                <p>Save your settings, load them later, export them, share them with collaborators. Your signature sound, one click away.</p>
+                <p>Save your mastering settings, load them later, and reuse across tracks. Genre-based presets included for quick starts. Your signature sound, one click away.</p>
             </div>
         </div>
     </section>
@@ -1200,52 +1208,54 @@
         <div class="pricing-grid">
             <div class="pricing-card">
                 <div class="pricing-tier">Basic</div>
-                <div class="pricing-name">Instant</div>
                 <div class="pricing-price">
                     <span class="amount">$12.99</span>
                     <span class="period">/ track</span>
                 </div>
-                <p class="pricing-description">Quick professional mastering for tracks that just need to sound good.</p>
+                <p class="pricing-description">Clean, professional mastering with essential tools.</p>
                 <ul class="pricing-features">
-                    <li>Intelligent auto-mastering</li>
-                    <li>Platform presets (Spotify, YouTube, etc.)</li>
-                    <li>High-quality WAV + MP3 export</li>
-                    <li>Basic loudness targeting</li>
+                    <li>AI loudness normalization (LUFS targeting)</li>
+                    <li>Platform presets (Spotify, Apple Music, YouTube)</li>
+                    <li>7-band parametric EQ</li>
+                    <li>Bus compression + brick-wall limiter</li>
+                    <li>24-bit/16-bit WAV export</li>
+                    <li>Quality scorecard</li>
                 </ul>
                 <button class="pricing-cta" onclick="window.location.href='/app?tier=basic'">Get Started</button>
             </div>
             <div class="pricing-card featured">
                 <div class="pricing-tier">Professional</div>
-                <div class="pricing-name">Precision</div>
                 <div class="pricing-price">
                     <span class="amount">$29.99</span>
                     <span class="period">/ track</span>
                 </div>
-                <p class="pricing-description">Full manual control for when you know exactly what you want.</p>
+                <p class="pricing-description">Full mastering chain with multiband, M/S, and dynamic EQ.</p>
                 <ul class="pricing-features">
-                    <li>Everything in Instant</li>
-                    <li>Full 7-band parametric EQ</li>
-                    <li>Multiband compression</li>
-                    <li>Reference track matching</li>
-                    <li>M/S processing</li>
+                    <li>Everything in Basic, plus:</li>
+                    <li>Multiband compression (4-band)</li>
+                    <li>Mid/Side stereo processing</li>
+                    <li>Genre-optimized AI EQ curves</li>
+                    <li>Dynamic EQ + HF limiter</li>
+                    <li>Look-ahead limiter</li>
+                    <li>Multi-format export (WAV, MP3, FLAC)</li>
                 </ul>
                 <button class="pricing-cta" onclick="window.location.href='/app?tier=professional'">Get Started</button>
             </div>
             <div class="pricing-card">
                 <div class="pricing-tier">Studio</div>
-                <div class="pricing-name">Legendary</div>
                 <div class="pricing-price">
                     <span class="amount">$59.99</span>
                     <span class="period">/ track</span>
                 </div>
-                <p class="pricing-description">The complete toolkit. Everything we've got.</p>
+                <p class="pricing-description">The complete 20-stage mastering chain. Everything we've got.</p>
                 <ul class="pricing-features">
-                    <li>Everything in Precision</li>
-                    <li>Stem mastering</li>
-                    <li>Harmonic enhancement</li>
-                    <li>Spectral repair</li>
-                    <li>Codec preview</li>
-                    <li>PDF mastering report</li>
+                    <li>Everything in Professional, plus:</li>
+                    <li>Harmonic exciter + analog warmth</li>
+                    <li>Soft clipper for glue</li>
+                    <li>Full 20-stage mastering chain</li>
+                    <li>AI persistent learning</li>
+                    <li>Downloadable mastering report</li>
+                    <li>All formats (WAV, MP3, FLAC, AIFF)</li>
                 </ul>
                 <button class="pricing-cta" onclick="window.location.href='/app?tier=studio'">Get Started</button>
             </div>
@@ -1265,7 +1275,7 @@
                     <span>+</span>
                 </button>
                 <div class="faq-answer">
-                    <p>Those services give you a "black box" - upload and hope. LuvLang gives you full control. Reference matching, multiband compression, M/S processing, 7-band EQ, real-time metering. It's a full mastering suite, not just an algorithm.</p>
+                    <p>Those services give you a "black box" - upload and hope. LuvLang gives you full control with a 20-stage mastering chain: reference matching, multiband compression, M/S processing, 7-band EQ, harmonic exciter, real-time metering, and AI tier previews so you hear the difference before you pay.</p>
                 </div>
             </div>
             <div class="faq-item">
@@ -1283,7 +1293,7 @@
                     <span>+</span>
                 </button>
                 <div class="faq-answer">
-                    <p>WAV, MP3, FLAC, AIFF, OGG, M4A, and more. For best results, upload uncompressed WAV or FLAC. We export in high-quality WAV and MP3.</p>
+                    <p>WAV, MP3, FLAC, AIFF, OGG, M4A, and more. For best results, upload uncompressed WAV or FLAC. We export in WAV, MP3, FLAC, and AIFF depending on your tier.</p>
                 </div>
             </div>
             <div class="faq-item">

@@ -4733,6 +4733,22 @@
             ">B</span>
         </div>
 
+        <!-- Fix All Button - shown after mastering -->
+        <button id="floatingFixAllBtn" onclick="fixRemainingIssues()" title="Fix All Remaining Issues" style="
+            display: none;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.25), rgba(255,215,0,0.25));
+            border: 1px solid rgba(255,107,107,0.5);
+            border-radius: 8px;
+            color: #ffd700;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        ">FIX ALL</button>
+
         <!-- Status Pill - Updates based on state -->
         <div class="ai-status-pill" id="aiStatusPill">MASTERING CHAIN</div>
     </div>
@@ -4870,13 +4886,12 @@
 
         if (ac.state === 'suspended') ac.resume();
 
-        // Cancel any pending automation
-        dryGain.gain.cancelScheduledValues(0);
-        wetGain.gain.cancelScheduledValues(0);
-
-        // Read current gain values (reliable now — no setTargetAtTime in codebase)
         const now = ac.currentTime;
-        const fade = 0.05; // 50ms crossfade — smooth, no skip
+        const fade = 0.08; // 80ms crossfade — smooth, no skip
+
+        // Cancel pending automation from current time, then anchor current value
+        dryGain.gain.cancelScheduledValues(now);
+        wetGain.gain.cancelScheduledValues(now);
         dryGain.gain.setValueAtTime(dryGain.gain.value, now);
         wetGain.gain.setValueAtTime(wetGain.gain.value, now);
 
@@ -4911,6 +4926,10 @@
         if (abToggle) {
             abToggle.style.display = 'flex';
             abToggle.classList.add('visible');
+        }
+        const floatingFixAll = document.getElementById('floatingFixAllBtn');
+        if (floatingFixAll) {
+            floatingFixAll.style.display = 'inline-block';
         }
     };
     </script>
@@ -6643,9 +6662,9 @@
                 max-height: 92vh;
                 overflow-y: auto;
                 background: linear-gradient(165deg,
-                    rgba(15, 25, 45, 0.9) 0%,
-                    rgba(8, 15, 30, 0.95) 50%,
-                    rgba(5, 10, 25, 0.98) 100%);
+                    #0f192d 0%,
+                    #080f1e 50%,
+                    #050a19 100%);
                 border: 1px solid rgba(0, 212, 255, 0.15);
                 border-radius: 28px;
                 padding: 40px 36px;
@@ -6657,8 +6676,6 @@
                     0 0 150px rgba(0, 212, 255, 0.08),
                     0 0 80px rgba(184, 79, 255, 0.05);
                 animation: cardFloat 8s ease-in-out infinite;
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
             }
             /* Premium border glow animation */
             .gate-card::before {
@@ -17899,16 +17916,19 @@
         // This ensures the scorecard + report show fresh results after each pass.
         // ═══════════════════════════════════════════════════════════════════════════
         function fixRemainingIssues() {
-            // Update both possible button IDs (report panel + transport bar)
+            // Update all possible button IDs (report panel + transport bar + floating bar)
             const btn = document.getElementById('fixAllIssuesBtn');
             const btn2 = document.getElementById('fixAllBtn');
+            const btn3 = document.getElementById('floatingFixAllBtn');
             if (btn) { btn.textContent = 'RE-MASTERING...'; btn.disabled = true; }
             if (btn2) { btn2.textContent = '⏳ Fixing...'; btn2.disabled = true; }
+            if (btn3) { btn3.textContent = 'FIXING...'; btn3.disabled = true; btn3.style.opacity = '0.6'; }
 
             if (!window.audioContext || !window.audioBuffer) {
                 if (typeof showLuvLangToast === 'function') showLuvLangToast('Please load and master a track first', 'warning');
                 if (btn) { btn.textContent = 'FIX ALL ISSUES'; btn.disabled = false; }
                 if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; }
+                if (btn3) { btn3.textContent = 'FIX ALL'; btn3.disabled = false; btn3.style.opacity = '1'; }
                 return;
             }
 
@@ -18066,6 +18086,7 @@
                 // Reset buttons (mastering overlay will show progress)
                 if (btn) { btn.textContent = 'FIX ALL REMAINING ISSUES'; btn.disabled = false; btn.style.background = ''; }
                 if (btn2) { btn2.textContent = '🔧 Fix All'; btn2.disabled = false; btn2.style.background = ''; }
+                if (btn3) { btn3.textContent = 'FIX ALL'; btn3.disabled = false; btn3.style.opacity = '1'; }
             }, 300);
         }
 
