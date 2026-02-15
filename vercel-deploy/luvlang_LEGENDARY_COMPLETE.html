@@ -4309,9 +4309,9 @@
         backdrop-filter: blur(30px);
     ">
         <div style="text-align: center; margin-bottom: 24px;">
-            <div style="font-size: 2.5rem; margin-bottom: 8px;">📀</div>
-            <div style="font-size: 1.3rem; font-weight: 700; color: #fff;">Choose Your Export Settings</div>
-            <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 6px;">Select format and bit depth for your master</div>
+            <div id="tourFormatIcon" style="font-size: 2.5rem; margin-bottom: 8px;">📀</div>
+            <div id="tourFormatTitle" style="font-size: 1.3rem; font-weight: 700; color: #fff;">Choose Your Export Settings</div>
+            <div id="tourFormatSubtitle" style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 6px;">Select format and bit depth for your master</div>
         </div>
 
         <!-- Format Selection -->
@@ -4371,7 +4371,7 @@
         </div>
 
         <!-- Continue Button -->
-        <button onclick="confirmTourFormat()" style="
+        <button id="tourFormatConfirmBtn" onclick="confirmTourFormat()" style="
             width: 100%;
             padding: 16px;
             background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
@@ -4432,13 +4432,33 @@
         }
 
         function confirmTourFormat() {
-
             // Hide the format zone
             const formatZone = document.getElementById('tourFormatZone');
             if (formatZone) formatZone.style.display = 'none';
-            // Advance to next step - use window reference for global function
-            if (typeof window.advanceVoiceTour === 'function') {
 
+            // Check if we're in export mode (triggered from Export button)
+            if (window._exportGuideActive) {
+                window._exportGuideActive = false;
+                window._exportGuideCompleted = true; // Flag so export click goes through
+                // Restore texts for future tour use
+                const btn = document.getElementById('tourFormatConfirmBtn');
+                if (btn) btn.textContent = 'Continue to Mastering →';
+                const titleEl = document.getElementById('tourFormatTitle');
+                if (titleEl) titleEl.textContent = 'Choose Your Export Settings';
+                const subtitleEl = document.getElementById('tourFormatSubtitle');
+                if (subtitleEl) subtitleEl.textContent = 'Select format and bit depth for your master';
+                const iconEl = document.getElementById('tourFormatIcon');
+                if (iconEl) iconEl.textContent = '📀';
+                // Sync selections to sidebar export controls
+                updateTourFormatSummary();
+                // Trigger the actual export
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) exportBtn.click();
+                return;
+            }
+
+            // Normal tour mode - advance to next step
+            if (typeof window.advanceVoiceTour === 'function') {
                 window.advanceVoiceTour('formatSelected');
             } else {
                 console.error('🎤 ERROR: window.advanceVoiceTour not found!');
@@ -12604,6 +12624,8 @@
             originalInputLUFS = null; // Reset original LUFS for new file
             window.masteringComplete = false; // Reset mastering flag for new file
             window._masteringLocked = false; // Unlock mastering for new file
+            window._exportGuideActive = false; // Reset export guide
+            window._exportGuideCompleted = false;
             window.autoLUFSGainApplied = 0; // Reset LUFS gain tracking
 
             // Remove old report card for new file
@@ -23073,7 +23095,55 @@
         // OLD EXPORT BUTTON HANDLER - DISABLED: Now handled by TIER_SYSTEM.js payment gate
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         /*
+        // ═══════════════════════════════════════════════════════════════════════
+        // CHLOE EXPORT GUIDE — Shows premium format picker before export
+        // ═══════════════════════════════════════════════════════════════════════
+        window.showExportGuide = function() {
+            if (!audioBuffer) {
+                showLuvLangToast('Please upload an audio file first');
+                return;
+            }
+            // Set export mode flag
+            window._exportGuideActive = true;
+
+            // Update UI for export context
+            const confirmBtn = document.getElementById('tourFormatConfirmBtn');
+            if (confirmBtn) confirmBtn.textContent = 'Export My Master →';
+            const titleEl = document.getElementById('tourFormatTitle');
+            if (titleEl) titleEl.textContent = 'Export Your Mastered Track';
+            const subtitleEl = document.getElementById('tourFormatSubtitle');
+            if (subtitleEl) subtitleEl.textContent = 'Chloe recommends WAV 24-bit for the best quality';
+            const iconEl = document.getElementById('tourFormatIcon');
+            if (iconEl) iconEl.textContent = '🎧';
+
+            // Show the premium format zone
+            const formatZone = document.getElementById('tourFormatZone');
+            if (formatZone) {
+                formatZone.style.display = 'block';
+                formatZone.style.animation = 'fadeIn 0.3s ease';
+            }
+
+            // Have Chloe guide the user
+            if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
+                const hist = window._masteringHistory;
+                const last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
+                const gradeText = last ? `${last.grade}` : '';
+                let msg = `Time to export! `;
+                if (gradeText) msg += `Your master scored an ${gradeText}. `;
+                msg += `WAV is the best quality — lossless at 24-bit. FLAC gives you the same quality but smaller file size. MP3 is great for streaming and sharing. Pick your format and bit depth, then we'll get your track ready to go.`;
+                window.speakWithDucking(msg);
+            }
+        };
+
         document.getElementById('exportBtn').addEventListener('click', async () => {
+            // If export guide hasn't been shown yet, show it first
+            if (!window._exportGuideActive && !window._exportGuideCompleted) {
+                window.showExportGuide();
+                return;
+            }
+            // Reset the flag so guide shows again next time
+            window._exportGuideCompleted = false;
+
             if (!audioBuffer) {
                 showLuvLangToast('Please upload an audio file first');
                 return;
