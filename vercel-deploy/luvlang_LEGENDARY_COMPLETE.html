@@ -27472,17 +27472,9 @@
             const genreOverlay = document.getElementById('preMasteringGenreSelect');
             if (genreOverlay) genreOverlay.style.display = 'none';
 
-            // Default to WAV
+            // Default to WAV and open tier preview
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
-
-            // Legendary tier: export directly
-            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
-                }
-            }
             if (typeof window.proceedToPayment === 'function') {
                 window.proceedToPayment();
             }
@@ -27613,14 +27605,6 @@
         window.openPricingModal = function() {
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
-
-            // Legendary tier: export directly
-            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
-                }
-            }
             if (typeof window.proceedToPayment === 'function') {
                 window.proceedToPayment();
             }

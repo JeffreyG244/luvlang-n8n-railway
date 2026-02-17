@@ -391,19 +391,9 @@ window.addEventListener('load', function() {
             e.preventDefault();
             e.stopPropagation();
 
-            // Set default format
+            // Set default format and open tier preview modal
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
-
-            // Legendary/premium tier: export directly (no payment gate)
-            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-                if (typeof window.performExport === 'function') {
-                    window.performExport();
-                    return;
-                }
-            }
-
-            // Other tiers: show tier preview modal
             if (typeof window.proceedToPayment === 'function') {
                 window.proceedToPayment();
             } else {
