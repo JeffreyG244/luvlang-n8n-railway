@@ -22704,8 +22704,16 @@
         // EXPORT FUNCTION - Called by TIER_SYSTEM.js after payment verified
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         window.performExport = async function() {
+            // Use local audioBuffer, fall back to window.audioBuffer or masteredAudioBuffer
+            if (!audioBuffer && window.audioBuffer) {
+                audioBuffer = window.audioBuffer;
+            }
+            if (!audioBuffer && window.masteredAudioBuffer) {
+                audioBuffer = window.masteredAudioBuffer;
+            }
             if (!audioBuffer) {
-                showLuvLangToast('Please upload an audio file first');
+                console.error('performExport: No audio buffer available');
+                alert('Please upload an audio file first');
                 return;
             }
 
@@ -27464,9 +27472,17 @@
             const genreOverlay = document.getElementById('preMasteringGenreSelect');
             if (genreOverlay) genreOverlay.style.display = 'none';
 
-            // Default to WAV and go straight to tier preview
+            // Default to WAV
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
+
+            // Legendary tier: export directly
+            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                    return;
+                }
+            }
             if (typeof window.proceedToPayment === 'function') {
                 window.proceedToPayment();
             }
@@ -27597,6 +27613,14 @@
         window.openPricingModal = function() {
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
+
+            // Legendary tier: export directly
+            if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
+                if (typeof window.performExport === 'function') {
+                    window.performExport();
+                    return;
+                }
+            }
             if (typeof window.proceedToPayment === 'function') {
                 window.proceedToPayment();
             }

@@ -1391,6 +1391,14 @@
         // Close modal
         closeModal();
 
+        // Legendary/premium tier: export directly (no payment gate)
+        if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
+            if (typeof window.performExport === 'function') {
+                window.performExport();
+                return;
+            }
+        }
+
         // Proceed to Stripe checkout
         if (typeof downloadMaster === 'function') {
             downloadMaster();
@@ -1398,9 +1406,6 @@
             window.downloadMaster();
         } else {
             console.error('downloadMaster not available');
-            if (typeof showLuvLangToast === 'function') {
-                showLuvLangToast('Payment system is loading. Please try again.');
-            }
         }
     }
 
@@ -1414,9 +1419,8 @@
         // Check for audio buffer
         var audioBuffer = window.audioBuffer;
         if (!audioBuffer) {
-            if (typeof showLuvLangToast === 'function') {
-                showLuvLangToast('No audio loaded. Please upload and master a track first.');
-            }
+            console.error('Tier preview: No audioBuffer available');
+            alert('No audio loaded. Please upload and master a track first.');
             return;
         }
 
