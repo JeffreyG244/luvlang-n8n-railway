@@ -30485,6 +30485,17 @@
             // Set mastering in progress flag
             masteringInProgress = true;
 
+            // Chloe announces the LUFS target when mastering starts
+            if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
+                const target = typeof getPlatformTarget === 'function' ? getPlatformTarget() : -14;
+                const platformName = window.selectedPlatform || 'streaming';
+                const genre = window.selectedPreMasterGenre || 'your genre';
+                window.speakWithDucking(
+                    "Starting your master. I'm targeting " + Math.abs(target) + " LUFS for " + platformName + ". " +
+                    "You can always change the platform target on the left if you need a different level."
+                );
+            }
+
             // Call the actual mastering function
             try {
                 runActualMastering();
