@@ -10765,60 +10765,81 @@
                     }
                 };
 
-                // 10. OUTPUT DITHER - Essential for bit-depth reduction (24→16 bit)
-                // TPDF (Triangular Probability Density Function) dither
-                const ditherProcessor = audioContext.createScriptProcessor(4096, 2, 2);
-                let ditherEnabled = true;
-                let ditherBitDepth = 16; // Target bit depth
-
-                ditherProcessor.onaudioprocess = function(e) {
-                    if (!ditherEnabled) {
-                        // Pass through unchanged
-                        for (let ch = 0; ch < 2; ch++) {
-                            const input = e.inputBuffer.getChannelData(ch);
-                            const output = e.outputBuffer.getChannelData(ch);
-                            for (let i = 0; i < input.length; i++) {
-                                output[i] = input[i];
+                // 10. OUTPUT DITHER - AudioWorklet TPDF dither for bit-depth reduction
+                // Replaces deprecated ScriptProcessorNode with modern AudioWorklet.
+                // Only used during export — NOT in the real-time monitoring path.
+                const ditherWorkletCode = `
+                    class TPDFDitherProcessor extends AudioWorkletProcessor {
+                        constructor() {
+                            super();
+                            this._enabled = true;
+                            this._bitDepth = 16;
+                            this.port.onmessage = (e) => {
+                                if (e.data.type === 'setEnabled') this._enabled = e.data.value;
+                                if (e.data.type === 'setBitDepth') this._bitDepth = e.data.value;
+                            };
+                        }
+                        process(inputs, outputs) {
+                            const input = inputs[0];
+                            const output = outputs[0];
+                            if (!input || !input.length) return true;
+                            for (let ch = 0; ch < input.length; ch++) {
+                                const inp = input[ch];
+                                const out = output[ch];
+                                if (!this._enabled) {
+                                    out.set(inp);
+                                    continue;
+                                }
+                                const levels = Math.pow(2, this._bitDepth - 1);
+                                const amt = 1.0 / levels;
+                                for (let i = 0; i < inp.length; i++) {
+                                    const d = (Math.random() - 0.5 + Math.random() - 0.5) * amt;
+                                    const q = Math.round((inp[i] + d) * levels) / levels;
+                                    out[i] = q > 1 ? 1 : q < -1 ? -1 : q;
+                                }
                             }
-                        }
-                        return;
-                    }
-
-                    const quantizationLevels = Math.pow(2, ditherBitDepth - 1);
-                    const ditherAmount = 1.0 / quantizationLevels;
-
-                    for (let ch = 0; ch < 2; ch++) {
-                        const input = e.inputBuffer.getChannelData(ch);
-                        const output = e.outputBuffer.getChannelData(ch);
-
-                        for (let i = 0; i < input.length; i++) {
-                            // TPDF dither: sum of two uniform random values
-                            const dither = (Math.random() - 0.5 + Math.random() - 0.5) * ditherAmount;
-                            // Quantize to target bit depth
-                            const quantized = Math.round((input[i] + dither) * quantizationLevels) / quantizationLevels;
-                            // Clamp to valid range
-                            output[i] = Math.max(-1, Math.min(1, quantized));
+                            return true;
                         }
                     }
-                };
+                    registerProcessor('tpdf-dither', TPDFDitherProcessor);
+                `;
+                // Register worklet asynchronously — ditherNode becomes available after load
+                window.ditherNode = null;
+                (function() {
+                    try {
+                        const ditherBlob = new Blob([ditherWorkletCode], { type: 'application/javascript' });
+                        const ditherUrl = URL.createObjectURL(ditherBlob);
+                        audioContext.audioWorklet.addModule(ditherUrl).then(function() {
+                            URL.revokeObjectURL(ditherUrl);
+                            window.ditherNode = new AudioWorkletNode(audioContext, 'tpdf-dither', {
+                                numberOfInputs: 1,
+                                numberOfOutputs: 1,
+                                outputChannelCount: [2]
+                            });
+                            console.log('[Engine] TPDF dither AudioWorklet registered');
+                        }).catch(function(err) {
+                            URL.revokeObjectURL(ditherUrl);
+                            console.warn('[Engine] AudioWorklet dither unavailable:', err.message);
+                        });
+                    } catch (err) {
+                        console.warn('[Engine] AudioWorklet not supported, dither in export only:', err.message);
+                    }
+                })();
 
                 window.ditherControls = {
-                    enabled: ditherEnabled,
-                    bitDepth: ditherBitDepth,
-                    setBitDepth: (bits) => {
-                        ditherBitDepth = bits;
+                    enabled: true,
+                    bitDepth: 16,
+                    setBitDepth: function(bits) {
                         window.ditherControls.bitDepth = bits;
-
+                        if (window.ditherNode) window.ditherNode.port.postMessage({ type: 'setBitDepth', value: bits });
                     },
-                    enable: () => {
-                        ditherEnabled = true;
+                    enable: function() {
                         window.ditherControls.enabled = true;
-
+                        if (window.ditherNode) window.ditherNode.port.postMessage({ type: 'setEnabled', value: true });
                     },
-                    disable: () => {
-                        ditherEnabled = false;
+                    disable: function() {
                         window.ditherControls.enabled = false;
-
+                        if (window.ditherNode) window.ditherNode.port.postMessage({ type: 'setEnabled', value: false });
                     }
                 };
 
@@ -12525,7 +12546,7 @@
                 // STAGE 19: TPDF DITHER — ONLY applied during export (16-bit)
                 // Dithering in the real-time monitoring path adds unnecessary noise floor
                 // and is detrimental when outputting 24/32-bit through the audio interface.
-                // ditherProcessor is available at window.ditherProcessor for export use.
+                // ditherNode (AudioWorklet) is available at window.ditherNode for export use.
 
                 // STAGE 20: FINAL OUTPUT GAIN
                 safetyClipper.connect(masterGain);

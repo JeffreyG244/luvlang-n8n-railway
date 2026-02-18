@@ -119,20 +119,19 @@ module.exports = async (req, res) => {
             });
         }
 
-        // Update usage stats
+        // Atomic usage increment via Supabase RPC — eliminates race condition
+        // where two concurrent requests could both read the same monthly_usage
+        // value and lose one increment.
         await fetch(
-            `${SUPABASE_URL}/rest/v1/api_keys?id=eq.${keyRecord.id}`,
+            `${SUPABASE_URL}/rest/v1/rpc/increment_api_key_usage`,
             {
-                method: 'PATCH',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_SERVICE_KEY,
                     'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
                 },
-                body: JSON.stringify({
-                    monthly_usage: keyRecord.monthly_usage + 1,
-                    last_used_at: new Date().toISOString()
-                })
+                body: JSON.stringify({ key_id: keyRecord.id })
             }
         );
 
