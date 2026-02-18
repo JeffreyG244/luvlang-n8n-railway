@@ -22,12 +22,16 @@
             glow: 'rgba(136, 136, 136, 0.4)',
             badge: null,
             features: [
-                'AI loudness normalization (LUFS targeting)',
-                'Platform presets (Spotify, Apple Music, YouTube)',
-                '7-band parametric EQ',
-                'Bus compression + brick-wall limiter',
-                '24-bit / 16-bit WAV export',
-                'Quality scorecard'
+                '✓ AI loudness normalization (LUFS)',
+                '✓ Platform presets (Spotify, Apple, YouTube)',
+                '✓ 7-band genre-tuned EQ',
+                '✓ Bus compression + brickwall limiter',
+                '✓ 24-bit WAV export',
+                '✓ Quality scorecard',
+                '✗ Dynamic EQ',
+                '✗ Multiband compression',
+                '✗ Stereo widening',
+                '✗ Harmonic exciter & warmth'
             ]
         },
         advanced: {
@@ -40,13 +44,16 @@
             glow: 'rgba(0, 212, 255, 0.5)',
             badge: 'MOST POPULAR',
             features: [
-                'Everything in Basic, plus:',
-                'Multiband compression (4-band)',
-                'Mid/Side stereo processing',
-                'Genre-optimized AI EQ curves',
-                'Dynamic EQ (frequency-dependent)',
-                'HF limiter + look-ahead limiter',
-                'Multi-format export (WAV, MP3, FLAC)'
+                '✓ Everything in Basic, plus:',
+                '✓ Dynamic EQ (frequency-dependent)',
+                '✓ 4-band multiband compression',
+                '✓ Mid/Side stereo widening',
+                '✓ Look-ahead limiter (cleaner peaks)',
+                '✓ Genre-optimized AI EQ curves',
+                '✓ Multi-format (WAV, MP3, FLAC)',
+                '✗ Harmonic exciter',
+                '✗ Analog tape warmth',
+                '✗ Soft clipper & AI stem separation'
             ]
         },
         premium: {
@@ -59,13 +66,16 @@
             glow: 'rgba(255, 215, 0, 0.5)',
             badge: 'BEST QUALITY',
             features: [
-                'Everything in Advanced, plus:',
-                'Harmonic exciter + analog warmth',
-                'Soft clipper for glue',
-                'Full 20-stage mastering chain',
-                'AI persistent learning',
-                'Downloadable mastering report',
-                'Export all formats (WAV, MP3, FLAC, AIFF)'
+                '✓ Full 20-stage mastering chain',
+                '✓ Harmonic exciter (presence & air)',
+                '✓ Analog tape warmth (richness)',
+                '✓ Soft clipper (studio glue)',
+                '✓ Enhanced stereo imaging',
+                '✓ AI stem separation',
+                '✓ Downloadable mastering report',
+                '✓ All export formats (WAV, MP3, FLAC, AIFF)',
+                '✓ AI persistent learning',
+                '✓ Everything in Advanced included'
             ]
         }
     };
@@ -607,11 +617,18 @@
                     '; color:' + textColor + '">' + tier.badge + '</div>';
             }
 
-            const featuresHTML = tier.features.map(function(f, i) {
-                const isHeader = f.endsWith(':');
-                return '<li class="' + (isHeader ? 'header-item' : '') + '" style="' +
-                    (!isHeader ? 'color:' + tier.color : '') + '">' +
-                    escapeHTML(f) + '</li>';
+            var featuresHTML = tier.features.map(function(f) {
+                var isIncluded = f.startsWith('✓');
+                var isHeader = f.endsWith(':');
+                var style = '';
+                if (isIncluded) {
+                    style = 'color:' + tier.color + '; opacity: 1;';
+                } else if (f.startsWith('✗')) {
+                    style = 'color: rgba(255,255,255,0.25); text-decoration: line-through; opacity: 0.6;';
+                } else if (isHeader) {
+                    style = 'color: rgba(255,255,255,0.7);';
+                }
+                return '<li style="' + style + '">' + escapeHTML(f) + '</li>';
             }).join('');
 
             card.innerHTML = badgeHTML +
@@ -1374,6 +1391,42 @@
     // PLAYBACK CONTROLS
     // ═══════════════════════════════════════════════════════════════════════
 
+    // ── Chloe tier narration — speaks tier features when user plays a preview ──
+    var TIER_NARRATIONS = {
+        basic: "This is the Basic tier. " +
+            "Your track gets AI loudness normalization to hit streaming targets, " +
+            "a 7-band parametric EQ tuned to your genre, " +
+            "bus compression for glue, and a brickwall limiter. " +
+            "Clean, loud, and ready to upload.",
+        advanced: "This is the Advanced tier, our most popular. " +
+            "You get everything in Basic, plus dynamic EQ that automatically controls problem frequencies, " +
+            "4-band multiband compression for balanced dynamics across lows, mids, and highs, " +
+            "stereo widening for a wider, more immersive sound, " +
+            "and a look-ahead limiter for cleaner, distortion-free peaks. " +
+            "This is radio-ready mastering.",
+        premium: "This is the Premium tier. Our full 20-stage mastering chain. " +
+            "On top of everything in Advanced, you get a harmonic exciter that adds presence and air, " +
+            "analog tape warmth for richness and depth, " +
+            "a soft clipper for that studio glue that makes everything sit together, " +
+            "and enhanced stereo imaging. " +
+            "This is world-class mastering used by professionals."
+    };
+    var _lastNarratedTier = null;
+
+    function narrateTier(tierId) {
+        // Only narrate once per tier (until modal closes)
+        if (_lastNarratedTier === tierId) return;
+        _lastNarratedTier = tierId;
+
+        var text = TIER_NARRATIONS[tierId];
+        if (!text) return;
+
+        // Use Chloe (Azure TTS) if available
+        if (typeof window.speakWithDucking === 'function') {
+            window.speakWithDucking(text);
+        }
+    }
+
     function togglePlay(tierId) {
         if (renderingState[tierId] !== 'ready') return;
 
@@ -1382,6 +1435,9 @@
             stopPlayback();
             return;
         }
+
+        // Narrate the tier features via Chloe
+        narrateTier(tierId);
 
         // If another tier is playing, crossfade
         if (currentlyPlaying) {
@@ -1693,6 +1749,7 @@
 
         // Cleanup (keep previewBuffers cached for reuse)
         isModalOpen = false;
+        _lastNarratedTier = null; // Reset so Chloe narrates again next time
         cancelAnimationFrame(animFrameId);
 
         if (playbackContext && playbackContext.state !== 'closed') {

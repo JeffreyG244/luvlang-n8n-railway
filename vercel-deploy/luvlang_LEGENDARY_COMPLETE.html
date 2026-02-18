@@ -5436,6 +5436,23 @@
                     box-shadow: 0 0 15px rgba(255,215,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
                     min-height: 44px;
                 ">&#9733; SCORE <span id="scorecardTabGrade" style="color: #fff; font-weight: 900; font-size: 0.9rem;"></span></button>
+                <button id="stemSepBtn" onclick="if(typeof showAIStemSeparation==='function'){showAIStemSeparation();}else{showLuvLangToast('Stem separation is loading...');}" style="
+                    padding: 10px 16px;
+                    background: linear-gradient(180deg, rgba(184,79,255,0.15) 0%, rgba(184,79,255,0.06) 100%);
+                    border: 1px solid rgba(184,79,255,0.3);
+                    border-radius: 6px;
+                    color: rgba(184,79,255,0.9);
+                    font-size: 0.65rem;
+                    font-weight: 600;
+                    letter-spacing: 0.1em;
+                    text-transform: uppercase;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: none;
+                    align-items: center;
+                    gap: 6px;
+                    min-height: 44px;
+                ">🎹 STEMS</button>
                 <button onclick="openPricingModal()" style="
                     padding: 10px 20px;
                     background: linear-gradient(180deg, rgba(0,255,136,0.15) 0%, rgba(0,255,136,0.06) 100%);
@@ -22168,6 +22185,8 @@
                 window._masteringHistory = [];
                 const tabBtn = document.getElementById('scorecardTabBtn');
                 if (tabBtn) tabBtn.style.display = 'none';
+                var stemBtnReset = document.getElementById('stemSepBtn');
+                if (stemBtnReset) stemBtnReset.style.display = 'none';
                 const scorecard = document.getElementById('qualityScorecard');
                 if (scorecard) scorecard.style.display = 'none';
                 window._scorecardVisible = false;
@@ -31129,6 +31148,11 @@
                 tabBtn.style.display = 'flex';
                 tabBtn.style.alignItems = 'center';
                 tabBtn.style.gap = '6px';
+            }
+            // Show Stems button after mastering completes
+            var stemBtn = document.getElementById('stemSepBtn');
+            if (stemBtn) {
+                stemBtn.style.display = 'flex';
             }
             if (tabGrade) {
                 tabGrade.textContent = grade.grade + ' ' + grade.total;
