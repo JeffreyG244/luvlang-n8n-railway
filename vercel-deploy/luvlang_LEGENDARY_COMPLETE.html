@@ -27921,29 +27921,40 @@
 
         // openPricingModal — entry point from QC Check "Proceed to Export" and Export button
         window.openPricingModal = function() {
-            // Stop playback before opening the modal — check actual element state
-            if (audioElement && !audioElement.paused) {
-                audioElement.pause();
-            }
-            // Also stop via AudioContext if source node is active
-            if (window.audioContext && window.audioContext.state === 'running') {
-                // Suspend briefly to guarantee silence, then resume for modal previews
-                window.audioContext.suspend().then(function() {
-                    window.audioContext.resume();
-                });
-            }
-            // Sync UI state
-            isPlaying = false;
-            if (playBtn) playBtn.textContent = '\u25B6';
+            // Smooth fade-out before stopping playback (prevents click/pop)
+            var fadeMs = 150;
+            var wasPlaying = audioElement && !audioElement.paused;
 
-            // Stop Chloe if she's talking
-            if (typeof stopSpeaking === 'function') stopSpeaking();
-
-            window.selectedExportFormat = window.selectedExportFormat || 'wav';
-            window.exportFormat = window.selectedExportFormat;
-            if (typeof window.proceedToPayment === 'function') {
-                window.proceedToPayment();
+            if (wasPlaying && window.masterGain && window.audioContext) {
+                var t = window.audioContext.currentTime;
+                var currentVol = window.masterGain.gain.value;
+                window.masterGain.gain.setValueAtTime(currentVol, t);
+                window.masterGain.gain.linearRampToValueAtTime(0, t + fadeMs / 1000);
             }
+
+            // Wait for fade to finish, then pause and open modal
+            setTimeout(function() {
+                if (audioElement && !audioElement.paused) {
+                    audioElement.pause();
+                }
+                // Restore gain for tier preview playback
+                if (window.masterGain && window.audioContext) {
+                    window.masterGain.gain.setValueAtTime(1.0, window.audioContext.currentTime);
+                }
+
+                // Sync UI state
+                isPlaying = false;
+                if (playBtn) playBtn.textContent = '\u25B6';
+
+                // Stop Chloe if she's talking
+                if (typeof stopSpeaking === 'function') stopSpeaking();
+
+                window.selectedExportFormat = window.selectedExportFormat || 'wav';
+                window.exportFormat = window.selectedExportFormat;
+                if (typeof window.proceedToPayment === 'function') {
+                    window.proceedToPayment();
+                }
+            }, wasPlaying ? fadeMs + 20 : 0);
         };
 
         // Expose LUFS/peak getters for CONFIRMATION_TIER_PREVIEW.js
