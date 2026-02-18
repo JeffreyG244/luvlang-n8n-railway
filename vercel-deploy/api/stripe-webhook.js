@@ -116,13 +116,11 @@ async function recordPurchase(data) {
                 stripe_event_id: data.stripeEventId,
                 user_id: data.userId || null,
                 tier_slug: data.tier,
-                amount_paid: data.amount,
+                stripe_session_id: data.sessionId,
+                stripe_payment_intent: data.paymentIntentId,
+                amount_cents: Math.round(data.amount * 100),
                 currency: 'USD',
-                payment_provider: 'stripe',
-                payment_id: data.paymentIntentId,
-                payment_status: 'succeeded',
-                original_filename: data.filename,
-                completed_at: new Date().toISOString()
+                status: 'succeeded'
             })
         });
 
@@ -142,7 +140,7 @@ async function updatePurchaseStatus(paymentIntentId, status) {
 
     try {
         await fetch(
-            `${supabaseUrl}/rest/v1/purchases?payment_id=eq.${paymentIntentId}`,
+            `${supabaseUrl}/rest/v1/purchases?stripe_payment_intent=eq.${paymentIntentId}`,
             {
                 method: 'PATCH',
                 headers: {
@@ -150,7 +148,7 @@ async function updatePurchaseStatus(paymentIntentId, status) {
                     'apikey': supabaseServiceKey,
                     'Authorization': `Bearer ${supabaseServiceKey}`
                 },
-                body: JSON.stringify({ payment_status: status })
+                body: JSON.stringify({ status: status })
             }
         );
     } catch (err) {
