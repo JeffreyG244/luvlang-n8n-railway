@@ -847,6 +847,8 @@
 
         .waveform-panel-viz {
             border-color: rgba(0, 255, 136, 0.2);
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
         }
 
         .waveform-panel-viz .panel-title::before {
@@ -8418,6 +8420,38 @@
                 </div>
             </div>
 
+            <!-- TRANSPORT CONTROLS — under waveform -->
+            <div class="transport-controls" style="margin-bottom: 0; border-radius: 0 0 10px 10px; margin-top: -2px;">
+                <button class="play-btn" id="playBtn">▶</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <!-- Loop Region Overlay -->
+                    <div class="loop-region" id="loopRegion"></div>
+                </div>
+                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+                <!-- Separator -->
+                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.15);"></div>
+                <!-- Loop Controls -->
+                <button class="transport-btn" id="loopToggleBtn" onclick="toggleLoop()" title="Toggle Loop (L)">
+                    🔁 Loop
+                </button>
+                <button class="transport-btn" id="setLoopInBtn" onclick="setLoopIn()" title="Set Loop In Point (I)">
+                    ⏮ In
+                </button>
+                <button class="transport-btn" id="setLoopOutBtn" onclick="setLoopOut()" title="Set Loop Out Point (O)">
+                    Out ⏭
+                </button>
+                <span class="loop-time-display" id="loopTimeDisplay" style="display: none;">
+                    Loop: --:-- → --:--
+                </span>
+                <!-- Separator -->
+                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.15);"></div>
+                <!-- Mono Check -->
+                <button class="transport-btn" id="monoCheckBtn" onclick="toggleMonoCheck()" title="Check Mono Compatibility (M)">
+                    🔊 Mono
+                </button>
+            </div>
+
             <!-- ═══════════════════════════════════════════════════════════════════════════
                  LOUDNESS HISTORY TIMELINE — Real-time LUFS-over-time graph
                  Professional FabFilter Pro-L2 style loudness history visualization
@@ -8557,17 +8591,6 @@
             })();
             </script>
 
-            <!-- TRANSPORT CONTROLS -->
-            <div class="transport-controls">
-                <button class="play-btn" id="playBtn">▶</button>
-                <div class="progress-bar" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
-                    <!-- Loop Region Overlay -->
-                    <div class="loop-region" id="loopRegion"></div>
-                </div>
-                <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
-            </div>
-
             <!-- ═══════════════════════════════════════════════════════════════════════════
                  🎛️ UNIFIED MASTER CONTROL BAR - Vertical Layout: Master button + A/B Toggle
                  Professional, clean design - Button on top, toggle below
@@ -8603,32 +8626,6 @@
                 }
             }
             </script>
-
-            <!-- EXTENDED TRANSPORT CONTROLS (Professional Playback Features) -->
-            <div class="transport-extended">
-                <!-- Loop Controls -->
-                <button class="transport-btn" id="loopToggleBtn" onclick="toggleLoop()" title="Toggle Loop (L)">
-                    🔁 Loop
-                </button>
-                <button class="transport-btn" id="setLoopInBtn" onclick="setLoopIn()" title="Set Loop In Point (I)">
-                    ⏮ In
-                </button>
-                <button class="transport-btn" id="setLoopOutBtn" onclick="setLoopOut()" title="Set Loop Out Point (O)">
-                    Out ⏭
-                </button>
-                <span class="loop-time-display" id="loopTimeDisplay" style="display: none;">
-                    Loop: --:-- → --:--
-                </span>
-
-                <!-- Separator -->
-                <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
-
-                <!-- Mono Check -->
-                <button class="transport-btn" id="monoCheckBtn" onclick="toggleMonoCheck()" title="Check Mono Compatibility (M)">
-                    🔊 Mono
-                </button>
-
-            </div>
 
             <!-- REFERENCE TRACK SECTION -->
             <div class="reference-section" id="referenceSection">
