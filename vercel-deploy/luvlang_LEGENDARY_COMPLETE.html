@@ -4864,7 +4864,7 @@
 
     <script>
     // Integrated A/B Toggle Handler — post-mastering only
-    // v7.6.28: Smooth crossfade using current gain values — no skip/glitch
+    // v7.6.29: Smooth exponential crossfade — eliminates skip/click on toggle
     function handleFloatingABToggle(isMastered) {
         if (!window.isMasteringApplied) return;
 
@@ -4880,18 +4880,18 @@
         if (ac.state === 'suspended') ac.resume();
 
         const now = ac.currentTime;
-        const fade = 0.08; // 80ms crossfade — smooth, no skip
+        const tau = 0.04; // 40ms time constant — reaches 95% in ~120ms, click-free
 
-        // Cancel pending automation from current time, then anchor current value
-        dryGain.gain.cancelScheduledValues(now);
-        wetGain.gain.cancelScheduledValues(now);
+        // Cancel ALL pending automation, then use setTargetAtTime for smooth exponential curve
+        dryGain.gain.cancelScheduledValues(0);
+        wetGain.gain.cancelScheduledValues(0);
         dryGain.gain.setValueAtTime(dryGain.gain.value, now);
         wetGain.gain.setValueAtTime(wetGain.gain.value, now);
 
         if (isMastered) {
-            // Crossfade TO mastered (B)
-            dryGain.gain.linearRampToValueAtTime(0.0, now + fade);
-            wetGain.gain.linearRampToValueAtTime(1.0, now + fade);
+            // Crossfade TO mastered (B) — exponential approach, no discontinuity
+            dryGain.gain.setTargetAtTime(0.0, now, tau);
+            wetGain.gain.setTargetAtTime(1.0, now, tau);
 
             if (labelA) { labelA.style.color = 'rgba(255,255,255,0.4)'; labelA.style.fontWeight = '600'; }
             if (labelB) { labelB.style.color = '#00ff88'; labelB.style.fontWeight = '700'; labelB.style.textShadow = '0 0 8px rgba(0, 255, 136, 0.5)'; }
@@ -4900,9 +4900,9 @@
                 statusPill.className = 'ai-status-pill mastered';
             }
         } else {
-            // Crossfade TO original (A)
-            dryGain.gain.linearRampToValueAtTime(1.0, now + fade);
-            wetGain.gain.linearRampToValueAtTime(0.0, now + fade);
+            // Crossfade TO original (A) — exponential approach, no discontinuity
+            dryGain.gain.setTargetAtTime(1.0, now, tau);
+            wetGain.gain.setTargetAtTime(0.0, now, tau);
 
             if (labelA) { labelA.style.color = '#ff9a56'; labelA.style.fontWeight = '700'; }
             if (labelB) { labelB.style.color = 'rgba(255,255,255,0.4)'; labelB.style.fontWeight = '600'; labelB.style.textShadow = 'none'; }
@@ -22786,7 +22786,9 @@
                 const genre = this.getAttribute('data-genre');
                 if (genre) {
                     // Store selected genre for intensity system
-                    window.selectedPreMasterGenre = genre === 'edm' ? 'electronic' : genre;
+                    // Map sidebar data-genre values to canonical keys matching eqCurves
+                    const _sidebarGenreMap = { 'hip-hop': 'hiphop', 'edm': 'electronic', 'lo-fi': 'lofi', 'r&b': 'rnb', 'dancehall': 'reggae', 'dub': 'reggae', 'worship': 'gospel', 'amapiano': 'afrobeats', 'memphis': 'phonk' };
+                    window.selectedPreMasterGenre = _sidebarGenreMap[genre] || genre;
 
                     // Genre display names and descriptions
                     const genreNames = {

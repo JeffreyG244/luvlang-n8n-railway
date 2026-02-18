@@ -107,7 +107,7 @@
         warmth: true,
         softClipper: true,
         stereoEnhance: true,
-        saturationAmount: 50  // 0-100, controls warmth intensity
+        saturationLevel: 'balanced'  // 'low' | 'balanced' | 'high'
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -703,79 +703,60 @@
                 margin-bottom: 6px;
             }
 
-            /* ── Saturation Slider ── */
+            /* ── Saturation 3-Way Toggle ── */
             .ctp-saturation-wrap {
                 display: flex;
                 align-items: center;
-                gap: 10px;
+                gap: 6px;
                 margin-top: 10px;
-                padding: 8px 0 2px;
+                padding: 6px 0 2px;
                 transition: opacity 0.2s;
             }
             .ctp-saturation-wrap.disabled {
                 opacity: 0.35;
                 pointer-events: none;
             }
-            .ctp-saturation-label {
-                font-size: 0.65rem;
-                color: rgba(255, 255, 255, 0.45);
-                font-weight: 500;
-                white-space: nowrap;
-                min-width: 36px;
-            }
-            .ctp-saturation-label:last-of-type {
-                text-align: right;
-            }
-            .ctp-saturation-slider {
-                -webkit-appearance: none;
-                appearance: none;
-                flex: 1;
-                height: 4px;
-                background: rgba(255, 255, 255, 0.12);
-                border-radius: 2px;
-                outline: none;
-                cursor: pointer;
-            }
-            .ctp-saturation-slider::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background: #FFD700;
-                box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
-                cursor: pointer;
-                transition: box-shadow 0.15s;
-            }
-            .ctp-saturation-slider::-webkit-slider-thumb:hover {
-                box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
-            }
-            .ctp-saturation-slider::-moz-range-thumb {
-                width: 16px;
-                height: 16px;
-                border: none;
-                border-radius: 50%;
-                background: #FFD700;
-                box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
-                cursor: pointer;
-            }
-            .ctp-saturation-slider::-moz-range-track {
-                height: 4px;
-                background: rgba(255, 255, 255, 0.12);
-                border-radius: 2px;
-            }
-            .ctp-saturation-slider:focus-visible {
-                outline: 2px solid #FFD700;
-                outline-offset: 4px;
-                border-radius: 2px;
-            }
-            .ctp-saturation-value {
-                font-size: 0.7rem;
+            .ctp-saturation-title {
+                font-size: 0.6rem;
+                color: rgba(255, 255, 255, 0.4);
                 font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                margin-right: 4px;
+                white-space: nowrap;
+            }
+            .ctp-sat-btn {
+                flex: 1;
+                padding: 5px 0;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 0.6rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s;
+                text-align: center;
+            }
+            .ctp-sat-btn:first-of-type {
+                border-radius: 5px 0 0 5px;
+            }
+            .ctp-sat-btn:last-of-type {
+                border-radius: 0 5px 5px 0;
+            }
+            .ctp-sat-btn.active {
+                background: rgba(255, 215, 0, 0.15);
+                border-color: rgba(255, 215, 0, 0.5);
                 color: #FFD700;
-                min-width: 32px;
-                text-align: right;
-                font-variant-numeric: tabular-nums;
+                box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
+            }
+            .ctp-sat-btn:hover:not(.active) {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.2);
+                color: rgba(255, 255, 255, 0.7);
+            }
+            .ctp-sat-btn:focus-visible {
+                outline: 2px solid #FFD700;
+                outline-offset: 2px;
             }
 
             @media (max-width: 600px) {
@@ -1324,7 +1305,7 @@
         // PREMIUM ONLY: Analog warmth (gentle tape saturation)
         // ═══════════════════════════════════════════════════════════
         if (tierId === 'premium' && premiumEffects.warmth) {
-            currentNode = applyAnalogWarmth(offline, currentNode, premiumEffects.saturationAmount);
+            currentNode = applyAnalogWarmth(offline, currentNode, premiumEffects.saturationLevel);
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1487,14 +1468,18 @@
 
     /**
      * applyAnalogWarmth — tape-style saturation for richness.
-     * Premium only. Saturation amount (0-100) controls drive and wet/dry mix.
+     * Premium only. 3 levels: low (subtle), balanced (default), high (heavy).
      * tanh waveshaping with 4x oversampling for clean harmonic distortion.
-     * drive: 1.0 (transparent) → 2.0 (heavy), wet: 0.08 → 0.43, dry = 1-wet
      */
-    function applyAnalogWarmth(ctx, input, saturationAmount) {
-        var amount = (typeof saturationAmount === 'number') ? saturationAmount : 50;
-        var drive = 1.0 + (amount / 100) * 1.0;
-        var wetMix = 0.08 + (amount / 100) * 0.35;
+    function applyAnalogWarmth(ctx, input, saturationLevel) {
+        var levels = {
+            low:      { drive: 1.1, wet: 0.10 },  // subtle tape warmth
+            balanced: { drive: 1.5, wet: 0.25 },  // present, musical default
+            high:     { drive: 2.0, wet: 0.43 }   // heavy harmonic saturation
+        };
+        var cfg = levels[saturationLevel] || levels.balanced;
+        var drive = cfg.drive;
+        var wetMix = cfg.wet;
         var dryMix = 1.0 - wetMix;
 
         var shaper = ctx.createWaveShaper();
@@ -2003,15 +1988,14 @@
             var isOn = premiumEffects[fx.key];
             var sliderHTML = '';
             if (fx.hasSlider) {
-                var satVal = premiumEffects.saturationAmount;
+                var satLvl = premiumEffects.saturationLevel;
                 var disabledClass = isOn ? '' : ' disabled';
                 sliderHTML =
                     '<div class="ctp-saturation-wrap' + disabledClass + '">' +
-                        '<span class="ctp-saturation-label">Subtle</span>' +
-                        '<input type="range" class="ctp-saturation-slider" min="0" max="100" value="' + satVal + '"' +
-                            ' data-fx="saturationAmount" aria-label="Saturation amount">' +
-                        '<span class="ctp-saturation-label">Heavy</span>' +
-                        '<span class="ctp-saturation-value">' + satVal + '%</span>' +
+                        '<span class="ctp-saturation-title">Color</span>' +
+                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'low' ? ' active' : '') + '" data-sat="low" aria-label="Low saturation">Low</button>' +
+                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'balanced' ? ' active' : '') + '" data-sat="balanced" aria-label="Balanced saturation">Balanced</button>' +
+                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'high' ? ' active' : '') + '" data-sat="high" aria-label="High saturation">High</button>' +
                     '</div>';
             }
             return '<div class="ctp-effect-card ' + (isOn ? 'ctp-effect-on' : '') + '" data-effect="' + fx.key + '">' +
@@ -2079,15 +2063,16 @@
             });
         });
 
-        // Wire saturation slider
-        var satSlider = panel.querySelector('.ctp-saturation-slider');
-        if (satSlider) {
-            satSlider.addEventListener('input', function() {
-                premiumEffects.saturationAmount = parseInt(this.value, 10);
-                var valEl = this.parentNode.querySelector('.ctp-saturation-value');
-                if (valEl) valEl.textContent = this.value + '%';
+        // Wire saturation level buttons
+        panel.querySelectorAll('.ctp-sat-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                premiumEffects.saturationLevel = this.getAttribute('data-sat');
+                // Update active state
+                var wrap = this.parentNode;
+                wrap.querySelectorAll('.ctp-sat-btn').forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
             });
-        }
+        });
 
         // Wire play button in customize panel
         document.getElementById('ctpCustomizePlayBtn').addEventListener('click', function() {
@@ -2204,7 +2189,7 @@
             warmth: premiumEffects.warmth,
             softClipper: premiumEffects.softClipper,
             stereoEnhance: premiumEffects.stereoEnhance,
-            saturationAmount: premiumEffects.saturationAmount
+            saturationLevel: premiumEffects.saturationLevel
         };
 
         window.selectedTier = 'premium';
