@@ -740,108 +740,225 @@
     // ═══════════════════════════════════════════════════════════════════════
 
     /**
+     * getGenreEQ — reads the user's selected genre EQ curve from the live mastering engine.
+     * Falls back to a neutral mastering curve if not available.
+     */
+    function getGenreEQ() {
+        var genre = window.selectedPreMasterGenre || 'pop';
+        var curves = window.eqCurves;
+        if (curves && curves[genre]) return curves[genre];
+        // Neutral mastering curve — gentle smile EQ
+        return { sub: 1.5, bass: 1.0, lowmid: -0.5, mid: 0.3, highmid: 1.0, high: 0.8, air: 1.2 };
+    }
+
+    /**
+     * measureRMS — measures RMS loudness of a rendered AudioBuffer.
+     * Used for LUFS-approximate normalization between tiers.
+     */
+    function measureRMS(buffer) {
+        var sumSq = 0;
+        var count = 0;
+        for (var ch = 0; ch < buffer.numberOfChannels; ch++) {
+            var data = buffer.getChannelData(ch);
+            for (var i = 0; i < data.length; i++) {
+                sumSq += data[i] * data[i];
+                count++;
+            }
+        }
+        return Math.sqrt(sumSq / (count || 1));
+    }
+
+    /**
+     * normalizeBuffer — normalizes a rendered AudioBuffer to a target RMS.
+     * Ensures all three tier previews play at the same perceived loudness
+     * so users hear quality differences, not volume differences.
+     */
+    function normalizeBuffer(buffer, targetRMS) {
+        var currentRMS = measureRMS(buffer);
+        if (currentRMS < 0.0001) return buffer; // silence guard
+
+        var gainLinear = targetRMS / currentRMS;
+        // Clamp gain to prevent extreme correction (±6 dB max)
+        gainLinear = Math.max(0.5, Math.min(2.0, gainLinear));
+
+        for (var ch = 0; ch < buffer.numberOfChannels; ch++) {
+            var data = buffer.getChannelData(ch);
+            for (var i = 0; i < data.length; i++) {
+                var s = data[i] * gainLinear;
+                // Soft clip at ±0.98 to prevent digital overs
+                if (s > 0.98) s = 0.98 + 0.02 * Math.tanh((s - 0.98) / 0.02);
+                else if (s < -0.98) s = -0.98 - 0.02 * Math.tanh((-s - 0.98) / 0.02);
+                data[i] = s;
+            }
+        }
+        return buffer;
+    }
+
+    /**
      * renderTierPreview — renders the segment through a tier-specific processing chain.
      * Uses OfflineAudioContext for non-realtime rendering.
+     *
+     * GOOD (Basic $12.99) — Clean, loud, competitive. Your track mastered to standard.
+     * BETTER (Advanced $29.99) — Professional dynamics, balanced frequency control.
+     * BEST (Premium $59.99) — World-class polish with harmonic depth and analog character.
      */
     async function renderTierPreview(segment, tierId) {
-        const sampleRate = segment.sampleRate;
-        const length = segment.length;
-        const channels = segment.numberOfChannels;
+        var sampleRate = segment.sampleRate;
+        var length = segment.length;
+        var channels = segment.numberOfChannels;
 
-        const offline = new OfflineAudioContext(channels, length, sampleRate);
+        var offline = new OfflineAudioContext(channels, length, sampleRate);
 
         // Source
-        const source = offline.createBufferSource();
+        var source = offline.createBufferSource();
         source.buffer = segment;
+        var currentNode = source;
 
-        // Build chain
-        let currentNode = source;
-
-        // ── Stage 1: DC offset + subsonic filter (all tiers) ──
-        const subsonic = offline.createBiquadFilter();
+        // ── Stage 1: Subsonic filter (all tiers) ──
+        var subsonic = offline.createBiquadFilter();
         subsonic.type = 'highpass';
         subsonic.frequency.value = 25;
         subsonic.Q.value = 0.707;
         currentNode.connect(subsonic);
         currentNode = subsonic;
 
-        // ── Stage 2: 7-band parametric EQ (all tiers) ──
-        currentNode = applyParametricEQ(offline, currentNode);
+        // Get genre-aware EQ values
+        var genreEQ = getGenreEQ();
 
-        // ── Stage 3: Dynamic EQ — Advanced + Premium only ──
-        if (tierId === 'advanced' || tierId === 'premium') {
-            currentNode = applyDynamicEQ(offline, currentNode);
+        // ════════════════════════════════════════════════════════════════════
+        // BASIC — "GOOD" — Clean & Competitive
+        // Stages: Subsonic → Genre EQ (70%) → Gentle Glue Comp → Limiter
+        // ════════════════════════════════════════════════════════════════════
+
+        // ── Stage 2: Genre-aware parametric EQ ──
+        // Basic: 70% intensity for clean tonal shaping
+        // Advanced: 100% for full professional sculpting
+        // Premium: 110% + air shelf boost for shimmer
+        var eqIntensity = (tierId === 'basic') ? 0.70 :
+                          (tierId === 'advanced') ? 1.0 : 1.10;
+
+        var eqBands = [
+            { freq: 40,    type: 'highshelf', key: 'sub',     Q: 0.707 },
+            { freq: 120,   type: 'peaking',   key: 'bass',    Q: 1.2 },
+            { freq: 400,   type: 'peaking',   key: 'lowmid',  Q: 1.4 },
+            { freq: 1000,  type: 'peaking',   key: 'mid',     Q: 1.4 },
+            { freq: 3200,  type: 'peaking',   key: 'highmid', Q: 1.4 },
+            { freq: 8000,  type: 'peaking',   key: 'high',    Q: 1.4 },
+            { freq: 12000, type: 'highshelf', key: 'air',     Q: 0.707 }
+        ];
+
+        eqBands.forEach(function(b) {
+            var filter = offline.createBiquadFilter();
+            filter.type = b.type;
+            filter.frequency.value = b.freq;
+            filter.Q.value = b.Q;
+            filter.gain.value = (genreEQ[b.key] || 0) * eqIntensity;
+            currentNode.connect(filter);
+            currentNode = filter;
+        });
+
+        // Premium: extra air shelf for shimmer (+1.5 dB above 14kHz)
+        if (tierId === 'premium') {
+            var airShelf = offline.createBiquadFilter();
+            airShelf.type = 'highshelf';
+            airShelf.frequency.value = 14000;
+            airShelf.gain.value = 1.5;
+            airShelf.Q.value = 0.707;
+            currentNode.connect(airShelf);
+            currentNode = airShelf;
         }
 
-        // ── Stage 4: Bus compressor (all tiers) ──
-        const busComp = offline.createDynamicsCompressor();
-        busComp.threshold.value = -18;
-        busComp.knee.value = 10;
-        busComp.ratio.value = 3;
-        busComp.attack.value = 0.01;
-        busComp.release.value = 0.15;
+        // ════════════════════════════════════════════════════════════════════
+        // ADVANCED adds: Dynamic EQ → Better Compression → Multiband → Stereo
+        // ════════════════════════════════════════════════════════════════════
+
+        // ── Stage 3: Dynamic EQ — Advanced + Premium ──
+        // Frequency-dependent compression catches problem resonances
+        if (tierId === 'advanced' || tierId === 'premium') {
+            currentNode = applyDynamicEQ(offline, currentNode, tierId);
+        }
+
+        // ── Stage 4: Bus compressor ──
+        // Basic: gentle glue (high threshold, low ratio)
+        // Advanced: tighter control (lower threshold, musical ratio)
+        // Premium: precision bus compression
+        var busComp = offline.createDynamicsCompressor();
+        if (tierId === 'basic') {
+            busComp.threshold.value = -14;
+            busComp.knee.value = 12;
+            busComp.ratio.value = 1.8;
+            busComp.attack.value = 0.020;
+            busComp.release.value = 0.200;
+        } else if (tierId === 'advanced') {
+            busComp.threshold.value = -16;
+            busComp.knee.value = 8;
+            busComp.ratio.value = 2.2;
+            busComp.attack.value = 0.012;
+            busComp.release.value = 0.150;
+        } else {
+            busComp.threshold.value = -17;
+            busComp.knee.value = 6;
+            busComp.ratio.value = 2.5;
+            busComp.attack.value = 0.008;
+            busComp.release.value = 0.120;
+        }
         currentNode.connect(busComp);
         currentNode = busComp;
 
-        // ── Stage 5: Multiband compression — Advanced + Premium only ──
+        // ── Stage 5: Multiband compression — Advanced + Premium ──
         if (tierId === 'advanced' || tierId === 'premium') {
-            currentNode = applyMultibandCompression(offline, currentNode);
+            currentNode = applyMultibandCompression(offline, currentNode, tierId);
         }
 
-        // ── Stage 6: M/S stereo processing — Advanced + Premium only ──
+        // ── Stage 6: Stereo widening — Advanced + Premium ──
         if ((tierId === 'advanced' || tierId === 'premium') && channels >= 2) {
-            currentNode = applyStereoWidening(offline, currentNode);
+            currentNode = applyStereoWidening(offline, currentNode, tierId);
         }
 
-        // ── Stage 7: HF limiter — Advanced + Premium only ──
-        if (tierId === 'advanced' || tierId === 'premium') {
-            const hfShelf = offline.createBiquadFilter();
-            hfShelf.type = 'highshelf';
-            hfShelf.frequency.value = 8000;
-            hfShelf.gain.value = -1.5; // gentle HF taming
-            currentNode.connect(hfShelf);
-            currentNode = hfShelf;
-        }
+        // ════════════════════════════════════════════════════════════════════
+        // PREMIUM adds: Harmonic Exciter → Analog Warmth → Soft Clipper
+        // ════════════════════════════════════════════════════════════════════
 
-        // ── Stage 8: Harmonic exciter — Premium only ──
+        // ── Stage 7: Harmonic exciter — Premium only ──
         if (tierId === 'premium') {
             currentNode = applyHarmonicExciter(offline, currentNode);
         }
 
-        // ── Stage 9: Analog warmth — Premium only ──
+        // ── Stage 8: Analog warmth — Premium only ──
         if (tierId === 'premium') {
             currentNode = applyAnalogWarmth(offline, currentNode);
         }
 
-        // ── Stage 10: Soft clipper — Premium only ──
+        // ── Stage 9: Soft clipper — Premium only ──
         if (tierId === 'premium') {
             currentNode = applySoftClipper(offline, currentNode);
         }
 
-        // ── Stage 11: Look-ahead limiter — Advanced + Premium ──
+        // ── Stage 10: Look-ahead limiter — Advanced + Premium ──
+        // Catches peaks before the brickwall for cleaner limiting
         if (tierId === 'advanced' || tierId === 'premium') {
-            const laLimiter = offline.createDynamicsCompressor();
-            laLimiter.threshold.value = -3;
+            var laLimiter = offline.createDynamicsCompressor();
+            laLimiter.threshold.value = (tierId === 'premium') ? -2.5 : -3.0;
             laLimiter.knee.value = 0;
             laLimiter.ratio.value = 20;
             laLimiter.attack.value = 0.001;
-            laLimiter.release.value = 0.05;
+            laLimiter.release.value = 0.050;
             currentNode.connect(laLimiter);
             currentNode = laLimiter;
         }
 
-        // ── Stage 12: Brickwall limiter (all tiers) ──
-        const brickwall = offline.createDynamicsCompressor();
+        // ── Stage 11: Brickwall limiter (all tiers) ──
+        var brickwall = offline.createDynamicsCompressor();
         brickwall.threshold.value = -1.5;
         brickwall.knee.value = 0;
         brickwall.ratio.value = 20;
         brickwall.attack.value = 0.001;
-        brickwall.release.value = 0.03;
+        brickwall.release.value = 0.030;
         currentNode.connect(brickwall);
         currentNode = brickwall;
 
-        // ── Stage 13: Master output gain (all tiers) ──
-        const masterGain = offline.createGain();
+        // ── Stage 12: Master output gain ──
+        var masterGain = offline.createGain();
         masterGain.gain.value = 1.0;
         currentNode.connect(masterGain);
         masterGain.connect(offline.destination);
@@ -850,165 +967,165 @@
         return offline.startRendering();
     }
 
-    // ── Processing Helpers ──
+    // ═══════════════════════════════════════════════════════════════════════
+    // PROCESSING HELPERS — Tier-aware parameters
+    // ═══════════════════════════════════════════════════════════════════════
 
-    function applyParametricEQ(ctx, input) {
-        const bands = [
-            { freq: 60, type: 'lowshelf', gain: 1.0, Q: 0.707 },
-            { freq: 170, type: 'peaking', gain: 0.5, Q: 1.4 },
-            { freq: 500, type: 'peaking', gain: -0.5, Q: 1.4 },
-            { freq: 1000, type: 'peaking', gain: 0.3, Q: 1.4 },
-            { freq: 3000, type: 'peaking', gain: 1.0, Q: 1.4 },
-            { freq: 8000, type: 'peaking', gain: 0.8, Q: 1.4 },
-            { freq: 12000, type: 'highshelf', gain: 1.5, Q: 0.707 }
-        ];
+    /**
+     * applyDynamicEQ — 3-band frequency-dependent compression.
+     * Advanced: moderate control. Premium: tighter, more surgical.
+     */
+    function applyDynamicEQ(ctx, input, tierId) {
+        var isPremium = (tierId === 'premium');
 
-        let node = input;
-        bands.forEach(function(b) {
-            const filter = ctx.createBiquadFilter();
-            filter.type = b.type;
-            filter.frequency.value = b.freq;
-            filter.gain.value = b.gain;
-            filter.Q.value = b.Q;
-            node.connect(filter);
-            node = filter;
-        });
-        return node;
-    }
-
-    function applyDynamicEQ(ctx, input) {
-        // 3-band dynamic EQ via gentle compressors on filtered bands
         // Low band
-        const lpf = ctx.createBiquadFilter();
+        var lpf = ctx.createBiquadFilter();
         lpf.type = 'lowpass';
         lpf.frequency.value = 200;
         lpf.Q.value = 0.5;
         input.connect(lpf);
-
-        const lowComp = ctx.createDynamicsCompressor();
-        lowComp.threshold.value = -24;
-        lowComp.ratio.value = 2;
-        lowComp.attack.value = 0.02;
-        lowComp.release.value = 0.15;
+        var lowComp = ctx.createDynamicsCompressor();
+        lowComp.threshold.value = isPremium ? -20 : -18;
+        lowComp.ratio.value = isPremium ? 2.0 : 1.5;
+        lowComp.attack.value = 0.020;
+        lowComp.release.value = 0.150;
         lpf.connect(lowComp);
 
         // Mid band
-        const bpf = ctx.createBiquadFilter();
+        var bpf = ctx.createBiquadFilter();
         bpf.type = 'bandpass';
         bpf.frequency.value = 2000;
         bpf.Q.value = 0.5;
         input.connect(bpf);
-
-        const midComp = ctx.createDynamicsCompressor();
-        midComp.threshold.value = -22;
-        midComp.ratio.value = 2;
-        midComp.attack.value = 0.01;
-        midComp.release.value = 0.1;
+        var midComp = ctx.createDynamicsCompressor();
+        midComp.threshold.value = isPremium ? -18 : -16;
+        midComp.ratio.value = isPremium ? 1.8 : 1.4;
+        midComp.attack.value = 0.010;
+        midComp.release.value = 0.100;
         bpf.connect(midComp);
 
         // High band
-        const hpf = ctx.createBiquadFilter();
+        var hpf = ctx.createBiquadFilter();
         hpf.type = 'highpass';
         hpf.frequency.value = 6000;
         hpf.Q.value = 0.5;
         input.connect(hpf);
-
-        const hiComp = ctx.createDynamicsCompressor();
-        hiComp.threshold.value = -20;
-        hiComp.ratio.value = 2.5;
+        var hiComp = ctx.createDynamicsCompressor();
+        hiComp.threshold.value = isPremium ? -16 : -14;
+        hiComp.ratio.value = isPremium ? 2.0 : 1.5;
         hiComp.attack.value = 0.005;
-        hiComp.release.value = 0.08;
+        hiComp.release.value = 0.080;
         hpf.connect(hiComp);
 
-        // Sum bands
-        const merger = ctx.createGain();
-        merger.gain.value = 0.85; // compensate 3-band sum (0.6 was too quiet)
+        // Sum bands with compensated gain
+        // 3 parallel bands each pass the full signal → sum is ~3x louder
+        // Compensate to unity: 1/3 ≈ 0.33, but compressors reduce gain, so use ~0.45
+        var merger = ctx.createGain();
+        merger.gain.value = 0.45;
         lowComp.connect(merger);
         midComp.connect(merger);
         hiComp.connect(merger);
-        return merger;
+
+        // Dry/wet blend for transparency
+        var dryGain = ctx.createGain();
+        dryGain.gain.value = 0.35;
+        input.connect(dryGain);
+
+        var output = ctx.createGain();
+        output.gain.value = 1.0;
+        merger.connect(output);
+        dryGain.connect(output);
+        return output;
     }
 
-    function applyMultibandCompression(ctx, input) {
-        const crossovers = [200, 1500, 6000];
-        const settings = [
-            { threshold: -20, ratio: 2.5, attack: 0.02, release: 0.15 },
-            { threshold: -18, ratio: 2.0, attack: 0.01, release: 0.1 },
-            { threshold: -16, ratio: 2.0, attack: 0.008, release: 0.08 },
-            { threshold: -14, ratio: 3.0, attack: 0.005, release: 0.06 }
+    /**
+     * applyMultibandCompression — 4-band dynamics control.
+     * Advanced: gentle leveling. Premium: tighter per-band control.
+     */
+    function applyMultibandCompression(ctx, input, tierId) {
+        var isPremium = (tierId === 'premium');
+        var thresholdOffset = isPremium ? -2 : 0; // Premium compresses more
+
+        var bands = [
+            { type: 'lowpass',  freq: 200,  Q: 0.707,
+              threshold: -18 + thresholdOffset, ratio: 2.0, attack: 0.020, release: 0.150 },
+            { type: 'bandpass', freq: 600,  Q: 0.7,
+              threshold: -16 + thresholdOffset, ratio: 1.8, attack: 0.012, release: 0.120 },
+            { type: 'bandpass', freq: 3500, Q: 0.7,
+              threshold: -15 + thresholdOffset, ratio: 1.8, attack: 0.008, release: 0.100 },
+            { type: 'highpass', freq: 6000, Q: 0.707,
+              threshold: -14 + thresholdOffset, ratio: 2.0, attack: 0.005, release: 0.080 }
         ];
 
-        // Band 1: low
-        const lp1 = ctx.createBiquadFilter();
-        lp1.type = 'lowpass'; lp1.frequency.value = crossovers[0]; lp1.Q.value = 0.707;
-        input.connect(lp1);
-        const c1 = ctx.createDynamicsCompressor();
-        c1.threshold.value = settings[0].threshold; c1.ratio.value = settings[0].ratio;
-        c1.attack.value = settings[0].attack; c1.release.value = settings[0].release;
-        lp1.connect(c1);
+        var bandOutputs = [];
+        bands.forEach(function(b) {
+            var filter = ctx.createBiquadFilter();
+            filter.type = b.type;
+            filter.frequency.value = b.freq;
+            filter.Q.value = b.Q;
+            input.connect(filter);
 
-        // Band 2: low-mid
-        const bp2 = ctx.createBiquadFilter();
-        bp2.type = 'bandpass'; bp2.frequency.value = 600; bp2.Q.value = 0.7;
-        input.connect(bp2);
-        const c2 = ctx.createDynamicsCompressor();
-        c2.threshold.value = settings[1].threshold; c2.ratio.value = settings[1].ratio;
-        c2.attack.value = settings[1].attack; c2.release.value = settings[1].release;
-        bp2.connect(c2);
+            var comp = ctx.createDynamicsCompressor();
+            comp.threshold.value = b.threshold;
+            comp.ratio.value = b.ratio;
+            comp.attack.value = b.attack;
+            comp.release.value = b.release;
+            comp.knee.value = 6;
+            filter.connect(comp);
 
-        // Band 3: high-mid
-        const bp3 = ctx.createBiquadFilter();
-        bp3.type = 'bandpass'; bp3.frequency.value = 3500; bp3.Q.value = 0.7;
-        input.connect(bp3);
-        const c3 = ctx.createDynamicsCompressor();
-        c3.threshold.value = settings[2].threshold; c3.ratio.value = settings[2].ratio;
-        c3.attack.value = settings[2].attack; c3.release.value = settings[2].release;
-        bp3.connect(c3);
+            bandOutputs.push(comp);
+        });
 
-        // Band 4: high
-        const hp4 = ctx.createBiquadFilter();
-        hp4.type = 'highpass'; hp4.frequency.value = crossovers[2]; hp4.Q.value = 0.707;
-        input.connect(hp4);
-        const c4 = ctx.createDynamicsCompressor();
-        c4.threshold.value = settings[3].threshold; c4.ratio.value = settings[3].ratio;
-        c4.attack.value = settings[3].attack; c4.release.value = settings[3].release;
-        hp4.connect(c4);
+        // Sum bands — 4 parallel paths, compensate to avoid volume buildup
+        var sum = ctx.createGain();
+        sum.gain.value = 0.40; // 4 bands → ~0.25 each, but compressors reduce, so ~0.40
+        bandOutputs.forEach(function(b) { b.connect(sum); });
 
-        const sum = ctx.createGain();
-        sum.gain.value = 0.8; // compensate 4-band sum (0.5 was too quiet)
-        c1.connect(sum); c2.connect(sum); c3.connect(sum); c4.connect(sum);
-        return sum;
+        // Dry/wet blend for musicality
+        var dryGain = ctx.createGain();
+        dryGain.gain.value = 0.30;
+        input.connect(dryGain);
+
+        var output = ctx.createGain();
+        output.gain.value = 1.0;
+        sum.connect(output);
+        dryGain.connect(output);
+        return output;
     }
 
-    function applyStereoWidening(ctx, input) {
-        // Subtle stereo enhancement via channel splitter/merger with side boost
-        const splitter = ctx.createChannelSplitter(2);
-        const merger = ctx.createChannelMerger(2);
+    /**
+     * applyStereoWidening — cross-feed technique for wider image.
+     * Advanced: subtle widening. Premium: more pronounced.
+     */
+    function applyStereoWidening(ctx, input, tierId) {
+        var crossFeedAmount = (tierId === 'premium') ? -0.10 : -0.07;
 
-        const leftGain = ctx.createGain();
+        var splitter = ctx.createChannelSplitter(2);
+        var merger = ctx.createChannelMerger(2);
+
+        var leftGain = ctx.createGain();
         leftGain.gain.value = 1.0;
-        const rightGain = ctx.createGain();
+        var rightGain = ctx.createGain();
         rightGain.gain.value = 1.0;
 
-        // Cross-feed for subtle widening (side emphasis)
-        const crossL = ctx.createGain();
-        crossL.gain.value = -0.08; // small negative cross-feed = wider
-        const crossR = ctx.createGain();
-        crossR.gain.value = -0.08;
+        var crossL = ctx.createGain();
+        crossL.gain.value = crossFeedAmount;
+        var crossR = ctx.createGain();
+        crossR.gain.value = crossFeedAmount;
 
         input.connect(splitter);
 
         splitter.connect(leftGain, 0);
         splitter.connect(rightGain, 1);
-        splitter.connect(crossL, 1); // right → left (inverted)
-        splitter.connect(crossR, 0); // left → right (inverted)
+        splitter.connect(crossL, 1);
+        splitter.connect(crossR, 0);
 
-        const leftSum = ctx.createGain();
+        var leftSum = ctx.createGain();
         leftSum.gain.value = 1.0;
         leftGain.connect(leftSum);
         crossL.connect(leftSum);
 
-        const rightSum = ctx.createGain();
+        var rightSum = ctx.createGain();
         rightSum.gain.value = 1.0;
         rightGain.connect(rightSum);
         crossR.connect(rightSum);
@@ -1019,71 +1136,90 @@
         return merger;
     }
 
+    /**
+     * applyHarmonicExciter — adds upper harmonics for presence and air.
+     * Premium only. Parallel wet/dry blend preserves original clarity.
+     */
     function applyHarmonicExciter(ctx, input) {
-        // Saturate upper harmonics: high-shelf boost → waveshaper → mix back
-        const preGain = ctx.createGain();
-        preGain.gain.value = 0.5;
+        var preGain = ctx.createGain();
+        preGain.gain.value = 0.4;
         input.connect(preGain);
 
-        const hfBoost = ctx.createBiquadFilter();
+        var hfBoost = ctx.createBiquadFilter();
         hfBoost.type = 'highshelf';
-        hfBoost.frequency.value = 3000;
-        hfBoost.gain.value = 6;
+        hfBoost.frequency.value = 3500;
+        hfBoost.gain.value = 5;
         preGain.connect(hfBoost);
 
-        const shaper = ctx.createWaveShaper();
-        const curve = new Float32Array(1024);
-        for (let i = 0; i < 1024; i++) {
-            const x = (i / 1023) * 2 - 1;
-            curve[i] = Math.tanh(x * 2);
+        var shaper = ctx.createWaveShaper();
+        var curve = new Float32Array(2048);
+        for (var i = 0; i < 2048; i++) {
+            var x = (i / 2047) * 2 - 1;
+            // Gentle saturation — musical even harmonics
+            curve[i] = Math.tanh(x * 1.8);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
         hfBoost.connect(shaper);
 
-        const wetGain = ctx.createGain();
-        wetGain.gain.value = 0.15; // subtle harmonic blend
+        var wetGain = ctx.createGain();
+        wetGain.gain.value = 0.12; // subtle harmonic blend
         shaper.connect(wetGain);
 
-        const dryGain = ctx.createGain();
+        var dryGain = ctx.createGain();
         dryGain.gain.value = 1.0;
         input.connect(dryGain);
 
-        const sum = ctx.createGain();
+        var sum = ctx.createGain();
         sum.gain.value = 1.0;
         dryGain.connect(sum);
         wetGain.connect(sum);
         return sum;
     }
 
+    /**
+     * applyAnalogWarmth — tape-style saturation for richness.
+     * Premium only. Gentle tanh curve with 4x oversampling.
+     */
     function applyAnalogWarmth(ctx, input) {
-        // Gentle tape-style saturation via waveshaper (tanh soft-clip)
-        const shaper = ctx.createWaveShaper();
-        const curve = new Float32Array(2048);
-        for (let i = 0; i < 2048; i++) {
-            const x = (i / 2047) * 2 - 1;
-            // Gentle tanh saturation — preserves ~95% of level at peak
-            curve[i] = Math.tanh(x * 1.4);
+        // Dry/wet parallel processing for control
+        var shaper = ctx.createWaveShaper();
+        var curve = new Float32Array(2048);
+        for (var i = 0; i < 2048; i++) {
+            var x = (i / 2047) * 2 - 1;
+            // Gentle tape saturation — preserves ~95% of level at peak
+            curve[i] = Math.tanh(x * 1.3);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
 
+        var wetGain = ctx.createGain();
+        wetGain.gain.value = 0.60;
         input.connect(shaper);
+        shaper.connect(wetGain);
 
-        const postGain = ctx.createGain();
-        postGain.gain.value = 1.05; // slight makeup for tanh compression
-        shaper.connect(postGain);
+        var dryGain = ctx.createGain();
+        dryGain.gain.value = 0.45;
+        input.connect(dryGain);
 
-        return postGain;
+        var output = ctx.createGain();
+        output.gain.value = 1.0;
+        wetGain.connect(output);
+        dryGain.connect(output);
+
+        return output;
     }
 
+    /**
+     * applySoftClipper — gentle soft clip for analog glue.
+     * Premium only. Catches peaks that escape the limiter chain.
+     */
     function applySoftClipper(ctx, input) {
-        // Soft clip at -0.5 dB for glue
-        const shaper = ctx.createWaveShaper();
-        const curve = new Float32Array(1024);
-        const ceiling = 0.944; // ~-0.5 dB
-        for (let i = 0; i < 1024; i++) {
-            const x = (i / 1023) * 2 - 1;
+        var shaper = ctx.createWaveShaper();
+        var curve = new Float32Array(2048);
+        var ceiling = 0.944; // ~-0.5 dB
+        for (var i = 0; i < 2048; i++) {
+            var x = (i / 2047) * 2 - 1;
             if (Math.abs(x) < ceiling) {
                 curve[i] = x;
             } else {
@@ -1091,7 +1227,7 @@
             }
         }
         shaper.curve = curve;
-        shaper.oversample = '2x';
+        shaper.oversample = '4x';
 
         input.connect(shaper);
         return shaper;
@@ -1102,27 +1238,56 @@
     // ═══════════════════════════════════════════════════════════════════════
 
     async function renderAllPreviews(audioBuffer) {
-        // Find best 15-second segment
-        const startSample = findBestSegment(audioBuffer);
+        // Find best 15-second segment (most dynamic section)
+        var startSample = findBestSegment(audioBuffer);
         previewSegment = extractSegment(audioBuffer, startSample);
 
-        // Render tiers sequentially to avoid memory pressure
-        const tierIds = ['basic', 'advanced', 'premium'];
+        // Render all tiers first, then LUFS-normalize so users hear quality not volume
+        var tierIds = ['basic', 'advanced', 'premium'];
+        var renderedBuffers = {};
 
-        for (let i = 0; i < tierIds.length; i++) {
-            const tierId = tierIds[i];
+        // Pass 1: Render each tier through its processing chain
+        for (var i = 0; i < tierIds.length; i++) {
+            var tierId = tierIds[i];
             renderingState[tierId] = 'rendering';
             updatePlayerUI(tierId);
 
             try {
-                previewBuffers[tierId] = await renderTierPreview(previewSegment, tierId);
-                renderingState[tierId] = 'ready';
-                updatePlayerUI(tierId);
-                drawWaveform(tierId, previewBuffers[tierId]);
+                renderedBuffers[tierId] = await renderTierPreview(previewSegment, tierId);
             } catch (err) {
                 console.error('Tier render failed (' + tierId + '):', err);
                 renderingState[tierId] = 'error';
                 updatePlayerUI(tierId);
+            }
+        }
+
+        // Pass 2: LUFS-normalize all rendered buffers to the same loudness
+        // This is CRITICAL — without it, louder tiers are perceived as "better"
+        // which isn't a fair quality comparison. Use Advanced as reference.
+        var referenceRMS = null;
+        if (renderedBuffers['advanced']) {
+            referenceRMS = measureRMS(renderedBuffers['advanced']);
+        } else if (renderedBuffers['basic']) {
+            referenceRMS = measureRMS(renderedBuffers['basic']);
+        }
+
+        if (referenceRMS && referenceRMS > 0.0001) {
+            for (var j = 0; j < tierIds.length; j++) {
+                var tid = tierIds[j];
+                if (renderedBuffers[tid]) {
+                    normalizeBuffer(renderedBuffers[tid], referenceRMS);
+                }
+            }
+        }
+
+        // Pass 3: Store buffers, update UI, draw waveforms
+        for (var k = 0; k < tierIds.length; k++) {
+            var id = tierIds[k];
+            if (renderedBuffers[id]) {
+                previewBuffers[id] = renderedBuffers[id];
+                renderingState[id] = 'ready';
+                updatePlayerUI(id);
+                drawWaveform(id, previewBuffers[id]);
             }
         }
     }
