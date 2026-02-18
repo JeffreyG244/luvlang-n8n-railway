@@ -107,7 +107,6 @@
         warmth: true,
         softClipper: true,
         stereoEnhance: true,
-        saturationLevel: 'balanced'  // 'low' | 'balanced' | 'high'
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -703,62 +702,6 @@
                 margin-bottom: 6px;
             }
 
-            /* ── Saturation 3-Way Toggle ── */
-            .ctp-saturation-wrap {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                margin-top: 10px;
-                padding: 6px 0 2px;
-                transition: opacity 0.2s;
-            }
-            .ctp-saturation-wrap.disabled {
-                opacity: 0.35;
-                pointer-events: none;
-            }
-            .ctp-saturation-title {
-                font-size: 0.6rem;
-                color: rgba(255, 255, 255, 0.4);
-                font-weight: 600;
-                letter-spacing: 0.06em;
-                text-transform: uppercase;
-                margin-right: 4px;
-                white-space: nowrap;
-            }
-            .ctp-sat-btn {
-                flex: 1;
-                padding: 5px 0;
-                background: rgba(255, 255, 255, 0.04);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                color: rgba(255, 255, 255, 0.5);
-                font-size: 0.6rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.15s;
-                text-align: center;
-            }
-            .ctp-sat-btn:first-of-type {
-                border-radius: 5px 0 0 5px;
-            }
-            .ctp-sat-btn:last-of-type {
-                border-radius: 0 5px 5px 0;
-            }
-            .ctp-sat-btn.active {
-                background: rgba(255, 215, 0, 0.15);
-                border-color: rgba(255, 215, 0, 0.5);
-                color: #FFD700;
-                box-shadow: 0 0 8px rgba(255, 215, 0, 0.15);
-            }
-            .ctp-sat-btn:hover:not(.active) {
-                background: rgba(255, 255, 255, 0.08);
-                border-color: rgba(255, 255, 255, 0.2);
-                color: rgba(255, 255, 255, 0.7);
-            }
-            .ctp-sat-btn:focus-visible {
-                outline: 2px solid #FFD700;
-                outline-offset: 2px;
-            }
-
             @media (max-width: 600px) {
                 .ctp-effects-grid {
                     grid-template-columns: 1fr;
@@ -1305,7 +1248,7 @@
         // PREMIUM ONLY: Analog warmth (gentle tape saturation)
         // ═══════════════════════════════════════════════════════════
         if (tierId === 'premium' && premiumEffects.warmth) {
-            currentNode = applyAnalogWarmth(offline, currentNode, premiumEffects.saturationLevel);
+            currentNode = applyAnalogWarmth(offline, currentNode);
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1467,50 +1410,33 @@
     }
 
     /**
-     * applyAnalogWarmth — tape-style saturation for richness.
-     * Premium only. 3 levels: low (subtle), balanced (default), high (heavy).
-     * tanh waveshaping with 4x oversampling for clean harmonic distortion.
-     *
-     * Gain compensation: tanh(x*drive) amplifies quiet signals by ~drive factor
-     * while compressing peaks. Output gain = 1/(dryMix + wetMix*drive) maintains
-     * unity RMS so downstream limiters see the same level at any setting.
-     * Low: +0.1 dB, Balanced: +0.7 dB, High: +1.1 dB (all compensated to unity).
+     * applyAnalogWarmth — gentle tape-style saturation for richness.
+     * Premium only. 50/50 dry/wet blend sums to unity (no gain buildup).
+     * tanh(x * 1.1) with 4x oversampling for clean harmonic distortion.
      */
-    function applyAnalogWarmth(ctx, input, saturationLevel) {
-        var levels = {
-            low:      { drive: 1.15, wet: 0.10 },  // whisper of warmth, barely there
-            balanced: { drive: 1.4,  wet: 0.20 },  // musical tape character, sweet spot
-            high:     { drive: 1.55, wet: 0.25 }   // warm color, sits well without pushing limiter
-        };
-        var cfg = levels[saturationLevel] || levels.balanced;
-        var drive = cfg.drive;
-        var wetMix = cfg.wet;
-        var dryMix = 1.0 - wetMix;
-
+    function applyAnalogWarmth(ctx, input) {
         var shaper = ctx.createWaveShaper();
         var curve = new Float32Array(4096);
         for (var i = 0; i < 4096; i++) {
             var x = (i / 4095) * 2 - 1;
-            curve[i] = Math.tanh(x * drive);
+            curve[i] = Math.tanh(x * 1.1);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
 
+        // Wet path (saturated) — subtle warmth, not obvious coloration
         var wetGain = ctx.createGain();
-        wetGain.gain.value = wetMix;
+        wetGain.gain.value = 0.15;
         input.connect(shaper);
         shaper.connect(wetGain);
 
+        // Dry path (clean) — 0.85 + 0.15 = 1.0 unity
         var dryGain = ctx.createGain();
-        dryGain.gain.value = dryMix;
+        dryGain.gain.value = 0.85;
         input.connect(dryGain);
 
-        // Gain compensation: neutralize the RMS increase from saturation
-        // Small-signal gain = dryMix + wetMix * drive (Low: 1.01, Balanced: 1.125, High: 1.43)
-        // Compensate so downstream limiters see the same level regardless of setting
-        var smallSignalGain = dryMix + wetMix * drive;
         var output = ctx.createGain();
-        output.gain.value = 1.0 / smallSignalGain;
+        output.gain.value = 1.0;
         wetGain.connect(output);
         dryGain.connect(output);
         return output;
@@ -1966,7 +1892,7 @@
 
     var PREMIUM_EFFECT_META = [
         { key: 'exciter',       icon: '\u2728', name: 'Harmonic Exciter',  desc: 'Adds brightness, air, and presence to your highs' },
-        { key: 'warmth',        icon: '\uD83D\uDD25', name: 'Analog Warmth',     desc: 'Rich, tape-style saturation for depth and body', hasSlider: true },
+        { key: 'warmth',        icon: '\uD83D\uDD25', name: 'Analog Warmth',     desc: 'Rich, tape-style saturation for depth and body' },
         { key: 'softClipper',   icon: '\uD83D\uDCC8', name: 'Soft Clipper',      desc: 'Smooths peaks for a polished, glued-together sound' },
         { key: 'stereoEnhance', icon: '\uD83C\uDFA7', name: 'Enhanced Stereo',   desc: 'Wider stereo image for an immersive listening experience' }
     ];
@@ -1995,18 +1921,6 @@
 
         var effectCardsHTML = PREMIUM_EFFECT_META.map(function(fx) {
             var isOn = premiumEffects[fx.key];
-            var sliderHTML = '';
-            if (fx.hasSlider) {
-                var satLvl = premiumEffects.saturationLevel;
-                var disabledClass = isOn ? '' : ' disabled';
-                sliderHTML =
-                    '<div class="ctp-saturation-wrap' + disabledClass + '">' +
-                        '<span class="ctp-saturation-title">Color</span>' +
-                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'low' ? ' active' : '') + '" data-sat="low" aria-label="Low saturation">Low</button>' +
-                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'balanced' ? ' active' : '') + '" data-sat="balanced" aria-label="Balanced saturation">Balanced</button>' +
-                        '<button type="button" class="ctp-sat-btn' + (satLvl === 'high' ? ' active' : '') + '" data-sat="high" aria-label="High saturation">High</button>' +
-                    '</div>';
-            }
             return '<div class="ctp-effect-card ' + (isOn ? 'ctp-effect-on' : '') + '" data-effect="' + fx.key + '">' +
                 '<div class="ctp-effect-card-top">' +
                     '<span class="ctp-effect-name"><span class="ctp-effect-icon">' + fx.icon + '</span> ' + escapeHTML(fx.name) + '</span>' +
@@ -2016,7 +1930,6 @@
                     '</label>' +
                 '</div>' +
                 '<div class="ctp-effect-desc">' + escapeHTML(fx.desc) + '</div>' +
-                sliderHTML +
             '</div>';
         }).join('');
 
@@ -2062,24 +1975,7 @@
                 if (card) {
                     if (this.checked) card.classList.add('ctp-effect-on');
                     else card.classList.remove('ctp-effect-on');
-                    // Enable/disable saturation slider when warmth is toggled
-                    var satWrap = card.querySelector('.ctp-saturation-wrap');
-                    if (satWrap) {
-                        if (this.checked) satWrap.classList.remove('disabled');
-                        else satWrap.classList.add('disabled');
-                    }
                 }
-            });
-        });
-
-        // Wire saturation level buttons
-        panel.querySelectorAll('.ctp-sat-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                premiumEffects.saturationLevel = this.getAttribute('data-sat');
-                // Update active state
-                var wrap = this.parentNode;
-                wrap.querySelectorAll('.ctp-sat-btn').forEach(function(b) { b.classList.remove('active'); });
-                this.classList.add('active');
             });
         });
 
@@ -2197,8 +2093,7 @@
             exciter: premiumEffects.exciter,
             warmth: premiumEffects.warmth,
             softClipper: premiumEffects.softClipper,
-            stereoEnhance: premiumEffects.stereoEnhance,
-            saturationLevel: premiumEffects.saturationLevel
+            stereoEnhance: premiumEffects.stereoEnhance
         };
 
         window.selectedTier = 'premium';
