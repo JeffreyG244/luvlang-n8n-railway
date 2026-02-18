@@ -31464,36 +31464,22 @@
                 tabGrade.style.color = grade.color;
             }
 
-            // Build and show the panel
+            // Cancel any pending auto-hide from a previous pass
+            if (window._scorecardAutoHideTimer) {
+                clearTimeout(window._scorecardAutoHideTimer);
+                window._scorecardAutoHideTimer = null;
+            }
+
+            // Always show the latest scorecard on new mastering pass
+            window._scorecardViewIndex = null;
             renderScorecardPanel();
             window._scorecardVisible = true;
-
-            // Auto-hide after 8 seconds so it doesn't block — user can re-open via tab
-            setTimeout(() => {
-                if (window._scorecardVisible) {
-                    const panel = document.getElementById('qualityScorecard');
-                    if (panel) {
-                        panel.style.opacity = '0';
-                        panel.style.transform = 'translateY(10px)';
-                        setTimeout(() => { if (panel) panel.style.display = 'none'; }, 300);
-                    }
-                    window._scorecardVisible = false;
-                    // Pulse the tab button to remind user they can re-open
-                    if (tabBtn) {
-                        tabBtn.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.35) 0%, rgba(255,165,0,0.2) 100%)';
-                        tabBtn.style.borderColor = 'rgba(255,215,0,0.8)';
-                        tabBtn.style.boxShadow = '0 0 20px rgba(255,215,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
-                        setTimeout(() => {
-                            tabBtn.style.background = '';
-                            tabBtn.style.borderColor = '';
-                            tabBtn.style.boxShadow = '';
-                        }, 2500);
-                    }
-                }
-            }, 8000);
         }
 
-        function renderScorecardPanel() {
+        // Track which scorecard entry the user is viewing (null = latest)
+        window._scorecardViewIndex = null;
+
+        function renderScorecardPanel(viewIndex) {
             let scorecardEl = document.getElementById('qualityScorecard');
             if (!scorecardEl) {
                 scorecardEl = document.createElement('div');
@@ -31511,104 +31497,138 @@
                 document.body.appendChild(scorecardEl);
             }
 
-            const history = window._masteringHistory;
-            const latest = history[history.length - 1];
-            if (!latest) return;
+            var history = window._masteringHistory;
+            if (!history || history.length === 0) return;
 
-            const barColor = (score, max) => {
-                const pct = score / max;
+            // Determine which entry to show
+            var idx = (typeof viewIndex === 'number') ? viewIndex : history.length - 1;
+            idx = Math.max(0, Math.min(idx, history.length - 1));
+            window._scorecardViewIndex = idx;
+            var entry = history[idx];
+            var isLatest = idx === history.length - 1;
+
+            var barColor = function(score, max) {
+                var pct = score / max;
                 if (pct >= 0.85) return '#00ff88';
                 if (pct >= 0.7) return '#00d4ff';
                 if (pct >= 0.55) return '#ffd700';
                 return '#ff6b6b';
             };
-            const scoreBar = (label, score, max, detail) => `
-                <div style="margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
-                        <span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;">${label}</span>
-                        <span style="font-size: 0.65rem; font-weight: 700; color: ${barColor(score, max)};">${score}/${max}</span>
-                    </div>
-                    <div style="height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">
-                        <div style="height: 100%; width: ${(score/max)*100}%; background: ${barColor(score, max)}; border-radius: 2px; transition: width 0.8s ease;"></div>
-                    </div>
-                    <div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 2px;">${detail}</div>
-                </div>`;
+            var scoreBar = function(label, score, max, detail) {
+                return '<div style="margin-bottom: 8px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">' +
+                        '<span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em;">' + label + '</span>' +
+                        '<span style="font-size: 0.65rem; font-weight: 700; color: ' + barColor(score, max) + ';">' + score + '/' + max + '</span>' +
+                    '</div>' +
+                    '<div style="height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;">' +
+                        '<div style="height: 100%; width: ' + ((score/max)*100) + '%; background: ' + barColor(score, max) + '; border-radius: 2px; transition: width 0.8s ease;"></div>' +
+                    '</div>' +
+                    '<div style="font-size: 0.5rem; color: rgba(255,255,255,0.3); margin-top: 2px;">' + detail + '</div>' +
+                '</div>';
+            };
 
-            // Build history timeline
-            let historyHTML = '';
+            // Build history selector — each entry is clickable
+            var historyHTML = '';
             if (history.length > 1) {
-                historyHTML = `<div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">
-                    <div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Mastering History</div>`;
-                history.forEach((h, i) => {
-                    const isCurrent = i === history.length - 1;
-                    const arrow = i > 0 ? (() => {
-                        const diff = h.total - history[i-1].total;
-                        return diff > 0 ? `<span style="color:#00ff88;">+${diff}</span>` :
-                               diff < 0 ? `<span style="color:#ff6b6b;">${diff}</span>` :
-                               `<span style="color:rgba(255,255,255,0.3);">0</span>`;
-                    })() : '';
-                    historyHTML += `
-                        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0; ${isCurrent ? 'opacity:1;' : 'opacity:0.5;'}">
-                            <div style="width: 6px; height: 6px; border-radius: 50%; background: ${h.color}; flex-shrink: 0;"></div>
-                            <span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); flex: 1;">${h.label}</span>
-                            <span style="font-size: 0.7rem; font-weight: 800; color: ${h.color};">${h.grade} ${h.total}</span>
-                            ${arrow ? `<span style="font-size: 0.55rem; font-weight: 600;">${arrow}</span>` : ''}
-                        </div>`;
-                });
+                historyHTML = '<div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06);">' +
+                    '<div style="font-size: 0.55rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Mastering History — tap to view</div>';
+                for (var i = 0; i < history.length; i++) {
+                    var h = history[i];
+                    var isViewing = i === idx;
+                    var arrow = '';
+                    if (i > 0) {
+                        var diff = h.total - history[i-1].total;
+                        if (diff > 0) arrow = '<span style="color:#00ff88;">+' + diff + '</span>';
+                        else if (diff < 0) arrow = '<span style="color:#ff6b6b;">' + diff + '</span>';
+                        else arrow = '<span style="color:rgba(255,255,255,0.3);">0</span>';
+                    }
+                    var bgStyle = isViewing
+                        ? 'background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.3); border-radius: 6px; padding: 6px 8px;'
+                        : 'background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 6px 8px;';
+                    var opStyle = isViewing ? 'opacity:1;' : 'opacity:0.55;';
+                    historyHTML += '<div onclick="window._viewScorecard(' + i + ')" style="display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s; margin-bottom: 3px; ' + bgStyle + ' ' + opStyle + '">' +
+                        '<div style="width: 6px; height: 6px; border-radius: 50%; background: ' + h.color + '; flex-shrink: 0;"></div>' +
+                        '<span style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.7); flex: 1;">' + h.label + '</span>' +
+                        '<span style="font-size: 0.7rem; font-weight: 800; color: ' + h.color + ';">' + h.grade + ' ' + h.total + '</span>' +
+                        (arrow ? '<span style="font-size: 0.55rem; font-weight: 600;">' + arrow + '</span>' : '') +
+                    '</div>';
+                }
                 historyHTML += '</div>';
             }
 
-            // Build fixed/unfixed sections for latest pass
-            let changesHTML = '';
-            if (latest.fixed.length > 0 || latest.unfixed.length > 0) {
+            // Build fixed/unfixed sections for selected entry
+            var changesHTML = '';
+            if ((entry.fixed && entry.fixed.length > 0) || (entry.unfixed && entry.unfixed.length > 0)) {
                 changesHTML = '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">';
-                if (latest.fixed.length > 0) {
-                    changesHTML += latest.fixed.map(f =>
-                        `<div style="font-size: 0.55rem; color: #00ff88; padding: 2px 0;">&#10003; ${f}</div>`
-                    ).join('');
+                if (entry.fixed && entry.fixed.length > 0) {
+                    for (var fi = 0; fi < entry.fixed.length; fi++) {
+                        changesHTML += '<div style="font-size: 0.55rem; color: #00ff88; padding: 2px 0;">&#10003; ' + entry.fixed[fi] + '</div>';
+                    }
                 }
-                if (latest.unfixed.length > 0) {
-                    changesHTML += latest.unfixed.map(u =>
-                        `<div style="font-size: 0.55rem; color: #ff6b6b; padding: 2px 0;">&#10007; ${u.item}</div>
-                         <div style="font-size: 0.48rem; color: rgba(255,255,255,0.25); padding: 0 0 4px 14px;">${u.reason}</div>`
-                    ).join('');
+                if (entry.unfixed && entry.unfixed.length > 0) {
+                    for (var ui = 0; ui < entry.unfixed.length; ui++) {
+                        changesHTML += '<div style="font-size: 0.55rem; color: #ff6b6b; padding: 2px 0;">&#10007; ' + entry.unfixed[ui].item + '</div>' +
+                            '<div style="font-size: 0.48rem; color: rgba(255,255,255,0.25); padding: 0 0 4px 14px;">' + entry.unfixed[ui].reason + '</div>';
+                    }
                 }
                 changesHTML += '</div>';
             }
 
-            const s = latest.scores;
-            const d = latest.details;
+            var s = entry.scores || {};
+            var d = entry.details || {};
 
-            scorecardEl.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <div>
-                        <div style="font-size: 0.5rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">${latest.label}</div>
-                        <div style="font-size: 1.4rem; font-weight: 800; color: ${latest.color}; line-height: 1;">${latest.grade}</div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.6rem; font-weight: 800; color: ${latest.color}; line-height: 1;">${latest.total}</div>
-                        <div style="font-size: 0.5rem; color: rgba(255,255,255,0.35);">/ 100</div>
-                    </div>
-                </div>
-                <div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
-                    <div style="height: 100%; width: ${latest.total}%; background: linear-gradient(90deg, ${latest.color}, ${latest.color}88); border-radius: 3px; transition: width 1s ease;"></div>
-                </div>
-                ${scoreBar('LUFS Accuracy', s.lufs || 0, 25, `${(d.lufsActual||0).toFixed(1)} LUFS vs ${d.lufsTarget||'-14'} target (${d.platformName||'Streaming'})`)}
-                ${scoreBar('True Peak Safety', s.peak || 0, 25, `${(d.peakActual||0).toFixed(1)} dBTP (ceiling: ${d.peakCeiling||'-1.0'} dBTP)`)}
-                ${scoreBar('Dynamic Range', s.dynamics || 0, 25, `LRA: ${(d.lra||0).toFixed(1)} LU (${d.genre||'pop'} target: ${d.lraTarget||'5-10 LU'})`)}
-                ${scoreBar('Tonal Balance', s.tonal || 0, 25, `Clarity, width, and processing quality`)}
-                ${changesHTML}
-                ${historyHTML}
-            `;
+            // "Viewing older" banner when not on latest
+            var olderBanner = '';
+            if (!isLatest) {
+                olderBanner = '<div onclick="window._viewScorecard(' + (history.length - 1) + ')" style="' +
+                    'text-align: center; padding: 6px; margin-bottom: 10px; cursor: pointer;' +
+                    'background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.25); border-radius: 6px;' +
+                    'font-size: 0.6rem; color: #ffd700; font-weight: 600;">' +
+                    'Viewing pass ' + (idx + 1) + ' of ' + history.length + ' — tap to return to latest</div>';
+            }
+
+            // Pass number label
+            var passLabel = 'Pass ' + (idx + 1) + (isLatest ? ' (Latest)' : '');
+
+            scorecardEl.innerHTML =
+                olderBanner +
+                '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+                    '<div>' +
+                        '<div style="font-size: 0.5rem; font-weight: 600; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;">' + passLabel + ' — ' + (entry.label || '') + '</div>' +
+                        '<div style="font-size: 1.4rem; font-weight: 800; color: ' + entry.color + '; line-height: 1;">' + entry.grade + '</div>' +
+                    '</div>' +
+                    '<div style="display: flex; align-items: center; gap: 12px;">' +
+                        '<div style="text-align: right;">' +
+                            '<div style="font-size: 1.6rem; font-weight: 800; color: ' + entry.color + '; line-height: 1;">' + entry.total + '</div>' +
+                            '<div style="font-size: 0.5rem; color: rgba(255,255,255,0.35);">/ 100</div>' +
+                        '</div>' +
+                        '<div onclick="window.toggleScorecardPanel()" style="cursor:pointer; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.4); font-size:0.8rem; transition:all 0.15s;" onmouseover="this.style.background=\'rgba(255,255,255,0.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.06)\'">&#10005;</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="width: 100%; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">' +
+                    '<div style="height: 100%; width: ' + entry.total + '%; background: linear-gradient(90deg, ' + entry.color + ', ' + entry.color + '88); border-radius: 3px; transition: width 1s ease;"></div>' +
+                '</div>' +
+                scoreBar('LUFS Accuracy', s.lufs || 0, 25, (d.lufsActual||0).toFixed(1) + ' LUFS vs ' + (d.lufsTarget||'-14') + ' target (' + (d.platformName||'Streaming') + ')') +
+                scoreBar('True Peak Safety', s.peak || 0, 25, (d.peakActual||0).toFixed(1) + ' dBTP (ceiling: ' + (d.peakCeiling||'-1.0') + ' dBTP)') +
+                scoreBar('Dynamic Range', s.dynamics || 0, 25, 'LRA: ' + (d.lra||0).toFixed(1) + ' LU (' + (d.genre||'pop') + ' target: ' + (d.lraTarget||'5-10 LU') + ')') +
+                scoreBar('Tonal Balance', s.tonal || 0, 25, 'Clarity, width, and processing quality') +
+                changesHTML +
+                historyHTML;
 
             scorecardEl.style.display = 'block';
             scorecardEl.style.opacity = '0';
             scorecardEl.style.transform = 'translateY(10px)';
-            requestAnimationFrame(() => {
+            requestAnimationFrame(function() {
                 scorecardEl.style.opacity = '1';
                 scorecardEl.style.transform = 'translateY(0)';
             });
         }
+
+        // Click handler for viewing a specific scorecard from history
+        window._viewScorecard = function(index) {
+            renderScorecardPanel(index);
+            window._scorecardVisible = true;
+        };
 
         // Toggle scorecard panel from export bar tab
         window.toggleScorecardPanel = function() {
