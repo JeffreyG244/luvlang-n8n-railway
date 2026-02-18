@@ -7778,17 +7778,17 @@
             <div class="selector-group">
                 <div class="section-title">Platform Target</div>
                 <div class="selector-grid">
-                    <div class="selector-btn active" data-platform="streaming" style="position: relative;">
+                    <div class="selector-btn active" data-platform="streaming" onclick="window.selectSidebarPlatform(this, 'streaming')" style="position: relative;">
                         <div>Streaming</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-14 LUFS</div>
                         <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Spotify • YouTube • Tidal</div>
                     </div>
-                    <div class="selector-btn" data-platform="apple" style="position: relative;">
+                    <div class="selector-btn" data-platform="apple" onclick="window.selectSidebarPlatform(this, 'apple')" style="position: relative;">
                         <div>Apple Music</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-16 LUFS</div>
                         <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Higher Dynamic Range</div>
                     </div>
-                    <div class="selector-btn" data-platform="podcast" style="position: relative;">
+                    <div class="selector-btn" data-platform="podcast" onclick="window.selectSidebarPlatform(this, 'podcast')" style="position: relative;">
                         <div>Podcast</div>
                         <div style="font-size: 0.65rem; opacity: 0.6; margin-top: 2px;">-16 LUFS</div>
                         <div style="font-size: 0.55rem; opacity: 0.4; margin-top: 1px;">Speech Optimized</div>
@@ -30562,6 +30562,88 @@
             updateConsoleSummary();
         };
 
+        // Sidebar Platform selector — syncs with console platform buttons
+        window.selectSidebarPlatform = function(btn, platform) {
+            // Update sidebar active state
+            document.querySelectorAll('.selector-btn[data-platform]').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+
+            // Map sidebar categories to console platform names + LUFS targets
+            var platformConfig = {
+                streaming: { consolePlatform: 'spotify', targetLUFS: -14, truePeakCeiling: -1.0 },
+                apple:     { consolePlatform: 'apple',   targetLUFS: -16, truePeakCeiling: -1.0 },
+                podcast:   { consolePlatform: 'podcast',  targetLUFS: -16, truePeakCeiling: -1.0 }
+            };
+            var config = platformConfig[platform] || platformConfig.streaming;
+
+            // Set global platform state
+            window.selectedPlatform = config.consolePlatform;
+            window.targetLUFS = config.targetLUFS;
+            window.truePeakCeiling = config.truePeakCeiling;
+            if (typeof PLATFORM_PRESETS !== 'undefined' && PLATFORM_PRESETS[config.consolePlatform]) {
+                window.selectedPlatformPreset = PLATFORM_PRESETS[config.consolePlatform];
+            }
+
+            // Sync console platform buttons
+            document.querySelectorAll('.console-platform-btn').forEach(function(b) {
+                b.classList.remove('active');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                b.style.boxShadow = 'none';
+                b.style.transform = '';
+                var labels = b.querySelectorAll('div');
+                if (labels[1]) labels[1].style.color = 'rgba(255,255,255,0.7)';
+            });
+            var consoleMatch = document.querySelector('.console-platform-btn[data-platform="' + config.consolePlatform + '"]');
+            if (consoleMatch) {
+                var preset = (typeof PLATFORM_PRESETS !== 'undefined' && PLATFORM_PRESETS[config.consolePlatform]) || null;
+                var accentColor = preset ? preset.color : '#00d4ff';
+                consoleMatch.classList.add('active');
+                consoleMatch.style.background = accentColor + '22';
+                consoleMatch.style.borderColor = accentColor + '88';
+                consoleMatch.style.boxShadow = '0 0 12px ' + accentColor + '80, 0 0 24px ' + accentColor + '33, inset 0 0 6px ' + accentColor + '1a';
+                consoleMatch.style.transform = 'scale(1.04)';
+                var activeLabels = consoleMatch.querySelectorAll('div');
+                if (activeLabels[1]) activeLabels[1].style.color = accentColor;
+            }
+
+            // Update LUFS target display
+            var lufsTargetElement = document.getElementById('lufsTarget');
+            if (lufsTargetElement) {
+                var platformNames = { streaming: 'Streaming', apple: 'Apple Music', podcast: 'Podcast' };
+                lufsTargetElement.textContent = 'Target: ' + config.targetLUFS + ' LUFS (' + (platformNames[platform] || 'Streaming') + ')';
+            }
+
+            // Update platform info banner
+            var infoBanner = document.getElementById('platformInfoBanner');
+            if (infoBanner && typeof PLATFORM_PRESETS !== 'undefined' && PLATFORM_PRESETS[config.consolePlatform]) {
+                var preset2 = PLATFORM_PRESETS[config.consolePlatform];
+                infoBanner.textContent = preset2.normalization;
+                var ac2 = preset2.color || '#00d4ff';
+                infoBanner.style.borderColor = ac2 + '33';
+                infoBanner.style.background = ac2 + '0d';
+            }
+
+            // If mastering is complete, re-apply gain for new LUFS target
+            if (window.masteringComplete && window.makeupGain && window.audioContext) {
+                var prevTarget = window.autoLUFSTargetLevel || -14;
+                var gainDiff = config.targetLUFS - prevTarget;
+                if (gainDiff !== 0) {
+                    var currentGainDB = window.appliedMakeupGainDB || 0;
+                    var newGainDB = Math.max(-6, Math.min(12, currentGainDB + gainDiff));
+                    var newGainLinear = Math.pow(10, newGainDB / 20);
+                    window.makeupGain.gain.cancelScheduledValues(window.audioContext.currentTime);
+                    window.makeupGain.gain.setValueAtTime(newGainLinear, window.audioContext.currentTime);
+                    window.appliedMakeupGainDB = newGainDB;
+                    window.autoLUFSTargetLevel = config.targetLUFS;
+                }
+            }
+
+            updateConsoleSummary();
+        };
+
         // Update MASTER NOW summary line
         function updateConsoleSummary() {
             const summaryEl = document.getElementById('consoleMasterSummary');
@@ -30576,9 +30658,19 @@
             const genreName = genreNames[genre] || genre;
 
             const platformBtn = document.querySelector('.console-platform-btn.active');
-            const platform = platformBtn ? platformBtn.dataset.platform : 'streaming';
-            const lufsMap = { streaming: '-14 LUFS', apple: '-16 LUFS', podcast: '-16 LUFS' };
-            const platformNames = { streaming: 'Streaming', apple: 'Apple Music', podcast: 'Podcast' };
+            const platform = platformBtn ? platformBtn.dataset.platform : 'spotify';
+            const lufsMap = {
+                spotify: '-14 LUFS', youtube: '-14 LUFS', tidal: '-14 LUFS',
+                amazon: '-14 LUFS', soundcloud: '-14 LUFS', tiktok: '-14 LUFS',
+                cd: '-14 LUFS', club: '-14 LUFS', streaming: '-14 LUFS',
+                apple: '-16 LUFS', podcast: '-16 LUFS'
+            };
+            const platformNames = {
+                spotify: 'Streaming', youtube: 'Streaming', tidal: 'Streaming',
+                amazon: 'Streaming', soundcloud: 'Streaming', tiktok: 'Streaming',
+                cd: 'CD', club: 'Club', streaming: 'Streaming',
+                apple: 'Apple Music', podcast: 'Podcast'
+            };
 
             const formatBtn = document.querySelector('.console-format-btn.selected');
             const format = formatBtn ? formatBtn.dataset.format : 'wav';
@@ -30590,11 +30682,19 @@
 
         // Sync sidebar with console selections
         function syncSidebarWithConsole() {
-            // Sync platform
+            // Sync platform — map console platform names to sidebar categories
             const platform = window.selectedPlatform || 'streaming';
+            const sidebarPlatformMap = {
+                spotify: 'streaming', youtube: 'streaming', tidal: 'streaming',
+                amazon: 'streaming', soundcloud: 'streaming', tiktok: 'streaming',
+                cd: 'streaming', club: 'streaming',
+                apple: 'apple', podcast: 'podcast',
+                streaming: 'streaming'
+            };
+            const sidebarKey = sidebarPlatformMap[platform] || 'streaming';
             document.querySelectorAll('.selector-btn[data-platform]').forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.dataset.platform === platform) btn.classList.add('active');
+                if (btn.dataset.platform === sidebarKey) btn.classList.add('active');
             });
 
             // Sync genre
