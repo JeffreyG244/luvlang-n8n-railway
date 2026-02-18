@@ -895,7 +895,7 @@
             deMud.type = 'peaking';
             deMud.frequency.value = 300;
             deMud.Q.value = 1.5;
-            deMud.gain.value = isPremium ? -2.0 : -1.5;
+            deMud.gain.value = -1.5;
             currentNode.connect(deMud);
             currentNode = deMud;
 
@@ -904,7 +904,7 @@
             boxCut.type = 'peaking';
             boxCut.frequency.value = 500;
             boxCut.Q.value = 2.0;
-            boxCut.gain.value = isPremium ? -1.5 : -1.0;
+            boxCut.gain.value = -1.0;
             currentNode.connect(boxCut);
             currentNode = boxCut;
 
@@ -913,7 +913,7 @@
             presence.type = 'peaking';
             presence.frequency.value = 3000;
             presence.Q.value = 1.2;
-            presence.gain.value = isPremium ? 1.5 : 1.0;
+            presence.gain.value = isPremium ? 1.2 : 1.0;
             currentNode.connect(presence);
             currentNode = presence;
 
@@ -922,7 +922,7 @@
             deEss.type = 'peaking';
             deEss.frequency.value = 6500;
             deEss.Q.value = 3.0;
-            deEss.gain.value = isPremium ? -2.5 : -1.5;
+            deEss.gain.value = isPremium ? -2.0 : -1.5;
             currentNode.connect(deEss);
             currentNode = deEss;
         }
@@ -947,11 +947,12 @@
             busComp.attack.value = 0.012;
             busComp.release.value = 0.150;
         } else {
-            busComp.threshold.value = -17;
-            busComp.knee.value = 6;
-            busComp.ratio.value = 2.5;
-            busComp.attack.value = 0.008;
-            busComp.release.value = 0.120;
+            // Premium: slightly tighter than Advanced, not drastically different
+            busComp.threshold.value = -16;
+            busComp.knee.value = 7;
+            busComp.ratio.value = 2.3;
+            busComp.attack.value = 0.010;
+            busComp.release.value = 0.140;
         }
         currentNode.connect(busComp);
         currentNode = busComp;
@@ -964,10 +965,10 @@
         if (tierId === 'advanced' || tierId === 'premium') {
             var charComp = offline.createDynamicsCompressor();
             if (tierId === 'premium') {
-                // Tighter punch, more density
-                charComp.threshold.value = -12;
-                charComp.knee.value = 10;
-                charComp.ratio.value = 1.5;
+                // Same punch as Advanced — warmth comes from saturation, not more squash
+                charComp.threshold.value = -10;
+                charComp.knee.value = 12;
+                charComp.ratio.value = 1.3;
                 charComp.attack.value = 0.030;
                 charComp.release.value = 0.250;
             } else {
@@ -1140,9 +1141,9 @@
         postLP.Q.value = 0.5;
         shaper.connect(postLP);
 
-        // Wet blend — subtle shimmer
+        // Wet blend — very subtle shimmer (less is more)
         var wetGain = ctx.createGain();
-        wetGain.gain.value = 0.18;
+        wetGain.gain.value = 0.08;
         postLP.connect(wetGain);
 
         // Dry pass-through (unity)
@@ -1172,15 +1173,15 @@
         shaper.curve = curve;
         shaper.oversample = '4x';
 
-        // Wet path (saturated)
+        // Wet path (saturated) — subtle warmth, not heavy distortion
         var wetGain = ctx.createGain();
-        wetGain.gain.value = 0.50;
+        wetGain.gain.value = 0.25;
         input.connect(shaper);
         shaper.connect(wetGain);
 
-        // Dry path (clean) — 0.50 + 0.50 = 1.0 unity
+        // Dry path (clean) — 0.75 + 0.25 = 1.0 unity
         var dryGain = ctx.createGain();
-        dryGain.gain.value = 0.50;
+        dryGain.gain.value = 0.75;
         input.connect(dryGain);
 
         var output = ctx.createGain();

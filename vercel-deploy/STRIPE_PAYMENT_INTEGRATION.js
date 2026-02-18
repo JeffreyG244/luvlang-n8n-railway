@@ -27,15 +27,17 @@ async function downloadMaster() {
         showPaymentModal('Preparing secure payment...');
 
         // ──────────────────────────────────────────────────────────────────
-        // 1. CHECK IF USER IS AUTHENTICATED
+        // 1. CHECK IF USER IS AUTHENTICATED (optional — Supabase may not be loaded)
         // ──────────────────────────────────────────────────────────────────
 
-        const { data: { user }, error: authError } = await window.supabase.auth.getUser();
-
-        if (authError || !user) {
-            hidePaymentModal();
-            showAuthModal();
-            return;
+        var user = null;
+        if (window.supabase && window.supabase.auth) {
+            try {
+                var authResult = await window.supabase.auth.getUser();
+                user = authResult.data ? authResult.data.user : null;
+            } catch (e) {
+                console.warn('Auth check skipped:', e.message);
+            }
         }
 
         // ──────────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ async function downloadMaster() {
                 tier: tier,
                 sessionData: {
                     filename: filename,
-                    userId: user.id,
+                    userId: user ? user.id : '',
                     targetLUFS: targetLUFS,
                     truePeak: truePeak,
                     genre: genre,
