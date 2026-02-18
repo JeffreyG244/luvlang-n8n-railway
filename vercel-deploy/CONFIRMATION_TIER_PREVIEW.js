@@ -1472,16 +1472,15 @@
      * tanh waveshaping with 4x oversampling for clean harmonic distortion.
      *
      * Gain compensation: tanh(x*drive) amplifies quiet signals by ~drive factor
-     * while compressing peaks. Without compensation, the blended signal pushes
-     * downstream limiters harder (up to +3 dB at High). The output gain is set
-     * to 1/(dryMix + wetMix*drive) to maintain unity RMS — the saturated harmonics
-     * add color without adding level, keeping the dynamics chain clean.
+     * while compressing peaks. Output gain = 1/(dryMix + wetMix*drive) maintains
+     * unity RMS so downstream limiters see the same level at any setting.
+     * Low: +0.1 dB, Balanced: +0.7 dB, High: +1.1 dB (all compensated to unity).
      */
     function applyAnalogWarmth(ctx, input, saturationLevel) {
         var levels = {
-            low:      { drive: 1.1, wet: 0.10 },  // subtle tape warmth
-            balanced: { drive: 1.5, wet: 0.25 },  // present, musical default
-            high:     { drive: 2.0, wet: 0.43 }   // heavy harmonic saturation
+            low:      { drive: 1.15, wet: 0.10 },  // whisper of warmth, barely there
+            balanced: { drive: 1.4,  wet: 0.20 },  // musical tape character, sweet spot
+            high:     { drive: 1.55, wet: 0.25 }   // warm color, sits well without pushing limiter
         };
         var cfg = levels[saturationLevel] || levels.balanced;
         var drive = cfg.drive;
