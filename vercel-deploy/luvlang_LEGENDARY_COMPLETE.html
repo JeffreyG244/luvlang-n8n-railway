@@ -12001,72 +12001,80 @@
                 window.clipDetector = {
                     isClipping: false,
                     clipCount: 0,
-                    ispClipCount: 0, // Intersample peak clips
-                    sampleClipCount: 0, // Sample-level clips
+                    ispClipCount: 0,
+                    sampleClipCount: 0,
                     lastClipTime: 0,
-                    holdUntil: 0, // Hold indicator until this time
-                    threshold: 0.9999, // Sample-level clip threshold (0 dBFS)
-                    ispThreshold: 1.0, // ISP threshold (0 dBTP) - True Peak
-                    consecutiveClips: 0, // Track sustained clipping
-                    maxConsecutiveClips: 0, // Maximum sustained clip length
+                    holdUntil: 0,
+                    threshold: 1.0,    // 0 dBFS — true digital full scale (was 0.9999 = false positives)
+                    ispThreshold: 1.0, // 0 dBTP — true peak full scale
+                    consecutiveClips: 0,
+                    maxConsecutiveClips: 0,
 
-                    // Broadcast-grade clip check with ISP detection
-                    check: (data) => {
+                    // Single-pass stereo clip check — call once per frame with both channels
+                    checkStereo: (leftData, rightData) => {
                         const now = Date.now();
-                        let audioData = data;
 
-                        // Decay clip count over time (prevents accumulation during long sessions)
+                        // Decay clip count over time (prevents endless accumulation)
                         if (now - lastClipDecay > CLIP_DECAY_TIME && window.clipDetector.clipCount > 0) {
                             window.clipDetector.clipCount = Math.max(0, window.clipDetector.clipCount - 1);
                             lastClipDecay = now;
                         }
 
-                        // If no data provided, get from analyser
-                        if (!audioData && analyser) {
-                            audioData = new Float32Array(analyser.fftSize);
-                            analyser.getFloatTimeDomainData(audioData);
-                        }
-
-                        if (!audioData) return false;
+                        if (!leftData && !rightData) return false;
 
                         let sampleClipped = false;
-                        let ispClipped = false;
                         let currentConsecutive = 0;
+                        var threshold = window.clipDetector.threshold;
 
-                        // Check sample-level clipping (digital full scale)
-                        for (let i = 0; i < audioData.length; i++) {
-                            const absVal = Math.abs(audioData[i]);
-                            if (absVal >= window.clipDetector.threshold) {
-                                sampleClipped = true;
-                                window.clipDetector.sampleClipCount++;
-                                currentConsecutive++;
-                            } else {
-                                if (currentConsecutive > window.clipDetector.maxConsecutiveClips) {
-                                    window.clipDetector.maxConsecutiveClips = currentConsecutive;
+                        // Check both channels for sample-level clipping
+                        // Count per-EVENT (one clip per contiguous run), not per-sample
+                        var datasets = [];
+                        if (leftData) datasets.push(leftData);
+                        if (rightData) datasets.push(rightData);
+
+                        var eventClips = 0;
+                        for (var d = 0; d < datasets.length; d++) {
+                            var data = datasets[d];
+                            var inClip = false;
+                            for (var i = 0; i < data.length; i++) {
+                                if (Math.abs(data[i]) >= threshold) {
+                                    currentConsecutive++;
+                                    if (!inClip) {
+                                        // Start of a new clip event
+                                        eventClips++;
+                                        inClip = true;
+                                        sampleClipped = true;
+                                    }
+                                } else {
+                                    if (currentConsecutive > window.clipDetector.maxConsecutiveClips) {
+                                        window.clipDetector.maxConsecutiveClips = currentConsecutive;
+                                    }
+                                    currentConsecutive = 0;
+                                    inClip = false;
                                 }
-                                currentConsecutive = 0;
                             }
                         }
 
-                        // Check ISP (intersample peak) using True Peak detector
+                        if (eventClips > 0) {
+                            window.clipDetector.sampleClipCount += eventClips;
+                        }
+
+                        // Check ISP once per frame (not per channel)
+                        var ispClipped = false;
                         if (window.getTruePeak) {
-                            const truePeakDB = window.getTruePeak();
-                            const truePeakLinear = Math.pow(10, truePeakDB / 20);
+                            var truePeakDB = window.getTruePeak();
+                            var truePeakLinear = Math.pow(10, truePeakDB / 20);
                             if (truePeakLinear >= window.clipDetector.ispThreshold) {
                                 ispClipped = true;
                                 window.clipDetector.ispClipCount++;
                             }
                         }
 
-                        // Track consecutive clips
-                        if (currentConsecutive > 0) {
-                            window.clipDetector.consecutiveClips = currentConsecutive;
-                        }
                         if (currentConsecutive > window.clipDetector.maxConsecutiveClips) {
                             window.clipDetector.maxConsecutiveClips = currentConsecutive;
                         }
 
-                        const clipped = sampleClipped || ispClipped;
+                        var clipped = sampleClipped || ispClipped;
 
                         if (clipped) {
                             window.clipDetector.clipCount++;
@@ -12074,13 +12082,15 @@
                             window.clipDetector.holdUntil = now + CLIP_HOLD_TIME;
                         }
 
-                        // Maintain hold state for visual feedback
                         window.clipDetector.isClipping = clipped || (now < window.clipDetector.holdUntil);
-
                         return clipped;
                     },
 
-                    // Reset all clip counters
+                    // Legacy single-channel check (redirects to stereo)
+                    check: (data) => {
+                        return window.clipDetector.checkStereo(data, null);
+                    },
+
                     reset: () => {
                         window.clipDetector.clipCount = 0;
                         window.clipDetector.ispClipCount = 0;
@@ -12090,33 +12100,28 @@
                         window.clipDetector.isClipping = false;
                         window.clipDetector.holdUntil = 0;
                         lastClipDecay = Date.now();
-
                     },
 
-                    // Get broadcast-standard clip status
                     getStatus: () => {
                         const total = window.clipDetector.clipCount;
                         const isp = window.clipDetector.ispClipCount;
-                        const sample = window.clipDetector.sampleClipCount;
                         const maxConsec = window.clipDetector.maxConsecutiveClips;
 
-                        // Severity based on clip type and count
                         if (total === 0) {
                             return { status: 'CLEAN', color: '#00ff88', description: 'No clipping detected', severity: 0 };
                         }
                         if (maxConsec > 100) {
-                            return { status: 'SEVERE', color: '#ff0000', description: `Sustained clipping! ${maxConsec} consecutive samples`, severity: 4 };
+                            return { status: 'SEVERE', color: '#ff0000', description: 'Sustained clipping! ' + maxConsec + ' consecutive samples', severity: 4 };
                         }
                         if (total > 100 || isp > 50) {
-                            return { status: 'HIGH', color: '#ff3333', description: `${total} clips (${isp} ISP) - reduce gain!`, severity: 3 };
+                            return { status: 'HIGH', color: '#ff3333', description: total + ' clips (' + isp + ' ISP) - reduce gain!', severity: 3 };
                         }
                         if (total > 10 || isp > 5) {
-                            return { status: 'MODERATE', color: '#ff9800', description: `${total} clips (${isp} ISP) - check levels`, severity: 2 };
+                            return { status: 'MODERATE', color: '#ff9800', description: total + ' clips (' + isp + ' ISP) - check levels', severity: 2 };
                         }
-                        return { status: 'MINOR', color: '#ffd700', description: `${total} clips detected`, severity: 1 };
+                        return { status: 'MINOR', color: '#ffd700', description: total + ' clips detected', severity: 1 };
                     },
 
-                    // Get detailed clip analysis
                     getAnalysis: () => {
                         return {
                             totalClips: window.clipDetector.clipCount,
@@ -21614,9 +21619,8 @@
                 leftAnalyser.getFloatTimeDomainData(leftData);
                 rightAnalyser.getFloatTimeDomainData(rightData);
 
-                // Check both channels for clipping
-                window.clipDetector.check(leftData);
-                window.clipDetector.check(rightData);
+                // Check both channels in one pass (prevents double-counting ISP)
+                window.clipDetector.checkStereo(leftData, rightData);
 
                 const clipStatusEl = document.getElementById('clipStatus');
                 const clipCountEl = document.getElementById('clipCount');
