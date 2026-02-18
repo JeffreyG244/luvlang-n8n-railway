@@ -22656,6 +22656,8 @@
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.export-format-btn[data-format]').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
+                window.selectedExportFormat = this.dataset.format;
+                window.exportFormat = this.dataset.format;
             });
         });
 
@@ -23011,8 +23013,7 @@
                 }
 
                 // Convert to WAV with selected bit depth
-                const wav = bufferToWave(renderedBuffer, renderedBuffer.length);
-                const blob = new Blob([wav], { type: 'audio/wav' });
+                const blob = bufferToWave(renderedBuffer, renderedBuffer.length);
                 const url = URL.createObjectURL(blob);
 
                 // Download
