@@ -369,41 +369,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONNECT EXPORT BUTTON TO ACTUAL EXPORT
+// EXPORT BAR A/B BUTTON (if exists)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Wait for DOM to be ready, then connect export button
 window.addEventListener('load', function() {
-    // Find all export buttons and connect to PRICING MODAL (not direct export)
-    const exportBtn = document.getElementById('exportBtn');
-
-    if (exportBtn) {
-        exportBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // Set default format and open tier preview modal
-            window.selectedExportFormat = window.selectedExportFormat || 'wav';
-            window.exportFormat = window.selectedExportFormat;
-            if (typeof window.proceedToPayment === 'function') {
-                window.proceedToPayment();
-            } else {
-                console.error('proceedToPayment not available');
-            }
-        });
-
-    }
-
-    // Export Bar A/B button (if exists)
     const exportBarAbBtn = document.querySelector('.export-bar-btn.secondary');
     if (exportBarAbBtn) {
         exportBarAbBtn.addEventListener('click', function() {
-            // Toggle A/B comparison
             if (typeof toggleABComparison === 'function') {
                 toggleABComparison();
             }
         });
-
     }
 });
 

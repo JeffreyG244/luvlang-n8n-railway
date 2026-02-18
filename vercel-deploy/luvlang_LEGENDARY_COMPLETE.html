@@ -2088,45 +2088,7 @@
             color: #00d4ff;
         }
 
-        .export-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: linear-gradient(135deg, #00d4ff, #00ff88);
-            color: #000;
-            transition: all 0.2s ease;
-            letter-spacing: 0.5px;
-        }
-
-        .export-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
-        }
-
-        .export-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Export button glow animation - activated after mastering */
-        .export-btn.ready-glow {
-            animation: exportBtnGlow 2s ease-in-out infinite;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 255, 136, 0.3);
-        }
-        @keyframes exportBtnGlow {
-            0%, 100% {
-                box-shadow: 0 0 15px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 255, 136, 0.2);
-                transform: scale(1);
-            }
-            50% {
-                box-shadow: 0 0 25px rgba(0, 212, 255, 0.7), 0 0 50px rgba(0, 255, 136, 0.4), 0 0 80px rgba(0, 212, 255, 0.2);
-                transform: scale(1.02);
-            }
-        }
+        /* Export button styles removed — export lives in persistent bottom bar */
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
            SCROLLBAR STYLING
@@ -7856,43 +7818,8 @@
                 </div>
             </div>
 
-            <!-- EXPORT SECTION (below genre for easy workflow) -->
-            <div class="export-section" id="exportSection">
-                <div class="section-title">Export</div>
-
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 0.75rem; opacity: 0.6; margin-bottom: 8px;">Format</div>
-                    <div class="export-format-grid">
-                        <div class="export-format-btn active" data-format="wav">WAV 48kHz</div>
-                        <div class="export-format-btn" data-format="mp3">MP3 320kbps</div>
-                        <div class="export-format-btn" data-format="flac">FLAC</div>
-                        <div class="export-format-btn" data-format="aac">AAC 256kbps</div>
-                    </div>
-                </div>
-
-                <!-- BIT DEPTH SELECTOR -->
-                <div style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="font-size: 0.75rem; opacity: 0.6;">Bit Depth</div>
-                        <div style="font-size: 0.6rem; color: #00ff88; font-weight: 600;">TPDF Dithering</div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button id="bitDepth24Btn" class="export-format-btn active" onclick="selectBitDepth(24)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">24-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">Professional</div>
-                        </button>
-                        <button id="bitDepth16Btn" class="export-format-btn" onclick="selectBitDepth(16)" style="padding: 10px; font-size: 0.75rem;">
-                            <div style="font-weight: 700;">16-bit</div>
-                            <div style="font-size: 0.6rem; opacity: 0.7;">CD Quality</div>
-                        </button>
-                    </div>
-                    <input type="hidden" id="bitDepthSelector" value="24">
-                </div>
-
-                <button class="export-btn" id="exportBtn" disabled>
-                    Export Master
-                </button>
-            </div>
+            <!-- Export section removed — export lives in persistent bottom bar -->
+            <input type="hidden" id="bitDepthSelector" value="24">
 
             <!-- Presets container moved to below genre selector -->
 
@@ -22667,17 +22594,14 @@
          */
         function selectBitDepth(bitDepth) {
             // Update hidden selector
-            document.getElementById('bitDepthSelector').value = bitDepth;
+            const selector = document.getElementById('bitDepthSelector');
+            if (selector) selector.value = bitDepth;
 
-            // Update button states
-            document.getElementById('bitDepth24Btn').classList.toggle('active', bitDepth === 24);
-            document.getElementById('bitDepth16Btn').classList.toggle('active', bitDepth === 16);
-
-            // Update WAV button label to show bit depth
-            const wavBtn = document.querySelector('.export-format-btn[data-format="wav"]');
-            if (wavBtn) {
-                wavBtn.textContent = `WAV ${bitDepth}-bit`;
-            }
+            // Update button states (if sidebar buttons exist)
+            const btn24 = document.getElementById('bitDepth24Btn');
+            const btn16 = document.getElementById('bitDepth16Btn');
+            if (btn24) btn24.classList.toggle('active', bitDepth === 24);
+            if (btn16) btn16.classList.toggle('active', bitDepth === 16);
 
             // Show dithering notice for 16-bit
             if (bitDepth === 16) {
@@ -22765,11 +22689,13 @@
                 // Get oversampling setting
                 const useOversampling = isOversamplingEnabled();
 
-                // Show progress
+                // Show progress (exportBtn may not exist if sidebar section was removed)
                 const exportBtn = document.getElementById('exportBtn');
-                const originalText = exportBtn.textContent;
-                exportBtn.textContent = useOversampling ? '⏳ Rendering (2x)...' : '⏳ Rendering...';
-                exportBtn.disabled = true;
+                const originalText = exportBtn ? exportBtn.textContent : 'Export';
+                if (exportBtn) {
+                    exportBtn.textContent = useOversampling ? '⏳ Rendering (2x)...' : '⏳ Rendering...';
+                    exportBtn.disabled = true;
+                }
 
                 // PROFESSIONAL EXPORT: Use OfflineAudioContext for pristine quality
                 const targetSampleRate = 48000;
@@ -23006,7 +22932,7 @@
 
                 // If oversampling was used, downsample to target rate
                 if (useOversampling && renderedBuffer.sampleRate !== targetSampleRate) {
-                    exportBtn.textContent = '⏳ Downsampling...';
+                    if (exportBtn) exportBtn.textContent = '⏳ Downsampling...';
 
                     renderedBuffer = await downsampleBuffer(renderedBuffer, targetSampleRate);
 
@@ -23028,14 +22954,14 @@
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
 
                 // Restore button
-                exportBtn.textContent = originalText;
-                exportBtn.disabled = false;
+                if (exportBtn) {
+                    exportBtn.textContent = originalText;
+                    exportBtn.disabled = false;
+                }
 
             } catch (error) {
                 console.error('❌ Export error:', error);
                 showLuvLangToast('Export failed: ' + error.message);
-                const expBtn = document.getElementById('exportBtn');
-                if (expBtn) { expBtn.textContent = 'Export Master'; expBtn.disabled = false; }
             }
         };
 
@@ -23259,7 +23185,7 @@
             } catch (error) {
                 console.error('❌ Export error:', error);
                 showLuvLangToast('Export failed: ' + error.message);
-                document.getElementById('exportBtn').textContent = '💾 Export Master';
+                document.getElementById('exportBtn').textContent = '💾 Export';
                 document.getElementById('exportBtn').disabled = false;
             }
         });
@@ -28270,9 +28196,13 @@
         // Close A/B modal and proceed to export
         window.closeABModalAndExport = function() {
             closeABModal();
-            // Trigger export flow
-            const exportBtn = document.getElementById('exportBtn');
-            if (exportBtn) exportBtn.click();
+            // Trigger export flow via pricing modal or direct export
+            if (typeof window.proceedToPayment === 'function') {
+                window.selectedExportFormat = window.selectedExportFormat || 'wav';
+                window.proceedToPayment();
+            } else if (typeof window.performExport === 'function') {
+                window.performExport();
+            }
         };
 
         // ═══════════════════════════════════════════════════════════════════════════
