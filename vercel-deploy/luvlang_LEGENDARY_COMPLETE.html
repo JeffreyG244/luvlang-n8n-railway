@@ -25490,14 +25490,14 @@
                 const genre = window.selectedPreMasterGenre || 'pop';
                 const intensity = window.selectedIntensity || 3; // 1=Subtle, 2=Light, 3=Balanced, 4=Heavy, 5=Max
 
-                // v7.6.13k: WIDE intensity range — each level sounds distinctly different
-                // Level 1 = transparent polish, Level 5 = loud aggressive slam
+                // v7.6.16: Recalibrated — professional mastering is subtle even at high intensity
+                // Level 1 = transparent polish, Level 5 = punchy professional loudness
                 const intensityMultipliers = {
                     1: 0.30,  // Subtle - transparent polish, preserves mix
                     2: 0.60,  // Light - gentle warmth and clarity
                     3: 1.0,   // Balanced - professional standard (full preset)
-                    4: 1.50,  // Heavy - punchy, in-your-face character
-                    5: 2.0    // Max - full slam, maximum impact
+                    4: 1.20,  // Heavy - punchy, forward character
+                    5: 1.45   // Max - aggressive but still musical
                 };
                 let intensityMult = intensityMultipliers[intensity] || 1.0;
 
@@ -25520,10 +25520,10 @@
                 // v7.6.14: Dynamic EQ is ALWAYS bypassed during mastering — manual-only control
                 // User reported auto-enabled Dynamic EQ adds unwanted "wetness" to masters
                 bypass.dynamicEQ     = true;
-                bypass.multibandComp = intensity < 5;
-                bypass.transient     = intensity < 5;
+                bypass.multibandComp = intensity < 4;  // v7.6.16: enable at 4+ (was 5)
+                bypass.transient     = intensity < 4;  // v7.6.16: enable at 4+ (was 5)
                 bypass.warmth        = intensity < 4;
-                bypass.exciter       = intensity < 5;
+                bypass.exciter       = intensity < 4;  // v7.6.16: enable at 4+ (was 5)
                 bypass.hfLimiter     = true;
                 bypass.msProcessing  = true;
                 bypass.stereoWidth   = intensity < 4;
@@ -25560,8 +25560,8 @@
                     1: 0,      // No reduction needed
                     2: 0,      // No reduction needed
                     3: 0,      // No reduction — limiter handles headroom
-                    4: -0.8,   // Moderate reduction for heavy processing
-                    5: -1.5    // Larger reduction at max intensity
+                    4: -0.5,   // Moderate reduction for heavy processing
+                    5: -0.8    // Controlled reduction at max intensity
                 };
                 const headroomDb = headroomCompensation[effectiveIntensity] || 0;
                 // Note: headroomDb is still available for reference but NOT applied to masterGain
@@ -25716,13 +25716,13 @@
                 // 11. Bus Compressor - SSL/API Style Glue
                 // With dynamic EQ + multiband + HF limiter + 2 limiters in chain,
                 // the bus comp needs to be conservative to avoid over-processing
-                // v7.6.13k: Wider compressor scaling — each level sounds different
+                // v7.6.16: Recalibrated — even heavy mastering stays musical
                 const compRatioMultipliers = {
                     1: 0.25,  // Subtle - nearly transparent
                     2: 0.55,  // Light - gentle glue
                     3: 0.90,  // Balanced - professional glue
-                    4: 1.35,  // Heavy - firm control, punchy
-                    5: 1.80   // Max - aggressive slam
+                    4: 1.15,  // Heavy - firm control, punchy
+                    5: 1.40   // Max - aggressive but clean
                 };
                 const compRatioMult = compRatioMultipliers[effectiveIntensity] || 1.0;
 
@@ -25731,16 +25731,16 @@
                     1: 1.6,   // Slowest - preserve all transients
                     2: 1.25,  // Slow - mostly transparent
                     3: 1.0,   // Standard
-                    4: 0.65,  // Fast - catches transients
-                    5: 0.40   // Fastest - aggressive transient control
+                    4: 0.80,  // Faster - catches transients without killing punch
+                    5: 0.60   // Fast - aggressive but preserves some transient snap
                 };
                 const compAttackMult = compAttackMultipliers[effectiveIntensity] || 1.0;
 
                 if (window.compressor) {
                     if (!bypass.compression) {
                         const compScale = stageInt.compression !== undefined ? stageInt.compression : 1.0;
-                        // v7.6.13k: Wider threshold range for dramatic intensity differences
-                        const thresholdOffset = { 1: 8, 2: 4, 3: 0, 4: -4, 5: -8 };
+                        // v7.6.16: Recalibrated thresholds — avoid over-compression at high levels
+                        const thresholdOffset = { 1: 8, 2: 4, 3: 0, 4: -3, 5: -5 };
                         let adjustedThreshold = comp.threshold + (thresholdOffset[effectiveIntensity] || 0);
                         // Scale threshold by AI stage intensity (raise threshold = less compression when intensity is low)
                         adjustedThreshold += (1.0 - compScale) * 6;
@@ -25822,7 +25822,7 @@
                             window.multibandCompressor.loadPreset(mbPreset);
                         }
                         const mbThresholdOffsets = {
-                            1: 6, 2: 3, 3: 0, 4: -3, 5: -6
+                            1: 6, 2: 3, 3: 0, 4: -2, 5: -4
                         };
                         let mbOffset = mbThresholdOffsets[effectiveIntensity] || 0;
                         // Scale by AI stage intensity
@@ -25887,7 +25887,7 @@
                                            (genre === 'rock') ? 0.06 :
                                            (genre === 'electronic') ? 0.03 :
                                            (genre === 'lofi') ? 0.08 : 0.04;
-                        const warmthMultipliers = { 1: 0.0, 2: 0.3, 3: 0.6, 4: 1.0, 5: 1.3 };
+                        const warmthMultipliers = { 1: 0.0, 2: 0.3, 3: 0.6, 4: 0.85, 5: 1.0 };
                         const warmthMult = warmthMultipliers[effectiveIntensity] || 1.0;
                         let finalWarmth = baseWarmth * warmthMult * warmScale;
                         if (aiProfile && aiProfile.warmthDelta) {
@@ -25915,8 +25915,8 @@
                 // 15. Harmonic Exciter - Intensity-adaptive harmonic enhancement
                 if (window.harmonicExciter && window.harmonicExciter.setAmount) {
                     if (!bypass.exciter) {
-                        // v7.6.8c: Halved exciter amounts — was adding HF harshness
-                        const exciteAmounts = { 1: 0, 2: 1, 3: 2, 4: 4, 5: 6 };
+                        // v7.6.16: Reduced exciter at high levels — avoids HF harshness
+                        const exciteAmounts = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
                         const exciteAmount = exciteAmounts[effectiveIntensity] || 2;
                         window.harmonicExciter.setAmount(exciteAmount);
                     } else {
@@ -30100,6 +30100,7 @@
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             // v7.6.15: ALIGNED with runActualMastering() values — switching intensity
             // after mastering now produces the EXACT same result as mastering at that level
+            // v7.6.16: Recalibrated — professional mastering stays musical at all levels
             const profiles = {
                 1: { // SUBTLE — transparent polish, preserves your mix
                     eqMult: 0.30,       // Matches mastering intensityMultipliers[1]
@@ -30137,28 +30138,28 @@
                     knee: 8,            // Medium knee
                     label: 'Balanced'
                 },
-                4: { // HEAVY — punchy, in-your-face character
-                    eqMult: 1.50,       // Matches mastering intensityMultipliers[4]
-                    compRatio: 1.35,    // Matches mastering compRatioMultipliers[4]
-                    compThreshOff: -4,  // Matches mastering thresholdOffset[4]
-                    compAttack: 0.65,   // Matches mastering compAttackMultipliers[4]
-                    warmth: 0.04,       // Noticeable warmth
-                    exciter: 4,         // Strong harmonics
+                4: { // HEAVY — punchy, forward character
+                    eqMult: 1.20,       // Matches mastering intensityMultipliers[4]
+                    compRatio: 1.15,    // Matches mastering compRatioMultipliers[4]
+                    compThreshOff: -3,  // Matches mastering thresholdOffset[4]
+                    compAttack: 0.80,   // Matches mastering compAttackMultipliers[4]
+                    warmth: 0.035,      // Musical warmth
+                    exciter: 3,         // Moderate harmonics
                     stereoWidth: 1.03,  // Slightly wide
                     limiterCeil: -1.0,  // Standard ceiling
-                    knee: 5,            // Harder knee
+                    knee: 6,            // Firmer knee
                     label: 'Heavy'
                 },
-                5: { // MAX — full slam, maximum impact
-                    eqMult: 2.0,        // Matches mastering intensityMultipliers[5]
-                    compRatio: 1.80,    // Matches mastering compRatioMultipliers[5]
-                    compThreshOff: -8,  // Matches mastering thresholdOffset[5]
-                    compAttack: 0.40,   // Matches mastering compAttackMultipliers[5]
-                    warmth: 0.06,       // Heavy warmth/saturation
-                    exciter: 6,         // Maximum harmonics
-                    stereoWidth: 1.06,  // Wide stereo
+                5: { // MAX — aggressive but still musical
+                    eqMult: 1.45,       // Matches mastering intensityMultipliers[5]
+                    compRatio: 1.40,    // Matches mastering compRatioMultipliers[5]
+                    compThreshOff: -5,  // Matches mastering thresholdOffset[5]
+                    compAttack: 0.60,   // Matches mastering compAttackMultipliers[5]
+                    warmth: 0.045,      // Rich warmth/saturation
+                    exciter: 4,         // Strong but musical harmonics
+                    stereoWidth: 1.05,  // Wide stereo
                     limiterCeil: -1.0,  // Safety ceiling
-                    knee: 3,            // Hard knee = aggressive limiting
+                    knee: 4,            // Hard knee = louder, punchier limiting
                     label: 'Max'
                 }
             };
@@ -30262,11 +30263,11 @@
             // ━━━━ 7. LUFS-PRESERVING AUTO-GAIN ━━━━
             // More compression → more GR → need more makeup gain (not less!)
             if (window.makeupGain && window.appliedMakeupGainLinear) {
-                const estimatedGR = Math.max(0, -p.compThreshOff * 0.5);
-                const warmthLoudness = p.warmth * 2; // saturation adds perceived loudness
+                const estimatedGR = Math.max(0, -p.compThreshOff * 0.4);
+                const warmthLoudness = p.warmth * 1.5; // saturation adds perceived loudness
                 const autoGainDB = estimatedGR - totalEQBoostDB - warmthLoudness;
-                // Tiny safety trim at extremes
-                const safetyTrim = { 1: 0.3, 2: 0.1, 3: 0, 4: -0.2, 5: -0.4 };
+                // Safety trim — compensate for stages adding volume at high intensity
+                const safetyTrim = { 1: 0.3, 2: 0.1, 3: 0, 4: -0.3, 5: -0.5 };
                 const totalOffsetDB = autoGainDB + (safetyTrim[level] || 0);
                 const offsetLinear = Math.pow(10, totalOffsetDB / 20);
                 const compensatedGain = window.appliedMakeupGainLinear * offsetLinear;
