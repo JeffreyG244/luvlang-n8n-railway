@@ -14724,13 +14724,13 @@
                 const weakest = categories[0];
 
                 if (weakest.name === 'dynamics' && weakest.score < 25) {
-                    advice = `Your ${weakest.label} score is holding you back. Try switching to a different genre or sub-genre preset — each one targets different dynamics, and the right match can push you to a perfect score.`;
+                    advice = `Your ${weakest.label} score is holding you back. Try switching to a different genre or sub-genre preset, then hit the FIX ALL button to re-master. The right genre match can push you to a perfect 100.`;
                 } else if (weakest.name === 'dynamics') {
-                    advice = `Your ${weakest.label} could be better. Try a different genre or sub-genre preset to bump your score higher.`;
+                    advice = `Your ${weakest.label} could be better. Try a different genre or sub-genre preset and hit FIX ALL to re-master and bump your score higher.`;
                 } else if (weakest.score < 20) {
-                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset — the right match can make a big difference.`;
+                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset, then hit FIX ALL — the right match can make a big difference.`;
                 } else {
-                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track.`;
+                    advice = `You're close! Switch your genre or sub-genre preset and hit FIX ALL to re-master. That should get you to 100.`;
                 }
             }
 
@@ -27351,7 +27351,7 @@
          🎛️ EXPORT CONFIRMATION + TIER PREVIEW - A/B compare tiers before checkout
          Overrides proceedToPayment to show confirmation modal with previews
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="CONFIRMATION_TIER_PREVIEW.js?v=20260217h"></script>
+    <script src="CONFIRMATION_TIER_PREVIEW.js?v=20260217i"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          ✓ MASTERING COMPLETE OVERLAY - Post-processing user guidance
@@ -33509,72 +33509,72 @@
                 steps: [
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Chloe, and I\'ll be walking you through everything. Let\'s get started. Just drag your track onto that glowing area, or click to browse your files. We support WAV, MP3, FLAC, and more.' },
                     { title: 'Time to Master', desc: 'Hit MASTER and we\'ll analyze and master your track automatically. The AI detects your genre and applies professional processing.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll analyze your track, detect the genre, and master it automatically. No extra steps, just one click and we handle the rest. Go on, let\'s hear what you\'ve got.' },
-                    { title: 'Export Your Master', desc: 'When you\'re happy with your sound, hit Export at the bottom to preview tiers and download your master.', action: '', voice: 'When you\'re happy with your sound, hit that Export button at the bottom. You can preview each tier, pick the one you love, and download your master. Enjoy.' }
+                    { title: 'Get a Perfect Score', desc: 'Check your scorecard, pick the right genre, and hit FIX ALL to fix any issues. Re-master until you hit 100, then export.', action: '', voice: 'Nice work! Now check your scorecard on the right — it shows your mastering score. If it\'s not a perfect 100, here\'s the trick. Scroll down to the genre section, pick the genre that best matches your track, and hit FIX ALL to fix any issues the AI found. Each time you re-master, your score goes up. Keep switching genres and hitting FIX ALL until you reach 100 out of 100. Once you\'re there, hit Export to preview your tiers and download your master.' }
                 ],
-                explore: { title: "You're All Set!", subtitle: 'Your track sounds brilliant. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
+                explore: { title: 'Aim for 100!', subtitle: 'Check your scorecard, pick the right genre, and hit FIX ALL to re-master until you reach a perfect score:', genre: 'Pick Your Genre', genreDesc: 'The right genre match boosts your score', presets: 'Hit FIX ALL', presetsDesc: 'Fixes detected issues & re-masters automatically', eq: 'Reach 100/100', eqDesc: 'Then hit Export to download your master', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
                 skip: 'Skip'
             },
             es: {
                 steps: [
                     { title: 'Sube Tu Pista', desc: 'Arrastra tu archivo de audio al área resaltada o haz clic para buscar.', action: 'Haz clic en el área de carga brillante', voice: 'Bienvenido a LuvLang Mastering Profesional. Primero, sube tu pista de audio haciendo clic en el área de carga o arrastrando un archivo. Soportamos WAV, MP3, FLAC y muchos más formatos.' },
                     { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER y masterizaremos tu pista automáticamente. La IA detecta el género y aplica procesamiento profesional.', action: 'Haz clic en el botón MASTER', voice: 'Ahora masterizemos tu pista. Haz clic en el botón Master arriba. La IA analizará tu pista, detectará el género y la masterizará automáticamente. Sin pasos extra.' },
-                    { title: 'Exporta Tu Master', desc: 'Cuando estés satisfecho, haz clic en Exportar abajo para previsualizar y descargar.', action: '', voice: 'Cuando estés satisfecho con tu sonido, haz clic en Exportar abajo. Puedes previsualizar cada nivel, elegir el que te guste y descargar tu master.' }
+                    { title: 'Logra un Puntaje Perfecto', desc: 'Revisa tu puntuación, selecciona el género correcto y presiona CORREGIR TODO para arreglar problemas. Re-masteriza hasta llegar a 100.', action: '', voice: 'Buen trabajo. Ahora revisa tu puntuación a la derecha. Si no es un 100 perfecto, baja a la sección de género, elige el que mejor coincida con tu pista y presiona Corregir Todo para arreglar los problemas detectados. Sigue cambiando géneros y presionando Corregir Todo hasta alcanzar 100 de 100. Luego haz clic en Exportar para descargar tu master.' }
                 ],
-                explore: { title: '¡Estás Listo para Crear!', subtitle: 'Tu pista está masterizada. Personaliza con estas herramientas:', genre: 'Selección de Género', genreDesc: 'Hip-Hop, Pop, Rock, EDM y más', presets: 'Presets de Género', presetsDesc: 'Curvas EQ profesionales', eq: 'EQ Manual', eqDesc: 'Control paramétrico de 7 bandas', btn: 'Empezar a Explorar', tip: 'Haz clic en ? para escuchar esta guía de nuevo' },
+                explore: { title: '¡Apunta al 100!', subtitle: 'Revisa tu puntuación, elige el género correcto y presiona CORREGIR TODO hasta alcanzar un puntaje perfecto:', genre: 'Selección de Género', genreDesc: 'El género correcto mejora tu puntaje', presets: 'Presiona CORREGIR TODO', presetsDesc: 'Corrige problemas y re-masteriza automáticamente', eq: 'Alcanza 100/100', eqDesc: 'Luego exporta para descargar tu master', btn: '¡Vamos!', tip: 'Haz clic en ? para escuchar esta guía de nuevo' },
                 skip: 'Saltar Tour'
             },
             fr: {
                 steps: [
                     { title: 'Téléchargez Votre Piste', desc: 'Glissez votre fichier audio sur la zone en surbrillance ou cliquez pour parcourir.', action: 'Cliquez sur la zone de téléchargement', voice: 'Bienvenue sur LuvLang Mastering Professionnel. Premièrement, téléchargez votre piste audio en cliquant sur la zone ou en faisant glisser un fichier. Nous supportons WAV, MP3, FLAC et bien plus.' },
                     { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER et nous masteriserons votre piste automatiquement. L\'IA détecte le genre et applique un traitement professionnel.', action: 'Cliquez sur le bouton MASTER', voice: 'Maintenant masterisons votre piste. Cliquez sur le bouton Master en haut. L\'IA analysera votre piste, détectera le genre et la masterisera automatiquement. Aucune étape supplémentaire.' },
-                    { title: 'Exportez Votre Master', desc: 'Quand vous êtes satisfait, cliquez sur Exporter en bas pour prévisualiser et télécharger.', action: '', voice: 'Quand vous êtes satisfait de votre son, cliquez sur Exporter en bas. Prévisualisez chaque niveau, choisissez celui qui vous plaît et téléchargez votre master.' }
+                    { title: 'Obtenez un Score Parfait', desc: 'Vérifiez votre score, choisissez le bon genre et appuyez sur TOUT CORRIGER pour résoudre les problèmes. Re-masterisez jusqu\'à atteindre 100.', action: '', voice: 'Bien joué. Vérifiez votre score à droite. Si ce n\'est pas un 100 parfait, descendez à la section genre, choisissez celui qui correspond le mieux et appuyez sur Tout Corriger pour résoudre les problèmes détectés. Continuez à changer de genre et à appuyer sur Tout Corriger jusqu\'à atteindre 100 sur 100. Ensuite, cliquez sur Exporter pour télécharger votre master.' }
                 ],
-                explore: { title: 'Vous Êtes Prêt à Créer!', subtitle: 'Votre piste est masterisée. Personnalisez avec ces outils:', genre: 'Sélection de Genre', genreDesc: 'Hip-Hop, Pop, Rock, EDM et plus', presets: 'Préréglages de Genre', presetsDesc: 'Courbes EQ professionnelles', eq: 'EQ Manuel', eqDesc: 'Contrôle paramétrique 7 bandes', btn: 'Commencer à Explorer', tip: 'Cliquez sur ? pour réécouter ce guide' },
+                explore: { title: 'Visez le 100!', subtitle: 'Vérifiez votre score, choisissez le bon genre et appuyez sur TOUT CORRIGER jusqu\'au score parfait:', genre: 'Sélection de Genre', genreDesc: 'Le bon genre améliore votre score', presets: 'Appuyez TOUT CORRIGER', presetsDesc: 'Corrige les problèmes et re-masterise automatiquement', eq: 'Atteignez 100/100', eqDesc: 'Puis exportez pour télécharger votre master', btn: 'Commencer', tip: 'Cliquez sur ? pour réécouter ce guide' },
                 skip: 'Passer la Visite'
             },
             de: {
                 steps: [
                     { title: 'Track Hochladen', desc: 'Ziehen Sie Ihre Audiodatei auf den markierten Bereich oder klicken Sie zum Durchsuchen.', action: 'Klicken Sie auf den Upload-Bereich', voice: 'Willkommen bei LuvLang Professional Mastering. Laden Sie zuerst Ihren Audio-Track hoch, indem Sie auf den Upload-Bereich klicken oder eine Datei hineinziehen. Wir unterstützen WAV, MP3, FLAC und viele weitere Formate.' },
                     { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER und wir mastern Ihren Track automatisch. Die KI erkennt das Genre und wendet professionelle Verarbeitung an.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Jetzt mastern wir Ihren Track. Klicken Sie auf den Master-Button oben. Die KI analysiert Ihren Track, erkennt das Genre und mastert ihn automatisch. Keine zusätzlichen Schritte.' },
-                    { title: 'Master Exportieren', desc: 'Wenn Sie zufrieden sind, klicken Sie unten auf Exportieren zum Vorschau und Download.', action: '', voice: 'Wenn Sie mit Ihrem Sound zufrieden sind, klicken Sie unten auf Exportieren. Wählen Sie Ihre Stufe und laden Sie Ihren Master herunter.' }
+                    { title: 'Perfekte Punktzahl Erreichen', desc: 'Prüfen Sie Ihre Punktzahl, wählen Sie das richtige Genre und drücken Sie ALLES BEHEBEN. Mastern Sie erneut bis 100.', action: '', voice: 'Gut gemacht. Prüfen Sie Ihre Punktzahl rechts. Wenn es keine perfekte 100 ist, scrollen Sie zum Genre-Bereich, wählen Sie das passende Genre und drücken Sie Alles Beheben um erkannte Probleme zu lösen. Wechseln Sie Genres und drücken Sie Alles Beheben bis Sie 100 von 100 erreichen. Dann klicken Sie auf Exportieren um Ihren Master herunterzuladen.' }
                 ],
-                explore: { title: 'Bereit zum Erstellen!', subtitle: 'Ihr Track ist gemastert. Anpassen mit diesen Tools:', genre: 'Genre-Auswahl', genreDesc: 'Hip-Hop, Pop, Rock, EDM & mehr', presets: 'Genre-Presets', presetsDesc: 'Professionelle EQ-Kurven', eq: 'Manueller EQ', eqDesc: '7-Band parametrische Kontrolle', btn: 'Erkunden Starten', tip: 'Klicken Sie ? um diese Anleitung erneut zu hören' },
+                explore: { title: 'Ziel: 100!', subtitle: 'Prüfen Sie Ihre Punktzahl, wählen Sie das richtige Genre und drücken Sie ALLES BEHEBEN bis zur perfekten Punktzahl:', genre: 'Genre-Auswahl', genreDesc: 'Das richtige Genre verbessert Ihre Punktzahl', presets: 'ALLES BEHEBEN drücken', presetsDesc: 'Behebt Probleme und mastert automatisch erneut', eq: '100/100 erreichen', eqDesc: 'Dann exportieren und Master herunterladen', btn: 'Los Geht\'s', tip: 'Klicken Sie ? um diese Anleitung erneut zu hören' },
                 skip: 'Tour Überspringen'
             },
             pt: {
                 steps: [
                     { title: 'Envie Sua Faixa', desc: 'Arraste seu arquivo de áudio para a área destacada ou clique para procurar.', action: 'Clique na área de upload brilhante', voice: 'Bem-vindo ao LuvLang Mastering Profissional. Primeiro, envie sua faixa de áudio clicando na área de upload ou arrastando um arquivo. Suportamos WAV, MP3, FLAC e muitos outros formatos.' },
                     { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER e masterizaremos sua faixa automaticamente. A IA detecta o gênero e aplica processamento profissional.', action: 'Clique no botão MASTER', voice: 'Agora vamos masterizar sua faixa. Clique no botão Master acima. A IA analisará sua faixa, detectará o gênero e masterizará automaticamente. Sem passos extras.' },
-                    { title: 'Exporte Seu Master', desc: 'Quando estiver satisfeito, clique em Exportar abaixo para pré-visualizar e baixar.', action: '', voice: 'Quando estiver satisfeito com seu som, clique em Exportar abaixo. Pré-visualize cada nível, escolha o que mais gostar e baixe seu master.' }
+                    { title: 'Alcance a Nota Perfeita', desc: 'Verifique sua pontuação, escolha o gênero certo e pressione CORRIGIR TUDO para resolver problemas. Re-masterize até chegar a 100.', action: '', voice: 'Bom trabalho. Agora verifique sua pontuação à direita. Se não for um 100 perfeito, desça até a seção de gênero, escolha o que melhor combina com sua faixa e pressione Corrigir Tudo para resolver os problemas detectados. Continue trocando gêneros e pressionando Corrigir Tudo até alcançar 100 de 100. Depois clique em Exportar para baixar seu master.' }
                 ],
-                explore: { title: 'Pronto para Criar!', subtitle: 'Sua faixa está masterizada. Personalize com estas ferramentas:', genre: 'Seleção de Gênero', genreDesc: 'Hip-Hop, Pop, Rock, EDM e mais', presets: 'Presets de Gênero', presetsDesc: 'Curvas EQ profissionais', eq: 'EQ Manual', eqDesc: 'Controle paramétrico de 7 bandas', btn: 'Começar a Explorar', tip: 'Clique em ? para ouvir este guia novamente' },
+                explore: { title: 'Mire no 100!', subtitle: 'Verifique sua pontuação, escolha o gênero certo e pressione CORRIGIR TUDO até a pontuação perfeita:', genre: 'Seleção de Gênero', genreDesc: 'O gênero certo melhora sua pontuação', presets: 'Pressione CORRIGIR TUDO', presetsDesc: 'Corrige problemas e re-masteriza automaticamente', eq: 'Alcance 100/100', eqDesc: 'Depois exporte para baixar seu master', btn: 'Vamos!', tip: 'Clique em ? para ouvir este guia novamente' },
                 skip: 'Pular Tour'
             },
             ja: {
                 steps: [
                     { title: 'トラックをアップロード', desc: 'ハイライトされたエリアにオーディオファイルをドラッグするか、クリックして参照します。', action: '光っているアップロードエリアをクリック', voice: 'LuvLangプロフェッショナルマスタリングへようこそ。まず、アップロードエリアをクリックするか、ファイルをドラッグしてオーディオトラックをアップロードしてください。WAV、MP3、FLACなど多くのフォーマットをサポートしています。' },
                     { title: 'トラックをマスター', desc: 'MASTERをクリックすると自動的にマスタリングされます。AIがジャンルを検出しプロの処理を適用します。', action: 'MASTERボタンをクリック', voice: 'では、トラックをマスタリングしましょう。上部のマスターボタンをクリックしてください。AIがトラックを分析し、ジャンルを検出して自動的にマスタリングします。追加の手順は不要です。' },
-                    { title: 'マスターをエクスポート', desc: 'サウンドに満足したら、下のエクスポートをクリックしてプレビューとダウンロード。', action: '', voice: 'サウンドに満足したら、下のエクスポートボタンをクリックしてください。各レベルをプレビューして、お好みのものを選んでダウンロードしてください。' }
+                    { title: '満点を目指そう', desc: 'スコアカードを確認し、正しいジャンルを選び、全て修正を押して問題を解決。100点になるまで再マスタリング。', action: '', voice: 'よくできました。右側のスコアカードを確認してください。100点満点でなければ、ジャンルセクションまでスクロールして、トラックに最も合うジャンルを選び、全て修正ボタンを押して検出された問題を修正してください。ジャンルを変えながら全て修正を押し続け、100点満点を目指しましょう。達成したら、エクスポートをクリックしてマスターをダウンロードしてください。' }
                 ],
-                explore: { title: '準備完了！', subtitle: 'トラックがマスタリングされました。これらのツールでカスタマイズ:', genre: 'ジャンル選択', genreDesc: 'Hip-Hop, Pop, Rock, EDM等', presets: 'ジャンルプリセット', presetsDesc: 'プロのEQカーブ', eq: 'マニュアルEQ', eqDesc: '7バンドパラメトリック', btn: '探索を開始', tip: '?をクリックしてガイドを再生' },
+                explore: { title: '100点を目指そう！', subtitle: 'スコアを確認し、正しいジャンルを選び、全て修正を押して満点を目指しましょう:', genre: 'ジャンル選択', genreDesc: '正しいジャンルでスコアアップ', presets: '全て修正を押す', presetsDesc: '問題を修正して自動的に再マスタリング', eq: '100/100達成', eqDesc: 'その後エクスポートしてダウンロード', btn: '始めましょう', tip: '?をクリックしてガイドを再生' },
                 skip: 'ツアーをスキップ'
             },
             ko: {
                 steps: [
                     { title: '트랙 업로드', desc: '강조 표시된 영역에 오디오 파일을 드래그하거나 클릭하여 찾아보세요.', action: '빛나는 업로드 영역을 클릭', voice: 'LuvLang 프로페셔널 마스터링에 오신 것을 환영합니다. 먼저 업로드 영역을 클릭하거나 파일을 드래그하여 오디오 트랙을 업로드하세요. WAV, MP3, FLAC 등 다양한 형식을 지원합니다.' },
                     { title: '트랙 마스터링', desc: 'MASTER를 클릭하면 자동으로 마스터링됩니다. AI가 장르를 감지하고 프로페셔널 처리를 적용합니다.', action: 'MASTER 버튼을 클릭', voice: '이제 트랙을 마스터링해 봅시다. 상단의 마스터 버튼을 클릭하세요. AI가 트랙을 분석하고 장르를 감지하여 자동으로 마스터링합니다. 추가 단계가 필요 없습니다.' },
-                    { title: '마스터 내보내기', desc: '사운드에 만족하면 아래 내보내기를 클릭하여 미리보기 및 다운로드하세요.', action: '', voice: '사운드에 만족하면 아래 내보내기 버튼을 클릭하세요. 각 레벨을 미리보고 원하는 것을 선택하여 다운로드하세요.' }
+                    { title: '만점을 목표로', desc: '스코어카드를 확인하고, 올바른 장르를 선택한 후 모두 수정을 눌러 문제를 해결하세요. 100점이 될 때까지 재마스터링하세요.', action: '', voice: '잘 하셨습니다. 오른쪽의 스코어카드를 확인하세요. 만점이 아니라면 장르 섹션으로 스크롤하여 트랙에 가장 맞는 장르를 선택하고 모두 수정 버튼을 눌러 감지된 문제를 해결하세요. 장르를 바꾸고 모두 수정을 계속 누르면서 100점 만점을 달성하세요. 달성하면 내보내기를 클릭하여 마스터를 다운로드하세요.' }
                 ],
-                explore: { title: '준비 완료!', subtitle: '트랙이 마스터링되었습니다. 이 도구들로 커스터마이즈:', genre: '장르 선택', genreDesc: 'Hip-Hop, Pop, Rock, EDM 등', presets: '장르 프리셋', presetsDesc: '전문 EQ 커브', eq: '수동 EQ', eqDesc: '7밴드 파라메트릭', btn: '탐색 시작', tip: '?를 클릭하여 가이드 다시 듣기' },
+                explore: { title: '100점을 목표로!', subtitle: '스코어를 확인하고, 올바른 장르를 선택하고, 모두 수정을 눌러 만점을 달성하세요:', genre: '장르 선택', genreDesc: '올바른 장르가 점수를 높입니다', presets: '모두 수정 누르기', presetsDesc: '문제를 수정하고 자동으로 재마스터링', eq: '100/100 달성', eqDesc: '그 다음 내보내기로 마스터 다운로드', btn: '시작하기', tip: '?를 클릭하여 가이드 다시 듣기' },
                 skip: '투어 건너뛰기'
             },
             zh: {
                 steps: [
                     { title: '上传您的曲目', desc: '将音频文件拖放到高亮区域或点击浏览。', action: '点击发光的上传区域', voice: '欢迎来到LuvLang专业母带处理。首先，点击上传区域或拖放文件来上传您的音频曲目。我们支持WAV、MP3、FLAC等多种格式。' },
                     { title: '母带处理', desc: '点击MASTER，我们将自动处理您的曲目。AI检测流派并应用专业处理。', action: '点击MASTER按钮', voice: '现在让我们处理您的曲目。点击顶部的Master按钮。AI将分析您的曲目，检测流派并自动完成母带处理。无需额外步骤。' },
-                    { title: '导出您的母带', desc: '满意后，点击下方的导出按钮预览和下载。', action: '', voice: '当您对声音满意时，点击下方的导出按钮。预览每个级别，选择您喜欢的，然后下载母带。' }
+                    { title: '获得满分', desc: '检查评分卡，选择正确的流派，点击全部修复来解决问题。反复处理直到达到100分。', action: '', voice: '做得好。现在检查右侧的评分卡。如果不是满分100，向下滚动到流派部分，选择最匹配您曲目的流派，然后点击全部修复来解决检测到的问题。继续切换流派并点击全部修复，直到达到100分满分。达到后，点击导出下载您的母带。' }
                 ],
-                explore: { title: '准备就绪！', subtitle: '曲目已处理完成。使用这些工具自定义：', genre: '流派选择', genreDesc: 'Hip-Hop、Pop、Rock、EDM等', presets: '流派预设', presetsDesc: '专业EQ曲线', eq: '手动EQ', eqDesc: '7段参量控制', btn: '开始探索', tip: '点击?重新收听指南' },
+                explore: { title: '目标：100分！', subtitle: '检查评分，选择正确流派，点击全部修复直到获得满分：', genre: '流派选择', genreDesc: '正确的流派能提高分数', presets: '点击全部修复', presetsDesc: '修复问题并自动重新处理', eq: '达到100/100', eqDesc: '然后导出下载母带', btn: '开始吧', tip: '点击?重新收听指南' },
                 skip: '跳过导览'
             }
         };
@@ -34461,7 +34461,7 @@
                         <p style="font-size: 1.1rem; color: rgba(255,255,255,0.7); line-height: 1.6; margin: 0 0 32px;">${trans.subtitle}</p>
 
                         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 36px; text-align: left;">
-                            <div class="explore-genre-card" style="
+                            <div style="
                                 display: flex;
                                 align-items: center;
                                 gap: 18px;
@@ -34470,28 +34470,28 @@
                                 border-radius: 16px;
                                 padding: 18px 22px;
                                 transition: all 0.3s ease;
-                                animation: genreCardGlow 2s ease-in-out infinite;
-                                box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 40px rgba(0, 212, 255, 0.05);
                             ">
-                                <span style="font-size: 2.5rem;">🎵</span>
+                                <div style="font-size: 2rem; width: 48px; height: 48px; border-radius: 50%; background: rgba(0,212,255,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 900; color: #00d4ff;">1</div>
                                 <div>
                                     <div style="font-weight: 700; color: #00d4ff; font-size: 1.1rem;">${trans.genre}</div>
                                     <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 4px;">${trans.genreDesc}</div>
                                 </div>
                             </div>
-                            <div style="
+                            <div class="explore-genre-card" style="
                                 display: flex;
                                 align-items: center;
                                 gap: 18px;
-                                background: linear-gradient(135deg, rgba(184,79,255,0.12) 0%, rgba(184,79,255,0.05) 100%);
-                                border: 1px solid rgba(184,79,255,0.35);
+                                background: linear-gradient(135deg, rgba(0,255,136,0.15) 0%, rgba(0,255,136,0.06) 100%);
+                                border: 1px solid rgba(0,255,136,0.5);
                                 border-radius: 16px;
                                 padding: 18px 22px;
                                 transition: all 0.3s ease;
+                                animation: genreCardGlow 2s ease-in-out infinite;
+                                box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 0 40px rgba(0, 255, 136, 0.05);
                             ">
-                                <span style="font-size: 2.5rem;">🎛️</span>
+                                <div style="font-size: 2rem; width: 48px; height: 48px; border-radius: 50%; background: rgba(0,255,136,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 900; color: #00ff88;">2</div>
                                 <div>
-                                    <div style="font-weight: 700; color: #b84fff; font-size: 1.1rem;">${trans.presets}</div>
+                                    <div style="font-weight: 700; color: #00ff88; font-size: 1.1rem;">${trans.presets}</div>
                                     <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 4px;">${trans.presetsDesc}</div>
                                 </div>
                             </div>
@@ -34499,15 +34499,15 @@
                                 display: flex;
                                 align-items: center;
                                 gap: 18px;
-                                background: linear-gradient(135deg, rgba(0,255,136,0.12) 0%, rgba(0,255,136,0.05) 100%);
-                                border: 1px solid rgba(0,255,136,0.35);
+                                background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%);
+                                border: 1px solid rgba(255,215,0,0.35);
                                 border-radius: 16px;
                                 padding: 18px 22px;
                                 transition: all 0.3s ease;
                             ">
-                                <span style="font-size: 2.5rem;">🎚️</span>
+                                <div style="font-size: 2rem; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,215,0,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 900; color: #FFD700;">3</div>
                                 <div>
-                                    <div style="font-weight: 700; color: #00ff88; font-size: 1.1rem;">${trans.eq}</div>
+                                    <div style="font-weight: 700; color: #FFD700; font-size: 1.1rem;">${trans.eq}</div>
                                     <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 4px;">${trans.eqDesc}</div>
                                 </div>
                             </div>
@@ -34553,8 +34553,8 @@
                     @keyframes modalSlideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
                     @keyframes celebrateBounce { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-15px) rotate(-5deg); } 75% { transform: translateY(-15px) rotate(5deg); } }
                     @keyframes genreCardGlow {
-                        0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 40px rgba(0, 212, 255, 0.05); border-color: rgba(0, 212, 255, 0.5); }
-                        50% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), 0 0 60px rgba(0, 212, 255, 0.1); border-color: rgba(0, 212, 255, 0.8); }
+                        0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 0 40px rgba(0, 255, 136, 0.05); border-color: rgba(0, 255, 136, 0.5); }
+                        50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 255, 136, 0.1); border-color: rgba(0, 255, 136, 0.8); }
                     }
                 </style>
             `;

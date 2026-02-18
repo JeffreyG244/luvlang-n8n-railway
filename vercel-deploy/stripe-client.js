@@ -1,7 +1,7 @@
 /**
  * STRIPE PAYMENT INTEGRATION
  * Handles per-track purchases for LuvLang Mastering
- * Tiers: BASIC ($12.99), PROFESSIONAL ($29.99), STUDIO ($59.99)
+ * Tiers: BASIC ($12.99), ADVANCED ($29.99), PREMIUM ($59.99)
  *
  * SECURITY: Keys loaded from config.js - never hardcode in production
  */
@@ -83,9 +83,9 @@ const MASTERING_TIERS = {
             exportFormats: ['WAV']
         }
     },
-    professional: {
-        name: 'PROFESSIONAL',
-        slug: 'professional',
+    advanced: {
+        name: 'ADVANCED',
+        slug: 'advanced',
         price: 29.99,
         priceId: 'price_1T14UF1lp4jDhuWyvc8zu8wq',
         features: [
@@ -108,13 +108,13 @@ const MASTERING_TIERS = {
             exportFormats: ['WAV', 'MP3', 'FLAC']
         }
     },
-    studio: {
-        name: 'STUDIO',
-        slug: 'studio',
+    premium: {
+        name: 'PREMIUM',
+        slug: 'premium',
         price: 59.99,
         priceId: 'price_1T14UX1lp4jDhuWySLwOnf00',
         features: [
-            'Everything in PROFESSIONAL, plus:',
+            'Everything in ADVANCED, plus:',
             'Stem mastering (up to 5 stems)',
             'Reference track matching',
             'Advanced spectral repair',
@@ -151,7 +151,7 @@ function getApiBaseUrl() {
 /**
  * Create a Stripe Checkout session for a tier
  *
- * @param {string} tierSlug - 'instant', 'precision', or 'legendary'
+ * @param {string} tierSlug - 'basic', 'advanced', or 'premium'
  * @param {object} sessionData - Audio processing data to attach to purchase
  * @returns {Promise<object>} Success/error result
  */
@@ -221,6 +221,7 @@ async function createCheckoutSession(tierSlug, sessionData = {}) {
                     targetLUFS: sessionData.targetLUFS || -14.0,
                     finalLUFS: sessionData.finalLUFS,
                     truePeak: sessionData.truePeak,
+                    premiumEffects: window.premiumEffects || null,
                     timestamp: new Date().toISOString()
                 },
                 successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -403,14 +404,14 @@ async function hasAccessToTier(tierSlug) {
             return false;
         }
 
-        // If user has purchased STUDIO, they have access to all tiers
-        if (purchases.some(p => p.tier_slug === 'studio')) {
+        // If user has purchased PREMIUM, they have access to all tiers
+        if (purchases.some(p => p.tier_slug === 'premium')) {
             return true;
         }
 
-        // If user has purchased PROFESSIONAL, they have access to BASIC and PROFESSIONAL
-        if (tierSlug === 'basic' || tierSlug === 'professional') {
-            if (purchases.some(p => p.tier_slug === 'professional' || p.tier_slug === 'studio')) {
+        // If user has purchased ADVANCED, they have access to BASIC and ADVANCED
+        if (tierSlug === 'basic' || tierSlug === 'advanced') {
+            if (purchases.some(p => p.tier_slug === 'advanced' || p.tier_slug === 'premium')) {
                 return true;
             }
         }

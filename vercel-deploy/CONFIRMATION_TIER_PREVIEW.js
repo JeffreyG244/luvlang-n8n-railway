@@ -101,6 +101,14 @@
     let playbackOffset = 0;
     let animFrameId = null;
 
+    // Premium effect customization — users can toggle individual effects on/off
+    let premiumEffects = {
+        exciter: true,
+        warmth: true,
+        softClipper: true,
+        stereoEnhance: true
+    };
+
     // ═══════════════════════════════════════════════════════════════════════
     // CSS INJECTION
     // ═══════════════════════════════════════════════════════════════════════
@@ -486,6 +494,226 @@
                     min-height: 44px;
                 }
             }
+
+            /* ── Premium Customize Panel ── */
+            .ctp-tiers.ctp-slide-out {
+                opacity: 0;
+                transform: translateX(-30px);
+                pointer-events: none;
+                position: absolute;
+                visibility: hidden;
+                transition: opacity 0.3s ease, transform 0.3s ease;
+            }
+            .ctp-customize-panel {
+                padding: 12px 32px 28px;
+                animation: ctpSlideIn 0.35s ease forwards;
+            }
+            @keyframes ctpSlideIn {
+                from { opacity: 0; transform: translateX(30px); }
+                to   { opacity: 1; transform: translateX(0); }
+            }
+            .ctp-customize-header {
+                text-align: center;
+                margin-bottom: 24px;
+            }
+            .ctp-customize-header h3 {
+                margin: 0 0 6px;
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #FFD700;
+            }
+            .ctp-customize-header p {
+                margin: 0;
+                font-size: 0.78rem;
+                color: rgba(255, 255, 255, 0.5);
+            }
+            .ctp-effects-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+                margin-bottom: 20px;
+            }
+            .ctp-effect-card {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 215, 0, 0.15);
+                border-radius: 10px;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+            .ctp-effect-card.ctp-effect-on {
+                border-color: rgba(255, 215, 0, 0.35);
+                box-shadow: 0 0 12px rgba(255, 215, 0, 0.08);
+            }
+            .ctp-effect-card-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .ctp-effect-name {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .ctp-effect-icon {
+                font-size: 1rem;
+            }
+            .ctp-effect-desc {
+                font-size: 0.7rem;
+                color: rgba(255, 255, 255, 0.45);
+                line-height: 1.4;
+            }
+
+            /* Toggle switch — reuses existing pattern */
+            .ctp-toggle {
+                position: relative;
+                width: 40px;
+                height: 22px;
+                flex-shrink: 0;
+            }
+            .ctp-toggle input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+                position: absolute;
+            }
+            .ctp-toggle-slider {
+                position: absolute;
+                inset: 0;
+                background: rgba(255, 255, 255, 0.12);
+                border-radius: 11px;
+                cursor: pointer;
+                transition: background 0.2s;
+            }
+            .ctp-toggle-slider::before {
+                content: '';
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                left: 3px;
+                bottom: 3px;
+                background: #fff;
+                border-radius: 50%;
+                transition: transform 0.2s;
+            }
+            .ctp-toggle input:checked + .ctp-toggle-slider {
+                background: #FFD700;
+            }
+            .ctp-toggle input:checked + .ctp-toggle-slider::before {
+                transform: translateX(18px);
+            }
+            .ctp-toggle input:focus-visible + .ctp-toggle-slider {
+                outline: 2px solid #FFD700;
+                outline-offset: 2px;
+            }
+
+            /* Customize panel buttons */
+            .ctp-customize-actions {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+            .ctp-preview-btn {
+                flex: 1;
+                padding: 13px 20px;
+                border-radius: 10px;
+                border: 2px solid #FFD700;
+                background: transparent;
+                color: #FFD700;
+                font-size: 0.82rem;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                cursor: pointer;
+                transition: all 0.15s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+            .ctp-preview-btn:hover {
+                background: rgba(255, 215, 0, 0.1);
+            }
+            .ctp-preview-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .ctp-checkout-btn {
+                flex: 1;
+                padding: 13px 20px;
+                border-radius: 10px;
+                border: none;
+                background: linear-gradient(180deg, #FFD700 0%, #c7a600 100%);
+                color: #000;
+                font-size: 0.82rem;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .ctp-checkout-btn:hover {
+                transform: translateY(-1px);
+                filter: brightness(1.1);
+            }
+            .ctp-back-to-tiers {
+                display: block;
+                text-align: center;
+                margin-top: 14px;
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.4);
+                cursor: pointer;
+                transition: color 0.15s;
+                background: none;
+                border: none;
+                padding: 6px;
+                width: 100%;
+            }
+            .ctp-back-to-tiers:hover {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            /* Preview spinner inside button */
+            .ctp-preview-btn .ctp-btn-spinner {
+                width: 14px;
+                height: 14px;
+                border: 2px solid rgba(255, 215, 0, 0.3);
+                border-top-color: #FFD700;
+                border-radius: 50%;
+                animation: ctp-spin 0.8s linear infinite;
+                display: inline-block;
+            }
+
+            /* Waveform in customize panel */
+            .ctp-customize-waveform-wrap {
+                margin-bottom: 16px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                border-radius: 8px;
+                padding: 10px;
+            }
+            .ctp-customize-waveform-wrap .ctp-player-top {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 6px;
+            }
+
+            @media (max-width: 600px) {
+                .ctp-effects-grid {
+                    grid-template-columns: 1fr;
+                }
+                .ctp-customize-actions {
+                    flex-direction: column;
+                }
+                .ctp-customize-panel {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                }
+            }
         `;
         document.head.appendChild(style);
     }
@@ -835,7 +1063,7 @@
         // Removes sub-20Hz rumble that wastes headroom
         var subsonic = offline.createBiquadFilter();
         subsonic.type = 'highpass';
-        subsonic.frequency.value = 25;
+        subsonic.frequency.value = 30;
         subsonic.Q.value = 0.707;
         currentNode.connect(subsonic);
         currentNode = subsonic;
@@ -849,16 +1077,16 @@
         // Advanced 100% — full professional sculpting
         // Premium 110% + air shelf — shimmer and openness
         // ═══════════════════════════════════════════════════════════
-        var eqIntensity = (tierId === 'basic') ? 0.70 :
-                          (tierId === 'advanced') ? 1.0 : 1.10;
+        var eqIntensity = (tierId === 'basic') ? 0.75 :
+                          (tierId === 'advanced') ? 1.0 : 1.05;
 
         var eqBands = [
             { freq: 40,    type: 'highshelf', key: 'sub',     Q: 0.707 },
-            { freq: 120,   type: 'peaking',   key: 'bass',    Q: 1.2 },
-            { freq: 400,   type: 'peaking',   key: 'lowmid',  Q: 1.4 },
-            { freq: 1000,  type: 'peaking',   key: 'mid',     Q: 1.4 },
-            { freq: 3200,  type: 'peaking',   key: 'highmid', Q: 1.4 },
-            { freq: 8000,  type: 'peaking',   key: 'high',    Q: 1.4 },
+            { freq: 120,   type: 'peaking',   key: 'bass',    Q: 0.8 },
+            { freq: 400,   type: 'peaking',   key: 'lowmid',  Q: 0.9 },
+            { freq: 1000,  type: 'peaking',   key: 'mid',     Q: 0.8 },
+            { freq: 3200,  type: 'peaking',   key: 'highmid', Q: 1.0 },
+            { freq: 8000,  type: 'peaking',   key: 'high',    Q: 0.9 },
             { freq: 12000, type: 'highshelf', key: 'air',     Q: 0.707 }
         ];
 
@@ -872,12 +1100,12 @@
             currentNode = filter;
         });
 
-        // Premium: extra air shelf (+1.5 dB above 14kHz for shimmer)
+        // Premium: extra air shelf (+1.0 dB above 14kHz for shimmer)
         if (tierId === 'premium') {
             var airShelf = offline.createBiquadFilter();
             airShelf.type = 'highshelf';
             airShelf.frequency.value = 14000;
-            airShelf.gain.value = 1.5;
+            airShelf.gain.value = 1.0;
             airShelf.Q.value = 0.707;
             currentNode.connect(airShelf);
             currentNode = airShelf;
@@ -917,12 +1145,12 @@
             currentNode.connect(presence);
             currentNode = presence;
 
-            // De-ess: tame harsh sibilance
+            // De-ess: tame harsh sibilance (wider Q for more musical correction)
             var deEss = offline.createBiquadFilter();
             deEss.type = 'peaking';
             deEss.frequency.value = 6500;
-            deEss.Q.value = 3.0;
-            deEss.gain.value = isPremium ? -2.0 : -1.5;
+            deEss.Q.value = 2.5;
+            deEss.gain.value = isPremium ? -1.5 : -1.2;
             currentNode.connect(deEss);
             currentNode = deEss;
         }
@@ -935,8 +1163,8 @@
         // ═══════════════════════════════════════════════════════════
         var busComp = offline.createDynamicsCompressor();
         if (tierId === 'basic') {
-            busComp.threshold.value = -14;
-            busComp.knee.value = 12;
+            busComp.threshold.value = -15;
+            busComp.knee.value = 10;
             busComp.ratio.value = 1.8;
             busComp.attack.value = 0.020;
             busComp.release.value = 0.200;
@@ -947,12 +1175,12 @@
             busComp.attack.value = 0.012;
             busComp.release.value = 0.150;
         } else {
-            // Premium: slightly tighter than Advanced, not drastically different
+            // Premium: transparent precision — wider knee than Advanced for smoother action
             busComp.threshold.value = -16;
-            busComp.knee.value = 7;
-            busComp.ratio.value = 2.3;
-            busComp.attack.value = 0.010;
-            busComp.release.value = 0.140;
+            busComp.knee.value = 9;
+            busComp.ratio.value = 2.0;
+            busComp.attack.value = 0.012;
+            busComp.release.value = 0.160;
         }
         currentNode.connect(busComp);
         currentNode = busComp;
@@ -965,16 +1193,16 @@
         if (tierId === 'advanced' || tierId === 'premium') {
             var charComp = offline.createDynamicsCompressor();
             if (tierId === 'premium') {
-                // Same punch as Advanced — warmth comes from saturation, not more squash
+                // Premium character — gentle density, preserve transients
+                charComp.threshold.value = -12;
+                charComp.knee.value = 12;
+                charComp.ratio.value = 1.2;
+                charComp.attack.value = 0.030;
+                charComp.release.value = 0.280;
+            } else {
+                // Musical density — tighter knee for more character
                 charComp.threshold.value = -10;
                 charComp.knee.value = 12;
-                charComp.ratio.value = 1.3;
-                charComp.attack.value = 0.030;
-                charComp.release.value = 0.250;
-            } else {
-                // Gentler — adds density without over-squashing
-                charComp.threshold.value = -10;
-                charComp.knee.value = 15;
                 charComp.ratio.value = 1.3;
                 charComp.attack.value = 0.030;
                 charComp.release.value = 0.250;
@@ -987,29 +1215,35 @@
         // ADVANCED + PREMIUM: M/S Stereo widening
         // Proper Mid/Side math — boosts side signal for wider image
         // Mono content preserved perfectly (no phase cancellation)
+        // For Premium: uses full width (1.25) when stereoEnhance ON,
+        // falls back to Advanced width (1.15) when OFF
         // ═══════════════════════════════════════════════════════════
         if ((tierId === 'advanced' || tierId === 'premium') && channels >= 2) {
-            currentNode = applyStereoWidening(offline, currentNode, tierId);
+            var stereoTier = tierId;
+            if (tierId === 'premium' && !premiumEffects.stereoEnhance) {
+                stereoTier = 'advanced'; // fall back to Advanced width
+            }
+            currentNode = applyStereoWidening(offline, currentNode, stereoTier);
         }
 
         // ═══════════════════════════════════════════════════════════
         // PREMIUM ONLY: Harmonic exciter (subtle upper harmonics)
         // ═══════════════════════════════════════════════════════════
-        if (tierId === 'premium') {
+        if (tierId === 'premium' && premiumEffects.exciter) {
             currentNode = applyHarmonicExciter(offline, currentNode);
         }
 
         // ═══════════════════════════════════════════════════════════
         // PREMIUM ONLY: Analog warmth (gentle tape saturation)
         // ═══════════════════════════════════════════════════════════
-        if (tierId === 'premium') {
+        if (tierId === 'premium' && premiumEffects.warmth) {
             currentNode = applyAnalogWarmth(offline, currentNode);
         }
 
         // ═══════════════════════════════════════════════════════════
         // PREMIUM ONLY: Soft clipper (catches peaks before limiter)
         // ═══════════════════════════════════════════════════════════
-        if (tierId === 'premium') {
+        if (tierId === 'premium' && premiumEffects.softClipper) {
             currentNode = applySoftClipper(offline, currentNode);
         }
 
@@ -1018,7 +1252,7 @@
         // ═══════════════════════════════════════════════════════════
         if (tierId === 'advanced' || tierId === 'premium') {
             var laLimiter = offline.createDynamicsCompressor();
-            laLimiter.threshold.value = (tierId === 'premium') ? -2.0 : -3.0;
+            laLimiter.threshold.value = (tierId === 'premium') ? -2.0 : -2.5;
             laLimiter.knee.value = 0;
             laLimiter.ratio.value = 20;
             laLimiter.attack.value = 0.001;
@@ -1116,19 +1350,19 @@
      * low level. Post-LP at 14kHz tames any harsh artifacts.
      */
     function applyHarmonicExciter(ctx, input) {
-        // Isolate upper frequencies for harmonic generation
+        // Isolate upper frequencies for harmonic generation (2kHz avoids low-mid coloration)
         var hpFilter = ctx.createBiquadFilter();
         hpFilter.type = 'highpass';
         hpFilter.frequency.value = 2000;
         hpFilter.Q.value = 0.5;
         input.connect(hpFilter);
 
-        // Gentle saturation — generates even/odd harmonics musically
+        // Gentle saturation — generates subtle musical harmonics
         var shaper = ctx.createWaveShaper();
         var curve = new Float32Array(4096);
         for (var i = 0; i < 4096; i++) {
             var x = (i / 4095) * 2 - 1;
-            curve[i] = Math.tanh(x * 1.3);
+            curve[i] = Math.tanh(x * 1.15);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
@@ -1141,9 +1375,9 @@
         postLP.Q.value = 0.5;
         shaper.connect(postLP);
 
-        // Wet blend — very subtle shimmer (less is more)
+        // Wet blend — subtle presence and air shimmer (less = more transparent)
         var wetGain = ctx.createGain();
-        wetGain.gain.value = 0.08;
+        wetGain.gain.value = 0.06;
         postLP.connect(wetGain);
 
         // Dry pass-through (unity)
@@ -1168,20 +1402,20 @@
         var curve = new Float32Array(4096);
         for (var i = 0; i < 4096; i++) {
             var x = (i / 4095) * 2 - 1;
-            curve[i] = Math.tanh(x * 1.2);
+            curve[i] = Math.tanh(x * 1.1);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
 
-        // Wet path (saturated) — subtle warmth, not heavy distortion
+        // Wet path (saturated) — subtle warmth, not obvious coloration
         var wetGain = ctx.createGain();
-        wetGain.gain.value = 0.25;
+        wetGain.gain.value = 0.15;
         input.connect(shaper);
         shaper.connect(wetGain);
 
-        // Dry path (clean) — 0.75 + 0.25 = 1.0 unity
+        // Dry path (clean) — 0.85 + 0.15 = 1.0 unity
         var dryGain = ctx.createGain();
-        dryGain.gain.value = 0.75;
+        dryGain.gain.value = 0.85;
         input.connect(dryGain);
 
         var output = ctx.createGain();
@@ -1323,7 +1557,8 @@
         const height = rect.height;
         const data = buffer.getChannelData(0);
         const step = Math.floor(data.length / width);
-        const tier = TIERS[tierId];
+        // 'Customize' uses Premium color
+        const tier = TIERS[tierId] || TIERS.premium;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -1548,6 +1783,19 @@
                 if (statusEl && renderingState[tierId] === 'ready') statusEl.textContent = 'Preview ready';
             }
         });
+
+        // Also sync customize panel play button if present
+        var custPlayIcon = document.getElementById('ctpCustomizePlayIcon');
+        var custStatus = document.getElementById('ctpCustomizeStatus');
+        if (custPlayIcon) {
+            if (currentlyPlaying === 'premium') {
+                custPlayIcon.innerHTML = '&#9646;&#9646;';
+                if (custStatus) custStatus.textContent = 'Playing...';
+            } else {
+                custPlayIcon.innerHTML = '&#9654;';
+                if (custStatus && renderingState.premium === 'ready') custStatus.textContent = 'Preview ready';
+            }
+        }
     }
 
     function startTimeUpdater(tierId) {
@@ -1564,43 +1812,289 @@
     }
 
     function updateTimeDisplay(tierId, seconds) {
-        var el = document.getElementById('ctpTime-' + tierId);
-        if (!el) return;
         var s = Math.max(0, Math.floor(seconds));
         var mins = Math.floor(s / 60);
         var secs = s % 60;
-        el.textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+        var timeStr = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+        var el = document.getElementById('ctpTime-' + tierId);
+        if (el) el.textContent = timeStr;
+
+        // Also update customize panel time if playing premium
+        if (tierId === 'premium') {
+            var custTime = document.getElementById('ctpCustomizeTime');
+            if (custTime) custTime.textContent = timeStr;
+        }
     }
 
     function drawPlayhead(tierId, elapsed) {
-        var canvas = document.getElementById('ctpWaveform-' + tierId);
-        if (!canvas || !previewBuffers[tierId]) return;
-
         var buffer = previewBuffers[tierId];
+        if (!buffer) return;
         var progress = Math.min(elapsed / buffer.duration, 1);
 
-        // Redraw waveform then overlay playhead
-        drawWaveform(tierId, buffer);
+        // Draw on the main tier canvas
+        var canvas = document.getElementById('ctpWaveform-' + tierId);
+        if (canvas) {
+            drawWaveform(tierId, buffer);
+            drawPlayheadOnCanvas(canvas, progress, TIERS[tierId].glow);
+        }
 
+        // Also draw on customize panel canvas when playing premium
+        if (tierId === 'premium') {
+            var custCanvas = document.getElementById('ctpCustomizeWaveform');
+            if (custCanvas) {
+                drawWaveform('Customize', buffer);
+                drawPlayheadOnCanvas(custCanvas, progress, 'rgba(255, 215, 0, 0.5)');
+            }
+        }
+    }
+
+    function drawPlayheadOnCanvas(canvas, progress, glowColor) {
         var dpr = window.devicePixelRatio || 1;
         var ctx = canvas.getContext('2d');
         var width = canvas.getBoundingClientRect().width;
         var height = canvas.getBoundingClientRect().height;
         var x = progress * width;
 
-        // Played region tint
-        ctx.fillStyle = TIERS[tierId].glow;
+        ctx.fillStyle = glowColor;
         ctx.globalAlpha = 0.15;
         ctx.fillRect(0, 0, x * dpr, height * dpr);
         ctx.globalAlpha = 1.0;
 
-        // Playhead line
         ctx.beginPath();
         ctx.moveTo(x * dpr, 0);
         ctx.lineTo(x * dpr, height * dpr);
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.5 * dpr;
         ctx.stroke();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PREMIUM EFFECT CUSTOMIZATION PANEL
+    // ═══════════════════════════════════════════════════════════════════════
+
+    var PREMIUM_EFFECT_META = [
+        { key: 'exciter',       icon: '\u2728', name: 'Harmonic Exciter',  desc: 'Adds brightness, air, and presence to your highs' },
+        { key: 'warmth',        icon: '\uD83D\uDD25', name: 'Analog Warmth',     desc: 'Rich, tape-style saturation for depth and body' },
+        { key: 'softClipper',   icon: '\uD83D\uDCC8', name: 'Soft Clipper',      desc: 'Smooths peaks for a polished, glued-together sound' },
+        { key: 'stereoEnhance', icon: '\uD83C\uDFA7', name: 'Enhanced Stereo',   desc: 'Wider stereo image for an immersive listening experience' }
+    ];
+
+    function showPremiumCustomizePanel() {
+        var tiersEl = document.getElementById('ctpTiers');
+        if (!tiersEl) return;
+
+        // Slide tier cards out
+        tiersEl.classList.add('ctp-slide-out');
+
+        // Update section title
+        var sectionTitle = tiersEl.previousElementSibling;
+        if (sectionTitle && sectionTitle.classList.contains('ctp-section-title')) {
+            sectionTitle.style.display = 'none';
+        }
+
+        // Remove any existing customize panel
+        var existing = document.getElementById('ctpCustomizePanel');
+        if (existing) existing.parentNode.removeChild(existing);
+
+        // Build panel
+        var panel = document.createElement('div');
+        panel.id = 'ctpCustomizePanel';
+        panel.className = 'ctp-customize-panel';
+
+        var effectCardsHTML = PREMIUM_EFFECT_META.map(function(fx) {
+            var isOn = premiumEffects[fx.key];
+            return '<div class="ctp-effect-card ' + (isOn ? 'ctp-effect-on' : '') + '" data-effect="' + fx.key + '">' +
+                '<div class="ctp-effect-card-top">' +
+                    '<span class="ctp-effect-name"><span class="ctp-effect-icon">' + fx.icon + '</span> ' + escapeHTML(fx.name) + '</span>' +
+                    '<label class="ctp-toggle">' +
+                        '<input type="checkbox" ' + (isOn ? 'checked' : '') + ' data-fx="' + fx.key + '" aria-label="Toggle ' + escapeHTML(fx.name) + '">' +
+                        '<span class="ctp-toggle-slider"></span>' +
+                    '</label>' +
+                '</div>' +
+                '<div class="ctp-effect-desc">' + escapeHTML(fx.desc) + '</div>' +
+            '</div>';
+        }).join('');
+
+        panel.innerHTML =
+            '<div class="ctp-customize-header">' +
+                '<h3>Fine-Tune Your Premium Master</h3>' +
+                '<p>Toggle effects on/off &mdash; your track, your choice</p>' +
+            '</div>' +
+            '<div class="ctp-effects-grid">' + effectCardsHTML + '</div>' +
+            '<div class="ctp-customize-waveform-wrap">' +
+                '<div class="ctp-player-top">' +
+                    '<button class="ctp-play-btn" id="ctpCustomizePlayBtn" ' +
+                        'style="background:#FFD700" aria-label="Play Premium preview" ' +
+                        (renderingState.premium === 'ready' ? '' : 'disabled') + '>' +
+                        '<span id="ctpCustomizePlayIcon">&#9654;</span>' +
+                    '</button>' +
+                    '<span class="ctp-player-status" id="ctpCustomizeStatus">' +
+                        (renderingState.premium === 'ready' ? 'Preview ready' : 'Waiting...') +
+                    '</span>' +
+                    '<span class="ctp-player-time" id="ctpCustomizeTime">0:00</span>' +
+                '</div>' +
+                '<canvas class="ctp-waveform" id="ctpCustomizeWaveform" aria-label="Premium tier waveform preview"></canvas>' +
+            '</div>' +
+            '<div class="ctp-customize-actions">' +
+                '<button class="ctp-preview-btn" id="ctpPreviewBtn">&#9654; Preview</button>' +
+                '<button class="ctp-checkout-btn" id="ctpCheckoutBtn">Sounds Great &mdash; Checkout</button>' +
+            '</div>' +
+            '<button class="ctp-back-to-tiers" id="ctpBackToTiers">&larr; Back to Tiers</button>';
+
+        tiersEl.parentNode.insertBefore(panel, tiersEl.nextSibling);
+
+        // Draw existing waveform if available
+        if (previewBuffers.premium) {
+            drawWaveform('Customize', previewBuffers.premium);
+        }
+
+        // Wire toggle switches
+        panel.querySelectorAll('input[data-fx]').forEach(function(input) {
+            input.addEventListener('change', function() {
+                var fxKey = this.getAttribute('data-fx');
+                premiumEffects[fxKey] = this.checked;
+                var card = this.closest('.ctp-effect-card');
+                if (card) {
+                    if (this.checked) card.classList.add('ctp-effect-on');
+                    else card.classList.remove('ctp-effect-on');
+                }
+            });
+        });
+
+        // Wire play button in customize panel
+        document.getElementById('ctpCustomizePlayBtn').addEventListener('click', function() {
+            togglePlay('premium');
+        });
+
+        // Wire Preview button
+        document.getElementById('ctpPreviewBtn').addEventListener('click', function() {
+            previewWithCurrentSettings();
+        });
+
+        // Wire Checkout button
+        document.getElementById('ctpCheckoutBtn').addEventListener('click', function() {
+            checkoutFromCustomize();
+        });
+
+        // Wire Back to Tiers
+        document.getElementById('ctpBackToTiers').addEventListener('click', function() {
+            hidePremiumCustomizePanel();
+        });
+    }
+
+    function hidePremiumCustomizePanel() {
+        var tiersEl = document.getElementById('ctpTiers');
+        var panel = document.getElementById('ctpCustomizePanel');
+
+        if (tiersEl) {
+            tiersEl.classList.remove('ctp-slide-out');
+        }
+
+        // Restore section title
+        if (tiersEl) {
+            var sectionTitle = tiersEl.previousElementSibling;
+            if (sectionTitle && sectionTitle.classList.contains('ctp-section-title')) {
+                sectionTitle.style.display = '';
+            }
+        }
+
+        if (panel && panel.parentNode) {
+            panel.parentNode.removeChild(panel);
+        }
+    }
+
+    async function previewWithCurrentSettings() {
+        if (!previewSegment) return;
+
+        var previewBtn = document.getElementById('ctpPreviewBtn');
+        var statusEl = document.getElementById('ctpCustomizeStatus');
+
+        // Show spinner on button
+        if (previewBtn) {
+            previewBtn.disabled = true;
+            previewBtn.innerHTML = '<span class="ctp-btn-spinner"></span> Rendering...';
+        }
+        if (statusEl) {
+            statusEl.innerHTML = '<span class="ctp-spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;--tier-color:#FFD700"></span> Re-rendering preview...';
+        }
+
+        // Stop any current playback
+        stopPlayback();
+
+        try {
+            // Render premium with current effect toggles
+            var rendered = await renderTierPreview(previewSegment, 'premium');
+
+            // Normalize to same reference RMS
+            var referenceRMS = null;
+            if (previewBuffers.advanced) {
+                referenceRMS = measureRMS(previewBuffers.advanced);
+            } else if (previewBuffers.basic) {
+                referenceRMS = measureRMS(previewBuffers.basic);
+            }
+            if (referenceRMS && referenceRMS > 0.0001) {
+                normalizeBuffer(rendered, referenceRMS);
+            }
+
+            // Store and update
+            previewBuffers.premium = rendered;
+            renderingState.premium = 'ready';
+
+            // Update waveform in customize panel
+            drawWaveform('Customize', rendered);
+
+            // Update the main tier card waveform too
+            drawWaveform('premium', rendered);
+
+            // Update customize panel UI
+            if (statusEl) statusEl.textContent = 'Preview ready';
+            var playBtn = document.getElementById('ctpCustomizePlayBtn');
+            if (playBtn) playBtn.disabled = false;
+
+            // Also update the main tier card player
+            updatePlayerUI('premium');
+
+            // Auto-play the new render
+            startPlayback('premium');
+
+        } catch (err) {
+            console.error('Premium re-render failed:', err);
+            if (statusEl) statusEl.textContent = 'Render failed';
+        }
+
+        // Reset preview button
+        if (previewBtn) {
+            previewBtn.disabled = false;
+            previewBtn.innerHTML = '&#9654; Preview';
+        }
+    }
+
+    function checkoutFromCustomize() {
+        // Store effect choices globally for Stripe metadata
+        window.premiumEffects = {
+            exciter: premiumEffects.exciter,
+            warmth: premiumEffects.warmth,
+            softClipper: premiumEffects.softClipper,
+            stereoEnhance: premiumEffects.stereoEnhance
+        };
+
+        window.selectedTier = 'premium';
+
+        // Stop playback
+        stopPlayback();
+
+        // Close modal
+        closeModal();
+
+        // Proceed to checkout
+        if (typeof downloadMaster === 'function') {
+            downloadMaster();
+        } else if (typeof window.downloadMaster === 'function') {
+            window.downloadMaster();
+        } else {
+            console.error('downloadMaster not available');
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1615,13 +2109,17 @@
         var card = document.getElementById('ctpCard-' + tierId);
         if (card) card.classList.add('selected');
 
-        // Stop any playback
-        stopPlayback();
+        // Premium: show customization panel instead of going directly to checkout
+        if (tierId === 'premium') {
+            stopPlayback();
+            showPremiumCustomizePanel();
+            return;
+        }
 
-        // Close modal
+        // Basic & Advanced: proceed directly to checkout
+        stopPlayback();
         closeModal();
 
-        // Always proceed to Stripe checkout — no free downloads
         if (typeof downloadMaster === 'function') {
             downloadMaster();
         } else if (typeof window.downloadMaster === 'function') {
@@ -1677,6 +2175,9 @@
         currentlyPlaying = null;
         playbackOffset = 0;
 
+        // Reset premium effects to all-on for each new session
+        premiumEffects = { exciter: true, warmth: true, softClipper: true, stereoEnhance: true };
+
         // Show modal
         isModalOpen = true;
         requestAnimationFrame(function() {
@@ -1705,6 +2206,9 @@
         if (!isModalOpen) return;
 
         stopPlayback();
+
+        // Clean up customize panel if open
+        hidePremiumCustomizePanel();
 
         var overlay = document.getElementById('ctpOverlay');
         if (overlay) {

@@ -31,6 +31,8 @@ const TIER_INFO = {
 const ALLOWED_ORIGINS = [
     'https://luvlangmastering.vercel.app',
     'https://luvlang-mastering.vercel.app',
+    'https://www.luvlang.studio',
+    'https://luvlang.studio',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -96,7 +98,8 @@ module.exports = async (req, res) => {
                 tier: tier,
                 filename: sessionData?.filename || 'untitled',
                 targetLUFS: sessionData?.targetLUFS?.toString() || '-14',
-                userId: sessionData?.userId || ''
+                userId: sessionData?.userId || '',
+                premiumEffects: sessionData?.premiumEffects ? JSON.stringify(sessionData.premiumEffects) : ''
             },
             allow_promotion_codes: true,
             // Disable Stripe Link (phone number collection for faster checkout)
