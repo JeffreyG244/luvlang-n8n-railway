@@ -15,6 +15,8 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const ALLOWED_ORIGINS = [
     'https://luvlangmastering.vercel.app',
     'https://luvlang-mastering.vercel.app',
+    'https://www.luvlang.studio',
+    'https://luvlang.studio',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -162,7 +164,7 @@ module.exports = async (req, res) => {
                         name: name,
                         key_prefix: keyPrefix,
                         key_hash: keyHash,
-                        tier_access: tierAccess || 'instant',
+                        tier_access: tierAccess || 'basic',
                         rate_limit: rateLimit || 60,
                         monthly_quota: monthlyQuota || 100,
                         expires_at: expiresAt || null

@@ -7,7 +7,7 @@
 // GLOBAL STATE
 // ═══════════════════════════════════════════════════════════════════════════
 
-let currentTier = 'legendary'; // DEV: default to legendary for testing
+let currentTier = 'premium';
 let wasmPrecisionMode = '32bit'; // '32bit', '64bit'
 
 const _tierLinks = (typeof window !== 'undefined' && window.__ENV__) || {};
@@ -73,12 +73,12 @@ const TIER_CONFIG = {
         exportFormats: ['mp3', 'wav', 'ddp'],
         processing: '64bit'
     },
+    // Legacy alias — map 'legendary' to 'premium' config for backwards compat
     legendary: {
-        price: 0,
-        label: 'LEGENDARY',
-        stripeLink: '',
+        price: 59.99,
+        label: 'PREMIUM',
+        stripeLink: _tierLinks.STRIPE_LINK_PREMIUM || '',
         features: [
-            'ALL features unlocked',
             '64-bit precision engine (4x oversampling)',
             'Full manual control - All modules unlocked',
             'Multiband Compression',
@@ -86,14 +86,14 @@ const TIER_CONFIG = {
             'Reference Track Matching',
             'DDP Export for CD manufacturing',
             'High-res WAV (24/32-bit)',
-            'Unlimited exports in all formats'
+            'Unlimited MP3 exports'
         ],
         modules: {
             stereoWidth: true,
             multiband: true,
             ms: true
         },
-        exportFormats: ['mp3', 'wav', 'ddp', 'flac'],
+        exportFormats: ['mp3', 'wav', 'ddp'],
         processing: '64bit'
     }
 };
@@ -362,8 +362,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeStripe();
     }, 1000);
 
-    // Set initial tier state — use override if set, otherwise legendary for testing
-    const initTier = window._tierOverride || 'legendary';
+    // Set initial tier state — use override if set, otherwise premium
+    const initTier = window._tierOverride || 'premium';
     switchTier(initTier);
 
 });

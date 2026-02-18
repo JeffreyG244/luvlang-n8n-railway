@@ -11,8 +11,8 @@
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Disable body parsing for raw webhook payload
-export const config = {
+// Disable body parsing for raw webhook payload (Vercel-specific CJS config)
+module.exports.config = {
     api: {
         bodyParser: false
     }
@@ -62,8 +62,9 @@ module.exports = async (req, res) => {
             case 'checkout.session.completed': {
                 const session = event.data.object;
 
-                // Record purchase in Supabase
+                // Record purchase in Supabase (idempotent via stripe_event_id)
                 await recordPurchase({
+                    stripeEventId: event.id,
                     sessionId: session.id,
                     paymentIntentId: session.payment_intent,
                     tier: session.metadata.tier,
@@ -86,7 +87,8 @@ module.exports = async (req, res) => {
 
     } catch (err) {
         console.error('Webhook handler error:', err);
-        res.status(200).json({ received: true });
+        // Return 500 so Stripe retries the event delivery
+        res.status(500).json({ error: 'Webhook handler failed' });
     }
 };
 
@@ -95,19 +97,23 @@ async function recordPurchase(data) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
+        console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
         return;
     }
 
     try {
+        // Use upsert on stripe_event_id for idempotency — duplicate webhook
+        // deliveries from Stripe will update the existing row instead of inserting.
         const response = await fetch(`${supabaseUrl}/rest/v1/purchases`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': supabaseServiceKey,
                 'Authorization': `Bearer ${supabaseServiceKey}`,
-                'Prefer': 'return=representation'
+                'Prefer': 'return=representation,resolution=merge-duplicates'
             },
             body: JSON.stringify({
+                stripe_event_id: data.stripeEventId,
                 user_id: data.userId || null,
                 tier_slug: data.tier,
                 amount_paid: data.amount,
@@ -120,8 +126,7 @@ async function recordPurchase(data) {
             })
         });
 
-        if (response.ok) {
-        } else {
+        if (!response.ok) {
             console.error('Failed to record purchase:', await response.text());
         }
     } catch (err) {

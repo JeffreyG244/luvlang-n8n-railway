@@ -9,9 +9,9 @@
 
     // Tier configurations
     const TIERS = {
-        instant: {
-            id: 'instant',
-            name: 'INSTANT',
+        basic: {
+            id: 'basic',
+            name: 'BASIC',
             tagline: 'Quick & Clean',
             price: 12.99,
             color: '#00d4ff',
@@ -32,16 +32,16 @@
                 stereoWidth: 'basic'
             }
         },
-        precision: {
-            id: 'precision',
-            name: 'PRECISION',
+        advanced: {
+            id: 'advanced',
+            name: 'ADVANCED',
             tagline: 'Full Control',
             price: 29.99,
             color: '#b84fff',
             gradient: 'linear-gradient(135deg, #b84fff, #8b2fd6)',
             popular: true,
             features: [
-                'Everything in Instant',
+                'Everything in Basic',
                 '7-Band Parametric EQ',
                 'Multiband Compression',
                 'Reference Matching',
@@ -57,15 +57,15 @@
                 stereoWidth: 'enhanced'
             }
         },
-        legendary: {
-            id: 'legendary',
-            name: 'LEGENDARY',
+        premium: {
+            id: 'premium',
+            name: 'PREMIUM',
             tagline: 'Studio Grade',
             price: 59.99,
             color: '#ff00ff',
             gradient: 'linear-gradient(135deg, #ff00ff, #cc00cc)',
             features: [
-                'Everything in Precision',
+                'Everything in Advanced',
                 'Harmonic Enhancement',
                 'Spectral Repair',
                 'Stem Mastering',
@@ -808,9 +808,9 @@
     // Get quality label for tier
     function getQualityLabel(tierId) {
         switch (tierId) {
-            case 'instant': return 'Balanced • Streaming Ready';
-            case 'precision': return 'Enhanced • Reference Quality';
-            case 'legendary': return 'Maximum • Studio Grade';
+            case 'basic': return 'Balanced • Streaming Ready';
+            case 'advanced': return 'Enhanced • Reference Quality';
+            case 'premium': return 'Maximum • Studio Grade';
             default: return '';
         }
     }
@@ -913,7 +913,7 @@
             const lowShelf = ctx.createBiquadFilter();
             lowShelf.type = 'lowshelf';
             lowShelf.frequency.value = 120;
-            lowShelf.gain.value = tierId === 'instant' ? 1 : (tierId === 'precision' ? 2 : 3);
+            lowShelf.gain.value = tierId === 'basic' ? 1 : (tierId === 'advanced' ? 2 : 3);
             node.connect(lowShelf);
             node = lowShelf;
 
@@ -921,7 +921,7 @@
             const highShelf = ctx.createBiquadFilter();
             highShelf.type = 'highshelf';
             highShelf.frequency.value = 8000;
-            highShelf.gain.value = tierId === 'instant' ? 1.5 : (tierId === 'precision' ? 2.5 : 3.5);
+            highShelf.gain.value = tierId === 'basic' ? 1.5 : (tierId === 'advanced' ? 2.5 : 3.5);
             node.connect(highShelf);
             node = highShelf;
 
@@ -930,7 +930,7 @@
             presence.type = 'peaking';
             presence.frequency.value = 3500;
             presence.Q.value = 1;
-            presence.gain.value = tierId === 'instant' ? 1 : (tierId === 'precision' ? 2 : 2.5);
+            presence.gain.value = tierId === 'basic' ? 1 : (tierId === 'advanced' ? 2 : 2.5);
             node.connect(presence);
             node = presence;
         }
@@ -938,9 +938,9 @@
         // Compression - All tiers
         if (tier.processing.compression) {
             const compressor = ctx.createDynamicsCompressor();
-            compressor.threshold.value = tierId === 'instant' ? -18 : (tierId === 'precision' ? -20 : -24);
-            compressor.knee.value = tierId === 'instant' ? 20 : (tierId === 'precision' ? 15 : 10);
-            compressor.ratio.value = tierId === 'instant' ? 3 : (tierId === 'precision' ? 4 : 5);
+            compressor.threshold.value = tierId === 'basic' ? -18 : (tierId === 'advanced' ? -20 : -24);
+            compressor.knee.value = tierId === 'basic' ? 20 : (tierId === 'advanced' ? 15 : 10);
+            compressor.ratio.value = tierId === 'basic' ? 3 : (tierId === 'advanced' ? 4 : 5);
             compressor.attack.value = 0.003;
             compressor.release.value = 0.25;
             node.connect(compressor);
@@ -987,7 +987,7 @@
         // Final limiter - All tiers
         if (tier.processing.limiter) {
             const limiter = ctx.createDynamicsCompressor();
-            limiter.threshold.value = tierId === 'instant' ? -3 : (tierId === 'precision' ? -2 : -1);
+            limiter.threshold.value = tierId === 'basic' ? -3 : (tierId === 'advanced' ? -2 : -1);
             limiter.knee.value = 0;
             limiter.ratio.value = 20;
             limiter.attack.value = 0.001;
@@ -998,7 +998,7 @@
 
         // Output gain normalization
         const outputGain = ctx.createGain();
-        outputGain.gain.value = tierId === 'instant' ? 1.1 : (tierId === 'precision' ? 1.15 : 1.2);
+        outputGain.gain.value = tierId === 'basic' ? 1.1 : (tierId === 'advanced' ? 1.15 : 1.2);
         node.connect(outputGain);
         node = outputGain;
 

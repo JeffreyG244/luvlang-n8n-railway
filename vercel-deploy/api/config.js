@@ -12,6 +12,8 @@
 const ALLOWED_ORIGINS = [
     'https://luvlangmastering.vercel.app',
     'https://luvlang-mastering.vercel.app',
+    'https://www.luvlang.studio',
+    'https://luvlang.studio',
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
