@@ -24413,44 +24413,149 @@
 
         // Feature 1: AI Stem Separation
         async function showAIStemSeparation() {
-            if (!window.aiSuite) {
-                showLuvLangToast('AI Suite is still loading. Please wait a moment and try again.');
-                return;
-            }
             if (!window.audioBuffer) {
                 showLuvLangToast('Please upload an audio file first.');
                 return;
             }
 
             try {
-                showAIResults('🎵 AI Stem Separation', 'Separating audio into stems... This may take 20-40 seconds.');
+                showAIResults('🎵 AI Stem Separation', 'Separating audio into stems...');
 
-                let stemSep = window.aiSuite.getModule('stemSeparator');
-                if (!stemSep) {
-                    await window.aiSuite.loadModule('stemSeparator');
-                    stemSep = window.aiSuite.getModule('stemSeparator'); // Get newly loaded module
+                // Load stem separator directly if AI suite not ready
+                var stemSep;
+                if (window.aiSuite) {
+                    stemSep = window.aiSuite.getModule('stemSeparator');
+                    if (!stemSep) {
+                        await window.aiSuite.loadModule('stemSeparator');
+                        stemSep = window.aiSuite.getModule('stemSeparator');
+                    }
                 }
-
-                if (!stemSep) {
+                if (!stemSep && typeof AIStemSeparator !== 'undefined') {
+                    stemSep = new AIStemSeparator();
+                    await stemSep.init();
+                }
+                if (!stemSep || !stemSep.isLoaded) {
                     throw new Error('Stem separation module failed to load');
                 }
 
-                const stems = await stemSep.separateStems(window.audioBuffer, (progress, msg) => {
-                    showAIResults('🎵 AI Stem Separation', `Processing: ${msg}<br>Progress: ${progress}%`);
+                var stems = await stemSep.separateStems(window.audioBuffer, function(progress, msg) {
+                    showAIResults('🎵 AI Stem Separation', 'Processing: ' + msg + '<br>Progress: ' + progress + '%');
                 });
 
-                let html = '<strong>✅ Stems Separated Successfully!</strong><br><br>';
-                html += `🎤 Vocals: ${stems.vocals.duration.toFixed(2)}s<br>`;
-                html += `🥁 Drums: ${stems.drums.duration.toFixed(2)}s<br>`;
-                html += `🎸 Bass: ${stems.bass.duration.toFixed(2)}s<br>`;
-                html += `🎹 Other: ${stems.other.duration.toFixed(2)}s<br><br>`;
-                html += '<span style="opacity: 0.7;">Use console to access: window.lastStems</span>';
-
                 window.lastStems = stems;
+
+                var html = '<strong style="color:#00ff88;">Stems Separated Successfully!</strong><br><br>';
+                html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">';
+                var stemList = [
+                    { key: 'vocals', icon: '🎤', label: 'Vocals' },
+                    { key: 'drums',  icon: '🥁', label: 'Drums' },
+                    { key: 'bass',   icon: '🎸', label: 'Bass' },
+                    { key: 'other',  icon: '🎹', label: 'Other' }
+                ];
+                for (var i = 0; i < stemList.length; i++) {
+                    var s = stemList[i];
+                    var dur = stems[s.key] ? stems[s.key].duration.toFixed(1) : '0';
+                    html += '<button onclick="window._playStem(\'' + s.key + '\')" style="';
+                    html += 'padding:10px; background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.3);';
+                    html += 'border-radius:8px; color:#fff; cursor:pointer; font-size:0.8rem; text-align:center;">';
+                    html += s.icon + ' ' + s.label + '<br><span style="font-size:0.6rem; opacity:0.6;">' + dur + 's</span>';
+                    html += '</button>';
+                }
+                html += '</div>';
+                html += '<div style="margin-top:12px; text-align:center;">';
+                html += '<button onclick="window._downloadAllStems()" style="';
+                html += 'padding:10px 20px; background:linear-gradient(135deg,rgba(0,255,136,0.2),rgba(0,212,255,0.2));';
+                html += 'border:1px solid rgba(0,255,136,0.4); border-radius:8px; color:#00ff88; cursor:pointer;';
+                html += 'font-size:0.75rem; font-weight:600; letter-spacing:0.05em;">';
+                html += 'DOWNLOAD ALL STEMS</button></div>';
+
                 showAIResults('🎵 AI Stem Separation Complete', html);
             } catch (error) {
                 showAIResults('❌ Stem Separation Error', error.message);
                 console.error('Stem separation failed:', error);
+            }
+        }
+
+        // Play a single stem
+        window._playStem = function(stemKey) {
+            if (!window.lastStems || !window.lastStems[stemKey]) return;
+            if (window._stemSource) {
+                try { window._stemSource.stop(); } catch(e) {}
+            }
+            var ctx = window.audioContext || new AudioContext();
+            if (ctx.state === 'suspended') ctx.resume();
+            var src = ctx.createBufferSource();
+            src.buffer = window.lastStems[stemKey];
+            src.connect(ctx.destination);
+            src.start(0);
+            window._stemSource = src;
+            showLuvLangToast('Playing ' + stemKey + '...');
+        };
+
+        // Download all stems as WAV files
+        window._downloadAllStems = function() {
+            if (!window.lastStems) return;
+            var baseName = (window.currentAudioFilename || 'track').replace(/\.[^.]+$/, '');
+            var stemKeys = ['vocals', 'drums', 'bass', 'other'];
+            for (var i = 0; i < stemKeys.length; i++) {
+                var key = stemKeys[i];
+                var buf = window.lastStems[key];
+                if (!buf) continue;
+                var wav = _audioBufferToWav(buf);
+                var blob = new Blob([wav], { type: 'audio/wav' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = baseName + '_' + key + '.wav';
+                a.click();
+                setTimeout(function(u) { URL.revokeObjectURL(u); }.bind(null, url), 5000);
+            }
+            showLuvLangToast('Downloading all stems...');
+        };
+
+        // Simple WAV encoder for stem export
+        function _audioBufferToWav(buffer) {
+            var numChannels = buffer.numberOfChannels;
+            var sampleRate = buffer.sampleRate;
+            var length = buffer.length;
+            var bytesPerSample = 2; // 16-bit
+            var blockAlign = numChannels * bytesPerSample;
+            var dataSize = length * blockAlign;
+            var headerSize = 44;
+            var arrayBuffer = new ArrayBuffer(headerSize + dataSize);
+            var view = new DataView(arrayBuffer);
+
+            // WAV header
+            _writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            _writeString(view, 8, 'WAVE');
+            _writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            _writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            // Interleave channels
+            var offset = 44;
+            for (var i = 0; i < length; i++) {
+                for (var ch = 0; ch < numChannels; ch++) {
+                    var sample = buffer.getChannelData(ch)[i];
+                    sample = Math.max(-1, Math.min(1, sample));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+            return arrayBuffer;
+        }
+
+        function _writeString(view, offset, string) {
+            for (var i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
             }
         }
 
@@ -27145,7 +27250,7 @@
          🎛️ EXPORT CONFIRMATION + TIER PREVIEW - A/B compare tiers before checkout
          Overrides proceedToPayment to show confirmation modal with previews
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="CONFIRMATION_TIER_PREVIEW.js?v=20260217e"></script>
+    <script src="CONFIRMATION_TIER_PREVIEW.js?v=20260217f"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          ✓ MASTERING COMPLETE OVERLAY - Post-processing user guidance

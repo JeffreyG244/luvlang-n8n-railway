@@ -1436,8 +1436,7 @@
             return;
         }
 
-        // Narrate the tier features via Chloe
-        narrateTier(tierId);
+        // Chloe narrates AFTER the sample finishes (moved to onended callbacks)
 
         // If another tier is playing, crossfade
         if (currentlyPlaying) {
@@ -1474,6 +1473,8 @@
                 updateAllPlayButtons();
                 updateTimeDisplay(tierId, 0);
                 cancelAnimationFrame(animFrameId);
+                // Chloe narrates after sample finishes playing
+                narrateTier(tierId);
             }
         };
 
@@ -1549,6 +1550,8 @@
                 updateAllPlayButtons();
                 updateTimeDisplay(tierId, 0);
                 cancelAnimationFrame(animFrameId);
+                // Chloe narrates after sample finishes playing
+                narrateTier(tierId);
             }
         };
 
