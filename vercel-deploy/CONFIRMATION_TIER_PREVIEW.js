@@ -10,6 +10,7 @@
     // TIER CONFIGURATIONS
     // ═══════════════════════════════════════════════════════════════════════
 
+    // Tier IDs match TIER_SYSTEM.js canonical names: basic, advanced, premium
     const TIERS = {
         basic: {
             id: 'basic',
@@ -29,12 +30,12 @@
                 'Quality scorecard'
             ]
         },
-        professional: {
-            id: 'professional',
-            name: 'Professional',
+        advanced: {
+            id: 'advanced',
+            name: 'Advanced',
             tagline: 'Radio-Ready Sound',
             price: '$29.99',
-            priceId: 'professional',
+            priceId: 'advanced',
             color: '#00d4ff',
             glow: 'rgba(0, 212, 255, 0.5)',
             badge: 'MOST POPULAR',
@@ -48,17 +49,17 @@
                 'Multi-format export (WAV, MP3, FLAC)'
             ]
         },
-        studio: {
-            id: 'studio',
-            name: 'Studio',
+        premium: {
+            id: 'premium',
+            name: 'Premium',
             tagline: 'World-Class Polish',
             price: '$59.99',
-            priceId: 'studio',
+            priceId: 'premium',
             color: '#FFD700',
             glow: 'rgba(255, 215, 0, 0.5)',
             badge: 'BEST QUALITY',
             features: [
-                'Everything in Professional, plus:',
+                'Everything in Advanced, plus:',
                 'Harmonic exciter + analog warmth',
                 'Soft clipper for glue',
                 'Full 20-stage mastering chain',
@@ -82,9 +83,10 @@
     let playbackContext = null; // live AudioContext for playback
     let playbackSource = null; // current source node
     let playbackGain = null; // gain node for crossfade
-    let previewBuffers = {}; // { basic: AudioBuffer, professional: AudioBuffer, studio: AudioBuffer }
+    let previewBuffers = {}; // { basic: AudioBuffer, advanced: AudioBuffer, premium: AudioBuffer }
     let previewSegment = null; // the raw 15-second segment before tier processing
     let renderingState = {}; // { basic: 'pending'|'rendering'|'ready', ... }
+    let _lastPreviewSourceBuffer = null; // Cache key: identity of source audioBuffer
     let playbackStartTime = 0;
     let playbackOffset = 0;
     let animFrameId = null;
@@ -559,7 +561,7 @@
 
             let badgeHTML = '';
             if (tier.badge) {
-                const bgColor = tierId === 'professional' ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 215, 0, 0.2)';
+                const bgColor = tierId === 'advanced' ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 215, 0, 0.2)';
                 const textColor = tier.color;
                 badgeHTML = '<div class="ctp-badge" style="background:' + bgColor +
                     '; color:' + textColor + '">' + tier.badge + '</div>';
@@ -726,8 +728,8 @@
         // ── Stage 2: 7-band parametric EQ (all tiers) ──
         currentNode = applyParametricEQ(offline, currentNode);
 
-        // ── Stage 3: Dynamic EQ — Professional + Studio only ──
-        if (tierId === 'professional' || tierId === 'studio') {
+        // ── Stage 3: Dynamic EQ — Advanced + Premium only ──
+        if (tierId === 'advanced' || tierId === 'premium') {
             currentNode = applyDynamicEQ(offline, currentNode);
         }
 
@@ -741,18 +743,18 @@
         currentNode.connect(busComp);
         currentNode = busComp;
 
-        // ── Stage 5: Multiband compression — Professional + Studio only ──
-        if (tierId === 'professional' || tierId === 'studio') {
+        // ── Stage 5: Multiband compression — Advanced + Premium only ──
+        if (tierId === 'advanced' || tierId === 'premium') {
             currentNode = applyMultibandCompression(offline, currentNode);
         }
 
-        // ── Stage 6: M/S stereo processing — Professional + Studio only ──
-        if ((tierId === 'professional' || tierId === 'studio') && channels >= 2) {
+        // ── Stage 6: M/S stereo processing — Advanced + Premium only ──
+        if ((tierId === 'advanced' || tierId === 'premium') && channels >= 2) {
             currentNode = applyStereoWidening(offline, currentNode);
         }
 
-        // ── Stage 7: HF limiter — Professional + Studio only ──
-        if (tierId === 'professional' || tierId === 'studio') {
+        // ── Stage 7: HF limiter — Advanced + Premium only ──
+        if (tierId === 'advanced' || tierId === 'premium') {
             const hfShelf = offline.createBiquadFilter();
             hfShelf.type = 'highshelf';
             hfShelf.frequency.value = 8000;
@@ -761,23 +763,23 @@
             currentNode = hfShelf;
         }
 
-        // ── Stage 8: Harmonic exciter — Studio only ──
-        if (tierId === 'studio') {
+        // ── Stage 8: Harmonic exciter — Premium only ──
+        if (tierId === 'premium') {
             currentNode = applyHarmonicExciter(offline, currentNode);
         }
 
-        // ── Stage 9: Analog warmth — Studio only ──
-        if (tierId === 'studio') {
+        // ── Stage 9: Analog warmth — Premium only ──
+        if (tierId === 'premium') {
             currentNode = applyAnalogWarmth(offline, currentNode);
         }
 
-        // ── Stage 10: Soft clipper — Studio only ──
-        if (tierId === 'studio') {
+        // ── Stage 10: Soft clipper — Premium only ──
+        if (tierId === 'premium') {
             currentNode = applySoftClipper(offline, currentNode);
         }
 
-        // ── Stage 11: Look-ahead limiter — Professional + Studio ──
-        if (tierId === 'professional' || tierId === 'studio') {
+        // ── Stage 11: Look-ahead limiter — Advanced + Premium ──
+        if (tierId === 'advanced' || tierId === 'premium') {
             const laLimiter = offline.createDynamicsCompressor();
             laLimiter.threshold.value = -3;
             laLimiter.knee.value = 0;
@@ -1065,7 +1067,7 @@
         previewSegment = extractSegment(audioBuffer, startSample);
 
         // Render tiers sequentially to avoid memory pressure
-        const tierIds = ['basic', 'professional', 'studio'];
+        const tierIds = ['basic', 'advanced', 'premium'];
 
         for (let i = 0; i < tierIds.length; i++) {
             const tierId = tierIds[i];
@@ -1436,9 +1438,22 @@
         populateSummary();
         populateTierCards();
 
-        // Reset state
-        previewBuffers = {};
-        renderingState = { basic: 'pending', professional: 'pending', studio: 'pending' };
+        // Check if we can reuse cached preview buffers (same source audio)
+        var canReuse = (_lastPreviewSourceBuffer === audioBuffer &&
+            previewBuffers.basic && previewBuffers.advanced && previewBuffers.premium);
+
+        if (!canReuse) {
+            previewBuffers = {};
+            renderingState = { basic: 'pending', advanced: 'pending', premium: 'pending' };
+        } else {
+            // Restore ready state and redraw waveforms for cached buffers
+            Object.keys(TIERS).forEach(function(tierId) {
+                renderingState[tierId] = 'ready';
+                updatePlayerUI(tierId);
+                drawWaveform(tierId, previewBuffers[tierId]);
+            });
+        }
+
         currentlyPlaying = null;
         playbackOffset = 0;
 
@@ -1448,8 +1463,11 @@
             overlay.classList.add('open');
         });
 
-        // Start rendering previews
-        renderAllPreviews(audioBuffer);
+        // Start rendering previews only if not cached
+        if (!canReuse) {
+            _lastPreviewSourceBuffer = audioBuffer;
+            renderAllPreviews(audioBuffer);
+        }
     }
 
     function closeModal() {
@@ -1465,12 +1483,9 @@
             }, 350);
         }
 
-        // Cleanup
+        // Cleanup (keep previewBuffers cached for reuse)
         isModalOpen = false;
         cancelAnimationFrame(animFrameId);
-        previewBuffers = {};
-        previewSegment = null;
-        renderingState = {};
 
         if (playbackContext && playbackContext.state !== 'closed') {
             playbackContext.close().catch(function() {});

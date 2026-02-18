@@ -339,10 +339,15 @@ function showPaymentModal(message) {
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         `;
 
-        content.innerHTML = `
-            <div class="spinner" style="margin: 0 auto 20px; width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #00d4ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <div id="paymentMessage" style="color: white; font-size: 1rem;">${message}</div>
-        `;
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        spinner.style.cssText = 'margin: 0 auto 20px; width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #00d4ff; border-radius: 50%; animation: spin 1s linear infinite;';
+        const msgEl = document.createElement('div');
+        msgEl.id = 'paymentMessage';
+        msgEl.style.cssText = 'color: white; font-size: 1rem;';
+        msgEl.textContent = message;
+        content.appendChild(spinner);
+        content.appendChild(msgEl);
 
         modal.appendChild(content);
         document.body.appendChild(modal);
@@ -413,45 +418,116 @@ async function handlePaymentSuccess() {
 
     showPaymentModal('Verifying payment...');
 
-    // Poll for order completion (webhook may take a few seconds)
+    // Poll for order completion with exponential backoff
     let attempts = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 15;
+    const OVERALL_TIMEOUT = 30000; // 30 seconds
+    const startTime = Date.now();
 
     const checkOrder = async () => {
         attempts++;
 
-        const { data: orders, error } = await window.supabase
-            .from('orders')
-            .select('*')
-            .eq('stripe_session_id', sessionId)
-            .eq('status', 'completed')
-            .single();
-
-        if (error || !orders) {
-            if (attempts < maxAttempts) {
-                updatePaymentModal(`Verifying payment... (${attempts}/${maxAttempts})`);
-                setTimeout(checkOrder, 1000); // Check again in 1 second
-            } else {
-                hidePaymentModal();
-                (typeof showLuvLangToast==='function'?showLuvLangToast('Payment verification is taking longer than expected. Please check your email or try downloading again.'):void 0);
-            }
+        // Overall timeout guard
+        if (Date.now() - startTime > OVERALL_TIMEOUT) {
+            hidePaymentModal();
+            (typeof showLuvLangToast==='function'?showLuvLangToast('Payment verification timed out. Your payment was received — please refresh the page or try downloading again.'):void 0);
             return;
         }
 
-        // Order confirmed!
-        hidePaymentModal();
-        showSuccessToast('Payment verified! You can now download your master.');
+        try {
+            const { data: orders, error } = await window.supabase
+                .from('orders')
+                .select('*')
+                .eq('stripe_session_id', sessionId)
+                .eq('status', 'completed')
+                .single();
 
-        // Clear URL params
-        window.history.replaceState({}, document.title, window.location.pathname);
+            if (error || !orders) {
+                if (attempts < maxAttempts) {
+                    // Exponential backoff: 1s, 1.5s, 2.25s, ...
+                    const delay = Math.min(1000 * Math.pow(1.5, attempts - 1), 5000);
+                    updatePaymentModal(`Verifying payment... (${attempts}/${maxAttempts})`);
+                    setTimeout(checkOrder, delay);
+                } else {
+                    hidePaymentModal();
+                    (typeof showLuvLangToast==='function'?showLuvLangToast('Payment verification is taking longer than expected. Please check your email or try downloading again.'):void 0);
+                }
+                return;
+            }
 
-        // Auto-trigger download
-        setTimeout(() => {
-            downloadMaster();
-        }, 1000);
+            // Order confirmed!
+            hidePaymentModal();
+            showSuccessToast('Payment verified! You can now download your master.');
+
+            // Clear URL params
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Auto-trigger download
+            setTimeout(() => {
+                downloadMaster();
+            }, 1000);
+        } catch (err) {
+            console.error('Payment verification error:', err);
+            if (attempts < maxAttempts) {
+                const delay = Math.min(1000 * Math.pow(1.5, attempts - 1), 5000);
+                setTimeout(checkOrder, delay);
+            } else {
+                hidePaymentModal();
+                (typeof showLuvLangToast==='function'?showLuvLangToast('Payment verification failed. Please refresh the page and try again.'):void 0);
+            }
+        }
     };
 
     await checkOrder();
+}
+
+// Wire exportMasteredWAV to performExport so Stripe integration gets mastered audio
+// performExport is defined in the main HTML and renders through the full wet chain
+if (typeof window.exportMasteredWAV !== 'function') {
+    window.exportMasteredWAV = async function() {
+        // Use the mastered buffer (post-processing) if available
+        var buf = window.masteredAudioBuffer || window.audioBuffer;
+        if (!buf) {
+            throw new Error('No audio buffer available for export');
+        }
+        // Render to WAV blob using the mastered buffer
+        var numberOfChannels = buf.numberOfChannels;
+        var sampleRate = buf.sampleRate;
+        var bitDepth = 24;
+        var bytesPerSample = bitDepth / 8;
+        var blockAlign = numberOfChannels * bytesPerSample;
+        var channelArrays = [];
+        for (var ch = 0; ch < numberOfChannels; ch++) {
+            channelArrays.push(buf.getChannelData(ch));
+        }
+        var dataLength = channelArrays[0].length * numberOfChannels * bytesPerSample;
+        var bufferLength = 44 + dataLength;
+        var arrayBuffer = new ArrayBuffer(bufferLength);
+        var view = new DataView(arrayBuffer);
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + dataLength, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numberOfChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitDepth, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, dataLength, true);
+        var offset = 44;
+        for (var i = 0; i < channelArrays[0].length; i++) {
+            for (var c = 0; c < numberOfChannels; c++) {
+                var sample = Math.max(-1, Math.min(1, channelArrays[c][i]));
+                var intSample = sample < 0 ? sample * 0x800000 : sample * 0x7FFFFF;
+                view.setInt32(offset, intSample, true);
+                offset += 3;
+            }
+        }
+        return new Blob([arrayBuffer], { type: 'audio/wav' });
+    };
 }
 
 // Check for payment success on page load

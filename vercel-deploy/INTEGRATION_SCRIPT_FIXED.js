@@ -392,72 +392,57 @@ function displayIssuesInUI(analysis) {
 }
 
 // ============================================================================
-// PLACEHOLDER FUNCTIONS (Connect to your existing code)
+// BRIDGE FUNCTIONS — delegate to window.* implementations in main HTML
 // ============================================================================
 
 function togglePlayPause() {
-    // Your play/pause logic
-
+    if (typeof window.togglePlayPause === 'function') window.togglePlayPause();
 }
 
 function toggleABComparison() {
-    // Your A/B comparison logic
-
+    if (typeof window.toggleABCompare === 'function') window.toggleABCompare();
 }
 
 function resetAllEQ() {
-    // Your EQ reset logic
-
+    if (typeof window.resetAllEQ === 'function') window.resetAllEQ();
 }
 
 function resetEverything() {
-    // Your full reset logic
-
+    if (typeof window.resetEverything === 'function') window.resetEverything();
 }
 
 function toggleBypassAll() {
-    // Your bypass logic
-
+    if (typeof window.toggleBypassAll === 'function') window.toggleBypassAll();
 }
 
 function toggleMSMode() {
-    // Your M/S toggle logic
-
+    if (typeof window.toggleMSMode === 'function') window.toggleMSMode();
 }
 
 function performUndo() {
     if (window.undoRedoManager) {
-        const state = window.undoRedoManager.undo();
-        if (state) {
-
-            // Apply state
-        }
+        var state = window.undoRedoManager.undo();
+        if (state && typeof window.applyState === 'function') window.applyState(state);
     }
 }
 
 function performRedo() {
     if (window.undoRedoManager) {
-        const state = window.undoRedoManager.redo();
-        if (state) {
-
-            // Apply state
-        }
+        var state = window.undoRedoManager.redo();
+        if (state && typeof window.applyState === 'function') window.applyState(state);
     }
 }
 
 function showSavePresetDialog() {
-    const name = prompt('Enter preset name:');
+    var name = prompt('Enter preset name:');
     if (name && window.presetManager) {
-        const state = getCurrentSettings();
-        window.presetManager.savePreset(name, state);
-
+        window.presetManager.savePreset(name, getCurrentSettings());
     }
 }
 
 function getCurrentSettings() {
-    // Return current state object
     return {
-        eq: [0, 0, 0, 0, 0, 0, 0], // Get from UI
+        eq: [0, 0, 0, 0, 0, 0, 0],
         compression: {},
         masterGain: 0,
         stereoWidth: 100

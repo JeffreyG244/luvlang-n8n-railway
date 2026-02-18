@@ -194,19 +194,10 @@ function switchWASMPrecision(mode) {
     // Global flag for WASM engine (if loaded)
     if (typeof window.masteringEngine !== 'undefined') {
         window.masteringEngine.precisionMode = mode;
-
-    } else {
-
     }
 
     // Store in localStorage for persistence
     try { localStorage.setItem('wasmPrecisionMode', mode); } catch (_) { /* private browsing */ }
-
-    if (mode === '64bit') {
-
-    } else {
-
-    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

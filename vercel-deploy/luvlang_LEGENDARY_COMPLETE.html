@@ -8526,8 +8526,10 @@
                         const desc = descParts.join(':').trim();
 
                         const icon = tile.querySelector('div')?.textContent || '';
-                        tooltip.querySelector('.tooltip-title').innerHTML = icon + ' ' + name;
-                        tooltip.querySelector('.tooltip-desc').textContent = desc || titleText;
+                        const titleEl = tooltip.querySelector('.tooltip-title');
+                        const descEl = tooltip.querySelector('.tooltip-desc');
+                        if (titleEl) titleEl.textContent = icon + ' ' + name;
+                        if (descEl) descEl.textContent = desc || titleText;
 
                         const rect = tile.getBoundingClientRect();
                         let left = rect.right + 12;
@@ -9666,6 +9668,35 @@
                         }
                     }
                 } catch (_) {}
+
+                // Teardown audio chain to release Web Audio nodes
+                try {
+                    const nodesToDisconnect = [
+                        window.compressor, window.limiter, window.masterGain,
+                        window.dryGain, window.wetGain, window.analyser,
+                        window.eqSubFilter, window.eqBassFilter, window.eqLowMidFilter,
+                        window.eqMidFilter, window.eqHighMidFilter, window.eqHighFilter,
+                        window.eqAirFilter, window.dynEqLowFilter, window.dynEqMidFilter,
+                        window.dynEqHighFilter, window.dynEqLowComp, window.dynEqMidComp,
+                        window.dynEqHighComp, window.limiterWorklet
+                    ];
+                    nodesToDisconnect.forEach(function(node) {
+                        if (node && typeof node.disconnect === 'function') {
+                            try { node.disconnect(); } catch (_) {}
+                        }
+                    });
+                    if (window.audioContext && window.audioContext.state !== 'closed') {
+                        window.audioContext.close().catch(function() {});
+                    }
+                } catch (_) {}
+
+                // Cancel any pending RAF
+                if (typeof _timelineRAF !== 'undefined' && _timelineRAF) {
+                    cancelAnimationFrame(_timelineRAF);
+                }
+                if (typeof animationFrame !== 'undefined' && animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                }
             });
 
             // Close modals on Escape key
@@ -9974,13 +10005,7 @@
                             window.aiSuite.loadAll().then(success => {
                                 if (success) {
 
-                                    // DISABLED: Auto-trigger causes browser freeze on large files
-                                    // User can manually click "RUN FULL AI MASTER" button when ready
-                                    // setTimeout(() => {
-                                    //     if (typeof runFullAIMaster === 'function' && window.audioBuffer) {
-                                    //         runFullAIMaster();
-                                    //     }
-                                    // }, 500);
+                                    // Auto-trigger disabled — user clicks "RUN FULL AI MASTER" manually
                                 } else {
                                     console.warn('⚠️ Some AI modules failed to load');
                                 }
@@ -12878,6 +12903,9 @@
 
                 } catch (error) {
                     console.error('⚠️ Error decoding audio buffer:', error);
+                    if (typeof showLuvLangToast === 'function') {
+                        showLuvLangToast('Failed to decode audio file. Please try a different format (WAV, MP3, FLAC).');
+                    }
                 }
 
                 // NO AUTO-PROCESSING - User must click AI button to master
@@ -14511,11 +14539,14 @@
                 const badgeClass = withinTol ? 'target' : 'warn';
                 const badgeText = withinTol ? 'On Target' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)} LU`;
 
-                lufsRow.querySelector('.rc-metric-values').innerHTML = `
+                const lufsValuesEl = lufsRow.querySelector('.rc-metric-values');
+                if (lufsValuesEl) {
+                    lufsValuesEl.innerHTML = `
                     <span class="rc-metric-value before">${beforeLUFS.toFixed(1)} LUFS</span>
                     <span style="color:rgba(255,255,255,0.2);">&rarr;</span>
                     <span class="rc-metric-value after">${afterLUFS.toFixed(1)} LUFS</span>
                     <span class="rc-badge ${badgeClass}">${badgeText}</span>`;
+                }
             }
 
             // Update Peak row with before/after
@@ -14532,11 +14563,14 @@
                 else { peakBadgeClass = 'good'; peakBadgeText = 'Safe'; }
 
                 if (typeof beforePeak === 'number' && isFinite(beforePeak)) {
-                    peakRow.querySelector('.rc-metric-values').innerHTML = `
+                    const peakValuesEl = peakRow.querySelector('.rc-metric-values');
+                    if (peakValuesEl) {
+                        peakValuesEl.innerHTML = `
                         <span class="rc-metric-value before">${beforePeak.toFixed(1)} dBTP</span>
                         <span style="color:rgba(255,255,255,0.2);">&rarr;</span>
                         <span class="rc-metric-value after">${afterPeak.toFixed(1)} dBTP</span>
                         <span class="rc-badge ${peakBadgeClass}">${peakBadgeText}</span>`;
+                    }
                 }
             }
 
@@ -19498,6 +19532,8 @@
                     }, 150);
                 });
                 _wfObserver.observe(_wfContainer);
+                // Disconnect on page unload
+                window.addEventListener('beforeunload', function() { _wfObserver.disconnect(); });
             }
         } catch (e) { /* ResizeObserver not supported */ }
 
@@ -21958,6 +21994,7 @@
                 // Redraw waveform with mastered audio (shows post-processing waveform)
                 if (window.masteredAudioBuffer && typeof drawWaveformFromBuffer === 'function') {
                     window.audioBuffer = window.masteredAudioBuffer;
+                    audioBuffer = window.masteredAudioBuffer; // Keep local var in sync
                     drawWaveformFromBuffer(window.masteredAudioBuffer, true);
                 }
 
@@ -23584,7 +23621,16 @@
         // File input change handler
         document.getElementById('referenceFileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
-            if (file) processReferenceFile(file);
+            if (file) {
+                try {
+                    await processReferenceFile(file);
+                } catch (err) {
+                    console.error('Reference file processing failed:', err);
+                    if (typeof showLuvLangToast === 'function') {
+                        showLuvLangToast('Failed to process reference file. Please try a different audio file.');
+                    }
+                }
+            }
         });
 
         document.getElementById('applyReferenceBtn').addEventListener('click', () => {
@@ -24055,16 +24101,7 @@
                 ctx.font = '14px Arial';
                 ctx.fillText('Load audio file to see waveform...', 260, 65);
 
-                // WAVEFORM NOW DRAWS EVERY FRAME in draw() loop - no need for interval
-                // (Disabled to prevent duplicate drawing)
-                /*
-                window.waveformRedrawInterval = setInterval(() => {
-                    const buffer = window.audioBuffer || audioBuffer;
-                    if (buffer) {
-                        drawWaveformFromBuffer(buffer);
-                    }
-                }, 200);
-                */
+                // Waveform draws every frame in draw() loop — no interval needed
 
                 // Check if audio is already loaded
                 if (window.audioBuffer || audioBuffer) {
@@ -24117,8 +24154,18 @@
         // AI Results Display Helper
         function showAIResults(title, content) {
             const display = document.getElementById('aiResultsDisplay');
+            if (!display) return;
             display.style.display = 'block';
-            display.innerHTML = `<div style="color: #00d4ff; font-weight: 700; margin-bottom: 8px;">${title}</div>${content}`;
+            // title and content are always internal strings, not user input
+            const titleDiv = document.createElement('div');
+            titleDiv.style.cssText = 'color: #00d4ff; font-weight: 700; margin-bottom: 8px;';
+            titleDiv.textContent = title;
+            display.textContent = '';
+            display.appendChild(titleDiv);
+            // Content may contain safe HTML from internal code (progress bars, etc.)
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = content;
+            display.appendChild(contentDiv);
             display.scrollTop = 0;
         }
 
@@ -26991,6 +27038,10 @@
             subtree: true
         });
     });
+    // Disconnect observer on unload to prevent memory leak
+    window.addEventListener('beforeunload', function() {
+        if (_lockObserver) _lockObserver.disconnect();
+    });
 
     // Override applyTierRestrictions to be a no-op for legendary
     var _origApplyTier = window.applyTierRestrictions;
@@ -27050,8 +27101,10 @@
             // dryGain = DIRECT/ORIGINAL, wetGain = PROCESSED/MASTERED
             // ═══════════════════════════════════════════════════════════════════════════
             if (window.dryGain && window.wetGain && window.audioContext) {
-                window.dryGain.gain.value = 0.0;
-                window.wetGain.gain.value = 1.0;
+                // Use short ramp to avoid click/pop artifacts
+                var now = window.audioContext.currentTime;
+                window.dryGain.gain.linearRampToValueAtTime(0.0, now + 0.005);
+                window.wetGain.gain.linearRampToValueAtTime(1.0, now + 0.005);
                 window.isMasteringApplied = true;
                 window.abCompareMode = false;
 
@@ -27160,8 +27213,8 @@
 
         };
 
-        // v7.6.3j: Guide removed — user goes straight to interface after mastering
-        window.showGenrePresetGuide = function() { /* removed */ };
+        // v7.6.3j: Guide removed — stub kept for callers
+        window.showGenrePresetGuide = function() {};
 
         // Keep as no-op for backwards compatibility
         window.closeGenrePresetGuide = function() {
@@ -27169,19 +27222,7 @@
             if (tooltip) tooltip.remove();
         };
 
-        /* ═══ REMOVED: showGenrePresetGuide body ═══
-        window.showGenrePresetGuide = function() {
-            if (window.genrePresetGuideShown) return;
-            window.genrePresetGuideShown = true;
-
-            const genreSection = document.getElementById('genreSection');
-            if (!genreSection) return;
-
-            genreSection.style.transition = 'all 0.3s ease';
-            genreSection.style.boxShadow = '0 0 0 2px rgba(124, 184, 255, 0.5), 0 0 20px rgba(124, 184, 255, 0.2)';
-            genreSection.style.borderRadius = '8px';
-
-            // Create tooltip element
+        /* Removed: Old genrePresetGuide tooltip code — see git history
             const tooltip = document.createElement('div');
             tooltip.id = 'genrePresetGuideTooltip';
             tooltip.innerHTML = `
@@ -31192,8 +31233,14 @@
             }
         };
 
+        // Cache canvas reference outside RAF loop for performance (Phase 5A)
+        let _timelineCanvasRef = null;
+
         function renderLoudnessTimeline() {
-            const canvas = document.getElementById('loudnessTimelineCanvas');
+            if (!_timelineCanvasRef) {
+                _timelineCanvasRef = document.getElementById('loudnessTimelineCanvas');
+            }
+            const canvas = _timelineCanvasRef;
             if (!canvas || !canvas.offsetWidth) {
                 _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
                 return;
@@ -31261,6 +31308,7 @@
             ctx.fillRect(0, 0, w, hotZone);
 
             if (_timelineHistory.length < 2) {
+                if (_timelineRAF) cancelAnimationFrame(_timelineRAF);
                 _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
                 // Update value display
                 const valEl = document.getElementById('loudnessTimelineValue');
@@ -31335,6 +31383,7 @@
                 else valEl.style.color = '#ff6b6b';
             }
 
+            if (_timelineRAF) cancelAnimationFrame(_timelineRAF);
             _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
         }
 
@@ -31359,6 +31408,7 @@
                 const canvasWrapper = container.querySelector('div[style*="height: 80px"]');
                 if (canvasWrapper) _timelineResizeObserver.observe(canvasWrapper);
             }
+            if (_timelineRAF) cancelAnimationFrame(_timelineRAF);
             _timelineRAF = requestAnimationFrame(renderLoudnessTimeline);
         });
 
@@ -32330,6 +32380,8 @@
             }
         };
 
+        var ALBUM_MAX_TRACKS = 50;
+
         window.handleAlbumFiles = function(files) {
             if (!files || files.length === 0) return;
 
@@ -32337,6 +32389,13 @@
                 if (!file.type.startsWith('audio/')) continue;
                 // Avoid duplicates
                 if (window._albumTracks.some(t => t.name === file.name)) continue;
+                // Cap at maximum tracks
+                if (window._albumTracks.length >= ALBUM_MAX_TRACKS) {
+                    if (typeof showLuvLangToast === 'function') {
+                        showLuvLangToast('Album limit reached (' + ALBUM_MAX_TRACKS + ' tracks maximum).');
+                    }
+                    break;
+                }
                 window._albumTracks.push({
                     file: file,
                     name: file.name,

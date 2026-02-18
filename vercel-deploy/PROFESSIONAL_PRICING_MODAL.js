@@ -30,6 +30,9 @@ const FEATURE_TOOLTIPS = {
     'All 24 AI Modules': 'Full access to every processing module including neural models and adaptive learning.'
 };
 
+// Read Stripe links from env config (injected at build time by build-env.js)
+const _pricingEnv = (typeof window !== 'undefined' && window.__ENV__) || {};
+
 // Tier configurations with detailed features
 const PRICING_TIERS = {
     basic: {
@@ -50,7 +53,7 @@ const PRICING_TIERS = {
             { text: 'Stereo Width Control', included: false },
             { text: 'Multiband Compression', included: false }
         ],
-        stripeLink: 'https://buy.stripe.com/test_bJeeVf4vKaqY6vDbYY7EQ03'
+        stripeLink: _pricingEnv.STRIPE_LINK_BASIC || ''
     },
     advanced: {
         name: 'Advanced',
@@ -71,7 +74,7 @@ const PRICING_TIERS = {
             { text: 'Advanced Metering Suite', included: true },
             { text: 'Multiband Compression', included: false }
         ],
-        stripeLink: 'https://buy.stripe.com/test_9B614pd2g42A1bjd327EQ01'
+        stripeLink: _pricingEnv.STRIPE_LINK_ADVANCED || ''
     },
     premium: {
         name: 'Premium',
@@ -91,7 +94,7 @@ const PRICING_TIERS = {
             { text: 'Unlimited Presets', included: true },
             { text: 'Priority Processing', included: true }
         ],
-        stripeLink: 'https://buy.stripe.com/test_5kQ9AVbYceHe6vDe767EQ02'
+        stripeLink: _pricingEnv.STRIPE_LINK_PREMIUM || ''
     }
 };
 
@@ -560,6 +563,14 @@ function createPricingModal() {
             const tier = this.dataset.tier;
             const config = PRICING_TIERS[tier];
 
+            if (!config.stripeLink) {
+                if (typeof window.showLuvLangToast === 'function') {
+                    window.showLuvLangToast('Payment link not configured for this tier. Please contact support.');
+                } else {
+                    alert('Payment link not configured for this tier. Please contact support.');
+                }
+                return;
+            }
             window.location.href = config.stripeLink;
         });
     });
