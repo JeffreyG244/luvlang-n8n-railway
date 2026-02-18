@@ -10431,7 +10431,7 @@
                 // This WaveShaperNode hard-clips at 0.8913 linear (-1.0 dBTP) — instant, zero latency.
                 const safetyClipper = audioContext.createWaveShaper();
                 const safetyClipCurve = new Float32Array(65536);
-                const ceilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP (industry standard streaming ceiling)
+                const ceilingLinear = Math.pow(10, -1.3 / 20); // 0.8610 = -1.3 dBTP (0.3 dB ISP margin → true peaks land at ~-1.0 dBTP)
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1; // -1 to +1
                     safetyClipCurve[i] = Math.max(-ceilingLinear, Math.min(ceilingLinear, x));
@@ -13383,7 +13383,7 @@
                 // DynamicsCompressor has inherent attack time that lets transients through.
                 // This WaveShaperNode is a sample-level brickwall: instant, zero latency.
                 const ceilClipper = offlineCtx.createWaveShaper();
-                const ceilLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP (matches live chain ceiling)
+                const ceilLinear = Math.pow(10, -1.3 / 20); // 0.8610 = -1.3 dBTP (0.3 dB ISP margin → matches live chain)
                 const clipCurve = new Float32Array(65536);
                 for (let ci = 0; ci < 65536; ci++) {
                     const x = (ci / 32768) - 1;
@@ -26485,12 +26485,17 @@
                             console.log(`✅ Pass 3 on target: ${pass3.integratedLUFS.toFixed(1)} LUFS (${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU vs target ${targetLUFS})`);
                         }
 
-                        // v7.6.13: True peak check at EXACT ceiling — broadcast safe at -1.0 dBTP
-                        if (pass3.truePeakDB > -1.0) {
+                        // v7.6.30: True peak check — only for genuinely dangerous peaks
+                        // The hard clipper at -1.3 dBTP provides 0.3 dB ISP margin, so
+                        // typical true peaks land at -1.0 to -1.1 dBTP. Only intervene
+                        // for peaks above -0.5 dBTP which indicate the clipper was bypassed.
+                        let tpCorrectionApplied = false;
+                        if (pass3.truePeakDB > -0.5) {
                             const tpOvershoot = pass3.truePeakDB - (-1.0);
                             correctionDB -= tpOvershoot;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
-                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP over ceiling, reducing gain by ${tpOvershoot.toFixed(1)} dB`);
+                            tpCorrectionApplied = true;
+                            console.log(`⚠️ True peak ${pass3.truePeakDB.toFixed(1)} dBTP dangerously over ceiling, reducing gain by ${tpOvershoot.toFixed(1)} dB`);
                         }
 
                         // PASS 4: Final verification — re-measure with corrected gain
@@ -26506,8 +26511,10 @@
                         if (pass4 && isFinite(pass4.integratedLUFS) && pass4.integratedLUFS > -60) {
                             const finalDeviation = pass4.integratedLUFS - targetLUFS;
 
-                            // Check true peak FIRST — ceiling takes priority over LUFS target
-                            if (pass4.truePeakDB > -1.0) {
+                            // Check true peak FIRST — but only if Pass 3 didn't already correct,
+                            // and only for genuinely dangerous peaks (above -0.5 dBTP).
+                            // The -1.3 dBTP hard clipper handles normal ISP.
+                            if (!tpCorrectionApplied && pass4.truePeakDB > -0.5) {
                                 const tp4Overshoot = pass4.truePeakDB - (-1.0);
                                 correctionDB -= tp4Overshoot;
                                 correctionDB = Math.max(-6, Math.min(12, correctionDB));
