@@ -46,7 +46,9 @@ async function downloadMaster() {
         //    The actual mastered file export happens AFTER payment.
         // ──────────────────────────────────────────────────────────────────
 
-        const tier = window.selectedTier || 'basic';
+        const TIER_ALIASES = { instant: 'basic', precision: 'advanced', legendary: 'premium' };
+        const rawTier = window.selectedTier || 'basic';
+        const tier = TIER_ALIASES[rawTier] || rawTier;
         const filename = window.currentAudioFilename || 'untitled';
         const targetLUFS = window.analysisResults?.integratedLUFS || -14;
         const truePeak = window.analysisResults?.maxPeak || 0;

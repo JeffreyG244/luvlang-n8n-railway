@@ -12,6 +12,13 @@ const TIER_PRICES = {
     premium: 5999
 };
 
+// Map legacy tier names to current names
+const TIER_ALIASES = {
+    instant: 'basic',
+    precision: 'advanced',
+    legendary: 'premium'
+};
+
 const TIER_INFO = {
     basic: {
         name: 'BASIC',
@@ -55,11 +62,20 @@ module.exports = async (req, res) => {
     }
 
     try {
-        const { tier, sessionData, successUrl, cancelUrl } = req.body;
+        // Vercel auto-parses JSON bodies, but handle string fallback
+        let body = req.body || {};
+        if (typeof body === 'string') {
+            try { body = JSON.parse(body); } catch (e) { body = {}; }
+        }
+        const { tier: rawTier, sessionData, successUrl, cancelUrl } = body;
+
+        // Normalize tier name (support legacy names)
+        const tier = TIER_ALIASES[rawTier] || rawTier;
 
         // Validate tier
         if (!TIER_PRICES[tier]) {
-            return res.status(400).json({ error: 'Invalid tier' });
+            console.error('Invalid tier received:', JSON.stringify({ rawTier, tier, bodyKeys: Object.keys(body), bodyType: typeof req.body }));
+            return res.status(400).json({ error: 'Invalid tier', received: rawTier || null });
         }
 
         const tierInfo = TIER_INFO[tier];
