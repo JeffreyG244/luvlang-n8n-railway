@@ -10424,14 +10424,14 @@
                 limiter.knee.value = 0;             // Hard knee = true brickwall
                 limiter.ratio.value = 20;           // Brick-wall ratio
                 limiter.attack.value = 0.001;       // 1ms attack
-                limiter.release.value = 0.080;      // v7.6.3j: 80ms (balanced: fast enough for transients, no bass distortion)
+                limiter.release.value = 0.050;      // 50ms — fast recovery for rare peaks (safety net, not musical)
 
                 // v7.6.13d: BRICKWALL CLIPPER at -1.0 dBTP — sample-level ceiling enforcement
                 // DynamicsCompressor limiters have inherent attack time; transients slip through.
                 // This WaveShaperNode hard-clips at 0.8913 linear (-1.0 dBTP) — instant, zero latency.
                 const safetyClipper = audioContext.createWaveShaper();
                 const safetyClipCurve = new Float32Array(65536);
-                const ceilingLinear = Math.pow(10, -1.5 / 20); // 0.8414 = -1.5 dBTP (accounts for inter-sample overshoot)
+                const ceilingLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP (industry standard streaming ceiling)
                 for (let i = 0; i < 65536; i++) {
                     const x = (i / 32768) - 1; // -1 to +1
                     safetyClipCurve[i] = Math.max(-ceilingLinear, Math.min(ceilingLinear, x));
@@ -11344,11 +11344,11 @@
 
                 // The actual limiter (now with look-ahead) — PRIMARY musical limiter (v7.5.0)
                 const lookAheadLimiter = audioContext.createDynamicsCompressor();
-                lookAheadLimiter.threshold.value = -1.5;  // -1.5dBTP — gives brickwall 0.5dB headroom (was -1.0)
+                lookAheadLimiter.threshold.value = -1.5;  // -1.5dBTP — gives brickwall 0.5dB headroom
                 lookAheadLimiter.knee.value = 0;         // Hard knee for limiting
-                lookAheadLimiter.ratio.value = 12;       // Musical limiting ratio (was 20 — brick wall)
-                lookAheadLimiter.attack.value = 0.001;   // 1ms (was 0.5ms)
-                lookAheadLimiter.release.value = 0.080;  // 80ms — more musical (was 50ms)
+                lookAheadLimiter.ratio.value = 20;       // Brickwall ratio — catches peaks cleanly with 5ms look-ahead
+                lookAheadLimiter.attack.value = 0.001;   // 1ms
+                lookAheadLimiter.release.value = 0.100;  // 100ms — transparent, no pumping
 
                 window.lookAheadLimiter = {
                     enabled: true,
@@ -13377,13 +13377,13 @@
                 lim2.knee.value = chainParams.limiterKnee || 0;
                 lim2.ratio.value = 20;
                 lim2.attack.value = 0.001;
-                lim2.release.value = 0.080;
+                lim2.release.value = 0.050; // Fast recovery — safety net, matches live chain
 
                 // v7.6.13d: Hard clipper at -1.0 dBTP — guarantees NO peak exceeds ceiling
                 // DynamicsCompressor has inherent attack time that lets transients through.
                 // This WaveShaperNode is a sample-level brickwall: instant, zero latency.
                 const ceilClipper = offlineCtx.createWaveShaper();
-                const ceilLinear = Math.pow(10, -1.5 / 20); // 0.8414 = -1.5 dBTP (accounts for inter-sample overshoot)
+                const ceilLinear = Math.pow(10, -1.0 / 20); // 0.8913 = -1.0 dBTP (matches live chain ceiling)
                 const clipCurve = new Float32Array(65536);
                 for (let ci = 0; ci < 65536; ci++) {
                     const x = (ci / 32768) - 1;

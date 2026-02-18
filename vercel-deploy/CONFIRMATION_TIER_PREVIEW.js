@@ -1030,9 +1030,9 @@
             var data = buffer.getChannelData(ch);
             for (var i = 0; i < data.length; i++) {
                 var s = data[i] * gainLinear;
-                // Soft clip at ±0.98 to prevent digital overs
-                if (s > 0.98) s = 0.98 + 0.02 * Math.tanh((s - 0.98) / 0.02);
-                else if (s < -0.98) s = -0.98 - 0.02 * Math.tanh((-s - 0.98) / 0.02);
+                // Soft clip at ±0.995 to prevent digital overs (high ceiling = minimal coloration)
+                if (s > 0.995) s = 0.995 + 0.005 * Math.tanh((s - 0.995) / 0.005);
+                else if (s < -0.995) s = -0.995 - 0.005 * Math.tanh((-s - 0.995) / 0.005);
                 data[i] = s;
             }
         }
@@ -1081,7 +1081,7 @@
                           (tierId === 'advanced') ? 1.0 : 1.05;
 
         var eqBands = [
-            { freq: 40,    type: 'highshelf', key: 'sub',     Q: 0.707 },
+            { freq: 60,    type: 'lowshelf',  key: 'sub',     Q: 0.707 },
             { freq: 120,   type: 'peaking',   key: 'bass',    Q: 0.8 },
             { freq: 400,   type: 'peaking',   key: 'lowmid',  Q: 0.9 },
             { freq: 1000,  type: 'peaking',   key: 'mid',     Q: 0.8 },
@@ -1099,6 +1099,17 @@
             currentNode.connect(filter);
             currentNode = filter;
         });
+
+        // Basic: subtle air shelf (+0.8 dB above 12kHz for a more mastered feel)
+        if (tierId === 'basic') {
+            var basicAir = offline.createBiquadFilter();
+            basicAir.type = 'highshelf';
+            basicAir.frequency.value = 12000;
+            basicAir.gain.value = 0.8;
+            basicAir.Q.value = 0.707;
+            currentNode.connect(basicAir);
+            currentNode = basicAir;
+        }
 
         // Premium: extra air shelf (+1.0 dB above 14kHz for shimmer)
         if (tierId === 'premium') {
@@ -1136,11 +1147,11 @@
             currentNode.connect(boxCut);
             currentNode = boxCut;
 
-            // Presence lift: open up the mix
+            // Presence lift: open up the mix (wider Q = more musical)
             var presence = offline.createBiquadFilter();
             presence.type = 'peaking';
             presence.frequency.value = 3000;
-            presence.Q.value = 1.2;
+            presence.Q.value = isPremium ? 1.0 : 0.9;
             presence.gain.value = isPremium ? 1.2 : 1.0;
             currentNode.connect(presence);
             currentNode = presence;
@@ -1167,7 +1178,7 @@
             busComp.knee.value = 10;
             busComp.ratio.value = 1.8;
             busComp.attack.value = 0.020;
-            busComp.release.value = 0.200;
+            busComp.release.value = 0.250; // longer release = smoother, less pumping
         } else if (tierId === 'advanced') {
             busComp.threshold.value = -16;
             busComp.knee.value = 8;
@@ -1256,16 +1267,22 @@
             laLimiter.knee.value = 0;
             laLimiter.ratio.value = 20;
             laLimiter.attack.value = 0.001;
-            laLimiter.release.value = 0.050;
+            // Premium: longer release for maximum transparency
+            // Advanced: moderate release for clean limiting
+            laLimiter.release.value = (tierId === 'premium') ? 0.100 : 0.080;
             currentNode.connect(laLimiter);
             currentNode = laLimiter;
         }
 
         // ═══════════════════════════════════════════════════════════
         // ALL TIERS: Brickwall limiter (final safety net)
+        // Premium: -0.5 dBTP (soft clipper + look-ahead already caught peaks)
+        // Advanced: -0.8 dBTP (look-ahead provides clean headroom)
+        // Basic: -1.0 dBTP (conservative — single limiter stage)
         // ═══════════════════════════════════════════════════════════
         var brickwall = offline.createDynamicsCompressor();
-        brickwall.threshold.value = -1.0;
+        brickwall.threshold.value = (tierId === 'premium') ? -0.5 :
+                                    (tierId === 'advanced') ? -0.8 : -1.0;
         brickwall.knee.value = 0;
         brickwall.ratio.value = 20;
         brickwall.attack.value = 0.001;
@@ -1433,7 +1450,7 @@
     function applySoftClipper(ctx, input) {
         var shaper = ctx.createWaveShaper();
         var curve = new Float32Array(4096);
-        var ceiling = 0.944; // ~-0.5 dB
+        var ceiling = 0.955; // ~-0.4 dB — higher ceiling = less coloration, more transparent
         for (var i = 0; i < 4096; i++) {
             var x = (i / 4095) * 2 - 1;
             if (Math.abs(x) < ceiling) {
