@@ -276,18 +276,35 @@ class MultibandCompressor {
      */
     setBypass(bypassed) {
         if (bypassed) {
-            // Disconnect all bands
             Object.values(this.bands).forEach(band => {
                 band.output.disconnect();
             });
-
+            this._enabled = false;
         } else {
-            // Reconnect all bands
             Object.values(this.bands).forEach(band => {
                 band.output.connect(this.output);
             });
-
+            this._enabled = true;
         }
+    }
+
+    /** Enable multiband processing */
+    enable() { this.setBypass(false); }
+
+    /** Bypass/disable multiband processing */
+    bypass() { this.setBypass(true); }
+    disable() { this.setBypass(true); }
+
+    /** Alias for loadPreset */
+    applyPreset(name) { this.loadPreset(name); }
+
+    /** Adjust all band thresholds by an offset (dB) */
+    adjustThresholds(offsetDB) {
+        Object.keys(this.bands).forEach(bandName => {
+            var band = this.bands[bandName];
+            band.compressor.threshold.value += offsetDB;
+        });
+        this.applyAutoMakeupGain();
     }
 
     /**
