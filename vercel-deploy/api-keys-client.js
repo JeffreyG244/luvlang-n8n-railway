@@ -9,7 +9,7 @@
 
 const API_KEY_CONFIG = {
     maxKeys: 5,
-    tiers: ['instant', 'precision', 'legendary'],
+    tiers: ['basic', 'advanced', 'premium'],
     defaultRateLimit: 60,
     defaultMonthlyQuota: 100
 };
@@ -79,7 +79,7 @@ async function listApiKeys() {
  *
  * @param {object} options - Key options
  * @param {string} options.name - Key name
- * @param {string} options.tierAccess - Tier access level (instant, precision, legendary)
+ * @param {string} options.tierAccess - Tier access level (basic, advanced, premium)
  * @param {number} options.rateLimit - Requests per minute
  * @param {number} options.monthlyQuota - Monthly request limit
  * @param {string} options.expiresAt - Expiration date (ISO string)
@@ -98,7 +98,7 @@ async function createApiKey(options = {}) {
             },
             body: JSON.stringify({
                 name: options.name || 'My API Key',
-                tierAccess: options.tierAccess || 'instant',
+                tierAccess: options.tierAccess || 'basic',
                 rateLimit: options.rateLimit || API_KEY_CONFIG.defaultRateLimit,
                 monthlyQuota: options.monthlyQuota || API_KEY_CONFIG.defaultMonthlyQuota,
                 expiresAt: options.expiresAt || null,
@@ -428,9 +428,9 @@ function showCreateKeyForm() {
                         color: white;
                         font-size: 1rem;
                     ">
-                        <option value="instant">INSTANT ($9.99/track)</option>
-                        <option value="precision">PRECISION ($19.99/track)</option>
-                        <option value="legendary">LEGENDARY ($29.99/track)</option>
+                        <option value="basic">BASIC ($12.99/track)</option>
+                        <option value="advanced">ADVANCED ($29.99/track)</option>
+                        <option value="premium">PREMIUM ($59.99/track)</option>
                     </select>
                 </div>
 

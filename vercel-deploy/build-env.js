@@ -21,9 +21,9 @@ const config = {
     STRIPE_LINK_BASIC: clean(process.env.STRIPE_LINK_BASIC),
     STRIPE_LINK_ADVANCED: clean(process.env.STRIPE_LINK_ADVANCED),
     STRIPE_LINK_PREMIUM: clean(process.env.STRIPE_LINK_PREMIUM),
-    STRIPE_PRICE_INSTANT: clean(process.env.STRIPE_PRICE_INSTANT),
-    STRIPE_PRICE_PRECISION: clean(process.env.STRIPE_PRICE_PRECISION),
-    STRIPE_PRICE_LEGENDARY: clean(process.env.STRIPE_PRICE_LEGENDARY)
+    STRIPE_PRICE_BASIC: clean(process.env.STRIPE_PRICE_BASIC || process.env.STRIPE_PRICE_INSTANT),
+    STRIPE_PRICE_ADVANCED: clean(process.env.STRIPE_PRICE_ADVANCED || process.env.STRIPE_PRICE_PRECISION),
+    STRIPE_PRICE_PREMIUM: clean(process.env.STRIPE_PRICE_PREMIUM || process.env.STRIPE_PRICE_LEGENDARY)
 };
 
 // Generate env-config.js with values injected at build time
@@ -40,9 +40,9 @@ window.__ENV__ = {
     STRIPE_LINK_BASIC: ${JSON.stringify(config.STRIPE_LINK_BASIC)},
     STRIPE_LINK_ADVANCED: ${JSON.stringify(config.STRIPE_LINK_ADVANCED)},
     STRIPE_LINK_PREMIUM: ${JSON.stringify(config.STRIPE_LINK_PREMIUM)},
-    STRIPE_PRICE_INSTANT: ${JSON.stringify(config.STRIPE_PRICE_INSTANT)},
-    STRIPE_PRICE_PRECISION: ${JSON.stringify(config.STRIPE_PRICE_PRECISION)},
-    STRIPE_PRICE_LEGENDARY: ${JSON.stringify(config.STRIPE_PRICE_LEGENDARY)},
+    STRIPE_PRICE_BASIC: ${JSON.stringify(config.STRIPE_PRICE_BASIC)},
+    STRIPE_PRICE_ADVANCED: ${JSON.stringify(config.STRIPE_PRICE_ADVANCED)},
+    STRIPE_PRICE_PREMIUM: ${JSON.stringify(config.STRIPE_PRICE_PREMIUM)},
     _loaded: true,
     _error: null
 };

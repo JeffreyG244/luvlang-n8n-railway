@@ -52,9 +52,9 @@ const LUVLANG_CONFIG = (() => {
 
         // Price IDs from environment variables
         priceIds: {
-            instant: ENV.STRIPE_PRICE_INSTANT || '',
-            precision: ENV.STRIPE_PRICE_PRECISION || '',
-            legendary: ENV.STRIPE_PRICE_LEGENDARY || ''
+            basic: ENV.STRIPE_PRICE_BASIC || ENV.STRIPE_PRICE_INSTANT || '',
+            advanced: ENV.STRIPE_PRICE_ADVANCED || ENV.STRIPE_PRICE_PRECISION || '',
+            premium: ENV.STRIPE_PRICE_PREMIUM || ENV.STRIPE_PRICE_LEGENDARY || ''
         }
     };
 

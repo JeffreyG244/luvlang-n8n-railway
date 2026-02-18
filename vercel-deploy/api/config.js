@@ -45,9 +45,9 @@ module.exports = function handler(req, res) {
         STRIPE_LINK_BASIC: process.env.STRIPE_LINK_BASIC || '',
         STRIPE_LINK_ADVANCED: process.env.STRIPE_LINK_ADVANCED || '',
         STRIPE_LINK_PREMIUM: process.env.STRIPE_LINK_PREMIUM || '',
-        STRIPE_PRICE_INSTANT: process.env.STRIPE_PRICE_INSTANT || '',
-        STRIPE_PRICE_PRECISION: process.env.STRIPE_PRICE_PRECISION || '',
-        STRIPE_PRICE_LEGENDARY: process.env.STRIPE_PRICE_LEGENDARY || ''
+        STRIPE_PRICE_BASIC: process.env.STRIPE_PRICE_BASIC || process.env.STRIPE_PRICE_INSTANT || '',
+        STRIPE_PRICE_ADVANCED: process.env.STRIPE_PRICE_ADVANCED || process.env.STRIPE_PRICE_PRECISION || '',
+        STRIPE_PRICE_PREMIUM: process.env.STRIPE_PRICE_PREMIUM || process.env.STRIPE_PRICE_LEGENDARY || ''
     };
 
     res.status(200).json(publicConfig);

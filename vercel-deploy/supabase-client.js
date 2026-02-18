@@ -565,9 +565,9 @@ const SUBSCRIPTION_TIERS = {
             priorityProcessing: false
         }
     },
-    legendary: {
-        name: 'Legendary',
-        price: 29.99,
+    premium: {
+        name: 'Premium',
+        price: 59.99,
         limits: {
             presets: -1, // Unlimited
             historyDays: 365,
@@ -670,8 +670,9 @@ async function getAvailableFeatures() {
  * Locks/unlocks premium features
  */
 async function applyTierRestrictions() {
-    // Legendary tier override — skip all restrictions
-    if (window._tierOverride === 'legendary' || window.userTier === 'legendary') {
+    // Premium tier override — skip all restrictions
+    const tier = window._tierOverride || window.userTier;
+    if (tier === 'premium' || tier === 'legendary') {
         document.querySelectorAll('.feature-locked').forEach(el => {
             el.classList.remove('feature-locked');
             el.removeAttribute('data-locked');
