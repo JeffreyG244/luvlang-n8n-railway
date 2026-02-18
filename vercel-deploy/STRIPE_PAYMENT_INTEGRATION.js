@@ -8,7 +8,7 @@
  *
  * Features:
  * - Checks if user has already paid for file
- * - Creates Stripe checkout session via Edge Function
+ * - Creates Stripe checkout session via Vercel serverless endpoint
  * - Handles payment verification
  * - Generates 60-second signed download URLs
  * - Shows loading states during webhook processing
@@ -24,7 +24,7 @@ async function downloadMaster() {
     try {
 
         // Show loading state
-        showPaymentModal('Checking payment status...');
+        showPaymentModal('Preparing secure payment...');
 
         // ──────────────────────────────────────────────────────────────────
         // 1. CHECK IF USER IS AUTHENTICATED
@@ -39,90 +39,66 @@ async function downloadMaster() {
         }
 
         // ──────────────────────────────────────────────────────────────────
-        // 2. GET FILE PATH FROM STORAGE (or use processed buffer)
+        // 2. CREATE STRIPE CHECKOUT SESSION
+        //    No file upload needed — Stripe only needs tier + metadata.
+        //    The actual mastered file export happens AFTER payment.
         // ──────────────────────────────────────────────────────────────────
 
-        const filePath = await getCurrentFilePath();
-        if (!filePath) {
-            throw new Error('No mastered file to download. Please master your audio first.');
+        const tier = window.selectedTier || 'basic';
+        const filename = window.currentAudioFilename || 'untitled';
+        const targetLUFS = window.analysisResults?.integratedLUFS || -14;
+        const truePeak = window.analysisResults?.maxPeak || 0;
+        const genre = window.selectedPreMasterGenre || 'unknown';
+        const platform = getSelectedPlatform();
+
+        const response = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tier: tier,
+                sessionData: {
+                    filename: filename,
+                    userId: user.id,
+                    targetLUFS: targetLUFS,
+                    truePeak: truePeak,
+                    genre: genre,
+                    platform: platform,
+                },
+                successUrl: window.location.origin + '/?session_id={CHECKOUT_SESSION_ID}',
+                cancelUrl: window.location.origin + '/',
+            }),
+        });
+
+        if (!response.ok) {
+            const errBody = await response.json().catch(function() { return {}; });
+            throw new Error(errBody.error || 'Failed to create checkout session');
         }
 
-        // ──────────────────────────────────────────────────────────────────
-        // 3. CHECK IF USER HAS ALREADY PAID
-        // ──────────────────────────────────────────────────────────────────
+        const data = await response.json();
 
-        const { data: orders, error: checkError } = await window.supabase
-            .from('orders')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('file_path', filePath)
-            .eq('status', 'completed')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (checkError) {
-            console.error('❌ Error checking order status:', checkError);
-            throw new Error('Failed to check payment status');
+        if (!data.url) {
+            throw new Error('No checkout URL returned');
         }
-
-        // ──────────────────────────────────────────────────────────────────
-        // 4. IF PAID → GENERATE SIGNED URL & DOWNLOAD
-        // ──────────────────────────────────────────────────────────────────
-
-        if (orders && orders.length > 0) {
-
-            updatePaymentModal('Generating secure download link...');
-
-            // Generate 60-second signed URL
-            const { data: signedUrlData, error: urlError } = await window.supabase.storage
-                .from('masters')
-                .createSignedUrl(filePath, 60); // 60 seconds expiry
-
-            if (urlError || !signedUrlData) {
-                console.error('❌ Error creating signed URL:', urlError);
-                throw new Error('Failed to generate download link');
-            }
-
-            // Start download
-            const downloadUrl = signedUrlData.signedUrl;
-            const originalFilename = orders[0].original_filename || 'mastered_track.wav';
-
-            // Create temporary download link
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = originalFilename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            hidePaymentModal();
-            showSuccessToast('Download started! Your file is ready.');
-
-            return;
-        }
-
-        // ──────────────────────────────────────────────────────────────────
-        // 5. IF NOT PAID → CREATE CHECKOUT SESSION
-        // ──────────────────────────────────────────────────────────────────
-
-        updatePaymentModal('Preparing secure payment...');
-
-        const checkoutUrl = await createCheckoutSession(filePath);
 
         hidePaymentModal();
 
-        // Redirect to Stripe Checkout
-        window.location.href = checkoutUrl;
+        // ──────────────────────────────────────────────────────────────────
+        // 3. REDIRECT TO STRIPE CHECKOUT
+        // ──────────────────────────────────────────────────────────────────
+
+        window.location.href = data.url;
 
     } catch (error) {
         console.error('❌ Error in downloadMaster:', error);
         hidePaymentModal();
-        (typeof showLuvLangToast==='function'?showLuvLangToast(error.message || 'An error occurred. Please try again.'):void 0);
+        if (typeof showLuvLangToast === 'function') {
+            showLuvLangToast(error.message || 'An error occurred. Please try again.');
+        }
     }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CREATE CHECKOUT SESSION - Call Edge Function
+// CREATE CHECKOUT SESSION - Call Vercel Serverless Endpoint
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 async function createCheckoutSession(filePath) {
@@ -137,32 +113,47 @@ async function createCheckoutSession(filePath) {
         // Get original filename and metadata
         const originalFilename = window.currentAudioFilename || 'mastered_track.wav';
         const metadata = {
-            genre: window.currentGenrePreset || 'unknown',
+            genre: window.selectedPreMasterGenre || 'unknown',
             platform: getSelectedPlatform(),
             lufs: window.analysisResults?.integratedLUFS,
             true_peak: window.analysisResults?.maxPeak,
         };
 
-        // Call create-checkout Edge Function
-        const { data, error } = await window.supabase.functions.invoke('create-checkout', {
-            body: {
-                file_path: filePath,
-                original_filename: originalFilename,
-                metadata: metadata,
-                tier: window.selectedTier || 'basic',
+        // Call Vercel serverless endpoint
+        const response = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
             },
+            body: JSON.stringify({
+                tier: window.selectedTier || 'basic',
+                sessionData: {
+                    file_path: filePath,
+                    filename: originalFilename,
+                    userId: session.user.id,
+                    targetLUFS: metadata.lufs,
+                    truePeak: metadata.true_peak,
+                    genre: metadata.genre,
+                    platform: metadata.platform,
+                },
+                successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancelUrl: `${window.location.origin}/cancel`,
+            }),
         });
 
-        if (error) {
-            console.error('❌ Checkout creation error:', error);
-            throw new Error(error.message || 'Failed to create checkout session');
+        if (!response.ok) {
+            const errBody = await response.json().catch(() => ({}));
+            throw new Error(errBody.error || 'Failed to create checkout session');
         }
 
-        if (!data.session_url) {
+        const data = await response.json();
+
+        if (!data.url) {
             throw new Error('No checkout URL returned');
         }
 
-        return data.session_url;
+        return data.url;
 
     } catch (error) {
         console.error('❌ Error creating checkout:', error);
@@ -184,7 +175,7 @@ async function getCurrentFilePath() {
     }
 
     // Otherwise, upload the current buffer to storage first
-    if (!audioBuffer) {
+    if (!window.audioBuffer) {
         return null;
     }
 

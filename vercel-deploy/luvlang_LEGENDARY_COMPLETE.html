@@ -204,7 +204,7 @@
             background: linear-gradient(180deg, #101018 0%, #0a0a10 100%);
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 24px 16px 250px;
+            padding: 24px 16px 80px;
             border-left: 1px solid rgba(184, 79, 255, 0.08);
             min-width: 0;
         }
@@ -348,9 +348,15 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        .ai-master-btn-floating:active {
-            transform: scale(0.97) translateY(0);
-            transition: transform 0.1s ease;
+        .ai-master-btn-floating:active,
+        .ai-master-btn-floating.pressed {
+            transform: scale(0.91) translateY(2px);
+            transition: transform 0.06s ease;
+            box-shadow:
+                0 1px 6px rgba(0, 212, 255, 0.15),
+                inset 0 2px 8px rgba(0, 0, 0, 0.35);
+            border-color: rgba(0, 255, 136, 0.8);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 212, 255, 0.15) 100%);
         }
 
         /* Processing state */
@@ -627,7 +633,14 @@
         .selector-btn.active {
             border-color: #00d4ff;
             background: rgba(0, 212, 255, 0.2);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.4), 0 0 30px rgba(0, 212, 255, 0.15), inset 0 0 8px rgba(0, 212, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Console platform buttons — lit up glow when selected */
+        .console-platform-btn.active {
+            box-shadow: 0 0 12px rgba(29, 185, 84, 0.5), 0 0 24px rgba(29, 185, 84, 0.2), inset 0 0 6px rgba(29, 185, 84, 0.1) !important;
+            transform: scale(1.04);
         }
 
         /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3438,7 +3451,7 @@
                 padding: 18px 16px;
             }
             .right-sidebar {
-                padding: 18px 16px 250px;
+                padding: 18px 16px 80px;
             }
 
             .center-main {
@@ -3518,7 +3531,7 @@
                 transform: translateX(100%);
                 transition: transform 0.3s ease;
                 padding-top: 20px;
-                padding-bottom: 250px;
+                padding-bottom: 80px;
                 overflow-y: auto;
             }
 
@@ -4343,6 +4356,8 @@
         // Tour format selection handlers
         window.tourSelectedFormat = 'wav';
         window.tourSelectedBitDepth = 24;
+        window.selectedExportFormat = 'wav';
+        window.exportFormat = 'wav';
 
         function selectTourFormat(btn, format) {
             document.querySelectorAll('.format-tour-btn').forEach(b => b.classList.remove('selected'));
@@ -4466,8 +4481,6 @@
             <div id="tourProgress1" style="width: 40px; height: 5px; border-radius: 3px; background: linear-gradient(90deg, #00d4ff, #b84fff); box-shadow: 0 0 12px rgba(0, 212, 255, 0.5); transition: all 0.4s;"></div>
             <div id="tourProgress2" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
             <div id="tourProgress3" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress4" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
-            <div id="tourProgress5" style="width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.12); transition: all 0.4s;"></div>
         </div>
 
         <!-- Step Counter Badge -->
@@ -4483,7 +4496,7 @@
                 text-transform: uppercase;
                 letter-spacing: 3px;
                 font-weight: 700;
-            ">STEP 1 OF 5</span>
+            ">STEP 1 OF 3</span>
         </div>
 
         <!-- Main Title -->
@@ -4664,7 +4677,13 @@
          ═══════════════════════════════════════════════════════════════════════════ -->
     <div class="ai-command-bar" id="aiCommandBar" style="display: none;">
         <!-- Master Button - Professional Processing -->
-        <button class="ai-master-btn-floating" id="aiMasterBtnFloating" onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');showLuvLangToast('Please wait for the page to fully load.');}">
+        <button class="ai-master-btn-floating" id="aiMasterBtnFloating"
+            ontouchstart="this.classList.add('pressed')"
+            ontouchend="var b=this;setTimeout(function(){b.classList.remove('pressed')},200)"
+            onmousedown="this.classList.add('pressed')"
+            onmouseup="var b=this;setTimeout(function(){b.classList.remove('pressed')},200)"
+            onmouseleave="this.classList.remove('pressed')"
+            onclick="if(typeof runFullAIMaster==='function'){runFullAIMaster();}else{console.error('runFullAIMaster not ready');showLuvLangToast('Please wait for the page to fully load.');}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
                 <defs><linearGradient id="masterIconGrad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#00ff88"/></linearGradient></defs>
                 <rect x="2" y="10" width="3" height="4" rx="1.5" fill="url(#masterIconGrad)"><animate attributeName="height" values="4;10;4" dur="0.8s" repeatCount="indefinite"/><animate attributeName="y" values="10;7;10" dur="0.8s" repeatCount="indefinite"/></rect>
@@ -5046,7 +5065,7 @@
                 <div style="margin-bottom: 14px;">
                     <div style="font-size: 0.6rem; font-weight: 600; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;">Platform Target</div>
                     <div id="consolePlatformGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
-                        <button type="button" class="console-platform-btn active" data-platform="spotify" onclick="selectConsolePlatform(this, 'spotify')" style="padding: 8px 4px; background: rgba(29,185,84,0.15); border: 1px solid rgba(29,185,84,0.4); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                        <button type="button" class="console-platform-btn active" data-platform="spotify" onclick="selectConsolePlatform(this, 'spotify')" style="padding: 8px 4px; background: rgba(29,185,84,0.13); border: 1px solid rgba(29,185,84,0.53); border-radius: 6px; cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 0 12px rgba(29,185,84,0.5), 0 0 24px rgba(29,185,84,0.2), inset 0 0 6px rgba(29,185,84,0.1); transform: scale(1.04);">
                             <div style="font-size: 0.85rem; margin-bottom: 2px;">🟢</div>
                             <div style="font-size: 0.6rem; font-weight: 700; color: #1DB954;">-14</div>
                             <div style="font-size: 0.45rem; color: rgba(255,255,255,0.5); margin-top: 1px;">Spotify</div>
@@ -7704,6 +7723,40 @@
                 <button id="albumMasterAllBtn" onclick="masterAllAlbumTracks()" style="display: none; width: 100%; padding: 8px; margin-top: 8px; background: linear-gradient(135deg, rgba(184,79,255,0.2), rgba(0,212,255,0.2)); border: 1px solid rgba(184,79,255,0.3); border-radius: 6px; color: #b84fff; font-size: 0.7rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">Master All Tracks</button>
             </div>
 
+            <!-- FORMAT & BIT DEPTH SELECTOR -->
+            <div class="selector-group">
+                <div class="section-title">Output Format</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+                    <div class="selector-btn active export-format-btn" data-format="wav" onclick="window.selectSidebarFormat(this, 'wav')" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">WAV</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">Lossless</div>
+                    </div>
+                    <div class="selector-btn export-format-btn" data-format="mp3" onclick="window.selectSidebarFormat(this, 'mp3')" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">MP3</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">320kbps</div>
+                    </div>
+                    <div class="selector-btn export-format-btn" data-format="flac" onclick="window.selectSidebarFormat(this, 'flac')" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">FLAC</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">Lossless</div>
+                    </div>
+                    <div class="selector-btn export-format-btn" data-format="aac" onclick="window.selectSidebarFormat(this, 'aac')" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">AAC</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">256kbps</div>
+                    </div>
+                </div>
+                <div class="section-title" style="margin-top: 0;">Bit Depth</div>
+                <div style="display: flex; gap: 6px;">
+                    <div class="selector-btn active" id="bitDepth24Btn" onclick="window.selectSidebarBitDepth(this, 24)" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">24-bit</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">Professional</div>
+                    </div>
+                    <div class="selector-btn" id="bitDepth16Btn" onclick="window.selectSidebarBitDepth(this, 16)" style="flex: 1; padding: 6px 4px;">
+                        <div style="font-size: 0.75rem; font-weight: 700;">16-bit</div>
+                        <div style="font-size: 0.55rem; opacity: 0.5; margin-top: 1px;">CD Quality</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- PLATFORM SELECTOR -->
             <div class="selector-group">
                 <div class="section-title">Platform Target</div>
@@ -9377,7 +9430,7 @@
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          STRIPE PAYMENT - Per-Song Purchases
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="stripe-client.js"></script>
+    <script src="stripe-client.js?v=20260217"></script>
 
     <!-- Tier Comparison Modal -->
     <script src="TIER_COMPARISON_MODAL.js"></script>
@@ -12459,8 +12512,16 @@
                 wetGain.connect(outputMixer);
 
                 // Final output to speakers + analyser for metering
+                // voiceDuckGain sits between analyser and destination — ONLY used for
+                // Chloe voice ducking.  This isolates ducking from outputMixer.gain,
+                // which is shared by the reference-track A/B toggle and mastering chain.
+                const voiceDuckGain = audioContext.createGain();
+                voiceDuckGain.gain.value = 1.0;
+                window.voiceDuckGain = voiceDuckGain;
+
                 outputMixer.connect(analyser);
-                analyser.connect(audioContext.destination);
+                analyser.connect(voiceDuckGain);
+                voiceDuckGain.connect(audioContext.destination);
 
                 // Connect analyser for metering (stereo split)
                 outputMixer.connect(stereoSplitter);
@@ -14575,6 +14636,7 @@
         };
 
         // Narrates mastering results after post-mastering report card updates
+        // Fires on EVERY master (including re-masters)
         window.chloeNarrateMasterResult = function() {
             if (typeof window.speakWithDucking !== 'function') return;
             if (window.tourActive) return;
@@ -14589,30 +14651,48 @@
             const scores = lastEntry ? lastEntry.scores : {};
             const gradeLabel = lastEntry ? lastEntry.grade : '';
 
+            // Perfect score — tell user this track is maxed out
+            if (totalScore >= 100) {
+                const measuredValue = typeof v.verifiedLUFS === 'number' ? Math.abs(v.verifiedLUFS).toFixed(1) : '14.0';
+                const targetValue = Math.abs(v.targetLUFS || -14);
+                const bitDepth = document.getElementById('bitDepthSelector')
+                    ? document.getElementById('bitDepthSelector').value : '24';
+                const message = `Your track hit a perfect 100 out of 100 — that's as good as it gets. ` +
+                    `Loudness landed right at negative ${measuredValue} LUFS on a negative ${targetValue} target, ` +
+                    `${bitDepth}-bit output. There's nothing left to improve on this one. ` +
+                    `Go ahead and export, or upload a new track to master next.`;
+                setTimeout(() => window.speakWithDucking(message), 800);
+                return;
+            }
+
             // Get the grade
             let gradeText = '';
             if (gradeLabel === 'A+' && totalScore >= 95) {
-                gradeText = `Amazing! Your track earned a perfect ${gradeLabel} grade with ${totalScore} out of 100!`;
+                gradeText = `Your track earned a ${gradeLabel} with ${totalScore} out of 100.`;
             } else if (gradeLabel === 'A+' || gradeLabel === 'A') {
-                gradeText = `Your track earned an ${gradeLabel} grade with ${totalScore} out of 100!`;
+                gradeText = `Your track earned an ${gradeLabel} with ${totalScore} out of 100.`;
             } else if (gradeLabel) {
-                gradeText = `Your track scored a ${gradeLabel} grade with ${totalScore} out of 100.`;
+                gradeText = `Your track scored a ${gradeLabel} with ${totalScore} out of 100.`;
             } else {
-                gradeText = `Mastering complete!`;
+                gradeText = `Mastering complete.`;
             }
 
-            // Key improvement — announce the measured LUFS
-            let improvement = '';
+            // Announce LUFS target and verified measurement + bit depth
+            let lufsInfo = '';
             const afterLUFS = v.verifiedLUFS;
+            const targetLUFS = v.targetLUFS || -14;
+            const bitDepth = document.getElementById('bitDepthSelector')
+                ? document.getElementById('bitDepthSelector').value : '24';
             if (typeof afterLUFS === 'number' && isFinite(afterLUFS)) {
                 const measuredValue = Math.abs(afterLUFS).toFixed(1);
-                improvement = `Loudness is at negative ${measuredValue} LUFS.`;
+                const targetValue = Math.abs(targetLUFS);
+                lufsInfo = `Loudness is at negative ${measuredValue} LUFS on a negative ${targetValue} target, ${bitDepth}-bit output.`;
             }
 
             // Genre/sub-genre advice when score isn't perfect
             let advice = '';
             if (totalScore >= 95) {
-                advice = `That's a perfect master! You're ready to export.`;
+                advice = `That's a near-perfect master. You're ready to export.`;
             } else if (totalScore > 0) {
                 // Find the weakest category
                 const categories = [
@@ -14625,18 +14705,18 @@
                 const weakest = categories[0];
 
                 if (weakest.name === 'dynamics' && weakest.score < 25) {
-                    advice = `Your ${weakest.label} score is holding you back. Here's a tip — try switching to a different genre or sub-genre preset. Each genre has different dynamic range targets, so picking one that matches your track's natural dynamics can push you to a perfect score.`;
+                    advice = `Your ${weakest.label} score is holding you back. Try switching to a different genre or sub-genre preset — each one targets different dynamics, and the right match can push you to a perfect score.`;
                 } else if (weakest.name === 'dynamics') {
-                    advice = `Your ${weakest.label} could be better. Try changing your genre or sub-genre preset — different genres expect different dynamic ranges, and finding the right match can bump your score up to a perfect A plus.`;
+                    advice = `Your ${weakest.label} could be better. Try a different genre or sub-genre preset to bump your score higher.`;
                 } else if (weakest.score < 20) {
-                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset — the right genre match can make a big difference.`;
+                    advice = `Your ${weakest.label} score needs some work. Try a different genre or sub-genre preset — the right match can make a big difference.`;
                 } else {
-                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track. Each preset targets different specs, and the right one could push you to a perfect score.`;
+                    advice = `You're close! Try switching your genre or sub-genre preset to better match your track.`;
                 }
             }
 
-            const message = `${gradeText} ${improvement} ${advice}`;
-            setTimeout(() => window.speakWithDucking(message), 1200);
+            const message = `${gradeText} ${lufsInfo} ${advice}`;
+            setTimeout(() => window.speakWithDucking(message), 800);
         };
 
         function resetTrackReportCard() {
@@ -18245,6 +18325,60 @@
             timeDisplay.textContent = `${currentTime} / ${duration}`;
         });
 
+        // Reset meters to zero when playback stops
+        function resetMetersToZero() {
+            // Phase correlation
+            const phaseEl = document.getElementById('phaseValue');
+            if (phaseEl) {
+                phaseEl.textContent = '0.00';
+                phaseEl.style.color = 'rgba(255,255,255,0.3)';
+            }
+            const phaseLabel = document.getElementById('phaseLabel');
+            if (phaseLabel) phaseLabel.textContent = '';
+
+            // True Peak
+            const tpEl = document.getElementById('truePeakValue');
+            if (tpEl) {
+                tpEl.textContent = '-\u221E';
+                tpEl.style.color = 'rgba(255,255,255,0.3)';
+            }
+
+            // Compliance badge
+            const compLabel = document.getElementById('complianceLabel');
+            const compValue = document.getElementById('complianceValue');
+            const compLight = document.getElementById('complianceLight');
+            const compBadge = document.getElementById('complianceBadge');
+            if (compLabel) { compLabel.textContent = 'STANDBY'; compLabel.style.color = 'rgba(255,255,255,0.3)'; }
+            if (compValue) compValue.textContent = '-\u221E dBTP';
+            if (compLight) { compLight.style.background = 'rgba(255,255,255,0.2)'; compLight.style.boxShadow = 'none'; }
+            if (compBadge) { compBadge.style.borderColor = 'rgba(255,255,255,0.1)'; compBadge.style.background = 'rgba(255,255,255,0.03)'; }
+
+            // LUFS bar indicator — park at far left
+            const lufsBar = document.getElementById('lufsBarIndicator');
+            if (lufsBar) lufsBar.style.left = '0%';
+
+            // LUFS number — show -∞ unless meters are locked (post-master shows stable value)
+            if (!metersLocked) {
+                const measuredEl = document.getElementById('measuredLufsValue');
+                if (measuredEl) {
+                    measuredEl.textContent = '-\u221E';
+                    measuredEl.style.color = 'rgba(255,255,255,0.3)';
+                    measuredEl.style.textShadow = 'none';
+                }
+            }
+
+            // Meter LED
+            const led = document.getElementById('meterActiveLED');
+            if (led) { led.style.background = 'rgba(255,255,255,0.15)'; led.style.boxShadow = 'none'; }
+
+            // Peak LED
+            const peakLED = document.getElementById('peakLED');
+            if (peakLED) { peakLED.style.background = 'rgba(255,255,255,0.15)'; peakLED.style.boxShadow = 'none'; }
+        }
+
+        audioElement.addEventListener('pause', resetMetersToZero);
+        audioElement.addEventListener('ended', resetMetersToZero);
+
         progressBar.addEventListener('click', async (e) => {
             if (!audioElement.duration) return;
 
@@ -20613,6 +20747,9 @@
         let _lastLockedLufsText = null;
 
         function updateMeters(dataArray) {
+            // Don't update meters when audio is not playing — resetMetersToZero handles cleanup
+            if (audioElement && (audioElement.paused || audioElement.ended)) return;
+
             // PROFESSIONAL METERING: Integrated LUFS locked to stable value (no fluctuation)
             // Peak and Phase meters stay REAL-TIME (should fluctuate with audio)
             if (metersLocked && lockedLUFS !== null) {
@@ -20858,10 +20995,11 @@
                     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                     // LUFS Bar Indicator — linear dB scale (v7.6.25)
                     // Range: -36 to -6 (30 dB), labels every 6 dB = linear mapping
-                    // Uses momentaryLUFS for real-time movement (matches live LUFS meter)
+                    // When meters are locked (post-mastering), bar shows stable integrated LUFS
+                    // to match the locked number display. Pre-mastering uses smoothed LUFS.
                     const lufsBarIndicator = document.getElementById('lufsBarIndicator');
                     if (lufsBarIndicator && !window._isSpeaking) {
-                        const barLUFS = momentaryLUFS;
+                        const barLUFS = (metersLocked && lockedLUFS !== null) ? lockedLUFS : smoothedLUFS;
                         const clampedLUFS = Math.max(-36, Math.min(-6, barLUFS));
                         const position = (clampedLUFS + 36) / 30 * 100;
                         lufsBarIndicator.style.left = `${position}%`;
@@ -22991,16 +23129,7 @@
                 formatZone.style.animation = 'fadeIn 0.3s ease';
             }
 
-            // Have Chloe guide the user
-            if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
-                var hist = window._masteringHistory;
-                var last = hist && hist.length > 0 ? hist[hist.length - 1] : null;
-                var gradeText = last ? last.grade : '';
-                var msg = 'Time to export! ';
-                if (gradeText) msg += 'Your master scored an ' + gradeText + '. ';
-                msg += 'WAV is the best quality — lossless at 24-bit. FLAC gives you the same quality but smaller file size. MP3 is great for streaming and sharing. Pick your format and bit depth, then we will get your track ready to go.';
-                window.speakWithDucking(msg);
-            }
+            // Voice guidance moved to chloeNarrateMasterResult to avoid competing speeches
         };
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26119,11 +26248,11 @@
                     const pass3 = await measureChainLoudness(window.audioBuffer, pass3Params);
                     if (pass3 && isFinite(pass3.integratedLUFS) && pass3.integratedLUFS > -60) {
                         const deviation = pass3.integratedLUFS - targetLUFS;
-                        // v7.6.12: Tighter correction — 95% factor, 0.3 LU threshold
-                        // Previous 70% at 0.5 LU was leaving tracks consistently +0.4 LU above target
-                        if (Math.abs(deviation) > 0.3) {
-                            // Correct toward target: 95% correction factor (aggressive, near-exact)
-                            const microCorrection = -deviation * 0.95;
+                        // v7.6.14: Precision correction — full factor, 0.05 LU threshold
+                        // Must nail -14.0 / -16.0 exactly for Spotify/Apple compliance
+                        if (Math.abs(deviation) > 0.05) {
+                            // Correct toward target: 100% correction (Pass 4 catches any overshoot)
+                            const microCorrection = -deviation * 1.0;
                             correctionDB += microCorrection;
                             correctionDB = Math.max(-6, Math.min(12, correctionDB));
                             console.log(`🎯 Pass 3 correction: offline shows ${deviation > 0 ? '+' : ''}${deviation.toFixed(2)} LU, correcting ${microCorrection.toFixed(2)} dB → final=${correctionDB.toFixed(1)} dB`);
@@ -26158,16 +26287,16 @@
                                 correctionDB -= tp4Overshoot;
                                 correctionDB = Math.max(-6, Math.min(12, correctionDB));
                                 console.log(`⚠️ Pass 4 true peak ${pass4.truePeakDB.toFixed(1)} dBTP — reducing gain by ${tp4Overshoot.toFixed(1)} dB (peak ceiling takes priority)`);
-                            } else if (Math.abs(finalDeviation) > 0.2) {
-                                // Only correct LUFS if peaks are safe
-                                const maxBoost = pass4.truePeakDB < -2.0 ? Math.abs(finalDeviation) * 0.98
-                                    : Math.min(Math.abs(finalDeviation) * 0.98, Math.abs(pass4.truePeakDB + 1.0));
+                            } else if (Math.abs(finalDeviation) > 0.05) {
+                                // v7.6.14: Precision — 0.05 LU threshold, full correction
+                                const maxBoost = pass4.truePeakDB < -2.0 ? Math.abs(finalDeviation)
+                                    : Math.min(Math.abs(finalDeviation), Math.abs(pass4.truePeakDB + 1.0));
                                 if (finalDeviation < 0) {
                                     // Too quiet — can boost, but cap at peak headroom
-                                    correctionDB += Math.min(maxBoost, -finalDeviation * 0.98);
+                                    correctionDB += Math.min(maxBoost, -finalDeviation * 1.0);
                                 } else {
                                     // Too loud — always safe to reduce
-                                    correctionDB -= finalDeviation * 0.98;
+                                    correctionDB -= finalDeviation * 1.0;
                                 }
                                 correctionDB = Math.max(-6, Math.min(12, correctionDB));
                                 console.log(`🎯 Pass 4 fine-tune: ${finalDeviation > 0 ? '+' : ''}${finalDeviation.toFixed(2)} LU off, peak headroom: ${(-1.0 - pass4.truePeakDB).toFixed(1)} dB → corrected to ${correctionDB.toFixed(1)} dB`);
@@ -26991,13 +27120,13 @@
          💳 STRIPE PAYMENT INTEGRATION - Secure payment & file delivery
          Defines downloadMaster() for payment-gated export
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="STRIPE_PAYMENT_INTEGRATION.js"></script>
+    <script src="STRIPE_PAYMENT_INTEGRATION.js?v=20260217c"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          🎛️ EXPORT CONFIRMATION + TIER PREVIEW - A/B compare tiers before checkout
          Overrides proceedToPayment to show confirmation modal with previews
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <script src="CONFIRMATION_TIER_PREVIEW.js"></script>
+    <script src="CONFIRMATION_TIER_PREVIEW.js?v=20260217c"></script>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
          ✓ MASTERING COMPLETE OVERLAY - Post-processing user guidance
@@ -27331,13 +27460,7 @@
                 voiceTourSpotlight.style.display = 'none';
             }
 
-            // Voice prompt to guide user to pick a genre (only on first master, skip if tour active)
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function' && !window.tourActive && !window._postMasterVoicePlayed) {
-                    window._postMasterVoicePlayed = true;
-                    window.speakWithDucking("Nice! Your track just ran through our full mastering chain - we're talking EQ, compression, limiting, the whole nine. Now here's where it gets fun. Each genre has 10 different presets tuned by pro engineers. Try a few and watch the EQ faders move in real-time - see what vibes with your sound.");
-                }
-            }, 500);
+            // Voice guidance consolidated into chloeNarrateMasterResult (avoids competing speeches)
 
             // Scroll genre section into view
             genreSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -27382,12 +27505,15 @@
                 rightSidebar.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
-            // Voice prompt to direct user to the main interface (skip if voice tour is active)
-            setTimeout(() => {
-                if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
-                    window.speakWithDucking("Alright, here's your workspace. The spectrum shows everything happening in your mix. Those genre buttons on the left? Each one opens up 10 different styles to choose from. Play around with them - that's what they're there for. When you're happy with how it sounds, hit export and you're done.");
-                }
-            }, 500);
+            // Workspace voice guide — first master only, delayed to not override LUFS announcement
+            if (!window._workspaceVoicePlayed) {
+                window._workspaceVoicePlayed = true;
+                setTimeout(() => {
+                    if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
+                        window.speakWithDucking("Those genre buttons on the left each have 10 different styles tuned by pro engineers. Try a few and watch the EQ faders move in real-time. When you're happy with how it sounds, hit export.");
+                    }
+                }, 8000); // 8s delay — lets LUFS announcement finish first
+            }
 
             // Highlight the spectrum/EQ panel with enhanced glow
             const spectrumPanel = document.querySelector('.spectrum-panel');
@@ -27571,6 +27697,24 @@
 
         // openPricingModal — entry point from QC Check "Proceed to Export" and Export button
         window.openPricingModal = function() {
+            // Stop playback before opening the modal — check actual element state
+            if (audioElement && !audioElement.paused) {
+                audioElement.pause();
+            }
+            // Also stop via AudioContext if source node is active
+            if (window.audioContext && window.audioContext.state === 'running') {
+                // Suspend briefly to guarantee silence, then resume for modal previews
+                window.audioContext.suspend().then(function() {
+                    window.audioContext.resume();
+                });
+            }
+            // Sync UI state
+            isPlaying = false;
+            if (playBtn) playBtn.textContent = '\u25B6';
+
+            // Stop Chloe if she's talking
+            if (typeof stopSpeaking === 'function') stopSpeaking();
+
             window.selectedExportFormat = window.selectedExportFormat || 'wav';
             window.exportFormat = window.selectedExportFormat;
             if (typeof window.proceedToPayment === 'function') {
@@ -30243,12 +30387,16 @@
                 b.classList.remove('active');
                 b.style.background = 'rgba(255,255,255,0.03)';
                 b.style.borderColor = 'rgba(255,255,255,0.1)';
+                b.style.boxShadow = 'none';
+                b.style.transform = '';
                 const labels = b.querySelectorAll('div');
                 if (labels[1]) labels[1].style.color = 'rgba(255,255,255,0.7)';
             });
             btn.classList.add('active');
-            btn.style.background = `${accentColor}15`;
-            btn.style.borderColor = `${accentColor}66`;
+            btn.style.background = `${accentColor}22`;
+            btn.style.borderColor = `${accentColor}88`;
+            btn.style.boxShadow = `0 0 12px ${accentColor}80, 0 0 24px ${accentColor}33, inset 0 0 6px ${accentColor}1a`;
+            btn.style.transform = 'scale(1.04)';
             const activeLabels = btn.querySelectorAll('div');
             if (activeLabels[1]) activeLabels[1].style.color = accentColor;
 
@@ -30342,6 +30490,55 @@
             }
             const bitDepthInput = document.getElementById('bitDepthSelector');
             if (bitDepthInput) bitDepthInput.value = depth;
+            updateConsoleSummary();
+        };
+
+        // Sidebar Format selector — syncs with console
+        window.selectSidebarFormat = function(btn, format) {
+            document.querySelectorAll('.export-format-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            window.tourSelectedFormat = format;
+            window.selectedExportFormat = format;
+            window.exportFormat = format;
+            // Sync console format buttons
+            document.querySelectorAll('.console-format-btn').forEach(b => {
+                b.classList.remove('selected');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                var d = b.querySelector('div'); if (d) d.style.color = 'rgba(255,255,255,0.7)';
+            });
+            var consoleMatch = document.querySelector('.console-format-btn[data-format="' + format + '"]');
+            if (consoleMatch) {
+                consoleMatch.classList.add('selected');
+                consoleMatch.style.background = 'rgba(0,212,255,0.12)';
+                consoleMatch.style.borderColor = 'rgba(0,212,255,0.4)';
+                var d = consoleMatch.querySelector('div'); if (d) d.style.color = '#00d4ff';
+            }
+            updateConsoleSummary();
+        };
+
+        // Sidebar Bit Depth selector — syncs with console
+        window.selectSidebarBitDepth = function(btn, depth) {
+            document.getElementById('bitDepth24Btn')?.classList.remove('active');
+            document.getElementById('bitDepth16Btn')?.classList.remove('active');
+            btn.classList.add('active');
+            window.tourSelectedBitDepth = depth;
+            var bitDepthInput = document.getElementById('bitDepthSelector');
+            if (bitDepthInput) bitDepthInput.value = depth;
+            // Sync console bit depth buttons
+            document.querySelectorAll('.console-bitdepth-btn').forEach(b => {
+                b.classList.remove('selected');
+                b.style.background = 'rgba(255,255,255,0.03)';
+                b.style.borderColor = 'rgba(255,255,255,0.1)';
+                var d = b.querySelector('div'); if (d) d.style.color = 'rgba(255,255,255,0.7)';
+            });
+            var consoleMatch = document.querySelector('.console-bitdepth-btn[data-depth="' + depth + '"]');
+            if (consoleMatch) {
+                consoleMatch.classList.add('selected');
+                consoleMatch.style.background = depth === 24 ? 'rgba(0,255,136,0.1)' : 'rgba(0,212,255,0.12)';
+                consoleMatch.style.borderColor = depth === 24 ? 'rgba(0,255,136,0.3)' : 'rgba(0,212,255,0.4)';
+                var d = consoleMatch.querySelector('div'); if (d) d.style.color = depth === 24 ? '#00ff88' : '#00d4ff';
+            }
             updateConsoleSummary();
         };
 
@@ -30452,6 +30649,21 @@
             // End the voice tour
             if (typeof window.endVoiceTour === 'function') {
                 window.endVoiceTour();
+            }
+
+            // Check if track already scored 100% — no need to re-master
+            const _hist = window._masteringHistory;
+            const _lastEntry = _hist && _hist.length > 0 ? _hist[_hist.length - 1] : null;
+            if (_lastEntry && _lastEntry.total >= 100) {
+                if (typeof window.speakWithDucking === 'function') {
+                    window.speakWithDucking(
+                        "This track already scored a perfect 100 — it's at its full potential. " +
+                        "There's nothing more to gain from re-mastering. Go ahead and hit Export to download your master, " +
+                        "or upload a new track to work on next."
+                    );
+                }
+                showLuvLangToast('Track already at 100% — ready to export!');
+                return;
             }
 
             // Set mastering in progress flag
@@ -32241,9 +32453,10 @@
         };
 
         function applyCodecPreview() {
-            if (!window.audioContext || !window.outputMixer) return;
+            if (!window.audioContext || !window.voiceDuckGain) return;
             try {
                 const ac = window.audioContext;
+                const duckNode = window.voiceDuckGain;
                 // MP3 128kbps: sharp cutoff at ~16kHz, slight pre-echo/ringing
                 if (!window._codecPreviewFilter) {
                     window._codecPreviewFilter = ac.createBiquadFilter();
@@ -32251,12 +32464,11 @@
                     window._codecPreviewFilter.frequency.value = 16000;
                     window._codecPreviewFilter.Q.value = 0.5;
                 }
-                // Insert filter before output
-                // Disconnect outputMixer → destination, insert filter
+                // Insert filter between voiceDuckGain and destination
                 try {
-                    window.outputMixer.disconnect(ac.destination);
+                    duckNode.disconnect(ac.destination);
                 } catch (_) {}
-                window.outputMixer.connect(window._codecPreviewFilter);
+                duckNode.connect(window._codecPreviewFilter);
                 window._codecPreviewFilter.connect(ac.destination);
             } catch (e) {
                 console.warn('Codec preview error:', e);
@@ -32264,14 +32476,15 @@
         }
 
         function removeCodecPreview() {
-            if (!window.audioContext || !window.outputMixer) return;
+            if (!window.audioContext || !window.voiceDuckGain) return;
             try {
                 const ac = window.audioContext;
+                const duckNode = window.voiceDuckGain;
                 if (window._codecPreviewFilter) {
-                    try { window.outputMixer.disconnect(window._codecPreviewFilter); } catch (_) {}
+                    try { duckNode.disconnect(window._codecPreviewFilter); } catch (_) {}
                     try { window._codecPreviewFilter.disconnect(ac.destination); } catch (_) {}
                 }
-                window.outputMixer.connect(ac.destination);
+                duckNode.connect(ac.destination);
             } catch (e) {
                 console.warn('Codec preview removal error:', e);
             }
@@ -32895,8 +33108,7 @@
                 steps: [
                     { title: 'Upload Your Track', desc: 'Drop your track right here, or click to browse. We support WAV, MP3, FLAC, and more.', action: 'Click the glowing upload area', voice: 'Hey there, welcome to Luv Lang. I\'m Chloe, and I\'ll be walking you through everything. Let\'s get started. Just drag your track onto that glowing area, or click to browse your files. We support WAV, MP3, FLAC, and more.' },
                     { title: 'Time to Master', desc: 'Hit MASTER and we\'ll analyze and master your track automatically. The AI detects your genre and applies professional processing.', action: 'Hit the MASTER button', voice: 'Right then, this is the fun bit. See that Master button up top? Give it a tap and we\'ll analyze your track, detect the genre, and master it automatically. No extra steps, just one click and we handle the rest. Go on, let\'s hear what you\'ve got.' },
-                    { title: 'Sounding Proper!', desc: 'Your master sounds incredible. Now use the sidebar on the left to fine-tune your sound. Pick your genre, adjust the intensity, and explore sub-genre presets.', action: '', voice: 'Beautiful. Your master is sounding incredible. Now check out the sidebar on the left. You can change the genre, adjust the intensity, and explore sub-genre presets to dial in your sound.' },
-                    { title: 'Export Your Master', desc: 'When you\'re happy with your sound, scroll down to Export in the sidebar. Pick your format and download your master.', action: '', voice: 'When you\'re happy with your sound, scroll down on the left sidebar to find the Export section. Pick your format, and download your master. Enjoy.' }
+                    { title: 'Export Your Master', desc: 'When you\'re happy with your sound, hit Export at the bottom to preview tiers and download your master.', action: '', voice: 'When you\'re happy with your sound, hit that Export button at the bottom. You can preview each tier, pick the one you love, and download your master. Enjoy.' }
                 ],
                 explore: { title: "You're All Set!", subtitle: 'Your track sounds brilliant. Now make it uniquely yours:', genre: 'Pick Your Genre', genreDesc: 'Hip-Hop, Rock, Pop, EDM, Jazz & more', presets: 'Genre Presets', presetsDesc: 'Pro EQ curves for every style', eq: 'Manual EQ', eqDesc: 'Full 7-band control', btn: 'Let\'s Go!', tip: 'Hit the ? anytime to hear this again' },
                 skip: 'Skip'
@@ -32905,8 +33117,7 @@
                 steps: [
                     { title: 'Sube Tu Pista', desc: 'Arrastra tu archivo de audio al área resaltada o haz clic para buscar.', action: 'Haz clic en el área de carga brillante', voice: 'Bienvenido a LuvLang Mastering Profesional. Primero, sube tu pista de audio haciendo clic en el área de carga o arrastrando un archivo. Soportamos WAV, MP3, FLAC y muchos más formatos.' },
                     { title: 'Masteriza Tu Pista', desc: 'Haz clic en MASTER y masterizaremos tu pista automáticamente. La IA detecta el género y aplica procesamiento profesional.', action: 'Haz clic en el botón MASTER', voice: 'Ahora masterizemos tu pista. Haz clic en el botón Master arriba. La IA analizará tu pista, detectará el género y la masterizará automáticamente. Sin pasos extra.' },
-                    { title: 'Masterización Completa', desc: 'Tu master suena increíble. Usa la barra lateral izquierda para ajustar el género, la intensidad y los presets.', action: '', voice: 'Excelente. Tu master suena increíble. Usa el toggle A B para comparar. Luego ajusta el género, la intensidad y los presets en la barra lateral izquierda.' },
-                    { title: 'Exporta Tu Master', desc: 'Cuando estés satisfecho, desplázate hasta Exportar en la barra lateral. Elige tu formato y descarga.', action: '', voice: 'Cuando estés satisfecho con tu sonido, desplázate hacia abajo en la barra lateral para encontrar la sección de Exportar. Elige tu formato y descarga tu master.' }
+                    { title: 'Exporta Tu Master', desc: 'Cuando estés satisfecho, haz clic en Exportar abajo para previsualizar y descargar.', action: '', voice: 'Cuando estés satisfecho con tu sonido, haz clic en Exportar abajo. Puedes previsualizar cada nivel, elegir el que te guste y descargar tu master.' }
                 ],
                 explore: { title: '¡Estás Listo para Crear!', subtitle: 'Tu pista está masterizada. Personaliza con estas herramientas:', genre: 'Selección de Género', genreDesc: 'Hip-Hop, Pop, Rock, EDM y más', presets: 'Presets de Género', presetsDesc: 'Curvas EQ profesionales', eq: 'EQ Manual', eqDesc: 'Control paramétrico de 7 bandas', btn: 'Empezar a Explorar', tip: 'Haz clic en ? para escuchar esta guía de nuevo' },
                 skip: 'Saltar Tour'
@@ -32915,8 +33126,7 @@
                 steps: [
                     { title: 'Téléchargez Votre Piste', desc: 'Glissez votre fichier audio sur la zone en surbrillance ou cliquez pour parcourir.', action: 'Cliquez sur la zone de téléchargement', voice: 'Bienvenue sur LuvLang Mastering Professionnel. Premièrement, téléchargez votre piste audio en cliquant sur la zone ou en faisant glisser un fichier. Nous supportons WAV, MP3, FLAC et bien plus.' },
                     { title: 'Masterisez Votre Piste', desc: 'Cliquez sur MASTER et nous masteriserons votre piste automatiquement. L\'IA détecte le genre et applique un traitement professionnel.', action: 'Cliquez sur le bouton MASTER', voice: 'Maintenant masterisons votre piste. Cliquez sur le bouton Master en haut. L\'IA analysera votre piste, détectera le genre et la masterisera automatiquement. Aucune étape supplémentaire.' },
-                    { title: 'Mastering Terminé', desc: 'Votre master est incroyable. Utilisez la barre latérale gauche pour ajuster le genre, l\'intensité et les préréglages.', action: '', voice: 'Excellent. Votre master est incroyable. Utilisez le toggle A B pour comparer. Puis ajustez le genre, l\'intensité et les préréglages dans la barre latérale gauche.' },
-                    { title: 'Exportez Votre Master', desc: 'Quand vous êtes satisfait, descendez jusqu\'à Exporter dans la barre latérale. Choisissez votre format et téléchargez.', action: '', voice: 'Quand vous êtes satisfait de votre son, descendez dans la barre latérale pour trouver la section Exporter. Choisissez votre format et téléchargez votre master.' }
+                    { title: 'Exportez Votre Master', desc: 'Quand vous êtes satisfait, cliquez sur Exporter en bas pour prévisualiser et télécharger.', action: '', voice: 'Quand vous êtes satisfait de votre son, cliquez sur Exporter en bas. Prévisualisez chaque niveau, choisissez celui qui vous plaît et téléchargez votre master.' }
                 ],
                 explore: { title: 'Vous Êtes Prêt à Créer!', subtitle: 'Votre piste est masterisée. Personnalisez avec ces outils:', genre: 'Sélection de Genre', genreDesc: 'Hip-Hop, Pop, Rock, EDM et plus', presets: 'Préréglages de Genre', presetsDesc: 'Courbes EQ professionnelles', eq: 'EQ Manuel', eqDesc: 'Contrôle paramétrique 7 bandes', btn: 'Commencer à Explorer', tip: 'Cliquez sur ? pour réécouter ce guide' },
                 skip: 'Passer la Visite'
@@ -32925,8 +33135,7 @@
                 steps: [
                     { title: 'Track Hochladen', desc: 'Ziehen Sie Ihre Audiodatei auf den markierten Bereich oder klicken Sie zum Durchsuchen.', action: 'Klicken Sie auf den Upload-Bereich', voice: 'Willkommen bei LuvLang Professional Mastering. Laden Sie zuerst Ihren Audio-Track hoch, indem Sie auf den Upload-Bereich klicken oder eine Datei hineinziehen. Wir unterstützen WAV, MP3, FLAC und viele weitere Formate.' },
                     { title: 'Track Mastern', desc: 'Klicken Sie auf MASTER und wir mastern Ihren Track automatisch. Die KI erkennt das Genre und wendet professionelle Verarbeitung an.', action: 'Klicken Sie auf den MASTER-Button', voice: 'Jetzt mastern wir Ihren Track. Klicken Sie auf den Master-Button oben. Die KI analysiert Ihren Track, erkennt das Genre und mastert ihn automatisch. Keine zusätzlichen Schritte.' },
-                    { title: 'Mastering Abgeschlossen', desc: 'Ihr Master klingt fantastisch. Nutzen Sie die linke Seitenleiste um Genre, Intensität und Presets anzupassen.', action: '', voice: 'Ausgezeichnet. Ihr Master klingt fantastisch. Nutzen Sie den A B Toggle zum Vergleichen. Dann passen Sie Genre, Intensität und Presets in der linken Seitenleiste an.' },
-                    { title: 'Master Exportieren', desc: 'Wenn Sie zufrieden sind, scrollen Sie zum Export in der Seitenleiste. Wählen Sie Ihr Format und laden Sie herunter.', action: '', voice: 'Wenn Sie mit Ihrem Sound zufrieden sind, scrollen Sie in der Seitenleiste nach unten zum Export-Bereich. Wählen Sie Ihr Format und laden Sie Ihren Master herunter.' }
+                    { title: 'Master Exportieren', desc: 'Wenn Sie zufrieden sind, klicken Sie unten auf Exportieren zum Vorschau und Download.', action: '', voice: 'Wenn Sie mit Ihrem Sound zufrieden sind, klicken Sie unten auf Exportieren. Wählen Sie Ihre Stufe und laden Sie Ihren Master herunter.' }
                 ],
                 explore: { title: 'Bereit zum Erstellen!', subtitle: 'Ihr Track ist gemastert. Anpassen mit diesen Tools:', genre: 'Genre-Auswahl', genreDesc: 'Hip-Hop, Pop, Rock, EDM & mehr', presets: 'Genre-Presets', presetsDesc: 'Professionelle EQ-Kurven', eq: 'Manueller EQ', eqDesc: '7-Band parametrische Kontrolle', btn: 'Erkunden Starten', tip: 'Klicken Sie ? um diese Anleitung erneut zu hören' },
                 skip: 'Tour Überspringen'
@@ -32935,8 +33144,7 @@
                 steps: [
                     { title: 'Envie Sua Faixa', desc: 'Arraste seu arquivo de áudio para a área destacada ou clique para procurar.', action: 'Clique na área de upload brilhante', voice: 'Bem-vindo ao LuvLang Mastering Profissional. Primeiro, envie sua faixa de áudio clicando na área de upload ou arrastando um arquivo. Suportamos WAV, MP3, FLAC e muitos outros formatos.' },
                     { title: 'Masterize Sua Faixa', desc: 'Clique em MASTER e masterizaremos sua faixa automaticamente. A IA detecta o gênero e aplica processamento profissional.', action: 'Clique no botão MASTER', voice: 'Agora vamos masterizar sua faixa. Clique no botão Master acima. A IA analisará sua faixa, detectará o gênero e masterizará automaticamente. Sem passos extras.' },
-                    { title: 'Masterização Completa', desc: 'Seu master está incrível. Use a barra lateral esquerda para ajustar gênero, intensidade e presets.', action: '', voice: 'Excelente. Seu master está incrível. Use o toggle A B para comparar. Depois ajuste o gênero, a intensidade e os presets na barra lateral esquerda.' },
-                    { title: 'Exporte Seu Master', desc: 'Quando estiver satisfeito, role até Exportar na barra lateral. Escolha seu formato e baixe.', action: '', voice: 'Quando estiver satisfeito com seu som, role para baixo na barra lateral para encontrar a seção Exportar. Escolha seu formato e baixe seu master.' }
+                    { title: 'Exporte Seu Master', desc: 'Quando estiver satisfeito, clique em Exportar abaixo para pré-visualizar e baixar.', action: '', voice: 'Quando estiver satisfeito com seu som, clique em Exportar abaixo. Pré-visualize cada nível, escolha o que mais gostar e baixe seu master.' }
                 ],
                 explore: { title: 'Pronto para Criar!', subtitle: 'Sua faixa está masterizada. Personalize com estas ferramentas:', genre: 'Seleção de Gênero', genreDesc: 'Hip-Hop, Pop, Rock, EDM e mais', presets: 'Presets de Gênero', presetsDesc: 'Curvas EQ profissionais', eq: 'EQ Manual', eqDesc: 'Controle paramétrico de 7 bandas', btn: 'Começar a Explorar', tip: 'Clique em ? para ouvir este guia novamente' },
                 skip: 'Pular Tour'
@@ -32945,8 +33153,7 @@
                 steps: [
                     { title: 'トラックをアップロード', desc: 'ハイライトされたエリアにオーディオファイルをドラッグするか、クリックして参照します。', action: '光っているアップロードエリアをクリック', voice: 'LuvLangプロフェッショナルマスタリングへようこそ。まず、アップロードエリアをクリックするか、ファイルをドラッグしてオーディオトラックをアップロードしてください。WAV、MP3、FLACなど多くのフォーマットをサポートしています。' },
                     { title: 'トラックをマスター', desc: 'MASTERをクリックすると自動的にマスタリングされます。AIがジャンルを検出しプロの処理を適用します。', action: 'MASTERボタンをクリック', voice: 'では、トラックをマスタリングしましょう。上部のマスターボタンをクリックしてください。AIがトラックを分析し、ジャンルを検出して自動的にマスタリングします。追加の手順は不要です。' },
-                    { title: 'マスタリング完了', desc: 'マスターは素晴らしいサウンドです。左のサイドバーでジャンル、強度、プリセットを調整してください。', action: '', voice: '素晴らしい。マスターは最高のサウンドです。A Bトグルで比較してください。左のサイドバーでジャンル、強度、プリセットを調整できます。' },
-                    { title: 'マスターをエクスポート', desc: 'サウンドに満足したら、サイドバーのエクスポートまでスクロールしてください。フォーマットを選んでダウンロード。', action: '', voice: 'サウンドに満足したら、サイドバーを下にスクロールしてエクスポートセクションを見つけてください。フォーマットを選んでマスターをダウンロードしてください。' }
+                    { title: 'マスターをエクスポート', desc: 'サウンドに満足したら、下のエクスポートをクリックしてプレビューとダウンロード。', action: '', voice: 'サウンドに満足したら、下のエクスポートボタンをクリックしてください。各レベルをプレビューして、お好みのものを選んでダウンロードしてください。' }
                 ],
                 explore: { title: '準備完了！', subtitle: 'トラックがマスタリングされました。これらのツールでカスタマイズ:', genre: 'ジャンル選択', genreDesc: 'Hip-Hop, Pop, Rock, EDM等', presets: 'ジャンルプリセット', presetsDesc: 'プロのEQカーブ', eq: 'マニュアルEQ', eqDesc: '7バンドパラメトリック', btn: '探索を開始', tip: '?をクリックしてガイドを再生' },
                 skip: 'ツアーをスキップ'
@@ -32955,8 +33162,7 @@
                 steps: [
                     { title: '트랙 업로드', desc: '강조 표시된 영역에 오디오 파일을 드래그하거나 클릭하여 찾아보세요.', action: '빛나는 업로드 영역을 클릭', voice: 'LuvLang 프로페셔널 마스터링에 오신 것을 환영합니다. 먼저 업로드 영역을 클릭하거나 파일을 드래그하여 오디오 트랙을 업로드하세요. WAV, MP3, FLAC 등 다양한 형식을 지원합니다.' },
                     { title: '트랙 마스터링', desc: 'MASTER를 클릭하면 자동으로 마스터링됩니다. AI가 장르를 감지하고 프로페셔널 처리를 적용합니다.', action: 'MASTER 버튼을 클릭', voice: '이제 트랙을 마스터링해 봅시다. 상단의 마스터 버튼을 클릭하세요. AI가 트랙을 분석하고 장르를 감지하여 자동으로 마스터링합니다. 추가 단계가 필요 없습니다.' },
-                    { title: '마스터링 완료', desc: '마스터가 훌륭합니다. 왼쪽 사이드바에서 장르, 강도, 프리셋을 조정하세요.', action: '', voice: '훌륭합니다. 마스터가 최고입니다. A B 토글로 비교해 보세요. 왼쪽 사이드바에서 장르, 강도, 프리셋을 조정할 수 있습니다.' },
-                    { title: '마스터 내보내기', desc: '사운드에 만족하면 사이드바의 내보내기로 스크롤하세요. 형식을 선택하고 다운로드하세요.', action: '', voice: '사운드에 만족하면 사이드바를 아래로 스크롤하여 내보내기 섹션을 찾으세요. 형식을 선택하고 마스터를 다운로드하세요.' }
+                    { title: '마스터 내보내기', desc: '사운드에 만족하면 아래 내보내기를 클릭하여 미리보기 및 다운로드하세요.', action: '', voice: '사운드에 만족하면 아래 내보내기 버튼을 클릭하세요. 각 레벨을 미리보고 원하는 것을 선택하여 다운로드하세요.' }
                 ],
                 explore: { title: '준비 완료!', subtitle: '트랙이 마스터링되었습니다. 이 도구들로 커스터마이즈:', genre: '장르 선택', genreDesc: 'Hip-Hop, Pop, Rock, EDM 등', presets: '장르 프리셋', presetsDesc: '전문 EQ 커브', eq: '수동 EQ', eqDesc: '7밴드 파라메트릭', btn: '탐색 시작', tip: '?를 클릭하여 가이드 다시 듣기' },
                 skip: '투어 건너뛰기'
@@ -32965,8 +33171,7 @@
                 steps: [
                     { title: '上传您的曲目', desc: '将音频文件拖放到高亮区域或点击浏览。', action: '点击发光的上传区域', voice: '欢迎来到LuvLang专业母带处理。首先，点击上传区域或拖放文件来上传您的音频曲目。我们支持WAV、MP3、FLAC等多种格式。' },
                     { title: '母带处理', desc: '点击MASTER，我们将自动处理您的曲目。AI检测流派并应用专业处理。', action: '点击MASTER按钮', voice: '现在让我们处理您的曲目。点击顶部的Master按钮。AI将分析您的曲目，检测流派并自动完成母带处理。无需额外步骤。' },
-                    { title: '母带处理完成', desc: '您的母带听起来很棒。使用左侧边栏调整流派、强度和预设。', action: '', voice: '太好了。您的母带听起来很棒。使用A B切换进行比较。然后在左侧边栏中调整流派、强度和预设。' },
-                    { title: '导出您的母带', desc: '满意后，向下滚动到侧边栏的导出部分。选择格式并下载。', action: '', voice: '当您对声音满意时，向下滚动侧边栏找到导出部分。选择您的格式并下载母带。' }
+                    { title: '导出您的母带', desc: '满意后，点击下方的导出按钮预览和下载。', action: '', voice: '当您对声音满意时，点击下方的导出按钮。预览每个级别，选择您喜欢的，然后下载母带。' }
                 ],
                 explore: { title: '准备就绪！', subtitle: '曲目已处理完成。使用这些工具自定义：', genre: '流派选择', genreDesc: 'Hip-Hop、Pop、Rock、EDM等', presets: '流派预设', presetsDesc: '专业EQ曲线', eq: '手动EQ', eqDesc: '7段参量控制', btn: '开始探索', tip: '点击?重新收听指南' },
                 skip: '跳过导览'
@@ -32978,9 +33183,7 @@
         // Tour Steps Configuration (will be updated based on language)
         const voiceTourSteps = [
             { id: 'upload', target: '#uploadArea', waitFor: 'fileUploaded', position: 'right' },
-            // Format step removed in v7.6.3 — format selection merged into AI Mastering Console
             { id: 'master', target: '#aiMasterBtnFloating', waitFor: 'masteringComplete', position: 'bottom' },
-            { id: 'complete', target: '#genreSection', waitFor: null, position: 'right', showNext: true },
             { id: 'explore', target: null, waitFor: null, position: 'center', isExploreStep: true }
         ];
 
@@ -33115,7 +33318,8 @@
         }
 
         let currentAudio = null;
-        let musicDuckedVolume = null;
+        let isMusicDucked = false;          // Whether music is currently ducked
+        let duckSafetyTimer = null;         // Auto-restore safety net (30s max)
         // Speech generation counter — prevents orphaned audio from concurrent speak() calls
         let speechGeneration = 0;
         // Track ALL active audio elements so we can stop orphaned ones
@@ -33129,32 +33333,56 @@
             return voice + ':' + text;
         }
 
-        // ── Helper: duck music at output stage, play audio blob, restore volume ──
-        // Ducks outputMixer.gain (after all processing) so the mastering chain
-        // can't amplify the signal back up and drown out Chloe's voice
+        // ── Helper: duck music via dedicated voiceDuckGain node ──
+        // Uses a SEPARATE GainNode (voiceDuckGain) that sits between the analyser
+        // and audioContext.destination.  This never touches outputMixer.gain, so
+        // the mastering chain, reference-track A/B toggle, and LUFS meters are
+        // completely unaffected.  No saved-volume race conditions are possible
+        // because voiceDuckGain's only job is ducking during Chloe's speech.
         function duckMusicVolume() {
             window._isSpeaking = true;
+            showDismissChloeBtn();
             const ac = window.audioContext;
-            const mixer = window.outputMixer;
-            if (ac && mixer) {
-                if (musicDuckedVolume === null) musicDuckedVolume = mixer.gain.value;
+            const duckNode = window.voiceDuckGain;
+            if (ac && duckNode) {
+                isMusicDucked = true;
                 const now = ac.currentTime;
-                mixer.gain.cancelScheduledValues(now);
-                mixer.gain.setValueAtTime(mixer.gain.value, now);
-                mixer.gain.linearRampToValueAtTime(0.12, now + 0.15);
+                duckNode.gain.cancelScheduledValues(now);
+                duckNode.gain.setValueAtTime(duckNode.gain.value, now);
+                duckNode.gain.linearRampToValueAtTime(0.12, now + 0.15);
             }
+            // Safety timer — auto-restore if speech exceeds 30 seconds
+            if (duckSafetyTimer) clearTimeout(duckSafetyTimer);
+            duckSafetyTimer = setTimeout(function() {
+                if (isMusicDucked) {
+                    console.warn('[Chloe] Safety timer: auto-restoring music volume');
+                    restoreMusicVolume();
+                }
+            }, 30000);
         }
 
         function restoreMusicVolume() {
             window._isSpeaking = false;
+            hideDismissChloeBtn();
+            // Clear safety timer
+            if (duckSafetyTimer) {
+                clearTimeout(duckSafetyTimer);
+                duckSafetyTimer = null;
+            }
             const ac = window.audioContext;
-            const mixer = window.outputMixer;
-            if (ac && mixer && musicDuckedVolume !== null) {
+            const duckNode = window.voiceDuckGain;
+            if (ac && duckNode && isMusicDucked) {
                 const now = ac.currentTime;
-                mixer.gain.cancelScheduledValues(now);
-                mixer.gain.setValueAtTime(mixer.gain.value, now);
-                mixer.gain.linearRampToValueAtTime(musicDuckedVolume, now + 0.08);
-                musicDuckedVolume = null;
+                duckNode.gain.cancelScheduledValues(now);
+                // Restore to 1.0 immediately — voiceDuckGain's only purpose is
+                // ducking, so 1.0 is always the correct "unducked" value.
+                duckNode.gain.setValueAtTime(1.0, now);
+                isMusicDucked = false;
+            }
+            // Also restore audioElement.volume (Browser SpeechSynthesis may have ducked it)
+            const musicEl = document.getElementById('audioElement');
+            if (musicEl && musicEl.volume < 0.9) {
+                musicEl.volume = 1.0;
             }
         }
 
@@ -33317,12 +33545,15 @@
             }
         }
 
-        // ── Main speak() — cascade: Azure → ElevenLabs → Browser ──
+        // ── Main speak() — cascade: Azure → Browser ──
         async function speak(text) {
             if (!voiceEnabled || !text) return;
 
             // Increment generation — any older in-flight speak() calls will abort
             const myGen = ++speechGeneration;
+
+            // Restore any orphaned volume ducking from previous speech before starting new one
+            restoreMusicVolume();
 
             // Stop ALL in-flight speech (Azure audio + browser SpeechSynthesis)
             stopCurrentAudio();
@@ -33437,6 +33668,42 @@
             // Stop ALL tracked audio elements (Azure TTS + ElevenLabs)
             stopCurrentAudio();
             restoreMusicVolume();
+        }
+        window.stopSpeaking = stopSpeaking;
+
+        // ── Dismiss Chloe button — floating button to skip voice guidance ──
+        function showDismissChloeBtn() {
+            let btn = document.getElementById('dismissChloeBtn');
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.id = 'dismissChloeBtn';
+                btn.textContent = 'Dismiss Chloe';
+                btn.style.cssText = 'position:fixed;bottom:90px;right:20px;z-index:10002;' +
+                    'background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);' +
+                    'border:1px solid rgba(255,255,255,0.2);border-radius:10px;' +
+                    'color:#fff;font-size:0.82rem;font-weight:600;padding:8px 16px;' +
+                    'cursor:pointer;transition:opacity 0.2s,transform 0.2s;opacity:0;' +
+                    'transform:translateY(8px);pointer-events:none;';
+                btn.addEventListener('click', function() {
+                    stopSpeaking();
+                });
+                document.body.appendChild(btn);
+            }
+            // Fade in
+            requestAnimationFrame(function() {
+                btn.style.opacity = '1';
+                btn.style.transform = 'translateY(0)';
+                btn.style.pointerEvents = 'auto';
+            });
+        }
+
+        function hideDismissChloeBtn() {
+            const btn = document.getElementById('dismissChloeBtn');
+            if (btn) {
+                btn.style.opacity = '0';
+                btn.style.transform = 'translateY(8px)';
+                btn.style.pointerEvents = 'none';
+            }
         }
 
         function toggleVoice() {
@@ -33607,7 +33874,7 @@
             }
 
             // Update progress bar
-            for (let i = 1; i <= 5; i++) {
+            for (let i = 1; i <= 3; i++) {
                 const dot = document.getElementById('tourProgress' + i);
                 if (dot) {
                     if (i <= stepIndex + 1) {
@@ -33740,7 +34007,7 @@
         function showExploreModal() {
             // Get translated content
             const trans = tourTranslations[currentLang]?.explore || tourTranslations.en.explore;
-            const stepTrans = tourTranslations[currentLang]?.steps[3] || tourTranslations.en.steps[3];
+            const stepTrans = tourTranslations[currentLang]?.steps[2] || tourTranslations.en.steps[2];
 
             // Speak the final step voice
             if (stepTrans && stepTrans.voice) {

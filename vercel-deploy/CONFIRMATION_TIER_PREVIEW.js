@@ -209,6 +209,35 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
+            .ctp-summary-value.highlight {
+                color: #00d4ff;
+                text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+            }
+
+            /* ── Back / Change Settings Button ── */
+            .ctp-back-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                padding: 14px;
+                margin-top: 16px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .ctp-back-btn:hover {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(0, 212, 255, 0.3);
+                color: #00d4ff;
+            }
 
             /* ── Section Title ── */
             .ctp-section-title {
@@ -475,6 +504,13 @@
                 <div class="ctp-section-title">Choose Your Quality Tier &mdash; Listen &amp; Compare</div>
 
                 <div class="ctp-tiers" id="ctpTiers"></div>
+
+                <div style="padding: 0 32px 24px;">
+                    <button class="ctp-back-btn" id="ctpBackBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Back to Change Settings
+                    </button>
+                </div>
             </div>
         `;
 
@@ -482,6 +518,9 @@
 
         // Close button
         document.getElementById('ctpCloseBtn').addEventListener('click', closeModal);
+
+        // Back button — closes modal so user can change format/bit depth/platform
+        document.getElementById('ctpBackBtn').addEventListener('click', closeModal);
 
         // Overlay click to close
         overlay.addEventListener('click', function(e) {
@@ -510,7 +549,7 @@
 
         const intensityLabels = { 1: 'Subtle', 2: 'Light', 3: 'Balanced', 4: 'Heavy', 5: 'Maximum' };
         const intensity = window.selectedIntensity || 3;
-        const genre = window.currentGenrePreset || 'General';
+        const genre = window.selectedPreMasterGenre || 'General';
         const platform = window.selectedPlatform || 'spotify';
         const format = (window.selectedExportFormat || 'wav').toUpperCase();
         const bitDepth = (document.getElementById('bitDepthSelector')
@@ -522,20 +561,21 @@
         const filename = window.currentFileName || 'Untitled Track';
 
         const items = [
-            { label: 'Track', value: truncate(filename, 22) },
-            { label: 'Format', value: format },
-            { label: 'Bit Depth', value: bitDepth },
-            { label: 'Genre', value: capitalize(genre) },
-            { label: 'Platform', value: capitalize(platform) },
-            { label: 'Intensity', value: intensityLabels[intensity] || 'Balanced' },
-            { label: 'LUFS', value: (typeof lufs === 'number' ? lufs.toFixed(1) : '-14.0') + ' LUFS' },
-            { label: 'True Peak', value: (typeof truePeak === 'number' ? truePeak.toFixed(1) : '-1.0') + ' dBTP' }
+            { label: 'Track', value: truncate(filename, 22), highlight: false },
+            { label: 'Format', value: format, highlight: true },
+            { label: 'Bit Depth', value: bitDepth, highlight: true },
+            { label: 'Genre', value: capitalize(genre), highlight: false },
+            { label: 'Platform', value: capitalize(platform), highlight: false },
+            { label: 'Intensity', value: intensityLabels[intensity] || 'Balanced', highlight: false },
+            { label: 'LUFS', value: (typeof lufs === 'number' ? lufs.toFixed(1) : '-14.0') + ' LUFS', highlight: true },
+            { label: 'True Peak', value: (typeof truePeak === 'number' ? truePeak.toFixed(1) : '-1.0') + ' dBTP', highlight: false }
         ];
 
         container.innerHTML = items.map(function(item) {
+            var cls = 'ctp-summary-value' + (item.highlight ? ' highlight' : '');
             return '<div class="ctp-summary-item">' +
                 '<div class="ctp-summary-label">' + escapeHTML(item.label) + '</div>' +
-                '<div class="ctp-summary-value">' + escapeHTML(item.value) + '</div>' +
+                '<div class="' + cls + '">' + escapeHTML(item.value) + '</div>' +
                 '</div>';
         }).join('');
     }
@@ -795,8 +835,8 @@
         brickwall.threshold.value = -1.5;
         brickwall.knee.value = 0;
         brickwall.ratio.value = 20;
-        brickwall.attack.value = 0.0005;
-        brickwall.release.value = 0.02;
+        brickwall.attack.value = 0.001;
+        brickwall.release.value = 0.03;
         currentNode.connect(brickwall);
         currentNode = brickwall;
 
@@ -882,7 +922,7 @@
 
         // Sum bands
         const merger = ctx.createGain();
-        merger.gain.value = 0.6; // compensate 3-band sum
+        merger.gain.value = 0.85; // compensate 3-band sum (0.6 was too quiet)
         lowComp.connect(merger);
         midComp.connect(merger);
         hiComp.connect(merger);
@@ -935,7 +975,7 @@
         hp4.connect(c4);
 
         const sum = ctx.createGain();
-        sum.gain.value = 0.5; // compensate 4-band sum
+        sum.gain.value = 0.8; // compensate 4-band sum (0.5 was too quiet)
         c1.connect(sum); c2.connect(sum); c3.connect(sum); c4.connect(sum);
         return sum;
     }
@@ -998,7 +1038,7 @@
             curve[i] = Math.tanh(x * 2);
         }
         shaper.curve = curve;
-        shaper.oversample = '2x';
+        shaper.oversample = '4x';
         hfBoost.connect(shaper);
 
         const wetGain = ctx.createGain();
@@ -1026,7 +1066,7 @@
             curve[i] = Math.tanh(x * 1.4);
         }
         shaper.curve = curve;
-        shaper.oversample = '2x';
+        shaper.oversample = '4x';
 
         input.connect(shaper);
 
@@ -1463,6 +1503,17 @@
             overlay.classList.add('open');
         });
 
+        // Chloe voice guidance — explain tier selection and audio previews
+        if (typeof window.speakWithDucking === 'function' && !window.tourActive) {
+            setTimeout(function() {
+                window.speakWithDucking(
+                    "Here's your tier preview. Each tier masters your track at a different quality level. " +
+                    "Hit the play button on any card to hear a 15-second sample of how your master will sound. " +
+                    "When you've found the one you like, tap Select to continue to checkout."
+                );
+            }, 600);
+        }
+
         // Start rendering previews only if not cached
         if (!canReuse) {
             _lastPreviewSourceBuffer = audioBuffer;
@@ -1542,12 +1593,14 @@
     }
 
     function truncate(str, maxLen) {
+        str = String(str);
         if (str.length <= maxLen) return str;
         return str.substring(0, maxLen - 1) + '\u2026';
     }
 
     function capitalize(str) {
         if (!str) return '';
+        str = String(str);
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
