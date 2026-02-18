@@ -106,7 +106,8 @@
         exciter: true,
         warmth: true,
         softClipper: true,
-        stereoEnhance: true
+        stereoEnhance: true,
+        saturationAmount: 50  // 0-100, controls warmth intensity
     };
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -702,6 +703,81 @@
                 margin-bottom: 6px;
             }
 
+            /* ── Saturation Slider ── */
+            .ctp-saturation-wrap {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+                padding: 8px 0 2px;
+                transition: opacity 0.2s;
+            }
+            .ctp-saturation-wrap.disabled {
+                opacity: 0.35;
+                pointer-events: none;
+            }
+            .ctp-saturation-label {
+                font-size: 0.65rem;
+                color: rgba(255, 255, 255, 0.45);
+                font-weight: 500;
+                white-space: nowrap;
+                min-width: 36px;
+            }
+            .ctp-saturation-label:last-of-type {
+                text-align: right;
+            }
+            .ctp-saturation-slider {
+                -webkit-appearance: none;
+                appearance: none;
+                flex: 1;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.12);
+                border-radius: 2px;
+                outline: none;
+                cursor: pointer;
+            }
+            .ctp-saturation-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: #FFD700;
+                box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+                cursor: pointer;
+                transition: box-shadow 0.15s;
+            }
+            .ctp-saturation-slider::-webkit-slider-thumb:hover {
+                box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+            }
+            .ctp-saturation-slider::-moz-range-thumb {
+                width: 16px;
+                height: 16px;
+                border: none;
+                border-radius: 50%;
+                background: #FFD700;
+                box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+                cursor: pointer;
+            }
+            .ctp-saturation-slider::-moz-range-track {
+                height: 4px;
+                background: rgba(255, 255, 255, 0.12);
+                border-radius: 2px;
+            }
+            .ctp-saturation-slider:focus-visible {
+                outline: 2px solid #FFD700;
+                outline-offset: 4px;
+                border-radius: 2px;
+            }
+            .ctp-saturation-value {
+                font-size: 0.7rem;
+                font-weight: 600;
+                color: #FFD700;
+                min-width: 32px;
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+
             @media (max-width: 600px) {
                 .ctp-effects-grid {
                     grid-template-columns: 1fr;
@@ -1248,7 +1324,7 @@
         // PREMIUM ONLY: Analog warmth (gentle tape saturation)
         // ═══════════════════════════════════════════════════════════
         if (tierId === 'premium' && premiumEffects.warmth) {
-            currentNode = applyAnalogWarmth(offline, currentNode);
+            currentNode = applyAnalogWarmth(offline, currentNode, premiumEffects.saturationAmount);
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -1410,29 +1486,33 @@
     }
 
     /**
-     * applyAnalogWarmth — gentle tape-style saturation for richness.
-     * Premium only. 50/50 dry/wet blend sums to unity (no gain buildup).
-     * tanh(x * 1.2) with 4x oversampling for clean harmonic distortion.
+     * applyAnalogWarmth — tape-style saturation for richness.
+     * Premium only. Saturation amount (0-100) controls drive and wet/dry mix.
+     * tanh waveshaping with 4x oversampling for clean harmonic distortion.
+     * drive: 1.0 (transparent) → 2.0 (heavy), wet: 0.08 → 0.43, dry = 1-wet
      */
-    function applyAnalogWarmth(ctx, input) {
+    function applyAnalogWarmth(ctx, input, saturationAmount) {
+        var amount = (typeof saturationAmount === 'number') ? saturationAmount : 50;
+        var drive = 1.0 + (amount / 100) * 1.0;
+        var wetMix = 0.08 + (amount / 100) * 0.35;
+        var dryMix = 1.0 - wetMix;
+
         var shaper = ctx.createWaveShaper();
         var curve = new Float32Array(4096);
         for (var i = 0; i < 4096; i++) {
             var x = (i / 4095) * 2 - 1;
-            curve[i] = Math.tanh(x * 1.1);
+            curve[i] = Math.tanh(x * drive);
         }
         shaper.curve = curve;
         shaper.oversample = '4x';
 
-        // Wet path (saturated) — subtle warmth, not obvious coloration
         var wetGain = ctx.createGain();
-        wetGain.gain.value = 0.15;
+        wetGain.gain.value = wetMix;
         input.connect(shaper);
         shaper.connect(wetGain);
 
-        // Dry path (clean) — 0.85 + 0.15 = 1.0 unity
         var dryGain = ctx.createGain();
-        dryGain.gain.value = 0.85;
+        dryGain.gain.value = dryMix;
         input.connect(dryGain);
 
         var output = ctx.createGain();
@@ -1892,7 +1972,7 @@
 
     var PREMIUM_EFFECT_META = [
         { key: 'exciter',       icon: '\u2728', name: 'Harmonic Exciter',  desc: 'Adds brightness, air, and presence to your highs' },
-        { key: 'warmth',        icon: '\uD83D\uDD25', name: 'Analog Warmth',     desc: 'Rich, tape-style saturation for depth and body' },
+        { key: 'warmth',        icon: '\uD83D\uDD25', name: 'Analog Warmth',     desc: 'Rich, tape-style saturation for depth and body', hasSlider: true },
         { key: 'softClipper',   icon: '\uD83D\uDCC8', name: 'Soft Clipper',      desc: 'Smooths peaks for a polished, glued-together sound' },
         { key: 'stereoEnhance', icon: '\uD83C\uDFA7', name: 'Enhanced Stereo',   desc: 'Wider stereo image for an immersive listening experience' }
     ];
@@ -1921,6 +2001,19 @@
 
         var effectCardsHTML = PREMIUM_EFFECT_META.map(function(fx) {
             var isOn = premiumEffects[fx.key];
+            var sliderHTML = '';
+            if (fx.hasSlider) {
+                var satVal = premiumEffects.saturationAmount;
+                var disabledClass = isOn ? '' : ' disabled';
+                sliderHTML =
+                    '<div class="ctp-saturation-wrap' + disabledClass + '">' +
+                        '<span class="ctp-saturation-label">Subtle</span>' +
+                        '<input type="range" class="ctp-saturation-slider" min="0" max="100" value="' + satVal + '"' +
+                            ' data-fx="saturationAmount" aria-label="Saturation amount">' +
+                        '<span class="ctp-saturation-label">Heavy</span>' +
+                        '<span class="ctp-saturation-value">' + satVal + '%</span>' +
+                    '</div>';
+            }
             return '<div class="ctp-effect-card ' + (isOn ? 'ctp-effect-on' : '') + '" data-effect="' + fx.key + '">' +
                 '<div class="ctp-effect-card-top">' +
                     '<span class="ctp-effect-name"><span class="ctp-effect-icon">' + fx.icon + '</span> ' + escapeHTML(fx.name) + '</span>' +
@@ -1930,6 +2023,7 @@
                     '</label>' +
                 '</div>' +
                 '<div class="ctp-effect-desc">' + escapeHTML(fx.desc) + '</div>' +
+                sliderHTML +
             '</div>';
         }).join('');
 
@@ -1967,7 +2061,7 @@
         }
 
         // Wire toggle switches
-        panel.querySelectorAll('input[data-fx]').forEach(function(input) {
+        panel.querySelectorAll('input[type="checkbox"][data-fx]').forEach(function(input) {
             input.addEventListener('change', function() {
                 var fxKey = this.getAttribute('data-fx');
                 premiumEffects[fxKey] = this.checked;
@@ -1975,9 +2069,25 @@
                 if (card) {
                     if (this.checked) card.classList.add('ctp-effect-on');
                     else card.classList.remove('ctp-effect-on');
+                    // Enable/disable saturation slider when warmth is toggled
+                    var satWrap = card.querySelector('.ctp-saturation-wrap');
+                    if (satWrap) {
+                        if (this.checked) satWrap.classList.remove('disabled');
+                        else satWrap.classList.add('disabled');
+                    }
                 }
             });
         });
+
+        // Wire saturation slider
+        var satSlider = panel.querySelector('.ctp-saturation-slider');
+        if (satSlider) {
+            satSlider.addEventListener('input', function() {
+                premiumEffects.saturationAmount = parseInt(this.value, 10);
+                var valEl = this.parentNode.querySelector('.ctp-saturation-value');
+                if (valEl) valEl.textContent = this.value + '%';
+            });
+        }
 
         // Wire play button in customize panel
         document.getElementById('ctpCustomizePlayBtn').addEventListener('click', function() {
@@ -2093,7 +2203,8 @@
             exciter: premiumEffects.exciter,
             warmth: premiumEffects.warmth,
             softClipper: premiumEffects.softClipper,
-            stereoEnhance: premiumEffects.stereoEnhance
+            stereoEnhance: premiumEffects.stereoEnhance,
+            saturationAmount: premiumEffects.saturationAmount
         };
 
         window.selectedTier = 'premium';
