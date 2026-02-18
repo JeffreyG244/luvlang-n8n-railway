@@ -10424,7 +10424,7 @@
                 limiter.knee.value = 0;             // Hard knee = true brickwall
                 limiter.ratio.value = 20;           // Brick-wall ratio
                 limiter.attack.value = 0.001;       // 1ms attack
-                limiter.release.value = 0.050;      // 50ms — fast recovery for rare peaks (safety net, not musical)
+                limiter.release.value = 0.080;      // 80ms — balanced: fast for transients, no bass distortion
 
                 // v7.6.13d: BRICKWALL CLIPPER at -1.0 dBTP — sample-level ceiling enforcement
                 // DynamicsCompressor limiters have inherent attack time; transients slip through.
@@ -11346,9 +11346,9 @@
                 const lookAheadLimiter = audioContext.createDynamicsCompressor();
                 lookAheadLimiter.threshold.value = -1.5;  // -1.5dBTP — gives brickwall 0.5dB headroom
                 lookAheadLimiter.knee.value = 0;         // Hard knee for limiting
-                lookAheadLimiter.ratio.value = 20;       // Brickwall ratio — catches peaks cleanly with 5ms look-ahead
+                lookAheadLimiter.ratio.value = 12;       // Musical limiting — lets transients breathe, brickwall catches the rest
                 lookAheadLimiter.attack.value = 0.001;   // 1ms
-                lookAheadLimiter.release.value = 0.100;  // 100ms — transparent, no pumping
+                lookAheadLimiter.release.value = 0.080;  // 80ms — balanced: fast enough for transients, no bass distortion
 
                 window.lookAheadLimiter = {
                     enabled: true,
@@ -13367,9 +13367,9 @@
                 const lim1 = offlineCtx.createDynamicsCompressor();
                 lim1.threshold.value = chainParams.limiter2Threshold || -1.5;
                 lim1.knee.value = 0;        // Hard knee
-                lim1.ratio.value = 20;
+                lim1.ratio.value = 12;      // Musical limiting — matches live chain
                 lim1.attack.value = 0.001;
-                lim1.release.value = 0.100;
+                lim1.release.value = 0.080; // Matches live chain
 
                 // Stage 2: Brickwall safety limiter (-1.0 dBTP, catches anything that slips through)
                 const lim2 = offlineCtx.createDynamicsCompressor();
@@ -13377,7 +13377,7 @@
                 lim2.knee.value = chainParams.limiterKnee || 0;
                 lim2.ratio.value = 20;
                 lim2.attack.value = 0.001;
-                lim2.release.value = 0.050; // Fast recovery — safety net, matches live chain
+                lim2.release.value = 0.080; // Matches live chain
 
                 // v7.6.13d: Hard clipper at -1.0 dBTP — guarantees NO peak exceeds ceiling
                 // DynamicsCompressor has inherent attack time that lets transients through.
