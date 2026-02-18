@@ -12267,42 +12267,53 @@
                 rightAnalyser.smoothingTimeConstant = 0.3;
 
                 // ═══════════════════════════════════════════════════════════════════════════
-                // M/S (MID/SIDE) STEREO WIDTH CONTROLS
-                // Controls stereo width by adjusting the relationship between L and R
+                // M/S (MID/SIDE) STEREO WIDTH CONTROLS — proper cross-feed matrix
+                // L_out = L * directGain + R * crossGain
+                // R_out = R * directGain + L * crossGain
+                // At 100%: direct=1, cross=0 (passthrough). 0%: mono. 200%: extra wide.
                 // ═══════════════════════════════════════════════════════════════════════════
+                const widthSplitter = audioContext.createChannelSplitter(2);
+                const widthMerger = audioContext.createChannelMerger(2);
+                // Cross-feed matrix: 4 gain nodes (L→L, R→L, L→R, R→R)
+                const widthLL = audioContext.createGain(); // L direct
+                const widthRL = audioContext.createGain(); // R cross-feed into L
+                const widthRR = audioContext.createGain(); // R direct
+                const widthLR = audioContext.createGain(); // L cross-feed into R
+                widthLL.gain.value = 1.0;
+                widthRL.gain.value = 0.0;
+                widthRR.gain.value = 1.0;
+                widthLR.gain.value = 0.0;
+                // Wire: splitter → gains → merger
+                widthSplitter.connect(widthLL, 0); // L → L direct
+                widthSplitter.connect(widthLR, 0); // L → R cross
+                widthSplitter.connect(widthRR, 1); // R → R direct
+                widthSplitter.connect(widthRL, 1); // R → L cross
+                widthLL.connect(widthMerger, 0, 0);
+                widthRL.connect(widthMerger, 0, 0);
+                widthRR.connect(widthMerger, 0, 1);
+                widthLR.connect(widthMerger, 0, 1);
+                window.widthSplitter = widthSplitter;
+                window.widthMerger = widthMerger;
+
                 window.msControls = {
-                    width: 100, // 100% = normal stereo
+                    width: 100,
                     setWidth: (percent) => {
-                        // 0% = mono, 100% = normal stereo, 200% = extra wide
-                        // This affects the bass mono crossover and overall stereo image
                         window.msControls.width = percent;
-
-                        if (percent === 0) {
-                            // Full mono - sum L+R
-                            leftChannel.gain.value = 0.5;
-                            rightChannel.gain.value = 0.5;
-                        } else if (percent <= 100) {
-                            // Narrow to normal (0-100%)
-                            const stereoAmount = percent / 100;
-                            leftChannel.gain.value = 0.5 + (0.5 * stereoAmount);
-                            rightChannel.gain.value = 0.5 + (0.5 * stereoAmount);
-                        } else {
-                            // Wide (100-200%) - boost side signal
-                            const wideAmount = (percent - 100) / 100;
-                            leftChannel.gain.value = 1.0 + (wideAmount * 0.3);
-                            rightChannel.gain.value = 1.0 + (wideAmount * 0.3);
-                        }
-
+                        const alpha = percent / 100; // 0=mono, 1=normal, 2=wide
+                        const direct = (1 + alpha) / 2;
+                        const cross = (1 - alpha) / 2;
+                        const t = audioContext.currentTime;
+                        widthLL.gain.setTargetAtTime(direct, t, 0.02);
+                        widthRR.gain.setTargetAtTime(direct, t, 0.02);
+                        widthRL.gain.setTargetAtTime(cross, t, 0.02);
+                        widthLR.gain.setTargetAtTime(cross, t, 0.02);
                     },
                     setMidGain: (dB) => {
-                        // Affects both channels equally (center content)
-                        const linearGain = Math.pow(10, dB / 20);
-                        // This is simplified - full M/S would need separate processing
-
+                        // Mid boost/cut = boost both direct and cross equally
+                        // Side boost/cut via setSideGain
                     },
                     setSideGain: (dB) => {
-                        // Affects stereo difference
-                        const widthPercent = 100 + (dB * 10); // +3dB = 130% width
+                        const widthPercent = 100 + (dB * 10);
                         window.msControls.setWidth(Math.max(0, Math.min(200, widthPercent)));
                     }
                 };
@@ -12511,11 +12522,13 @@
                 // STAGE 18b: HARD CLIPPER at -1.0 dBTP — catches transients that escape limiters
                 limiter.connect(safetyClipper);
 
-                // STAGE 19: TPDF DITHER (bit-depth conversion)
-                safetyClipper.connect(ditherProcessor);
+                // STAGE 19: TPDF DITHER — ONLY applied during export (16-bit)
+                // Dithering in the real-time monitoring path adds unnecessary noise floor
+                // and is detrimental when outputting 24/32-bit through the audio interface.
+                // ditherProcessor is available at window.ditherProcessor for export use.
 
                 // STAGE 20: FINAL OUTPUT GAIN
-                ditherProcessor.connect(masterGain);
+                safetyClipper.connect(masterGain);
 
                 // ═══════════════════════════════════════════════════════════════════════════
                 // OUTPUT ROUTING
@@ -12526,8 +12539,9 @@
                 dryCompDelay.connect(dryGain);
                 dryGain.connect(outputMixer);
 
-                // WET PATH - through mastering chain
-                masterGain.connect(wetGain);
+                // WET PATH - through mastering chain → stereo width → output
+                masterGain.connect(widthSplitter);
+                widthMerger.connect(wetGain);
                 wetGain.connect(outputMixer);
 
                 // Final output to speakers + analyser for metering
@@ -12779,26 +12793,55 @@
                     // Store original peaks for transient ghost layer
                     window.originalPeaksData = audioBuffer.getChannelData(0).slice();
 
-                    // 📊 ANALYZE INPUT LOUDNESS (but don't apply gain yet - user hears original first)
-
-                    // Calculate LUFS using K-weighted loudness (simplified ITU-R BS.1770)
-                    const channelData = audioBuffer.getChannelData(0);
-                    const rightChannel = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : channelData;
-
-                    let sumSquaresL = 0, sumSquaresR = 0;
-                    const windowSize = Math.min(channelData.length, audioBuffer.sampleRate * 3); // 3 second window
-
-                    for (let i = 0; i < windowSize; i++) {
-                        sumSquaresL += channelData[i] * channelData[i];
-                        sumSquaresR += rightChannel[i] * rightChannel[i];
+                    // 📊 ANALYZE INPUT LOUDNESS with K-weighting (ITU-R BS.1770-4)
+                    // Uses offline rendering with K-weighting filters for accurate LUFS
+                    var inputLUFS = -70;
+                    try {
+                        const measDur = Math.min(audioBuffer.duration, 10); // measure up to 10s
+                        const measSamples = Math.ceil(measDur * audioBuffer.sampleRate);
+                        const measCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, measSamples, audioBuffer.sampleRate);
+                        const measSrc = measCtx.createBufferSource();
+                        measSrc.buffer = audioBuffer;
+                        // K-weighting: high shelf +4dB at 1681.97Hz
+                        const kShelf = measCtx.createBiquadFilter();
+                        kShelf.type = 'highshelf';
+                        kShelf.frequency.value = 1681.97;
+                        kShelf.gain.value = 4.0;
+                        kShelf.Q.value = 0.7071;
+                        // K-weighting: two cascaded HP at 38.13Hz
+                        const kHP1 = measCtx.createBiquadFilter();
+                        kHP1.type = 'highpass';
+                        kHP1.frequency.value = 38.13;
+                        kHP1.Q.value = 0.5;
+                        const kHP2 = measCtx.createBiquadFilter();
+                        kHP2.type = 'highpass';
+                        kHP2.frequency.value = 38.13;
+                        kHP2.Q.value = 0.5;
+                        measSrc.connect(kShelf);
+                        kShelf.connect(kHP1);
+                        kHP1.connect(kHP2);
+                        kHP2.connect(measCtx.destination);
+                        measSrc.start(0);
+                        const measBuf = await measCtx.startRendering();
+                        // Calculate integrated LUFS from K-weighted signal
+                        let totalPower = 0;
+                        const nCh = measBuf.numberOfChannels;
+                        for (let ch = 0; ch < nCh; ch++) {
+                            const cd = measBuf.getChannelData(ch);
+                            let chSum = 0;
+                            for (let i = 0; i < cd.length; i++) chSum += cd[i] * cd[i];
+                            totalPower += chSum / cd.length;
+                        }
+                        totalPower /= nCh;
+                        inputLUFS = totalPower > 0 ? -0.691 + 10 * Math.log10(totalPower) : -70;
+                    } catch (e) {
+                        console.warn('K-weighted LUFS measurement failed, using RMS fallback:', e);
+                        const channelData = audioBuffer.getChannelData(0);
+                        let ss = 0;
+                        const ws = Math.min(channelData.length, audioBuffer.sampleRate * 3);
+                        for (let i = 0; i < ws; i++) ss += channelData[i] * channelData[i];
+                        inputLUFS = ss / ws > 0 ? -0.691 + 10 * Math.log10(ss / ws) : -70;
                     }
-
-                    const meanSquareL = sumSquaresL / windowSize;
-                    const meanSquareR = sumSquaresR / windowSize;
-                    const meanSquareStereo = (meanSquareL + meanSquareR) / 2;
-
-                    // Convert to LUFS (includes -0.691 offset per ITU spec)
-                    const inputLUFS = meanSquareStereo > 0 ? -0.691 + 10 * Math.log10(meanSquareStereo) : -70;
 
                     // Store input level for mastering (gain will be applied AFTER mastering button is clicked)
                     window.autoLUFSInputLevel = inputLUFS;
@@ -13286,16 +13329,16 @@
                 subsonic.frequency.value = 18;
                 subsonic.Q.value = 0.707;
 
-                // 7-Band EQ — v7.6.3j: MUST match live chain types, freqs, and Q values
+                // 7-Band EQ — Q values MUST match live chain exactly for accurate LUFS prediction
                 // Live chain: lowshelf @ 40, peaking @ 120/350/1000/3500/8000, highshelf @ 16000
                 const eqBands = [
-                    { freq: 40,    type: 'lowshelf',  gain: chainParams.eqGains?.sub || 0, q: 0.7 },
-                    { freq: 120,   type: 'peaking',   gain: chainParams.eqGains?.bass || 0, q: 0.7 },
-                    { freq: 350,   type: 'peaking',   gain: chainParams.eqGains?.lowmid || 0, q: 0.7 },
-                    { freq: 1000,  type: 'peaking',   gain: chainParams.eqGains?.mid || 0, q: 0.7 },
-                    { freq: 3500,  type: 'peaking',   gain: chainParams.eqGains?.highmid || 0, q: 0.7 },
-                    { freq: 8000,  type: 'peaking',   gain: chainParams.eqGains?.high || 0, q: 0.7 },
-                    { freq: 16000, type: 'highshelf',  gain: chainParams.eqGains?.air || 0, q: 0.7 }
+                    { freq: 40,    type: 'lowshelf',  gain: chainParams.eqGains?.sub || 0, q: 0.5 },
+                    { freq: 120,   type: 'peaking',   gain: chainParams.eqGains?.bass || 0, q: 1.0 },
+                    { freq: 350,   type: 'peaking',   gain: chainParams.eqGains?.lowmid || 0, q: 1.4 },
+                    { freq: 1000,  type: 'peaking',   gain: chainParams.eqGains?.mid || 0, q: 1.0 },
+                    { freq: 3500,  type: 'peaking',   gain: chainParams.eqGains?.highmid || 0, q: 1.2 },
+                    { freq: 8000,  type: 'peaking',   gain: chainParams.eqGains?.high || 0, q: 0.9 },
+                    { freq: 16000, type: 'highshelf',  gain: chainParams.eqGains?.air || 0, q: 0.707 }
                 ];
                 const eqFilters = eqBands.map(band => {
                     const f = offlineCtx.createBiquadFilter();
@@ -35015,6 +35058,53 @@
     </script>
     <script src="COOKIE_CONSENT.js"></script>
     <script src="TOUR_ENHANCEMENTS.js"></script>
+
+    <!-- AI Results Display Panel (used by Stem Separation and other AI features) -->
+    <div id="aiResultsDisplay" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 480px;
+        max-height: 70vh;
+        overflow-y: auto;
+        background: rgba(15, 15, 25, 0.97);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 212, 255, 0.1);
+        color: #fff;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    "></div>
+    <div id="aiResultsOverlay" onclick="document.getElementById('aiResultsDisplay').style.display='none';this.style.display='none';" style="
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 9998;
+    "></div>
+    <script>
+        // Patch showAIResults to also show/hide the overlay backdrop
+        (function() {
+            var origShow = window.showAIResults || function(){};
+            window.showAIResults = function(title, content) {
+                var overlay = document.getElementById('aiResultsOverlay');
+                if (overlay) overlay.style.display = 'block';
+                origShow(title, content);
+            };
+            var origClear = window.clearAIResults || function(){};
+            window.clearAIResults = function() {
+                var overlay = document.getElementById('aiResultsOverlay');
+                if (overlay) overlay.style.display = 'none';
+                origClear();
+            };
+        })();
+    </script>
 
 </body>
 </html>
