@@ -19069,18 +19069,19 @@
                     // Enable de-noiser
                     spectralDenoiser.setActive(true);
 
-                    // Enable all checked noise types
-                    const hissEnabled = document.getElementById('denoiseHiss').checked;
-                    const humEnabled = document.getElementById('denoiseHum').checked;
-                    const clicksEnabled = document.getElementById('denoiseClicks').checked;
-                    const broadbandEnabled = document.getElementById('denoiseBroadband').checked;
-
-                    if (!hissEnabled && !humEnabled && !clicksEnabled && !broadbandEnabled) {
-                        showLuvLangToast('Please enable at least one noise type (check the boxes)');
+                    // Enable noise types — use preset dropdown instead of missing checkboxes
+                    var denoisePresetEl = document.getElementById('denoisePresetSelect');
+                    var activePreset = denoisePresetEl ? denoisePresetEl.value : 'auto';
+                    if (activePreset === 'off') {
+                        showLuvLangToast('Select a de-noise preset first (Auto, Gentle, Moderate, or Aggressive)');
                         denoiserActive = false;
                         this.textContent = 'De-noiser Active';
                         this.disabled = false;
                         return;
+                    }
+                    // Apply the selected preset before processing
+                    if (activePreset !== 'off' && typeof spectralDenoiser.applyPreset === 'function') {
+                        spectralDenoiser.applyPreset(activePreset === 'auto' ? 'moderate' : activePreset);
                     }
 
                     // Process audio buffer
@@ -19268,39 +19269,138 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // DYNAMICS CONTROLS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // LOCKED AUDIO: Sliders update UI labels only — audio parameters are set
-        // exclusively by the mastering engine to preserve true A/B comparison.
+        // LIVE AUDIO CONTROLS — sliders directly modify audio nodes in real-time
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        // Comp slider: 0% = bypass (ratio 1), 100% = heavy compression (ratio 8)
         document.getElementById('compSlider').addEventListener('input', function() {
-            const value = parseInt(this.value);
+            var value = parseInt(this.value);
             document.getElementById('compValue').textContent = value + '%';
-            // Audio node NOT modified — mastering engine owns compressor.ratio
+            if (window.compressor && window.audioContext) {
+                var t = window.audioContext.currentTime;
+                if (value === 0) {
+                    // Bypass — ratio 1:1
+                    window.compressor.ratio.setTargetAtTime(1, t, 0.02);
+                    window.compressor.threshold.setTargetAtTime(0, t, 0.02);
+                } else {
+                    // Map 1-100% → ratio 1.2:1 to 8:1, threshold -8 to -24
+                    var pct = value / 100;
+                    var ratio = 1.2 + pct * 6.8;
+                    var threshold = -8 - pct * 16;
+                    window.compressor.ratio.setTargetAtTime(ratio, t, 0.02);
+                    window.compressor.threshold.setTargetAtTime(threshold, t, 0.02);
+                }
+            }
         });
 
+        // Width slider: 0% = mono, 100% = normal, 200% = extra wide
         document.getElementById('widthSlider').addEventListener('input', function() {
-            const value = parseInt(this.value);
+            var value = parseInt(this.value);
             document.getElementById('widthValue').textContent = value + '%';
-            // Audio node NOT modified — mastering engine owns stereo width
+            if (window.msControls && typeof window.msControls.setWidth === 'function') {
+                window.msControls.setWidth(value);
+            }
+            window.stereoWidth = value / 100;
         });
 
+        // Ceiling slider: sets limiter threshold in dBTP
         document.getElementById('limiterSlider').addEventListener('input', function() {
-            const value = parseFloat(this.value);
+            var value = parseFloat(this.value);
             document.getElementById('limiterValue').textContent = value.toFixed(1) + ' dB';
-            // Audio node NOT modified — mastering engine owns limiter.threshold
+            if (window.lookAheadLimiter && typeof window.lookAheadLimiter.setCeiling === 'function') {
+                window.lookAheadLimiter.setCeiling(value);
+            }
+            if (window.limiter && window.audioContext) {
+                window.limiter.threshold.setTargetAtTime(value + 0.5, window.audioContext.currentTime, 0.02);
+            }
+            window.truePeakCeiling = value;
         });
 
+        // Output gain slider: adjusts master output level
         document.getElementById('outputGainSlider').addEventListener('input', function() {
-            const value = parseFloat(this.value);
+            var value = parseFloat(this.value);
             document.getElementById('outputGainValue').textContent =
                 (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
-            // Audio node NOT modified — mastering engine owns masterGain
+            if (window.masterGain && window.audioContext) {
+                var linear = Math.pow(10, value / 20);
+                window.masterGain.gain.setTargetAtTime(linear, window.audioContext.currentTime, 0.02);
+            }
         });
 
         document.getElementById('masterGainSlider').addEventListener('input', function() {
-            const value = parseFloat(this.value);
+            var value = parseFloat(this.value);
             document.getElementById('masterGainValue').textContent =
                 (value >= 0 ? '+' : '') + value.toFixed(1) + ' dB';
-            // Audio node NOT modified — mastering engine owns masterGain
+            if (window.masterGain && window.audioContext) {
+                var linear = Math.pow(10, value / 20);
+                window.masterGain.gain.setTargetAtTime(linear, window.audioContext.currentTime, 0.02);
+            }
         });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        // GAIN REDUCTION METERING — polls compressor.reduction in real-time
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        (function initGRMeters() {
+            var grEl = document.getElementById('limiterGR');
+            var mbSubBar = document.getElementById('mbSubGR');
+            var mbLowBar = document.getElementById('mbLowMidGR');
+            var mbMidBar = document.getElementById('mbHighMidGR');
+            var mbHighBar = document.getElementById('mbHighsGR');
+            var mbSubVal = document.getElementById('mbSubGRValue');
+            var mbLowVal = document.getElementById('mbLowMidGRValue');
+            var mbMidVal = document.getElementById('mbHighMidGRValue');
+            var mbHighVal = document.getElementById('mbHighsGRValue');
+            var lastGR = 0;
+            var smoothGR = 0;
+
+            function updateGRMeters() {
+                // Main compressor GR
+                if (window.compressor && grEl) {
+                    var gr = window.compressor.reduction || 0; // negative dB
+                    // Smooth the GR display (attack fast, release slow)
+                    if (gr < smoothGR) {
+                        smoothGR = gr; // attack: instant
+                    } else {
+                        smoothGR += (gr - smoothGR) * 0.15; // release: smooth
+                    }
+                    var displayGR = Math.round(smoothGR * 10) / 10;
+                    if (displayGR !== lastGR) {
+                        lastGR = displayGR;
+                        if (displayGR < -0.1) {
+                            grEl.textContent = 'GR: ' + displayGR.toFixed(1) + 'dB';
+                            grEl.style.color = displayGR < -6 ? '#ff4444' : displayGR < -3 ? '#ffaa00' : '#00ff88';
+                        } else {
+                            grEl.textContent = 'GR: 0dB';
+                            grEl.style.color = '#00ff88';
+                        }
+                    }
+                }
+
+                // Multiband GR meters
+                if (window.multibandCompressor && window.multibandCompressor.bands) {
+                    var bands = window.multibandCompressor.bands;
+                    var bandMap = [
+                        { band: bands.sub, bar: mbSubBar, val: mbSubVal },
+                        { band: bands.lowMid, bar: mbLowBar, val: mbLowVal },
+                        { band: bands.highMid, bar: mbMidBar, val: mbMidVal },
+                        { band: bands.highs, bar: mbHighBar, val: mbHighVal }
+                    ];
+                    for (var i = 0; i < bandMap.length; i++) {
+                        var b = bandMap[i];
+                        if (b.band && b.band.compressor) {
+                            var bandGR = b.band.compressor.reduction || 0;
+                            var absGR = Math.abs(bandGR);
+                            var pct = Math.min(100, (absGR / 12) * 100);
+                            if (b.bar) b.bar.style.height = pct + '%';
+                            if (b.val) b.val.textContent = bandGR < -0.1 ? bandGR.toFixed(1) + 'dB' : '0dB';
+                        }
+                    }
+                }
+
+                requestAnimationFrame(updateGRMeters);
+            }
+            requestAnimationFrame(updateGRMeters);
+        })();
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // VISUALIZATION (Waveform + EQ Graph)
