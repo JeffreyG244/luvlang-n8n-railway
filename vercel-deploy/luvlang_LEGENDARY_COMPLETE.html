@@ -19313,7 +19313,7 @@
                 window.lookAheadLimiter.setCeiling(value);
             }
             if (window.limiter && window.audioContext) {
-                window.limiter.threshold.setTargetAtTime(value + 0.5, window.audioContext.currentTime, 0.02);
+                window.limiter.threshold.setTargetAtTime(Math.min(0, value + 0.5), window.audioContext.currentTime, 0.02);
             }
             window.truePeakCeiling = value;
         });

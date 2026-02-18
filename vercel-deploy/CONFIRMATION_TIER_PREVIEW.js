@@ -1470,6 +1470,12 @@
      * applyAnalogWarmth — tape-style saturation for richness.
      * Premium only. 3 levels: low (subtle), balanced (default), high (heavy).
      * tanh waveshaping with 4x oversampling for clean harmonic distortion.
+     *
+     * Gain compensation: tanh(x*drive) amplifies quiet signals by ~drive factor
+     * while compressing peaks. Without compensation, the blended signal pushes
+     * downstream limiters harder (up to +3 dB at High). The output gain is set
+     * to 1/(dryMix + wetMix*drive) to maintain unity RMS — the saturated harmonics
+     * add color without adding level, keeping the dynamics chain clean.
      */
     function applyAnalogWarmth(ctx, input, saturationLevel) {
         var levels = {
@@ -1500,8 +1506,12 @@
         dryGain.gain.value = dryMix;
         input.connect(dryGain);
 
+        // Gain compensation: neutralize the RMS increase from saturation
+        // Small-signal gain = dryMix + wetMix * drive (Low: 1.01, Balanced: 1.125, High: 1.43)
+        // Compensate so downstream limiters see the same level regardless of setting
+        var smallSignalGain = dryMix + wetMix * drive;
         var output = ctx.createGain();
-        output.gain.value = 1.0;
+        output.gain.value = 1.0 / smallSignalGain;
         wetGain.connect(output);
         dryGain.connect(output);
         return output;
