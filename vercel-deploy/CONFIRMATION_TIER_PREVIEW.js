@@ -1433,15 +1433,7 @@
         // Close modal
         closeModal();
 
-        // Legendary/premium tier: export directly (no payment gate)
-        if (window.userTier === 'legendary' || window._tierOverride === 'legendary') {
-            if (typeof window.performExport === 'function') {
-                window.performExport();
-                return;
-            }
-        }
-
-        // Proceed to Stripe checkout
+        // Always proceed to Stripe checkout — no free downloads
         if (typeof downloadMaster === 'function') {
             downloadMaster();
         } else if (typeof window.downloadMaster === 'function') {
