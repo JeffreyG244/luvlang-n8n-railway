@@ -561,17 +561,17 @@ function createPricingModal() {
     document.querySelectorAll('.tier-cta').forEach(btn => {
         btn.addEventListener('click', function() {
             const tier = this.dataset.tier;
-            const config = PRICING_TIERS[tier];
-
-            if (!config.stripeLink) {
+            closePricingModal();
+            window.selectedTier = tier;
+            if (typeof window.downloadMaster === 'function') {
+                window.downloadMaster();
+            } else {
                 if (typeof window.showLuvLangToast === 'function') {
-                    window.showLuvLangToast('Payment link not configured for this tier. Please contact support.');
+                    window.showLuvLangToast('Please upload a track first, then select a tier to master.');
                 } else {
-                    alert('Payment link not configured for this tier. Please contact support.');
+                    alert('Please upload a track first, then select a tier to master.');
                 }
-                return;
             }
-            window.location.href = config.stripeLink;
         });
     });
 
